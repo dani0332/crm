@@ -1,4 +1,10 @@
 <script setup>
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MemberDetails from '../../Components/MemberDetails.vue';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
+
 const page = usePage();
 defineProps({
   quote: Object,
@@ -30,17 +36,19 @@ defineProps({
   permissions: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
+const modelClass = 'App\\Models\\LifeQuote';
 const hasRole = role => useHasRole(role);
 
 const modals = reactive({
@@ -63,6 +71,9 @@ const advisorOptions = computed(() => {
       : advisor.name,
   }));
 });
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
@@ -273,13 +284,6 @@ const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
     value: indType.code,
     label: indType.text,
-  }));
-});
-
-const quoteStatusOptions = computed(() => {
-  return page.props.quoteStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
   }));
 });
 
@@ -638,7 +642,6 @@ const onAddUpdate = () => {
         </x-button>
       </template>
     </x-modal>
-
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -670,6 +673,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -734,6 +741,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY EXPIRY DATE</dt>
                 <dd>{{ quote.policy_expiry_date }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
@@ -1165,7 +1176,6 @@ const onAddUpdate = () => {
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1228,7 +1238,7 @@ const onAddUpdate = () => {
                 <x-field label="Transaction Type">
                   <x-input
                     type="text"
-                    :value="quote.transaction_type_text"
+                    v-model="quote.transaction_type_text"
                     class="w-full"
                     :disabled="true"
                   />
@@ -1304,8 +1314,8 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <EmbeddedProducts
@@ -1334,6 +1344,7 @@ const onAddUpdate = () => {
       :quote="quote"
       :insly-id="quote?.life_quote_request_detail?.insly_id"
       :expanded="sectionExpanded"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -1345,6 +1356,7 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="life"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
@@ -1556,10 +1568,15 @@ const onAddUpdate = () => {
       </Collapsible>
     </div>
     <AuditLogs
-      :type="'App\\Models\\LifeQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Life'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

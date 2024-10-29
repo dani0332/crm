@@ -42,10 +42,10 @@ enum QuoteTypes: string
 
     public function id(): string
     {
-        return self::getId($this);
+        return self::getId($this) ?? '';
     }
 
-    public static function getId(self $value): int
+    public static function getId(self $value): ?int
     {
         return match ($value) {
             QuoteTypes::CAR => 1,
@@ -61,6 +61,7 @@ enum QuoteTypes: string
             QuoteTypes::JETSKI => 11,
             QuoteTypes::CORPLINE => 101,
             QuoteTypes::GROUP_MEDICAL => 102,
+            default => null,
         };
     }
     public static function getName($value)
@@ -127,7 +128,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
-            self::HEALTH => SendHealthOCBIntroEmailJob::class,
+            // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
     }
@@ -158,6 +159,25 @@ enum QuoteTypes: string
         };
     }
 
+    public static function getNameShortCode(string $code)
+    {
+        $codes = [
+            'CAR' => self::CAR,
+            'HOM' => self::HOME,
+            'HEA' => self::HEALTH,
+            'LIF' => self::LIFE,
+            'BUS' => self::BUSINESS,
+            'BIK' => self::BIKE,
+            'YAC' => self::YACHT,
+            'TRA' => self::TRAVEL,
+            'PET' => self::PET,
+            'CYC' => self::CYCLE,
+            'JSK' => self::JETSKI,
+        ];
+
+        return $codes[$code] ?? null;
+    }
+
     public function url(string $uuid): string
     {
         return match ($this) {
@@ -176,4 +196,40 @@ enum QuoteTypes: string
             self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
         };
     }
+
+    public function quoteLink(string $uuid, array $queryParams = [])
+    {
+        $queryParamsStr = http_build_query($queryParams);
+
+        return match ($this) {
+            self::TRAVEL,self::CAR,self::HEALTH => "{$this->ecomUrl()}{$uuid}".($queryParamsStr ? "?{$queryParamsStr}" : ''),
+        };
+    }
+
+    /**
+     * Get all quote types with their IDs.
+     */
+    public static function allTypesWithIds(): array
+    {
+        $typesWithIds = [];
+        foreach (self::cases() as $quoteType) {
+            if (! $quoteType) {
+                continue;
+            }
+
+            $id = $quoteType->id();
+
+            if (! $id) {
+                continue;
+            }
+
+            $typesWithIds[] = [
+                'id' => $id,
+                'name' => $quoteType->value,
+            ];
+        }
+
+        return $typesWithIds;
+    }
+
 }

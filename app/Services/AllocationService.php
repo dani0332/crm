@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -235,7 +236,7 @@ class AllocationService
         $allocationCount = LeadAllocation::where('user_id', $userId)->select('auto_assignment_count', 'manual_assignment_count', 'max_capacity')
             ->first();
 
-        $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+        $leads = CarQuote::select('assignment_type')->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
@@ -331,4 +332,12 @@ class AllocationService
 
     }
 
+    public function leadAllocationFailed(string $uuid, QuoteTypes $quoteType)
+    {
+        $quote = $quoteType->model()->where('uuid', $uuid)->first();
+
+        if ($quote) {
+            $quote->markLeadAllocationFailed();
+        }
+    }
 }

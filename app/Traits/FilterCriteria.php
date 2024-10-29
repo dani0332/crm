@@ -10,7 +10,7 @@ trait FilterCriteria
 {
     public function scopeFilter($query, $paginate = true, $forTotalLeadsCount = false)
     {
-
+        $tableName = $this->getTable();
         $filters = $forTotalLeadsCount ? request()->merge([
             'created_at_start' => date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')),
             'created_at_end' => now()->format(config('constants.DATE_FORMAT_ONLY')),
@@ -58,11 +58,15 @@ trait FilterCriteria
                             if (isset(request()->{$key.'_start'}) && isset(request()->{$key.'_end'})) {
                                 $startDate = date('Y-m-d 00:00:00', strtotime(request()->{$key.'_start'}));
                                 $endDate = date('Y-m-d 23:59:59', strtotime(request()->{$key.'_end'}));
-                                $query->whereBetween($key, [$startDate, $endDate]);
+                                $query->whereBetween($tableName.'.'.$key, [$startDate, $endDate]);
                             } elseif (isset(request()->{$key.'_time_start'}) && isset(request()->{$key.'_time_end'})) {
                                 $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_start'}));
                                 $endDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_end'}));
                                 $query->whereBetween($key, [$startDate, $endDate]);
+                            } elseif (isset(request()->{'policy_expiry_date'}) && isset(request()->{'policy_expiry_date_end'})) {
+                                $startDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date'}));
+                                $endDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date_end'}));
+                                $query->whereBetween('previous_policy_expiry_date', [$startDate, $endDate]);
                             }
                             break;
                         default:

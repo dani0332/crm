@@ -22,7 +22,7 @@ const isDirty = ref(false);
 
 const advisorOptions = ref(
   Object.keys(page.props.filterOptions.advisors).map(key => ({
-    value: key,
+    value: key.toString(),
     label: page.props.filterOptions.advisors[key],
   })),
 );
@@ -179,15 +179,21 @@ const cleanFilters = filters => {
         filters[key].length == 0) &&
       delete filters[key],
   );
+
   return filters;
 };
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+  for (const [key, value] of Object.entries(params)) {
+    const match = key.match(/(.+?)\[(\d+)\]/);
+    if (match) {
+      const baseKey = match[1];
+      if (!filters[baseKey]) {
+        filters[baseKey] = [];
+      }
+      filters[baseKey][match[2]] = value;
     } else {
-      filters[key] = params[key];
+      filters[key] = value;
     }
   }
 }
@@ -216,7 +222,7 @@ const onTeamChange = e => {
     .then(res => {
       if (res.data.advisors.length > 0) {
         advisorOptions.value = Object.keys(res.data.advisors).map(key => ({
-          value: res.data.advisors[key].id,
+          value: res.data.advisors[key].id.toString(),
           label: res.data.advisors[key].name,
         }));
       }
@@ -550,12 +556,8 @@ onMounted(() => {
 
   setQueryStringFilters();
 
-  if (params['teams[]'] && params['teams[]'].length > 0) {
-    onTeamChange(params['teams[]']);
-  }
-
-  if (params['batchNo[]'] && typeof filters.batchNo === 'string') {
-    filters.batchNo = [params['batchNo[]']];
+  if (filters.teams && filters.teams.length > 0) {
+    onTeamChange(filters.teams);
   }
 
   calculateValuesAndHighlight();

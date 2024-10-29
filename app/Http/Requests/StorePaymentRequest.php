@@ -68,17 +68,35 @@ class StorePaymentRequest extends FormRequest
             if (! $quoteModel) {
                 $validator->errors()->add('quote', 'Quote Not Exists');
             } else {
-                // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
-                // Count will be iterative for each payment added through the send update or Child lead
-                $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
-                $paymentCount = app(PaymentRepository::class)->getPaymentsCountByLeadCode($mainLeadCode);
-                $expectedPaymentCode = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
-                if (! empty(request()->send_update_id)) {
-                    $paymentAlreadyExistsCount = Payment::where('send_update_log_id', request()->send_update_id)->count();
-                } else {
-                    $paymentAlreadyExistsCount = Payment::where('code', $expectedPaymentCode)->count();
+
+                $expectedPaymentCode = $quoteModel->code;
+                if (! empty(request()->send_update_id) || ! empty($quoteModel->parent_duplicate_quote_id)) {
+                    // Payment follow-up count is now iterative (uuid-(nth+1)) and not dependent on the count of payments in the quote
+                    // Count will be iterative for each payment added through the send update or Child lead
+
+                    if (! empty(request()->send_update_id)) {
+                        $paymentAlreadyExistsForSU = Payment::where('send_update_log_id', request()->send_update_id)->count();
+                        if ($paymentAlreadyExistsForSU > 0) {
+                            $validator->errors()->add('payment', 'Payment Already Added');
+                        }
+                    }
+
+                    if (! empty($quoteModel->parent_duplicate_quote_id)) {
+                        // This will check the double tab case and if the lead created through duplicate functionality
+                        $paymentAlreadyExists = $quoteModel->payments->count();
+
+                        // This condition check if the payment already exists and the payment is not added through send update
+                        if ($paymentAlreadyExists > 0 && empty(request()->send_update_id)) {
+                            $validator->errors()->add('payment', 'Payment Already Added');
+                        }
+                    }
+
+                    $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+                    $paymentCount = app(PaymentRepository::class)->getPaymentsCountByLeadCode($mainLeadCode);
+                    $expectedPaymentCode = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
                 }
 
+                $paymentAlreadyExistsCount = Payment::where('code', $expectedPaymentCode)->count();
                 if ($paymentAlreadyExistsCount > 0) {
                     $validator->errors()->add('payment', 'Payment Already Added');
                 }

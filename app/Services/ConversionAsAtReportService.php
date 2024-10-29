@@ -4,17 +4,21 @@ namespace App\Services;
 
 use App\Enums\DisplayByEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteType;
 use App\Models\Team;
+use App\Services\Reports\Reportable;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -23,6 +27,7 @@ use Illuminate\Support\Facades\DB;
 class ConversionAsAtReportService extends BaseService
 {
     use GetUserTreeTrait;
+    use Reportable;
     use TeamHierarchyTrait;
 
     public function getReportData($request)
@@ -30,47 +35,69 @@ class ConversionAsAtReportService extends BaseService
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
         if ($request->lob && $request->startEndDate && $request->asAtDate) {
-            $query = PersonalQuote::query()
+
+            if ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+                $model = app(CarQuote::class);
+                $detailModel = app(CarQuoteRequestDetail::class);
+            } else {
+                $model = app(PersonalQuote::class);
+                $detailModel = app(PersonalQuoteDetail::class);
+            }
+
+            $alias = $model->getTable();
+            $detailAlias = $detailModel->getTable();
+
+            $saleLeadsCountQuery = strtr("
+                SUM(
+                    CASE WHEN (
+                        (({$alias}.payment_status_id in (:paidStatuses) OR {$alias}.quote_status_id in (:approvedStatuses)) and {$alias}.transaction_approved_at is NULL) OR
+                        ({$alias}.quote_status_id in (:approvedStatuses) and {$alias}.transaction_approved_at <= ':asAtDate')
+                    ) THEN 1 ELSE 0 END) as sale_leads",
+                [
+                    ':approvedStatuses' => implode(',', [
+                        QuoteStatusEnum::TransactionApproved,
+                        QuoteStatusEnum::PolicyIssued,
+                        QuoteStatusEnum::PolicyBooked,
+                        QuoteStatusEnum::PolicySentToCustomer,
+                    ]),
+                    ':asAtDate' => Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat),
+                    ':paidStatuses' => implode(',', $this->getPaidStatuses()),
+                ]);
+
+            $query = $model::query()
                 ->select(
-                    DB::raw('SUM(CASE WHEN personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
-                    DB::raw('SUM(CASE WHEN
-                        personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')
-                        and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'"
-                        and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
+                    DB::raw('COUNT(*) as total_leads'),
+                    DB::raw("SUM(CASE WHEN
+                        {$alias}.quote_status_id in (".QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')
                         THEN 1 ELSE 0 END) as bad_leads'),
-                    DB::raw(
-                        'SUM(
-                            CASE WHEN (
-                                ( personal_quotes.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"
-                                and personal_quotes.payment_status_date <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
-                                )
-                                OR
-                                ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')
-                                and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
-                                )
-                            )
-                          and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'"
-                          THEN 1 ELSE 0 END) as sale_leads'
-                    ),
+                    DB::raw($saleLeadsCountQuery),
                 )
-                ->join('personal_quote_details as pqd', 'personal_quotes.id', 'pqd.personal_quote_id')
-                ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
+                ->join("{$detailAlias} as pqd", "{$alias}.id", "pqd.{$model->getForeignKey()}")
+                ->join('quote_batches', 'quote_batches.id', "{$alias}.quote_batch_id")
+                ->join('users', 'users.id', "{$alias}.advisor_id")
+                ->where('users.is_active', true)
+                ->whereNotIn("{$alias}.source", [
+                    LeadSourceEnum::IMCRM,
+                    LeadSourceEnum::INSLY,
+                    LeadSourceEnum::RENEWAL_UPLOAD,
+                    LeadSourceEnum::SAPGO,
+                    LeadSourceEnum::SAPJO,
+                ]);
 
             $filters = [
                 'startEndDate' => $request->startEndDate,
                 'lob' => $request->lob,
                 'displayBy' => $request->displayBy,
+                'tag' => $request->tag,
                 'page' => $request->page,
             ];
 
-            $query = $this->applyFilters($query, $filters);
+            $query = $this->applyFilters($query, $filters, $alias, $detailAlias, $model->getForeignKey());
 
             $query = $query->get();
 
             // map operation to calculate gross and net conversions of records
-            $mappedData = $this->mapConversionData($query, $request);
-
-            return $mappedData;
+            return $this->mapConversionData($query, $request);
         }
     }
 
@@ -110,7 +137,7 @@ class ConversionAsAtReportService extends BaseService
         ];
     }
 
-    public function applyFilters($query, $filters)
+    public function applyFilters($query, $filters, $alias, $detailAlias, $foreignKey)
     {
         $filters = (object) $filters;
 
@@ -130,38 +157,45 @@ class ConversionAsAtReportService extends BaseService
 
         if (isset($filters->lob)) {
             if ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::CORPLINE)) {
-                $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
+                $query->join('business_quote_request', 'business_quote_request.uuid', "{$alias}.uuid");
                 $query->where('business_quote_request.business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
             } elseif ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::GroupMedical)) {
-                $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
+                $query->join('business_quote_request', 'business_quote_request.uuid', "{$alias}.uuid");
                 $query->where('business_quote_request.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
-            } else {
-                $query->where('personal_quotes.quote_type_id', $filters->lob);
+            } elseif ($filters->lob != QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+                $query->where("{$alias}.quote_type_id", $filters->lob);
             }
         }
-
+        if (isset($filters->tag)) {
+            $query->join('quote_tags', 'quote_tags.quote_uuid', "{$alias}.uuid");
+            if ($filters->tag == QuoteSegmentEnum::SIC->value) {
+                $query->where('quote_tags.name', ucwords(QuoteSegmentEnum::SIC->value));
+            } else {
+                $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
+            }
+        }
         if (isset($filters->displayBy)) {
             switch ($filters->displayBy) {
                 case DisplayByEnum::ADVISOR_NAME:
-                    $this->getByAdvisorNameQuery($query);
+                    $this->getByAdvisorNameQuery($query, $alias);
                     break;
                 case DisplayByEnum::SUBTEAM:
-                    $this->getBySubTeamQuery($query);
+                    $this->getBySubTeamQuery($query, $alias);
                     break;
                 case DisplayByEnum::LEADSOURCE:
-                    $this->getByLeadSourceQuery($query);
+                    $this->getByLeadSourceQuery($query, $alias);
                     break;
                 case DisplayByEnum::EXTERNAL_LEADSOURCE:
-                    $this->getByExternalLeadSourceQuery($query);
+                    $this->getByExternalLeadSourceQuery($query, $alias, $detailAlias, $foreignKey);
                     break;
                 case DisplayByEnum::TIERS:
-                    $this->getByTiersQuery($query);
+                    $this->getByTiersQuery($query, $alias);
                     break;
                 case DisplayByEnum::NATIONALITY:
-                    $this->getByNationalityQuery($query);
+                    $this->getByNationalityQuery($query, $alias);
                     break;
                 case DisplayByEnum::TEAM:
-                    $this->getByTeamQuery($query, $filters);
+                    $this->getByTeamQuery($query, $filters, $alias);
                     break;
             }
         }
@@ -194,16 +228,14 @@ class ConversionAsAtReportService extends BaseService
      * @param [type] $query
      * @return void
      */
-    public function getByAdvisorNameQuery($query)
+    public function getByAdvisorNameQuery($query, $alias)
     {
         return $query
             ->addSelect(
                 'users.id as advisorId',
                 'users.name as advisor_name'
             )
-            ->join('users', 'users.id', 'personal_quotes.advisor_id')
-            ->where('users.is_active', true)
-            ->whereNotNull('personal_quotes.advisor_id')
+            ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('advisor_name', 'asc')
             ->groupBy('advisorId');
     }
@@ -214,17 +246,16 @@ class ConversionAsAtReportService extends BaseService
      * @param [type] $query
      * @return void
      */
-    public function getBySubTeamQuery($query)
+    public function getBySubTeamQuery($query, $alias)
     {
         return $query
             ->addSelect(
                 'teams.id as sub_team_id',
                 'teams.name as sub_team'
             )
-            ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('teams', 'users.sub_team_id', '=', 'teams.id')
             ->where('teams.type', TeamTypeEnum::SUB_TEAM)
-            ->whereNotNull('personal_quotes.advisor_id')
+            ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('sub_team', 'asc')
             ->groupBy('sub_team_id');
     }
@@ -235,13 +266,13 @@ class ConversionAsAtReportService extends BaseService
      * @param [type] $query
      * @return void
      */
-    public function getByLeadSourceQuery($query)
+    public function getByLeadSourceQuery($query, $alias)
     {
         return $query
             ->addSelect(
-                'personal_quotes.source as lead_source'
+                "{$alias}.source as lead_source"
             )
-            ->whereNotNull('personal_quotes.source')
+            ->whereNotNull("{$alias}.source")
             ->orderBy('lead_source', 'asc')
             ->groupBy('lead_source');
     }
@@ -252,14 +283,14 @@ class ConversionAsAtReportService extends BaseService
      * @param [type] $query
      * @return void
      */
-    public function getByExternalLeadSourceQuery($query)
+    public function getByExternalLeadSourceQuery($query, $alias, $detailAlias, $foreignKey)
     {
         return $query
             ->addSelect(
-                'personal_quote_details.utm_source as external_lead_source'
+                "{$detailAlias}.utm_source as external_lead_source"
             )
-            ->join('personal_quote_details', 'personal_quotes.id', 'personal_quote_details.personal_quote_id')
-            ->whereNotNull('personal_quote_details.utm_source')
+            ->join($detailAlias, "{$alias}.id", "{$detailAlias}.{$foreignKey}")
+            ->whereNotNull("{$detailAlias}.utm_source")
             ->orderBy('external_lead_source', 'asc')
             ->groupBy('external_lead_source');
     }
@@ -270,14 +301,14 @@ class ConversionAsAtReportService extends BaseService
      * @param [type] $query
      * @return void
      */
-    public function getByTiersQuery($query)
+    public function getByTiersQuery($query, $alias)
     {
         return $query
             ->addSelect(
                 't.name as tiers'
             )
-            ->join('tiers as t', 'personal_quotes.tier_id', 't.id')
-            ->whereNotNull('personal_quotes.tier_id')
+            ->join('tiers as t', "{$alias}.tier_id", 't.id')
+            ->whereNotNull("{$alias}.tier_id")
             ->orderBy('tiers', 'asc')
             ->groupBy('tiers');
     }
@@ -288,25 +319,25 @@ class ConversionAsAtReportService extends BaseService
      * @param [type] $query
      * @return void
      */
-    public function getByNationalityQuery($query)
+    public function getByNationalityQuery($query, $alias)
     {
         return $query
             ->addSelect(
                 'n.text as nationality'
             )
-            ->join('nationality as n', 'personal_quotes.nationality_id', 'n.id')
-            ->whereNotNull('personal_quotes.nationality_id')
+            ->join('nationality as n', "{$alias}.nationality_id", 'n.id')
+            ->whereNotNull("{$alias}.nationality_id")
             ->orderBy('nationality', 'asc')
             ->groupBy('nationality');
     }
 
-    public function getByTeamQuery($query, $filters)
+    public function getByTeamQuery($query, $filters, $alias)
     {
-        $teamType = null;
+        $parentTeamIds = [];
         if ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
-            $teamType = Team::where('name', TeamNameEnum::CAR)->where('type', TeamTypeEnum::PRODUCT)->first()->id;
+            $parentTeamIds = Team::where('name', TeamNameEnum::CAR)->where('type', TeamTypeEnum::PRODUCT)->pluck('id')->toArray();
         } elseif ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health)) {
-            $teamType = Team::where('name', TeamNameEnum::HEALTH)->where('type', TeamTypeEnum::PRODUCT)->first()->id;
+            $parentTeamIds = Team::whereIn('name', [TeamNameEnum::HEALTH, TeamNameEnum::CAR])->where('type', TeamTypeEnum::PRODUCT)->pluck('id')->toArray();
         }
 
         return $query
@@ -314,12 +345,12 @@ class ConversionAsAtReportService extends BaseService
                 'teams.id as team_id',
                 'teams.name as team'
             )
-            ->join('user_team', 'user_team.user_id', 'personal_quotes.advisor_id')
+            ->join('user_team', 'user_team.user_id', "{$alias}.advisor_id")
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('teams.type', TeamTypeEnum::TEAM)
-            ->where('teams.parent_team_id', $teamType)
-            ->where('is_active', 1)
-            ->whereNotNull('personal_quotes.advisor_id')
+            ->whereNot('teams.name', 'like', '%'.TeamNameEnum::RENEWALS.'%')
+            ->whereIn('teams.parent_team_id', $parentTeamIds)
+            ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('team', 'asc')
             ->groupBy('team_id');
     }
@@ -373,5 +404,4 @@ class ConversionAsAtReportService extends BaseService
             ? round(($numerator / $denominator) * 100, 2)
             : 'NaN';
     }
-
 }

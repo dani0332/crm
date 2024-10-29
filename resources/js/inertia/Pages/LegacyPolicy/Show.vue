@@ -1,7 +1,6 @@
 <script setup>
 import NProgress from 'nprogress';
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
-import DocumentListing from './Partials/DocumentListing.vue';
 
 const props = defineProps({
   policy: Object,
@@ -13,21 +12,6 @@ const notification = useNotifications('toast');
 const moveToImcrmModal = ref(false);
 const can = permission => useCan(permission);
 const itemCount = ref(false);
-
-const maskedEmail = computed(() => {
-  let emails = props.policy?.customer?.email;
-  if (emails) {
-    return maskEmail(emails);
-  }
-  return '';
-});
-
-const maskedMobileNumber = phone => {
-  if (phone) {
-    return maskPhone(phone);
-  }
-  return '';
-};
 
 const getS3TempUrl = async file => {
   try {
@@ -449,18 +433,18 @@ const dateFormat = date => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Email</dt>
-            <dd>{{ maskedEmail }}</dd>
+            <dd>{{ policy?.customer?.email }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Mobile Number</dt>
             <dd>
-              {{ maskedMobileNumber(policy?.customer?.mobile_phone) }}
+              {{ policy?.customer?.mobile_phone }}
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Phone Number</dt>
             <dd>
-              {{ maskedMobileNumber(policy?.customer?.phone) }}
+              {{ policy?.customer?.phone }}
             </dd>
           </div>
           <div v-for="profile_data in kycDetails">
@@ -537,7 +521,6 @@ const dateFormat = date => {
           border-cell
           hide-rows-per-page
           hide-footer
-          fixed-checkbox
         >
           <template #item-comment="{ comment }">
             {{ comment ? comment : '' }}
@@ -676,7 +659,6 @@ const dateFormat = date => {
         border-cell
         hide-rows-per-page
         hide-footer
-        fixed-checkbox
         v-if="!single"
       >
         <template #item-id="{ id, link }">

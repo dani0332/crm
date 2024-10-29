@@ -9,10 +9,10 @@ use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\DepartmentService;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
-use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -51,8 +51,8 @@ class UserController extends Controller
                 'u1.email',
                 DB::raw('(SELECT GROUP_CONCAT(roles.name) FROM users INNER JOIN model_has_roles ON model_has_roles.model_id = users.id INNER JOIN roles ON roles.id = model_has_roles.role_id WHERE users.id = u1.id GROUP BY users.name) as roles'),
                 'teams.name as teamName',
-                'u1.created_at',
-                'u1.updated_at',
+                DB::raw('DATE_FORMAT(u1.updated_at, "%Y-%m-%d %H:%i") as updated_at'),
+                DB::raw('DATE_FORMAT(u1.created_at, "%Y-%m-%d %H:%i") as created_at'),
                 'u1.is_active',
             ])
             ->leftJoin('user_team', 'user_team.user_id', '=', 'u1.id')
@@ -117,6 +117,7 @@ class UserController extends Controller
         }
 
     }
+
     public function store(Request $request)
     {
         $this->validate($request, [
@@ -164,7 +165,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         $user['new_created_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
-        $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
+        $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->updated_at)->format('Y-m-d H:i:s');
 
         $subTeamName = '';
         $additionalTeamNames = '';
@@ -174,6 +175,8 @@ class UserController extends Controller
         $user->roles = $user->roles->pluck('name')->toArray();
         $user->permissions = $user->permissions->pluck('name')->toArray();
         $user->department = $user->department ?? '';
+        $departments = implode(',', $user->departments->pluck('name')->toArray()) ?? '';
+
         if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
@@ -186,6 +189,7 @@ class UserController extends Controller
             'user' => $user,
             'teamName' => $teamName,
             'subTeamName' => $subTeamName,
+            'departments' => $departments,
             'additionalTeamNames' => $additionalTeamNames,
             'managerName' => $managerName,
             'productName' => $productName,
@@ -218,6 +222,7 @@ class UserController extends Controller
         $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
         $permissions = Permission::orderBy('name')->get();
         $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
+        $departmentIds = $this->getUserDepartments($user->id)->pluck('department_id')->toArray();
         $departments = $this->userService->getDepartmentsList();
 
         return inertia('Admin/Users/Form', [
@@ -226,6 +231,7 @@ class UserController extends Controller
             'userRole' => $userRole,
             'selectedAdditionalTeams' => $selectedAdditionalTeams,
             'subTeams' => $subTeams,
+            'department_ids' => $departmentIds,
             'departments' => $departments,
             'products' => $products,
             'userProductIds' => $userProductIds,
@@ -271,6 +277,9 @@ class UserController extends Controller
         }
         $user->is_active = $request->is_active ? 1 : 0;
 
+        if ($request->department_ids != null) {
+            app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);
+        }
         /*
          * temp fix: health lead allocation is using team_id to target health product
          * this needs to be updated with new team/product structure
@@ -369,11 +378,10 @@ class UserController extends Controller
         return $this->getTeamsByProductIds($request->productIds);
     }
 
-    //Scheduled to delete 1st April 2024
-    // public function me(Request $request)
-    // {
-    //     return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role' => strtolower(Auth::user()->usersroles[0]->name)];
-    // }
+    public function getTeamDepartments(Request $request)
+    {
+        return $this->getDepartmentsByTeamIds($request->teamIds);
+    }
 
     public function getSubTeams(Request $request)
     {

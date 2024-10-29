@@ -43,6 +43,7 @@ const filters = reactive({
   due_date_time_end: '',
   page: 1,
   isCustom: false,
+  redirect: false,
 });
 
 const loader = reactive({
@@ -114,6 +115,12 @@ function setQueryFilters() {
       const [key, value] = item.split('=');
       filters[key] = value;
     });
+  }
+
+  if (filters.redirect) {
+    resetDates('tweek');
+  } else {
+    resetDates('today');
   }
 }
 
@@ -268,10 +275,6 @@ const onSubmit = isValid => {
 // Component hooks
 watch(() => filters, { deep: true, immediate: true });
 
-onBeforeMount(() => {
-  resetDates('today');
-});
-
 onMounted(() => {
   setQueryFilters();
 });
@@ -413,7 +416,6 @@ onMounted(() => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-title="{ title }">
         <div class="w-40 whitespace-normal">{{ title }}</div>
@@ -428,6 +430,7 @@ onMounted(() => {
           v-if="(item.quote_uuid, item.quote_type_id)"
           :html="getLink(item.quote_uuid, item.quote_type_id)"
           class="text-primary-500 hover:underline"
+          :key="item.quote_uuid"
         />
       </template>
 

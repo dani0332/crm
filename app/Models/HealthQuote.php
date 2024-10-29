@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -37,6 +38,25 @@ class HealthQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
 
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            $skipBookingDateUpdateForNonCPD = true;
+            if (isset(request()->sendUpdateId)) {
+                $healthQuote = new HealthQuote;
+                $endorsmentDetails = $healthQuote->isCPDEndorsment(request()->sendUpdateId);
+                if ($endorsmentDetails['isCPDEndorsment']) {
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    $skipBookingDateUpdateForNonCPD = false;
+                }
+            }
+
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');
@@ -145,6 +165,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(HealthPlan::class, 'plan_id');
     }
 
+    public function healthQuotePlan()
+    {
+        return $this->hasOne(HealthQuotePlan::class, 'health_quote_request_id');
+    }
+
     public function lostReason()
     {
         return $this->belongsTo(LostReasons::class, 'lost_reason_id');
@@ -214,5 +239,25 @@ class HealthQuote extends Model implements AuditableContract
     public function policyWording()
     {
         return $this->hasMany(HealthPlanPolicyWording::class, 'plan_id', 'plan_id');
+    }
+
+    public function isApplicationPending()
+    {
+        return $this->quote_status_id === QuoteStatusEnum::ApplicationPending;
+    }
+
+    public function isApplyNowEmailSent()
+    {
+        return ! is_null($this->apply_now_email_sent_at);
+    }
+
+    public function getCurrentPlan()
+    {
+        $payload = $this->healthQuotePlan?->payload;
+        if ($payload && property_exists($payload, 'plans')) {
+            return collect($payload->plans)->filter(fn ($plan) => $plan && $plan->id === $this->plan_id)->first();
+        }
+
+        return null;
     }
 }

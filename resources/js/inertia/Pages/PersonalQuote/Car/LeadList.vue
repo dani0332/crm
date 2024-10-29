@@ -14,17 +14,19 @@ defineProps({
   genericRequestEnum: Array,
   isBetaUser: Boolean,
   teams: Object,
+  authorizedDays: Number,
 });
 
 const page = usePage();
 const { isRequired } = useRules();
-const notification = useToast();
+const notification = useNotifications('toast');
 const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
+
 const createLead = reactive({
   modal: false,
   type: '',
@@ -35,8 +37,11 @@ const tableHeader = [
   { text: 'BATCH', value: 'quote_batch_id_text' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LEAD SOURCE', value: 'source' },
+  { text: 'ADVISOR REQUESTED', value: 'sic_advisor_requested' },
   { text: 'NATIONALITY', value: 'nationality_id_text' },
   { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for_id_text' },
   { text: 'CAR MAKE', value: 'car_make_id_text' },
@@ -50,6 +55,11 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_text' },
   { text: 'CLAIM HISTORY', value: 'claim_history_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+  },
   { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'LEAD COST', value: 'cost_per_lead' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
@@ -64,7 +74,6 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PRICE', value: 'premium' },
@@ -206,9 +215,8 @@ const filters = reactive({
   email: '',
   mobile_no: '',
   quote_status_id: [],
-  created_at_start: page.props.createdAtStart || '',
+  created_at_start: '',
   currently_insured_with: '',
-  policy_expiry_date: '',
   is_ecommerce: '',
   payment_status_id: '',
   renewal_batch: '',
@@ -220,16 +228,20 @@ const filters = reactive({
   quote_batch_id: [],
   advisor_id: [],
   advisor_assigned_date_end: '',
-  policy_expiry_date_end: '',
-  created_at_end: page.props.createdAtEnd || '',
+  created_at_end: '',
   page: 1,
   paid_at_start: '',
   paid_at_end: '',
+  sic_advisor_requested: 'All',
   segment_filter: 'all',
   teams: [],
   transaction_approved_dates: page.props.transaction_approved_dates || '',
   payment_due_date: '',
   booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
 });
 
 const teamUsers =
@@ -279,6 +291,14 @@ const rules = {
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     filters.page = 1;
     let data = { ...filters };
     Object.keys(data).forEach(
@@ -379,6 +399,43 @@ const onConfirmCreateLead = () => {
   createLead.modal = false;
 };
 
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
+
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -418,6 +475,36 @@ const resetDateFilters = filterName => {
     },
   );
 });
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+const exportPUAUrl = () => {
+  let url = '/pua-leads-export';
+  return url;
+};
+
+const onExport = (url) => {
+  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'), url: `${window.location.origin}${url}`};
+  logAndExportQuotes(payload);
+}
 </script>
 
 <template>
@@ -591,16 +678,6 @@ const resetDateFilters = filterName => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
-        <DatePicker
-          v-model="filters.policy_expiry_date"
-          name="policy_expiry_date"
-          label="Policy Expiry Date Start"
-        />
-        <DatePicker
-          v-model="filters.policy_expiry_date_end"
-          name="policy_expiry_date_end"
-          label="Policy Expiry Date End"
-        />
         <ComboBox
           :single="true"
           v-model="filters.currently_insured_with"
@@ -617,6 +694,16 @@ const resetDateFilters = filterName => {
           label="Policy Number"
           class="w-full"
           placeholder="Policy Number"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
         />
         <ComboBox
           v-if="!hasRole(rolesEnum.CarAdvisor)"
@@ -680,6 +767,17 @@ const resetDateFilters = filterName => {
           :options="quoteSegments"
           :single="true"
         />
+        <x-select
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+        />
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -696,6 +794,26 @@ const resetDateFilters = filterName => {
           multi-calendars
           multi-calendars-solo
         />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>
@@ -703,7 +821,7 @@ const resetDateFilters = filterName => {
             v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
-            :href="`/car/leads-export?${objToUrl(filters)}`"
+            @click="onExport(`/car/leads-export?${objToUrl(filters)}`)"
             class="justify-self-start mr-3"
           >
             Export
@@ -728,9 +846,9 @@ const resetDateFilters = filterName => {
             "
             size="sm"
             color="emerald"
-            :href="`/car/leads-export-plan/${
+            @click="onExport(`/car/leads-export-plan/${
               genericRequestEnum.EXPORT_PLAN_DETAIL
-            }?${objToUrl(filters)}`"
+            }?${objToUrl(filters)}`)"
             class="justify-self-start mr-3"
           >
             Extract leads and plan detail
@@ -758,9 +876,9 @@ const resetDateFilters = filterName => {
             "
             size="sm"
             color="emerald"
-            :href="`/car/leads-details-with-email/${
+            @click="onExport(`/car/leads-details-with-email/${
               genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
-            }?${objToUrl(filters)}`"
+            }?${objToUrl(filters)}`)"
             class="justify-self-start mr-3"
           >
             Extract leads detail with email/mobile_no
@@ -785,12 +903,21 @@ const resetDateFilters = filterName => {
             v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
             size="sm"
             color="emerald"
-            :href="`/car/export-makes-model/${
+            @click="onExport(`/car/export-makes-model/${
               genericRequestEnum.EXPORT_MAKES_MODELS
-            }?${objToUrl(filters)}`"
+            }?${objToUrl(filters)}`)"
             class="justify-self-start mr-3"
           >
             Extract makes models trims
+          </x-button>
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
+            size="sm"
+            color="emerald"
+            @click="onExport('/pua-leads-export')"
+            class="justify-self-start mr-3"
+          >
+            Export PUA Updates
           </x-button>
         </div>
         <div class="flex justify-self-end gap-3">
@@ -822,7 +949,6 @@ const resetDateFilters = filterName => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
         <Link
@@ -840,6 +966,13 @@ const resetDateFilters = filterName => {
           </x-tag>
         </div>
       </template>
+      <template #item-sic_advisor_requested="{ sic_advisor_requested }">
+        <div class="text-center">
+          <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
+            {{ sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
       <template #item-is_gcc_standard="{ is_gcc_standard }">
         <div class="text-center">
           <x-tag size="sm" :color="is_gcc_standard ? 'success' : 'error'">
@@ -854,6 +987,18 @@ const resetDateFilters = filterName => {
           </x-tag>
         </div>
       </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
+      </template>
       <template #item-price_starting_from="item">
         <p v-if="item.price_starting_from != null">
           {{ fixedValue(item.price_starting_from) }}
@@ -862,6 +1007,16 @@ const resetDateFilters = filterName => {
 
       <template #item-premium="item">
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
       </template>
     </DataTable>
 

@@ -95,9 +95,9 @@ onMounted(() => {
 });
 </script>
 <template>
-  <Head title="Create Vehical Depreciation" />
+  <Head title="Create Vehicle Depreciation" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">Vehical Depreciation</h2>
+    <h2 class="text-xl font-semibold">Vehicle Depreciation</h2>
     <div class="space-x-3">
       <Link :href="route('vehicledepreciation.index')">
         <x-button size="sm" color="#ff5e00" tag="div">

@@ -72,6 +72,8 @@ class CycleQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'paymentStatus',
+            'payments',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -83,6 +85,7 @@ class CycleQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
 
+        $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         $query->orderBy('personal_quotes.'.$sort_by, $sort_type);

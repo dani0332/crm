@@ -70,13 +70,16 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetData()
     {
-        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason', 'paymentStatus',
+            'payments'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter()
             ->withFakeLeadCriteria()
             ->orderBy('life_quote_request.created_at', 'desc');
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
 
         $this->adjustQueryByDateFilters($query, 'life_quote_request');
 

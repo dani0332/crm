@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -37,7 +38,6 @@ use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
-use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -66,12 +66,14 @@ class CycleQuoteController extends Controller
 
         $count = $personalQuotes->count();
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('CycleQuote/Index', [
             'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : CycleQuoteRepository::getData(true, true),
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -139,13 +141,16 @@ class CycleQuoteController extends Controller
 
         /* Start - Temporarily adding for correcting historic data  */
         $quote = CycleQuoteRepository::where('uuid', $uuid)->first();
+        abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::CYCLE->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $quote = CycleQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::CYCLE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
-
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
         $quote->load('documents.createdBy:id,name,email');
 
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Cycle);
@@ -163,13 +168,7 @@ class CycleQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
-        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::CYCLE->name);
-
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::CYCLE->id(), $quote->id)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::CYCLE->id(), $quoteStatuses);
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::CYCLE->value, $quote->code);
@@ -195,10 +194,12 @@ class CycleQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => fn () => $quote,
+            'amlStatusName' => $amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
@@ -224,7 +225,6 @@ class CycleQuoteController extends Controller
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
-            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],

@@ -7,6 +7,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\Lookup;
 use App\Models\Team;
@@ -28,17 +29,29 @@ class ManagementReport
 
     public function getFilterOptions()
     {
-
+        $user = auth()->user();
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        if ($user->isDepartmentManager()) {
+            $user->load('departments.teams');
+            $teamIds = $user->departments->reduce(function ($carry, $department) {
+                return $carry->merge(
+                    $department->teams->pluck('team_id')
+                );
+            }, collect());
 
-        $loginUserId = auth()->user()->id;
+            $teamIds = $teamIds->all();
+            $departments = $user->departments;
+        } else {
+            $teamIds = $this->getUserTeams($user->id)->pluck('id');
+            $departments = Department::active()
+                ->orderBy('name')
+                ->get();
+        }
 
-        $teamIds = $this->getUserTeams($loginUserId);
-
-        $teams = Team::whereIn('id', $teamIds->pluck('id'))
+        $teams = Team::whereIn('id', $teamIds)
             ->select('name', 'id')
             ->orderBy('name')
-            ->where('is_active', 1)
+            ->active()
             ->get()
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
@@ -59,18 +72,13 @@ class ManagementReport
 
         $leadSources = LeadSource::query()
             ->select('name')
-            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
+            ->where('is_active', 1)
             ->whereNotNull('name')
             ->orderBy('name')
             ->get()
             ->keyBy('name')
             ->map(fn ($users) => $users->name)
             ->toArray();
-
-        $departments = DB::table('departments')
-            ->where('is_active', 1)
-            ->orderBy('name')
-            ->get();
 
         return [
             'maxDays' => $maxDays,
@@ -81,7 +89,7 @@ class ManagementReport
             'departments' => $departments,
         ];
     }
-    public function applyFilters($query, $request, $endorsementsQuery = false)
+    public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
     {
         $this->applyDateFilters($query, $request, $endorsementsQuery);
 
@@ -97,8 +105,16 @@ class ManagementReport
             }
         }
 
-        // filter teams
-        $query = $this->filterTeams($query, $request['teams'] ?? []);
+        $teams = $request['teams'] ?? [];
+        $user = auth()->user();
+        if ($user->isDepartmentManager() && empty($teams)) {
+            $user->load('departments.teams');
+            $teamIds = $user->departments->flatMap(function ($department) {
+                return $department->teams->pluck('team_id');
+            });
+            $teams = $teamIds->isEmpty() ? [] : $teamIds->all();
+        }
+        $query = $this->filterTeams($query, $teams, $isSSR);
 
         if (isset($request['subTeams']) && ! empty($request['subTeams'])) {
             $query->whereIn('u.sub_team_id', $request['subTeams']);
@@ -115,8 +131,15 @@ class ManagementReport
             $query->whereIn('personal_quotes.source', $request['leadSources']);
         }
 
-        if (! empty($request['department_id'])) {
-            $query->whereIn('u.department_id', $request['department_id']);
+        $departments = $request['department_id'] ?? [];
+        $departments = is_array($departments) ? $request['department_id'] : [$departments];
+        $user = auth()->user();
+        if ($user->isDepartmentManager() && empty($departments)) {
+            $departments = $user->departments->pluck('id');
+        }
+
+        if (! empty($departments) || $user->isDepartmentManager()) {
+            $query->whereIn('u.department_id', $departments);
         }
 
         if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies']) && $request['includeCancelledPolicies'] == 'No') {
@@ -225,11 +248,26 @@ class ManagementReport
         }
     }
 
-    protected function filterTeams($query, $teams)
+    protected function filterTeams($query, $teams, $isSSR = false)
     {
-        if (! empty($teams) && count($teams) > 0) {
-            $value = $teams;
-            $query->whereIn('t.id', $value);
+        if ($teams && ! is_array($teams)) {
+            $teams = [$teams];
+        }
+
+        if (! $isSSR) {
+            if ((! empty($teams) && count($teams) > 0) || auth()->user()->isDepartmentManager()) {
+                $query->whereIn('t.id', $teams);
+            }
+
+            return $query;
+        }
+
+        if ((! empty($teams) && count($teams) > 0) || auth()->user()->isDepartmentManager()) {
+            $query->whereIn('u.id', function ($query) use ($teams) {
+                $query->select('user_team.user_id')
+                    ->from('user_team')
+                    ->whereIn('user_team.team_id', $teams);
+            });
         }
 
         return $query;
@@ -354,10 +392,11 @@ class ManagementReport
     private static function mapEndorsementsToReport($item, $endorsementData, $request)
     {
         foreach ($endorsementData as $endorsement) {
-            if ($item[$request->groupBy] === $endorsement[$request->groupBy]) {
+            if ($item[$request->groupBy] === $endorsement->{$request->groupBy}) {
                 $item->total_endorsements = $endorsement->total_endorsements ?? 0;
                 $item->total_transaction = $item->total_policies + $item->total_endorsements;
                 $item->endorsements_amount = (float) $endorsement->total_endorsement_amount;
+                $item->commission_vat_applicable = (float) $item->commission_vat_applicable + (float) $endorsement->commission_vat_applicable;
                 $item->total_price =
                     ($item->total_price ? (float) $item->total_price : 0) +
                     ($endorsement->total_endorsement_amount ? (float) $endorsement->total_endorsement_amount : 0);
@@ -388,12 +427,13 @@ class ManagementReport
          * check if there are any endorsements that are not in the report data
          */
         foreach ($endorsementData as $endorsement) {
-            $found = $reportData->contains($request->groupBy, $endorsement[$request->groupBy]);
+            $found = $reportData->contains($request->groupBy, $endorsement->{$request->groupBy});
             if (! $found) {
                 $endorsement->total_policies = 0;
                 $endorsement->endorsements_amount = (float) $endorsement->total_endorsement_amount;
                 $endorsement->total_transaction = $endorsement->total_endorsements;
                 $endorsement->total_price = (float) $endorsement->total_endorsement_amount;
+                $endorsement->commission_vat_applicable = (float) $endorsement->commission_vat_applicable;
                 $reportData->push($endorsement);
             }
         }

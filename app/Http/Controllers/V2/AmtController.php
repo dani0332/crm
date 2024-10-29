@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -31,7 +33,6 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -66,6 +67,8 @@ class AmtController extends Controller
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
+            ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -92,7 +95,9 @@ class AmtController extends Controller
                 'bqr.device',
                 'bqr.previous_quote_policy_premium',
                 'bqr.customer_id',
-                'bqr.parent_duplicate_quote_id'
+                'bqr.parent_duplicate_quote_id',
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                'ps.text AS payment_status_id_text',
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -109,19 +114,44 @@ class AmtController extends Controller
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
 
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
+            $data->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
+        if (isset($request->company_name)) {
+            $data->where('bqr.company_name', 'like', '%'.$request->company_name.'%');
+        }
+
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no) && empty($request->renewal_batch) && empty($request->previous_quote_policy_number)
         ) {
             $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
+
         if (isset($request->first_name) && $request->first_name != '') {
             $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
         }
-        if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
+        if (isset($request->created_at_start) && $request->created_at_start != ''
+        && isset($request->created_at_end)
+        && $request->created_at_end != ''
+        && empty($request->email)
+        && empty($request->code)
+        && empty($request->renewal_batch)
+        && empty($request->payment_due_date)
+        && empty($request->booking_date)
+        && ! isset($request->previous_quote_policy_number)
+        && ! isset($request->insurer_tax_invoice_number)
+        && ! isset($request->insurer_commission_tax_invoice_number)
+        ) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
+        }
+
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
+            $data->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->last_name) && $request->last_name != '') {
             $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
@@ -163,6 +193,14 @@ class AmtController extends Controller
             $data->where('bqr.renewal_batch', $request->renewal_batch);
         }
 
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $data->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $data->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
         $this->adjustQueryByDateFilters($data, 'bqr');
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -181,11 +219,12 @@ class AmtController extends Controller
         } else {
             $data->orderBy('bqr.created_at', 'DESC')->orderBy('bqr.advisor_id');
         }
-
+        $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $authorizedDays = intval($paymentAuthorizedDays->value);
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays'));
     }
 
     /**
@@ -243,6 +282,7 @@ class AmtController extends Controller
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ]);
+        abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data  */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS->value);
@@ -265,13 +305,7 @@ class AmtController extends Controller
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
-        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, QuoteTypes::BUSINESS->name);
-
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::BUSINESS->id(), $record->id)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record, QuoteTypes::BUSINESS->id(), $quoteStatuses);
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
         $countries = Nationality::all();
@@ -320,6 +354,7 @@ class AmtController extends Controller
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -333,6 +368,7 @@ class AmtController extends Controller
             'issuanceAuthorities' => $issuanceAuthorities,
             'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
+            'amlStatusName' => $amlStatusName,
             'quoteDetails' => $quoteDetails,
             'quoteTypeId' => QuoteTypeId::Business,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
@@ -354,7 +390,6 @@ class AmtController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentMethods' => $paymentMethods,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($record->payments),
-            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,

@@ -166,6 +166,22 @@ onMounted(() => {
 const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] =
   createReusableTemplate();
 
+const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
+  let isPolicyBookingFailed =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.POLICY_BOOKING_FAILED;
+  if (isPolicyBookingFailed) {
+    let hasBookingFailedEditPermission = can(
+      permissionEnum.BOOKING_FAILED_EDIT,
+    );
+    if (!hasBookingFailedEditPermission) {
+      return true;
+    }
+    return false;
+  }
+  return false;
+});
+
 watch(
   () => props.isAddUpdate,
   () => {
@@ -284,7 +300,9 @@ watch(
           type="submit"
           size="sm"
           :loading="formProcessing"
-          :disabled="isDisabled"
+          :disabled="
+            isDisabled || disableIfPolicyFailedAndNoBookingFailedEditPermission
+          "
           v-if="readOnlyMode.isDisable === true"
         >
           Save

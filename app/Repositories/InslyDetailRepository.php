@@ -14,6 +14,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\YachtQuote;
 use App\Services\CapiRequestService;
+use App\Services\CustomerService;
 use App\Services\InslyDataService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -67,6 +68,12 @@ class InslyDetailRepository extends BaseRepository
         $data = $policy->toArray();
         $policy->quoteType = $this->getQuoteTypeFromCoverage($data['policy']['coverage']);
         $policy->imcrm_link = $this->replaceStoredAppURLWithCurrentAppURL($policy->imcrm_link);
+
+        $data['customer']['email'] = $this->maskData($data['customer']['email'], 'email');
+        $data['customer']['mobile_phone'] = $this->maskData($data['customer']['mobile_phone'], 'phone');
+        $data['customer']['phone'] = $this->maskData($data['customer']['phone'], 'phone');
+
+        $policy->customer = $data['customer'];
 
         if (! empty($data['installments'])) {
             $policy->premium = collect($data['installments'])->sum('gross_premium');
@@ -137,9 +144,16 @@ class InslyDetailRepository extends BaseRepository
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $inslyPolicyIssueDate)->addMonths(-1)->startOfDay();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $inslyPolicyIssueDate)->addMonths(1)->endOfDay();
 
-                $quote = $model::whereHas('payments', function ($query) use ($dateFrom, $dateTo) {
-                    return $query->whereBetween('captured_at', [$dateFrom, $dateTo]);
-                })->where('email', $email)->get();
+                $modelClassName = app($model);
+                $tableName = $modelClassName->getTable();
+
+                $quote = $model::leftJoin('payments as py', function ($join) use ($modelClassName, $tableName) {
+                    $join->on('py.paymentable_id', '=', $tableName.'.id')
+                        ->where('py.paymentable_type', '=', $modelClassName::class);
+                })
+                    ->where($tableName.'.email', $email)
+                    ->whereBetween('py.captured_at', [$dateFrom, $dateTo])
+                    ->get();
 
                 // quote against email and in between two month of payment captured
                 if (! $quote->isEmpty() && $validateAll) {
@@ -284,7 +298,10 @@ class InslyDetailRepository extends BaseRepository
                     $policy->code = $obj->code;
                     $policy->save();
                 }
-                $data[] = $this->where('policy_no', $policyNumber)->first()->toArray();
+                $inslyPolicy = $this->where('policy_no', $policyNumber)->first();
+                if ($inslyPolicy) {
+                    $data[] = $inslyPolicy->toArray();
+                }
 
                 return [
                     'status' => 201,
@@ -314,16 +331,14 @@ class InslyDetailRepository extends BaseRepository
         $dataArr = [];
         $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
-        $dataArr['email'] = $policy['customer']['email'] ?? null;
-        if ($dataArr['email'] == null) {
-            $dataArr['email'] = $policy['customer']['contact_person_email'] ?? null;
-        }
-        $insurer = $policy['policy']['insurer'] ?? null;
-        if ($insurer == 'Tokio Marine Nichido') {
-            $insurer = 'Tokio Marine & Nichido Fire Insurance Co';
-        }
-        $insuredWith = InsuranceProviderRepository::where('code', 'like', '%'.$insurer.'%')
-            ->orWhere('text', 'like', '%'.$insurer.'%')->first();
+        [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+
+        $dataArr['policy_number'] = $policy['policy_no'] ?? null;
+        $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
+        $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
+        // commented this because its value is null so no need to assign.
+        /* $dataArr['insurance_provider_id'] = null; */
+        $dataArr['policy_issuance_date'] = now()->format('Y-m-d');
 
         $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;
         if ($previousPolicyStartDate) {
@@ -336,7 +351,10 @@ class InslyDetailRepository extends BaseRepository
         array_shift($arr);
 
         $dataArr['last_name'] = implode(' ', $arr);
-        $dataArr['mobile_no'] = $policy['customer']['mobile_phone'] ?? '0552244556';
+
+        [$dataArr['mobile_no'], $additionalMobiles] = $this->getPrimaryAndAdditionalMobileNumbers($policy);
+
+        $dataArr['mobile_no'] = $dataArr['mobile_no'] ?? '0552244556';
 
         $premium = null;
         $data = $policy->toArray();
@@ -345,7 +363,13 @@ class InslyDetailRepository extends BaseRepository
         }
         $quoteTypeData = QuoteType::where('code', $quoteType)->first();
         if ($dataArr['email'] != null) {
-            $customer = $this->getCustomer($dataArr);
+            $customerService = new CustomerService;
+            $customer = $customerService->createCustomerIfNotExists($dataArr);
+
+            $customerService->addAdditionalContactsIfNotExists($customer, [
+                'additional_emails' => $additionalEmails,
+                'additional_mobiles' => $additionalMobiles,
+            ]);
             $dataArr['customer_id'] = $customer->id ?? null;
         } else {
             $dataArr['customer_id'] = null;
@@ -465,5 +489,117 @@ class InslyDetailRepository extends BaseRepository
         }
 
         return $businessTypeOfInsurance ? quoteBusinessTypeCode::getId($businessTypeOfInsurance) : null;
+    }
+
+    private function getPrimaryAndAdditionalEmails($policy)
+    {
+        // Handling multiple emails in comma separated format
+        $primaryEmail = null;
+        $emails = [];
+
+        if (isset($policy['customer']['email'])) {
+            $emails = $this->splitAndFilterValues($policy['customer']['email']);
+            if (count($emails) > 0) {
+                $primaryEmail = $emails[0];
+                unset($emails[0]);
+            }
+        }
+
+        if (isset($policy['customer']['contact_person_email'])) {
+            $contactEmails = $this->splitAndFilterValues($policy['customer']['contact_person_email']);
+            // If there's already an email set, ensure it's not duplicated
+            if ($primaryEmail !== null) {
+                $contactEmails = array_diff($contactEmails, [$primaryEmail]);
+            }
+            $emails = array_merge($emails, $contactEmails);
+            if ($primaryEmail === null && count($emails) > 0) {
+                $primaryEmail = $emails[0];
+                unset($emails[0]);
+            }
+        }
+
+        // Remove duplicates
+        $additionalEmails = array_unique($emails);
+
+        return [$primaryEmail, $additionalEmails];
+    }
+
+    private function getPrimaryAndAdditionalMobileNumbers($policy)
+    {
+        // Handling multiple phone numbers in comma separated format
+        $primaryPhone = null;
+        $phones = [];
+
+        if (isset($policy['customer']['mobile_phone'])) {
+            $phones = $this->splitAndFilterValues($policy['customer']['mobile_phone']);
+            if (count($phones) > 0) {
+                $primaryPhone = $phones[0];
+                unset($phones[0]);
+            }
+        }
+
+        if (isset($policy['customer']['phone'])) {
+            $contactPhones = $this->splitAndFilterValues($policy['customer']['phone']);
+            // If there's already a phone set, ensure it's not duplicated
+            if ($primaryPhone !== null) {
+                $contactPhones = array_diff($contactPhones, [$primaryPhone]);
+            }
+            $phones = array_merge($phones, $contactPhones);
+            if ($primaryPhone === null && count($phones) > 0) {
+                $primaryPhone = $phones[0];
+                unset($phones[0]);
+            }
+        }
+
+        // Remove duplicates
+        $additionalPhones = array_unique($phones);
+
+        return [$primaryPhone, $additionalPhones];
+    }
+
+    private function splitAndFilterValues($inputString)
+    {
+        return array_filter(array_map('trim', preg_split('/[;,]/', $inputString)), function ($value) {
+            return ! empty($value);
+        });
+    }
+
+    private function maskData($data, $type)
+    {
+        if (empty($data)) {
+            return null;
+        }
+
+        $dataArray = ($type === 'email')
+            ? preg_split('/[;,]\s*/', $data)
+            : preg_split('/[;,]+/', $data);
+
+        $maskedData = array_map(function ($item) use ($type) {
+            $item = trim($item);
+            if ($type === 'email') {
+                if (! isValidEmail($item)) {
+                    return $item;
+                }
+
+                [$localPart, $domainPart] = explode('@', $item);
+                $halfLength = ceil(strlen($localPart) / 2);
+                $maskedLocalPart = substr($localPart, 0, $halfLength).str_repeat('*', strlen($localPart) - $halfLength);
+
+                return $maskedLocalPart.'@'.$domainPart;
+            } elseif ($type === 'phone') {
+
+                $cleanedNumber = preg_replace('/\D/', '', $item);
+                if (strlen($cleanedNumber) < 7) {
+                    return $item;
+                }
+
+                $prefix = substr($cleanedNumber, 0, 3);
+                $suffix = substr($cleanedNumber, -3);
+
+                return "{$prefix}****{$suffix}";
+            }
+        }, $dataArray);
+
+        return implode(', ', array_filter($maskedData));
     }
 }

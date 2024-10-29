@@ -43,13 +43,13 @@ const props = defineProps({
   bookPolicyDetails: Array,
   payments: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -58,6 +58,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
+const modelClass = 'App\\Models\\PersonalQuote';
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
@@ -87,6 +88,9 @@ const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
 };
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
@@ -442,6 +446,10 @@ const onAddUpdate = () => {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
@@ -450,7 +458,6 @@ const onAddUpdate = () => {
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
@@ -536,6 +543,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
@@ -992,8 +1003,8 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <QuotePayments
@@ -1034,6 +1045,7 @@ const onAddUpdate = () => {
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
       quoteType="Pet"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -1045,6 +1057,7 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="pet"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
@@ -1067,5 +1080,10 @@ const onAddUpdate = () => {
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Pet'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -25,12 +26,20 @@ Route::middleware(['basicAuth'])->group(function () {
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/evaluate-tier', [ApiController::class, 'evaluateTier'])->name('evaluateTier');
     Route::post('/imcrm/trigger-sic-workflow', [ApiController::class, 'triggerSICWorkflow'])->name('triggerSICWorkflow');
+    Route::post('/imcrm/analyze-health', [ApiController::class, 'analyseHealthData']);
+    Route::post('/imcrm/send-health-apply-now-email', [ApiController::class, 'sendHealthApplyNowEmail'])->name('sendHealthApplyNowEmail');
+    // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
+    Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
+Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
+Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
+Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::class, 'stopFollowUpEvent']);
+Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
 
 Route::prefix('v1')->group(function () {
 
@@ -51,4 +60,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
+    Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
+    Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 });
+Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

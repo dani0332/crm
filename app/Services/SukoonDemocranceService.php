@@ -49,6 +49,15 @@ class SukoonDemocranceService
         $this->mapDocumentsType();
     }
 
+    /**
+     * Makes an HTTP request to the specified path with the given method, data, and headers.
+     *
+     * @param  string  $path  The API endpoint path.
+     * @param  string  $method  The HTTP method (default is 'post').
+     * @param  array  $data  The data to send with the request.
+     * @param  array  $headers  The headers to include with the request.
+     * @return mixed The response from the API.
+     */
     private function request($path, $method = 'post', $data = [], $headers = [])
     {
         $url = "{$this->baseUrl}/api/v".config('constants.SUKOON_API_VERSION').$path;
@@ -69,6 +78,13 @@ class SukoonDemocranceService
         return $response;
     }
 
+    /**
+     * Logs into the Democrance system and sets the session ID.
+     *
+     * @return void
+     *
+     * @throws Exception If login fails.
+     */
     public function login()
     {
         $data = [
@@ -90,7 +106,17 @@ class SukoonDemocranceService
         }
     }
 
-    public function formSubmit($data)
+    /**
+     * Submits a form to the Democrance system.
+     *
+     * @param  array  $data  The data to submit with the form.
+     * @param  mixed  $transaction  The transaction object.
+     * @param  bool  $isInitial  Indicates if this is the initial form submission.
+     * @return void
+     *
+     * @throws Exception If form submission fails.
+     */
+    public function formSubmit($data, $transaction = null, $save = false)
     {
         try {
             $result = $this->request('/policy/submit/'.$this->productSlug.'/', 'post', $data, [
@@ -99,8 +125,9 @@ class SukoonDemocranceService
                 'Accept' => 'application/json',
             ])->json();
 
-            // TODO: has_error need to be checked for failure
             if (isset($result['policy_number']) && $result['policy_number'] && ! $result['has_errors']) {
+                $save && $transaction->update(['quote_policy' => $result['policy_number']]);
+
                 return $this->policyNumber = $result['policy_number'];
             }
 
@@ -110,6 +137,13 @@ class SukoonDemocranceService
         }
     }
 
+    /**
+     * Initiates the payment process in the Democrance system.
+     *
+     * @return void
+     *
+     * @throws Exception If payment initiation fails.
+     */
     public function paymentInitiate()
     {
         $data = ['policy_number' => $this->policyNumber, 'gateway' => $this->paymentGateway];
@@ -131,7 +165,14 @@ class SukoonDemocranceService
         }
     }
 
-    public function paymentComplete()
+    /**
+     * Completes the payment process in the Democrance system.
+     *
+     * @return void
+     *
+     * @throws Exception If payment completion fails.
+     */
+    public function paymentComplete($transaction)
     {
         $data = ['payment_reference' => 'Payment reference here', 'payment_token' => $this->paymentToken];
 
@@ -144,6 +185,8 @@ class SukoonDemocranceService
             ])->json();
 
             if ($result) {
+                $transaction->update(['certificate_number' => $result['policy_number']]);
+
                 return $this->documentPolicyNumber = $result['policy_number'];
             }
 
@@ -153,12 +196,33 @@ class SukoonDemocranceService
         }
     }
 
+    /**
+     * Retrieves a document for the given quote, embedded transaction, template ID, and document code.
+     *
+     * @param  mixed  $quote  The quote object.
+     * @param  mixed  $embeddedTransaction  The embedded transaction object.
+     * @param  int  $templateId  The template ID.
+     * @param  string  $docCode  The document code.
+     * @return mixed The document.
+     */
     public function getDocument($quote, $embeddedTransaction, $templateId, $docCode)
     {
         try {
             $data = ['template' => $templateId];
             $result = $this->request('/policy/'.$this->documentPolicyNumber.'/coi/', 'post', $data, ['x-session-id' => $this->sessionId]);
             $content = $result->body();
+
+            // Regular expression to match the specific response message with any policy number
+            $pattern = '/Policy AP\d+ is not cancelled, cannot generate credit note/';
+
+            // Handle the case where the content is empty or contains the specific response message
+            if (empty($content) || preg_match($pattern, $content)) {
+                $message = 'Document is not available on democrance';
+                $this->logFailure($message.' '.$templateId.' doc_code : '.$docCode, $message, ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
+
+                return false;
+            }
+
             $headers = $result->toPsrResponse()->getHeader('Content-Disposition');
             $filename = '';
 
@@ -169,7 +233,7 @@ class SukoonDemocranceService
                 }
             }
 
-            if ($filename) {
+            if ($filename != '') {
                 $originalName = $filename;
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
                 $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', QuoteTypeId::Car)->first();
@@ -204,13 +268,23 @@ class SukoonDemocranceService
                     $embeddedTransaction->documents()->create($documentData);
                 }
             } else {
-                throw new Exception('Unable to determine filename from the response headers.');
+                $message = 'Unable to determine filename from the response headers.';
+                $this->logFailure($message.' '.$templateId.' doc_code : '.$docCode, $message, ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
             }
         } catch (Exception $e) {
             $this->logFailure('Get Document template_id : '.$templateId.' doc_code : '.$docCode, $e->getMessage(), ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
         }
     }
 
+    /**
+     * Retrieves documents related to the given quote and transaction.
+     *
+     * @param  mixed  $quote  The quote object.
+     * @param  mixed  $transaction  The transaction object.
+     * @return void
+     *
+     * @throws Exception If document retrieval fails.
+     */
     public function getDocuments($quote, $embeddedTransaction)
     {
         try {
@@ -223,6 +297,13 @@ class SukoonDemocranceService
         }
     }
 
+    /**
+     * Retrieves transaction details from the Democrance system.
+     *
+     * @return array The transaction details.
+     *
+     * @throws Exception If retrieval fails.
+     */
     public function getTransactionDetails()
     {
         $data = ['template' => $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE]];
@@ -245,89 +326,199 @@ class SukoonDemocranceService
         }
     }
 
+    /**
+     * Processes the Democrance submission for the given quote and transaction.
+     *
+     * @param  mixed  $quote  The quote object.
+     * @param  mixed  $transaction  The transaction object.
+     * @return void
+     */
     public function processDemocranceSubmission($quote, $transaction)
     {
         try {
             $this->currentQuote = $quote;
 
-            if (! $this->validateCustomerDetail($quote->customer->emirates_id_number, $quote->customer->emirates_id_expiry_date)) {
-                throw new Exception('Invalid Emirates ID or Expiry Date. Please check and try again.');
-            }
+            $this->validateCustomerDetails($quote);
 
-            $shortCode = $transaction->product->embeddedProduct->short_code;
-            if (! empty($quote->quoteRequestEntityMapping)) {
-                $firstName = $quote->first_name ?? '';
-                $lastName = $quote->last_name ?? '';
-            } else {
-                $firstName = $quote->customer->insured_first_name ?? '';
-                $lastName = $quote->customer->insured_last_name ?? '';
-            }
-
-            $userDetail = [
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
-                'nationality' => 'AE',
-                'is_resident' => $quote->emirate ? 'Yes' : 'No',
-                'emirate' => $quote->emirate->text,
-                'address' => $quote->customer->detail->residential_address ?? '',
-                'email' => 'hitesh.motwani@insurancemarket.ae',
-                'mobile' => '+971505027325',
-                'plan_option' => $this->productSlug.'_'.strtolower(EmbeddedProductEnum::$shortCode()->value),
-            ];
+            $userDetail = $this->prepareUserDetails($quote, $transaction);
 
             $this->login();
-            $this->formSubmit($userDetail);
 
-            $additionalData = [
-                'form_name' => 'additional_details',
-                'emirates_id_number' => $quote->customer->emirates_id_number,
-                'emirates_expiry_date' => $quote->customer->emirates_id_expiry_date,
-                'policy_number' => $this->policyNumber,
-            ];
+            $this->handleQuotePolicy($transaction, $userDetail);
+
+            $additionalData = $this->prepareAdditionalData($quote);
 
             $this->formSubmit($additionalData);
-            $this->request('/policy/'.$this->policyNumber.'/confirm/', 'post', ['confirm' => 'true'], ['x-session-id' => $this->sessionId]);
-            $this->paymentInitiate();
-            $this->paymentComplete();
-            $this->getDocuments($quote, $transaction);
-            $transactionDetail = $this->getTransactionDetails();
-            $commission_amount = floatval($transactionDetail['payments'][0]['amount_breakdown']['commission_amount']) ? (float) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] : (int) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'];
-            $commissionVat = $commission_amount * 0.05 ?? 0;
 
-            $transaction->update([
-                'certificate_number' => $this->documentPolicyNumber,
-                'tax_invoice_no' => $transactionDetail['additional_data']['tax_invoice_document_number'] ?? null,
-                'tax_invoice_buyer_no' => $transactionDetail['additional_data']['tax_invoice_buyer_document_number'] ?? null,
-                'credit_note_no' => $transactionDetail['additional_data']['credit_note_document_number'] ?? null,
-                'credit_note_buyer_no' => $transactionDetail['additional_data']['credit_note_buyer_document_number'] ?? null,
-                'commission_with_vat' => $commission_amount + $commissionVat ?? null,
-                'commission_without_vat' => $commission_amount,
-                'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
-                'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
+            $this->confirmPolicy();
+
+            $this->initiateAndCompletePayment($transaction);
+
+            $this->getDocuments($quote, $transaction);
+
+            $transactionDetail = $this->getTransactionDetails();
+
+            $this->updateTransaction($transaction, $transactionDetail);
+
+            EmbeddedProductRepository::sendDocument([
+                'epId' => $transaction->product->embeddedProduct->id,
+                'modelType' => quoteTypeCode::Car,
+                'quoteId' => $quote->id,
             ]);
-            EmbeddedProductRepository::sendDocument(['epId' => $transaction->product->embeddedProduct->id, 'modelType' => quoteTypeCode::Car, 'quoteId' => $quote->id]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
         }
     }
 
-    private function validateCustomerDetail($emiratesId, $emiratesIdExpiryDate)
+    /**
+     * Validates the customer details for the given quote.
+     *
+     * @param  mixed  $quote  The quote object.
+     * @return void
+     *
+     * @throws Exception If validation fails.
+     */
+    private function validateCustomerDetails($quote)
+    {
+        if (! $this->validateCustomerDetail(
+            $quote->customer->emirates_id_number,
+            $quote->customer->emirates_id_expiry_date,
+            $quote->customer->detail->residential_address
+        )) {
+            throw new Exception('Address cannot be empty, Invalid Emirates ID or Expiry Date. Please check and try again.');
+        }
+    }
+
+    private function validateCustomerDetail($emiratesId, $emiratesIdExpiryDate, $address)
     {
         $patternOfEID = '/^784-[0-9]{4}-[0-9]{7}-[0-9]{1}$/';
 
-        return preg_match($patternOfEID, $emiratesId) && $emiratesIdExpiryDate >= Carbon::now();
+        return preg_match($patternOfEID, $emiratesId) && $emiratesIdExpiryDate >= Carbon::now() && (! empty($address) || $address != '');
     }
 
-    private function logFailure($operation, $message, $data = [])
+    /**
+     * Prepares the user details array for the given quote and transaction.
+     *
+     * @param  mixed  $quote  The quote object.
+     * @param  mixed  $transaction  The transaction object.
+     * @return array The prepared user details.
+     */
+    private function prepareUserDetails($quote, $transaction)
     {
-        info('SUKOON DEMOCRANCE Service Failure', [
-            'operation' => $operation,
-            'message' => $message,
-            'data' => $data,
+        $shortCode = $transaction->product->embeddedProduct->short_code;
+
+        if (! empty($quote->quoteRequestEntityMapping)) {
+            $firstName = $quote->first_name ?? '';
+            $lastName = $quote->last_name ?? '';
+        } else {
+            $firstName = $quote->customer->insured_first_name ?? '';
+            $lastName = $quote->customer->insured_last_name ?? '';
+        }
+
+        return [
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
+            'nationality' => 'AE',
+            'is_resident' => $quote->emirate ? 'Yes' : 'No',
+            'emirate' => $quote->emirate->text,
+            'address' => $quote->customer->detail->residential_address ?? '',
+            'email' => 'hitesh.motwani@insurancemarket.ae',
+            'mobile' => '+971505027325',
+            'plan_option' => $this->productSlug.'_'.strtolower(EmbeddedProductEnum::$shortCode()->value),
+        ];
+    }
+
+    /**
+     * Handles the quote policy logic for the given transaction and user details.
+     *
+     * @param  mixed  $transaction  The transaction object.
+     * @param  array  $userDetail  The user details array.
+     * @return void
+     */
+    private function handleQuotePolicy($transaction, $userDetail)
+    {
+        if ($transaction->quote_policy == null) {
+            $this->formSubmit($userDetail, $transaction, true);
+        } else {
+            $this->policyNumber = $transaction->quote_policy;
+        }
+    }
+
+    /**
+     * Prepares the additional data array for the given quote.
+     *
+     * @param  mixed  $quote  The quote object.
+     * @return array The prepared additional data.
+     */
+    private function prepareAdditionalData($quote)
+    {
+        return [
+            'form_name' => 'additional_details',
+            'emirates_id_number' => $quote->customer->emirates_id_number,
+            'emirates_expiry_date' => $quote->customer->emirates_id_expiry_date,
+            'policy_number' => $this->policyNumber,
+        ];
+    }
+
+    /**
+     * Confirms the policy using the policy number.
+     *
+     * @return void
+     */
+    private function confirmPolicy()
+    {
+        $this->request('/policy/'.$this->policyNumber.'/confirm/', 'post', ['confirm' => 'true'], ['x-session-id' => $this->sessionId]);
+    }
+
+    /**
+     * Initiates and completes the payment for the given transaction.
+     *
+     * @param  mixed  $transaction  The transaction object.
+     * @return void
+     */
+    private function initiateAndCompletePayment($transaction)
+    {
+        $this->paymentInitiate();
+
+        if ($transaction->certificate_number == null) {
+            $this->paymentComplete($transaction);
+        } else {
+            $this->documentPolicyNumber = $transaction->certificate_number;
+        }
+    }
+
+    /**
+     * Updates the transaction with the given transaction details.
+     *
+     * @param  mixed  $transaction  The transaction object.
+     * @param  array  $transactionDetail  The transaction details array.
+     * @return void
+     */
+    private function updateTransaction($transaction, $transactionDetail)
+    {
+        $commission_amount = floatval($transactionDetail['payments'][0]['amount_breakdown']['commission_amount']) ? (float) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'] : (int) $transactionDetail['payments'][0]['amount_breakdown']['commission_amount'];
+        $commissionVat = $commission_amount * 0.05 ?? 0;
+
+        $transaction->update([
+            'certificate_number' => $this->documentPolicyNumber,
+            'tax_invoice_no' => $transactionDetail['additional_data']['tax_invoice_document_number'] ?? null,
+            'tax_invoice_buyer_no' => $transactionDetail['additional_data']['tax_invoice_buyer_document_number'] ?? null,
+            'credit_note_no' => $transactionDetail['additional_data']['credit_note_document_number'] ?? null,
+            'credit_note_buyer_no' => $transactionDetail['additional_data']['credit_note_buyer_document_number'] ?? null,
+            'commission_with_vat' => $commission_amount + $commissionVat ?? null,
+            'commission_without_vat' => $commission_amount,
+            'policy_price' => $transactionDetail['payments'][0]['amount_breakdown']['policy_price'] ?? null,
+            'policy_status' => $transactionDetail['payments'][0]['status'] ?? null,
         ]);
     }
 
+    /**
+     * Maps document types to the corresponding Democrance document types.
+     *
+     * @param  array  $documents  The documents to map.
+     * @return array The mapped document types.
+     */
     private function mapDocumentsType()
     {
         foreach ($this->documentTemplateIds as $template) {
@@ -351,6 +542,28 @@ class SukoonDemocranceService
         }
     }
 
+    /**
+     * Generates a unique UUID for the given document.
+     *
+     * @param  string  $documentType  The type of document.
+     * @return string The generated UUID.
+     */
+    private function generateUniqueUuid()
+    {
+        do {
+            $uuid = uniqid();
+        } while (QuoteDocument::where('doc_uuid', $uuid)->exists());
+
+        return $uuid;
+    }
+
+    /**
+     * Logs the request details for debugging and auditing purposes.
+     *
+     * @param  string  $action  The action being logged.
+     * @param  array  $data  The data associated with the action.
+     * @return void
+     */
     private function logRequest($status, $message, $data, $url = '', $response = '', $parentFunction = '')
     {
         // Truncate response if it's too large
@@ -366,6 +579,30 @@ class SukoonDemocranceService
             file_put_contents($responseFilePath, $response);
             $response = 'Response too large, saved to: '.$responseFilePath;
         }
+        // This below unsetRelation is used to avoid the long response data in the log
+        if ($this->currentQuote->relationLoaded('embeddedTransactions')) {
+            foreach ($this->currentQuote->embeddedTransactions as $transaction) {
+                if ($transaction->relationLoaded('product')) {
+                    if ($transaction->product->relationLoaded('embeddedProduct')) {
+                        $transaction->product->unsetRelation('embeddedProduct');
+                    }
+                    $transaction->unsetRelation('product');
+                }
+            }
+        }
+
+        if ($this->currentQuote->relationLoaded('emirate')) {
+            $this->currentQuote->unsetRelation('emirate');
+        }
+
+        if ($this->currentQuote->relationLoaded('customer')) {
+            $this->currentQuote->unsetRelation('customer');
+        }
+
+        if ($this->currentQuote->relationLoaded('quoteRequestEntityMapping')) {
+            $this->currentQuote->unsetRelation('quoteRequestEntityMapping');
+        }
+
         $logData = [
             'status' => $status,
             'request' => is_array($data) ? json_encode($data) : $data,
@@ -381,12 +618,20 @@ class SukoonDemocranceService
         info('SUKOON DEMOCRANCE Service Log', ['message' => $message, 'url' => $url, ...$logData]);
     }
 
-    private function generateUniqueUuid()
+    /**
+     * Logs the failure of a process with the given message and data.
+     *
+     * @param  string  $process  The name of the process.
+     * @param  string  $message  The failure message.
+     * @param  array  $data  The data related to the failure.
+     * @return void
+     */
+    private function logFailure($operation, $message, $data = [])
     {
-        do {
-            $uuid = uniqid();
-        } while (QuoteDocument::where('doc_uuid', $uuid)->exists());
-
-        return $uuid;
+        info('SUKOON DEMOCRANCE Service Failure', [
+            'operation' => $operation,
+            'message' => $message,
+            'data' => $data,
+        ]);
     }
 }

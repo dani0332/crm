@@ -8,6 +8,7 @@ defineProps({
     type: Number,
     default: 0,
   },
+  authorizedDays: Number,
 });
 
 const page = usePage();
@@ -54,8 +55,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date().toISOString() || '',
+  created_at_end: new Date().toISOString() || '',
   quote_status_id: [],
   advisor_id: [],
   business_type_of_insurance_id: [],
@@ -69,6 +70,10 @@ const filters = reactive({
   is_stale: false,
   payment_due_date: '',
   booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
 });
 
 watch(
@@ -114,6 +119,8 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'Company Name', value: 'company_name', is_active: true },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
@@ -130,6 +137,12 @@ const tableHeader = ref([
   {
     text: 'LAST MODIFIED DATE',
     value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
     is_active: true,
     sortable: true,
   },
@@ -160,8 +173,8 @@ const setIntialState = () => {
     last_name: '',
     email: '',
     mobile_no: '',
-    created_at_start: '',
-    created_at_end: '',
+    created_at_start: new Date() || '',
+    created_at_end: new Date() || '',
     quote_status_id: [],
     advisor_id: [],
     business_type_of_insurance_id: [],
@@ -173,6 +186,8 @@ const setIntialState = () => {
     payment_status: [],
     is_cold: false,
     is_stale: false,
+    policy_expiry_date: '',
+    policy_expiry_date_end: '',
   });
   filtersCount.value = 0;
 };
@@ -198,6 +213,14 @@ function resetFilters() {
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -283,14 +306,40 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const onDataExport = () => {
+  let diff = calculateDaysDifference(
+    filters.created_at_start,
+    filters.created_at_end,
+  );
+
+  if (diff > 31) {
+    notification.error({
+      message: 'Maximum of 31 days (created date) are allowed to be exported.',
+      position: 'top',
+    });
+    return;
+  }
+
+  filters.created_at_start = useDateFormat(
+    filters.created_at_start,
+    'YYYY-MM-DD',
+  ).value;
+
+  filters.created_at_end = useDateFormat(
+    filters.created_at_end,
+    'YYYY-MM-DD',
+  ).value;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Business'), url: url + '?' + new URLSearchParams(data).toString()};
+  logAndExportQuotes(payload);
 };
 
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
+    if (key == 'created_at_start' || key == 'created_at_end') {
+      filters[key] = useDateFormat(params[key], 'YYYY-MM-DD').value;
+    } else if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key].map(value =>
         isNaN(parseInt(value)) ? value : parseInt(value),
       );
@@ -333,6 +382,44 @@ watch(
   },
 );
 
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -370,6 +457,32 @@ const resetDateFilters = filterName => {
       }
     },
   );
+});
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+watch(() => {
+  if (filters.company_name) {
+    filters.created_at_start = '';
+    filters.created_at_end = '';
+  }
 });
 </script>
 
@@ -516,14 +629,34 @@ const resetDateFilters = filterName => {
           <DatePicker
             v-model="filters.created_at_start"
             name="created_at_start"
-            :rules="[created_at_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date ||
+              filters.company_name
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Created Date End">
           <DatePicker
             v-model="filters.created_at_end"
             name="created_at_end"
-            :rules="[created_at_end_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date ||
+              filters.company_name
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Lead Status">
@@ -531,6 +664,18 @@ const resetDateFilters = filterName => {
             v-model="filters.quote_status_id"
             placeholder="Search by Lead Status"
             :options="leadStatusOptions"
+          />
+        </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
           />
         </x-field>
         <x-field label="BUSINESS INSURANCE TYPE">
@@ -598,6 +743,26 @@ const resetDateFilters = filterName => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -687,7 +852,6 @@ const resetDateFilters = filterName => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="{ code, uuid, stale_at }">
         <Link
@@ -698,6 +862,16 @@ const resetDateFilters = filterName => {
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
       </template>
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
+      </template>
 
       <template #item-source="{ source }">
         <a
@@ -707,6 +881,18 @@ const resetDateFilters = filterName => {
         >
           {{ source }}
         </a>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
     </DataTable>
 

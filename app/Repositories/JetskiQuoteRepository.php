@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\URL;
 
 class JetskiQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -114,11 +117,15 @@ class JetskiQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'paymentStatus',
+            'payments',
         ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
         })->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }

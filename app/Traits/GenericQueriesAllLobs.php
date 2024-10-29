@@ -2,10 +2,13 @@
 
 namespace App\Traits;
 
+use App\Enums\DatabaseColumnsString;
 use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
@@ -49,8 +52,14 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
         $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
-
         if (! class_exists($model)) {
+            if (in_array(ucwords($quoteType), [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])) {
+                $model = $nameSpace.'BusinessQuote';
+                if (class_exists($model)) {
+                    return $model;
+                }
+            }
+
             return false;
         }
 
@@ -225,20 +234,14 @@ trait GenericQueriesAllLobs
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
-        info('fn: bookPolicyPayload called for '.$record->uuid);
-        $infoMessage = 'QC '.$record->code.' ';
+        info('Quote Code: '.$record->code.' fn: bookPolicyPayload called');
+        $infoMessage = 'Quote Code: '.$record->code.' ';
         $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
             $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
-            $brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment);
-
-            $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
-
-            if (in_array($record->quote_status_id, $getBINFromDBForPolicyStatuses)) {
-                $brokerInvoiceNo = $payment->broker_invoice_number;
-            }
+            $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
         $bookPolicyDetails = [];
@@ -263,7 +266,8 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['policyCancelled'] = false;
         $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
-
+        $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
+        $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -304,7 +308,7 @@ trait GenericQueriesAllLobs
             $bookPolicyDetails['text'] = 'Book Policy';
         }
         info($infoMessage);
-        info('Book Policy Details: ', $bookPolicyDetails);
+        info('Quote Code: '.$record->code.' Policy Booking Details: ', $bookPolicyDetails);
 
         return $bookPolicyDetails;
     }
@@ -357,14 +361,14 @@ trait GenericQueriesAllLobs
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        info('fn: updateQuoteStatus called for : '.$quote->uuid);
-        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called');
+        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-            info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
+            info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
                 $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
-                info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
+                info('Quote Code: '.$quote->code.' Is all required documents filled for '.$isAllRequiredDocumentAreUploaded);
                 if ($isAllRequiredDocumentAreUploaded) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
@@ -372,7 +376,7 @@ trait GenericQueriesAllLobs
                         'policy_issuance_status_other' => '',
                     ]);
                 }
-                info('update Quote Status complete for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
+                info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
         }
     }
@@ -448,7 +452,7 @@ trait GenericQueriesAllLobs
      */
     public function updatePriceAndDiscount($quoteModel, $sendUpdatePayment = null): bool
     {
-        info('fn: updatePriceAndDiscount called for : '.$quoteModel->uuid);
+        info('Quote Code: '.$quoteModel->code.' fn: updatePriceAndDiscount called');
 
         // it will check for send update payments.
         if (! $sendUpdatePayment) {
@@ -482,17 +486,12 @@ trait GenericQueriesAllLobs
      */
     private function updateTotalAmount($payment)
     {
+        info('Quote Code: '.$payment->code.' Updating TA frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-            info('Updating TA for PC: '.$payment->code);
-            $captureAmount = $payment->captured_amount;
             $totalPrice = $payment->total_price;
             $discountValue = $payment->discount_value;
-            if ($captureAmount < ($totalPrice - $discountValue)) {
-                $totalAmount = $captureAmount;
-            } else {
-                $totalAmount = $totalPrice - $discountValue;
-            }
-            info('updateTotalAmount totalAmount: '.$totalAmount);
+            $totalAmount = $totalPrice - $discountValue;
+            info('Quote Code: '.$payment->code.' updateTotalAmount - totalPrice: '.$totalPrice.', discountValue: '.$discountValue.', totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
             $payment->save();
         }
@@ -507,7 +506,7 @@ trait GenericQueriesAllLobs
      */
     private function isFilledPolicyDetails($type, $quote)
     {
-        info('Logging filled policy details for '.$quote->code, [
+        info('Quote Code: '.$quote->code.' is Policy Details Filled ', [
             'policy_number' => $quote->policy_number,
             'policy_issuance_date' => $quote->policy_issuance_date,
             'policy_start_date' => $quote->policy_start_date,
@@ -547,8 +546,8 @@ trait GenericQueriesAllLobs
         $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
 
-        info('isAllRequiredDocumentAreUploaded: '.$record->code.' Total number of document required: '.count($documentTypeCodes).' Upload number of document: '.$quoteDocumentsCount);
-        info('documentTypeCodes: ', $documentTypeCodes);
+        info('Quote Code: '.$record->code.' isAllRequiredDocumentAreUploaded: '.$record->code.' Total number of document required: '.count($documentTypeCodes).' Upload number of document: '.$quoteDocumentsCount);
+        info('Quote Code: '.$record->code.' documentTypeCodes: ', $documentTypeCodes);
 
         return $quoteDocumentsCount == count($documentTypeCodes);
     }
@@ -562,10 +561,14 @@ trait GenericQueriesAllLobs
      */
     private function isLackingPayment($payment)
     {
+        if ($this->isSplitPaymentFullyPaid($payment)) {
+            return true;
+        }
+
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
-            info('Checking Lacking Payment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
+            info('Quote Code: '.$payment->code.' Checking Lacking Payment paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
 
             return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
@@ -631,13 +634,15 @@ trait GenericQueriesAllLobs
      */
     public function setPaymentStatusAsPerPrice($quoteModel, mixed $payment, mixed $difference): void
     {
-        $priceWithVat = round($quoteModel->price_with_vat, 2);
-        $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
-        // If status is partially paid & total price is less than price with vat then set status to partially paid
-        if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
-            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
-        } elseif ($priceWithVat <= $captureAndDiscount) {
-            $payment->payment_status_id = PaymentStatusEnum::PAID;
+        if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
+            $priceWithVat = round($quoteModel->price_with_vat, 2);
+            $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
+            // If status is partially paid & total price is less than price with vat then set status to partially paid
+            if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
+                $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+            } elseif ($priceWithVat <= $captureAndDiscount) {
+                $payment->payment_status_id = PaymentStatusEnum::PAID;
+            }
         }
     }
 
@@ -650,7 +655,7 @@ trait GenericQueriesAllLobs
      */
     public function handleSmallAmountDifference(mixed $payment, mixed $priceWithVat): mixed
     {
-        $infoMessage = '';
+        $infoMessage = 'Quote Code: '.$payment->code;
         $capturedAmount = $payment->captured_amount;
         $discountValue = $payment->discount_value;
 
@@ -659,7 +664,7 @@ trait GenericQueriesAllLobs
 
         $difference = (float) number_format($initialDifference, 2);
 
-        $infoMessage = 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
+        $infoMessage .= 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
         $infoMessage .= 'ID: '.$difference.' ';
         if ($payment->system_adjusted_discount != null) {
             $difference += $payment->system_adjusted_discount;
@@ -778,21 +783,31 @@ trait GenericQueriesAllLobs
      */
     private function updateChildPaymentStatus($payment)
     {
-        info('Updating child payment status for: '.$payment->code);
+        info('Quote Code: '.$payment->code.' fn: Updating child payment status');
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {
+                info('Quote Code: '.$payment->code.' Updating TA for Split Payment frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
                 if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-                    info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
-                    $paymentSplit->payment_amount = $payment->total_amount;
+                    info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
+                    if ($paymentSplit->payment_amount != $payment->total_amount) {
+                        $paymentSplit->payment_amount = $payment->total_amount;
+                        $paymentSplit->save();
+                    }
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
+                    $oldPaymentStatusId = $paymentSplit->payment_status_id;
+                    $newPaymentStatusId = null;
                     if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
-                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                        $newPaymentStatusId = PaymentStatusEnum::PAID;
                     } else {
-                        $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                        $newPaymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
                     }
-                    $paymentSplit->save();
+                    if ($oldPaymentStatusId != $newPaymentStatusId) {
+                        $paymentSplit->payment_status_id = $newPaymentStatusId;
+                        $paymentSplit->save();
+                        info('Payment split status updated for: '.$paymentSplit->code.' from '.$oldPaymentStatusId.' to '.$newPaymentStatusId);
+                    }
                 }
             }
         }
@@ -831,6 +846,25 @@ trait GenericQueriesAllLobs
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
 
+    public function adjustQueryByInsurerInvoiceFilters($query)
+    {
+        $request = request();
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_number')) {
+            $value = $request->get('insurer_tax_number');
+            $query->whereHas('payments', function ($query) use ($value) {
+                $query->where(DatabaseColumnsString::INSURER_TAX_INVOICE_NUMBER, $value);
+            });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commmission_invoice_number')) {
+            $value = $request->get('insurer_commmission_invoice_number');
+            $query->whereHas('payments', function ($query) use ($value) {
+                $query->where(DatabaseColumnsString::INSURER_COMMISSION_TAX_INVOICE_NUMBER, $value);
+            });
+        }
+    }
+
     public function getSendUpdatePaymentCode($sendUpdateLogId): string
     {
         $code = Payment::where('send_update_log_id', $sendUpdateLogId)->pluck('code')->first();
@@ -854,5 +888,52 @@ trait GenericQueriesAllLobs
         }
 
         return null;
+    }
+
+    /**
+     * Check if the payment is split and all payment splits are paid.
+     * This method checks if the given payment has a frequency of split payments
+     * and verifies if all associated payment splits have a payment status of 'paid'.
+     *
+     * @return bool
+     */
+    private function isSplitPaymentFullyPaid($payment)
+    {
+        // Check if the payment exists and has a frequency of split payments
+        if ($payment && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+            // Get the payment splits associated with the payment
+            $paymentSplits = $payment->paymentSplits;
+
+            // Check if the payment splits are not empty and all have a payment status of 'paid'
+            if (! $paymentSplits->isEmpty() && $paymentSplits->every(function ($split) {
+                return $split->payment_status_id == PaymentStatusEnum::PAID;
+            })) {
+
+                $totalPrice = round($payment->total_price, 2);
+                $totalAmount = round($payment->total_amount, 2);
+                $discountValue = round($payment->discount_value, 2);
+
+                // Check if the total price is less than the sum of the total amount and discount value
+                return $totalPrice < ($totalAmount + $discountValue);
+            }
+        }
+
+        return false;
+    }
+
+    public function removeStaleFromLead($lead_status_id)
+    {
+        $skipStatus = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        return in_array($lead_status_id, $skipStatus);
     }
 }

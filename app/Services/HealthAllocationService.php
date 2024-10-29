@@ -6,12 +6,12 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
-use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
@@ -21,6 +21,7 @@ use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
@@ -47,7 +48,8 @@ class HealthAllocationService extends AllocationService
         $leads = HealthQuote::whereBetween('created_at', [$from, now()])
             ->whereNotNull('health_quote_request.price_starting_from')
             ->where('health_quote_request.is_error_email_sent', false)
-            ->whereIn('quote_status_id', [QuoteStatusEnum::Quoted]);
+            ->whereIn('quote_status_id', [QuoteStatusEnum::Quoted])
+            ->where('source', '!=', LeadSourceEnum::IMCRM);
         if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
         } else {
@@ -62,12 +64,19 @@ class HealthAllocationService extends AllocationService
 
         return $leads->get();
     }
-
-    public function assignTeamBasedOnPrice($lead)
+    public function isSICLead($uuid)
     {
-        info('Inside assignHealthTeamBasedOnStartingPrice for quote : '.$lead->uuid);
+        return DB::table('quote_tags')->where('quote_uuid', $uuid)
+            ->where('name', QuoteSegmentEnum::SIC->tag())
+            ->where('value', 1)
+            ->exists();
+    }
 
-        $priceStartingFrom = $lead->price_starting_from;
+    public function assignTeamBasedOnPrices($lead)
+    {
+        info("Inside assignHealthTeamBasedOnStartingPrice for quote: {$lead->uuid}");
+
+        $priceStartingFrom = $this->determinePriceStartingFrom($lead);
 
         $healthTeam = Team::where('allocation_threshold_enabled', true)
             ->where('min_price', '<=', $priceStartingFrom)
@@ -75,15 +84,29 @@ class HealthAllocationService extends AllocationService
             ->first();
 
         if ($healthTeam) {
-            info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
+            info("Filtered team for {$lead->uuid} is: {$healthTeam->name}");
             $lead->health_team_type = $healthTeam->name;
-            $lead->save();
         } else {
-            info('assignHealthTeamBasedOnStartingPrice team not found against : '.$lead->uuid);
+            info("No team found for {$lead->uuid}");
             $lead->is_error_email_sent = true;
-            $lead->save();
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
         }
+
+        $lead->save();
+    }
+
+    private function determinePriceStartingFrom($lead)
+    {
+        if ($this->isSICLead($lead->uuid)) {
+            $price = ! empty($lead->plan_id) && ! empty($lead->premium) ? $lead->premium : $lead->price_starting_from;
+            $planStatus = ! empty($lead->plan_id) ? 'found' : 'not found';
+            info("Plan {$planStatus} for {$lead->uuid} with plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
+        } else {
+            $price = $lead->price_starting_from;
+            info("No SIC lead for {$lead->uuid} | plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
+        }
+
+        return $price;
     }
 
     public function fetchAvailableAdvisor($leadTeam, $isReassignmentJob)
@@ -156,9 +179,6 @@ class HealthAllocationService extends AllocationService
             ->then(function () use ($lead, $isReassignment, $previousUserId) {
                 if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousUserId, $isReassignment)->delay(now()->addSeconds(15));
-                    if ($lead->quote_status_id == QuoteStatusEnum::FollowedUp) {
-                        CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
-                    }
                 }
             })->dispatch();
     }

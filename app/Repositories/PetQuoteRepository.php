@@ -99,6 +99,8 @@ class PetQuoteRepository extends BaseRepository
             'currentlyInsuredWith',
             'advisor',
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
+            'paymentStatus',
+            'payments',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -113,6 +115,8 @@ class PetQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
         if (request()->sortBy) {
@@ -150,11 +154,15 @@ class PetQuoteRepository extends BaseRepository
                         'paymentStatusLogs',
                         'insuranceProvider',
                         'paymentable',
-                        'paymentSplits.paymentStatus',
-                        'paymentSplits.paymentMethod',
-                        'paymentSplits.documents',
-                        'paymentSplits.verifiedByUser',
-                        'paymentSplits.processJob',
+                        'paymentSplits' => function ($q) {
+                            $q->with([
+                                'paymentStatus',
+                                'paymentMethod',
+                                'documents',
+                                'verifiedByUser',
+                                'processJob',
+                            ])->orderBy('sr_no', 'asc');
+                        },
                     ]);
                 },
                 'createdBy',

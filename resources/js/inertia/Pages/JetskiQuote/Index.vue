@@ -9,8 +9,9 @@ defineProps({
     type: String,
     default: 'jetski',
   },
+  authorizedDays: Number,
 });
-
+const notification = useNotifications('toast');
 const page = usePage();
 const loader = reactive({
   table: false,
@@ -31,6 +32,10 @@ let availableFilters = {
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
+  insurer_tax_number: '',
+  insurer_commmission_invoice_number: '',
 };
 
 const filters = reactive(availableFilters);
@@ -47,6 +52,14 @@ const rolesEnum = page.props.rolesEnum;
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     filters.page = 1;
 
     Object.keys(filters).forEach(
@@ -124,11 +137,18 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+  },
   { text: 'PREMIUM', value: 'premium' },
   { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
@@ -144,7 +164,8 @@ const tableHeader = [
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'jetski');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Jetski'), url: url + '?' + new URLSearchParams(data).toString()};
+  logAndExportQuotes(payload);
 };
 
 watch(
@@ -158,6 +179,62 @@ watch(
   },
   { deep: true, immediate: true },
 );
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
 </script>
 
 <template>
@@ -270,6 +347,18 @@ watch(
             "
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="Policy Number">
           <x-input
             v-model="filters.previous_quote_policy_number_text"
@@ -311,6 +400,26 @@ watch(
             class="w-full"
           />
         </x-field>
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_number"
+          type="text"
+          name="insurer_tax_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commmission_invoice_number"
+          type="text"
+          name="insurer_commmission_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -363,7 +472,6 @@ watch(
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
         <Link
@@ -375,6 +483,16 @@ watch(
         </Link>
         <span v-else>{{ code }}</span>
       </template>
+      <template #item-authorized_at="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ item?.payments[0]?.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at) }}
+        </p>
+      </template>
 
       <template #item-advisor="{ advisor }">
         {{ advisor?.email }}
@@ -382,6 +500,18 @@ watch(
 
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
 
       <template #item-currently_insured_with="{ currently_insured_with }">

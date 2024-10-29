@@ -192,6 +192,9 @@ class CarQuoteService extends BaseService
                 //'cqr.prefill_plan_selected_at',
                 //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                'cqr.policy_booking_date',
+                DB::raw('GROUP_CONCAT(team.name) as team_name'),
                 'cqr.insurance_provider_id',
                 'cqr.insurer_quote_number',
                 'cqr.price_vat_applicable',
@@ -199,10 +202,15 @@ class CarQuoteService extends BaseService
                 'cqr.price_with_vat',
                 'cpdip.text as insurer_name',
                 'cqr.policy_booking_date',
-                //'cqr.aml_status_id',
                 DB::raw('GROUP_CONCAT(team.name) as team_name'),
+                DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'cqr.insly_migrated',
+                'cqr.aml_status',
             )
+            ->leftJoin('payments as py', function ($join) {
+                $join->on('py.paymentable_id', '=', 'cqr.id')
+                    ->where('py.paymentable_type', '=', CarQuote::class);
+            })
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
@@ -913,17 +921,18 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
             $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
-        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '') {
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
             $dateFrom = $this->parseDate($request['policy_expiry_date'], true);
             $dateTo = $this->parseDate($request['policy_expiry_date_end'], false);
             $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at) && ! isset($request->payment_due_date) && ! isset($request->booking_date)) {
+        if (! $request->code && ! $request->email && ! $request->mobile_no && ! $request->created_at && ! $request->payment_due_date && ! $request->booking_date && ! $request->previous_quote_policy_number && ! $request->renewal_batch && ! $request->insurer_tax_invoice_number && ! $request->insurer_commission_tax_invoice_number) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (
@@ -936,6 +945,8 @@ class CarQuoteService extends BaseService
             && empty($request->payment_due_date)
             && empty($request->booking_date)
             && ! isset($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
@@ -945,16 +956,25 @@ class CarQuoteService extends BaseService
         if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
             CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr', QuoteTypeId::Car);
         }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
         if ($request->transaction_approved_dates) {
 
             $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
             $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
             $freshLoad = ! isset($request->page);
             $startDate = isset($request->transaction_approved_dates) ?
-            Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+                Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
             $endDate = isset($request->transaction_approved_dates) ?
-            Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+                Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
             $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
         }
@@ -1007,6 +1027,11 @@ class CarQuoteService extends BaseService
                     }
                 }
             }
+        }
+
+        $wheres = collect($this->query->wheres)->pluck('', 'column')->toArray();
+        if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch', 'insurer_tax_invoice_number', 'insurer_commission_tax_invoice_number'])) {
+            $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -1157,7 +1182,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'policy_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads', 'assignment_type'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'policy_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads', 'assignment_type'];
 
         return $searchProperties;
     }
@@ -1182,8 +1207,23 @@ class CarQuoteService extends BaseService
     {
         $carQuote = CarQuote::select(
             [
-                'id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'customer_id',
-                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'policy_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date',
+                'id',
+                'code',
+                'uuid',
+                'advisor_id',
+                'first_name',
+                'last_name',
+                'email',
+                'car_make_id',
+                'customer_id',
+                'car_model_id',
+                'currently_insured_with',
+                'quote_status_id',
+                'payment_status_id',
+                'policy_number',
+                'policy_expiry_date',
+                'previous_quote_policy_number',
+                'previous_policy_expiry_date',
             ]
         )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name')->with(['additionalContacts' => function ($q) {
@@ -1259,7 +1299,8 @@ class CarQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1277,9 +1318,12 @@ class CarQuoteService extends BaseService
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
+
+            Log::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
 
             if (isset($response->message)) {
                 $responseBodyAsString = $response->message;
@@ -2035,5 +2079,120 @@ class CarQuoteService extends BaseService
         } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
             $this->exportQuery->where('cqr.advisor_id', Auth::user()->id);
         }
+    }
+    public function exportnonPUAAuthorized()
+    {
+        $carTeam = $this->getProductByName(quoteTypeCode::Car);
+
+        $nonPUAAuthLead = DB::table('car_quote_request as q')
+            ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
+            ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
+            ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            ->where('t.parent_team_id', $carTeam->id)
+            ->whereNotIn('q.uuid', function ($query) {
+                $query->select('q.uuid')
+                    ->from('car_quote_plan_details as cqp')
+                    ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+                    ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
+                    ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+                    ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+                    ->whereNotNull('cqp.pua_premium')
+                    ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+                    ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
+            })
+            ->orderBy('q.paid_at', 'desc');
+
+        $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('t.parent_team_id', $carTeam->id)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            ->whereNotIn('q.uuid', function ($query) {
+                $query->select('q.uuid')
+                    ->from('car_quote_plan_details as cqp')
+                    ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+                    ->whereNotNull('cqp.pua_premium')
+                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
+            })
+            ->groupBy('t.name');
+
+        return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
+
+    }
+
+    public function exportPUAAuthorized()
+    {
+        $carTeam = $this->getProductByName(quoteTypeCode::Car);
+
+        $puaAuthUpdate = DB::table('car_quote_plan_details as cqp')
+            ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+            ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
+            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+            ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
+            ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
+            ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereNotNull('cqp.pua_premium')
+            ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
+            ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
+            ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
+            ->where('t.parent_team_id', '=', $carTeam->id)
+            ->orderBy('q.paid_at', 'desc');
+
+        $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')
+            ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereNotNull('cqp.pua_premium')
+            ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
+            ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
+            ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
+            ->where('t.parent_team_id', '=', $carTeam->id)
+            ->groupBy('t.name');
+
+        return [$puaAuthUpdate, $puaAuthTeamUpdate];
+    }
+    public function exportPUAUpdates()
+    {
+        $startDate = Carbon::now()->subDay()->startOfDay();
+        $endDate = Carbon::now()->subDay()->endOfDay();
+
+        return DB::table('car_quote_plan_details as cqp')
+            ->join('car_quote_request as cqr', 'cqp.quote_uuid', '=', 'cqr.uuid')
+            ->join('car_make as cmk', 'cqr.car_make_id', '=', 'cmk.id')
+            ->join('car_model as cmd', 'cqr.car_model_id', '=', 'cmd.id')
+            ->join('nationality as n', 'cqr.nationality_id', '=', 'n.id')
+            ->join('payment_status as ps', 'cqr.payment_status_id', '=', 'ps.id')
+            ->join('quote_status as qs', 'cqr.quote_status_id', '=', 'qs.id')
+            ->join('vehicle_type as vt', 'cqr.vehicle_type_id', '=', 'vt.id')
+            ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
+            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+            ->leftJoin('quote_tags as qt', 'cqr.uuid', '=', 'qt.quote_uuid')
+            ->whereNotNull('cqp.pua_premium')
+            ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
+            ->whereNotNull('cqr.paid_at')
+            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
+            ->whereColumn('cqp.plan_id', 'cqr.plan_id')
+            ->whereIn('qt.name', ['SPUA', 'APUA', 'NPUA']);
     }
 }

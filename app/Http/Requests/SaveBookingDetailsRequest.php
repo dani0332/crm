@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Repositories\InsuranceProviderRepository;
 use App\Rules\NotZero;
+use App\Services\SendUpdateLogService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
@@ -31,8 +34,8 @@ class SaveBookingDetailsRequest extends FormRequest
             'commission_vat_applicable' => 'required|numeric',
             'invoice_description' => 'required|string',
             'invoice_date' => 'required|date',
-            'insurer_tax_invoice_number' => 'required|string',
-            'insurer_commission_invoice_number' => 'required|string',
+            'insurer_tax_invoice_number' => 'required|string|max:50',
+            'insurer_commission_invoice_number' => 'required|string|max:50',
             'discount' => 'nullable|numeric',
             'commission_percentage' => 'required|numeric',
             'commission_vat_not_applicable' => 'nullable|numeric',
@@ -43,7 +46,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'price_vat_not_applicable' => 'sometimes|numeric',
             'total_price' => 'sometimes|numeric',
             'price_with_vat' => 'required|numeric',
-            'broker_invoice_number' => 'required|string',
+            'broker_invoice_number' => 'sometimes',
             'transaction_payment_status' => 'required|string',
             'commission_percentage' => 'required|numeric',
             'vat_on_commission' => 'required|numeric',
@@ -53,14 +56,25 @@ class SaveBookingDetailsRequest extends FormRequest
 
         $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
 
-        $isPriceVatNotApplicableRequired = in_array($this->sendUpdate->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
-            SendUpdateLogStatusEnum::CIR]) && ($this->sendUpdate->quote_type_id == QuoteTypeId::Life);
+        //        Price not applicable enabled when the endorsement will be Life, Business, Health
+        //        Price vat applicable and total vat amount enabled when the endorsement will not be Life
 
-        if ($isPriceVatNotApplicableRequired) {
-            $rules['price_vat_not_applicable'] = ['required', 'numeric', new NotZero];
-        } else {
-            $rules['price_vat_applicable'] = ['required', 'numeric', new NotZero];
-            $rules['total_vat_amount'] = 'required|numeric';
+        $validatedCatForPrices = in_array($this->sendUpdate->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
+            SendUpdateLogStatusEnum::CIR]);
+
+        if ($validatedCatForPrices) {
+            if (! in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Health])) {
+                $rules['price_vat_applicable'] = ['required', 'numeric', new NotZero];
+                $rules['total_vat_amount'] = 'required|numeric';
+            }
+
+            if ($this->sendUpdate->quote_type_id == QuoteTypeId::Life) {
+                $rules['price_vat_not_applicable'] = ['required', 'numeric', new NotZero];
+            }
+
+            if (request()->input('price_vat_applicable') !== 0) {
+                $rules['total_vat_amount'] = 'required|numeric';
+            }
         }
 
         if ($this->sendUpdate->category?->code == SendUpdateLogStatusEnum::CPD) {
@@ -77,6 +91,45 @@ class SaveBookingDetailsRequest extends FormRequest
             $rules = array_diff_key($rules, array_flip($skipRules));
         }
 
+        [$insuranceProviderId, $planId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($this->sendUpdate);
+        $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
+
+        if ($insuranceProvider?->non_self_billing) {
+            $rules['broker_invoice_number'] = 'required|string';
+        }
+
         return $rules;
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
+
+            //        Price not applicable enabled when the endorsement will be Life, Business, Health
+            //        Price vat applicable and total vat amount enabled when the endorsement will not be Life
+
+            $validatedCatForPrices = in_array($this->sendUpdate->category?->code, [
+                SendUpdateLogStatusEnum::EF,
+                SendUpdateLogStatusEnum::CPD,
+                SendUpdateLogStatusEnum::CI,
+                SendUpdateLogStatusEnum::CIR,
+            ]);
+
+            $isAdditionalCommission = $this->sendUpdate->option?->code == SendUpdateLogStatusEnum::ACB;
+
+            if ($validatedCatForPrices && ! $isAdditionalCommission && in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Business, QuoteTypeId::Health]) &&
+                request()->input('price_vat_applicable') == 0 && request()->input('price_vat_not_applicable') == 0) {
+                $validator->errors()->add('value', 'One of the fields, either "price vat applicable" or "price vat not applicable", must be greater than 0');
+            }
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');
+            }
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                return $validator->errors()->add('error', 'Update booking already in queued');
+            }
+        });
     }
 }

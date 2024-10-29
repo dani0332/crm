@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
@@ -20,6 +22,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -28,7 +31,6 @@ use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -85,6 +87,7 @@ class TravelController extends Controller
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
@@ -98,6 +101,7 @@ class TravelController extends Controller
                 'isLeadPool' => auth()->user()->isLeadPool(),
                 'isManagerORDeputy' => $isManager,
             ],
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -138,12 +142,11 @@ class TravelController extends Controller
                 ];
             })->values();
         }
-        /* // Will skip KYC and AML check , required by BA for payments
-        if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
-            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }*/
+
+        $leadStatuses = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
+        $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $leadStatuses);
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
@@ -223,16 +226,18 @@ class TravelController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
-        $isAmlClearedForQuote = app(CentralService::class)->amlClearedFromLog($record->id, QuoteTypes::TRAVEL->value);
+        $isAmlClearedForQuote = $record->aml_status === AMLStatusCode::AMLScreeningCleared;
+        $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'isAmlClearedForQuote' => $isAmlClearedForQuote,
+            'amlStatusName' => $amlStatusName,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Travel,
             'dropdownSource' => $dropdownSource,
-            'leadStatuses' => $dropdownSource['quote_status_id'],
+            'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,
             'renewalAdvisors' => $renewalAdvisors,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,

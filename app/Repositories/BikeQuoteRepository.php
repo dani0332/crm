@@ -211,6 +211,7 @@ class BikeQuoteRepository extends BaseRepository
             ->filter(! $forExport)
             ->withFakeLeadCriteria();
 
+        $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
         $this->orderBy('personal_quotes.created_at', 'desc');
 

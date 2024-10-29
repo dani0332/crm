@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -13,6 +14,7 @@ use App\Facades\Marshall;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
@@ -24,6 +26,7 @@ use App\Services\SendEmailCustomerService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
+use App\Strategies\EmbeddedProducts\RDX;
 use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -31,6 +34,7 @@ use Exception;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
@@ -140,56 +144,6 @@ class EmbeddedProductRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchDownloadCertificate($data)
-    {
-        $quoteId = $data['quoteId'];
-        $modelType = $data['modelType'];
-        $epId = $data['epId'];
-
-        $quoteObject = $this->getQuoteObject($modelType, $quoteId);
-
-        $ep = $this->where('id', $epId)->first();
-        $premium = '';
-        $optionsIds = [];
-        if ($ep->prices) {
-            $optionsIds = $ep->prices->pluck('id');
-        }
-
-        // certificate generation
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        $transaction = EmbeddedTransaction::where([
-            ['quote_type_id', '=', $quoteTypeId],
-            ['quote_request_id',  '=', $quoteId],
-            ['is_selected',  '=', true],
-        ])->whereIn('product_id', $optionsIds)->get();
-
-        $certificate_number = '';
-        $capturedAt = null;
-
-        if ($transaction->isNotEmpty()) {
-            $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
-            if ($isAlfredProtect) {
-                $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
-                $attachments = $strategy->getCertificateDocument($ep, $transaction[0], $quoteObject);
-
-                return response()->json(
-                    ['attachments' => $attachments]
-                );
-            } else {
-                $certificate_number = $transaction[0]['certificate_number'];
-                $premium = $transaction[0]['price_with_vat'];
-                $capturedAt = $transaction[0]['payment_status_date'];
-            }
-        }
-        $short_code = $ep->short_code;
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
-
-        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Salama_Certificate']);
-    }
-
-    /**
-     * @return mixed
-     */
     public function fetchUploadDocument($file, $title)
     {
         $type = 'embedded_product';
@@ -226,7 +180,6 @@ class EmbeddedProductRepository extends BaseRepository
         $ep = $this->whereHas('placements', function ($query) use ($quoteTypeId) {
             $query->where('quote_type_id', $quoteTypeId);
         })
-            ->where('is_active', 1)
             ->with([
                 'prices' => function ($query) {
                     $query->where('is_active', 1);
@@ -275,7 +228,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $canSend = false;
         if ($productCategory == EpCategoryEnum::BOLT_ON) {
-            if (in_array($quoteStatusId, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])) {
+            if (in_array($quoteStatusId, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked])) {
                 if ($transaction->isNotEmpty()) {
                     $canSend = true;
                 }
@@ -292,7 +245,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if ($quoteTypeId !== QuoteTypeId::Car) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             return false;
         }
 
@@ -355,49 +308,68 @@ class EmbeddedProductRepository extends BaseRepository
         $epId = $data['epId'];
 
         $ep = $this->where('id', $epId)->first();
-        $product_name = $short_code = $product_description = '';
-        if ($ep) {
-            $product_name = $ep->product_name;
-            $product_description = $ep->description;
-            $short_code = $ep->short_code;
-            $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-            $attachmentsUrls = [];
-            $documents = json_decode($ep->company_documents);
-            if (! empty($documents)) {
-                foreach ($documents as $item) {
-                    $path = $item->path;
-                    $pwDoc = $path !== '' ? $websiteURL.$path : '';
-                    if (! empty($path) && ! $isAlfredProtect) {
-                        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-
-                        $file = file_get_contents($pwDoc);
-                        $mimeType = $fileInfo->buffer($file);
-                        $attachments[] = [
-                            'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => $ep->display_name.'- Policy Wordings.pdf',
-                            'ContentType' => $mimeType,
-                        ];
-                    } else {
-                        $attachmentsUrls[] = $pwDoc;
-                    }
-                }
-            }
+        if (! $ep) {
+            return 'Embedded Product not found';
         }
 
-        // ep multiple options
-        $optionsIds = [];
-        $premium = '';
-        if ($ep->prices) {
-            $optionsIds = $ep->prices->pluck('id');
-        }
+        $short_code = $ep->short_code;
+        $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
+
+        [$attachments, $attachmentsUrls] = $this->fetchAttachments($ep, $isAlfredProtect);
+
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
         if (empty($quoteObject)) {
             return 'Quote not found';
         }
 
+        $advisorData = $this->fetchAdvisorData($quoteObject);
+        $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
+
+        if (! $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction)) {
+            info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+
+            return 'Documents cannot be sent';
+        }
+
+        if ($isAlfredProtect) {
+            return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
+        } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
+            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep);
+        }
+    }
+
+    private function fetchAttachments($ep, $isAlfredProtect)
+    {
+        $attachments = [];
+        $attachmentsUrls = [];
+        $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $documents = json_decode($ep->company_documents);
+
+        if (! empty($documents)) {
+            foreach ($documents as $item) {
+                $path = $item->path;
+                $pwDoc = $path !== '' ? $websiteURL.$path : '';
+                if (! empty($path) && ! $isAlfredProtect) {
+                    $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+                    $file = file_get_contents($pwDoc);
+                    $mimeType = $fileInfo->buffer($file);
+                    $attachments[] = [
+                        'Content' => base64_encode(file_get_contents($pwDoc)),
+                        'Name' => $ep->display_name.'- Policy Wordings.pdf',
+                        'ContentType' => $mimeType,
+                    ];
+                } else {
+                    $attachmentsUrls[] = $pwDoc;
+                }
+            }
+        }
+
+        return [$attachments, $attachmentsUrls];
+    }
+
+    private function fetchAdvisorData($quoteObject)
+    {
         $advisorData = [];
-        // advisor data
         if ($quoteObject->advisor) {
             $advisor = $quoteObject->advisor;
             $advisorData['email'] = $advisor->email;
@@ -405,144 +377,158 @@ class EmbeddedProductRepository extends BaseRepository
             $advisorData['phone'] = $advisor->mobile_no;
         }
 
-        // certificate generation
+        return $advisorData;
+    }
+
+    private function fetchTransaction($modelType, $quoteId, $ep, $selected = true)
+    {
+        $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        $transaction = EmbeddedTransaction::where([
+
+        $transactions = EmbeddedTransaction::where([
             ['quote_type_id', '=', $quoteTypeId],
-            ['quote_request_id',  '=', $quoteId],
-            ['is_selected',  '=', true],
-        ])->whereIn('product_id', $optionsIds)->get();
+            ['quote_request_id', '=', $quoteId],
+        ])->whereIn('product_id', $optionsIds);
 
-        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
-        if (! $canSendDocuments) {
-            info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
-
-            return 'Documents cannot be sent';
+        if ($selected) {
+            $transactions = $transactions->where('is_selected', true);
         }
 
-        $certificate_number = '';
-        $capturedAt = null;
-        if ($transaction->isNotEmpty()) {
-            $certificate_number = $transaction[0]['certificate_number'];
-            $premium = $transaction[0]['price_with_vat'];
-            $capturedAt = $transaction[0]['payment_status_date'];
-        }
+        return $transactions->get();
+    }
 
-        if ($isAlfredProtect) {
-            // send certificate only for alfred protect
-            $strategy = $this->createStrategy($short_code, $isAlfredProtect);
-            $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
-            $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
+    private function sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData)
+    {
+        $strategy = $this->createStrategy($short_code, true);
+        $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
+        $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
 
-            if (! empty($quoteObject->quoteRequestEntityMapping)) {
-                $firstName = $quoteObject->first_name ?? '';
-                $lastName = $quoteObject->last_name ?? '';
-            } else {
-                $firstName = $quoteObject->customer->insured_first_name ?? '';
-                $lastName = $quoteObject->customer->insured_last_name ?? '';
-            }
+        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : $quoteObject->customer->insured_first_name ?? '';
+        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : $quoteObject->customer->insured_last_name ?? '';
 
-            info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
-            $emailData = (object) [
-                'quoteCdbId' => $short_code.'-'.$quoteObject->code,
-                'customerName' => $firstName.' '.$lastName,
-                'customerEmail' => $quoteObject->email,
-                'advisorName' => isset($advisor) ? $advisor->name : null,
-                'advisorEmailAddress' => isset($advisor) ? $advisor->email : null,
-                'productName' => $product_name,
-                'advisorLandlineNo' => isset($advisor) ? $advisor->landline_no : null,
-                'advisorMobileNo' => isset($advisor) ? $advisor->mobile_no : null,
-                'documentUrl' => $attachmentsUrls,
-            ];
-            info('Send Alfred Protect Email Data: '.json_encode($emailData));
+        info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
+        $emailData = (object) [
+            'quoteCdbId' => $short_code.'-'.$quoteObject->code,
+            'customerName' => $firstName.' '.$lastName,
+            'customerEmail' => $quoteObject->email,
+            'advisorName' => $advisorData['name'] ?? null,
+            'advisorEmailAddress' => $advisorData['email'] ?? null,
+            'productName' => $ep->product_name,
+            'advisorLandlineNo' => $advisorData['landline_no'] ?? null,
+            'advisorMobileNo' => $advisorData['mobile_no'] ?? null,
+            'documentUrl' => $attachmentsUrls,
+        ];
+        info('Send Alfred Protect Email Data: '.json_encode($emailData));
 
-            $response = app(SendEmailCustomerService::class)->sendEmail($emailTemplateId, $emailData, 'policy-documents-alfred-protect');
-            info('Send Alfred Protect Email Response: '.json_encode($response));
+        $ccData = isset($advisorData['email']) ? [['email' => $advisorData['email'], 'name' => $advisorData['name']]] : [];
 
-            if ($response == 201) {
-                if (request()->ajax()) {
-                    return response()->json(['success' => 'Certificate sent successfully.']);
-                }
+        $response = app(SendEmailCustomerService::class)->sendEmail($emailTemplateId, $emailData, 'policy-documents-alfred-protect', $ccData);
+        info('Send Alfred Protect Email Response: '.json_encode($response));
 
-                return redirect()->back()->with('success', 'Certificate sent successfully.');
-            } else {
-                if (request()->ajax()) {
-                    return response()->json(['success' => 'Error sending Certificate.']);
-                }
-
-                return redirect()->back()->with('error', 'Error sending Certificate.');
-            }
-
+        if ($response == 201) {
+            return $this->handleAjaxResponse('Certificate sent successfully.', 'success');
         } else {
-            // send certificate only for medex
-            $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
-            if ($pdf) {
-                $attachments[] = [
-                    'Content' => base64_encode($pdf->output()),
-                    'Name' => 'Salama_Certificate.pdf',
-                    'ContentType' => 'application/pdf',
-                ];
-            }
-
-            $body = json_encode([
-                'From' => config('constants.IM_FROM_EMAIL'),
-                'ReplyTo' => isset($advisorData['email']) ? $advisorData['email'] : null,
-                'To' => $quoteObject->email,
-                'Cc' => isset($advisorData['email']) ? $advisorData['email'] : '',
-                'Tag' => '',
-                'TemplateAlias' => 'embedded-products-payment-auth',
-                'Attachments' => isset($attachments) ? $attachments : null,
-                'TemplateModel' => [
-                    'params' => [
-                        'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
-                        // For MEDEX pass true else false
-                        'isMedex' => strtoupper($short_code) == 'MDX' ? true : false,
-                        'productName' => $product_name,
-                        'productDescription' => $product_description,
-                        'advisor' => (object) $advisorData,
-                    ],
-                    'subject' => 'Thank you for your purchase of '.$product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
-                ],
-                'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
-            ], JSON_UNESCAPED_SLASHES);
-
-            SendEPDocumentsJob::dispatch($body);
-
-            return 'Certificate sent successfully';
+            return $this->handleAjaxResponse('Error sending Certificate.', 'error');
         }
+    }
+
+    private function sendMedexEmail($short_code, $quoteObject, $transaction, $modelType, $attachments, $advisorData, $ep)
+    {
+        $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType);
+        $certificatesConfig = config('embedded-products.certificates');
+
+        if ($pdf) {
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $url = $websiteURL.$pdf->doc_url;
+            $file = file_get_contents($url);
+            $attachments[] = [
+                'Content' => base64_encode($file),
+                'Name' => 'Salama_Certificate.pdf',
+                'ContentType' => 'application/pdf',
+            ];
+        }
+
+        $body = json_encode([
+            'From' => config('constants.IM_FROM_EMAIL'),
+            'ReplyTo' => $advisorData['email'] ?? null,
+            'To' => $quoteObject->email,
+            'Cc' => $advisorData['email'] ?? '',
+            'Tag' => '',
+            'TemplateAlias' => $certificatesConfig[$short_code]['email_template_alias'],
+            'Attachments' => $attachments,
+            'TemplateModel' => [
+                'params' => [
+                    'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
+                    'isMedex' => strtoupper($short_code) == EmbeddedProductEnum::MDX,
+                    'productName' => $ep->product_name,
+                    'productDescription' => $ep->description,
+                    'advisor' => (object) $advisorData,
+                ],
+                'subject' => 'Thank you for your purchase of '.$ep->product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
+            ],
+            'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
+        ], JSON_UNESCAPED_SLASHES);
+
+        SendEPDocumentsJob::dispatch($body);
+
+        return 'Certificate sent successfully';
+    }
+
+    private function handleAjaxResponse($message, $status)
+    {
+        if (request()->ajax()) {
+            return response()->json(['success' => $message]);
+        }
+
+        return redirect()->back()->with($status, $message);
     }
 
     /**
      * Retrieves the PDF certificate for a specific product.
      *
-     * @param  string  $short_code
-     * @param  object  $quoteObject
-     * @param  string  $certificate_number
-     * @param  float  $premium
-     * @param  null|Carbon  capturedAt
-     * @return PDF|null The PDF document or null if the short code is not defined in config.
+     * @param  mixed  $short_code
+     * @param  mixed  $quoteObject
+     * @param  mixed  $transaction
+     * @param  mixed  $modelType
+     * @return mixed
+     *
+     * @throws \Exception
      */
     private function getPDF(
         $short_code,
         $quoteObject,
-        $certificate_number,
-        $premium,
-        $capturedAt
+        $transaction,
+        $modelType
     ) {
-        $pdf = null;
-        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
-        $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
+
+        $certificateDocument = null;
+        $certificate_number = $transaction->certificate_number;
+        $premium = $transaction->price_with_vat;
+        $capturedAt = $transaction->payment_status_date;
+
+        $certificateDocument = $transaction->documents->where('document_type_code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->first();
+        if ($certificateDocument) {
+            return $certificateDocument;
+        }
+
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
+            $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
+            $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
             $viewFile = $certificatesConfig[$short_code]['view_file'];
+            if ($short_code === EmbeddedProductEnum::MDX) {
+                if (
+                    $epMdxV3From && ! empty($capturedAt)
+                    && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV3From->value))
+                ) {
+                    $viewFile = $certificatesConfig[$short_code]['view_file_v3'];
 
-            if ($epMdxV3From && ! empty($capturedAt)
-                && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV3From->value))) {
-                $viewFile = $certificatesConfig[$short_code]['view_file_v3'];
-
-            } elseif ($epMdxV2From && ! empty($capturedAt)
-            && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
-                $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
+                } elseif (
+                    $epMdxV2From && ! empty($capturedAt)
+                    && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))
+                ) {
+                    $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
+                }
             }
 
             $strategy = $this->createStrategy($short_code);
@@ -554,9 +540,33 @@ class EmbeddedProductRepository extends BaseRepository
                 ]
             )
                 ->loadView($viewFile, compact('viewData'));
+
+            $pdfContent = $pdf->output();
+            $docUuid = uniqid();
+            $title = "{$docUuid}_PolicyContract-{$certificate_number}.pdf";
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $documentType = DocumentType::where('code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->where('quote_type_id', $quoteTypeId)->first();
+            $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$title;
+            Storage::disk('azureIM')->put($filePathAzure, $pdfContent);
+            if (! Storage::disk('azureIM')->exists($filePathAzure)) {
+                throw new Exception('Error uploading document');
+            }
+
+            $documentData = [
+                'doc_name' => $title,
+                'original_name' => $title,
+                'doc_url' => $filePathAzure,
+                'doc_mime_type' => 'application/pdf',
+                'document_type_code' => $documentType->code,
+                'document_type_text' => $documentType->text,
+                'doc_uuid' => $docUuid,
+                'created_by_id' => null,
+            ];
+
+            $certificateDocument = $transaction->documents()->create($documentData);
         }
 
-        return $pdf;
+        return $certificateDocument;
     }
 
     /**
@@ -589,12 +599,14 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $strategy = null;
         $shortCode = strtoupper($shortCode);
-        if ($shortCode == 'MDX') {
+        if ($shortCode == EmbeddedProductEnum::MDX) {
             $strategy = new MDX;
         } elseif ($shortCode == EmbeddedProductEnum::TRAVEL) {
             $strategy = new TravelAnnual;
         } elseif ($isAlfredProtect) {
             $strategy = new AlfredProtect;
+        } elseif ($shortCode == EmbeddedProductEnum::RDX) {
+            $strategy = new RDX;
         } else {
             $strategy = new EmbeddedProductStrategy;
         }
@@ -703,7 +715,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCapturePayment($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if ($quoteTypeId !== QuoteTypeId::Car) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             return false;
         }
 
@@ -762,5 +774,81 @@ class EmbeddedProductRepository extends BaseRepository
         } catch (Exception $e) {
             Log::error('Capture Payment Error: '.$e->getMessage());
         }
+    }
+
+    public function fetchGetDocuments($data)
+    {
+        $ep = $this->where('id', $data['epId'])->first();
+        if (! $ep) {
+            return false;
+        }
+
+        $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false);
+
+        $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
+        $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
+
+        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        if ($canSendDocuments) {
+            $this->getPDF($ep->short_code, $quoteObject, $transaction->first(), $data['modelType']);
+        }
+
+        $epDocuments = $strategy->getDocumentList($ep, $transaction);
+
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType']));
+        $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
+        $canAddDocument = false;
+        if ($transaction->isNotEmpty()) {
+            $canAddDocument = in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID]);
+        }
+
+        return [
+            'ep' => $ep,
+            'documents' => $epDocuments,
+            'document_type' => $documentType,
+            'can_add_document' => $canAddDocument,
+        ];
+    }
+
+    public function fetchUploadQuoteDocument($data)
+    {
+        $ep = $this->where('id', $data['epId'])->first();
+        if (! $ep) {
+            return false;
+        }
+
+        $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false);
+
+        $documentData = $this->prepareDocumentData($data['file'][0]['file'], $data['title'], $data['type'], $quoteObject, $data['modelType']);
+        $transaction->first()->documents()->create($documentData);
+
+        return true;
+    }
+
+    private function prepareDocumentData($file, $title, $type, $quoteObject, $modelType)
+    {
+        $originalName = $file->getClientOriginalName();
+        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
+        $fileNameAzure = $quoteObject->uuid.'_'.$docName;
+        $docUuid = uniqid();
+        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+        if ($filePathAzure == false) {
+            throw new Exception('Error uploading document');
+        }
+
+        return [
+            'doc_name' => $title,
+            'original_name' => $originalName,
+            'doc_url' => $filePathAzure,
+            'doc_mime_type' => $file->getClientMimeType(),
+            'document_type_code' => $documentType->code,
+            'document_type_text' => $type,
+            'doc_uuid' => $docUuid,
+            'created_by_id' => null,
+        ];
     }
 }
