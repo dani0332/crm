@@ -932,7 +932,7 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! $request->code && ! $request->email && ! $request->mobile_no && ! $request->created_at && ! $request->payment_due_date && ! $request->booking_date && ! $request->previous_quote_policy_number && ! $request->renewal_batch) {
+        if (! $request->code && ! $request->email && ! $request->mobile_no && ! $request->created_at && ! $request->payment_due_date && ! $request->booking_date && ! $request->previous_quote_policy_number && ! $request->renewal_batch && ! $request->insurer_tax_invoice_number && ! $request->insurer_commission_tax_invoice_number) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (
@@ -945,6 +945,8 @@ class CarQuoteService extends BaseService
             && empty($request->payment_due_date)
             && empty($request->booking_date)
             && ! isset($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
@@ -954,6 +956,15 @@ class CarQuoteService extends BaseService
         if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
             CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr', QuoteTypeId::Car);
         }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
         if ($request->transaction_approved_dates) {
 
             $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
@@ -1019,7 +1030,7 @@ class CarQuoteService extends BaseService
         }
 
         $wheres = collect($this->query->wheres)->pluck('', 'column')->toArray();
-        if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch'])) {
+        if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch', 'insurer_tax_invoice_number', 'insurer_commission_tax_invoice_number'])) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
 
