@@ -105,7 +105,7 @@ class UpdatePolicyDetailRequest extends FormRequest
             $quote_policy_number = trim(request()->quote_policy_number);
 
             // Check if a policy with the same number and expiry date already exists, excluding the current quote
-            $formattedExpiryDate = Carbon::parse(request()->quote_policy_expiry_date)->format('Y-m-d');
+            $formattedExpiryDate = Carbon::parse(request()->quote_policy_expiry_date)->format(config('constants.DATE_FORMAT_ONLY'));
             $isExists = $model::where('policy_number', $quote_policy_number)
                 ->where('policy_expiry_date', $formattedExpiryDate)
                 ->where('code', '!=', $quoteModel->code)
