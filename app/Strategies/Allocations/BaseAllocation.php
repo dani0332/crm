@@ -20,7 +20,7 @@ abstract class BaseAllocation extends AllocationService
 
     protected $lead;
 
-    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false) {}
+    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false) {}
 
     private function getQuoteTypeId()
     {
@@ -103,16 +103,16 @@ abstract class BaseAllocation extends AllocationService
             ->orderBy('la.last_allocated', 'asc');
     }
 
-    protected function fetchAvailableAdvisor($isReassignmentJob = false)
+    public function fetchAvailableAdvisor()
     {
-        info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$this->teamId} - {$this->uuid}");
+        info(self::class." - fetchAvailableAdvisor: {$this->isReAssignment} - {$this->teamId} - {$this->uuid}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
         ];
 
-        if (! $isReassignmentJob) {
+        if (! $this->isReAssignment) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
@@ -134,7 +134,7 @@ abstract class BaseAllocation extends AllocationService
     {
         DB::beginTransaction();
         try {
-            $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED;
+            $assignmentType = $this->isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED;
             info(self::class." - assignLead: Going to Assign Advisor to Lead: {$this->lead->uuid}");
             $previousAssignmentType = $this->lead->assignment_type;
             $previousUserId = $this->lead->advisor_id;
@@ -150,7 +150,11 @@ abstract class BaseAllocation extends AllocationService
 
             if ($this->lead->source != LeadSourceEnum::REFERRAL) {
                 info(self::class.' - lead source is not referral so about to update allocation record');
-                $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id, $this->getQuoteTypeId()) : $this->adjustAllocationCounts($advisor->id, $this->lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, $this->getQuoteTypeId());
+                if ($assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED) {
+                    $this->addAllocationCounts($advisor->id, $this->getQuoteTypeId());
+                } else {
+                    $this->adjustAllocationCounts($advisor->id, $this->lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, $this->getQuoteTypeId());
+                }
             }
             DB::commit();
         } catch (\Exception $e) {

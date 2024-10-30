@@ -30,7 +30,7 @@ class PetAllocation extends BaseAllocation
         return null;
     }
 
-    protected function fetchAvailableAdvisor($isReassignmentJob = false)
+    public function fetchAvailableAdvisor($isReassignmentJob = false)
     {
         info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$this->teamId} - {$this->uuid}");
 

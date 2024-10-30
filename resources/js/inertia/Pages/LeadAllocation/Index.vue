@@ -125,6 +125,17 @@ const isCapChanged = computed(() => {
   return leadData?.value.some(item => item.capEdit);
 });
 
+const onStatusModalClose = event => {
+  const item = leadData?.value.find(item => item.id === statusModal?.data.id);
+  if (!event) {
+    item.reset = true;
+    setTimeout(() => {
+      item.reset = false;
+    }, 300);
+    statusModal.show = false;
+  }
+};
+
 const onStatusSubmit = async () => {
   statusModal.loader = true;
   const item = leadData.value.find(item => item.id === statusModal.data.id);
@@ -263,6 +274,7 @@ onMounted(() => {
 <template>
   <div>
     <UserStatus />
+
     <Head :title="quoteType + ' Lead Allocation'" />
     <div class="flex justify-between items-center">
       <div></div>
@@ -392,6 +404,42 @@ onMounted(() => {
         </div>
       </template>
     </DataTable>
+
+    <x-modal
+      v-model="statusModal.show"
+      title="Select Reason of Unavailability"
+      show-close
+      backdrop
+      @update:model-value="onStatusModalClose($event)"
+    >
+      <x-select
+        v-model="statusModal.data.reason"
+        placeholder="Select Reason"
+        :options="[
+          { value: 3, label: 'Temp. Unavailable' },
+          { value: 4, label: 'Sick' },
+          { value: 5, label: 'On Leave' },
+        ]"
+        @update:model-value="statusModal.data.reason = $event"
+        class="w-full mb-28"
+      />
+
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button size="sm" ghost @click.prevent="onStatusModalClose(false)">
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="primary"
+            :loading="statusModal.loader"
+            @click="onStatusSubmit"
+          >
+            Submit
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
   </div>
 </template>
 

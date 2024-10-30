@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypes;
 use App\Jobs\ReAssignBikeLeadsJob;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
+use App\Jobs\ReAssignLeads;
 use App\Services\ApplicationStorageService;
 use App\Services\BikeAllocationService;
 use App\Services\CarAllocationService;
@@ -67,6 +69,11 @@ class LeadsReassignment extends Command
 
             dispatch(new ReAssignBikeLeadsJob(app(BikeAllocationService::class), 0));
             info('Bike lead reassignment job  for '.$currentIteration.' is dispatched');
+
+            foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {
+                ReAssignLeads::dispatch($quoteType);
+                info("{$quoteType->value} lead reassignment job  for {$currentIteration} is dispatched");
+            }
 
             info('------------------- Lead reassignment Command Finished for '.$currentIteration.' -------------------');
         } else {
