@@ -102,10 +102,10 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Artisan;
 
 class CRUDController extends Controller
 {
@@ -2283,6 +2283,7 @@ class CRUDController extends Controller
     public function triggerSendPaymentEmail()
     {
         Artisan::call('SendPaymentEmail:cron');
+
         return response()->json(['message' => 'SendPaymentEmail:cron job triggered successfully.']);
     }
 }
