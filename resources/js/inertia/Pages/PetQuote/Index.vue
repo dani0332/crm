@@ -125,6 +125,12 @@ const tableHeader = ref([
     value: 'previous_quote_policy_number',
     is_active: true,
   },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
 ]);
 

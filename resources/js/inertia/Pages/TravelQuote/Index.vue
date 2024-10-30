@@ -27,9 +27,15 @@ const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
 const notification = useNotifications('toast');
+const cleanObj = obj => useCleanObj(obj);
 const quoteSegments = page.props.quoteSegments?.filter(
   segment => segment.value !== 'sic-revival',
 );
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
+});
 
 const filters = reactive({
   code: '',
@@ -104,6 +110,11 @@ const tableHeader = [
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
@@ -163,10 +174,10 @@ function onSubmit(isValid) {
       delete filters[key];
     }
   }
-
+  serverOptions.value.page = 1;
   router.visit(route('travel.index'), {
     method: 'get',
-    data: filters,
+    data: { ...filters, ...serverOptions.value },
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -334,6 +345,22 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   setQueryFilters();
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const resetDateFilters = filterName => {
@@ -392,6 +419,14 @@ const formatDate = date => {
   const parsedDate = new Date(`${year}-${month}-${day}`);
   return useDateFormat(parsedDate, 'DD-MMM-YYYY').value;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -722,6 +757,7 @@ const formatDate = date => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
