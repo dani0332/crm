@@ -167,4 +167,9 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
+
+    public function quoteDetail()
+    {
+        return $this->hasOne(LifeQuoteRequestDetail::class);
+    }
 }

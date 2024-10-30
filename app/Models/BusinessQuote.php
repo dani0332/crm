@@ -156,4 +156,8 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->morphMany(SageApiLog::class, 'section');
     }
 
+    public function quoteDetail()
+    {
+        return $this->hasOne(BusinessQuoteRequestDetail::class);
+    }
 }
