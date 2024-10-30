@@ -400,6 +400,7 @@ class ManagementReport
                 $item->total_price =
                     ($item->total_price ? (float) $item->total_price : 0) +
                     ($endorsement->total_endorsement_amount ? (float) $endorsement->total_endorsement_amount : 0);
+                $item->discount = (float) $item->discount + (float) $endorsement->discount;
             }
         }
 
@@ -434,6 +435,7 @@ class ManagementReport
                 $endorsement->total_transaction = $endorsement->total_endorsements;
                 $endorsement->total_price = (float) $endorsement->total_endorsement_amount;
                 $endorsement->commission_vat_applicable = (float) $endorsement->commission_vat_applicable;
+                $endorsement->discount = (float) $endorsement->discount;
                 $reportData->push($endorsement);
             }
         }
