@@ -641,7 +641,6 @@ class ReportService extends BaseService
         }
         $dataCollection = collect();
         foreach ($allowedLOBs as $details) {
-
             $premiumColumn = $details['table'].'.premium';
 
             $query = DB::table($details['table'])
@@ -664,6 +663,13 @@ class ReportService extends BaseService
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
                     ->whereIn('teams.name', $userTeams);
             }
+            if (isset($request->quoteType)) {
+                $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+                if (checkPersonalQuotes(ucfirst($quoteType))) {
+                    $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType));
+                    $query->where('quote_type_id', $quoteTypeId);
+                }
+            }
             if (isset($request->userIds)) {
                 $query->whereIn('advisor_id', $request->userIds);
             }
@@ -677,11 +683,11 @@ class ReportService extends BaseService
             }
 
             if (isset($request->todayDate)) {
-                $query->having('expiry_days', '=', 1);
+                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 1);
             }
 
             if (isset($request->tomorrowDate)) {
-                $query->having('expiry_days', '=', 2);
+                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 2);
             }
 
             if (isset($request->thisWeek)) {
