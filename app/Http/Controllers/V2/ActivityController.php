@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 class ActivityController extends Controller
 {
     use GetUserTreeTrait;
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -79,9 +80,14 @@ class ActivityController extends Controller
      */
     public function destroy($id)
     {
-        $activity = ActivityRepository::where('id', $id)->whereNotNull('user_id');
-        $activity->delete();
+        $activity = ActivityRepository::findOrFail($id);
+        if ($activity->user_id) {
+            $activity->delete();
 
-        return back()->with('message', 'Activity status updated successfully');
+            return back()->with('message', 'Activity status updated successfully');
+        } else {
+            return back()->with('message', 'System Generated Activity cannot be deleted');
+        }
+
     }
 }
