@@ -282,6 +282,7 @@ const getS3TempUrl = async docURL => {
             @click.prevent="uploadDocumentModal"
             size="sm"
             color="orange"
+            :disabled="quote.insurance_provider_id === null"
           >
             Upload Documents
           </x-button>
