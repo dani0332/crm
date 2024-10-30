@@ -37,14 +37,14 @@ class PersonalQuoteController extends Controller
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
         $response = PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->all());
-        if (! $response['status']) {
+        if (! $response['status'] || $response['status'] == false) {
             return back()->with('error', $response['message']);
         }
 
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->folder_path, $quoteId);
 
-        return back()->with('message', 'File Uploaded');
+        return back()->with('message', $response['message']);
     }
 
     /**

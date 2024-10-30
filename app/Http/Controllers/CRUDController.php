@@ -102,6 +102,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -844,7 +845,6 @@ class CRUDController extends Controller
                 'insuranceProvidersByQuoteType',
                 'vatPercentage',
                 'commercialRules',
-                'isAmlClearedForPayment',
                 'clientInquiryLogs',
                 'policyIssuanceStatus',
                 'bookPolicyDetails',
@@ -1996,6 +1996,11 @@ class CRUDController extends Controller
 
         info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
 
+        if (in_array($quoteModel->quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer])) {
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($quoteModel, $payment, $request->modelType);
+            info('Quote Code: '.$quoteModel->code.' BIN Generated for transactional leads');
+        }
+
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',
         ]);
@@ -2273,5 +2278,12 @@ class CRUDController extends Controller
         } catch (\Exception $e) {
             Log::error('Error saving CustomerAddress: ', ['customer_id' => $dataObject['customer_id'], 'quote_uuid' => $dataObject['quote_uuid'], 'error' => $e->getMessage()]);
         }
+    }
+
+    public function triggerSendPaymentEmail()
+    {
+        Artisan::call('SendPaymentEmail:cron');
+
+        return response()->json(['message' => 'SendPaymentEmail:cron job triggered successfully.']);
     }
 }

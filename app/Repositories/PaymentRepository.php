@@ -251,7 +251,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-                //[$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($masterPayment->frequency, $masterPayment->total_price, $splitPayment['sr_no'], $splitPayment['payment_amount'], $request->modelType, $request->quote_id, $totalSplitPayments);
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
@@ -584,63 +583,98 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $map[$documentTypeCode] ?? $documentTypeCode;
     }
 
+    /**
+     * This method updates the payment status for payments with an upfront frequency.
+     *
+     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @return void
+     */
+    private function updatePaymentStatusForUpFront($payment)
+    {
+        if ($payment->frequency !== PaymentFrequency::UPFRONT) {
+            return;
+        }
+
+        $capturedAmount = $payment->captured_amount;
+        $totalAmount = $payment->total_amount;
+
+        if ($capturedAmount > 0 && $totalAmount > $capturedAmount) {
+            $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]);
+        } else {
+            $firstSplitStatus = $payment->paymentSplits[0]->payment_status_id;
+            switch ($firstSplitStatus) {
+                case PaymentStatusEnum::PAID:
+                    $payment->update(['payment_status_id' => PaymentStatusEnum::CAPTURED]);
+                    break;
+                case PaymentStatusEnum::PARTIALLY_PAID:
+                    $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]);
+                    break;
+                default:
+                    $payment->update(['payment_status_id' => $firstSplitStatus]);
+                    break;
+            }
+        }
+    }
+
+    /**
+     * This method updates the payment status for payments that do not have an upfront frequency.
+     *
+     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @return void
+     */
+    private function updatePaymentStatusNonUpFront($payment)
+    {
+        $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PARTIAL_CAPTURED,
+            PaymentStatusEnum::PARTIALLY_PAID,
+        ])
+            ->where('code', $payment->code)
+            ->count();
+
+        info('Total paid payments for '.$payment->code.': '.$totalPaidPayments.' out of '.$payment->total_payments);
+
+        if (
+            $totalPaidPayments == $payment->total_payments
+            && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)
+        ) {
+            info('All payments are captured. Updating Payment status to CAPTURED: '.$payment->code);
+            $payment->update(
+                ['payment_status_id' => PaymentStatusEnum::CAPTURED]
+            );
+        } elseif ($totalPaidPayments > 0) {
+            info('Some payments are captured. Updating Payment status to PARTIAL_CAPTURED: '.$payment->code);
+            $payment->update(
+                ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
+            );
+        } else {
+            //verify credit approved status
+            $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
+                PaymentStatusEnum::CREDIT_APPROVED,
+            ])->where('code', $payment->code)->count();
+            info('Total credit approved payments for '.$payment->code.': '.$totalCreditPayments);
+            if ($totalCreditPayments > 0) {
+                info('Updating payment status to CREDIT_APPROVED for '.$payment->code);
+                $payment->update(
+                    ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
+                );
+            } else {
+                info('Updating payment status to NEW for '.$payment->code);
+                $payment->update(
+                    ['payment_status_id' => PaymentStatusEnum::NEW]
+                );
+            }
+        }
+    }
+
     public function setMasterPaymentStatus($payment)
     {
         if ($payment) {
             if ($payment->frequency == 'upfront') {
-                if ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PAID) {
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::CAPTURED]
-                    );
-                } elseif ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID) {
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
-                    );
-                } else {
-                    $payment->update(
-                        ['payment_status_id' => $payment->paymentSplits[0]->payment_status_id]
-                    );
-                }
+                $this->updatePaymentStatusForUpFront($payment);
             } else {
-                $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                    PaymentStatusEnum::PAID,
-                    PaymentStatusEnum::CAPTURED,
-                    PaymentStatusEnum::PARTIAL_CAPTURED,
-                    PaymentStatusEnum::PARTIALLY_PAID,
-                ])
-                    ->where('code', $payment->code)
-                    ->count();
-
-                info('Total paid payments for '.$payment->code.': '.$totalPaidPayments.' out of '.$payment->total_payments);
-
-                if (
-                    $totalPaidPayments == $payment->total_payments
-                    && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)
-                ) {
-                    info('All payments are captured. Updating Payment status to CAPTURED: '.$payment->code);
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::CAPTURED]
-                    );
-                } elseif ($totalPaidPayments > 0) {
-                    info('Some payments are captured. Updating Payment status to PARTIAL_CAPTURED: '.$payment->code);
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
-                    );
-                } else {
-                    //verify credit approved status
-                    $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
-                        PaymentStatusEnum::CREDIT_APPROVED,
-                    ])->where('code', $payment->code)->count();
-                    if ($totalCreditPayments > 0) {
-                        $payment->update(
-                            ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
-                        );
-                    } else {
-                        $payment->update(
-                            ['payment_status_id' => PaymentStatusEnum::NEW]
-                        );
-                    }
-                }
+                $this->updatePaymentStatusNonUpFront($payment);
             }
             info('Updating lead status for Payment Code: '.$payment->code);
             app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
@@ -657,11 +691,21 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
 
-    public function generateAndStoreBrokerInvoiceNumber($payment, $quoteType, $attempts = 0)
+    public function generateAndStoreBrokerInvoiceNumber($quote, $payment, $quoteType, $attempts = 0)
     {
+        info('fn:generateAndStoreBrokerInvoiceNumber Quote : '.$quote?->code.' Source : '.$quote?->source.' started');
+
+        $response = ['status' => false, 'message' => ''];
+
+        if (! $payment) {
+            info('fn:generateAndStoreBrokerInvoiceNumber Quote : '.$quote?->code.' Source : '.$quote?->source.' payment not found.');
+            $response['message'] = 'Payment not found.';
+
+            return $response;
+        }
         info('fn:generateAndStoreBrokerInvoiceNumber Payment : '.$payment->code);
         $maxRetries = 5;
-        $response = ['status' => false, 'message' => ''];
+
         if ($payment->broker_invoice_number) {
             info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Broker Invoice Number already exists - BIN : '.$payment->broker_invoice_number);
             $response['status'] = true;
@@ -716,7 +760,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if (in_array($e->getCode(), ['40001', '1213'])) {
                 if ($attempts < $maxRetries) {
                     info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : table locked, trying again');
-                    $this->generateAndStoreBrokerInvoiceNumber($payment, $quoteType, $attempts);
+                    $this->generateAndStoreBrokerInvoiceNumber($quote, $payment, $quoteType, $attempts);
                 } else {
                     info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Error occurred while generating broker invoice number: Could not acquire lock after multiple attempts');
                     $response['message'] = 'Exception: Could not acquire lock after multiple attempts';
@@ -772,7 +816,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($paymentSplits->whereNull('price_vat_applicable')->count()) {
                 foreach ($quotePayment->paymentSplits as $splitPayment) {
                     if (isset($splitPayment->payment_method) && $splitPayment->payment_method != null) {
-                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitPayment->payment_amount, $modelType, $quote->id, count($paymentSplits));
+                        $splitAmount = $paymentSplits->payment_amount;
+                        if ($paymentSplits->sr_no === 1) {
+                            $splitAmount = $paymentSplits->payment_amount + $quotePayment->discount_value;
+                        }
+                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitAmount, $modelType, $quote->id, count($paymentSplits));
                         $splitPayment->update([
                             'price_vat_applicable' => $priceWithoutVat,
                             'price_vat' => $vat,
