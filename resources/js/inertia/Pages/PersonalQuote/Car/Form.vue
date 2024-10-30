@@ -69,6 +69,17 @@ const quoteForm = useForm({
     props.quote?.has_ncd_supporting_documents || null,
   car_value_tier: props.quote?.car_value_tier || '',
   car_value: props.quote?.car_value || '',
+  addressObj: {
+    address_type: page.props.customerAddressData?.type || null,
+    villa_apartment_office_no:
+      page.props.customerAddressData?.office_number || null,
+    floor_no: page.props.customerAddressData?.floor_number || null,
+    villa_building_name: page.props.customerAddressData?.building_name || null,
+    street_name: page.props.customerAddressData?.street || null,
+    area: page.props.customerAddressData?.area || null,
+    city: page.props.customerAddressData?.city || null,
+    landmark: page.props.customerAddressData?.landmark || null,
+  },
 });
 
 const isDisbaled =
@@ -202,6 +213,12 @@ const cylinderValidation = event => {
     event.preventDefault();
   }
 };
+
+const addressTypes = [
+  { value: '', label: 'No Address Type' }, // option for leaving it blank
+  { value: 'Home', label: 'Home' },
+  { value: 'Office', label: 'Office' },
+];
 </script>
 
 <template>
@@ -285,6 +302,75 @@ const cylinderValidation = event => {
             :disabled="isEdit"
             :error="quoteForm.errors.mobile_no"
           />
+        </x-field>
+
+        <x-field label="Address Type">
+          <ComboBox
+            v-model="quoteForm.addressObj.address_type"
+            placeholder="Select address type"
+            :options="addressTypes"
+            :single="true"
+          />
+        </x-field>
+        <x-field label="ADDRESS">
+          <div class="flex flex-wrap -mx-2">
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.villa_apartment_office_no"
+                placeholder="Villa/Apartment/Office No."
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.floor_no"
+                placeholder="Floor No."
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.villa_building_name"
+                placeholder="Villa/Building Name"
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.street_name"
+                placeholder="Street"
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.area"
+                placeholder="Area"
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.city"
+                placeholder="City"
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.landmark"
+                placeholder="Landmark"
+                class="w-full"
+              />
+            </div>
+          </div>
         </x-field>
 
         <x-field label="DATE OF BIRTH" required>

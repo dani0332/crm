@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   teams: Array,
   volumeSegmentAdvisorsId: Array,
@@ -20,6 +22,7 @@ const notification = useToast();
 const { isRequired } = useRules();
 const isSagmentVolumeEmpty = ref(false);
 const isSagmentValueEmpty = ref(false);
+
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
@@ -59,7 +62,6 @@ const generateSlabArray = () => {
       }
     });
   });
-
   return slabs;
 };
 

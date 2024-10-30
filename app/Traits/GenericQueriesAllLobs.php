@@ -2,11 +2,13 @@
 
 namespace App\Traits;
 
+use App\Enums\DatabaseColumnsString;
 use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
@@ -50,8 +52,14 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
         $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
-
         if (! class_exists($model)) {
+            if (in_array(ucwords($quoteType), [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])) {
+                $model = $nameSpace.'BusinessQuote';
+                if (class_exists($model)) {
+                    return $model;
+                }
+            }
+
             return false;
         }
 
@@ -233,13 +241,7 @@ trait GenericQueriesAllLobs
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
             $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
-            $brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $quoteType);
-
-            $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
-
-            if (in_array($record->quote_status_id, $getBINFromDBForPolicyStatuses)) {
-                $brokerInvoiceNo = $payment->broker_invoice_number;
-            }
+            $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
         $bookPolicyDetails = [];
@@ -842,6 +844,25 @@ trait GenericQueriesAllLobs
         $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultDate;
         $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultDate;
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
+    }
+
+    public function adjustQueryByInsurerInvoiceFilters($query)
+    {
+        $request = request();
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_number')) {
+            $value = $request->get('insurer_tax_number');
+            $query->whereHas('payments', function ($query) use ($value) {
+                $query->where(DatabaseColumnsString::INSURER_TAX_INVOICE_NUMBER, $value);
+            });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commmission_invoice_number')) {
+            $value = $request->get('insurer_commmission_invoice_number');
+            $query->whereHas('payments', function ($query) use ($value) {
+                $query->where(DatabaseColumnsString::INSURER_COMMISSION_TAX_INVOICE_NUMBER, $value);
+            });
+        }
     }
 
     public function getSendUpdatePaymentCode($sendUpdateLogId): string

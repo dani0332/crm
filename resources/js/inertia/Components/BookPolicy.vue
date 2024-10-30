@@ -146,30 +146,32 @@ const formatAmount = amount => {
   });
 };
 
-// use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
-const binAsInsurerCommissionTaxInvoiceNumber = () => {
-  let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
+const isNonSelfBillingEnabledForInsuranceProvider = computed(() => {
   let insuranceProvider = page.props.quote?.insurance_provider;
   if (!insuranceProvider) {
     // If insurance_provider is not available, use insurance_provider_details
     insuranceProvider = page.props.quote?.insurance_provider_details;
+    // If insurance_provider_details is not available, use insurer from payment
+    if (!insuranceProvider) {
+      insuranceProvider = props.payments[0]?.insurance_provider;
+    }
   }
-  let insuranceProviderCode = insuranceProvider?.code;
-  let allowedInsuranceProvider = [
-    insuranceProviderCodeEnum.AAIC,
-    insuranceProviderCodeEnum.ALNC,
-    insuranceProviderCodeEnum.OALLIANZ,
-    insuranceProviderCodeEnum.CIG,
-    insuranceProviderCodeEnum.FPIL,
-    insuranceProviderCodeEnum.MTL,
-    insuranceProviderCodeEnum.NHICD,
-    insuranceProviderCodeEnum.ZILL,
-  ];
-  if (allowedInsuranceProvider.includes(insuranceProviderCode)) {
+
+  return insuranceProvider?.non_self_billing == 1;
+});
+// use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
+const binAsInsurerCommissionTaxInvoiceNumber = () => {
+  console.log(
+    'page.props.bookPolicyDetails',
+    isNonSelfBillingEnabledForInsuranceProvider.value,
+  );
+  let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
+  if (isNonSelfBillingEnabledForInsuranceProvider.value) {
     return brokerInvoiceNo;
   }
   return '';
 };
+
 const bpForm = useForm({
   parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
   booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) || '',
@@ -180,8 +182,7 @@ const bpForm = useForm({
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
   insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
   insurer_commmission_invoice_number:
-    page.props?.payments[0]?.insurer_commmission_invoice_number ||
-    binAsInsurerCommissionTaxInvoiceNumber(),
+    page.props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_vat_not_applicable:
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
@@ -340,12 +341,12 @@ const calculateCommission = () => {
         position: 'top',
       });
       /*bpForm.commission_vat_applicable = '';
-      bpForm.commission_vat_not_applicable = '';
-      notification.error({
-        title:
-          'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
-        position: 'top',
-      });*/
+            bpForm.commission_vat_not_applicable = '';
+            notification.error({
+              title:
+                'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
+              position: 'top',
+            });*/
     }
   } else {
     bpForm.commission_percentage = 0;
@@ -754,7 +755,9 @@ onMounted(() => {
                     <template #tooltip>
                       <span class="custom-tooltip-content">
                         {{
-                          productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                          isNonSelfBillingEnabledForInsuranceProvider
+                            ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                            : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
                         }}
                       </span>
                     </template>
