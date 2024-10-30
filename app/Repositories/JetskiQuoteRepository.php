@@ -123,7 +123,7 @@ class JetskiQuoteRepository extends BaseRepository
             $query->where('advisor_id', auth()->user()->id);
         })->filter(! $forExport)
             ->withFakeLeadCriteria();
-            // ->orderBy('created_at', 'desc');
+        // ->orderBy('created_at', 'desc');
 
         if (request()->sortBy) {
             $query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
