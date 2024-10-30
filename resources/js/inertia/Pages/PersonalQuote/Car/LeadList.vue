@@ -770,7 +770,7 @@ const onExport = url => {
           :options="quoteSegments"
           :single="true"
         />
-        <x-select
+        <ComboBox
           v-model="filters.sic_advisor_requested"
           label="Advisor Requested"
           placeholder="Select any option"
@@ -780,6 +780,7 @@ const onExport = url => {
             { value: 0, label: 'No' },
           ]"
           class="w-full"
+          :single="true"
         />
         <DatePicker
           v-model="filters.payment_due_date"

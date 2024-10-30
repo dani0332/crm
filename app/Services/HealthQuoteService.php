@@ -182,6 +182,7 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.insly_migrated',
+            'hqr.sic_advisor_requested',
             'hqr.aml_status',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
@@ -521,6 +522,9 @@ class HealthQuoteService extends BaseService
             if ($request->is_renewal == quoteTypeCode::noText) {
                 $this->query->whereNull('hqr.previous_quote_policy_number');
             }
+        }
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
+            $this->query->where('hqr.sic_advisor_requested', $request->sic_advisor_requested);
         }
         if (isset($request->is_ecommerce)) {
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
@@ -998,7 +1002,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1064,7 +1069,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1478,12 +1484,14 @@ class HealthQuoteService extends BaseService
                 if (isset($value['ratesPerCopay'])) {
                     foreach ($value['ratesPerCopay'] as $copay) {
                         if ((int) $copay['healthPlanCoPaymentId'] == (int) $copayId) {
-                            if (isset($loadingPrices[$key]) &&
+                            if (
+                                isset($loadingPrices[$key]) &&
                                 (int) $loadingPrices[$key]['memberId'] == $value['memberId']
                             ) {
                                 $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
                             }
-                            if (isset($manualPremiumPrices[$key]) &&
+                            if (
+                                isset($manualPremiumPrices[$key]) &&
                                 (int) $manualPremiumPrices[$key]['memberId'] == $value['memberId']
                                 && $manualPremiumPrices[$key]['premium'] != 0
                             ) {

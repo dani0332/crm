@@ -67,6 +67,7 @@ class CarQuoteService extends BaseService
                 'cqr.year_of_manufacture',
                 'cqr.code',
                 'cqr.is_ecommerce',
+                'cqr.sic_advisor_requested',
                 'cqr.premium',
                 DB::raw('DATE_FORMAT(cqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                 'cqr.payment_gateway',
@@ -955,6 +956,10 @@ class CarQuoteService extends BaseService
 
         if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
             CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr', QuoteTypeId::Car);
+        }
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
+
+            $this->query->where('cqr.sic_advisor_requested', $request->sic_advisor_requested);
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
