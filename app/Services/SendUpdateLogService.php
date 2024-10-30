@@ -666,10 +666,6 @@ class SendUpdateLogService
                     'invoice_description' => $insurerDetails['invoice_description'],
                     'broker_invoice_number' => $insurerDetails['broker_invoice_number'] ?? $sendUpdateLog->broker_invoice_number ?? null,
                 ];
-
-                if ($insurerDetails['is_non_self_billing_enabled']) {
-                    $sendUpdatePaymentDetails['insurer_commmission_invoice_number'] = $insurerDetails['broker_invoice_number'] ?? $sendUpdateLog->broker_invoice_number ?? null;
-                }
             } else {
                 $sendUpdatePaymentDetails = [
                     'policy_expiry_date' => $sendUpdateLog->expiry_date,
