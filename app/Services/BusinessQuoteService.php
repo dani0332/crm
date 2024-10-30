@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -15,11 +17,11 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
-use Auth;
 use Carbon\Carbon;
 use Config;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class BusinessQuoteService extends BaseService
@@ -184,17 +186,6 @@ class BusinessQuoteService extends BaseService
                 $payment->orderBy('created_at');
             },
         ])->first();
-    }
-
-    public function updateChildRecord($id)
-    {
-        BusinessQuoteRequestDetail::updateOrCreate(
-            ['business_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
     }
 
     public function getDetailEntity($id)
@@ -622,10 +613,26 @@ class BusinessQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
+
+            $oldAssignmentType = $lead->assignment_type;
+            $isReassignment = $lead->advisor_id != null ? true : false;
+            $previousAdvisorId = $lead->advisor_id;
+
             $lead->advisor_id = $userId;
+            $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
             $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, BusinessQuoteRequestDetail::class);
+
+            info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
+
+            $this->upsertManualAllocationCount($lead->advisor_id, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, QuoteTypes::BUSINESS->id());
+
+            $this->addOrUpdateQuoteViewCount($lead, QuoteTypes::BUSINESS->id(), $userId);
+            $lead->auto_assigned = false;
+
+            $lead->save();
         }
 
         return $result;
