@@ -453,10 +453,6 @@ class SendUpdateLogRepository extends BaseRepository
                 'plan_id' => $insurerDetails['plan_id'],
             ];
 
-            if ($insurerDetails['is_non_self_billing_enabled']) {
-                $sendUpdatePayload['insurer_commission_invoice_number'] = $insurerDetails['broker_invoice_number'] ?? $sendUpdate->broker_invoice_number ?? null;
-            }
-
             $sendUpdate->update($sendUpdatePayload);
 
             if (! $sendUpdate->payments->isEmpty()) {

@@ -136,7 +136,7 @@ class PersonalQuoteRepository extends BaseRepository
                 'doc_uuid' => $docUuid,
                 'created_by_id' => auth()->id(),
             ];
-            info('Document array prepared for creation', $document);
+            // info('Document array prepared for creation', $document);
 
             try {
                 $insuranceProviderId = null;
@@ -150,9 +150,15 @@ class PersonalQuoteRepository extends BaseRepository
 
                     if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
                         if ($insuranceProviderId) {
-                            app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
-                            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
-                            info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                            $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($quote->id, SendUpdateLogStatusEnum::UPDATE_ISSUED);
+                            if ($checkTransactionApprovedInSUStatusLogs) {
+                                app(SendUpdateLogService::class)->generateBrokerInvoiceNumberForSU($quote);
+                            } else {
+                                app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
+                                $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
+                                info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                            }
+
                         }
                     }
 
@@ -185,7 +191,7 @@ class PersonalQuoteRepository extends BaseRepository
                 return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
             }
         } catch (\Exception $exception) {
-            Log::error('Document Upload Error: '.$exception->getMessage());
+            Log::error('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
 
             return ['status' => true, 'message' => 'Document upload failed, please try again'];
         }
