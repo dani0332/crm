@@ -75,4 +75,9 @@ class DepartmentService extends BaseService
         return Team::all();
     }
 
+    public function syncUserDepartments($user, $departmentIds)
+    {
+        $user->departments()->sync($departmentIds);  // Sync the department IDs
+    }
+
 }

@@ -74,6 +74,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -112,7 +113,7 @@ const hasTaxDocuments = computed(() => {
   );
 });
 
-const checkSectionTwoEdit = () => {
+const checkSectionToEdit = () => {
   if (props.isUpdateBooked) {
     notification.error({
       title: 'Update already booked',
@@ -497,7 +498,8 @@ const paymentInvoiceNumberOptions = computed(() => {
 const reversalEntry = reactive({
   booking_date: null,
   invoice_description: props.bookingDetails?.reversal_invoice_description || '',
-  broker_invoice_number: null,
+  broker_invoice_number:
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null,
   transaction_payment_status: null,
   invoice_date: null,
   insurer_tax_invoice_number: null,
@@ -583,9 +585,8 @@ function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
     ? payment.insurer_tax_number + '-REV'
     : sendUpdate.insurer_tax_invoice_number + '-REV';
-  reversalEntry.broker_invoice_number = payment?.broker_invoice_number
-    ? payment.broker_invoice_number + '-REV'
-    : sendUpdate.broker_invoice_number + '-REV';
+  reversalEntry.broker_invoice_number =
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null;
   reversalEntry.insurer_commission_invoice_number =
     payment?.insurer_commmission_invoice_number
       ? payment.insurer_commmission_invoice_number + '-REV'
@@ -640,7 +641,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.insurer_tax_invoice_number =
     reversalEntry.insurer_tax_invoice_number.replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number =
-    reversalEntry.broker_invoice_number.replace('REV', 'NEW') || '';
+    props.sendUpdateLog?.broker_invoice_number ?? '';
   bookingDetailsForm.insurer_commission_invoice_number =
     reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
   bookingDetailsForm.price_vat_applicable =
@@ -946,12 +947,14 @@ const onCancel = () => {
   bookingDetailsForm.invoice_date = props.bookingDetails?.invoice_date || null;
   bookingDetailsForm.insurer_tax_invoice_number =
     props.bookingDetails?.insurer_tax_invoice_number || '';
-  bookingDetailsForm.insurer_commission_invoice_number =
-    props.bookingDetails?.insurer_commission_invoice_number || '';
+
   bookingDetailsForm.price_vat_applicable =
     props.bookingDetails?.price_vat_applicable || '';
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
+
+  bookingDetailsForm.insurer_commission_invoice_number =
+    props.bookingDetails?.insurer_commission_invoice_number || '';
 };
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] =
@@ -1020,9 +1023,13 @@ const checkDiscount = (newPrice, oldPrice) => {
         // don't use ===
         bookingDetailsForm.discount = savedDiscount;
       } else {
-        bookingDetailsForm.discount = Number(
+        let discount = Number(
           savedDiscount - (savedPriceWithVat - newPrice),
         ).toFixed(2);
+        if (!(discount < 0)) {
+          // negative value should not apply.
+          bookingDetailsForm.discount = discount;
+        }
       }
     } else {
       bookingDetailsForm.discount = savedDiscount;
@@ -1081,6 +1088,13 @@ watch(
     if (!(noDiscountType.value || ignoreCheckDiscount.value)) {
       checkDiscount(newValue, oldValue);
     }
+  },
+);
+
+watch(
+  () => props.bookingDetails?.broker_invoice_number,
+  (newValue, oldValue) => {
+    bookingDetailsForm.broker_invoice_number = newValue;
   },
 );
 </script>
@@ -1295,8 +1309,9 @@ watch(
                     INSURER COMMISSION TAX INVOICE NUMBER
                   </label>
                   <template #tooltip>
-                    Input the invoice number issued by the insurer for
-                    commission purposes. Double-check for accuracy.
+                    {{
+                      productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                    }}
                   </template>
                 </x-tooltip>
               </div>
@@ -1619,14 +1634,7 @@ watch(
                   </span>
                 </div>
               </div>
-              <div
-                v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
-                class="grid sm:grid-cols-2 pb-1.5"
-              >
+              <div class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
                   <x-tooltip placement="left">
                     <label
@@ -1801,8 +1809,9 @@ watch(
                       INSURER COMMISSION TAX INVOICE NUMBER
                     </label>
                     <template #tooltip>
-                      Input the invoice number issued by the insurer for
-                      commission purposes. Double-check for accuracy.
+                      {{
+                        productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      }}
                     </template>
                   </x-tooltip>
                 </div>
@@ -2157,7 +2166,7 @@ watch(
               <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                 <x-button
                   size="sm"
-                  @click="checkSectionTwoEdit"
+                  @click="checkSectionToEdit"
                   :disabled="props.isEditDisabledForQueuedBooking"
                 >
                   Edit
@@ -2169,7 +2178,7 @@ watch(
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="checkSectionTwoEdit">
+              <x-button v-else size="sm" @click="checkSectionToEdit">
                 Edit
               </x-button>
 

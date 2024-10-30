@@ -69,10 +69,12 @@ class SagePayloadFactory
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchRecordType' => 'CA',
+            'BankCode' => SageEnum::BANK_CODE,
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $sage_customer_number,
+                    'BankCode' => SageEnum::BANK_CODE,
                     'ReceiptTransactionType' => 'Receipt',
                     'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
                 ],
@@ -708,6 +710,12 @@ class SagePayloadFactory
             ],
         ];
 
+        if (in_array($request->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
+            $payLoad['BankCode'] = SageEnum::BANK_CODE;
+            $payLoad['ReceiptsAdjustments'][0]['BankCode'] = SageEnum::BANK_CODE;
+            $payLoad['ReceiptsAdjustments'][0]['PaymentCode'] = SageEnum::PAYMENT_CODE;
+        }
+
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
@@ -1067,10 +1075,12 @@ class SagePayloadFactory
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchRecordType' => 'CA',
+            'BankCode' => SageEnum::BANK_CODE,
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $sage_customer_number,
+                    'BankCode' => SageEnum::BANK_CODE,
                     'ReceiptTransactionType' => 'Receipt',
                     'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment),
                 ],

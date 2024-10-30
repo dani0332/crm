@@ -15,6 +15,7 @@ use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
+use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\User;
 use Carbon\Carbon;
@@ -106,8 +107,8 @@ class SendEmailCustomerService extends BaseService
 
         try {
             $response = Http::withHeaders($headers)
-                ->beforeSending(function () use ($fnName, $body) {
-                    info("{$fnName} ---- Mail Request is Sending");
+                ->beforeSending(function () use ($body) {
+                    // info("{$fnName} ---- Mail Request is Sending");
                     $sender = $body['sender'] ?? null;
                     $replyTo = $body['replyTo'] ?? null;
                     $to = $body['to'] ?? null;
@@ -508,6 +509,7 @@ class SendEmailCustomerService extends BaseService
         $quoteId = match ($quoteType) {
             QuoteTypes::CAR => $emailData->carQuoteId,
             QuoteTypes::TRAVEL => $emailData->travelQuoteId,
+            QuoteTypes::BIKE => $emailData->bikeQuoteId,
             default => $emailData->quoteId,
         };
 
@@ -565,7 +567,9 @@ class SendEmailCustomerService extends BaseService
                 $body['cc'] = $this->getAdditionalEmails(getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_EMAIL_CC));
                 $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO), 'name' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_DISPLAY_NAME)];
             }
-
+            if ($quoteType === QuoteTypes::BIKE) {
+                $body['replyTo'] = ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail];
+            }
             // Conditionally add 'sender' key if advisorName and $advisorCustomEmail are not null
             if ($emailData->advisorName !== null && $advisorCustomEmail !== null) {
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
@@ -621,6 +625,13 @@ class SendEmailCustomerService extends BaseService
 
     public function sendRMIntroEmail($quoteUuid, $previousAdvisorId, $isReassignment)
     {
+        $healthQuote = HealthQuote::where('uuid', $quoteUuid)->first();
+        if ($healthQuote && $healthQuote->isApplicationPending()) {
+            info('sendRMIntroEmail: Health quote is Application Pending, skipping RM Intro Email for uuid: '.$quoteUuid);
+
+            return;
+        }
+
         $dataArr = [
             'quoteUID' => $quoteUuid,
             'resend' => false,
@@ -644,8 +655,8 @@ class SendEmailCustomerService extends BaseService
             $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
             // Send Automated Followup Email Job if Health Auto-Followups is enabled.
             if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
-                $delayTime = isLeadSic($quoteUuid) ? 3 : 2;
-                OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addMinutes($delayTime));
+                $delayDays = isLeadSic($quoteUuid) ? 3 : 2;
+                OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addDays($delayDays));
                 info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
             }
         }
@@ -803,7 +814,7 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
-                    $path = $document->doc_url;
+                    $path = $document->watermarked_doc_url ?? $document->doc_url;
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $this->encodeUrl($documentURL),
@@ -974,7 +985,7 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
-                    $path = $document['doc_url'];
+                    $path = $document['watermarked_doc_url'] ?? $document['doc_url'];
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
@@ -1074,7 +1085,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendPaymentNotificationEmail($lead, $user, $totalLead)
+    public function sendPaymentNotificationEmail($lead, $user)
     {
         $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
         try {
@@ -1095,9 +1106,9 @@ class SendEmailCustomerService extends BaseService
             }
             $params = [
                 'advisor_name' => $user->name,
-                'total_leads' => $totalLead,
-                'total_premium' => $lead->total_premium ? sprintf('%.2f', $lead->total_premium) : 0,
-                'leads_expire' => $lead->total_leads ? $lead->total_leads : 0,
+                'total_leads' => $lead['total_leads'] ? $lead['total_leads'] : 0,
+                'total_premium' => $lead['total_premium'] ? sprintf('%.2f', $lead['total_premium']) : 0,
+                'leads_expire' => $lead['leads_expire'] ? $lead['leads_expire'] : 0,
                 'date' => Carbon::now()->toDateString(),
                 'paymentDoc' => $url,
             ];
@@ -1438,5 +1449,39 @@ class SendEmailCustomerService extends BaseService
         $encodedFileName = urlencode($fileName);
 
         return str_replace($fileName, $encodedFileName, $url);
+    }
+
+    public function sendApplyNowEmail($emailData, bool $sendToAdvisorOnly = false)
+    {
+        $body = [
+            'to' => [[
+                'email' => $emailData->email,
+                'name' => $emailData->customerName,
+            ]],
+            'templateId' => (int) getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_APPLY_NOW_EMAIL_TEMPLATE_ID),
+            'params' => $emailData,
+            'tags' => ['health-apply-now'],
+        ];
+
+        if (property_exists($emailData, 'advisorDetails')) {
+            if ($sendToAdvisorOnly) {
+                $body['to'] = [[
+                    'email' => $emailData->advisorDetails['email'],
+                    'name' => $emailData->advisorDetails['name'],
+                ]];
+            } else {
+                $body['replyTo'] = ['name' => $emailData->advisorDetails['name'], 'email' => $emailData->advisorDetails['email']];
+                $body['cc'] = [[
+                    'email' => $emailData->advisorDetails['email'],
+                    'name' => $emailData->advisorDetails['name'],
+                ]];
+            }
+        }
+
+        ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->email);
+
+        return $responseCode;
     }
 }
