@@ -104,8 +104,19 @@ class InslyDetailRepository extends BaseRepository
         $validateAll = $data['validateAll'];
 
         $policy = $this->where('policy_oid', $policyID)->first();
+
         $email = $policy['customer']['email'] ?? null;
+
+        if (empty($email)) {
+            return [
+                'status' => 400,
+                'message' => 'Customer email not found.',
+                'data' => '',
+            ];
+        }
+
         $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
+
         if ($inslyPolicyIssueDate) {
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
