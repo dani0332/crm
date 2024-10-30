@@ -3049,8 +3049,8 @@ const fullAddress = computed(() => {
                 </x-button>
                 <template #tooltip>
                   <span
-                    >When Activated, The button temporarily suspends the automatic
-                    sending of follow-up emails to clients</span
+                    >When Activated, The button temporarily suspends the
+                    automatic sending of follow-up emails to clients</span
                   >
                 </template>
               </x-tooltip>
@@ -3132,20 +3132,20 @@ const fullAddress = computed(() => {
               :isDisabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             />
 
-           <template v-if="!hasRole(rolesEnum.PA)">
-            <x-button
-              @click.prevent="copyLink"
-              size="sm"
-              color="emerald"
-              v-if="
-                typeof availablePlansTable.data !== 'string' &&
-                availablePlansTable.data.length > 0
-              "
-              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            >
-              Copy Link
-            </x-button>
-          </template>
+            <template v-if="!hasRole(rolesEnum.PA)">
+              <x-button
+                @click.prevent="copyLink"
+                size="sm"
+                color="emerald"
+                v-if="
+                  typeof availablePlansTable.data !== 'string' &&
+                  availablePlansTable.data.length > 0
+                "
+                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+              >
+                Copy Link
+              </x-button>
+            </template>
           </div>
           <DataTable
             table-class-name="compact"
