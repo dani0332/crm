@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -422,17 +424,6 @@ class LifeQuoteService extends BaseService
         return $query;
     }
 
-    public function updateChildRecord($id)
-    {
-        LifeQuoteRequestDetail::updateOrCreate(
-            ['life_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => auth()->id(),
-            ]
-        );
-    }
-
     public function fillModelProperties()
     {
         return [
@@ -609,10 +600,26 @@ class LifeQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
+
+            $oldAssignmentType = $lead->assignment_type;
+            $isReassignment = $lead->advisor_id != null ? true : false;
+            $previousAdvisorId = $lead->advisor_id;
+
             $lead->advisor_id = $userId;
+            $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
             $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, LifeQuoteRequestDetail::class, 'life_quote_request_id');
+
+            info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
+
+            $this->upsertManualAllocationCount($lead->advisor_id, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, QuoteTypes::LIFE->id());
+
+            $this->addOrUpdateQuoteViewCount($lead, QuoteTypes::LIFE->id(), $userId);
+            $lead->auto_assigned = false;
+
+            $lead->save();
         }
 
         return $result;

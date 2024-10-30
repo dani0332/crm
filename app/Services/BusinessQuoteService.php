@@ -623,7 +623,7 @@ class BusinessQuoteService extends BaseService
             $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
 
-            $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, BusinessQuoteRequestDetail::class);
+            $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, BusinessQuoteRequestDetail::class, 'business_quote_request_id');
 
             info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 

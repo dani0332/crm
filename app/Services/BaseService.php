@@ -426,12 +426,12 @@ class BaseService
         );
     }
 
-    public function updateDetailRecord($id, $detailModel)
+    public function updateDetailRecord($id, $detailModel, string $foreignKey)
     {
-        $childRecord = $detailModel::where('business_quote_request_id', $id)->first();
+        $childRecord = $detailModel::where($foreignKey, $id)->first();
         $oldAdvisorAssignedDate = $childRecord?->advisor_assigned_date ?? null;
 
-        $this->upsertQuoteDetail($id, $detailModel, 'business_quote_request_id');
+        $this->upsertQuoteDetail($id, $detailModel, $foreignKey);
 
         return $oldAdvisorAssignedDate;
     }
