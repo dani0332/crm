@@ -203,11 +203,11 @@ const onSubmitChanges = async () => {
         position: 'top',
       });
 
-        router.get(route('lead-allocation-dashboard', page.props.quoteType), {
-            replace: true,
-            preserveScroll: true,
-            preserveState: true,
-        });
+      router.get(route('lead-allocation-dashboard', page.props.quoteType), {
+        replace: true,
+        preserveScroll: true,
+        preserveState: true,
+      });
     })
     .finally(() => {
       loaders.submit = false;
