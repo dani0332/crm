@@ -899,6 +899,7 @@ class CentralService extends BaseService
     {
         $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_log_id', $sendUpdateId)
             ->where('current_status', $sendUpdateStatus)
+            ->orWhere('previous_status', $sendUpdateStatus)
             ->count();
 
         return $sendUpdateStatusCount > 0;

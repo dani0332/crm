@@ -355,6 +355,8 @@ final class PermissionsEnum extends Enum
     public const INPL_USER = 'inpl-user';
     public const INPL_APPROVER = 'inpl-approver';
     public const DOCUMENT_VERIFY = 'document-verify';
+    public const MANAGER_RETENTION_REPORT_VIEW = 'manager-retention-report-view';
+    public const ADVISOR_RETENTION_REPORT_VIEW = 'advisor-retention-report-view ';
     public const DEPARTMENT_CREATE = 'department-create';
     public const DEPARTMENT_UPDATE = 'department-update';
     public const DEPARTMENT_LIST = 'department-list';
@@ -379,6 +381,9 @@ final class PermissionsEnum extends Enum
     public const PET_LEAD_ALLOCATION_DASHBOARD = 'pet-lead-allocation-dashboard';
     public const LIFE_LEAD_ALLOCATION_DASHBOARD = 'life-lead-allocation-dashboard';
     public const HOME_LEAD_ALLOCATION_DASHBOARD = 'home-lead-allocation-dashboard';
+    public const SEARCH_INSURER_TAX_INVOICE_NUMBER = 'search-insurer-tax-invoice-number';
+    public const SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER = 'search-insurer-commission-tax-invoice-number';
+    public const SEND_UPDATE_EDIT_NOTES = 'send-update-edit-notes';
     public const DEPARTMENT_MANAGER = 'department-manager';
 
     public static function getAdvisorConversionReportPermissions()

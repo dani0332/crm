@@ -100,12 +100,22 @@ class InslyDetailRepository extends BaseRepository
 
     public function fetchSaveToImcrm($data)
     {
+        $email = $policy['customer']['email'] ?? null;
+
+        if (empty($email)) {
+            return [
+                'status' => 400,
+                'message' => 'Customer email not found.',
+                'data' => '',
+            ];
+        }
+
         $policyID = $data['policy_oid'];
         $validateAll = $data['validateAll'];
 
         $policy = $this->where('policy_oid', $policyID)->first();
-        $email = $policy['customer']['email'] ?? null;
         $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
+
         if ($inslyPolicyIssueDate) {
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
