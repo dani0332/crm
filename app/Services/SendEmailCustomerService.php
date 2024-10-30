@@ -1085,7 +1085,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendPaymentNotificationEmail($lead, $user, $totalLead)
+    public function sendPaymentNotificationEmail($lead, $user)
     {
         $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
         try {
@@ -1106,9 +1106,9 @@ class SendEmailCustomerService extends BaseService
             }
             $params = [
                 'advisor_name' => $user->name,
-                'total_leads' => $totalLead,
-                'total_premium' => $lead->total_premium ? sprintf('%.2f', $lead->total_premium) : 0,
-                'leads_expire' => $lead->total_leads ? $lead->total_leads : 0,
+                'total_leads' => $lead['total_leads'] ? $lead['total_leads'] : 0,
+                'total_premium' => $lead['total_premium'] ? sprintf('%.2f', $lead['total_premium']) : 0,
+                'leads_expire' => $lead['leads_expire'] ? $lead['leads_expire'] : 0,
                 'date' => Carbon::now()->toDateString(),
                 'paymentDoc' => $url,
             ];

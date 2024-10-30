@@ -627,7 +627,7 @@ class SageApiService
             info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
 
-        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+        if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);

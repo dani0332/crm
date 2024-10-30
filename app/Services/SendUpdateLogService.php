@@ -751,7 +751,7 @@ class SendUpdateLogService
                 'invoice_description' => $sendUpdateLog->invoice_description,
                 'insurer_invoice_date' => $sendUpdateLog->invoice_date,
                 'commission_vat' => abs($sendUpdateLog->vat_on_commission),
-                'total_price' => abs($sendUpdateLog->price_without_vat), // Need to verify this field
+                'total_price' => abs($sendUpdateLog->price_with_vat), // Reminder: AP CREDIT NOTE issue fix, Change price_with_vat instead of price_without_vat
                 'total_amount' => abs($sendUpdateLog->price_vat_applicable),
                 'commission' => abs($sendUpdateLog->total_commission),
                 'commission_vat_applicable' => abs($sendUpdateLog->commission_vat_applicable),
