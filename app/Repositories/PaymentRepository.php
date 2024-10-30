@@ -521,7 +521,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                                 [
                                     'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
                                     'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                                ]
+                                ],
                             );
                         }
                     } else {
@@ -537,7 +537,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             [
                                 'captured_amount' => $masterCapturedAmount,
                                 'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                            ]
+                            ],
                         );
                     }
                 }
@@ -640,12 +640,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         ) {
             info('All payments are captured. Updating Payment status to CAPTURED: '.$payment->code);
             $payment->update(
-                ['payment_status_id' => PaymentStatusEnum::CAPTURED]
+                ['payment_status_id' => PaymentStatusEnum::CAPTURED],
             );
         } elseif ($totalPaidPayments > 0) {
             info('Some payments are captured. Updating Payment status to PARTIAL_CAPTURED: '.$payment->code);
             $payment->update(
-                ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
+                ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED],
             );
         } else {
             //verify credit approved status
@@ -656,12 +656,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($totalCreditPayments > 0) {
                 info('Updating payment status to CREDIT_APPROVED for '.$payment->code);
                 $payment->update(
-                    ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
+                    ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED],
                 );
             } else {
                 info('Updating payment status to NEW for '.$payment->code);
                 $payment->update(
-                    ['payment_status_id' => PaymentStatusEnum::NEW]
+                    ['payment_status_id' => PaymentStatusEnum::NEW],
                 );
             }
         }
@@ -850,5 +850,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         return $personalCount;
+    }
+
+    public function fetchMainQuotePayment($quote)
+    {
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = $this->where('code', $quote->code)->mainLeadPayment()->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = $this->where([
+                'paymentable_id' => $quote->id, 'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->first();
+        }
+
+        return $payment;
     }
 }

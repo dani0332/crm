@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
 use App\Factories\PolicyIssuanceFactory;
+use App\Mail\PolicyIssuanceFailedNotification;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -15,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
 use Log;
 use Throwable;
 
-class PolicyIssuanceJob implements ShouldQueue , ShouldBeUnique
+class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -24,9 +25,7 @@ class PolicyIssuanceJob implements ShouldQueue , ShouldBeUnique
     // 28 is the cURL error code for timeout
     private $className = null;
     private mixed $process;
-
     public $uniqueFor = 60 * 15; // 15 minutes
-
 
     /**
      * Create a new job instance.
@@ -64,6 +63,7 @@ class PolicyIssuanceJob implements ShouldQueue , ShouldBeUnique
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
                 if (! $response['status']) {
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
+                    /*PolicyIssuanceFailedNotification::dispatch($this->process);*/
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
                 } else {
                     $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
@@ -89,6 +89,7 @@ class PolicyIssuanceJob implements ShouldQueue , ShouldBeUnique
         } else {
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         }
+        /*PolicyIssuanceFailedNotification::dispatch($this->process);*/
         Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
     }
 
@@ -97,13 +98,14 @@ class PolicyIssuanceJob implements ShouldQueue , ShouldBeUnique
         return [(new WithoutOverlapping($this->process->model->code.'-'.Carbon::now()->format('YmdHi')))->dontRelease()];
     }
 
+    public function uniqueId(): string
+    {
+        return $this->process->model->code;
+    }
+
     private function isProcessable($process)
     {
         return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
     }
 
-    public function uniqueId(): string
-    {
-        return $this->process->model->code;
-    }
 }
