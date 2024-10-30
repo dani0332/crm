@@ -364,6 +364,7 @@ onMounted(() => {
           :href="url"
           @click.prevent="setUrl(advisor_id, filters.statusId)"
           class="text-black underline"
+          style="cursor: pointer"
         >
           {{ advisor_name }}
         </a>

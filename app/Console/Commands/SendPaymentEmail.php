@@ -50,9 +50,9 @@ class SendPaymentEmail extends Command
      */
     public function handle()
     {
-        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION)->first();
+        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL)->first();
         if ($emailEnable && $emailEnable->value == 0) {
-            info('Payment Email is Disable');
+            info('ENABLE_PAYMENT_NOTIFICATION_EMAIL is Disable');
 
             return false;
         }
@@ -61,75 +61,49 @@ class SendPaymentEmail extends Command
 
         foreach ($userIds as $userId) {
             $user = User::find($userId);
-
             if (! isset($user)) {
-                info('User Not Found In Session');
+                info('User Not Found');
 
                 continue;
             }
 
-            $role = null;
-            $table = null;
-            $quoteTypeId = null;
+            $rolesData = [
+                RolesEnum::CarManager => ['role' => 'Car', 'table' => 'car_quote_request'],
+                RolesEnum::BusinessManager, RolesEnum::CorplineManager => ['role' => 'Business', 'table' => 'business_quote_request'],
+                RolesEnum::HealthManager => ['role' => 'Health', 'table' => 'health_quote_request'],
+                RolesEnum::TravelManager => ['role' => 'Travel', 'table' => 'travel_quote_request'],
+                RolesEnum::HomeManager => ['role' => 'Home', 'table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Home],
+                RolesEnum::PetManager => ['role' => 'Pet', 'table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Pet],
+                RolesEnum::YachtManager => ['role' => 'Yacht', 'table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Yacht],
+                RolesEnum::LifeManager => ['role' => 'Life', 'table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Life],
+                RolesEnum::BikeManager => ['role' => 'Bike', 'table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],
+                RolesEnum::CycleManager => ['role' => 'Cycle', 'table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Cycle],
+                RolesEnum::JetskiManager => ['role' => 'Jetski', 'table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Jetski],
+            ];
 
-            switch ($user) {
-                case $user->hasRole(RolesEnum::CarManager):
-                    $role = 'Car';
-                    $table = 'car_quote_request';
-                    break;
-                case $user->hasRole(RolesEnum::BusinessManager) || $user->hasRole(RolesEnum::CorplineManager) :
-                    $role = 'Business';
-                    $table = 'business_quote_request';
-                    break;
-                case $user->hasRole(RolesEnum::HealthManager):
-                    $role = 'Health';
-                    $table = 'health_quote_request';
-                    break;
-                case $user->hasRole(RolesEnum::TravelManager):
-                    $role = 'Travel';
-                    $table = 'travel_quote_request';
-                    break;
-                case $user->hasRole(RolesEnum::HomeManager):
-                    $role = 'Home';
-                    $table = 'personal_quotes';
-                    $quoteTypeId = QuoteTypeId::Home;
-                    break;
-                case $user->hasRole(RolesEnum::PetManager):
-                    $role = 'Pet';
-                    $table = 'personal_quotes';
-                    $quoteTypeId = QuoteTypeId::Pet;
-                    break;
-                case $user->hasRole(RolesEnum::YachtManager):
-                    $role = 'Yacht';
-                    $table = 'personal_quotes';
-                    $quoteTypeId = QuoteTypeId::Yacht;
-                    break;
-                case $user->hasRole(RolesEnum::LifeManager):
-                    $role = 'Life';
-                    $table = 'personal_quotes';
-                    $quoteTypeId = QuoteTypeId::Life;
-                    break;
-                case $user->hasRole(RolesEnum::BikeManager):
-                    $role = 'Bike';
-                    $table = 'personal_quotes';
-                    $quoteTypeId = QuoteTypeId::Bike;
-                    break;
-                case $user->hasRole(RolesEnum::CycleManager):
-                    $role = 'Cycle';
-                    $table = 'personal_quotes';
-                    $quoteTypeId = QuoteTypeId::Cycle;
-                    break;
-                case $user->hasRole(RolesEnum::JetskiManager):
-                    $role = 'Jetski';
-                    $table = 'personal_quotes';
-                    $quoteTypeId = QuoteTypeId::Jetski;
-                    break;
-                default:
-                    info('User has no valid role');
-                    break;
+            $notificationsData = [];
+            foreach ($rolesData as $roleKey => $roleData) {
+                if ($user->hasRole($roleKey)) {
+                    $role = $roleData['role'];
+                    $table = $roleData['table'];
+                    $quoteTypeId = $roleData['quoteTypeId'] ?? null;
+
+                    $data = $this->getPaymentNotificationData($role, $user, $table, $quoteTypeId);
+                    if ($data) {
+                        $notificationsData = array_merge($notificationsData, $data);
+                    }
+                }
             }
 
-            $this->getPaymentNotificationData($role, $user, $table, $quoteTypeId);
+            if (! empty($notificationsData)) {
+                $lead = [
+                    'leads_expire' => array_sum(array_column($notificationsData, 'total_leads')),
+                    'total_premium' => array_sum(array_column($notificationsData, 'total_premium')),
+                    'total_leads' => $notificationsData[0]['total_authorized_leads'] ?? 0,
+                ];
+                info("Dispatching PaymentNotification Job For User {$user->email}");
+                PaymentNotificationEmailJob::dispatch($lead, $user);
+            }
         }
     }
 
@@ -171,7 +145,7 @@ class SendPaymentEmail extends Command
             ->join('users', 'users.id', '=', $table.'.advisor_id')
             ->join('user_team', 'user_team.user_id', '=', 'users.id')
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
-            ->where($table.'.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->whereIn('teams.name', $teamName)
             ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId, $table) {
                 return $query->where($table.'.quote_type_id', $quoteTypeId);
@@ -180,12 +154,19 @@ class SendPaymentEmail extends Command
             ->having('expiry_days', '=', 1)
             ->orderBy('py.id');
 
-        $query->chunk(500, function ($leads) use ($role, $user, $totalLead) {
+        $data = [];
+        $query->chunk(500, function ($leads) use (&$data, $role, $totalLead) {
             foreach ($leads as $lead) {
-                info("PaymentNotification Job Dispatch For User {$role} and User Email {$user->email}");
-                PaymentNotificationEmailJob::dispatch($lead, $user, $totalLead);
+                $data[] = [
+                    'role' => $role,
+                    'total_leads' => $lead->total_leads,
+                    'total_premium' => $lead->total_premium,
+                    'expiry_days' => $lead->expiry_days,
+                    'total_authorized_leads' => $totalLead,
+                ];
             }
         });
-    }
 
+        return $data;
+    }
 }

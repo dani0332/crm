@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\AddBatchNumber::class,
+        Commands\AddBatchNumberNonMotors::class,
         Commands\Dtt::class,
         Commands\DttFollowUp::class,
         Commands\TierAssignment::class,
@@ -75,6 +76,9 @@ class Kernel extends ConsoleKernel
 
         $schedule
             ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping();
+
+        $schedule
+            ->command('AddBatchNumberNonMotors:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
