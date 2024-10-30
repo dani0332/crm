@@ -509,6 +509,7 @@ class SendEmailCustomerService extends BaseService
         $quoteId = match ($quoteType) {
             QuoteTypes::CAR => $emailData->carQuoteId,
             QuoteTypes::TRAVEL => $emailData->travelQuoteId,
+            QuoteTypes::BIKE => $emailData->bikeQuoteId,
             default => $emailData->quoteId,
         };
 
@@ -566,7 +567,9 @@ class SendEmailCustomerService extends BaseService
                 $body['cc'] = $this->getAdditionalEmails(getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_EMAIL_CC));
                 $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO), 'name' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_DISPLAY_NAME)];
             }
-
+            if($quoteType  === QuoteTypes::BIKE){
+                $body['replyTo'] = ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail];
+            }
             // Conditionally add 'sender' key if advisorName and $advisorCustomEmail are not null
             if ($emailData->advisorName !== null && $advisorCustomEmail !== null) {
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
