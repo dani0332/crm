@@ -18,6 +18,16 @@ class RolePermissionSeeder extends Seeder
     public function run(): void
     {
         try {
+            $exportRMLeadPermission = Permission::where('name', PermissionsEnum::EXPORT_RM_LEADS)->first();
+            if (! $exportRMLeadPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::EXPORT_RM_LEADS,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             $exportPUAUpdatePermission = Permission::where('name', PermissionsEnum::EXPORT_CAR_PUA_UPDATES)->first();
             if (! $exportPUAUpdatePermission) {
                 Permission::create([

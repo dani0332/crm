@@ -25,7 +25,7 @@ const loader = ref(false);
 const tableHeaders = reactive([
   {
     text: 'Created At',
-    value: '_id',
+    value: 'id',
   },
   {
     text: 'View',

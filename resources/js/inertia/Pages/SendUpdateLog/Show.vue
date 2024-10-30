@@ -60,6 +60,10 @@ const transactionType = computed(() => {
     ].includes(props.sendUpdateLog.category.code)
   ) {
     return 'Endorsement';
+  } else if (
+    props.sendUpdateLog.option.code === props.sendUpdateStatusEnum.ATICB
+  ) {
+    return page.props.parentText;
   }
 
   return null;
@@ -110,8 +114,11 @@ onMounted(() => {
   state.redirectURL = params.get('refURL');
 });
 
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 const onEdit = () => {
-  if (isUpdateBooked.value) {
+  if (isUpdateBooked.value && !can(permissionsEnum.SEND_UPDATE_EDIT_NOTES)) {
     notification.error({
       title: 'Update already booked',
       position: 'top',
@@ -274,7 +281,11 @@ onBeforeMount(() => {
                   v-model="sendUpdateForm.notes"
                   size="xs"
                   :disabled="!state.edit"
+                  maxlength="250"
                 />
+                <p class="text-xs text-right" v-if="state.edit">
+                  {{ sendUpdateForm.notes.length }} / 250
+                </p>
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
@@ -300,7 +311,7 @@ onBeforeMount(() => {
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ transactionType || page.props.parentText || '' }}</dd>
+                <dd>{{ transactionType || '' }}</dd>
               </template>
             </div>
             <div class="grid md:grid-cols-2 gap-y-4">
