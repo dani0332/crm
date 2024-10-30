@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -150,6 +151,7 @@ class SendPaymentEmail extends Command
             ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId, $table) {
                 return $query->where($table.'.quote_type_id', $quoteTypeId);
             })
+            ->where($table.'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT)
             ->groupBy('expiry_days')
             ->having('expiry_days', '=', 1)
             ->orderBy('py.id');
