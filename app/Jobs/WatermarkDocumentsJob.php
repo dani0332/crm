@@ -35,6 +35,7 @@ class WatermarkDocumentsJob implements ShouldQueue
      */
     public function handle()
     {
+        info("watermark job started");
         $quoteDocument = QuoteDocument::find($this->quoteDocumentId);
         $documentType = DocumentType::find($this->documentTypeId);
 
@@ -46,6 +47,9 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         // Get the file content
         $fileContent = Storage::disk('temp')->get($this->tempFilePath);
+
+        info(file_exists(storage_path('temp/'. $this->tempFilePath)) ? 'After Job File exists' : 'After Job File not exists');
+
 
         // Perform watermarking based on file type
         $watermarkService = app()->make(QuoteDocumentService::class);
@@ -65,5 +69,6 @@ class WatermarkDocumentsJob implements ShouldQueue
             'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
             'watermarked_doc_url' => $watermarkData['watermarked_doc_url'] ?? null,
         ]);
+        info("watermark job completed");
     }
 }

@@ -169,9 +169,12 @@ class PersonalQuoteRepository extends BaseRepository
                         {
                             $tempFilePath = storage_path('temp/' .$docName);
                             shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$tempFilePath $file");
+                            info('PDF file moved to temp folder  '.$tempFilePath);
                         } else {
                             $tempFilePath = $file->move(storage_path('temp'), $docName)->getPathname();
+                            info('Other files moved to temp folder  '.$tempFilePath);
                         }
+                        info(file_exists($tempFilePath) ? 'Befor Job File exists' : 'Before Job File not exists');
                         WatermarkDocumentsJob::dispatch(
                             $quoteDocument->id, basename($tempFilePath), $data['quote_uuid'], $documentType->id
                         );
