@@ -59,8 +59,8 @@ class TravelQuoteService extends BaseService
             'tqr.previous_quote_id',
             'tqr.first_name',
             'tqr.last_name',
-            'tqr.email',
-            'tqr.mobile_no',
+            // 'tqr.email',
+            // 'tqr.mobile_no',
             DB::raw('DATE_FORMAT(tqr.dob, "%d-%m-%Y") as dob'),
             'tqr.premium',
             'tqr.paid_at',
@@ -242,9 +242,9 @@ class TravelQuoteService extends BaseService
 
             return $response;
         }
-        info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
+        // info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
-        info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
+        // info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
@@ -563,7 +563,7 @@ class TravelQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('tqr.uuid', $id)->first();
+        return $this->query->addSelect(['tqr.email', 'tqr.mobile_no'])->where('tqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
