@@ -1,43 +1,46 @@
 <?php
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\EmbeddedProductEnum;
-use App\Enums\IMCRMSearchTypesEnum;
+use Carbon\Carbon;
+use App\Models\Team;
+use App\Models\User;
+use App\Enums\RolesEnum;
+use App\Models\CarQuote;
+use App\Models\QuoteTag;
+use App\Enums\QuoteTypes;
 use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\HealthQuote;
+use App\Models\TravelQuote;
+use Illuminate\Support\Str;
+use App\Enums\quoteTypeCode;
+use Illuminate\Http\Request;
+use App\Models\BusinessQuote;
+use App\Models\PersonalQuote;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Models\ApplicationStorage;
-use App\Models\BusinessQuote;
-use App\Models\CarQuote;
-use App\Models\CustomerAdditionalInfo;
+use App\Enums\CustomerTypeEnum;
 use App\Models\CustomerMembers;
-use App\Models\EmbeddedTransaction;
-use App\Models\HealthQuote;
-use App\Models\PersonalQuote;
-use App\Models\QuoteAdditionalDetail;
-use App\Models\QuoteTag;
-use App\Models\Team;
-use App\Models\TravelQuote;
-use App\Models\User;
 use App\Services\CentralService;
-use App\Services\HealthQuoteService;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\Query\JoinClause;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
+use App\Models\InsuranceProvider;
+use App\Enums\EmbeddedProductEnum;
+use App\Models\ApplicationStorage;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
+use App\Enums\IMCRMSearchTypesEnum;
+use App\Models\EmbeddedTransaction;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use App\Enums\WatermarkDocTypesEnum;
+use App\Services\HealthQuoteService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use App\Enums\InsuranceProvidersEnum;
+use App\Models\QuoteAdditionalDetail;
+use Illuminate\Support\Facades\Cache;
+use App\Enums\ApplicationStorageEnums;
+use App\Models\CustomerAdditionalInfo;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 if (! function_exists('generate_code')) {
     /**
@@ -1494,5 +1497,18 @@ if (! function_exists('getInsuranceProvider')) {
         }
 
         return $insuranceProvider;
+    }
+}
+
+if (! function_exists('getWatermarkProperty')) {
+    function getWatermarkProperty($quote, $documentType)
+    {
+        $ip = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->select('id')->first();
+
+        if ($quote->insurance_provider_id !== $ip->id && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
+            return true;
+        }
+
+        return false;
     }
 }
