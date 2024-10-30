@@ -42,7 +42,7 @@ Once you have doppler CLI installed on your local machine, run the following com
 - `composer serve` This will initiate the local server on your machine using th doppler env variables.
 - `doppler run -- php artisan <any command>` will run the laravel commands using your doppler configured profile.
 
-**Assets Configuration**
+**Assets Configuration** 
 
 This repository use Laravel Vite to build assets like CSS and JavaScript, use the following commands once modifying these files. Yarn will be our default package manager.
 
