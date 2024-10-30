@@ -131,6 +131,7 @@ class UpdatePolicyDetailRequest extends FormRequest
                 }
             }
 
+            $isExists->select('id')->limit(1);
             if ($isExists->exists()) {
                 // Add an error to the validator if a matching policy is found
                 $validator->errors()->add('quote_policy_number', 'Policy number already exists for this line of business with the same expiry date.');
