@@ -62,6 +62,8 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  insurer_tax_number: '',
+  insurer_commmission_invoice_number: '',
 });
 
 const loader = reactive({
@@ -226,7 +228,11 @@ const permissionsEnum = page.props.permissionsEnum;
 const onExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'life');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Life'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 
 watch(
@@ -533,6 +539,26 @@ watch(
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_number"
+          type="text"
+          name="insurer_tax_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commmission_invoice_number"
+          type="text"
+          name="insurer_commmission_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
         />
       </div>
 

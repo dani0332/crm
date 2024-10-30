@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\URL;
 
 class JetskiQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -125,6 +128,8 @@ class JetskiQuoteRepository extends BaseRepository
         if (request()->sortBy) {
             $query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
         }
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
