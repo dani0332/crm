@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 
@@ -638,10 +639,14 @@ const plansTable = reactive({
       text: 'Provider Name',
       value: 'providerName',
       sortable: true,
+      fixed: true,
+      width: 400,
     },
     {
       text: 'Plan Name',
       value: 'name',
+      fixed: true,
+      width: 100,
     },
     {
       text: 'Plan Type',
@@ -655,24 +660,25 @@ const plansTable = reactive({
     {
       text: 'CO-PAY/CO-INSURANCE',
       value: 'copayName',
-      width: 100,
+      width: 230,
     },
     {
       text: 'Price',
       value: 'actualPremium',
       sortable: true,
     },
-    {
-      text: 'Basmah',
-      value: 'basmah',
-    },
-    {
-      text: 'Policy Fee (if applicable)',
-      value: 'policyFee',
-    },
+    // {
+    //   text: 'Basmah',
+    //   value: 'basmah',
+    // },
+    // {
+    //   text: 'Policy Fee (if applicable)',
+    //   value: 'policyFee',
+    // },
     {
       text: 'Total Indicative Price (with VAT)',
       value: 'total',
+      width: 20,
     },
     {
       text: 'Action',
@@ -705,6 +711,7 @@ const onLoadAvailablePlansData = async () => {
         let plans = plansTable.data.filter(x => x.id == selectedPlan.value?.id);
         selectedPlan.value = { ...plans[0] };
       }
+
       setTimeout(() => {
         onPlanFiltersSubmit();
       }, 800);
@@ -882,6 +889,24 @@ watchEffect(() => {
   listQuotePlansFiltered.value = plansTable.data
     .slice()
     .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+
+  const matchingIndex = listQuotePlansFiltered.value.findIndex(
+    x => x.id === selectedProviderPlan.value?.id,
+  );
+
+  if (matchingIndex > 0) {
+    [
+      listQuotePlansFiltered.value[0],
+      listQuotePlansFiltered.value[matchingIndex],
+    ] = [
+      listQuotePlansFiltered.value[matchingIndex],
+      listQuotePlansFiltered.value[0],
+    ];
+  }
+});
+
+const computedListQuotePlans = computed(() => {
+  return listQuotePlansFiltered.value;
 });
 
 const onPlanFiltersSubmit = () => {
@@ -937,6 +962,8 @@ const onPlanFiltersSubmit = () => {
   if (planDataTable.value) {
     planDataTable.value.updatePage(1);
   }
+
+  // sortPlans();
 };
 
 const onPlanFiltersReset = () => {
@@ -3283,12 +3310,12 @@ const onAddUpdate = () => {
               hide-rows-per-page
               :rows-per-page="15"
               class="flex-wrap"
-              :sort-by="'actualPremium'"
-              :sort-type="'asc'"
               :hide-footer="listQuotePlansFiltered.length < 15"
             >
               <template #item-copayName="item">
-                <span class="copay-max">{{ item.copayName }}</span>
+                <p class="copay-max">
+                  {{ item.copayName }}
+                </p>
               </template>
 
               <template #item-planTypeId="item">

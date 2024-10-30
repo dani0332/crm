@@ -731,6 +731,16 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                   }}
                 </dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ICP Fee</dt>
+                <dd>
+                  {{
+                    props.plan?.icpFee
+                      ? Number(props.plan?.icpFee).toFixed(2)?.toLocaleString()
+                      : '0.00'
+                  }}
+                </dd>
+              </div>
               <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Total (exclusive of VAT)</dt>
               <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
