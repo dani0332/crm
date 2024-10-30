@@ -199,7 +199,7 @@ const onDeleteConfirmation = () => {
     preserveScroll: true,
     onSuccess: () => {
       modals.activityConfirm = false;
-      notification.error({
+      notification.success({
         title: 'Activity Deleted',
         position: 'top',
       });

@@ -79,7 +79,7 @@ class ActivityController extends Controller
      */
     public function destroy($id)
     {
-        $activity = ActivityRepository::findOrFail($id);
+        $activity = ActivityRepository::where('id', $id)->whereNotNull('user_id');
         $activity->delete();
 
         return back()->with('message', 'Activity status updated successfully');
