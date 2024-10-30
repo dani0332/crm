@@ -182,8 +182,7 @@ const bpForm = useForm({
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
   insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
   insurer_commmission_invoice_number:
-    page.props?.payments[0]?.insurer_commmission_invoice_number ||
-    binAsInsurerCommissionTaxInvoiceNumber(),
+    page.props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_vat_not_applicable:
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
@@ -769,10 +768,7 @@ onMounted(() => {
                     v-model="bpForm.insurer_commmission_invoice_number"
                     placeholder="Insurer Commission Tax Invoice Number"
                     class="w-full"
-                    :disabled="
-                      !bp.isEditing ||
-                      isNonSelfBillingEnabledForInsuranceProvider
-                    "
+                    :disabled="!bp.isEditing"
                     :rules="[isRequired]"
                   />
                 </dd>
