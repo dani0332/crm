@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -395,17 +397,6 @@ class HomeQuoteService extends BaseService
         return HomeQuote::orderBy('created_at', 'desc')->get();
     }
 
-    public function updateChildRecord($id)
-    {
-        HomeQuoteRequestDetail::updateOrCreate(
-            ['home_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
-    }
-
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('home_quote_request as hqr')
@@ -691,11 +682,26 @@ class HomeQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
+
+            $oldAssignmentType = $lead->assignment_type;
+            $isReassignment = $lead->advisor_id != null ? true : false;
+            $previousAdvisorId = $lead->advisor_id;
+
             $lead->advisor_id = $userId;
+            $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
             $lead->quote_batch_id = $quoteBatch->id;
             $lead->save();
-            // TODO: needs validation similar to Health
-            $this->updateChildRecord($lead->id);
+
+            $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, HomeQuoteRequestDetail::class, 'home_quote_request_id');
+
+            info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
+
+            $this->upsertManualAllocationCount($lead->advisor_id, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, QuoteTypes::HOME->id());
+
+            $this->addOrUpdateQuoteViewCount($lead, QuoteTypes::HOME->id(), $userId);
+            $lead->auto_assigned = false;
+
+            $lead->save();
         }
 
         return $result;
