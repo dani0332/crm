@@ -181,7 +181,7 @@ const onIncludeUnassignedLeadsChange = () => {
     return;
   }
 
-  filters.createdAtDate = filters.startEndDate ? filters.startEndDate : '' ;
+  filters.createdAtDate = filters.startEndDate ? filters.startEndDate : '';
 };
 
 const filters = reactive({
