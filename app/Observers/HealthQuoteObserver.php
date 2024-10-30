@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\HealthQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
@@ -37,6 +38,15 @@ class HealthQuoteObserver
     {
         $dirty = $healthQuote->getDirty();
 
+        if ($healthQuote->isDirty('advisor_id')) {
+            info(self::class." - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
+                'current_advisor_id' => $healthQuote->advisor_id,
+                'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),
+            ]);
+            HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
+            $healthQuote->markLeadAllocationPassed();
+        }
+
         if (
             $healthQuote->isDirty('quote_status_id')
         ) {
@@ -64,14 +74,10 @@ class HealthQuoteObserver
             $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
         }
 
-        if ($healthQuote->isDirty('advisor_id')) {
-            $healthQuote->markLeadAllocationPassed();
-        }
-
         $this->syncQuote($healthQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($healthQuote->uuid);
+            $this->updatePersonalQuote($healthQuote->uuid, QuoteTypeId::Health, $dirty);
         }
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::Qualified && $healthQuote->advisor_id) {
@@ -95,7 +101,7 @@ class HealthQuoteObserver
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::HEALTH->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
 
         }
     }

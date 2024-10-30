@@ -1,5 +1,6 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import axios from 'axios';
 
 window.Pusher.logToConsole = true;
 const options = {
@@ -14,3 +15,9 @@ const options = {
   disableStats: false,
 };
 window.Echo = new Echo({ ...options });
+
+window.axios = axios;
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+window.axios.defaults.headers.common['X-CSRF-TOKEN'] = document
+  .querySelector('meta[name="csrf-token"]')
+  .getAttribute('content');

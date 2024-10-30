@@ -41,7 +41,7 @@ class LifeQuoteObserver
         $this->syncQuote($lifeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($lifeQuote->uuid);
+            $this->updatePersonalQuote($lifeQuote->uuid, QuoteTypeId::Life, $dirty);
         }
 
         if (
@@ -61,7 +61,7 @@ class LifeQuoteObserver
             $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::LIFE->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
 
         }
     }

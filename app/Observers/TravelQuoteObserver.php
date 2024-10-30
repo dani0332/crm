@@ -59,7 +59,7 @@ class TravelQuoteObserver
         $this->syncQuote($travelQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($travelQuote->uuid);
+            $this->updatePersonalQuote($travelQuote->uuid, QuoteTypeId::Travel, $dirty);
         }
 
         if (
@@ -79,7 +79,7 @@ class TravelQuoteObserver
             $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::TRAVEL->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
 
         }
     }

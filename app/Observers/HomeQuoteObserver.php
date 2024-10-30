@@ -49,7 +49,7 @@ class HomeQuoteObserver
         $this->syncQuote($homeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $homeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($homeQuote->uuid);
+            $this->updatePersonalQuote($homeQuote->uuid, QuoteTypeId::Home, $dirty);
         }
 
         if (
@@ -69,7 +69,7 @@ class HomeQuoteObserver
             $homeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $homeQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::HOME->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($homeQuote, $payment, QuoteTypes::HOME->value);
 
         }
     }
