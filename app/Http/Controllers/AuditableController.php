@@ -80,15 +80,14 @@ class AuditableController extends Controller
 
         $quoteUuid = $request->auditableType::where('id', $request->auditableId)->value('uuid');
 
-   
+
         if ($auditableType == TravelQuote::class) {
-            $query = TravelInsurerRequestResponses::query();
+            $query = TravelInsurerRequestResponses::with('insuranceProvider');
         } else {
             $query = InsurerRequestResponse::with('insuranceProvider');
         }
-
-        $query->where('insurer_request_response.quote_uuid', $quoteUuid)
-            ->orderByDesc('insurer_request_response.created_at');
+        $query->select('*')->where('quote_uuid', $quoteUuid)
+            ->orderByDesc('created_at');
 
         if ($request->insurance_provider) {
             $query->where('insurer_request_response.provider_id', $request->insurance_provider);
