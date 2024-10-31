@@ -98,7 +98,7 @@ class CarQuoteObserver
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $lead->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::CAR->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
         }
     }
 }

@@ -10,6 +10,7 @@ const page = usePage();
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const cleanObj = obj => useCleanObj(obj);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -26,6 +27,11 @@ const rules = {
     return true;
   },
 };
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
+});
 
 const role = [rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.LifeManager];
 const roleLeadPool = [rolesEnum.LeadPool];
@@ -56,6 +62,8 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  insurer_tax_number: '',
+  insurer_commmission_invoice_number: '',
 });
 
 const loader = reactive({
@@ -95,6 +103,11 @@ const tableHeader = reactive([
     is_active: true,
   },
   {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
+  {
     text: 'Renewal Batch',
     value: 'renewal_batch',
     is_active: true,
@@ -126,10 +139,13 @@ function filterQuotes(isValid) {
       delete filters[key];
     }
   }
+
+  serverOptions.value.page = 1;
   router.visit(route('life-quotes-list'), {
     method: 'get',
     data: {
       ...filters,
+      ...serverOptions.value,
     },
     preserveState: true,
     preserveScroll: true,
@@ -212,7 +228,11 @@ const permissionsEnum = page.props.permissionsEnum;
 const onExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'life');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Life'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 
 watch(
@@ -278,6 +298,23 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   setQueryFilters();
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
@@ -332,6 +369,14 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) filterQuotes(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -495,6 +540,26 @@ const validateDateRange = () => {
           multi-calendars
           multi-calendars-solo
         />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_number"
+          type="text"
+          name="insurer_tax_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commmission_invoice_number"
+          type="text"
+          name="insurer_commmission_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
 
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -565,6 +630,7 @@ const validateDateRange = () => {
 
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"

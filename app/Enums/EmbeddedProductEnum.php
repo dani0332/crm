@@ -17,7 +17,7 @@ final class EmbeddedProductEnum extends Enum
     const MDX = 'MDX';
 
     // used in report for source
-    const SRC_CAR_EMBEDDED_PRODUCT = 'CAR EMBEDDED PRODUCT';
+    const SRC_CAR_EMBEDDED_PRODUCT = 'CAR_EMBEDDED_PRODUCT';
 
     public static function getAlfredProtectCodes(): array
     {
