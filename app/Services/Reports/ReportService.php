@@ -650,7 +650,7 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     'quote_status_id',
                     DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
-                    DB::raw('SUM(DISTINCT '.$premiumColumn.') as total_premium'),
+                    DB::raw('SUM('.$premiumColumn.') as total_premium'),
                     DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                     DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days")
                 )
