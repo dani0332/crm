@@ -34,6 +34,8 @@ const sortBy = ref('net_conversion');
 const sortType = ref('desc');
 const showTable = ref(true);
 let showUnassignedLeads = ref(false);
+let unassignedDate = ref([]);
+let initialAsAtDate = ref('');
 
 const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
@@ -106,6 +108,10 @@ const updateTableHeaders = () => {
   const filterCondition = filters.displayBy ?? null;
   if (filterCondition && filterCondition.length > 0) {
     let condition = displayByActive.value ? 1 : 0;
+    // check if at 0 index text is empty then remove it
+    if (tableHeader.value[0].text === '') {
+      tableHeader.value.splice(0, 1);
+    }
     tableHeader.value.splice(0, condition, {
       text: filterCondition
         .split('_')
@@ -119,6 +125,32 @@ const updateTableHeaders = () => {
     tableHeader.value.splice(0, 1);
     displayByActive.value = false;
   }
+  checkAndAddExtraEmptyColumn();
+};
+
+const checkAndAddExtraEmptyColumn = () => {
+  const filterCondition = filters.displayBy ?? null;
+
+  if (
+    (!filterCondition || !filterCondition.length) &&
+    filters.includeUnassignedLeads == 'yes' &&
+    tableHeader.value[0].text != ''
+  ) {
+    tableHeader.value.splice(0, 0, {
+      text: '',
+      value: '',
+    });
+  }
+};
+
+const formatDate = dateString => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
 };
 
 function calculateTotalNetConversion(data) {
@@ -216,6 +248,8 @@ function onSubmit(isValid) {
         loaders.table = true;
       },
       onFinish: () => {
+        unassignedDate = filters.createdAtDate ?? [];
+        initialAsAtDate = filters.asAtDate ?? '';
         updateShowUnassignedLeads();
         loaders.table = false;
         showTable.value = false;
@@ -339,6 +373,8 @@ const minDate = computed(() => {
 });
 
 onMounted(() => {
+  unassignedDate = props.createdAtDate ?? [];
+  checkAndAddExtraEmptyColumn();
   updateShowUnassignedLeads();
   document.querySelectorAll('[title]').forEach(element => {
     element.removeAttribute('title');
@@ -489,22 +525,22 @@ onMounted(() => {
       </template>
       <template #body-append>
         <tr v-if="showUnassignedLeads">
-          <td class="direction-left">Unassigned</td>
-          <td></td>
-          <td></td>
-          <td v-if="displayByActive"></td>
+          <td class="direction-left">Unassigned Leads</td>
+          <td>{{ formatDate(unassignedDate[0]) }}</td>
+          <td>{{ formatDate(unassignedDate[1]) }}</td>
+          <td>{{ formatDate(initialAsAtDate) }}</td>
           <td class="direction-center">
             {{ props.unassignedLeadsCount }}
           </td>
           <td class="direction-center">0</td>
-          <td class="direction-center">NaN</td>
-          <td class="direction-center">NaN</td>
+          <td class="direction-center">0</td>
+          <td class="direction-center">0</td>
         </tr>
         <tr v-if="reportData && reportData?.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td></td>
           <td></td>
-          <td v-if="displayByActive"></td>
+          <td v-if="showUnassignedLeads || displayByActive"></td>
           <td class="direction-center">
             {{ calculateTotalLeads(reportData) }}
           </td>
