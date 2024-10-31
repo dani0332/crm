@@ -877,7 +877,7 @@ class CentralService
     {
         $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_log_id', $sendUpdateId)
             ->where('current_status', $sendUpdateStatus)
-            ->orWhere('previous_status', $sendUpdateStatus)
+//            ->orWhere('previous_status', $sendUpdateStatus) // TODO:: Need to discuss with Mirza why this added? it's by passing the Transaction approval status
             ->count();
 
         return $sendUpdateStatusCount > 0;
