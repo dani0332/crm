@@ -99,6 +99,8 @@ const filters = reactive({
   advisors: [],
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_date: '',
+  advisor_assigned_date: '',
 });
 
 provide('filters', filters);
@@ -407,6 +409,21 @@ const validateDateRange = () => {
           label="Policy Number"
           class="w-full"
           placeholder="Policy Number"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.YachtManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

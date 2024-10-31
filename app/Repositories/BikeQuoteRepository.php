@@ -213,7 +213,8 @@ class BikeQuoteRepository extends BaseRepository
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
-        $this->orderBy('personal_quotes.created_at', 'desc');
+
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
