@@ -336,7 +336,7 @@ onMounted(() => {
     <DataTable
       table-class-name="compact"
       :headers="tableHeader"
-      :items="$page.props.data || []"
+      :items="props.data || []"
       :sort-by="'userName'"
       :sort-type="'asc'"
       :rows-per-page="999"
