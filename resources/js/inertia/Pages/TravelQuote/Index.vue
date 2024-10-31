@@ -56,6 +56,7 @@ const filters = reactive({
   transaction_approved_dates: page.props.transaction_approved_dates || '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  insurer_api_status: '',
 });
 
 const loader = reactive({
@@ -107,6 +108,14 @@ const paymentStatusOptions = computed(() => {
     return {
       value: item.id,
       label: item.text,
+    };
+  });
+});
+const insurerApiStatus = computed(() => {
+  return page.props.insurerApiStatus.map(item => {
+    return {
+      value: item,
+      label: item,
     };
   });
 });
@@ -634,6 +643,13 @@ const formatDate = date => {
           label="Insurer Commission Tax Invoice No"
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
+        />
+        <ComboBox
+          label="Insurer API Status"
+          v-model="filters.insurer_api_status"
+          placeholder="Select Status"
+          :options="insurerApiStatus"
+          class="w-full"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

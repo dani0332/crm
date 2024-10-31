@@ -106,6 +106,7 @@ class TravelQuoteService extends BaseService
             'tqr.parent_duplicate_quote_id',
             'tqr.has_arrived_destination',
             'tqr.has_arrived_uae',
+            'tqr.insurer_api_status',
             'start_date',
             'end_date',
             'direction_code',
@@ -404,6 +405,9 @@ class TravelQuoteService extends BaseService
         }
         if (isset($request->policy_number) && $request->policy_number != '') {
             $this->query->where('tqr.policy_number', $request->policy_number);
+        }
+        if (isset($request->insurer_api_status) && $request->insurer_api_status != '') {
+            $this->query->whereIn('tqr.insurer_api_status', $request->insurer_api_status);
         }
         if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
             // if user has advisor Role then fetch leads assigned to the user only

@@ -17,6 +17,7 @@ class PolicyIssuanceLog extends Model
         'endPoint',
         'payload',
         'response',
+        'status',
         'created_at',
         'updated_at',
     ];

@@ -23,7 +23,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     private const TIMEOUT_MESSAGE = 'cURL error 28';
 
     // 28 is the cURL error code for timeout
-    private $className = null;
+    private $className = 'policyIssuanceJob';
     private mixed $process;
     public $uniqueFor = 60 * 15; // 15 minutes
 
@@ -33,7 +33,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function __construct($process)
     {
         $this->process = $process;
-        $this->className = basename(__CLASS__);
     }
 
     /**

@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 
 class PolicyIssuanceCommand extends Command
 {
-    private $className = null;
+    private $className = 'policyIssuanceCommand';
 
     /**
      * The name and signature of the console command.
@@ -28,8 +28,6 @@ class PolicyIssuanceCommand extends Command
     public function __construct()
     {
         parent::__construct();
-
-        $this->className = basename(__CLASS__);
     }
 
     /**

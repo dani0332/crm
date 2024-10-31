@@ -6,11 +6,6 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-/**
- * @method static static OptionOne()
- * @method static static OptionTwo()
- * @method static static OptionThree()
- */
 final class PolicyIssuanceEnum extends Enum
 {
     const PENDING_STATUS = 'pending';
@@ -18,14 +13,26 @@ final class PolicyIssuanceEnum extends Enum
     const TIMEOUT_STATUS = 'timeout';
     const COMPLETED_STATUS = 'completed';
     const FAILED_STATUS = 'failed';
+    const SUCCESS_STATUS = 'success';
+
+    /* Insurer API Generic Status */
+
+    const AUTO_CAPTURE_FAILED = 'Auto Capture Failed';
+    const POLICY_DETAIL_API_FAILED = 'Policy Details API Failed';
+    const UPLOAD_POLICY_DOCUMENTS_API_FAILED = 'Document Upload API Failed';
+    const BOOKING_DETAILS_API_FAILED = 'Booking Details API Failed';
+
+    /* Insurer API Generic Status */
 
     /* Alliance Travel Steps*/
+
     const ALLIANCE_TRAVEL_ISSUE_POLICY = 'IssuePolicy';
     const ALLIANCE_TRAVEL_PURCHASE_POLICY = 'PurchasePolicy';
     const ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS = 'UploadPolicyDocuments';
     const ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS = 'FillPolicyBookingDetails';
     const ALLIANCE_TRAVEL_BOOK_POLICY = 'BookPolicy';
 
+    /* Alliance Travel Steps*/
     public static function getPolicyIssuanceSteps($insurerCode, $quoteType)
     {
         return match (ucfirst($quoteType)) {
@@ -44,6 +51,15 @@ final class PolicyIssuanceEnum extends Enum
             self::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS,
             self::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS,
             self::ALLIANCE_TRAVEL_BOOK_POLICY,
+        ];
+    }
+    public static function getInsurerAPIStatuses()
+    {
+        return [
+            self::AUTO_CAPTURE_FAILED,
+            self::POLICY_DETAIL_API_FAILED,
+            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
+            self::BOOKING_DETAILS_API_FAILED,
         ];
     }
 }

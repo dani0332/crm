@@ -20,8 +20,5 @@ final class PolicyIssuanceStatusEnum extends Enum
     const RenewalDirectToUnderwriter = 7;
     const Other = 8;
     const PolicyIssued = 9;
-    const AUTO_CAPTURE_FAILED = 10;
-    const POLICY_DETAIL_API_FAILED = 11;
-    const UPLOAD_POLICY_DOCUMENTS_API_FAILED = 12;
-    const BOOKING_DETAILS_API_FAILED = 13;
+
 }

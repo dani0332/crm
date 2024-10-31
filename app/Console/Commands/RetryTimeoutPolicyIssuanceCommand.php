@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 
 class RetryTimeoutPolicyIssuanceCommand extends Command
 {
-    private $className = null;
+    private $className = 'retryTimeoutPolicyIssuanceCommand';
 
     /**
      * The name and signature of the console command.
@@ -29,7 +29,6 @@ class RetryTimeoutPolicyIssuanceCommand extends Command
     {
         parent::__construct();
 
-        $this->className = basename(__CLASS__);
     }
 
     /**

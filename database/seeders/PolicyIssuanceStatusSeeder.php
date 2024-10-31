@@ -23,10 +23,6 @@ class PolicyIssuanceStatusSeeder extends Seeder
             ['id' => 7, 'text' => 'Renewal, Direct to Underwriter', 'text_ar' => 'The Policy has already been renewed and issued and requires recording in IMCRM and Send Policy '],
             ['id' => 8, 'text' => 'Other', 'text_ar' => 'Other'],
             ['id' => 9, 'text' => 'Policy Issued', 'text_ar' => 'Policy Issued'],
-            ['id' => 10, 'text' => 'Auto Capture Failed', 'text_ar' => 'Auto Capture Failed'],
-            ['id' => 11, 'text' => 'Policy Details API Failed', 'text_ar' => 'Policy Details API Failed'],
-            ['id' => 12, 'text' => 'Document Upload API Failed', 'text_ar' => 'Document Upload API Failed'],
-            ['id' => 13, 'text' => 'Booking Details API Failed', 'text_ar' => 'Booking Details API Failed'],
         ];
 
         foreach ($statuses as $status) {

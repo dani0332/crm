@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -27,7 +26,7 @@ use Storage;
 
 class AllianceInsuranceService implements PolicyIssuanceInterface
 {
-    private $className = null;
+    private $className = 'allianceInsuranceService';
     private mixed $baseUrl;
     private mixed $agencyId;
     private mixed $agencyCode;
@@ -40,7 +39,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     public $policyIssuance = null;
     public function __construct()
     {
-        $this->className = basename(__CLASS__);
         $this->vat = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
 
         $this->baseUrl = config('constants.ALLIANCE_API_BASE_URL');
@@ -68,101 +66,109 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function handle($process)
     {
+        $response = ['status' => false, 'error' => null, 'message' => null];
+
         $this->policyIssuance = $process;
         $quote = $process->model;
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' started');
 
-        if (isAllianceTravelAutomationEnabled()) {
-            $response = ['status' => false, 'error' => null, 'message' => null];
-            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id);
+        try {
+            if (isAllianceTravelAutomationEnabled()) {
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id);
 
-            $selectedPlan = $quote->travelQuotePlanDetails()->where('plan_id', $quote->plan_id)->first();
-            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - TravelQuotePlanDetails ID : '.$selectedPlan->id);
+                $selectedPlan = $quote->travelQuotePlanDetails()->where('plan_id', $quote->plan_id)->first();
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - TravelQuotePlanDetails ID : '.$selectedPlan->id);
 
-            $payment = PaymentRepository::mainQuotePayment($quote);
+                $payment = PaymentRepository::mainQuotePayment($quote);
 
-            $travelType = TravelQuoteEnum::ALLIANCE_IN_BOUND;
-            $directionCode = $quote->direction_code;
-            if ($directionCode === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND) {
-                $travelType = TravelQuoteEnum::ALLIANCE_OUT_BOUND;
-            }
-
-            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Travel Type : '.$travelType);
-            $lastCompletedStep = $process->completed_step;
-            $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY;
-
-            if ($nextStepToBeExecuted) {
-                if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY) {
-                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                    $policyIssuanceResponse = $this->issuePolicyAndFillPolicyDetails($quote, $selectedPlan, $travelType);
-                    if (! $policyIssuanceResponse['status']) {
-                        $quote->update(['policy_issuance_status_id' => $policyIssuanceResponse['policy_issuance_status_id']]);
-
-                        return $policyIssuanceResponse;
-                    }
-                    $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
+                $travelType = TravelQuoteEnum::ALLIANCE_IN_BOUND;
+                $directionCode = $quote->direction_code;
+                if ($directionCode === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND) {
+                    $travelType = TravelQuoteEnum::ALLIANCE_OUT_BOUND;
                 }
 
-                $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-                if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_PURCHASE_POLICY) {
-                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                    $policyPurchaseResponse = $this->policyPurchase($quote, $payment, $travelType);
-                    if (! $policyPurchaseResponse['status']) {
-                        $quote->update(['policy_issuance_status_id' => $policyPurchaseResponse['policy_issuance_status_id']]);
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Travel Type : '.$travelType);
+                $lastCompletedStep = $process->completed_step;
+                $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY;
 
-                        return $policyPurchaseResponse;
+                if ($nextStepToBeExecuted) {
+                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY) {
+                        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $policyIssuanceResponse = $this->issuePolicyAndFillPolicyDetails($quote, $selectedPlan, $travelType);
+                        if (! $policyIssuanceResponse['status']) {
+                            $quote->update(['insurer_api_status' => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED]);
+
+                            return $policyIssuanceResponse;
+                        }
+                        $process->update(['completed_step' => $policyIssuanceResponse['completed_step']]);
                     }
-                    $process->update(['completed_step' => $policyPurchaseResponse['completed_step']]);
+
+                    $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_PURCHASE_POLICY) {
+                        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $policyPurchaseResponse = $this->policyPurchase($quote, $payment, $travelType);
+                        if (! $policyPurchaseResponse['status']) {
+                            $quote->update(['insurer_api_status' => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED]);
+
+                            return $policyPurchaseResponse;
+                        }
+                        $process->update(['completed_step' => $policyPurchaseResponse['completed_step']]);
+                    }
+
+                    $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS) {
+                        // Add Sleep because after purchase policy we need to wait for some time to get the policy documents generated. -- Policy documents are still generating
+                        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted.' - Waiting for 10 seconds so  Provider can generate the policy documents');
+                        sleep(10);
+                        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $uploadPolicyDocumentResponse = $this->fetchAndUploadDocument($quote, $travelType);
+                        if (! $uploadPolicyDocumentResponse['status']) {
+                            $quote->update(['insurer_api_status' => PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED]);
+
+                            return $uploadPolicyDocumentResponse;
+                        }
+                        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued]);
+                        $process->update(['completed_step' => $uploadPolicyDocumentResponse['completed_step']]);
+                    }
+
+                    $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS) {
+                        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $fillPolicyDetailsResponse = $this->uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment);
+                        if (! $fillPolicyDetailsResponse['status']) {
+                            $quote->update(['insurer_api_status' => PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED]);
+
+                            return $fillPolicyDetailsResponse;
+                        }
+                        $process->update(['completed_step' => $fillPolicyDetailsResponse['completed_step']]);
+                    }
+
+                    $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
+                    if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_BOOK_POLICY) {
+                        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $fillPolicyDetailsResponse = $this->triggerBookPolicyProcess($quote);
+                        if (! $fillPolicyDetailsResponse['status']) {
+                            return $fillPolicyDetailsResponse;
+                        }
+                        $process->update(['completed_step' => $fillPolicyDetailsResponse['completed_step']]);
+                    }
+                } else {
+                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Last Completed Step : '.$lastCompletedStep);
                 }
 
-                $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-                if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS) {
-                    // Add Sleep because after purchase policy we need to wait for some time to get the policy documents generated. -- Policy documents are still generating
-                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted.' - Waiting for 10 seconds so  Provider can generate the policy documents');
-                    sleep(10);
-                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                    $uploadPolicyDocumentResponse = $this->fetchAndUploadDocument($quote, $travelType);
-                    if (! $uploadPolicyDocumentResponse['status']) {
-                        $quote->update(['policy_issuance_status_id' => $uploadPolicyDocumentResponse['policy_issuance_status_id']]);
-
-                        return $uploadPolicyDocumentResponse;
-                    }
-                    $process->update(['completed_step' => $uploadPolicyDocumentResponse['completed_step']]);
-                }
-
-                $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-                if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS) {
-                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                    $fillPolicyDetailsResponse = $this->uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment);
-                    if (! $fillPolicyDetailsResponse['status']) {
-                        $quote->update(['policy_issuance_status_id' => $fillPolicyDetailsResponse['policy_issuance_status_id']]);
-
-                        return $fillPolicyDetailsResponse;
-                    }
-                    $process->update(['completed_step' => $fillPolicyDetailsResponse['completed_step']]);
-                }
-                $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
-                if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_BOOK_POLICY) {
-                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                    $fillPolicyDetailsResponse = $this->triggerBookPolicyProcess($quote);
-                    if (! $fillPolicyDetailsResponse['status']) {
-                        return $fillPolicyDetailsResponse;
-                    }
-                    $process->update(['completed_step' => $fillPolicyDetailsResponse['completed_step']]);
-                }
+                $response['status'] = true;
+                $response['message'] = 'Sage Booking of policy triggered successfully';
             } else {
-                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Last Completed Step : '.$lastCompletedStep);
+
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Alliance Travel Automation is disabled');
+                $response['message'] = 'Alliance Travel Automation is disabled';
+
             }
+        } catch (\Exception $e) {
+            $response['error'] = $e->getMessage();
 
-            $response['status'] = true;
-            $response['message'] = 'Sage Booking of policy triggered successfully';
-        } else {
-
-            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Alliance Travel Automation is disabled');
-            $response['status'] = false;
-            $response['message'] = 'Alliance Travel Automation is disabled';
-
+            return $response;
         }
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' ended');
@@ -174,7 +180,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     {
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
-        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY, 'policy_issuance_status_id' => PolicyIssuanceStatusEnum::POLICY_DETAIL_API_FAILED, 'error' => null, 'message' => null];
+        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY, 'error' => null, 'message' => null];
 
         $title = 'Mr';
         $dateOfBirth = $quote->dob ? Carbon::parse($quote->dob)->format('Y-m-d') : null;
@@ -209,7 +215,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$issuePolicy);
 
         $issuePolicyResponse = $issuePolicy->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $endPoint, $response['completed_step']);
+        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $endPoint, $response['completed_step'], $issuePolicy->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
         if ($issuePolicy->failed()) {
             $response['error'] = $issuePolicyResponse?->errors;
@@ -245,13 +251,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     {
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
-        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_PURCHASE_POLICY, 'policy_issuance_status_id' => PolicyIssuanceStatusEnum::POLICY_DETAIL_API_FAILED, 'error' => null, 'message' => null];
+        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_PURCHASE_POLICY, 'error' => null, 'message' => null];
         $endPoint = $this->baseUrl.'/v1/quote/'.$travelType.'/purchase';
 
         $payload = [
             'agency_id' => $this->agencyId,
             'agency_code' => $this->agencyCode,
-            'policy_id' => $quote->insurer_policy_id,
+            'policy_id' => $quote->insurer_policy_id
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
@@ -259,7 +265,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyPurchase);
 
         $policyPurchaseResponse = $policyPurchase->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $endPoint, $response['completed_step']);
+        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $endPoint, $response['completed_step'], $policyPurchase->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
         if ($policyPurchase->failed()) {
             $response['error'] = $policyPurchaseResponse?->errors;
@@ -288,12 +294,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     public function fetchAndUploadDocument($quote, $travelType): array
     {
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
-        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS, 'policy_issuance_status_id' => PolicyIssuanceStatusEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED, 'error' => null, 'message' => null];
+        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS, 'error' => null, 'message' => null];
 
         $payload = [
             'agency_id' => $this->agencyId,
             'agency_code' => $this->agencyCode,
-            'policy_id' => $quote->insurer_policy_id,
+            'policy_id' => $quote->insurer_policy_id
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
@@ -302,7 +308,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyDocuments);
 
         $policyDocumentsResponse = $policyDocuments->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $policyDocumentsResponse, $endPoint, $response['completed_step']);
+        $this->storePolicyIssuanceLog($quote, $payload, $policyDocumentsResponse, $endPoint, $response['completed_step'], $policyDocuments->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
         if ($policyDocuments->failed()) {
             $response['error'] = $policyDocumentsResponse?->errors;
 
@@ -332,7 +338,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     public function uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment): array
     {
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
-        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS, 'policy_issuance_status_id' => PolicyIssuanceStatusEnum::BOOKING_DETAILS_API_FAILED, 'error' => null, 'message' => null];
+        $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS, 'error' => null, 'message' => null];
 
         $payload = [
             'agency_id' => $this->agencyId,
@@ -347,7 +353,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$buyerTaxInvoice);
 
         $buyerTaxInvoiceResponse = $buyerTaxInvoice->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $buyerTaxInvoiceResponse, $endPoint, $response['completed_step']);
+        $this->storePolicyIssuanceLog($quote, $payload, $buyerTaxInvoiceResponse, $endPoint, $response['completed_step'], $buyerTaxInvoice->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
         if ($buyerTaxInvoice->failed()) {
             $response['error'] = $buyerTaxInvoiceResponse?->errors;
@@ -530,7 +536,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         };
     }
 
-    private function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step)
+    private function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status = 'success')
     {
         $log = PolicyIssuanceLog::create([
             'policy_issuance_id' => $this->policyIssuance->id,
@@ -540,6 +546,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'endPoint' => $endPoint,
             'payload' => json_encode($payload),
             'response' => json_encode($response),
+            'status' => $status,
         ]);
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Policy Issuance ID : '.$this->policyIssuance?->id.' Log ID : '.$log->id);

@@ -11,6 +11,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -83,6 +84,7 @@ class TravelController extends Controller
     {
         $searchProperties = array_flip($this->genericModel->searchProperties);
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
+        $insurerApiStatus = PolicyIssuanceEnum::getInsurerAPIStatuses();
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
@@ -92,6 +94,7 @@ class TravelController extends Controller
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
+            'insurerApiStatus' => $insurerApiStatus,
             'dropdownSource' => $dropdownSource,
             'advisors' => $advisors,
             'session' => $request->session()->only(['success', 'error', 'message']),
