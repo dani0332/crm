@@ -867,28 +867,6 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
 
-        // if ($modelType == HealthQuote::class && ! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
-        //     $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
-        //     $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
-
-        //     $partialQuery->whereHas('healthQuoteRequestDetail', function ($query) use ($dateFrom, $dateTo) {
-        //         $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
-        //     });
-        //     $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-        // }
-
-        // if ($modelType == HomeQuote::class && ! empty($request->advisor_assigned_date) && ! empty($request->advisor_assigned_date)) {
-        //     $dateArray = $request['advisor_assigned_date'];
-
-        //     $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
-        //     $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-
-        //     $partialQuery->whereHas('homeQuoteRequestDetail', function ($query) use ($dateFrom, $dateTo) {
-        //         $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
-        //     });
-        //     $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-        // }
-
         if (isset($request->code) && $request->code != '') {
             $partialQuery->where('code', $request->code);
         }
