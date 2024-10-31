@@ -125,7 +125,7 @@ class JetskiQuoteRepository extends BaseRepository
         })->filter(! $forExport)
             ->withFakeLeadCriteria();
 
-        $query->orderBy('personal_quotes.' . (request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
