@@ -128,7 +128,7 @@ class JetskiQuoteRepository extends BaseRepository
             $query->where('advisor_id', auth()->user()->id);
         })->filter(! $forExport)
             ->withFakeLeadCriteria();
-        
+
         $query->orderBy('personal_quotes.'.$sort_by, $sort_type);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
