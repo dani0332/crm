@@ -8,10 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\LeadSourceEnum;
 use App\Models\QuoteType;
-use App\Enums\QuoteTypes;
-use Illuminate\Support\Facades\Log;
 use App\Services\RenewalsUploadService;
-use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeShortCode;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +24,7 @@ class TravelRenewalService extends BaseService
 
     public function getTravelRenewalLeads()
     {
-        TravelQuote::latest()->whereIn('quote_status_id', [
+        TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
             QuoteStatusEnum::PolicyBooked
         ])
@@ -37,7 +34,7 @@ class TravelRenewalService extends BaseService
         //     PaymentStatusEnum::PARTIAL_CAPTURED,
         //     PaymentStatusEnum::CREDIT_APPROVED
         // ])
-        ->where('start_date', '=', Carbon::now()->subDays(20))
+        ->where('start_date', '<=', Carbon::now()->subDays(20))
         ->chunkById(100, function ($quotes) {
             $quoteCount = $quotes->count();
             info("Processing total quotes in chunk: $quoteCount");
@@ -78,16 +75,15 @@ class TravelRenewalService extends BaseService
         // Calculate the policy expiry date based on the start date + 365 days
         $policyExpiryDate = $policyStartDate->copy()->addDays(365);
         info("Calculating policy expiry date".$policyExpiryDate);
-    return TravelQuote::where('customer_id', $quote->customer_id)
+  return TravelQuote::where('customer_id', $quote->customer_id)
         ->whereDate('policy_expiry_date', Carbon::parse($policyExpiryDate)->format('Y-m-d'))
         ->where('coverage_code', $quote->coverage_code)
         ->where('direction_code', $quote->direction_code)
         ->where('nationality_id', $quote->nationality_id)
         ->where('region_cover_for_id', $quote->region_cover_for_id)
         ->exists();
-
-
-
+    // dd($is_lead,Carbon::parse($policyExpiryDate)->format('Y-m-d'),);
+        // dd($is_lead);
     }
     public function storeTravelRenewalQuote($quote)
     {
@@ -156,10 +152,12 @@ class TravelRenewalService extends BaseService
             'last_name' =>  $travelQuote->last_name,
             'source' => $travelQuote->source,
             'customer_id' => $travelQuote->customer_id,
-            'payment_status_id' => PaymentStatusEnum::NEW,
+            'payment_status_id' => PaymentStatusEnum::DRAFT,
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'code' => $travelQuote->code,
             'uuid' => $travelQuote->uuid,
+            'direction_code' => $travelQuote->direction_code,
+            'nationality_id' => $travelQuote->nationality_id,
             // 'policy_number' => trim($data['policy_number']),
             // 'advisor_id' => $advisorId,
             // 'premium' => trim($data['premium']),
@@ -178,7 +176,7 @@ class TravelRenewalService extends BaseService
         $newQuote = TravelQuote::create($quoteData);
         $this->storeMembers($newQuote,$travelQuote->members);
         $this->leadAllocation($newQuote);
-        // dd("done")
+        dd("done");
     }
     public function getPaymentStatusIdByCode($paymentStatus)
     {
@@ -223,7 +221,12 @@ class TravelRenewalService extends BaseService
         $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
 
         $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid, $currentTeamId);
-        $allocationStrategy->executeSteps();
+        $response = $allocationStrategy->executeSteps();
+        dd( $response);
+    }
+
+    public function sendTravelOCB($lead){
+        
     }
 
 
