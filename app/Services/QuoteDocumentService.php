@@ -212,7 +212,7 @@ class QuoteDocumentService extends BaseService
                     $tempFilePath = $fileOrBase64->move(storage_path('temp'), $docName)->getPathname();
                 }
                 WatermarkDocumentsJob::dispatch(
-                    $quoteDocument->id, basename($tempFilePath), $data['quote_uuid'], $documentType->id
+                    $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
                 );
             }
 
@@ -465,9 +465,7 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $outputPath = storage_path('temp/'.$docName);
-
-        $outputFile = storage_path('temp/' .$docName);
+        $outputFile = $outputPath = storage_path('temp/' .$docName);
         $pdf = new Fpdi;
         $pageCount = $pdf->setSourceFile($outputFile);
 

@@ -50,7 +50,6 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         info(file_exists(storage_path('temp/'. $this->tempFilePath)) ? 'After Job File exists' : 'After Job File not exists');
 
-
         // Perform watermarking based on file type
         $watermarkService = app()->make(QuoteDocumentService::class);
         $fileMimeType = $quoteDocument->doc_mime_type;

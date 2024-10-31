@@ -176,7 +176,7 @@ class PersonalQuoteRepository extends BaseRepository
                         }
                         info(file_exists($tempFilePath) ? 'Befor Job File exists' : 'Before Job File not exists');
                         WatermarkDocumentsJob::dispatch(
-                            $quoteDocument->id, basename($tempFilePath), $data['quote_uuid'], $documentType->id
+                            $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
                         );
                     }
                 });
