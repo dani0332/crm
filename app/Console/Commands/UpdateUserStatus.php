@@ -111,13 +111,14 @@ class UpdateUserStatus extends Command
                             ReAssignBikeLeadsJob::dispatch(new BikeAllocationService, $userId);
                         }
 
-                        foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {
-                            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
-                            if ($this->userHaveProduct($userId, $team->id)) {
-                                info("user belongs to {$quoteType->value} so dispatching {$quoteType->value} reassignment job");
-                                ReAssignLeads::dispatch($quoteType, $userId);
-                            }
-                        }
+                        // Disabled Leads Auto Re Assignment for below Types as this is not needed at the moment
+                        // foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {
+                        //     $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
+                        //     if ($this->userHaveProduct($userId, $team->id)) {
+                        //         info("user belongs to {$quoteType->value} so dispatching {$quoteType->value} reassignment job");
+                        //         ReAssignLeads::dispatch($quoteType, $userId);
+                        //     }
+                        // }
                     }
                 } else {
                     if ($newStatus == UserStatusEnum::OFFLINE && $subtime > $lastActivity) {
