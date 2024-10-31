@@ -131,7 +131,7 @@ const updateTableHeaders = () => {
 const checkAndAddExtraEmptyColumn = () => {
   const filterCondition = filters.displayBy ?? null;
 
-   if((!filterCondition || filterCondition.length == 0) && filters.includeUnassignedLeads == 'yes' && tableHeader.value[0].text != '') {
+   if((!filterCondition || !filterCondition.length) && filters.includeUnassignedLeads == 'yes' && tableHeader.value[0].text != '') {
     tableHeader.value.splice(0, 0, {
       text: '',
       value: '',
