@@ -63,10 +63,8 @@ class CycleQuoteRepository extends BaseRepository
      */
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        $request = request();
-
-        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
-        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
+        $sort_by = request()->sortBy ?? 'created_at';
+        $sort_type = request()->sortType ?? 'desc';
 
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
