@@ -20,18 +20,17 @@ class RestartHaystack extends Command
     {
         info('Haystack process is about to be restarted');
 
-        $haystack = Haystack::whereNull('finished_at')
-            ->whereNull('resume_at')
-            ->where('started_at', '!=', null)
+        $haystack = Haystack::where('started_at', '!=', null)
             ->where('created_at', '>=', Carbon::parse('20-oct-2024'))
             ->orderBy('created_at', 'desc')
             ->first();
-        // dd($haystack->updated_at->diffInMinutes(Carbon::now()) > 4);
+            
         if ($haystack) {
-            if ($haystack->bales()->count() > 0 && $haystack->data->first()->updated_at->diffInMinutes(Carbon::now()) > 30) {
+            if ($haystack->bales()->count() > 0 && $haystack->data->where('key','=','count')->first()->updated_at->diffInMinutes(Carbon::now()) > 20) {
                 $haystack->restart();
                 $haystack->resume_at = Carbon::now();
                 $haystack->save();
+                info('HayStack:' . ' ---  process restarted successfully.');
                 $this->info('Haystack process restarted successfully.');
                 return;
             } else {
