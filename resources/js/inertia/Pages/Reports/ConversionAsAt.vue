@@ -106,12 +106,12 @@ const displayByActive = ref(false);
 
 const updateTableHeaders = () => {
   const filterCondition = filters.displayBy ?? null;
+  // check if at 0 index text is empty then remove it
+  if (!tableHeader.value[0].text.length) {
+    tableHeader.value.splice(0, 1);
+  }
   if (filterCondition && filterCondition.length > 0) {
     let condition = displayByActive.value ? 1 : 0;
-    // check if at 0 index text is empty then remove it
-    if (tableHeader.value[0].text === '') {
-      tableHeader.value.splice(0, 1);
-    }
     tableHeader.value.splice(0, condition, {
       text: filterCondition
         .split('_')
