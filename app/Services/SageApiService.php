@@ -339,7 +339,7 @@ class SageApiService
                 'sectionType' => $reversalInvoiceLogs[$reverseSageRequestTypeKey]['section_type'],
                 'sectionId' => $reversalInvoiceLogs[$reverseSageRequestTypeKey]['section_id'],
                 'sageRequestType' => $reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'],
-                'invoiceType' => $invoiceType,,
+                'invoiceType' => $invoiceType, ,
             ];
 
             $extraDetails['paymentFrequency'] = $preparedData['payment']->frequency;
@@ -814,7 +814,6 @@ class SageApiService
             $totalSteps = 24;
             $stepsMapping = ['step_1' => 6, 'step_2' => 7, 'step_3' => 8, 'step_4' => 9];
         }
-
 
         $isLiveApiCallStep2 = true;
         $createARInvoiceSplitPayments = SagePayloadFactory::createARInvoiceSplitPayments($sageRequest, $paymentSplits, $sageEntryType, $reverseInvoiceDetails, $extraDetails);
