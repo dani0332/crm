@@ -49,7 +49,7 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
 
     public function chunkSize(): int
     {
-        return 2000;
+        return 500;
     }
 
     /**
@@ -131,6 +131,7 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
                 }
 
                 foreach ($failed as $failedRecord) {
+                    info('Record Added in Coverage Import');
                     RateCoveragesProcess::create($failedRecord);
                 }
             },

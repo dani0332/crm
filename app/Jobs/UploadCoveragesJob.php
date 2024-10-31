@@ -29,7 +29,6 @@ class UploadCoveragesJob implements ShouldQueue
     public function __construct(RatesCoveragesUpload $uploadCoverages)
     {
         $this->uploadCoverages = $uploadCoverages;
-        $this->onQueue('coverages');
     }
 
     /**
@@ -39,6 +38,8 @@ class UploadCoveragesJob implements ShouldQueue
      */
     public function handle(RatesCoveragesUploadService $uploadCoveragesService)
     {
+        info('Coverage Job DisPatch');
+
         return $uploadCoveragesService->processUploadCoverages($this->uploadCoverages);
     }
 

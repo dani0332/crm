@@ -279,6 +279,12 @@ class LifeQuoteService extends BaseService
         }
         // }
 
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
+        } else {
+            return $this->query->orderBy('lqr.created_at', 'DESC');
+        }
+
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {

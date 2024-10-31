@@ -37,6 +37,15 @@ class RolePermissionSeeder extends Seeder
                     'updated_at' => now(),
                 ]);
             }
+            $leadStatusFakeDuplicatePermission = Permission::where('name', PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)->first();
+            if (! $leadStatusFakeDuplicatePermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
             $exportRMLeadPermission = Permission::where('name', PermissionsEnum::EXPORT_RM_LEADS)->first();
             if (! $exportRMLeadPermission) {
                 Permission::create([

@@ -49,7 +49,7 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
 
     public function chunkSize(): int
     {
-        return 2000;
+        return 500;
     }
 
     public function startRow(): int
@@ -112,6 +112,7 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
                 }
 
                 foreach ($failed as $failedRecord) {
+                    info('Record Added in Rate Import');
                     RateCoveragesProcess::create($failedRecord);
                 }
             },

@@ -26,6 +26,7 @@ class RatesCoveragesUploadService
         $azureFileName = $datetime.'_'.$fileName;
 
         $azureFilePath = request()->file('file_name')->storeAs($path, $azureFileName, 'azureIM');
+        info('File Save in Azure', [$azureFilePath]);
 
         return [
             'file_name' => $fileName,
@@ -43,6 +44,7 @@ class RatesCoveragesUploadService
             'cannot_upload' => 0,
             'type' => RateCoverageEnum::COVERAGES,
         ];
+        info('Coverage Record Created in DB');
 
         return RatesCoveragesUpload::create($uploadLeadData);
     }
@@ -115,6 +117,7 @@ class RatesCoveragesUploadService
 
     public function createCoveragesData($uploadCoverages)
     {
+        info('Coverage Record Created Start');
         RateCoveragesProcess::where('rate_coverage_id', $uploadCoverages->id)
             ->chunk(500, function ($coverages) {
                 $planCodes = $coverages->pluck('data')->map(function ($data) {
@@ -188,7 +191,6 @@ class RatesCoveragesUploadService
         $uploadedFile = $this->uploadFile();
 
         $uploadRate = $this->createRate($uploadedFile);
-
         UploadRatesJob::dispatch($uploadRate);
 
         return true;
@@ -204,6 +206,7 @@ class RatesCoveragesUploadService
             'cannot_upload' => 0,
             'type' => RateCoverageEnum::RATES,
         ];
+        info('Rate Record Created In DB');
 
         return RatesCoveragesUpload::create($uploadLeadData);
     }
@@ -264,6 +267,7 @@ class RatesCoveragesUploadService
 
     public function createRateData($uploadRate)
     {
+        info('Rate Record Created Start');
         RateCoveragesProcess::where('rate_coverage_id', $uploadRate->id)
             ->chunk(500, function ($coverages) {
                 $planCodes = $coverages->pluck('data')->map(function ($data) {

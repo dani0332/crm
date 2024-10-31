@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Factories\ManagementReportServiceFactory;
@@ -23,6 +24,7 @@ use App\Services\Reports\AdvisorPerformanceReportService;
 use App\Services\Reports\LeadDistributionReportService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\Reports\ReportService;
+use App\Services\Reports\RetentionReportService;
 use App\Strategies\ManagementReport;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -46,7 +48,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        $this->middleware('readonly_db');
+        // $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -361,7 +363,7 @@ class ReportsController extends Controller
             $qry->orderBy('id', 'desc');
         }, 'teams' => function ($qry) {
             $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
-        }])->get();
+        }])->where('quote_type_id', QuoteTypeId::Car)->get();
 
         $renewalBatches = $renewalBatches->map(function ($renewalBatch) {
             $renewalBatch->slabs = $renewalBatch->slabs->map(function ($slab) {
@@ -422,15 +424,20 @@ class ReportsController extends Controller
     {
 
         $displayBy = $request->displayBy ?? null;
+        $createdAtDate = $request->createdAtDate ?? null;
+        $includeUnassignedLeads = $request->includeUnassignedLeads ?? null;
         $quoteTypes = QuoteTypeId::getOptions();
         $quoteTypeCodes = quoteTypeCode::asArray();
         $quoteTypeIdEnum = QuoteTypeId::asArray();
 
         return inertia('Reports/ConversionAsAt', [
             'reportData' => $conversionAsAtReportService->getReportData($request),
+            'unassignedLeadsCount' => $conversionAsAtReportService->getUnassignedLeadsCount($request),
             'filterOptions' => $conversionAsAtReportService->getFilterOptions(),
             'quoteTypes' => $quoteTypes,
             'displayByColumn' => $displayBy,
+            'createdAtDate' => $createdAtDate,
+            'includeUnassignedLeads' => $includeUnassignedLeads,
             'quoteTypeCodes' => $quoteTypeCodes,
             'quoteTypeIdEnum' => $quoteTypeIdEnum,
         ]);
@@ -545,5 +552,29 @@ class ReportsController extends Controller
             'filterOptions' => $reportService->getDefaultFiltersForTotalPremium(),
 
         ]);
+    }
+
+    public function renderRetentionReport(Request $request, RetentionReportService $retentionReportService)
+    {
+        @[$retentionReportData, $footerData] = $retentionReportService->getReportData($request);
+
+        return inertia('Reports/RetentionReport', [
+            'filterOptions' => $retentionReportService->getFilterOptions(),
+            'filtersByLob' => $retentionReportService->getFiltersByLob(),
+            'reportData' => $retentionReportData,
+            'footerData' => $footerData,
+            'productName' => $retentionReportService->getUserPorductName(),
+            'retentionReportEnum' => RetentionReportEnum::asArray(),
+        ]);
+    }
+
+    public function fetchRetentionLeadsData(Request $request, RetentionReportService $retentionReportService)
+    {
+        return $retentionReportService->getRetentionLeadsData($request);
+    }
+
+    public function fetchBatchByDates(Request $request, RetentionReportService $retentionReportService)
+    {
+        return $retentionReportService->getBatchByDates($request);
     }
 }
