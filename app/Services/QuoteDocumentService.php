@@ -172,10 +172,10 @@ class QuoteDocumentService extends BaseService
                 }
                 // $fileOrBase64 = $tempKycFile;
             } else {
-                $originalName = sanitizeFileName($fileOrBase64->getClientOriginalName());
+                $originalName = uniqid().'_'.sanitizeFileName($fileOrBase64->getClientOriginalName());
 
                 // Generate a unique filename
-                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+                $docName = preg_replace('/\s+/', '', $originalName);
                 $fileMimeType = $fileOrBase64->getClientMimeType();
 
                 // Set the filename for Azure storage
