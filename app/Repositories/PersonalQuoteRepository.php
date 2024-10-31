@@ -112,7 +112,7 @@ class PersonalQuoteRepository extends BaseRepository
 
             $isWaterMarkQualifyDoc = getWatermarkProperty($quote, $documentType);
 
-            $originalName = $file->getClientOriginalName();
+            $originalName = sanitizeFileName($file->getClientOriginalName());
             $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
             $fileMimeType = $file->getClientMimeType();
             //upload file to azure

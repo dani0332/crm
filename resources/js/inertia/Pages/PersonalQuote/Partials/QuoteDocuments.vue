@@ -361,7 +361,7 @@ const getS3TempUrl = async docURL => {
               View Legacy policy
             </x-button>
           </Link>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange" :disabled="quote.insurance_provider_id === null"
+          <x-button @click.prevent="modals.doc = true" size="sm" color="orange"
           >
             Upload Documents
           </x-button>
@@ -447,6 +447,7 @@ const getS3TempUrl = async docURL => {
           :value="index"
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
+          :key="index"
         >
           <div
             v-for="documentType in docType"

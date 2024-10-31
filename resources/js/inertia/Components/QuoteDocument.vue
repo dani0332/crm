@@ -282,7 +282,6 @@ const getS3TempUrl = async docURL => {
             @click.prevent="uploadDocumentModal"
             size="sm"
             color="orange"
-            :disabled="quote.insurance_provider_id === null"
           >
             Upload Documents
           </x-button>
@@ -368,8 +367,9 @@ const getS3TempUrl = async docURL => {
           :value="index"
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
+          :key="index"
         >
-          <div
+        <div
             v-for="documentType in docType"
             :key="documentType.id"
             class="grid md:grid-cols-2 gap-2 my-4 border-b"
