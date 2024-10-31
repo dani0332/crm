@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -144,6 +145,7 @@ class TravelQuoteService extends BaseService
             DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             'tqr.policy_booking_date',
             'tqr.insly_migrated',
+            'tqr.sic_advisor_requested',
             'tqr.aml_status',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
@@ -336,7 +338,9 @@ class TravelQuoteService extends BaseService
         } else {
             $searchProperties = $model->searchProperties;
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number)) {
+        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start)
+        && ! isset($request->payment_due_date) && ! isset($request->booking_date)
+    && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
             $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if ($request->transaction_approved_dates) {
@@ -351,6 +355,23 @@ class TravelQuoteService extends BaseService
         ) {
             $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
+
+        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
+            $dateArray = $request['last_modified_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('tqr.updated_at', [$dateFrom, $dateTo]);
+        }
+
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateArray = $request['advisor_assigned_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
@@ -372,6 +393,8 @@ class TravelQuoteService extends BaseService
             && empty($request->booking_date)
             && empty($request->renewal_batch)
             && empty($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
         ) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
@@ -445,6 +468,17 @@ class TravelQuoteService extends BaseService
         if (isset($request->source) && $request->source != '') {
             $this->query->where('tqr.source', $request->source);
         }
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
+            $this->query->where('tqr.sic_advisor_requested', $request->sic_advisor_requested);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
 
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
@@ -469,6 +503,12 @@ class TravelQuoteService extends BaseService
         }
         $this->query->filterBySegment();
         $this->adjustQueryByDateFilters($this->query, 'tqr');
+
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
+        } else {
+            return $this->query->orderBy('tqr.created_at', 'DESC');
+        }
 
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -808,7 +848,8 @@ class TravelQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -977,7 +1018,6 @@ class TravelQuoteService extends BaseService
 
             return $response;
         }
-
     }
 
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
@@ -1007,7 +1047,6 @@ class TravelQuoteService extends BaseService
         $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
-
     }
 
     public function setQuoteUpdatedAt($id)

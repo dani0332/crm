@@ -627,7 +627,7 @@ class SageApiService
             info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
 
-        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+        if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
@@ -1903,7 +1903,7 @@ class SageApiService
             'created_by' => $userId,
         ];
 
-        $isQuoteLogSameAsBefore = $latestQuoteStatusLog->current_quote_status_id == QuoteStatusEnum::PolicyBooked && $latestQuoteStatusLog->previous_quote_status_id = $previousQuoteStatusId;
+        $isQuoteLogSameAsBefore = $latestQuoteStatusLog?->current_quote_status_id == QuoteStatusEnum::PolicyBooked && $latestQuoteStatusLog?->previous_quote_status_id == $previousQuoteStatusId;
         //check if the last quote log status is same as new status then update the same log
         if ($latestQuoteStatusLog && $isQuoteLogSameAsBefore) {
             $latestQuoteStatusLog->update($quoteLogData);
