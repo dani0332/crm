@@ -131,23 +131,27 @@ const updateTableHeaders = () => {
 const checkAndAddExtraEmptyColumn = () => {
   const filterCondition = filters.displayBy ?? null;
 
-   if((!filterCondition || !filterCondition.length) && filters.includeUnassignedLeads == 'yes' && tableHeader.value[0].text != '') {
+  if (
+    (!filterCondition || !filterCondition.length) &&
+    filters.includeUnassignedLeads == 'yes' &&
+    tableHeader.value[0].text != ''
+  ) {
     tableHeader.value.splice(0, 0, {
       text: '',
       value: '',
     });
   }
-}
+};
 
-const formatDate = (dateString) => {
-  if(!dateString) return '';
+const formatDate = dateString => {
+  if (!dateString) return '';
   const date = new Date(dateString);
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
   return `${day}-${month}-${year}`;
-}
+};
 
 function calculateTotalNetConversion(data) {
   let totalLeads = 0;
