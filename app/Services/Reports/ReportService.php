@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -656,6 +657,7 @@ class ReportService extends BaseService
                 ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
                 ->join('users', 'users.id', $details['table'].'.advisor_id');
             $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED);
+            $query->where($details['table'].'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             if ($user->isAdvisor()) {
                 $query->where($details['table'].'.advisor_id', $user->id);
             } else {

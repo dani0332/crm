@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -137,8 +138,8 @@ class SendPaymentEmail extends Command
 
         $query = DB::table('payments as py')
             ->select(
-                DB::raw('COUNT(*) as total_leads'),
-                DB::raw('SUM('.$table.'.premium) as total_premium'),
+                DB::raw('COUNT(DISTINCT '.$table.'.code) as total_leads'),
+                DB::raw('SUM(DISTINCT '.$table.'.premium) as total_premium'),
                 DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
             )
             ->leftJoin($table, 'py.code', '=', $table.'.code')
@@ -150,6 +151,7 @@ class SendPaymentEmail extends Command
             ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId, $table) {
                 return $query->where($table.'.quote_type_id', $quoteTypeId);
             })
+            ->where($table.'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT)
             ->groupBy('expiry_days')
             ->having('expiry_days', '=', 1)
             ->orderBy('py.id');
