@@ -29,9 +29,15 @@ const page = usePage();
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
+const cleanObj = obj => useCleanObj(obj);
 const quoteSegments = page.props.quoteSegments?.filter(
   segment => segment.value !== 'sic-revival',
 );
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
+});
 
 const filters = reactive({
   code: '',
@@ -55,9 +61,12 @@ const filters = reactive({
   segment_filter: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  sic_advisor_requested: 'All',
   transaction_approved_dates: page.props.transaction_approved_dates || '',
   last_modified_date: null,
   advisor_assigned_date: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
 });
 
 const loader = reactive({
@@ -83,6 +92,10 @@ const tableHeader = [
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  {
+    text: 'ADVISOR REQUESTED',
+    value: 'sic_advisor_requested',
+  },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {
@@ -101,6 +114,11 @@ const tableHeader = [
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
@@ -160,10 +178,10 @@ function onSubmit(isValid) {
       delete filters[key];
     }
   }
-
+  serverOptions.value.page = 1;
   router.visit(route('travel.index'), {
     method: 'get',
-    data: filters,
+    data: { ...filters, ...serverOptions.value },
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -264,7 +282,11 @@ const onDataExport = () => {
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'travel');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Travel'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
@@ -327,6 +349,22 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   setQueryFilters();
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const resetDateFilters = filterName => {
@@ -385,6 +423,14 @@ const formatDate = date => {
   const parsedDate = new Date(`${year}-${month}-${day}`);
   return useDateFormat(parsedDate, 'DD-MMM-YYYY').value;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -628,6 +674,38 @@ const formatDate = date => {
           range
           format="dd-MM-yyyy"
         />
+        <ComboBox
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -698,6 +776,7 @@ const formatDate = date => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
@@ -741,7 +820,13 @@ const formatDate = date => {
             : ''
         }}
       </template>
-
+      <template #item-sic_advisor_requested="{ sic_advisor_requested }">
+        <div class="text-center">
+          <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
+            {{ sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">

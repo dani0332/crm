@@ -88,6 +88,8 @@ class LifeQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria()
             ->orderBy('life_quote_request.created_at', 'desc');
 
+        $this->adjustQueryByInsurerInvoiceFilters($query);
+
         $this->adjustQueryByDateFilters($query, 'life_quote_request');
 
         return $query->simplePaginate()->withQueryString();

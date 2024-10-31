@@ -119,6 +119,12 @@ const tableHeader = ref([
     value: 'previous_quote_policy_number',
     is_active: true,
   },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
 ]);
 
@@ -194,7 +200,11 @@ const handleSelectedFilters = selectedFilters => {
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'yacht');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Yacht'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 
 const advisorOptionsFilter = computed(() => {
