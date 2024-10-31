@@ -875,10 +875,13 @@ class CentralService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
-        $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_log_id', $sendUpdateId)
-            ->where('current_status', $sendUpdateStatus)
-//            ->orWhere('previous_status', $sendUpdateStatus) // TODO:: Need to discuss with Mirza why this added? it's by passing the Transaction approval status
-            ->count();
+        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatus) {
+            $query->where('send_update_log_id', $sendUpdateId)
+                ->where(function ($query) use ($sendUpdateStatus) {
+                    $query->where('current_status', $sendUpdateStatus)
+                        ->orWhere('previous_status', $sendUpdateStatus);
+                });
+        })->count();
 
         return $sendUpdateStatusCount > 0;
     }
