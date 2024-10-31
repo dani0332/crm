@@ -1035,6 +1035,8 @@ const checkDiscount = (newPrice, oldPrice) => {
       bookingDetailsForm.discount = savedDiscount;
     }
   }
+
+  bookingDetailsForm.discount = (bookingDetailsForm.discount > 0.99) ? 0 : bookingDetailsForm.discount;
 };
 
 const dateToDMY = date => {
@@ -1088,8 +1090,7 @@ watch(
     if (
       !(
         noDiscountType.value ||
-        ignoreCheckDiscount.value ||
-        props?.payments[0]?.discount_value === 0
+        ignoreCheckDiscount.value
       )
     ) {
       checkDiscount(newValue, oldValue);
