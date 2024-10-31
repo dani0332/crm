@@ -160,7 +160,6 @@ class YachtQuoteRepository extends BaseRepository
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
         $query->orderBy('personal_quotes.'.$sort_by, $sort_type);
 
-
         if ($forTotalLeadsCount) {
             //PD Revert
             // return $query->count();
