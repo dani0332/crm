@@ -355,8 +355,8 @@ class HealthQuoteService extends BaseService
             $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
             $this->query->whereBetween('hqr.transaction_approved_at', [$startDate, $endDate]);
         }
-        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) 
-        && ! isset($request->booking_date) && ! isset($request->renewal_batch) 
+        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date)
+        && ! isset($request->booking_date) && ! isset($request->renewal_batch)
     && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
             $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }

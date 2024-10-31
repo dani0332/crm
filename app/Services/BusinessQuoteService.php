@@ -265,7 +265,7 @@ class BusinessQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
 
-        if (! isset($request->code) && ! isset($request->advisor_assigned_date) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) 
+        if (! isset($request->code) && ! isset($request->advisor_assigned_date) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date)
         && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
             $this->query->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
