@@ -113,8 +113,6 @@ class JetskiQuoteRepository extends BaseRepository
      */
     public function fetchGetData($forExport = false)
     {
-        $sort_by = request()->sortBy ?? 'created_at';
-        $sort_type = request()->sortType ?? 'desc';
 
         $query = $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with([
             'quoteStatus',
@@ -127,7 +125,7 @@ class JetskiQuoteRepository extends BaseRepository
         })->filter(! $forExport)
             ->withFakeLeadCriteria();
 
-        $query->orderBy('personal_quotes.'.$sort_by, $sort_type);
+        $query->orderBy('personal_quotes.' . (request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
 

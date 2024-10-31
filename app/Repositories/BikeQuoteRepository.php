@@ -198,8 +198,6 @@ class BikeQuoteRepository extends BaseRepository
     public function fetchGetData($forExport = false)
     {
 
-        $sort_by = request()->sortBy ?? 'created_at';
-        $sort_type = request()->sortType ?? 'desc';
 
         $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
             'quoteStatus',
@@ -217,7 +215,8 @@ class BikeQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        $query->orderBy('personal_quotes.'.$sort_by, $sort_type);
+        $query->orderBy('personal_quotes.' . (request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
