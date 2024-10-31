@@ -3032,68 +3032,70 @@ const fullAddress = computed(() => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div v-if="!hasRole(rolesEnum.PA)" class="flex mb-4 justify-end">
-            <x-tooltip
-              v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
-            >
-              <x-button
-                class="ml-2 mr-2"
-                :disabled="disableFollowUp"
-                size="sm"
-                color="rose"
-                @click="showfollowup = !showfollowup"
-                v-if="readOnlyMode.isDisable === true"
+          <div class="flex mb-4 justify-end">
+            <template v-if="!hasRole(rolesEnum.PA)">
+              <x-tooltip
+                v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
               >
-                Pause Follow-up to customer
-              </x-button>
-              <template #tooltip>
-                <span
-                  >When Activated, The button temporarily suspends the automatic
-                  sending of follow-up emails to clients</span
+                <x-button
+                  class="ml-2 mr-2"
+                  :disabled="disableFollowUp"
+                  size="sm"
+                  color="rose"
+                  @click="showfollowup = !showfollowup"
+                  v-if="readOnlyMode.isDisable === true"
                 >
-              </template>
-            </x-tooltip>
-            <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                  Pause Follow-up to customer
+                </x-button>
+                <template #tooltip>
+                  <span
+                    >When Activated, The button temporarily suspends the
+                    automatic sending of follow-up emails to clients</span
+                  >
+                </template>
+              </x-tooltip>
+              <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                <x-button
+                  @click.prevent="onTogglePlans(false)"
+                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Show
+                </x-button>
+                <x-button
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Hide
+                </x-button>
+              </x-button-group>
               <x-button
-                @click.prevent="onTogglePlans(false)"
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                color="emerald"
+                class="ml-2 mr-2"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
                 :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-                :loading="toggleLoader"
-                v-if="readOnlyMode.isDisable === true"
               >
-                Show
+                Download PDF
               </x-button>
               <x-button
-                @click.prevent="onTogglePlans(true)"
-                :loading="toggleLoader"
+                @click.prevent="modals.sendConfirm = true"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                :disabled="
+                  record.advisor_id != $page.props.auth.user.id ||
+                  page.props.linkedQuoteDetails.childLeadsCount > 0
+                "
                 v-if="readOnlyMode.isDisable === true"
               >
-                Hide
+                Send OCB Email to Customer
               </x-button>
-            </x-button-group>
-            <x-button
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              color="emerald"
-              class="ml-2 mr-2"
-              @click.prevent="onExportPlans"
-              :loading="exportLoader"
-              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            >
-              Download PDF
-            </x-button>
-            <x-button
-              @click.prevent="modals.sendConfirm = true"
-              size="sm"
-              color="orange"
-              class="mr-2"
-              :disabled="
-                record.advisor_id != $page.props.auth.user.id ||
-                page.props.linkedQuoteDetails.childLeadsCount > 0
-              "
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Send OCB Email to Customer
-            </x-button>
+            </template>
 
             <AddPlanButtonTemplate v-slot="{ isDisabled }">
               <x-button
@@ -3130,18 +3132,20 @@ const fullAddress = computed(() => {
               :isDisabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             />
 
-            <x-button
-              @click.prevent="copyLink"
-              size="sm"
-              color="emerald"
-              v-if="
-                typeof availablePlansTable.data !== 'string' &&
-                availablePlansTable.data.length > 0
-              "
-              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            >
-              Copy Link
-            </x-button>
+            <template v-if="!hasRole(rolesEnum.PA)">
+              <x-button
+                @click.prevent="copyLink"
+                size="sm"
+                color="emerald"
+                v-if="
+                  typeof availablePlansTable.data !== 'string' &&
+                  availablePlansTable.data.length > 0
+                "
+                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+              >
+                Copy Link
+              </x-button>
+            </template>
           </div>
           <DataTable
             table-class-name="compact"
