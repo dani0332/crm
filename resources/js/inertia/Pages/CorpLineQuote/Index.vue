@@ -13,6 +13,7 @@ defineProps({
 
 const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const canExport = ref(false);
 const notification = useNotifications('toast');
@@ -72,6 +73,8 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_date: null,
+  advisor_assigned_date: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
 });
@@ -194,6 +197,8 @@ const setIntialState = () => {
     is_stale: false,
     policy_expiry_date: '',
     policy_expiry_date_end: '',
+    last_modified_date: null,
+    advisor_assigned_date: '',
   });
   filtersCount.value = 0;
 };
@@ -645,7 +650,8 @@ watch(() => {
               filters.renewal_batch ||
               filters.payment_due_date ||
               filters.booking_date ||
-              filters.company_name
+              filters.company_name ||
+              filters.advisor_assigned_date
                 ? []
                 : [isRequired]
             "
@@ -662,7 +668,8 @@ watch(() => {
               filters.renewal_batch ||
               filters.payment_due_date ||
               filters.booking_date ||
-              filters.company_name
+              filters.company_name ||
+              filters.advisor_assigned_date
                 ? []
                 : [isRequired]
             "
@@ -752,6 +759,21 @@ watch(() => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.CorplineManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"

@@ -167,6 +167,7 @@ const filters = reactive({
   segment_filter: '',
   sic_advisor_requested: 'All',
   transaction_approved_dates: '',
+  last_modified_date: null,
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
 });
@@ -815,6 +816,13 @@ watch(() => {
           multi-calendars
           multi-calendars-solo
           max-range="120"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
