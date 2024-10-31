@@ -675,3 +675,5 @@ Route::get('/add-batch-number', function () {
     $addBtchNuimber->handle();
     echo 'Done';
 });
+
+Route::get('/send-payment-email', [CRUDController::class, 'triggerSendPaymentEmail']);

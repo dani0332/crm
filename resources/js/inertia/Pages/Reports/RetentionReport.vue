@@ -361,7 +361,7 @@ function onSubmit(isValid = true) {
       });
       return;
     }
-    if (filters.policyExpiryDate.length == 0) {
+    if (filters.policyExpiryDate?.length == 0) {
       notification.error({
         title: 'Please select Start & End Date',
         position: 'top',
@@ -458,7 +458,7 @@ function onFetchLeadsInfo(advisor_id, renewal_batch_id, type, page = 1) {
   let payload = JSON.parse(JSON.stringify(filters));
   payload = cleanFilters(payload);
   payload = addMissingFilters(payload);
-  if (!payload.policyExpiryDate || payload.policyExpiryDate.length === 0) {
+  if (!payload.policyExpiryDate || payload.policyExpiryDate?.length === 0) {
     if (!payload.month || payload.month === '') {
       delete payload.displayBy;
     }
@@ -700,8 +700,8 @@ function handleDateChange(dateRange) {
             !filters?.policyExpiryDate ||
             filters?.policyExpiryDate?.length === 0
           "
-          :min-date="filters?.policyExpiryDate[0]"
-          :max-date="filters?.policyExpiryDate[1]"
+          :min-date="filters?.policyExpiryDate && filters?.policyExpiryDate[0]"
+          :max-date="filters?.policyExpiryDate && filters?.policyExpiryDate[1]"
           model-type="yyyy-MM-dd"
         />
 
