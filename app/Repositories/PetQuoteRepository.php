@@ -89,6 +89,11 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
+        $request = request();
+
+        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
+        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
+
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
@@ -119,9 +124,8 @@ class PetQuoteRepository extends BaseRepository
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
-        if (request()->sortBy) {
-            $query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
-        }
+        $query->orderBy('personal_quotes.'.$sort_by, $sort_type);
+
         if ($forTotalLeadsCount) {
             //PD Revert
             return 0;
