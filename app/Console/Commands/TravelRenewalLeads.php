@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Services\TravelRenewalService;
+use Illuminate\Console\Command;
 
 class TravelRenewalLeads extends Command
 {
@@ -26,8 +26,8 @@ class TravelRenewalLeads extends Command
      */
     public function handle()
     {
-        echo "get renewals travel-renewal- leads";
+        echo 'get renewals travel-renewal- leads';
         app(TravelRenewalService::class)->getTravelRenewalLeads();
-        echo "done";
+        echo 'done';
     }
 }
