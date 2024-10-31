@@ -1,6 +1,4 @@
-<?php 
-use App\Enums\quoteStatusCode; 
-use App\Enums\quoteTypeCode;
+<?php
 ?>
     <div class="drag-container">
         <ul class="drag-list">
@@ -17,7 +15,7 @@ use App\Enums\quoteTypeCode;
             @endif
 
             @if($teamName == quoteTypeCode::Business)
-                @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::QUALIFIED || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::MISSING_DOCUMENTS || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING)
+                @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::QUALIFIED || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::MISSING_DOCUMENTS || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::POLICY_DOCUMENTS_PENDING)
                 <x-my-leads-visual
                     :item="$item"
                     :model="$teamName"
@@ -35,7 +33,7 @@ use App\Enums\quoteTypeCode;
             @endif
 
             @if($teamName == quoteTypeCode::Health)
-                @if($item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED)
+                @if($item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::POLICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED)
                 <x-my-leads-visual
                     :item="$item"
                     :model="$teamName"
