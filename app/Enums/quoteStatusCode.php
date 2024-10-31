@@ -26,7 +26,7 @@ final class quoteStatusCode extends Enum
     const NEGOTIATION = 'In Negotiation';
     const PAYMENTPENDING = 'Payment Pending';
     const PENDINGUW = 'Pending with UW';
-    const PLOICY_DOCUMENTS_PENDING = 'Policy Documents Pending';
+    const POLICY_DOCUMENTS_PENDING = 'Policy Documents Pending';
     const APPLICATION_PENDING = 'Application Pending';
     const APPLICATION_SUBMITTED = 'Application Submitted';
     const MISSING_DOCUMENTS = 'Missing Documents Requested';
