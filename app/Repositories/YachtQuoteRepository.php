@@ -141,10 +141,6 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        $request = request();
-
-        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
-        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
 
         $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
             'quoteStatus',
@@ -168,7 +164,8 @@ class YachtQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
-        $this->orderBy($sort_by, $sort_type);
+
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
             //PD Revert
