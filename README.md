@@ -25,7 +25,8 @@ Please make sure to go through the last two lines to familiarize yourself with t
 - [TailwindCSS](https://tailwindcss.com/)
 - [UI - indielayer](https://indielayer.com/)
 
-## Setting up Laravel
+## Setting up  Laravel
+
 
 - Clone the repo in a new folder and use the develop branch for initial setup.
 - Make sure you're using PHP 8.1 or above, Maria DB server 10.x or above on your local machine.
