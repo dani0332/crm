@@ -1036,7 +1036,8 @@ const checkDiscount = (newPrice, oldPrice) => {
     }
   }
 
-  bookingDetailsForm.discount = (bookingDetailsForm.discount > 0.99) ? 0 : bookingDetailsForm.discount;
+  bookingDetailsForm.discount =
+    bookingDetailsForm.discount > 0.99 ? 0 : bookingDetailsForm.discount;
 };
 
 const dateToDMY = date => {
@@ -1087,12 +1088,7 @@ const noDiscountType = computed(() => {
 watch(
   () => bookingDetailsForm.price_with_vat,
   (newValue, oldValue) => {
-    if (
-      !(
-        noDiscountType.value ||
-        ignoreCheckDiscount.value
-      )
-    ) {
+    if (!(noDiscountType.value || ignoreCheckDiscount.value)) {
       checkDiscount(newValue, oldValue);
     }
   },
