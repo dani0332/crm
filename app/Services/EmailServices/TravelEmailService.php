@@ -7,10 +7,13 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SICFollowupEmailJob;
+use App\Models\ApplicationStorage;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\BaseService;
+use App\Services\BirdService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -18,9 +21,6 @@ use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Models\ApplicationStorage;
-use App\Services\BirdService;
-use App\Enums\WorkflowTypeEnum;
 
 class TravelEmailService extends BaseService
 {
@@ -130,7 +130,7 @@ class TravelEmailService extends BaseService
         return $sortedFixtures->first()->text.' and much more...';
     }
 
-    private function buildCommonEmailData(TravelQuote $lead, $advisor, $previousAdvisor, $workflowType=null): object
+    private function buildCommonEmailData(TravelQuote $lead, $advisor, $previousAdvisor, $workflowType = null): object
     {
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
 
@@ -297,18 +297,21 @@ class TravelEmailService extends BaseService
         return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
     }
 
-    public function SendOCBTravelRenewalIntroEmail(TravelQuote $lead){
+    public function SendOCBTravelRenewalIntroEmail(TravelQuote $lead)
+    {
         $advisor = User::where('id', $lead->advisor_id)->first();
 
         $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_RENEWALS_OCB);
         $travelRenewalEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_TRAVEL_RENEWALS_OCB)->first();
         if ($travelRenewalEvent) {
-           $response =  app(BirdService::class)->triggerWebHookRequest($travelRenewalEvent->value, $emailData);
+            $response = app(BirdService::class)->triggerWebHookRequest($travelRenewalEvent->value, $emailData);
             info("SendOCBTravelRenewalIntroEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+
             return $response->status_code;
         } else {
             info("SendOCBTravelRenewalIntroEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
         }
+
         return null;
     }
 }

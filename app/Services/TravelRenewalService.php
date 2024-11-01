@@ -6,21 +6,20 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\TeamNameEnum;
+use App\Enums\TeamNameEnum;
 use App\Factories\AllocationFactory;
+use App\Factories\AllocationFactory;
+use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
+use App\Models\PaymentStatus;
 use App\Models\PaymentStatus;
 use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use App\Factories\AllocationFactory;
-use App\Enums\TeamNameEnum;
-use App\Enums\QuoteTypeId;
-use App\Models\PaymentStatus;
-use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
-
 
 class TravelRenewalService extends BaseService
 {
@@ -31,24 +30,23 @@ class TravelRenewalService extends BaseService
             QuoteStatusEnum::TransactionApproved,
             QuoteStatusEnum::PolicyBooked,
         ])
-        ->whereIn('payment_status_id', [
-            PaymentStatusEnum::CAPTURED,
-            PaymentStatusEnum::PAID,
-            PaymentStatusEnum::PARTIAL_CAPTURED,
-            PaymentStatusEnum::CREDIT_APPROVED
-        ])
-        ->whereDate('start_date',Carbon::now()->subDays(20))
-        ->chunkById(100, function ($quotes) {
-            $quoteCount = $quotes->count();
-            info("Processing total quotes in chunk: $quoteCount");
-            if($quoteCount > 0 ){
+            ->whereIn('payment_status_id', [
+                PaymentStatusEnum::CAPTURED,
+                PaymentStatusEnum::PAID,
+                PaymentStatusEnum::PARTIAL_CAPTURED,
+                PaymentStatusEnum::CREDIT_APPROVED,
+            ])
+            ->whereDate('start_date', Carbon::now()->subDays(20))
+            ->chunkById(100, function ($quotes) {
+                $quoteCount = $quotes->count();
+                info("Processing total quotes in chunk: $quoteCount");
+                if ($quoteCount > 0) {
 
-                $this->processTravelRenewalQuotes($quotes);
-            }
-            else{
-                info('No quotes in chunk.');
-            }
-        });
+                    $this->processTravelRenewalQuotes($quotes);
+                } else {
+                    info('No quotes in chunk.');
+                }
+            });
     }
 
     public function processTravelRenewalQuotes($quotes)
@@ -232,7 +230,7 @@ class TravelRenewalService extends BaseService
 
         $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid, $currentTeamId);
         $response = $allocationStrategy->executeSteps();
-        if($response){
+        if ($response) {
             info(self::class.' - Going to dispatch SendOCBTravelRenewalIntroEmailJob ................ Ref-ID:'.$lead->uuid);
             SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->onQueue('local')->delay(now()->addSeconds(5));
         }

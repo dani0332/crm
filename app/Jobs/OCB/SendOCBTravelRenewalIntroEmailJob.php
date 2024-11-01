@@ -2,17 +2,16 @@
 
 namespace App\Jobs\OCB;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use App\Models\TravelQuote;
+use App\Services\EmailServices\TravelEmailService;
 use Exception;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\EmailServices\TravelEmailService;
-use App\Models\TravelQuote;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SendOCBTravelRenewalIntroEmailJob implements ShouldQueue
 {
@@ -22,13 +21,14 @@ class SendOCBTravelRenewalIntroEmailJob implements ShouldQueue
      * Create a new job instance.
      */
     public $tries = 3;
+
     public $timeout = 100;
     public $backoff = 300;
     private $quoteUuid;
 
     public function __construct($quoteUuid)
     {
-       $this->quoteUuid = $quoteUuid;
+        $this->quoteUuid = $quoteUuid;
     }
 
     /**
@@ -38,16 +38,18 @@ class SendOCBTravelRenewalIntroEmailJob implements ShouldQueue
     {
         if (! $lead) {
             info(self::class." - Lead not found for uuid: {$this->quoteUuid}");
+
             return false;
         }
         info(self::class." - Lead found for uuid: {$this->quoteUuid}");
-        $shouldSkip =  Str::startsWith($lead->code, 'TRA-CAR-') || (empty($lead->advisor_id) && $lead->isMultiTrip());
+        $shouldSkip = Str::startsWith($lead->code, 'TRA-CAR-') || (empty($lead->advisor_id) && $lead->isMultiTrip());
         if ($shouldSkip) {
             if (Str::startsWith($lead->code, 'TRA-CAR-')) {
                 info(self::class." - Lead is a CAR lead having Travel as EP, no need to send OCB INTRO email for uuid: {$lead->uuid}");
             } elseif (empty($lead->advisor_id) && $lead->isMultiTrip()) {
                 info(self::class." - The Lead is Multi Trip Lead so Skipping Initial OCB Email for uuid: {$lead->uuid}");
             }
+
             return false;
         }
 

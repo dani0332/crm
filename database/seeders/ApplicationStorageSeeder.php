@@ -63,8 +63,6 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-
-
     }
 
 }
