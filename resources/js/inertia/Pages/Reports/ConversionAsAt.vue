@@ -3,9 +3,12 @@ import { usePagination, useRowsPerPage } from 'use-vue3-easy-data-table';
 
 const props = defineProps({
   reportData: Array,
+  unassignedLeadsCount: Number,
   filterOptions: Object,
   quoteTypes: Object,
   displayByColumn: String,
+  createdAtDate: String,
+  includeUnassignedLeads: String,
   quoteTypeCodes: Object,
   quoteTypeIdEnum: Object,
 });
@@ -30,6 +33,9 @@ const permissionsEnum = page.props.permissionsEnum;
 const sortBy = ref('net_conversion');
 const sortType = ref('desc');
 const showTable = ref(true);
+let showUnassignedLeads = ref(false);
+let unassignedDate = ref([]);
+let initialAsAtDate = ref('');
 
 const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
@@ -91,12 +97,21 @@ const displayBy = ref([
   { label: 'External Lead Source (UTM)', value: 'external_lead_source' },
 ]);
 
+const includeUnassignedLeads = ref([
+  { label: 'Yes', value: 'yes' },
+  { label: 'No', value: 'no' },
+]);
+
 const displayByActive = ref(false);
 
 const updateTableHeaders = () => {
   const filterCondition = filters.displayBy ?? null;
   if (filterCondition && filterCondition.length > 0) {
     let condition = displayByActive.value ? 1 : 0;
+    // check if at 0 index text is empty then remove it
+    if (tableHeader.value[0].text === '') {
+      tableHeader.value.splice(0, 1);
+    }
     tableHeader.value.splice(0, condition, {
       text: filterCondition
         .split('_')
@@ -110,6 +125,32 @@ const updateTableHeaders = () => {
     tableHeader.value.splice(0, 1);
     displayByActive.value = false;
   }
+  checkAndAddExtraEmptyColumn();
+};
+
+const checkAndAddExtraEmptyColumn = () => {
+  const filterCondition = filters.displayBy ?? null;
+
+  if (
+    (!filterCondition || !filterCondition.length) &&
+    filters.includeUnassignedLeads == 'yes' &&
+    tableHeader.value[0].text != ''
+  ) {
+    tableHeader.value.splice(0, 0, {
+      text: '',
+      value: '',
+    });
+  }
+};
+
+const formatDate = dateString => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
 };
 
 function calculateTotalNetConversion(data) {
@@ -122,7 +163,10 @@ function calculateTotalNetConversion(data) {
     badLeads += Number(row.bad_leads);
   });
   const numerator = saleLeads;
-  const denominator = totalLeads - badLeads;
+  const denominator =
+    (showUnassignedLeads && props.unassignedLeadsCount
+      ? +totalLeads + props.unassignedLeadsCount
+      : totalLeads) - badLeads;
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
@@ -136,7 +180,10 @@ function calculateTotalGrossConversion(data) {
     saleLeads += Number(row.sale_leads);
   });
   const numerator = saleLeads;
-  const denominator = totalLeads;
+  const denominator =
+    showUnassignedLeads && props.unassignedLeadsCount
+      ? +totalLeads + props.unassignedLeadsCount
+      : totalLeads;
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
@@ -147,7 +194,9 @@ function calculateTotalLeads(data) {
   data.forEach(row => {
     totalLeads += Number(row.total_leads);
   });
-  return totalLeads;
+  return showUnassignedLeads && props.unassignedLeadsCount
+    ? +totalLeads + props.unassignedLeadsCount
+    : totalLeads;
 }
 
 function calculateTotalSaleLeads(data) {
@@ -158,13 +207,24 @@ function calculateTotalSaleLeads(data) {
   return saleLeads;
 }
 
+const onIncludeUnassignedLeadsChange = () => {
+  if (filters.includeUnassignedLeads == 'no') {
+    filters.createdAtDate = '';
+    return;
+  }
+
+  filters.createdAtDate = filters.startEndDate ? filters.startEndDate : '';
+};
+
 const filters = reactive({
   startEndDate: [],
   lob: '',
   asAtDate: '',
   tag: '',
   displayBy: props.displayByColumn || '',
+  createdAtDate: props.createdAtDate || '',
   page: 1,
+  includeUnassignedLeads: props.includeUnassignedLeads || 'no',
 });
 
 function onSubmit(isValid) {
@@ -188,6 +248,9 @@ function onSubmit(isValid) {
         loaders.table = true;
       },
       onFinish: () => {
+        unassignedDate = filters.createdAtDate ?? [];
+        initialAsAtDate = filters.asAtDate ?? '';
+        updateShowUnassignedLeads();
         loaders.table = false;
         showTable.value = false;
         updateTableHeaders();
@@ -202,6 +265,10 @@ function onSubmit(isValid) {
     });
   }
 }
+
+const updateShowUnassignedLeads = () => {
+  showUnassignedLeads.value = filters.includeUnassignedLeads == 'yes';
+};
 
 function onReset() {
   isDirty.value = false;
@@ -306,6 +373,9 @@ const minDate = computed(() => {
 });
 
 onMounted(() => {
+  unassignedDate = props.createdAtDate ?? [];
+  checkAndAddExtraEmptyColumn();
+  updateShowUnassignedLeads();
   document.querySelectorAll('[title]').forEach(element => {
     element.removeAttribute('title');
   });
@@ -384,6 +454,27 @@ onMounted(() => {
           class="w-full"
           :single="true"
         />
+        <ComboBox
+          v-model="filters.includeUnassignedLeads"
+          placeholder="Select Option"
+          label="Include Unassigned Leads?"
+          :options="includeUnassignedLeads"
+          class="w-full"
+          :single="true"
+          @update:modelValue="onIncludeUnassignedLeadsChange"
+        />
+        <DatePicker
+          v-if="filters.includeUnassignedLeads == 'yes'"
+          v-model="filters.createdAtDate"
+          label="Lead Created Date*"
+          placeholder="Specify Lead Created Date"
+          range
+          :max-range="30"
+          :maxDate="new Date()"
+          :rules="[isRequired]"
+          size="sm"
+          model-type="yyyy-MM-dd"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">
@@ -433,11 +524,23 @@ onMounted(() => {
         <p v-else>{{ item.net_conversion }} %</p>
       </template>
       <template #body-append>
+        <tr v-if="showUnassignedLeads">
+          <td class="direction-left">Unassigned Leads</td>
+          <td>{{ formatDate(unassignedDate[0]) }}</td>
+          <td>{{ formatDate(unassignedDate[1]) }}</td>
+          <td>{{ formatDate(initialAsAtDate) }}</td>
+          <td class="direction-center">
+            {{ props.unassignedLeadsCount }}
+          </td>
+          <td class="direction-center">0</td>
+          <td class="direction-center">0</td>
+          <td class="direction-center">0</td>
+        </tr>
         <tr v-if="reportData && reportData?.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td></td>
           <td></td>
-          <td v-if="displayByActive"></td>
+          <td v-if="showUnassignedLeads || displayByActive"></td>
           <td class="direction-center">
             {{ calculateTotalLeads(reportData) }}
           </td>
