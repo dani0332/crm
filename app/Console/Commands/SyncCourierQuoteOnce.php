@@ -4,14 +4,13 @@ namespace App\Console\Commands;
 
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
-use Illuminate\Console\Command;
 use App\Services\MACRMService;
+use Illuminate\Console\Command;
 
 class SyncCourierQuotesOnce extends Command
 {
     protected $signature = 'sync:courier-quotes-once';
     protected $description = 'Sync courier quotes with MACRM for a list of RefIds, running only once on deployment.';
-
     protected $refIds = [
         '33LMCP2Q',
         'ZXEFPZXX',
@@ -177,17 +176,17 @@ class SyncCourierQuotesOnce extends Command
         '9K97929B',
         '9B45MWV7',
         'HNMAVQFG',
-        'CE9RQDQT'
+        'CE9RQDQT',
     ];
-
 
     public function handle()
     {
-        $this->info("Syncing process started at: " . now());
+        $this->info('Syncing process started at: '.now());
         foreach ($this->refIds as $refId) {
             $quote = CarQuote::where('uuid', $refId)->first();
-            if (!$quote) {
+            if (! $quote) {
                 $this->info("Quote not found for RefId: {$refId}");
+
                 continue;
             }
             $quoteTypeId = QuoteTypeId::Car;
@@ -198,6 +197,6 @@ class SyncCourierQuotesOnce extends Command
                 : $this->warn("Failed to sync quote for RefId: {$refId}");
         }
 
-        $this->info("Syncing process completed successfully at: " . now());
+        $this->info('Syncing process completed successfully at: '.now());
     }
 }
