@@ -10,6 +10,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -71,8 +72,8 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
             'hqr.last_name',
             'hqr.payment_status_id',
-            'hqr.email',
-            'hqr.mobile_no',
+            // 'hqr.email',
+            // 'hqr.mobile_no',
             'hqr.preference',
             'hqr.details',
             'hqr.source',
@@ -181,6 +182,7 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.insly_migrated',
+            'hqr.sic_advisor_requested',
             'hqr.aml_status',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
@@ -212,7 +214,7 @@ class HealthQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('hqr.uuid', $id)->first();
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
@@ -353,7 +355,9 @@ class HealthQuoteService extends BaseService
             $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
             $this->query->whereBetween('hqr.transaction_approved_at', [$startDate, $endDate]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates)) {
+        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date)
+        && ! isset($request->booking_date) && ! isset($request->renewal_batch)
+    && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
             $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
@@ -367,6 +371,14 @@ class HealthQuoteService extends BaseService
             $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
 
+        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
+            $dateArray = $request['last_modified_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('hqr.updated_at', [$dateFrom, $dateTo]);
+        }
+
         if (
             ! empty($request->created_at_start)
             && ! empty($request->created_at_end)
@@ -377,6 +389,8 @@ class HealthQuoteService extends BaseService
             && empty($request->booking_date)
             && empty($request->renewal_batch)
             && empty($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
         ) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
@@ -427,11 +441,7 @@ class HealthQuoteService extends BaseService
         if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
         }
-        /*if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-        $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
-        $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-        $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }*/
+
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
@@ -519,6 +529,9 @@ class HealthQuoteService extends BaseService
                 $this->query->whereNull('hqr.previous_quote_policy_number');
             }
         }
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
+            $this->query->where('hqr.sic_advisor_requested', $request->sic_advisor_requested);
+        }
         if (isset($request->is_ecommerce)) {
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
@@ -537,6 +550,14 @@ class HealthQuoteService extends BaseService
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($subQueryCallback) {
                 $query->whereNotIn('hqr.uuid', $subQueryCallback);
             });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'hqr');
@@ -987,7 +1008,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1053,7 +1075,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1467,12 +1490,14 @@ class HealthQuoteService extends BaseService
                 if (isset($value['ratesPerCopay'])) {
                     foreach ($value['ratesPerCopay'] as $copay) {
                         if ((int) $copay['healthPlanCoPaymentId'] == (int) $copayId) {
-                            if (isset($loadingPrices[$key]) &&
+                            if (
+                                isset($loadingPrices[$key]) &&
                                 (int) $loadingPrices[$key]['memberId'] == $value['memberId']
                             ) {
                                 $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
                             }
-                            if (isset($manualPremiumPrices[$key]) &&
+                            if (
+                                isset($manualPremiumPrices[$key]) &&
                                 (int) $manualPremiumPrices[$key]['memberId'] == $value['memberId']
                                 && $manualPremiumPrices[$key]['premium'] != 0
                             ) {

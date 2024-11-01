@@ -12,10 +12,16 @@ defineProps({
   authorizedDays: Number,
 });
 const notification = useNotifications('toast');
+const cleanObj = obj => useCleanObj(obj);
 const page = usePage();
 const loader = reactive({
   table: false,
   export: false,
+});
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
 });
 
 let availableFilters = {
@@ -37,6 +43,8 @@ let availableFilters = {
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  insurer_tax_number: '',
+  insurer_commmission_invoice_number: '',
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -66,10 +74,11 @@ function onSubmit(isValid) {
         (filters[key] === '' || filters[key].length === 0) &&
         delete filters[key],
     );
+    serverOptions.value.page = 1;
     // /personal-quotes/bike'
     router.visit(route('bike-quotes-list'), {
       method: 'get',
-      data: filters,
+      data: { ...filters, ...serverOptions.value },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -108,6 +117,24 @@ onMounted(() => {
   if (hasRole(rolesEnum.BikeManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
   }
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
@@ -133,6 +160,11 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
@@ -161,7 +193,11 @@ const onLeadAssigned = () => {
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'bike');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Bike'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 function daysAgoFromAuthorizedDate(authorizedDate) {
   let date = authorizedDate.split(' ')[0];
@@ -270,6 +306,14 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -451,6 +495,26 @@ const validateDateRange = () => {
           multi-calendars
           multi-calendars-solo
         />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_number"
+          type="text"
+          name="insurer_tax_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commmission_invoice_number"
+          type="text"
+          name="insurer_commmission_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -498,6 +562,7 @@ const validateDateRange = () => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

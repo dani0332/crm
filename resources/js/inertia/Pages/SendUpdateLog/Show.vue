@@ -114,8 +114,11 @@ onMounted(() => {
   state.redirectURL = params.get('refURL');
 });
 
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 const onEdit = () => {
-  if (isUpdateBooked.value) {
+  if (isUpdateBooked.value && !can(permissionsEnum.SEND_UPDATE_EDIT_NOTES)) {
     notification.error({
       title: 'Update already booked',
       position: 'top',
@@ -278,7 +281,11 @@ onBeforeMount(() => {
                   v-model="sendUpdateForm.notes"
                   size="xs"
                   :disabled="!state.edit"
+                  maxlength="250"
                 />
+                <p class="text-xs text-right" v-if="state.edit">
+                  {{ sendUpdateForm.notes.length }} / 250
+                </p>
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
@@ -607,6 +614,7 @@ onBeforeMount(() => {
     <AuditLogs
       :type="modelClass"
       :id="$page.props.sendUpdateLog.id"
+      :quoteType="'SendUpdateLog'"
       :expanded="true"
     />
   </div>

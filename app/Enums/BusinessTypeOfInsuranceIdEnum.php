@@ -9,7 +9,7 @@ use BenSampo\Enum\Enum;
  * @method static static OptionTwo()
  * @method static static OptionThree()
  */
-final class RedisKeyEnum extends Enum
+final class BusinessTypeOfInsuranceIdEnum extends Enum
 {
-    const LEAD_SOURCE = 'leadSource';
+    const GROUP_MEDICAL = 5;
 }
