@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -69,8 +70,7 @@ class SendPaymentEmail extends Command
 
             $rolesData = [
                 RolesEnum::CarManager => ['role' => 'Car', 'table' => 'car_quote_request'],
-                RolesEnum::BusinessManager => ['role' => 'Business', 'table' => 'business_quote_request'],
-                RolesEnum::CorplineManager => ['role' => 'Business', 'table' => 'business_quote_request'],
+                RolesEnum::BusinessManager, RolesEnum::CorplineManager => ['role' => 'Business', 'table' => 'business_quote_request'],
                 RolesEnum::HealthManager => ['role' => 'Health', 'table' => 'health_quote_request'],
                 RolesEnum::TravelManager => ['role' => 'Travel', 'table' => 'travel_quote_request'],
                 RolesEnum::HomeManager => ['role' => 'Home', 'table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Home],
@@ -138,7 +138,7 @@ class SendPaymentEmail extends Command
 
         $query = DB::table('payments as py')
             ->select(
-                DB::raw('COUNT(*) as total_leads'),
+                DB::raw('COUNT(DISTINCT '.$table.'.code) as total_leads'),
                 DB::raw('SUM('.$table.'.premium) as total_premium'),
                 DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
             )
@@ -146,11 +146,12 @@ class SendPaymentEmail extends Command
             ->join('users', 'users.id', '=', $table.'.advisor_id')
             ->join('user_team', 'user_team.user_id', '=', 'users.id')
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
-            ->where($table.'.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->whereIn('teams.name', $teamName)
             ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId, $table) {
                 return $query->where($table.'.quote_type_id', $quoteTypeId);
             })
+            ->where($table.'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT)
             ->groupBy('expiry_days')
             ->having('expiry_days', '=', 1)
             ->orderBy('py.id');

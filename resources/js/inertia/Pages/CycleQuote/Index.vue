@@ -45,6 +45,8 @@ let availableFilters = {
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_date: '',
+  advisor_assigned_date: null,
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
 };
@@ -137,6 +139,12 @@ const tableHeader = ref([
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
     is_active: true,
+  },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    is_active: true,
+    sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
 ]);
@@ -601,6 +609,21 @@ const validateDateRange = () => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.CycleManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"

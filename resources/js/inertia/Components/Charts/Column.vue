@@ -8,6 +8,7 @@ const props = defineProps({
   seriesName: String,
   title: String,
   yAxisTitle: String,
+  dataLabelsFormat: String,
 });
 
 const chartRef = ref(null);
@@ -58,14 +59,13 @@ const chartOptions = ref({
       borderWidth: 0,
       dataLabels: {
         enabled: true,
-        format: '{point.y:.2f}%',
+        format: props.dataLabelsFormat ?? '{point.y:.2f}%',
       },
     },
   },
   tooltip: {
     headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
-    pointFormat:
-      '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b>',
+    pointFormat: `<span style="color:{point.color}">{point.name}</span>: <b>${props.dataLabelsFormat ?? '{point.y:.2f}%'}</b>`,
   },
   series: [
     {

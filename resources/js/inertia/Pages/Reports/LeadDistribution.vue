@@ -50,6 +50,7 @@ const filters = reactive({
   assignmentTypes: 'All',
   isCommercial: 'All',
   segment_filter: 'all',
+  sic_advisor_requested: 'All',
   page: 1,
 });
 
@@ -177,6 +178,17 @@ const calculateTotalSum = (data, key) => {
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
           :single="true"
         />
       </div>
