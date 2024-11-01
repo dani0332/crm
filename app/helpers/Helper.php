@@ -1484,7 +1484,7 @@ if (! function_exists('getInsuranceProvider')) {
     {
         $insuranceProvider = null;
         $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes) && isset($payment)) {
             $planRelationName = strtolower($quoteType).'Plan';
             $payment->load($planRelationName);
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;

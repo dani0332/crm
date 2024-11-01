@@ -13,6 +13,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -446,6 +447,7 @@ class SplitPaymentService
             if ($isFromJob && $splitPayment->id > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPayment->id)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $errorMessage]);
                 info('Payment Process Job failed for Split Payment ID: '.$splitPayment->id.' with error: '.$errorMessage);
+                $this->handleAutomationError($quote, $modelType, $splitPayment->payment);
             }
         }
     }
@@ -688,7 +690,7 @@ class SplitPaymentService
 
                     if ($isFromJob) {
                         CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $sageMessage]);
-
+                        $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
                         return;
                     } else {
                         vAbort($sageMessage);
@@ -704,6 +706,9 @@ class SplitPaymentService
                 if ($capturePaymentResponse->getStatusCode() != 200) {
                     $data = json_decode($capturePaymentResponse->getContent(), true);
                     $this->handleCapturePaymentError($data[0] ?? '', $isFromJob, $paymentSplit->id, $paymentSplit->code);
+                    if ($isFromJob) {
+                        $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
+                    }
                 }
                 //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
             }
@@ -716,14 +721,14 @@ class SplitPaymentService
 
         if (! $paymentSplit->payment->is_approved &&
             (! $isFromJob ||
-                ($isFromJob && $modelType === QuoteTypes::TRAVEL && $paymentSplit->payment->insuranceProvider->code = InsuranceProvidersEnum::ALNC)
+                ($isFromJob && $modelType == QuoteTypes::TRAVEL->value && $paymentSplit->payment->insuranceProvider->code == InsuranceProvidersEnum::ALNC)
             )
         ) {
 
             $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
-                    $paymentSplit->verified_by = Auth::user()->id;
+                    $paymentSplit->verified_by = Auth::user()->id ?? null;
                 }
 
                 $parentPayment = $paymentSplit->payment;
@@ -764,6 +769,7 @@ class SplitPaymentService
                 info('Failed to approve split payment for Payment Split ID: '.$splitPaymentId.' with error: '.$retryResponse['message']);
                 if ($isFromJob) {
                     CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $retryResponse['message']]);
+                    $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
                 } else {
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
                 }
@@ -830,7 +836,7 @@ class SplitPaymentService
             $masterPayment->update([
                 'is_approved' => 1,
                 'payment_status_id' => $masterPaymentStatus,
-                'updated_by' => Auth::user()->id,
+                'updated_by' => Auth::user()->id ?? null,
             ]);
 
             info('Master payment approved for Quote Code: '.$quoteModel->code.' with Payment Status: '.$masterPaymentStatus);
@@ -889,6 +895,7 @@ class SplitPaymentService
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
                 info('Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' with error: '.$exception->getMessage());
+                $this->handleAutomationError($quoteModel, $modelType, $masterPayment);
             }
             Log::error('Error in processMasterPaymentApprove for Quote Code: '.$quoteModel->code.': '.$exception->getMessage());
             DB::rollBack();
@@ -1118,5 +1125,16 @@ class SplitPaymentService
             $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
         }
 
+    }
+
+    private function handleAutomationError($quote, $quoteType, $payment)
+    {
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+
+        if ($insuranceProvider && $quoteType == QuoteTypes::TRAVEL->value && $payment->insuranceProvider->code == InsuranceProvidersEnum::ALNC) {
+            $quote->update([
+                'insurer_api_status' => PolicyIssuanceEnum::AUTO_CAPTURE_FAILED,
+            ]);
+        }
     }
 }
