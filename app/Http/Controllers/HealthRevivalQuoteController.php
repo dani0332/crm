@@ -80,7 +80,6 @@ class HealthRevivalQuoteController extends Controller
 
         $paymentMethods = app(LookupService::class)->getPaymentMethods();
         $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
-        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocuments($quoteType, $record->id);
         $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
             $quoteDocument->created_by_name = isset($quoteDocument->createdBy->name) ? $quoteDocument->createdBy->name : null;
@@ -155,7 +154,6 @@ class HealthRevivalQuoteController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'storageUrl' => storageUrl(),
-            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'emirates' => Emirate::where('is_active', 1)->select('id', 'text')->get(),
             'salaryBands' => app(LookupService::class)->getSalaryBands(),
             'genderOptions' => app(CRUDService::class)->getGenderOptions(),

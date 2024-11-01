@@ -2402,7 +2402,6 @@ const onCreateDuplicate = isValid => {
     "
     :storageUrl="storageUrl"
     :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
-    :isAmlClearedForPayment="isAmlClearedForPayment"
   />
 
   <!-- QuoteDocuments -->
