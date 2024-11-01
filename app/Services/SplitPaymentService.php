@@ -691,6 +691,7 @@ class SplitPaymentService
                     if ($isFromJob) {
                         CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $sageMessage]);
                         $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
+
                         return;
                     } else {
                         vAbort($sageMessage);

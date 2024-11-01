@@ -259,7 +259,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $payload = [
             'agency_id' => $this->agencyId,
             'agency_code' => $this->agencyCode,
-            'policy_id' => $quote->insurer_policy_id
+            'policy_id' => $quote->insurer_policy_id,
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
@@ -301,7 +301,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $payload = [
             'agency_id' => $this->agencyId,
             'agency_code' => $this->agencyCode,
-            'policy_id' => $quote->insurer_policy_id
+            'policy_id' => $quote->insurer_policy_id,
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 

@@ -20,5 +20,4 @@ final class PolicyIssuanceStatusEnum extends Enum
     const RenewalDirectToUnderwriter = 7;
     const Other = 8;
     const PolicyIssued = 9;
-
 }

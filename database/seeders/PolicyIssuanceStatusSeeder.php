@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\PolicyIssuanceStatus;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class PolicyIssuanceStatusSeeder extends Seeder
 {
@@ -30,7 +29,6 @@ class PolicyIssuanceStatusSeeder extends Seeder
                 'text' => $status['text'],
             ], $status);
         }
-
 
     }
 }
