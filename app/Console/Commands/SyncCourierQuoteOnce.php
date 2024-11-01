@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use App\Services\MACRMService;
@@ -133,7 +134,12 @@ class SyncCourierQuotesOnce extends Command
 
     public function handle()
     {
-        $this->info('Syncing process started at: '.now());
+        if (getAppStorageValueByKey(ApplicationStorageEnums::COURIER_QUOTES_SYNC_ENABLED) !== 1) {
+            $this->info('Courier quotes syncing is disabled.');
+            return;
+        }
+
+        $this->info('Syncing process started at: ' . now());
         foreach ($this->refIds as $refId) {
             $quote = CarQuote::where('uuid', $refId)->first();
             if (! $quote) {
@@ -152,6 +158,6 @@ class SyncCourierQuotesOnce extends Command
             sleep(1);
         }
 
-        $this->info('Syncing process completed successfully at: '.now());
+        $this->info('Syncing process completed successfully at: ' . now());
     }
 }
