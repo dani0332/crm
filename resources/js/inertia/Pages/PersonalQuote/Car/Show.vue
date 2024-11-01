@@ -4096,6 +4096,7 @@ const fullAddress = computed(() => {
     />
   </div>
   <AuditLogs
+    :quoteType="quoteType"
     :type="modelClass"
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"

@@ -1553,6 +1553,7 @@ const onAddUpdate = () => {
     <AuditLogs
       :type="modelClass"
       :id="$page.props.quote.id"
+      :quoteType="$page.props.modelType"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />

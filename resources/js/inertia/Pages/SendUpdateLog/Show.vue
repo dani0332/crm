@@ -614,6 +614,7 @@ onBeforeMount(() => {
     <AuditLogs
       :type="modelClass"
       :id="$page.props.sendUpdateLog.id"
+      :quoteType="'SendUpdateLog'"
       :expanded="true"
     />
   </div>

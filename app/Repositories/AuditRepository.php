@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Models\Audit;
 
@@ -14,14 +15,30 @@ class AuditRepository extends BaseRepository
 
     public function fetchGetQuoteAudits()
     {
-        $quoteObject = app('\\App\\Models\\'.ucfirst(strtolower(request()->quote_type)).'Quote');
+
+        $lobs = [
+            quoteTypeCode::Health,
+            quoteTypeCode::Car,
+            quoteTypeCode::Travel,
+            quoteTypeCode::Home,
+            quoteTypeCode::Life,
+            quoteTypeCode::Pet,
+            quoteTypeCode::CORPLINE,
+            quoteTypeCode::Business,
+            quoteTypeCode::Cycle,
+            quoteTypeCode::Bike,
+            quoteTypeCode::Yacht,
+            quoteTypeCode::Jetski,
+        ];
+        $quoteObject = (in_array(ucfirst(strtolower(request()->quote_type)), $lobs)) ? app('\\App\\Models\\'.ucfirst(strtolower(request()->quote_type)).'Quote') : app('\\App\\Models\\'.request()->quote_type);
+
         $auditables = $quoteObject->getAuditables();
         $code = isset(request()->code) ? request()->code : '';
         $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
 
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
-            ->join('users', 'audits.user_id', 'users.id')
+            ->leftJoin('users', 'audits.user_id', 'users.id')
             ->where(function ($q) use ($auditables) {
                 $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
             });
