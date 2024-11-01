@@ -597,6 +597,12 @@ class CRUDController extends Controller
         })->values();
         $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, $quoteTypeId, $leadStatuses);
 
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+            $leadStatuses = collect($leadStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            })->values();
+        }
+
         $lostReasons = $this->lookupService->getLostReasons();
         $selectedLostReasonId = '';
         if (strtolower($this->genericModel->modelType) != 'teams' && strtolower($this->genericModel->modelType) != 'leadstatus') {
@@ -643,6 +649,7 @@ class CRUDController extends Controller
                 'is_cold' => $activity->is_cold,
                 'quote_status_id' => $activity->quote_status_id,
                 'quote_status' => $activity?->quoteStatus,
+                'user_id' => $activity?->user_id,
             ];
             array_push($activities, $updatedActivity);
         }
@@ -1991,6 +1998,11 @@ class CRUDController extends Controller
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
         info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
+
+        if (in_array($quoteModel->quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer])) {
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($quoteModel, $payment, $request->modelType);
+            info('Quote Code: '.$quoteModel->code.' BIN Generated for transactional leads');
+        }
 
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',

@@ -12,10 +12,16 @@ defineProps({
   authorizedDays: Number,
 });
 const notification = useNotifications('toast');
+const cleanObj = obj => useCleanObj(obj);
 const page = usePage();
 const loader = reactive({
   table: false,
   export: false,
+});
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
 });
 
 let availableFilters = {
@@ -34,6 +40,8 @@ let availableFilters = {
   page: 1,
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  insurer_tax_number: '',
+  insurer_commmission_invoice_number: '',
 };
 
 const filters = reactive(availableFilters);
@@ -66,9 +74,10 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
+    serverOptions.value.page = 1;
     router.visit(route('jetski-quotes-list'), {
       method: 'get',
-      data: filters,
+      data: { ...filters, ...serverOptions.value },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -128,6 +137,23 @@ onMounted(() => {
     permissionAssignLeads.value = true;
   }
 
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
@@ -156,13 +182,22 @@ const tableHeader = [
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
   },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'jetski');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Jetski'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 
 watch(
@@ -232,6 +267,14 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -397,6 +440,26 @@ const validateDateRange = () => {
             class="w-full"
           />
         </x-field>
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_number"
+          type="text"
+          name="insurer_tax_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commmission_invoice_number"
+          type="text"
+          name="insurer_commmission_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -442,6 +505,7 @@ const validateDateRange = () => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

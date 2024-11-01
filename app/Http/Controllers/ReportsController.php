@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Factories\ManagementReportServiceFactory;
@@ -16,12 +17,14 @@ use App\Models\User;
 use App\Models\UserManager;
 use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ConversionAsAtReportService;
+use App\Services\DropdownSourceService;
 use App\Services\Reports\AdvisorConversionReportService;
 use App\Services\Reports\AdvisorDistributionReportService;
 use App\Services\Reports\AdvisorPerformanceReportService;
 use App\Services\Reports\LeadDistributionReportService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\Reports\ReportService;
+use App\Services\Reports\RetentionReportService;
 use App\Strategies\ManagementReport;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -29,6 +32,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PDF;
 
 class ReportsController extends Controller
@@ -44,7 +48,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        $this->middleware('readonly_db');
+        // $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -359,7 +363,7 @@ class ReportsController extends Controller
             $qry->orderBy('id', 'desc');
         }, 'teams' => function ($qry) {
             $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
-        }])->get();
+        }])->where('quote_type_id', QuoteTypeId::Car)->get();
 
         $renewalBatches = $renewalBatches->map(function ($renewalBatch) {
             $renewalBatch->slabs = $renewalBatch->slabs->map(function ($slab) {
@@ -381,9 +385,38 @@ class ReportsController extends Controller
 
     public function renderPaymentSummary(Request $request, ReportService $reportService)
     {
+        $user = Auth::user();
+        $request->teamIds = $user->getUserTeamsIds($user->id);
+        if ($request->quoteType) {
+            $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType));
+            $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', $quoteTypeId);
+            $leadStatuses = $leadStatuses->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'text' => $item->text,
+                ];
+            })->toArray();
+        }
+        $fieldDisable = true;
+        if ($user->isAdvisor()) {
+            $advisor = [
+                [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                ],
+            ];
+            $fieldDisable = false;
+        } else {
+            $advisor = $this->fetchAdvisorsByTeam($request);
+        }
+
         return inertia('Reports/AuthorisedPaymentSummary', [
             'reportData' => $reportService->getPaymentAuthorisedSummary($request),
-            'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
+            'defaultFilters' => $reportService->authorizedPaymentSummaryFilters(),
+            'advisor' => $advisor,
+            'fieldDisable' => $fieldDisable,
+            'leadStatuses' => $leadStatuses ?? [],
         ]);
     }
 
@@ -391,15 +424,20 @@ class ReportsController extends Controller
     {
 
         $displayBy = $request->displayBy ?? null;
+        $createdAtDate = $request->createdAtDate ?? null;
+        $includeUnassignedLeads = $request->includeUnassignedLeads ?? null;
         $quoteTypes = QuoteTypeId::getOptions();
         $quoteTypeCodes = quoteTypeCode::asArray();
         $quoteTypeIdEnum = QuoteTypeId::asArray();
 
         return inertia('Reports/ConversionAsAt', [
             'reportData' => $conversionAsAtReportService->getReportData($request),
+            'unassignedLeadsCount' => $conversionAsAtReportService->getUnassignedLeadsCount($request),
             'filterOptions' => $conversionAsAtReportService->getFilterOptions(),
             'quoteTypes' => $quoteTypes,
             'displayByColumn' => $displayBy,
+            'createdAtDate' => $createdAtDate,
+            'includeUnassignedLeads' => $includeUnassignedLeads,
             'quoteTypeCodes' => $quoteTypeCodes,
             'quoteTypeIdEnum' => $quoteTypeIdEnum,
         ]);
@@ -514,5 +552,29 @@ class ReportsController extends Controller
             'filterOptions' => $reportService->getDefaultFiltersForTotalPremium(),
 
         ]);
+    }
+
+    public function renderRetentionReport(Request $request, RetentionReportService $retentionReportService)
+    {
+        @[$retentionReportData, $footerData] = $retentionReportService->getReportData($request);
+
+        return inertia('Reports/RetentionReport', [
+            'filterOptions' => $retentionReportService->getFilterOptions(),
+            'filtersByLob' => $retentionReportService->getFiltersByLob(),
+            'reportData' => $retentionReportData,
+            'footerData' => $footerData,
+            'productName' => $retentionReportService->getUserPorductName(),
+            'retentionReportEnum' => RetentionReportEnum::asArray(),
+        ]);
+    }
+
+    public function fetchRetentionLeadsData(Request $request, RetentionReportService $retentionReportService)
+    {
+        return $retentionReportService->getRetentionLeadsData($request);
+    }
+
+    public function fetchBatchByDates(Request $request, RetentionReportService $retentionReportService)
+    {
+        return $retentionReportService->getBatchByDates($request);
     }
 }
