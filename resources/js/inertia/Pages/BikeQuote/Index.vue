@@ -12,10 +12,16 @@ defineProps({
   authorizedDays: Number,
 });
 const notification = useNotifications('toast');
+const cleanObj = obj => useCleanObj(obj);
 const page = usePage();
 const loader = reactive({
   table: false,
   export: false,
+});
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
 });
 
 let availableFilters = {
@@ -68,10 +74,11 @@ function onSubmit(isValid) {
         (filters[key] === '' || filters[key].length === 0) &&
         delete filters[key],
     );
+    serverOptions.value.page = 1;
     // /personal-quotes/bike'
     router.visit(route('bike-quotes-list'), {
       method: 'get',
-      data: filters,
+      data: { ...filters, ...serverOptions.value },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -110,6 +117,24 @@ onMounted(() => {
   if (hasRole(rolesEnum.BikeManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
   }
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
@@ -135,6 +160,11 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
@@ -276,6 +306,14 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -524,6 +562,7 @@ const validateDateRange = () => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

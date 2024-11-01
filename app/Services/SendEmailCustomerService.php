@@ -509,6 +509,7 @@ class SendEmailCustomerService extends BaseService
         $quoteId = match ($quoteType) {
             QuoteTypes::CAR => $emailData->carQuoteId,
             QuoteTypes::TRAVEL => $emailData->travelQuoteId,
+            QuoteTypes::BIKE => $emailData->bikeQuoteId,
             default => $emailData->quoteId,
         };
 
@@ -566,7 +567,9 @@ class SendEmailCustomerService extends BaseService
                 $body['cc'] = $this->getAdditionalEmails(getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_EMAIL_CC));
                 $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO), 'name' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_DISPLAY_NAME)];
             }
-
+            if ($quoteType === QuoteTypes::BIKE) {
+                $body['replyTo'] = ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail];
+            }
             // Conditionally add 'sender' key if advisorName and $advisorCustomEmail are not null
             if ($emailData->advisorName !== null && $advisorCustomEmail !== null) {
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
@@ -1082,7 +1085,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendPaymentNotificationEmail($lead, $user, $totalLead)
+    public function sendPaymentNotificationEmail($lead, $user)
     {
         $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
         try {
@@ -1103,9 +1106,9 @@ class SendEmailCustomerService extends BaseService
             }
             $params = [
                 'advisor_name' => $user->name,
-                'total_leads' => $totalLead,
-                'total_premium' => $lead->total_premium ? sprintf('%.2f', $lead->total_premium) : 0,
-                'leads_expire' => $lead->total_leads ? $lead->total_leads : 0,
+                'total_leads' => $lead['total_leads'] ? $lead['total_leads'] : 0,
+                'total_premium' => $lead['total_premium'] ? sprintf('%.2f', $lead['total_premium']) : 0,
+                'leads_expire' => $lead['leads_expire'] ? $lead['leads_expire'] : 0,
                 'date' => Carbon::now()->toDateString(),
                 'paymentDoc' => $url,
             ];
