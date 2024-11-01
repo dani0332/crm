@@ -162,6 +162,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             } else {
 
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Alliance Travel Automation is disabled');
+                $response['error'] = 'Alliance Travel Automation is disabled';
                 $response['message'] = 'Alliance Travel Automation is disabled';
 
             }
@@ -232,6 +233,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $quote->update([
             'insurer_policy_id' => $insurerPolicyId,
             'price_without_vat' => $priceVatApplicable,
+            'price_with_vat' => $premium,
             'vat' => $premium - $priceVatApplicable,
             'price_vat_applicable' => $priceVatApplicable,
             'policy_issuance_date' => $policyIssuanceDate,
@@ -378,6 +380,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'commmission_percentage' => ($bookingDetails->agency_commission / ($bookingDetails->premium / (1 + (float) $bookingDetails->tax_rate))) * 100,
             'insurer_commmission_invoice_number' => $bookingDetails->tax_invoice_number,
             'insurer_invoice_date' => $insurerInvoiceDate,
+            'invoice_description' => (new PaymentRepository)->generateInvoiceDescription($payment, self::TYPE, $quote),
         ]);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy Details filled.');
 
