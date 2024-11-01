@@ -1217,7 +1217,7 @@ class SendUpdateLogService
 
     public function updatePaymentTotalPrice($payment, $totalPrice): void
     {
-        info('Payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
+        info('Master payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
         $payment->total_price = $totalPrice;
     }
 
