@@ -196,8 +196,8 @@ class SyncCourierQuotesOnce extends Command
                 ? $this->info("Successfully synced quote for RefId: {$refId}")
                 : $this->warn("Failed to sync quote for RefId: {$refId}");
 
-            // Add a 10-second delay before moving to the next RefId
-            sleep(10);
+            // Add a 1-second delay before moving to the next RefId
+            sleep(1);
         }
 
         $this->info('Syncing process completed successfully at: ' . now());
