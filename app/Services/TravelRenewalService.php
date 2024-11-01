@@ -2,14 +2,17 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypeShortCode;
+use App\Enums\TeamNameEnum;
+use App\Factories\AllocationFactory;
+use App\Models\PaymentStatus;
+use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\LeadSourceEnum;
-use App\Models\QuoteType;
-use App\Services\RenewalsUploadService;
-use App\Enums\QuoteTypeShortCode;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use App\Factories\AllocationFactory;
@@ -21,14 +24,12 @@ use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 
 class TravelRenewalService extends BaseService
 {
-
-
     public function getTravelRenewalLeads()
     {
 
         TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
-            QuoteStatusEnum::PolicyBooked
+            QuoteStatusEnum::PolicyBooked,
         ])
         ->whereIn('payment_status_id', [
             PaymentStatusEnum::CAPTURED,
@@ -50,16 +51,18 @@ class TravelRenewalService extends BaseService
         });
     }
 
-    public function processTravelRenewalQuotes($quotes){
+    public function processTravelRenewalQuotes($quotes)
+    {
         foreach ($quotes as $quote) {
             // try {
-                    // Check if the quote is a duplicate
-                if ($this->isDuplicateQuote($quote)) {
-                    info('Duplicate quote detected for Quote Ref-ID: ' . $quote->uuid);
-                    continue; // Skip processing this quote
-                }
-                // dd($quote);
-                $this->storeTravelRenewalQuote($quote);
+            // Check if the quote is a duplicate
+            if ($this->isDuplicateQuote($quote)) {
+                info('Duplicate quote detected for Quote Ref-ID: '.$quote->uuid);
+
+                continue; // Skip processing this quote
+            }
+            // dd($quote);
+            $this->storeTravelRenewalQuote($quote);
             // } catch (\Exception $e) {
             //     // Log the exception or handle it as needed
             //     Log::error('Error processing quote ID ' . $quote->uuid . ': ' . $e->getMessage());
@@ -77,15 +80,16 @@ class TravelRenewalService extends BaseService
         }
         // Calculate the policy expiry date based on the start date + 365 days
         $policyExpiryDate = $policyStartDate->copy()->addDays(365);
-        info("Calculating policy expiry date".$policyExpiryDate);
-  return TravelQuote::where('customer_id', $quote->customer_id)
-        ->whereDate('policy_expiry_date', Carbon::parse($policyExpiryDate)->format('Y-m-d'))
-        ->where('coverage_code', $quote->coverage_code)
-        ->where('direction_code', $quote->direction_code)
-        ->where('nationality_id', $quote->nationality_id)
-        ->where('region_cover_for_id', $quote->region_cover_for_id)
-        ->exists();
-    // dd($is_lead,Carbon::parse($policyExpiryDate)->format('Y-m-d'),);
+        info('Calculating policy expiry date'.$policyExpiryDate);
+
+        return TravelQuote::where('customer_id', $quote->customer_id)
+            ->whereDate('policy_expiry_date', Carbon::parse($policyExpiryDate)->format('Y-m-d'))
+            ->where('coverage_code', $quote->coverage_code)
+            ->where('direction_code', $quote->direction_code)
+            ->where('nationality_id', $quote->nationality_id)
+            ->where('region_cover_for_id', $quote->region_cover_for_id)
+            ->exists();
+        // dd($is_lead,Carbon::parse($policyExpiryDate)->format('Y-m-d'),);
         // dd($is_lead);
     }
     public function storeTravelRenewalQuote($quote)
@@ -109,14 +113,14 @@ class TravelRenewalService extends BaseService
 
         $customer = $this->getCustomerByEamil($quote->customer_email);
         info("old uuid: {$quote->uuid}");
-        $travelQuote = (object)[
+        $travelQuote = (object) [
             'first_name' => trim($quote->first_name),
             'last_name' => trim($quote->last_name),
             'source' => LeadSourceEnum::RENEWAL_UPLOAD,
             'customer_id' => $quote->customer_id,
             'direction_code' => $quote->direction_code,
-            'destination'=> $quote->destination ?? null,
-            'code' => QuoteTypeShortCode::TRA."-". $quoteUuid,
+            'destination' => $quote->destination ?? null,
+            'code' => QuoteTypeShortCode::TRA.'-'.$quoteUuid,
             'uuid' => $quoteUuid,
             'renewal_batch' => trim($batchNumber),
             'email' => $quote->email,
@@ -152,7 +156,7 @@ class TravelRenewalService extends BaseService
         $quoteData = [
             'destination' => $travelQuote->destination,
             'first_name' => $travelQuote->first_name,
-            'last_name' =>  $travelQuote->last_name,
+            'last_name' => $travelQuote->last_name,
             'source' => $travelQuote->source,
             'customer_id' => $travelQuote->customer_id,
             'payment_status_id' => PaymentStatusEnum::DRAFT,
@@ -168,18 +172,18 @@ class TravelRenewalService extends BaseService
             'renewal_batch' => $travelQuote->renewal_batch,
             // 'currently_located_in_id' => $currently_located_in_id,
             'policy_expiry_date' => $travelQuote->policy_expiry_date,
-            'email' =>  $travelQuote->email,
+            'email' => $travelQuote->email,
             'mobile_no' => $travelQuote->mobile_no,
-            'coverage_code'=> $travelQuote->coverage_code,
+            'coverage_code' => $travelQuote->coverage_code,
             'start_date' => $travelQuote->start_date,
-            'region_cover_for_id'=>$travelQuote->region_cover_for_id,
+            'region_cover_for_id' => $travelQuote->region_cover_for_id,
 
         ];
 
         $newQuote = TravelQuote::create($quoteData);
-        $this->storeMembers($newQuote,$travelQuote->members);
+        $this->storeMembers($newQuote, $travelQuote->members);
         $this->leadAllocation($newQuote);
-        dd("done");
+        dd('done');
     }
     public function getPaymentStatusIdByCode($paymentStatus)
     {
@@ -190,20 +194,22 @@ class TravelRenewalService extends BaseService
         return QuoteType::where('short_code', $shortCode)->first();
     }
 
-    public function createBatchNumber($expiryDate){
+    public function createBatchNumber($expiryDate)
+    {
         return strtoupper(Carbon::parse($expiryDate)->format('MY'));
     }
 
     public function getCustomerByEamil($customerEmail)
     {
-     return CustomerService::getCustomerByEmail($customerEmail);
+        return CustomerService::getCustomerByEmail($customerEmail);
     }
 
-    public function storeMembers($quote,$members){
-         // Prepare data for new members associated with this quote_id
-         $membersData = collect($members)->map(function ($member) use ($quote) {
+    public function storeMembers($quote, $members)
+    {
+        // Prepare data for new members associated with this quote_id
+        $membersData = collect($members)->map(function ($member) use ($quote) {
             return array_merge(
-                Arr::except($member->toArray(), ['quote_id', 'created_at', 'updated_at','id']),
+                Arr::except($member->toArray(), ['quote_id', 'created_at', 'updated_at', 'id']),
                 [
                     'quote_id' => $quote->id ?? 1,
                     'created_at' => now(),
@@ -217,7 +223,8 @@ class TravelRenewalService extends BaseService
         info("customer members created successfully for quote Ref-ID: {$quote->uuid}");
     }
 
-    public function leadAllocation($lead){
+    public function leadAllocation($lead)
+    {
         info('Processing Travel record for Quote Allocation with uuid: '.$lead->uuid);
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         // Only apply teamId if the payment status is AUTHORIZED
@@ -230,6 +237,5 @@ class TravelRenewalService extends BaseService
             SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->onQueue('local')->delay(now()->addSeconds(5));
         }
     }
-
 
 }

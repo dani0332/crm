@@ -46,10 +46,9 @@ class TravelAllocationService extends AllocationService
 
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quoteUUID}");
-            if( $quote->source == LeadSourceEnum::RENEWAL_UPLOAD ){
-             $eligibleUser =  $this->getAdvisorByStatus($status, $teamId, $isSIC, true, $quote);
-            }
-            else {
+            if ($quote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+                $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC, true, $quote);
+            } else {
                 $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC);
             }
             if ($eligibleUser) {
@@ -91,29 +90,30 @@ class TravelAllocationService extends AllocationService
             })
             ->orderBy('la.last_allocated', 'asc');
         info(self::class." - getAdvisorByStatus query: {$query->toSql()}, bindings: ".json_encode($query->getBindings()));
-         // Get the list of eligible advisors
+        // Get the list of eligible advisors
         $advisors = $query->get();
 
-      // Implement round-robin logic if enabled and advisors are available
+        // Implement round-robin logic if enabled and advisors are available
         if ($enableRoundRobin && $advisors->isNotEmpty()) {
             // Fetch the last assigned advisor for this specific lead
             $lastAssignedAdvisor = $this->getPreviousAdvisor($quote);
-            info(self::class . " - Last assigned advisor ID: " . ($lastAssignedAdvisor->id ?? 'null') . " for quote UUID: {$quote->uuid}");
+            info(self::class.' - Last assigned advisor ID: '.($lastAssignedAdvisor->id ?? 'null')." for quote UUID: {$quote->uuid}");
 
             // Find the index of the last assigned advisor in the list of eligible advisors
             $lastIndex = $lastAssignedAdvisor
-                ? $advisors->search(fn($advisor) => $advisor->user_id == $lastAssignedAdvisor->id)
+                ? $advisors->search(fn ($advisor) => $advisor->user_id == $lastAssignedAdvisor->id)
                 : false;
-            info(self::class . " - Last index of assigned advisor: " . ($lastIndex !== false ? $lastIndex : 'none') . " in eligible advisors list");
+            info(self::class.' - Last index of assigned advisor: '.($lastIndex !== false ? $lastIndex : 'none').' in eligible advisors list');
 
             // Calculate the index of the next advisor to assign
             $nextIndex = ($lastIndex === false || $lastIndex === $advisors->count() - 1) ? 0 : $lastIndex + 1;
-            info(self::class . " - Next index to assign: {$nextIndex}");
+            info(self::class." - Next index to assign: {$nextIndex}");
 
             // Assign and log the next advisor
             if ($advisors->has($nextIndex)) {
                 $assignedAdvisor = $advisors[$nextIndex];
-                info(self::class . " - Advisor assigned: {$assignedAdvisor->user_id}");
+                info(self::class." - Advisor assigned: {$assignedAdvisor->user_id}");
+
                 return $assignedAdvisor;
             }
         }
@@ -153,12 +153,12 @@ class TravelAllocationService extends AllocationService
         return $oldAdvisorAssignedDate;
     }
 
-    private function getPreviousAdvisor($lead=null)
+    private function getPreviousAdvisor($lead = null)
     {
         // Retrieve the most recent TravelQuote for the given customer with an assigned advisor
         return TravelQuote::query()
             // ->where('customer_id', $lead->customer_id)
-            ->where('source',LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereNotNull('advisor_id')
             ->with('advisor')
             ->latest('created_at')
