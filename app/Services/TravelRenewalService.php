@@ -16,6 +16,7 @@ use App\Factories\AllocationFactory;
 use App\Enums\TeamNameEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\PaymentStatus;
+use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 
 
 class TravelRenewalService extends BaseService
@@ -24,21 +25,23 @@ class TravelRenewalService extends BaseService
 
     public function getTravelRenewalLeads()
     {
+
         TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
             QuoteStatusEnum::PolicyBooked
         ])
-        // ->whereIn('payment_status_id', [
-        //     PaymentStatusEnum::CAPTURED,
-        //     PaymentStatusEnum::PAID,
-        //     PaymentStatusEnum::PARTIAL_CAPTURED,
-        //     PaymentStatusEnum::CREDIT_APPROVED
-        // ])
-        ->where('start_date', '<=', Carbon::now()->subDays(20))
+        ->whereIn('payment_status_id', [
+            PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIAL_CAPTURED,
+            PaymentStatusEnum::CREDIT_APPROVED
+        ])
+        ->whereDate('start_date',Carbon::now()->subDays(20))
         ->chunkById(100, function ($quotes) {
             $quoteCount = $quotes->count();
             info("Processing total quotes in chunk: $quoteCount");
             if($quoteCount > 0 ){
+
                 $this->processTravelRenewalQuotes($quotes);
             }
             else{
@@ -222,11 +225,10 @@ class TravelRenewalService extends BaseService
 
         $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid, $currentTeamId);
         $response = $allocationStrategy->executeSteps();
-        dd( $response);
-    }
-
-    public function sendTravelOCB($lead){
-        
+        if($response){
+            info(self::class.' - Going to dispatch SendOCBTravelRenewalIntroEmailJob ................ Ref-ID:'.$lead->uuid);
+            SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->onQueue('local')->delay(now()->addSeconds(5));
+        }
     }
 
 
