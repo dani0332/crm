@@ -181,7 +181,7 @@ class SyncCourierQuotesOnce extends Command
 
     public function handle()
     {
-        $this->info('Syncing process started at: '.now());
+        $this->info('Syncing process started at: ' . now());
         foreach ($this->refIds as $refId) {
             $quote = CarQuote::where('uuid', $refId)->first();
             if (! $quote) {
@@ -195,8 +195,11 @@ class SyncCourierQuotesOnce extends Command
             $result
                 ? $this->info("Successfully synced quote for RefId: {$refId}")
                 : $this->warn("Failed to sync quote for RefId: {$refId}");
+
+            // Add a 10-second delay before moving to the next RefId
+            sleep(10);
         }
 
-        $this->info('Syncing process completed successfully at: '.now());
+        $this->info('Syncing process completed successfully at: ' . now());
     }
 }
