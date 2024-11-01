@@ -391,31 +391,17 @@
     $vat = 0;
     $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
     $entity = null;
-    $quoteType = explode('-', $quote->code)[0];
+    $quoteTypeName = explode('-', $quote->code)[0];
 
     if($isRequestFromSendUpdateLogPage){
         $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
-        $subTotal =  $proformaPaymentRequest->price_vat_applicable;
-        $vat =  $proformaPaymentRequest->price_vat;
-        $totalAmount =   $subTotal + $vat;
-
-    }else{
-
-        if($quoteType == QuoteTypeShortCode::CAR){
-            $carQuoteDetails = $quote->carQuoteRequestDetail;
-            $subTotal =  $carQuoteDetails->actual_premium;
-            $vat =  $carQuoteDetails->premium_vat;
-            $totalAmount =  $subTotal + $vat;
-        }else{
-            $subTotal =  $proformaPaymentRequest->price_vat_applicable;
-            $vat =  $proformaPaymentRequest->price_vat;
-            $totalAmount =  $subTotal + $vat;
-        }
-        if($quoteType == QuoteTypeShortCode::BUS){
-            $entity = $quote?->quoteRequestEntityMapping?->entity;
-        }
-
+    } else if($quoteTypeName == QuoteTypeShortCode::BUS) {
+        $entity = $quote?->quoteRequestEntityMapping?->entity;
     }
+
+    $subTotal = $proformaPaymentRequest->price_vat_applicable;
+    $vat = $proformaPaymentRequest->price_vat;
+    $totalAmount = $subTotal + $vat;
 
 @endphp
 
@@ -582,7 +568,7 @@
             <tr>
 
                 <td class="customer">
-                    @if(in_array($quoteType, [QuoteTypeShortCode::BUS, QuoteTypeShortCode::CAR, QuoteTypeShortCode::HOM, QuoteTypeShortCode::YAC]))
+                    @if(in_array($quoteTypeName, [QuoteTypeShortCode::BUS, QuoteTypeShortCode::CAR, QuoteTypeShortCode::HOM, QuoteTypeShortCode::YAC]))
                         {{ $quote->company_name ?? '' }} </br>
                         {{ $quote->company_address ?? '' }} </br>
                     @elseif($entity)

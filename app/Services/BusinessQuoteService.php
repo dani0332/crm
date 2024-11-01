@@ -241,8 +241,6 @@ class BusinessQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-        \Log::debug('capi request');
-        \Log::debug($dataArr);
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
         if (isset($response->quoteUID)) {
