@@ -60,6 +60,13 @@ class TravelQuote extends Model implements AuditableContract
             }
         });
     }
+
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);

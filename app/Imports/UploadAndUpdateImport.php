@@ -159,7 +159,6 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             'registration_location' => ['index' => 38, 'title' => 'Registration Location', 'rules' => ['max:100']],
             'previous_advisor' => ['index' => 39, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
             'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:500'],
-            'renewal_batch' => ['index' => 41, 'title' => 'Renewal Batch Ref', 'rules' => 'max:50'],
         ];
 
         if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {

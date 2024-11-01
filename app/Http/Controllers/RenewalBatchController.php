@@ -81,17 +81,6 @@ class RenewalBatchController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
@@ -141,17 +130,6 @@ class RenewalBatchController extends Controller
         $renewalBatch->update($attributes);
 
         return redirect()->route('renewal-batches-list')->with('message', 'Renewal Batch Successfully updated');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 
     /**

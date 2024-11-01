@@ -197,6 +197,7 @@ const ageRangeValid = computed(() => {
   </div>
   <AuditLogs
     :type="'App\\Models\\SICConfig'"
+    :quoteType="'SICConfig'"
     :id="$page.props.sicConfigurable?.id"
     :expanded="sectionExpanded"
   />
