@@ -134,7 +134,7 @@ class SyncCourierQuotesOnce extends Command
 
     public function handle()
     {
-        if (getAppStorageValueByKey(ApplicationStorageEnums::COURIER_QUOTES_SYNC_ENABLED) !== "1") {
+        if (getAppStorageValueByKey(ApplicationStorageEnums::COURIER_QUOTES_SYNC_ENABLED) !== '1') {
             $this->info('Courier quotes syncing is disabled.');
 
             return;
