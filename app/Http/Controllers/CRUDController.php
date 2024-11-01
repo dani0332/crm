@@ -102,7 +102,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -2285,12 +2284,5 @@ class CRUDController extends Controller
         } catch (\Exception $e) {
             Log::error('Error saving CustomerAddress: ', ['customer_id' => $dataObject['customer_id'], 'quote_uuid' => $dataObject['quote_uuid'], 'error' => $e->getMessage()]);
         }
-    }
-
-    public function triggerSendPaymentEmail()
-    {
-        Artisan::call('SendPaymentEmail:cron');
-
-        return response()->json(['message' => 'SendPaymentEmail:cron job triggered successfully.']);
     }
 }

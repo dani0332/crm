@@ -62,7 +62,6 @@ class HealthQuotesExport
             'hqr.renewal_batch',
             'hqr.previous_policy_expiry_date',
             'hqr.previous_quote_policy_premium',
-            'hqr.previous_quote_policy_premium',
             'hqr.transaction_approved_at',
             'hqr.policy_booking_date',
             'payment_status.text as payment_status_text',
