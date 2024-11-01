@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\LogMessagePrefixEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -442,7 +443,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
-                    info('Child payment code: '.$paymentSplit->code . ' with serial no: '. $paymentSplit->sr_no .' approving process started');
+                    info(LogMessagePrefixEnum::CHILD_PAYMENT_LOG_PREFIX.$paymentSplit->code . ' with serial no: '. $paymentSplit->sr_no .' approving process started');
 
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
