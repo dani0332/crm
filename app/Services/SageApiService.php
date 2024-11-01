@@ -814,7 +814,6 @@ class SageApiService
             $stepsMapping = ['step_1' => 6, 'step_2' => 7, 'step_3' => 8, 'step_4' => 9];
         }
 
-
         $isLiveApiCallStep2 = true;
         $createARInvoiceSplitPayments = SagePayloadFactory::createARInvoiceSplitPayments($sageRequest, $paymentSplits, $sageEntryType, $reverseInvoiceDetails, $extraDetails);
         if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
