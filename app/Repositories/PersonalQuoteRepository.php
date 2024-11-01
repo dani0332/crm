@@ -175,9 +175,10 @@ class PersonalQuoteRepository extends BaseRepository
                             info('Other files moved to temp folder  '.$tempFilePath);
                         }
                         info(file_exists($tempFilePath) ? 'Befor Job File exists' : 'Before Job File not exists');
+
                         WatermarkDocumentsJob::dispatch(
                             $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
-                        );
+                        )->delay(now()->addSeconds(5));
                     }
                 });
 

@@ -213,7 +213,7 @@ class QuoteDocumentService extends BaseService
                 }
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
-                );
+                )->delay(now()->addSeconds(5));
             }
 
             return $quoteDocument;
