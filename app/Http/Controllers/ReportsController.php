@@ -15,7 +15,6 @@ use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\UserManager;
-use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ConversionAsAtReportService;
 use App\Services\DropdownSourceService;
 use App\Services\Reports\AdvisorConversionReportService;
@@ -43,10 +42,10 @@ class ReportsController extends Controller
     public function __construct()
     {
         $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConversionReportPermissions());
-        $this->middleware(['permission:' . $advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
+        $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
 
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
-        $this->middleware(['permission:' . $advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
+        $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
         // $this->middleware('readonly_db');
     }
@@ -140,7 +139,7 @@ class ReportsController extends Controller
         return inertia('Reports/RevivalConversion', [
             'reportsData' => $reportData,
             'allowedLobs' => $allowedLobs,
-            'quoteTypeIdEnum' => QuoteTypeId::asArray()
+            'quoteTypeIdEnum' => QuoteTypeId::asArray(),
         ]);
     }
 
@@ -352,7 +351,7 @@ class ReportsController extends Controller
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn($users) => $users->name)
+            ->map(fn ($users) => $users->name)
             ->toArray();
 
         return response()->json([
@@ -459,7 +458,7 @@ class ReportsController extends Controller
 
         $displayByColumn = $request->displayBy ?? null;
         $displayBy = $request->displayBy ? ucfirst(str_replace('_', ' ', $request->displayBy)) : 'N/A';
-        $lob = QuoteTypes::getName($request->lob)->value . ' Insurance';
+        $lob = QuoteTypes::getName($request->lob)->value.' Insurance';
 
         $reportData = $conversionAsAtReportService->getReportData($request);
         $totalGrossConversion = $conversionAsAtReportService->calculateTotalGrossConversion($reportData);
@@ -484,9 +483,9 @@ class ReportsController extends Controller
         ];
 
         $pdf = PDF::loadView('pdf.conversion_as_at_report', compact('pdfDate'))->setOptions(['defaultFont' => 'DejaVu Sans']);
-        $name = 'InsuranceMarket.ae™ Conversion As At Report - ' . Carbon::now()->format($dateTimeFormat) . '.pdf';
+        $name = 'InsuranceMarket.ae™ Conversion As At Report - '.Carbon::now()->format($dateTimeFormat).'.pdf';
 
-        return response()->json(['data' => 'data:application/pdf;base64,' . base64_encode($pdf->stream()), 'name' => $name]);
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $name]);
     }
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)

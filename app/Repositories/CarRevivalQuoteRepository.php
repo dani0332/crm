@@ -3,8 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
@@ -20,7 +18,6 @@ use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class CarRevivalQuoteRepository extends BaseRepository

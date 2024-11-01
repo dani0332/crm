@@ -30,7 +30,7 @@ class InboundEmailsHookService extends BaseService
         $authPass = config('constants.INBOUND_WEBHOOK_BASIC_AUTH_PASSWORD');
 
         if (request('basicAuthUsername') === $authUser && request('basicAuthPassword') === $authPass) {
-            info(self::class . ' - verifyAuthorization: Authorized Access');
+            info(self::class.' - verifyAuthorization: Authorized Access');
 
             return true;
         }
@@ -41,10 +41,10 @@ class InboundEmailsHookService extends BaseService
     public function process()
     {
         try {
-            info(self::class . ' - process: Webhook Received - Verifying Auth...');
+            info(self::class.' - process: Webhook Received - Verifying Auth...');
 
             if (! $this->verifyAuthorization()) {
-                info(self::class . ' - process: Unauthorized Access');
+                info(self::class.' - process: Unauthorized Access');
 
                 return apiResponse([], Response::HTTP_UNAUTHORIZED, 'Unauthorized Access');
             }
@@ -52,13 +52,13 @@ class InboundEmailsHookService extends BaseService
             $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
 
             $subject = $inbound->Subject();
-            info(self::class . " - process: Webhook Received with Subject: {$subject}");
+            info(self::class." - process: Webhook Received with Subject: {$subject}");
 
             $data = getQuoteUsingSubject($subject);
 
             return $this->resolveLead($subject, $data);
         } catch (Exception $e) {
-            info(self::class . ' - process: Exception occurred', [
+            info(self::class.' - process: Exception occurred', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
@@ -84,12 +84,12 @@ class InboundEmailsHookService extends BaseService
                 };
             }
 
-            info(self::class . " - resolveLead: Lead not found for uuid: {$uuid}");
+            info(self::class." - resolveLead: Lead not found for uuid: {$uuid}");
 
             return apiResponse([], Response::HTTP_NOT_FOUND, "Lead not found for uuid: {$uuid}");
         }
 
-        info(self::class . " - resolveLead: uuid not found in subject: {$subject}");
+        info(self::class." - resolveLead: uuid not found in subject: {$subject}");
 
         return apiResponse([], Response::HTTP_NOT_FOUND, "UUID & Quote Type could not be extracted from subject: {$subject}");
     }
@@ -97,20 +97,20 @@ class InboundEmailsHookService extends BaseService
     private function handleCar(CarQuote $lead)
     {
         if ($lead->source == LeadSourceEnum::REVIVAL) {
-            info(self::class . " - handleCar: Going to update Car Quote for uuid {$lead->uuid}");
+            info(self::class." - handleCar: Going to update Car Quote for uuid {$lead->uuid}");
             $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
             DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
-            info(self::class . " - handleCar: Car Quote Source updated for Revival for uuid {$lead->uuid}");
+            info(self::class." - handleCar: Car Quote Source updated for Revival for uuid {$lead->uuid}");
 
             return apiResponse([], Response::HTTP_OK, 'Car Source Updated Successfully!');
         } else {
             try {
-                info(self::class . " - handleCar: Going to handle Car Quote for uuid {$lead->uuid}");
+                info(self::class." - handleCar: Going to handle Car Quote for uuid {$lead->uuid}");
                 (new ApiService)->sicReplyToILA($lead);
 
                 return apiResponse([], Response::HTTP_OK, 'Car Handled for SIC to ILA Successfully!');
             } catch (\Exception $e) {
-                info(self::class . " - handleCar: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}");
+                info(self::class." - handleCar: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}");
 
                 return apiResponse([], Response::HTTP_INTERNAL_SERVER_ERROR, 'Something went wrong!');
             }
@@ -119,18 +119,18 @@ class InboundEmailsHookService extends BaseService
 
     private function handleTravel(TravelQuote $lead)
     {
-        info(self::class . " - handleTravel: Going to Assign Advisor to uuid: {$lead->uuid}");
+        info(self::class." - handleTravel: Going to Assign Advisor to uuid: {$lead->uuid}");
 
         if ($lead->advisor_id) {
-            info(self::class . " - handleTravel: Lead already has an advisor assigned: {$lead->uuid}");
+            info(self::class." - handleTravel: Lead already has an advisor assigned: {$lead->uuid}");
 
             return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
         }
 
-        info(self::class . " - handleTravel: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
+        info(self::class." - handleTravel: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
         $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid);
         $assignedAdvisorId = $allocationStrategy->executeSteps();
-        info(self::class . " - handleTravel: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+        info(self::class." - handleTravel: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
@@ -138,22 +138,22 @@ class InboundEmailsHookService extends BaseService
     private function handleHealth(HealthQuote $lead)
     {
         if ($lead->source == LeadSourceEnum::REVIVAL) {
-            Log::info(self::class . " - handleHealth: Going to Assign Advisor to uuid: {$lead->uuid}");
+            Log::info(self::class." - handleHealth: Going to Assign Advisor to uuid: {$lead->uuid}");
             if ($lead->advisor_id) {
-                Log::info(self::class . " - handleHealth: Lead already has an advisor assigned: {$lead->uuid}");
+                Log::info(self::class." - handleHealth: Lead already has an advisor assigned: {$lead->uuid}");
 
                 return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
             }
 
             $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-            Log::info(self::class . " - handleHealth: Car Quote Source updated for Revival for uuid {$lead->uuid} to REVIVAL_REPLIED");
+            Log::info(self::class." - handleHealth: Car Quote Source updated for Revival for uuid {$lead->uuid} to REVIVAL_REPLIED");
             DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
-            Log::info(self::class . " - handleHealth: Health Quote Source updated for Revival for uuid {$lead->uuid}");
+            Log::info(self::class." - handleHealth: Health Quote Source updated for Revival for uuid {$lead->uuid}");
 
-            info(self::class . " - handleHealth: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
+            info(self::class." - handleHealth: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
             $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Health, $lead->uuid);
             $assignedAdvisorId = $allocationStrategy->executeSteps();
-            info(self::class . " - handleHealth: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+            info(self::class." - handleHealth: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
             return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
         }
@@ -171,7 +171,7 @@ class InboundEmailsHookService extends BaseService
             $type = $payload['payload']['type'] ?? null;
 
             if (! empty($type)) {
-                info('Bird Webhook  Payload: ' . json_encode($payload));
+                info('Bird Webhook  Payload: '.json_encode($payload));
                 // Extract necessary fields from the payload
                 $messageId = $payload['payload']['messageId'] ?? null;
                 $status = $type;
@@ -201,14 +201,14 @@ class InboundEmailsHookService extends BaseService
 
             return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
         } catch (\Throwable $th) {
-            info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | " . PHP_EOL . $th->getTraceAsString());
+            info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | ".PHP_EOL.$th->getTraceAsString());
             throw $th;
         }
     }
     public function birdMessageInteractionsUpdate($result, $identifierValue = null)
     {
         $result = (object) $result->all();
-        info('Webhook birdMessageInteractionsUpdate Payload: ' . json_encode($result));
+        info('Webhook birdMessageInteractionsUpdate Payload: '.json_encode($result));
         $messageId = $result->messageId ?? null;
         $status = $result->type ?? null;
         $emailSubject = $result->reason ?? null;
@@ -221,11 +221,11 @@ class InboundEmailsHookService extends BaseService
                 'customer_email' => $identifierValue,
             ];
             // Dispatch the EmailStatusEventJob to handle the email status update
-            info('EmailStatusEventJob sending job dispatch | Time: ' . now());
+            info('EmailStatusEventJob sending job dispatch | Time: '.now());
             EmailStatusEventJob::dispatch($emailData)->delay(Carbon::now()->addSeconds(120));
             info('EmailStatusEventJob dispatched successfully!');
         } else {
-            $msg = 'EmailData not found for msg_id: ' . $messageId;
+            $msg = 'EmailData not found for msg_id: '.$messageId;
             info($msg);
         }
     }
@@ -258,11 +258,11 @@ class InboundEmailsHookService extends BaseService
                     $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
                     app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
                 } else {
-                    info("Advisor not found for email: {$quote->uuid} | Time: " . now());
+                    info("Advisor not found for email: {$quote->uuid} | Time: ".now());
                 }
             }
         } else {
-            $msg = 'EmailStatus not found for msg_id: ' . $messageId;
+            $msg = 'EmailStatus not found for msg_id: '.$messageId;
             info($msg);
         }
     }
