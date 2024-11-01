@@ -136,10 +136,11 @@ class SyncCourierQuotesOnce extends Command
     {
         if (getAppStorageValueByKey(ApplicationStorageEnums::COURIER_QUOTES_SYNC_ENABLED) !== 1) {
             $this->info('Courier quotes syncing is disabled.');
+
             return;
         }
 
-        $this->info('Syncing process started at: ' . now());
+        $this->info('Syncing process started at: '.now());
         foreach ($this->refIds as $refId) {
             $quote = CarQuote::where('uuid', $refId)->first();
             if (! $quote) {
@@ -158,6 +159,6 @@ class SyncCourierQuotesOnce extends Command
             sleep(1);
         }
 
-        $this->info('Syncing process completed successfully at: ' . now());
+        $this->info('Syncing process completed successfully at: '.now());
     }
 }
