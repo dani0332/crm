@@ -118,9 +118,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
                     $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
                     if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS) {
-                        // Add Sleep because after purchase policy we need to wait for some time to get the policy documents generated. -- Policy documents are still generating
-                        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted.' - Waiting for 10 seconds so  Provider can generate the policy documents');
-                        sleep(10);
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                         $uploadPolicyDocumentResponse = $this->fetchAndUploadDocument($quote, $travelType);
                         if (! $uploadPolicyDocumentResponse['status']) {
@@ -295,6 +292,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function fetchAndUploadDocument($quote, $travelType): array
     {
+        $maxRetries = 15;
+        $retryDelay = 10; // seconds
+        $retryCount = 0;
+
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
         $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS, 'error' => null, 'message' => null];
 
@@ -306,10 +307,22 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
         $endPoint = $this->baseUrl.'/v1/policy/'.$travelType.'/documents';
-        $policyDocuments = Http::post($endPoint, $payload);
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyDocuments);
 
-        $policyDocumentsResponse = $policyDocuments->object();
+        do {
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Waiting for 10 seconds so  Provider can generate the policy documents');
+            sleep($retryDelay);
+
+            $policyDocuments = Http::post($endPoint, $payload);
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyDocuments);
+
+            $policyDocumentsResponse = $policyDocuments->object();
+            if ($policyDocuments->failed() && $policyDocumentsResponse?->errors && str_contains($policyDocumentsResponse?->errors[0], 'Policy documents are still generating')) {
+                $retryCount++;
+            } else {
+                break;
+            }
+        } while ($retryCount < $maxRetries);
+
         $this->storePolicyIssuanceLog($quote, $payload, $policyDocumentsResponse, $endPoint, $response['completed_step'], $policyDocuments->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
         if ($policyDocuments->failed()) {
             $response['error'] = $policyDocumentsResponse?->errors;
@@ -318,8 +331,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         }
 
         $policyDocumentsResult = $policyDocumentsResponse?->result;
-        $policyDocuments = $policyDocumentsResult?->policy_documents;
-        foreach ($policyDocuments as $policyDocument) {
+        $issuePolicyDocuments = $policyDocumentsResult?->policy_documents;
+        foreach ($issuePolicyDocuments as $policyDocument) {
             $policyDocumentCode = $this->getTravelDocumentMapping($policyDocument->name);
             if ($policyDocumentCode) {
                 $this->uploadAndAttachToQuoteDocuments($quote, $policyDocument->url, $policyDocumentCode['code'], $policyDocument->name);
@@ -553,6 +566,11 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ]);
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Policy Issuance ID : '.$this->policyIssuance?->id.' Log ID : '.$log->id);
+    }
+
+    private function fetchPolicyDocuments()
+    {
+        return config('constants.ALLIANCE_TRAVEL_AUTOMATION_ENABLED');
     }
 
 }
