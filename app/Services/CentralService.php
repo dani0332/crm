@@ -10,6 +10,7 @@ use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -881,5 +882,29 @@ class CentralService
             ->count();
 
         return $sendUpdateStatusCount > 0;
+    }
+
+    /**
+     * This method is used to check if the COMMISSION (VAT NOT APPLICABLE) is enabled or not.
+     *
+     * @param  $quoteType  - Life, Business etc.
+     * @param  $businessTypeOfInsuranceId  - Business type of insurance id, if quote type is Business.
+     * @return bool
+     */
+    public function commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId = null): bool
+    {
+        if (
+            ($quoteType == quoteTypeCode::Business &&
+            in_array($businessTypeOfInsuranceId, [
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoIndividual),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineHull),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
+            ])) ||
+            $quoteType == quoteTypeCode::Life
+        ) {
+            return true;
+        }
+
+        return false;
     }
 }

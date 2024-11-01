@@ -1441,4 +1441,16 @@ class SendUpdateLogService
 
         return false;
     }
+
+    /**
+     * This method is used to check if the COMMISSION (VAT NOT APPLICABLE) is enabled or not.
+     *
+     * @param  $quoteType  - Life, Business etc.
+     * @param  $businessTypeOfInsuranceId  - Business type of insurance id, if quote type is Business.
+     * @return bool
+     */
+    public function commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId): bool
+    {
+        return app(CentralService::class)->commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId);
+    }
 }
