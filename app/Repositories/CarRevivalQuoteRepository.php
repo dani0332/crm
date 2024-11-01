@@ -20,6 +20,7 @@ use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class CarRevivalQuoteRepository extends BaseRepository

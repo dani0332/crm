@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use Carbon\Carbon;
@@ -18,6 +19,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\AddBatchNumber::class,
+        Commands\AddBatchNumberNonMotors::class,
         Commands\Dtt::class,
         Commands\DttFollowUp::class,
         Commands\TierAssignment::class,
@@ -32,6 +34,8 @@ class Kernel extends ConsoleKernel
         Commands\AlfredFollowUpSchedulerCommand::class,
         Commands\ProcessCCPaymentsCommand::class,
         Commands\SageProcessesCommand::class,
+        Commands\SageProcessDataCleanUpCommand::class,
+        SageProcessesMarkFailedCommand::class,
     ];
 
     /**
@@ -67,15 +71,18 @@ class Kernel extends ConsoleKernel
         //send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
             ->daily()
-            ->withoutOverlapping(1)->onOneServer()
+            ->withoutOverlapping()->onOneServer()
             ->at('9:00');
 
         $schedule
-            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
+            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule
+            ->command('AddBatchNumberNonMotors:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+
+        $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:55')->onOneServer()->withoutOverlapping();
 
@@ -124,6 +131,7 @@ class Kernel extends ConsoleKernel
         //     ->onFailure(function (Stringable $output) {
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
+
     }
 
     /**

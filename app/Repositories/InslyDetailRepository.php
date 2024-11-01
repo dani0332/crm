@@ -104,8 +104,19 @@ class InslyDetailRepository extends BaseRepository
         $validateAll = $data['validateAll'];
 
         $policy = $this->where('policy_oid', $policyID)->first();
+
         $email = $policy['customer']['email'] ?? null;
+
+        if (empty($email)) {
+            return [
+                'status' => 400,
+                'message' => 'Customer email not found.',
+                'data' => '',
+            ];
+        }
+
         $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
+
         if ($inslyPolicyIssueDate) {
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
@@ -577,6 +588,10 @@ class InslyDetailRepository extends BaseRepository
         $maskedData = array_map(function ($item) use ($type) {
             $item = trim($item);
             if ($type === 'email') {
+                if (! isValidEmail($item)) {
+                    return $item;
+                }
+
                 [$localPart, $domainPart] = explode('@', $item);
                 $halfLength = ceil(strlen($localPart) / 2);
                 $maskedLocalPart = substr($localPart, 0, $halfLength).str_repeat('*', strlen($localPart) - $halfLength);

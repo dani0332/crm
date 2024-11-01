@@ -135,6 +135,7 @@ class ActivitiesService extends BaseService
         $activity->updated_at = Carbon::now();
         $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->source = LeadSourceEnum::IMCRM;
+        $activity->user_id = auth()->user()->id;
         $activity->save();
 
         return $activity;

@@ -17,7 +17,6 @@ use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
-use App\Models\AML;
 use App\Models\CarQuote;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
@@ -29,11 +28,11 @@ use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use Yajra\Datatables\Datatables;
 
 class RenewalsUploadController extends Controller
 {
     private $renewalsUploadFileService;
+
     use TeamHierarchyTrait;
 
     public function __construct(RenewalsUploadService $renewalsUploadFileService)
@@ -219,7 +218,7 @@ class RenewalsUploadController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, RenewalsUploadLeads $renewalsUploadLeads, Datatables $datatables)
+    public function index(Request $request, RenewalsUploadLeads $renewalsUploadLeads)
     {
 
         $dataRenewalUpload = $renewalsUploadLeads::select(
@@ -263,7 +262,7 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
-    public function listRenewalBatches(Request $request, Datatables $datatables)
+    public function listRenewalBatches(Request $request)
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
@@ -436,11 +435,11 @@ class RenewalsUploadController extends Controller
             'products' => $products,
         ]);
     }
+
     public function export(Request $request)
     {
         $quotes = $this->renewalsUploadFileService->getExport($request);
 
         return $quotes;
     }
-
 }
