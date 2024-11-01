@@ -131,10 +131,9 @@ class SyncCourierQuotesOnce extends Command
         'QY2AK6LA',
     ];
 
-
     public function handle()
     {
-        $this->info('Syncing process started at: ' . now());
+        $this->info('Syncing process started at: '.now());
         foreach ($this->refIds as $refId) {
             $quote = CarQuote::where('uuid', $refId)->first();
             if (! $quote) {
@@ -153,6 +152,6 @@ class SyncCourierQuotesOnce extends Command
             sleep(1);
         }
 
-        $this->info('Syncing process completed successfully at: ' . now());
+        $this->info('Syncing process completed successfully at: '.now());
     }
 }
