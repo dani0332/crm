@@ -462,7 +462,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     // This method handles the approval or decline of split payments based on the request.
     public function fetchUpdateSplitPaymentsApprove($request)
     {
-        return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);  
+        return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);
     }
 
     //migrate payments
