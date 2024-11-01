@@ -394,6 +394,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $request->paymentCode);
     }
 
+    // Will move this code to helper or some where else later
     private function getQuoteModel($modelType, $quoteId, $sendUpdateId = 0)
     {
         if ($sendUpdateId > 0) {
@@ -443,7 +444,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
-                    info(LogMessagePrefixEnum::CHILD_PAYMENT_LOG_PREFIX.$paymentSplit->code . ' with serial no: '. $paymentSplit->sr_no .' approving process started');
+                    info(LogMessagePrefixEnum::CHILD_PAYMENT_LOG_PREFIX.$paymentSplit->code . LogMessagePrefixEnum::SERIAL_NUMBER_LOG_PREFIX. $paymentSplit->sr_no .' approving process started');
 
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
