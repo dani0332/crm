@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentProcessJobEnum;
 use App\Jobs\ProcessCCPaymentJob;
+use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use Illuminate\Console\Command;
 
@@ -29,12 +31,24 @@ class ProcessCCPaymentsCommand extends Command
     public function handle()
     {
         info('CC Payments Job Started');
-        CcPaymentProcess::where('status', PaymentProcessJobEnum::PENDING)
-            ->chunk(100, function ($pendingCCRecords) {
-                foreach ($pendingCCRecords as $pendingCCRecord) {
-                    ProcessCCPaymentJob::dispatch($pendingCCRecord);
-                }
-            });
+
+        $processCcPaymentsEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::PROCESS_CC_PAYMENTS_ENABLED)->first();
+
+        if($processCcPaymentsEnabled?->value) {
+
+            CcPaymentProcess::where('status', PaymentProcessJobEnum::PENDING)
+                ->chunk(100, function ($pendingCCRecords) {
+                    foreach ($pendingCCRecords as $pendingCCRecord) {
+                        ProcessCCPaymentJob::dispatch($pendingCCRecord);
+                    }
+                });
+        }
+        else
+        {
+            info('CC Payments Job ProcessCcPayments are disabled');
+        }
+
+
         info('CC Payments Job Ended');
 
         return 0;
