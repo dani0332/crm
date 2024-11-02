@@ -36,6 +36,8 @@ class ProcessCCPaymentsCommand extends Command
 
         if($processCcPaymentsEnabled?->value) {
 
+            info('CC Payments Job ProcessCcPayments Enabled');
+
             CcPaymentProcess::where('status', PaymentProcessJobEnum::PENDING)
                 ->chunk(100, function ($pendingCCRecords) {
                     foreach ($pendingCCRecords as $pendingCCRecord) {
