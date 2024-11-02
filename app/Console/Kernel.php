@@ -50,7 +50,7 @@ class Kernel extends ConsoleKernel
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
-        // $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping();
 
