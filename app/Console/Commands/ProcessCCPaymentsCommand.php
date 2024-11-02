@@ -34,7 +34,7 @@ class ProcessCCPaymentsCommand extends Command
 
         $processCcPaymentsEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::PROCESS_CC_PAYMENTS_ENABLED)->first();
 
-        if($processCcPaymentsEnabled?->value) {
+        if ($processCcPaymentsEnabled?->value) {
 
             info('CC Payments Job ProcessCcPayments Enabled');
 
@@ -44,12 +44,9 @@ class ProcessCCPaymentsCommand extends Command
                         ProcessCCPaymentJob::dispatch($pendingCCRecord);
                     }
                 });
-        }
-        else
-        {
+        } else {
             info('CC Payments Job ProcessCcPayments are disabled');
         }
-
 
         info('CC Payments Job Ended');
 
