@@ -337,7 +337,7 @@ class RenewalsUploadService
                     })
                     ->allowFailures()
                     ->withDelay(2)
-                    ->create();
+                    ->dispatch();
                 info($logPrefix.' all jobs are scheduled');
             } else {
                 info($logPrefix.' no jobs to create quotes');
