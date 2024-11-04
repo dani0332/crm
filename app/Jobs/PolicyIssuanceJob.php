@@ -62,7 +62,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
                 if (! $response['status']) {
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
-                    /*PolicyIssuanceFailedNotification::dispatch($this->process);*/
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
                 } else {
                     $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
@@ -88,7 +87,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         } else {
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         }
-        /*PolicyIssuanceFailedNotification::dispatch($this->process);*/
         Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
     }
 
