@@ -1553,7 +1553,7 @@ if (! function_exists('getInsuranceProvider')) {
 if (! function_exists('getWatermarkProperty')) {
     function getWatermarkProperty($quote, $documentType)
     {
-        $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->get()->toArray();
+        $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
 
         $skipWatermark = in_array($quote->insurance_provider_id, $ips);
 
