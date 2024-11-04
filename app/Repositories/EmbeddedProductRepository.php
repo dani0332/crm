@@ -36,6 +36,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
+use App\Enums\quoteTypeCode;
+use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -252,8 +255,6 @@ class EmbeddedProductRepository extends BaseRepository
         return false;
     }
 
-
-
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
@@ -287,6 +288,12 @@ class EmbeddedProductRepository extends BaseRepository
                 if (EmbeddedProductStrategy::checkAlfredProtect($item->product->embeddedProduct->short_code) && ! $isDocPresent) {
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
                     ProcessSyncAlfredProtect::dispatch($quoteObject);
+
+                } else if($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER 
+                && ucwords($modelType) == quoteTypeCode::Car) {
+
+                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                    SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
 
                 } else {
 
@@ -624,6 +631,51 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return $strategy;
+    }
+
+    public function fetchCancelEmbeddedProducts($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if (!in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+                ['quote_type_id', $quoteTypeId],
+                ['quote_request_id', $leadId],
+                ['is_selected', 1],
+            ])
+            ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED])
+            ->with(['payments'])
+            ->get();
+
+        if ($epTransaction->isNotEmpty()) {
+            
+            $quoteObject = $this->getQuoteObject($modelType, $leadId);
+            foreach ($epTransaction as $item) {
+                $product_id = $item->product_id;
+                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                $payment = $item['payments'][0];
+
+                $data = [
+                    'embedded_id' => $embedded_product_id,
+                    'modelType' => ucfirst($modelType),
+                    'amount' => $payment->premium_authorized,
+                    'reason' => 'policy cancelled',
+                    'uuid' => $quoteObject->uuid
+                ];
+                $response = $this->fetchCancelPayment($data);
+                info("Cancel EP Payment: - {$quoteObject->uuid} - " . json_encode($data) . ' - ' .json_encode($response));
+
+                if (
+                    $item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+                    && ucwords($modelType) == quoteTypeCode::Car
+                    && $response['code'] == 200
+                ) {
+                    CancelCourierQuoteOnMACRM::dispatch($quoteObject, $quoteTypeId);
+                }
+            }
+        }
     }
 
     public function fetchCancelPayment($data)

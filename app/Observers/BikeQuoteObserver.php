@@ -4,6 +4,8 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\BikeQuote;
+use App\Repositories\EmbeddedProductRepository;
+use App\Enums\quoteTypeCode;
 
 class BikeQuoteObserver
 {
@@ -21,6 +23,13 @@ class BikeQuoteObserver
                 $bikeQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $bikeQuote->transaction_approved_at];
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $bikeQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled
+        ) {
+            EmbeddedProductRepository::cancelEmbeddedProducts($bikeQuote->id, quoteTypeCode::Bike);
         }
     }
 }

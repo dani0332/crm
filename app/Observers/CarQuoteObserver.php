@@ -68,20 +68,16 @@ class CarQuoteObserver
                 });
                 $dirty = [...$dirty, 'transaction_approved_at' => $lead->transaction_approved_at];
             }
-
-            if ($lead->quote_status_id === QuoteStatusEnum::PolicyIssued) {
-                SyncCourierQuoteWithMacrm::dispatch($lead, QuoteTypeId::Car);
-            }
-
-            if (in_array($lead->quote_status_id, [QuoteStatusEnum::PolicyCancelled])) {
-                CancelCourierQuoteOnMACRM::dispatch($lead, QuoteTypeId::Car);
-            }
         }
 
         $this->syncQuote($lead, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
+        }
+
+        if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
+            EmbeddedProductRepository::cancelEmbeddedProducts($lead->id, quoteTypeCode::Car);
         }
 
         if (
