@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
@@ -128,18 +129,7 @@ class SaleSummaryReportService extends ManagementReport
 
             $this->formatData($processedData);
 
-            // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0];
-            if (in_array($this->groupByColumn, ['advisor', 'department'])) {
-                $nonIntegarIndexes[] = 1;
-            }
-
-            return $this->download(
-                'Sale Summary Report '.$this->reportDateRange,
-                $processedData,
-                $this->headings(),
-                $nonIntegarIndexes
-            );
+            return (new SaleSummaryReportExport($processedData, $this->groupByColumn))->download("Sale Summary Report {$this->reportDateRange}.xlsx");
         } else {
             return $data;
         }
@@ -186,7 +176,8 @@ class SaleSummaryReportService extends ManagementReport
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('((
                     sum(IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ))) +
-                    sum(IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ))) - sum(IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 ))) as total_endorsement_amount'),
+                    sum(IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ))) -
+                    sum(IFNULL( IF(ps.discount_value IS NULL OR ps.discount_value = 0, send_update_logs.discount, ps.discount_value) , 0 ))) as total_endorsement_amount'),
                 DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_vat_applicable, 0) ELSE 0 END) as commission_vat_applicable'),
             )
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
@@ -381,57 +372,6 @@ class SaleSummaryReportService extends ManagementReport
             'policyBookDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::SALE_SUMMARY,
             'reportType' => ManagementReportTypeEnum::BOOKED_POLICIES,
-        ];
-    }
-
-    public function headings(): array
-    {
-        $headings = [
-            ucwords(str_replace('_', ' ', $this->groupByColumn)),
-        ];
-
-        if (in_array($this->groupByColumn, ['advisor', 'department'])) {
-            $headings[] = 'Department';
-        }
-
-        return [
-            ...$headings,
-            'Total Policies',
-            'Total Endorsements',
-            'Total Transactions',
-            'Price (VAT applicable)',
-            'Total VAT',
-            'Price (VAT not applicable)',
-            'Discount',
-            'Commission',
-            'Total Endorsement Amount',
-            'Total Price',
-        ];
-    }
-
-    public function map($quote): array
-    {
-        $groupBy = $this->groupByColumn;
-        $values = [
-            $quote->$groupBy ?? 'N/A',
-        ];
-
-        if (in_array($this->groupByColumn, ['advisor', 'department'])) {
-            $values[] = $quote->department ?? 'N/A';
-        }
-
-        return [
-            ...$values,
-            $quote->total_policies ?? 0,
-            $quote->total_endorsements ?? 0,
-            $quote->total_transaction ?? 0,
-            $quote->price_vat_applicable ?? '0.00',
-            $quote->total_vat ?? '0.00',
-            $quote->price_vat_not_applicable ?? '0.00',
-            $quote->discount ?? '0.00',
-            $quote->commission_vat_applicable ?? '0.00',
-            $quote->endorsements_amount ? \number_format($quote->endorsements_amount, 2, '.', ',') : '0.00',
-            $quote->total_price ? \number_format($quote->total_price, 2, '.', ',') : '0.00',
         ];
     }
 }

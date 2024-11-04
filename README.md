@@ -16,7 +16,14 @@ URLs:
 - [Laravel Code Standard Guide Lines](https://xqsit94.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
-Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing..
+Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
+
+## Other stack & libraries
+
+- [Vue](https://vuejs.org/)
+- [InertiaJS](https://inertiajs.com/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [UI - indielayer](https://indielayer.com/)
 
 ## Setting up Laravel
 
@@ -81,7 +88,7 @@ This repo is integrated with [dhalsim](https://github.com/InsuranceMarket-ae/dha
 
 This guide outlines the steps to run the project locally on Docker. Docker provides a consistent environment for development and deployment, ensuring that the project runs smoothly across different systems.
 
-## Prerequisites
+### Prerequisites
 
 Before proceeding, ensure that you have the following prerequisites installed on your system:
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -14,10 +15,9 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
-use Config;
-use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class HomeQuoteService extends BaseService
@@ -40,8 +40,8 @@ class HomeQuoteService extends BaseService
             'hqr.uuid',
             'hqr.first_name',
             'hqr.last_name',
-            'hqr.email',
-            'hqr.mobile_no',
+            // 'hqr.email',
+            // 'hqr.mobile_no',
             'hqr.address',
             'hqr.has_contents',
             'hqr.contents_aed',
@@ -103,6 +103,7 @@ class HomeQuoteService extends BaseService
             'c.insured_last_name',
             'c.emirates_id_number',
             'c.emirates_id_expiry_date',
+            'c.receive_marketing_updates',
             'qrem.entity_id',
             'ent.code as entity_code',
             'ent.trade_license_no',
@@ -123,6 +124,7 @@ class HomeQuoteService extends BaseService
             'ps.text AS payment_status_id_text',
             'hqr.policy_booking_date',
             'hqr.insly_migrated',
+            'hqr.aml_status',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
@@ -145,7 +147,7 @@ class HomeQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('hqr.uuid', $id)->first();
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
     public function getSelectedLostReason($id)
@@ -168,8 +170,8 @@ class HomeQuoteService extends BaseService
 
     public function saveHomeQuote(Request $request)
     {
-        $sourceName = Config::get('constants.SOURCE_NAME');
-        $appUrl = Config::get('constants.APP_URL');
+        $sourceName = config('constants.SOURCE_NAME');
+        $appUrl = config('constants.APP_URL');
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -225,21 +227,26 @@ class HomeQuoteService extends BaseService
         ) {
             $this->query->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
-        if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-            $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
-            $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
+
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
+
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateArray = $request['advisor_assigned_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+
         if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
@@ -250,6 +257,15 @@ class HomeQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
+
+        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
+            $dateArray = $request['last_modified_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('hqr.updated_at', [$dateFrom, $dateTo]);
+        }
+
         if (isset($request->code) && $request->code != '') {
             $this->query->where('hqr.code', $request->code);
         }
@@ -324,6 +340,15 @@ class HomeQuoteService extends BaseService
                 $this->query->whereNull('hqr.previous_quote_policy_number');
             }
         }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {

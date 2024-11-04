@@ -5,7 +5,6 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import LazyBookingDetails from '../SendUpdateLog/Partials/BookingDetails.vue';
 
 defineProps({
   quote: Object,
@@ -47,7 +46,7 @@ defineProps({
   websiteURL: String,
   linkedQuoteDetails: Object,
   vatPercentage: Number,
-  isAmlClearedForPayment: Boolean,
+
   permissions: Object,
   enums: Object,
   payments: Array,
@@ -57,11 +56,11 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 
 const assumptionState = reactive({
   isEditing: false,
-  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -439,9 +438,14 @@ const fetchUpdatedQuote = async () => {
             <dt class="font-medium">PRICE</dt>
             <dd>{{ quote?.premium ?? '' }}</dd>
           </div>
+
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
             <dd>{{ quote?.paid_at ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AML STATUS</dt>
+            <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -476,7 +480,6 @@ const fetchUpdatedQuote = async () => {
             <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
           </div>
         </dl>
-
         <AddOn
           v-if="bikeQuotePlanAddons.length > 0"
           :quotePlanAddons="bikeQuotePlanAddons"
@@ -793,6 +796,12 @@ const fetchUpdatedQuote = async () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">DATE OF BIRTH</dt>
               <dd>{{ quote?.dob }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+              <dd>
+                {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMIRATES ID NUMBER</dt>
@@ -1278,7 +1287,6 @@ const fetchUpdatedQuote = async () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
@@ -1291,6 +1299,15 @@ const fetchUpdatedQuote = async () => {
       :insurance-providers="insuranceProviders"
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="record.uuid"
+      :code="record.code"
+      :quote="record"
+      :modelType="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <PolicyDetail
@@ -1321,10 +1338,10 @@ const fetchUpdatedQuote = async () => {
       "
       :quote="quote"
       quoteType="Bike"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />

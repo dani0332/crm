@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -30,7 +32,6 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
-use App\Services\AMLService;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -112,7 +113,7 @@ class LifeQuoteController extends Controller
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
         $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
-        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::LIFE->value);
+
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $membersDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name);
@@ -131,13 +132,16 @@ class LifeQuoteController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::LIFE->id(), $quoteStatuses);
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::LIFE->id(), $quote->id)) {
+
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();
         }
-
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
@@ -166,6 +170,7 @@ class LifeQuoteController extends Controller
                 'status' => $activity->status,
                 'quote_status_id' => $activity->quote_status_id,
                 'quote_status' => $activity?->quoteStatus,
+                'user_id' => $activity?->user_id,
             ];
         }
 
@@ -176,6 +181,7 @@ class LifeQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -184,6 +190,7 @@ class LifeQuoteController extends Controller
             'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
             'quote' => $quote,
+            'amlStatusName' => $amlStatusName,
             'record' => $quote,
             'activities' => $activitiesData,
             'advisors' => $advisors,
@@ -215,7 +222,6 @@ class LifeQuoteController extends Controller
             'bookPolicyDetails' => $bookPolicyDetails,
             'vatPercentage' => $vatPercentage,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
-            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateEnum' => $sendUpdateEnum,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,

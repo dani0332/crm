@@ -37,13 +37,14 @@ const props = defineProps({
   paymentTooltipEnum: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -618,7 +619,6 @@ const onAddUpdate = () => {
         </x-button>
       </template>
     </x-modal>
-
     <div class="p-4 rounded shadow mt-6 mmmbmb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -650,6 +650,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -884,6 +888,10 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
@@ -1284,7 +1292,6 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
     />
@@ -1298,6 +1305,7 @@ const onAddUpdate = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
+
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -1335,10 +1343,10 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="home"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1408,7 +1416,12 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
@@ -1507,7 +1520,6 @@ const onAddUpdate = () => {
         </template>
       </x-modal>
     </div>
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1545,6 +1557,7 @@ const onAddUpdate = () => {
     <AuditLogs
       :type="modelClass"
       :id="$page.props.quote.id"
+      :quoteType="$page.props.modelType"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />

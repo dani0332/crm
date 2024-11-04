@@ -3,7 +3,6 @@ import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
 const props = defineProps({
@@ -38,7 +37,7 @@ const props = defineProps({
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
@@ -49,6 +48,7 @@ const props = defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -61,8 +61,9 @@ const canAny = permissions => useCanAny(permissions);
 const modals = reactive({
   duplicate: false,
 });
-const quoteStatusEnum = page.props.quoteStatusEnum;
 const modelClass = 'App\\Models\\PersonalQuote';
+
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const countDays = useDaysSinceStale(
   props.quoteRequest?.stale_at ?? props.quote?.stale_at,
@@ -440,7 +441,6 @@ const onAddUpdate = () => {
         </x-button>
       </template>
     </x-modal>
-
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -473,12 +473,14 @@ const onAddUpdate = () => {
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
               </div>
-
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote.advisor?.name }}</dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
@@ -706,6 +708,14 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>
+                    {{
+                      quote.customer.receive_marketing_updates ? 'Yes' : 'No'
+                    }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
@@ -1008,7 +1018,6 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
     />
@@ -1063,10 +1072,10 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="Cycle"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

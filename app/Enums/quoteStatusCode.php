@@ -26,7 +26,7 @@ final class quoteStatusCode extends Enum
     const NEGOTIATION = 'In Negotiation';
     const PAYMENTPENDING = 'Payment Pending';
     const PENDINGUW = 'Pending with UW';
-    const PLOICY_DOCUMENTS_PENDING = 'Policy Documents Pending';
+    const POLICY_DOCUMENTS_PENDING = 'Policy Documents Pending';
     const APPLICATION_PENDING = 'Application Pending';
     const APPLICATION_SUBMITTED = 'Application Submitted';
     const MISSING_DOCUMENTS = 'Missing Documents Requested';
@@ -55,4 +55,6 @@ final class quoteStatusCode extends Enum
     const POLICY_BOOKED = 'Policy Booked';
     const POLICY_CANCELLED = 'Policy Cancelled';
     const POLICY_ISSUED = 'Policy Issued';
+    const POLICY_BOOKING_QUEUED = 'Policy Booking Queued';
+    const POLICY_BOOKING_FAILED = 'Policy Booking Failed';
 }

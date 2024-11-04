@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -58,8 +59,8 @@ class TravelQuoteService extends BaseService
             'tqr.previous_quote_id',
             'tqr.first_name',
             'tqr.last_name',
-            'tqr.email',
-            'tqr.mobile_no',
+            // 'tqr.email',
+            // 'tqr.mobile_no',
             DB::raw('DATE_FORMAT(tqr.dob, "%d-%m-%Y") as dob'),
             'tqr.premium',
             'tqr.paid_at',
@@ -124,6 +125,7 @@ class TravelQuoteService extends BaseService
             'c.insured_last_name',
             'c.emirates_id_number',
             'c.emirates_id_expiry_date',
+            'c.receive_marketing_updates',
             'qrem.entity_id',
             'ent.code as entity_code',
             'ent.trade_license_no',
@@ -144,6 +146,8 @@ class TravelQuoteService extends BaseService
             DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             'tqr.policy_booking_date',
             'tqr.insly_migrated',
+            'tqr.sic_advisor_requested',
+            'tqr.aml_status',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -240,9 +244,9 @@ class TravelQuoteService extends BaseService
 
             return $response;
         }
-        info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
+        // info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
-        info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
+        // info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
@@ -335,8 +339,16 @@ class TravelQuoteService extends BaseService
         } else {
             $searchProperties = $model->searchProperties;
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch)) {
+        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start)
+        && ! isset($request->payment_due_date) && ! isset($request->booking_date)
+    && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
             $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
+        if ($request->transaction_approved_dates) {
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $startDate = Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
+            $this->query->whereBetween('tqr.transaction_approved_at', [$startDate, $endDate]);
         }
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
@@ -344,6 +356,23 @@ class TravelQuoteService extends BaseService
         ) {
             $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
+
+        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
+            $dateArray = $request['last_modified_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('tqr.updated_at', [$dateFrom, $dateTo]);
+        }
+
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateArray = $request['advisor_assigned_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
@@ -355,7 +384,19 @@ class TravelQuoteService extends BaseService
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
+        if (
+            ! empty($request->created_at_start)
+            && ! empty($request->created_at_end)
+            && empty($request->code)
+            && empty($request->email)
+            && empty($request->mobile_no)
+            && empty($request->payment_due_date)
+            && empty($request->booking_date)
+            && empty($request->renewal_batch)
+            && empty($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
+        ) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
@@ -428,13 +469,24 @@ class TravelQuoteService extends BaseService
         if (isset($request->source) && $request->source != '') {
             $this->query->where('tqr.source', $request->source);
         }
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
+            $this->query->where('tqr.sic_advisor_requested', $request->sic_advisor_requested);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
 
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
+                    if (in_array('-1', $request[$item]) || in_array(-1, $request[$item])) {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
@@ -452,6 +504,12 @@ class TravelQuoteService extends BaseService
         }
         $this->query->filterBySegment();
         $this->adjustQueryByDateFilters($this->query, 'tqr');
+
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
+        } else {
+            return $this->query->orderBy('tqr.created_at', 'DESC');
+        }
 
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -535,7 +593,7 @@ class TravelQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('tqr.uuid', $id)->first();
+        return $this->query->addSelect(['tqr.email', 'tqr.mobile_no'])->where('tqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
@@ -791,7 +849,8 @@ class TravelQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -960,7 +1019,6 @@ class TravelQuoteService extends BaseService
 
             return $response;
         }
-
     }
 
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
@@ -990,7 +1048,6 @@ class TravelQuoteService extends BaseService
         $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
-
     }
 
     public function setQuoteUpdatedAt($id)

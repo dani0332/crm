@@ -56,4 +56,9 @@ class Team extends Model implements AuditableContract
     {
         return $this->belongsToMany(User::class, 'user_team');
     }
+
+    public function scopeActive($query)
+    {
+        $query->where('is_active', 1);
+    }
 }

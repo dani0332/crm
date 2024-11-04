@@ -13,7 +13,7 @@ WORKDIR /var/www
 COPY package*.json yarn.lock /var/www/
 RUN yarn install --pure-lockfile
 
-FROM php:8.1-fpm as build
+FROM php:8.2-fpm as build
 WORKDIR /app
 # Add docker php ext repo
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
@@ -53,21 +53,7 @@ COPY composer.json composer.json
 COPY composer.lock composer.lock
 RUN composer install --optimize-autoloader --no-dev
 
-RUN \
-  wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
-  cd /tmp/ && tar -zxvf newrelic-php5-*-linux.tar.gz && cd .. && \
-  export NR_INSTALL_USE_CP_NOT_LN=1 && \
-  export NR_INSTALL_SILENT=1 && \
-  /tmp/newrelic-php5-*/newrelic-install install && \
-  rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
-  sed -i \
-      -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
-      -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
-      -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
-      -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
-      /usr/local/etc/php/conf.d/newrelic.ini
-
-FROM php:8.1-fpm
+FROM php:8.2-fpm
 COPY --from=dependencies /root/.doppler/.doppler.yaml /root/.doppler/.doppler.yaml
 COPY --from=dependencies remote_syslog/remote_syslog /usr/local/bin/remote_syslog
 COPY --from=dependencies /usr/bin/doppler /usr/bin/doppler
@@ -77,7 +63,8 @@ COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
 COPY --from=build /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 COPY --from=build /usr/bin/ /usr/bin/
 COPY --from=build /app /var/www/
-COPY --from=build /usr/local/etc/php/conf.d/newrelic.ini /usr/local/etc/php/conf.d/newrelic.ini
+#COPY --from=build /usr/local/etc/php/conf.d/newrelic.ini /usr/local/etc/php/conf.d/newrelic.ini
+#COPY --from=build /var/log/newrelic/newrelic-daemon.log /var/log/newrelic/newrelic-daemon.log
 
 
 RUN apt-get update && apt-get install -y \
@@ -123,5 +110,19 @@ cp docker/log_files.yml /etc/
 RUN chmod +x /var/www/docker/run.sh
 RUN usermod -aG root www-data
 RUN usermod -aG root www
+
+RUN \
+  wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
+  cd /tmp/ && tar -zxvf newrelic-php5-*-linux.tar.gz && cd .. && \
+  export NR_INSTALL_USE_CP_NOT_LN=1 && \
+  export NR_INSTALL_SILENT=1 && \
+  /tmp/newrelic-php5-*/newrelic-install install && \
+  rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
+  sed -i \
+      -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
+      -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
+      -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
+      -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
+      /usr/local/etc/php/conf.d/newrelic.ini
 
 ENTRYPOINT ["/var/www/docker/run.sh"]

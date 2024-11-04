@@ -1,9 +1,6 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 const props = defineProps({
   quote: Object,
@@ -37,7 +34,6 @@ const props = defineProps({
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -45,6 +41,7 @@ const props = defineProps({
   bookPolicyDetails: Array,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -708,7 +705,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         </x-button>
       </template>
     </x-modal>
-
     <div class="p-4 rounded shadow mb-6 bg-white mt-6">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -773,6 +769,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -921,6 +921,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
                   <dd class="break-words">{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
@@ -1287,7 +1291,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       "
       :storageUrl="storageUrl"
       :quoteSubType="quoteTypeCodeEnum.CORPLINE"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
     />
@@ -1330,10 +1333,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quote="quote"
       quoteType="Business"
       modelType="Corpline"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1403,7 +1406,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
@@ -1538,7 +1546,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </x-accordion>
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
     </div>
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
@@ -1568,6 +1575,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </div> -->
 
     <AuditLogs
+      :quoteType="$page.props.modelType"
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"

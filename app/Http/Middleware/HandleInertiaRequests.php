@@ -2,9 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
@@ -20,12 +22,14 @@ use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Repositories\PaymentRepository;
+use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadsCountService;
 use App\Services\SplitPaymentService;
@@ -101,6 +105,7 @@ class HandleInertiaRequests extends Middleware
             'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
             'sendUpdateLogStatusEnum' => SendUpdateLogStatusEnum::asArray(),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'amlStatusEnum' => AMLStatusCode::asArray(),
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
             'authorisePaymentCount' => app(PaymentRepository::class)->getAuthorisePaymentCount($userId = null),
@@ -116,6 +121,9 @@ class HandleInertiaRequests extends Middleware
             'kycEnums' => Kyc::asArray(),
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
+            'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
+            'quoteTypes' => QuoteTypes::allTypesWithIds(),
+            'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
         ];
     }
 
@@ -189,13 +197,14 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW), 'Revival Conversion', route('revival-conversion-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Motor Retention report', route('renewal-batch-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY), 'Authorised Payment Summary', route('authorized-payment-summary', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::MANAGEMENT_REPORT), 'Management Report', route('management-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::STALE_LEADS_REPORT), 'Stale Leads Report', route('stale-leads-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::PIPELINE_REPORT), 'Pipeline Report', route('pipeline-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT), 'Total Premium Report', route('total-premium-leads-sales-report'), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT), 'Total Premium Report', route('total-premium-leads-sales-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(true, 'Non Motor Retention Report', route('retentionn-report'), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
@@ -217,6 +226,12 @@ class HandleInertiaRequests extends Middleware
                         'Car',
                         route('car-lead-allocation.index'),
                         fn ($s) => $s->attributes(['icon' => 'car'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TRAVEL_SIC_ALLOCATION),
+                        'Travel',
+                        route('travel-lead-allocation.index'),
+                        fn ($s) => $s->attributes(['icon' => 'travel'])
                     );
             });
         }

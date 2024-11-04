@@ -51,6 +51,11 @@ class CarQuote extends BaseModel
         'updated' => QuoteEmailUpdated::class,
     ];
 
+    public function getForeignKey()
+    {
+        return 'car_quote_request_id';
+    }
+
     protected static function booted()
     {
         static::updating(function ($model) {
@@ -71,6 +76,12 @@ class CarQuote extends BaseModel
         });
     }
 
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->last_name;

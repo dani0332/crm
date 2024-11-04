@@ -1,4 +1,5 @@
 <script setup>
+import { useRoundIt } from '../Composables/utilities';
 const page = usePage();
 const notification = useNotifications('toast');
 import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
@@ -145,30 +146,32 @@ const formatAmount = amount => {
   });
 };
 
-// use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
-const binAsInsurerCommissionTaxInvoiceNumber = () => {
-  let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
+const isNonSelfBillingEnabledForInsuranceProvider = computed(() => {
   let insuranceProvider = page.props.quote?.insurance_provider;
   if (!insuranceProvider) {
     // If insurance_provider is not available, use insurance_provider_details
     insuranceProvider = page.props.quote?.insurance_provider_details;
+    // If insurance_provider_details is not available, use insurer from payment
+    if (!insuranceProvider) {
+      insuranceProvider = props.payments[0]?.insurance_provider;
+    }
   }
-  let insuranceProviderCode = insuranceProvider?.code;
-  let allowedInsuranceProvider = [
-    insuranceProviderCodeEnum.AAIC,
-    insuranceProviderCodeEnum.ALNC,
-    insuranceProviderCodeEnum.OALLIANZ,
-    insuranceProviderCodeEnum.CIG,
-    insuranceProviderCodeEnum.FPIL,
-    insuranceProviderCodeEnum.MTL,
-    insuranceProviderCodeEnum.NHICD,
-    insuranceProviderCodeEnum.ZILL,
-  ];
-  if (allowedInsuranceProvider.includes(insuranceProviderCode)) {
+
+  return insuranceProvider?.non_self_billing == 1;
+});
+// use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
+const binAsInsurerCommissionTaxInvoiceNumber = () => {
+  console.log(
+    'page.props.bookPolicyDetails',
+    isNonSelfBillingEnabledForInsuranceProvider.value,
+  );
+  let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
+  if (isNonSelfBillingEnabledForInsuranceProvider.value) {
     return brokerInvoiceNo;
   }
   return '';
 };
+
 const bpForm = useForm({
   parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
   booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) || '',
@@ -179,8 +182,7 @@ const bpForm = useForm({
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
   insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
   insurer_commmission_invoice_number:
-    page.props?.payments[0]?.insurer_commmission_invoice_number ||
-    binAsInsurerCommissionTaxInvoiceNumber(),
+    page.props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_vat_not_applicable:
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
@@ -339,12 +341,12 @@ const calculateCommission = () => {
         position: 'top',
       });
       /*bpForm.commission_vat_applicable = '';
-      bpForm.commission_vat_not_applicable = '';
-      notification.error({
-        title:
-          'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
-        position: 'top',
-      });*/
+            bpForm.commission_vat_not_applicable = '';
+            notification.error({
+              title:
+                'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
+              position: 'top',
+            });*/
     }
   } else {
     bpForm.commission_percentage = 0;
@@ -364,18 +366,27 @@ const disableCommissionVatApplicable = computed(() => {
 });
 const showSendAndBookPolicyButtonBlock = computed(() => {
   const { quote_status_id } = props.quote;
-  const { TransactionApproved, PolicyIssued, AMLScreeningCleared } =
-    page.props.quoteStatusEnum;
+  const {
+    TransactionApproved,
+    PolicyIssued,
+    POLICY_BOOKING_FAILED,
+    AMLScreeningCleared,
+  } = page.props.quoteStatusEnum;
 
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
 
   if (isQuoteTypeTravel) {
-    return [TransactionApproved, PolicyIssued, AMLScreeningCleared].includes(
-      quote_status_id,
-    );
+    return [
+      TransactionApproved,
+      PolicyIssued,
+      POLICY_BOOKING_FAILED,
+      AMLScreeningCleared,
+    ].includes(quote_status_id);
   }
 
-  return [TransactionApproved, PolicyIssued].includes(quote_status_id);
+  return [TransactionApproved, POLICY_BOOKING_FAILED, PolicyIssued].includes(
+    quote_status_id,
+  );
 });
 
 const showSendAndBookPolicyButton = computed(() => {
@@ -400,6 +411,7 @@ const disableSendAndBookPolicyButton = computed(() => {
   return (
     !props.bookPolicyDetails?.sendButton &&
     !isPolicyStatusCancellationPending &&
+    disableIfPolicyFailedAndNoBookingFailedEditPermission &&
     !can(permission)
   );
 });
@@ -408,9 +420,41 @@ const disableBookPolicyButton = computed(() => {
   return (
     !props.bookPolicyDetails?.bookButton ||
     bp.isEditing ||
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value ||
     !can(permissionsEnum.BOOK_POLICY_BUTTON)
   );
 });
+
+const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
+  let isPolicyBookingFailed =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.POLICY_BOOKING_FAILED;
+  if (isPolicyBookingFailed) {
+    let hasBookingFailedEditPermission = can(
+      permissionsEnum.BOOKING_FAILED_EDIT,
+    );
+    if (!hasBookingFailedEditPermission) {
+      return true;
+    }
+    return false;
+  }
+  return false;
+});
+
+const showBookingFailedAlert = () => {
+  console.log(
+    'showBookingFailedAlert',
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value,
+  );
+  if (disableIfPolicyFailedAndNoBookingFailedEditPermission.value) {
+    notification.error({
+      title:
+        'Policy Booking Failed! Please contact finance for correction of details',
+      position: 'top',
+      timeout: 30000,
+    });
+  }
+};
 
 const isTravelQuoteAndAMLNotCleared = () => {
   const bookPolicyButtonLabel = props.bookPolicyDetails?.text;
@@ -483,6 +527,7 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
+
 const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] =
   createReusableTemplate();
 
@@ -496,6 +541,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
   return policyStatuses.includes(props.quote.quote_status_id);
 });
 onBeforeMount(() => {
+  showBookingFailedAlert();
   isTravelQuoteAndAMLNotCleared();
 });
 const readOnlyMode = reactive({
@@ -709,7 +755,9 @@ onMounted(() => {
                     <template #tooltip>
                       <span class="custom-tooltip-content">
                         {{
-                          productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                          isNonSelfBillingEnabledForInsuranceProvider
+                            ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                            : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
                         }}
                       </span>
                     </template>
@@ -718,7 +766,7 @@ onMounted(() => {
                 <dd>
                   <x-input
                     v-model="bpForm.insurer_commmission_invoice_number"
-                    placeholder="Insurer Tax Invoice Number"
+                    placeholder="Insurer Commission Tax Invoice Number"
                     class="w-full"
                     :disabled="!bp.isEditing"
                     :rules="[isRequired]"
@@ -948,7 +996,10 @@ onMounted(() => {
                 color="emerald"
                 size="sm"
                 @click.prevent="bp.isEditing = true"
-                :disabled="isDisabled"
+                :disabled="
+                  isDisabled ||
+                  disableIfPolicyFailedAndNoBookingFailedEditPermission
+                "
                 v-if="readOnlyMode.isDisable === true"
               >
                 Edit
@@ -1035,6 +1086,9 @@ onMounted(() => {
                       props.bookPolicyDetails?.editButton &&
                       can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
                     "
+                    :isDisabled="
+                      disableIfPolicyFailedAndNoBookingFailedEditPermission
+                    "
                   />
                 </template>
                 <x-tooltip>
@@ -1058,7 +1112,11 @@ onMounted(() => {
                       color="orange"
                       class="mt-4"
                       @click.prevent="confirmSendPolicy"
-                      :disabled="bp.isEditing || is_lacking_payment"
+                      :disabled="
+                        bp.isEditing ||
+                        is_lacking_payment ||
+                        disableIfPolicyFailedAndNoBookingFailedEditPermission
+                      "
                       v-if="showSendAndBookPolicyButton"
                     >
                       {{ props.bookPolicyDetails?.text }}
@@ -1080,7 +1138,8 @@ onMounted(() => {
                     :disabled="
                       bp.isEditing ||
                       is_lacking_payment ||
-                      isAMLNotClearedForTravelQuote
+                      isAMLNotClearedForTravelQuote ||
+                      disableIfPolicyFailedAndNoBookingFailedEditPermission
                     "
                     v-if="showSendAndBookPolicyButton"
                   >
@@ -1180,7 +1239,10 @@ onMounted(() => {
                         props.bookPolicyDetails?.editButton &&
                         can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
                       "
-                      :isDisabled="!props.bookPolicyDetails?.editButton"
+                      :isDisabled="
+                        !props.bookPolicyDetails?.editButton ||
+                        disableIfPolicyFailedAndNoBookingFailedEditPermission
+                      "
                     />
                   </template>
 
@@ -1198,7 +1260,8 @@ onMounted(() => {
                         color="orange"
                         :disabled="
                           disableBookPolicyButton ||
-                          isAMLNotClearedForTravelQuote
+                          isAMLNotClearedForTravelQuote ||
+                          disableIfPolicyFailedAndNoBookingFailedEditPermission
                         "
                         @click.prevent="confirmSendPolicy"
                       >
@@ -1219,7 +1282,9 @@ onMounted(() => {
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        disableBookPolicyButton || isAMLNotClearedForTravelQuote
+                        disableBookPolicyButton ||
+                        isAMLNotClearedForTravelQuote ||
+                        disableIfPolicyFailedAndNoBookingFailedEditPermission
                       "
                       @click.prevent="confirmSendPolicy"
                     >
@@ -1254,6 +1319,7 @@ onMounted(() => {
         </x-form>
       </template>
     </Collapsible>
+
     <x-modal
       v-model="modals.sendPolicyConfirm"
       size="lg"

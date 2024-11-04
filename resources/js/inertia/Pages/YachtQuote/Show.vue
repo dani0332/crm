@@ -1,6 +1,5 @@
 <script setup>
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
@@ -37,7 +36,7 @@ const props = defineProps({
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -48,6 +47,7 @@ const props = defineProps({
   payments: Array,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -344,6 +344,10 @@ const onAddUpdate = () => {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote.advisor?.name }}</dd>
               </div>
@@ -578,6 +582,14 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>
+                    {{
+                      quote.customer.receive_marketing_updates ? 'Yes' : 'No'
+                    }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
@@ -916,7 +928,6 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
     />
@@ -969,9 +980,9 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="Yacht"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

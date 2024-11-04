@@ -4,8 +4,10 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\TeamNameEnum;
 use App\Enums\TiersIdEnum;
 use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
@@ -80,28 +82,37 @@ class QuoteAllocation extends Command
         }
 
         $leads = CarQuote::whereNull('advisor_id')
-            ->select('uuid')
+            ->select('uuid', 'payment_status_id')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
             ->where('is_renewal_tier_email_sent', 0)
             ->where(function ($query) {
-                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)->where('sic_flow_enabled', 0)
-                    ->orWhere(function ($query) {
-                        $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->where('sic_advisor_requested', 1)->where('sic_flow_enabled', 1);
+                $query->leadAllocationFailed()
+                    ->orWhere(function ($q) {
+                        $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowDisabled();
+                    })->orWhere(function ($query) {
+                        $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
                     });
             })
             ->take($chunkSize);
 
         info('leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
 
+        // Get the teamId once before the loop
+        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+
         foreach ($leads->get() as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
             info('Processing record for Quote Allocation with uuid: '.$lead->uuid);
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
+
+            // Only apply teamId if the payment status is AUTHORIZED
+            $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
+
+            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $currentTeamId);
             $allocationStrategy->executeSteps();
             $processedRecords++;
             info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
@@ -120,17 +131,22 @@ class QuoteAllocation extends Command
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->where('health_quote_request.price_starting_from', '!=', null)
             ->where('health_quote_request.is_error_email_sent', 0)
-            ->where(function ($query) {
-                $query->where('sic_flow_enabled', 0)
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
+            ->where(function ($q) {
+                $q->leadAllocationFailed()
+                    ->orSicFlowDisabled()
                     ->orWhere(function ($subQuery) {
-                        $subQuery->where('sic_advisor_requested', 1)
-                            ->where('sic_flow_enabled', 1);
+                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
                     });
-            })->take($chunkSize);
+            })
+            ->take($chunkSize);
+
         foreach ($leads->get() as $lead) {
+            info('Processing Health record for Quote Allocation with uuid: '.$lead->uuid);
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
             $processedRecords++;
+            info('Processed Health record for Quote Allocation with uuid: '.$lead->uuid);
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -140,17 +156,32 @@ class QuoteAllocation extends Command
     {
         $processedRecords = 0;
         $leads = TravelQuote::whereNull('advisor_id')
-            ->select('uuid')
+            ->select('uuid', 'payment_status_id')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->where('sic_flow_enabled', false)
+            ->where(function ($q) {
+                $q->leadAllocationFailed()
+                    ->orSicFlowDisabled()
+                    ->orWhere(function ($subQuery) {
+                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                    });
+            })
             ->take($chunkSize);
 
+        // Get the teamId once before the loop
+        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+
         foreach ($leads->get() as $lead) {
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
+            info('Processing Travel record for Quote Allocation with uuid: '.$lead->uuid);
+
+            // Only apply teamId if the payment status is AUTHORIZED
+            $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
+
+            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $currentTeamId);
             $allocationStrategy->executeSteps();
             $processedRecords++;
+            info('Processed Travel record for Quote Allocation with uuid: '.$lead->uuid);
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);

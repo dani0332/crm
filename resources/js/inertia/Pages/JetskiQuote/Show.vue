@@ -1,11 +1,10 @@
 <script setup>
-import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
 defineProps({
   quote: Object,
@@ -28,6 +27,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -58,7 +58,6 @@ const dateFormat = date =>
 <template>
   <div>
     <Head title="Jetski Quotes" />
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
@@ -86,7 +85,7 @@ const dateFormat = date =>
               >
                 <x-button size="sm" tag="div">Edit</x-button>
               </Link>
-              <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+              <x-button v-else:disabled="isDisabled" size="sm" tag="div"
                 >Edit</x-button
               >
             </LeadEditBtnTemplate>
@@ -110,7 +109,6 @@ const dateFormat = date =>
                 v-if="can(permissionsEnum.JetskiQuotesEdit)"
               />
             </template>
-
             <Link
               v-if="can(permissionsEnum.JetskiQuotesList)"
               :href="route('jetski-quotes-list')"
@@ -142,7 +140,10 @@ const dateFormat = date =>
                 <dt class="font-medium">ADVISOR</dt>
                 <dd class="break-words">{{ quote.advisor?.email }}</dd>
               </div>
-
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
@@ -277,6 +278,12 @@ const dateFormat = date =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DATE OF BIRTH</dt>
                 <dd>{{ quote.dob }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                <dd>
+                  {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
+                </dd>
               </div>
               <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
             </dl>

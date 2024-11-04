@@ -346,6 +346,7 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
     public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
     public const ADD_MANUAL_HEALTH_PLAN = 'add-manual-health-plan';
+    public const VIEW_SAGE_API_LOGS = 'view-sage-api-logs';
     public const DOCUMENT_DELETE = 'document-delete';
     public const SEND_UPDATE_ADD_BOOKING = 'send-update-add-booking';
     public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
@@ -354,17 +355,31 @@ final class PermissionsEnum extends Enum
     public const INPL_USER = 'inpl-user';
     public const INPL_APPROVER = 'inpl-approver';
     public const DOCUMENT_VERIFY = 'document-verify';
+    public const MANAGER_RETENTION_REPORT_VIEW = 'manager-retention-report-view';
+    public const ADVISOR_RETENTION_REPORT_VIEW = 'advisor-retention-report-view ';
     public const DEPARTMENT_CREATE = 'department-create';
     public const DEPARTMENT_UPDATE = 'department-update';
     public const DEPARTMENT_LIST = 'department-list';
     public const AUDITDOCUMENT_UPLOAD = 'auditdocument-upload';
     public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
     public const TRAVEL_HAPEX = 'travel-hapex';
+    public const VIEW_BULK_POLICY_BOOKING_LIST = 'view-bulk-policy-booking-list';
+    public const BOOK_BULK_POLICY_ON_SAGE = 'book-bulk-policy-on-sage';
     public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
     public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
     public const QUOTE_RAW_DATA = 'quote-raw-data';
     public const MANAGER_AUTHORISED_PAYMENT_SUMMARY = 'manager-authorised-payment-summary';
-    public const VIEW_SAGE_API_LOGS = 'view-sage-api-logs';
+    public const BOOKING_FAILED_EDIT = 'booking-failed-edit';
+    public const TRAVEL_SIC_ALLOCATION = 'travel-sic-allocation';
+    public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
+    public const ReApprovePayments = 'reapprove-payment';
+    public const EXPORT_RM_LEADS = 'export-rm-leads';
+    public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
+    public const UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE = 'update-lead-status-to-fake-duplicate';
+    public const SEARCH_INSURER_TAX_INVOICE_NUMBER = 'search-insurer-tax-invoice-number';
+    public const SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER = 'search-insurer-commission-tax-invoice-number';
+    public const SEND_UPDATE_EDIT_NOTES = 'send-update-edit-notes';
+    public const DEPARTMENT_MANAGER = 'department-manager';
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -414,6 +429,15 @@ final class PermissionsEnum extends Enum
             self::YACHT_DISTRIBUTION_REPORT,
             self::CORPLINE_DISTRIBUTION_REPORT,
             self::GROUPMEDICAL_DISTRIBUTION_REPORT,
+        ];
+    }
+
+    public static function getBulkPolicyBookingOnSagePermissions()
+    {
+        return [
+            /*self::VIEW_BULK_POLICY_BOOKING_LIST,
+            self::BOOK_BULK_POLICY_ON_SAGE,*/
+            self::BOOKING_FAILED_EDIT,
         ];
     }
 }
