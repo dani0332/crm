@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\LogMessagePrefixEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\PaymentSplits;
@@ -64,7 +63,7 @@ class PaymentSplitsObserver
             $masterPayment->send_update_log_id
         );
 
-        info(LogMessagePrefixEnum::CHILD_PAYMENT_LOG_PREFIX.$paymentSplits->code . LogMessagePrefixEnum::SERIAL_NUMBER_LOG_PREFIX . $paymentSplits->sr_no .' SplitPayment:Observer VAT updated called');
+        info('Child payment code: '. $paymentSplits->code . ' with serial no: ' . $paymentSplits->sr_no .' SplitPayment:Observer VAT updated called');
         PaymentSplits::withoutEvents(function () use ($paymentSplits, $priceWithoutVat, $vat) {
             $paymentSplits->update([
                 'price_vat_applicable' => $priceWithoutVat,

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
-use App\Enums\LogMessagePrefixEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -1218,7 +1217,7 @@ class SendUpdateLogService
 
     public function updatePaymentTotalPrice($payment, $totalPrice): void
     {
-        info(LogMessagePrefixEnum::PARENT_PAYMENT_LOG_PREFIX.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
+        info('Master payment code: '. $payment->code .' - Total Price: '.$totalPrice.' Updated.');
         $payment->total_price = $totalPrice;
     }
 
