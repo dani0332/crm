@@ -22,19 +22,19 @@ class TravelRenewalService extends BaseService
 {
     public function getTravelRenewalLeads()
     {
-        info("Travel Renewal Leads processing started with Start Date: " . Carbon::now()->subDays(320));
+        info('Travel Renewal Leads processing started with Start Date: '.Carbon::now()->subDays(320));
         TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
             QuoteStatusEnum::PolicyBooked,
         ])
-        ->whereIn('payment_status_id', [
+            ->whereIn('payment_status_id', [
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
                 PaymentStatusEnum::CREDIT_APPROVED,
-        ])
-        ->whereDate('start_date', Carbon::now()->subDays(320))
-        ->chunkById(100, function ($quotes) {
+            ])
+            ->whereDate('start_date', Carbon::now()->subDays(320))
+            ->chunkById(100, function ($quotes) {
                 $quoteCount = $quotes->count();
                 info("total quotes in chunk: {$quoteCount}");
                 if ($quoteCount > 0) {
@@ -50,15 +50,16 @@ class TravelRenewalService extends BaseService
     {
         foreach ($quotes as $quote) {
             try {
-            // Check if the quote is a duplicate
-            if ($this->isDuplicateQuote($quote)) {
-                info('Duplicate quote detected for Quote Ref-ID: ' . $quote->uuid);
-                continue; // Skip processing this quote
-            }
-            $this->storeTravelRenewalQuote($quote);
+                // Check if the quote is a duplicate
+                if ($this->isDuplicateQuote($quote)) {
+                    info('Duplicate quote detected for Quote Ref-ID: '.$quote->uuid);
+
+                    continue; // Skip processing this quote
+                }
+                $this->storeTravelRenewalQuote($quote);
             } catch (\Exception $e) {
                 // Log the exception or handle it as needed
-                Log::error('Error processing quote ID ' . $quote->uuid . ': ' . $e->getMessage());
+                Log::error('Error processing quote ID '.$quote->uuid.': '.$e->getMessage());
             }
         }
     }
@@ -73,11 +74,11 @@ class TravelRenewalService extends BaseService
         }
         // Calculate the policy expiry date based on the start date + 365 days
         $policyExpiryDate = $policyStartDate->copy()->addDays(365);
-        info('Calculating policy expiry date' . $policyExpiryDate);
+        info('Calculating policy expiry date'.$policyExpiryDate);
 
         return TravelQuote::where('customer_id', $quote->customer_id)
             ->whereDate('policy_expiry_date', Carbon::parse($policyExpiryDate)->format('Y-m-d'))
-            ->whereDate('start_date',  $quote->start_date)
+            ->whereDate('start_date', $quote->start_date)
             ->where('coverage_code', $quote->coverage_code)
             ->where('direction_code', $quote->direction_code)
             ->where('nationality_id', $quote->nationality_id)
@@ -112,7 +113,7 @@ class TravelRenewalService extends BaseService
             'customer_id' => $quote->customer_id,
             'direction_code' => $quote->direction_code,
             'destination' => $quote->destination ?? null,
-            'code' => QuoteTypeShortCode::TRA . '-' . $quoteUuid,
+            'code' => QuoteTypeShortCode::TRA.'-'.$quoteUuid,
             'uuid' => $quoteUuid,
             'renewal_batch' => trim($batchNumber),
             'email' => $quote->email,
@@ -134,6 +135,7 @@ class TravelRenewalService extends BaseService
         ];
 
         $this->saveTravelRenewalQuote($travelQuote);
+
         return $travelQuote;
     }
 
@@ -168,7 +170,7 @@ class TravelRenewalService extends BaseService
         info("Travel quote successfully saved. Reference ID: {$newQuote->uuid} | Time:".now());
         info("Lead allocation process initiated for Reference ID: {$newQuote->uuid} | Time:".now());
         $this->leadAllocation($newQuote);
-        info("Lead allocation completed for Reference ID: {$newQuote->uuid} - | Time: " . now());
+        info("Lead allocation completed for Reference ID: {$newQuote->uuid} - | Time: ".now());
         dd('done');
     }
     public function getPaymentStatusIdByCode($paymentStatus)
@@ -211,7 +213,7 @@ class TravelRenewalService extends BaseService
 
     public function leadAllocation($lead)
     {
-        info('Processing Travel record for Quote Allocation with uuid: ' . $lead->uuid);
+        info('Processing Travel record for Quote Allocation with uuid: '.$lead->uuid);
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         // Only apply teamId if the payment status is AUTHORIZED
         $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
@@ -219,7 +221,7 @@ class TravelRenewalService extends BaseService
         $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid, $currentTeamId);
         $response = $allocationStrategy->executeSteps();
         if ($response) {
-            info(self::class . ' - Going to dispatch SendOCBTravelRenewalIntroEmailJob ................ Ref-ID:' . $lead->uuid);
+            info(self::class.' - Going to dispatch SendOCBTravelRenewalIntroEmailJob ................ Ref-ID:'.$lead->uuid);
             SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->delay(now()->addSeconds(30));
         }
     }

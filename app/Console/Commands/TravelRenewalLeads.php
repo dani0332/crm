@@ -26,8 +26,8 @@ class TravelRenewalLeads extends Command
      */
     public function handle()
     {
-        info("Starting process to retrieve travel renewal leads | Time: " . now());
+        info('Starting process to retrieve travel renewal leads | Time: '.now());
         app(TravelRenewalService::class)->getTravelRenewalLeads();
-        info("Completed process to retrieve travel renewal leads | Time: " . now());
+        info('Completed process to retrieve travel renewal leads | Time: '.now());
     }
 }
