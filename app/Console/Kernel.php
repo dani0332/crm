@@ -40,6 +40,7 @@ class Kernel extends ConsoleKernel
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         RetryTimeoutPolicyIssuanceCommand::class,
+        \App\Console\Commands\SyncCourierQuotesOnce::class,
     ];
 
     /**
@@ -139,6 +140,7 @@ class Kernel extends ConsoleKernel
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
 
+        $schedule->command('sync:courier-quotes-once')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
     }
 
     /**
