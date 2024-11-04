@@ -616,7 +616,8 @@ const onExport = url => {
             filters.payment_due_date ||
             filters.booking_date ||
             filters.insurer_tax_invoice_number ||
-            filters.insurer_commission_tax_invoice_number
+            filters.insurer_commission_tax_invoice_number ||
+            filters.mobile_no
               ? []
               : [isRequired]
           "
@@ -633,7 +634,8 @@ const onExport = url => {
             filters.payment_due_date ||
             filters.booking_date ||
             filters.insurer_tax_invoice_number ||
-            filters.insurer_commission_tax_invoice_number
+            filters.insurer_commission_tax_invoice_number ||
+            filters.mobile_no
               ? []
               : [isRequired]
           "
