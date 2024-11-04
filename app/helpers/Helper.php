@@ -1553,9 +1553,11 @@ if (! function_exists('getInsuranceProvider')) {
 if (! function_exists('getWatermarkProperty')) {
     function getWatermarkProperty($quote, $documentType)
     {
-        $ip = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->select('id')->first();
+        $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->get()->toArray();
 
-        if ($quote->insurance_provider_id !== $ip->id && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
+        $skipWatermark = in_array($quote->insurance_provider_id, $ips);
+
+        if (!$skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
             return true;
         }
 

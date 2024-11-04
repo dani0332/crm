@@ -456,10 +456,6 @@ class QuoteDocumentService extends BaseService
 
         $outputFile = $outputPath = storage_path('temp/' .$docName);
 
-        info('Output file: '.$outputFile);
-        info('Output path: '.$outputPath);
-        info('File: '. config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file);
-
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
         $fileContent = file_get_contents($azureFilePath);
 
