@@ -614,7 +614,9 @@ const onExport = url => {
             filters.renewal_batch ||
             filters.quote_batch_id ||
             filters.payment_due_date ||
-            filters.booking_date
+            filters.booking_date ||
+            filters.insurer_tax_invoice_number ||
+            filters.insurer_commission_tax_invoice_number
               ? []
               : [isRequired]
           "
@@ -629,7 +631,9 @@ const onExport = url => {
             filters.renewal_batch ||
             filters.quote_batch_id ||
             filters.payment_due_date ||
-            filters.booking_date
+            filters.booking_date ||
+            filters.insurer_tax_invoice_number ||
+            filters.insurer_commission_tax_invoice_number
               ? []
               : [isRequired]
           "
