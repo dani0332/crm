@@ -56,6 +56,7 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -340,13 +341,6 @@ const calculateCommission = () => {
         title: 'Total Price is zero for this Policy!',
         position: 'top',
       });
-      /*bpForm.commission_vat_applicable = '';
-            bpForm.commission_vat_not_applicable = '';
-            notification.error({
-              title:
-                'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
-              position: 'top',
-            });*/
     }
   } else {
     bpForm.commission_percentage = 0;
@@ -354,15 +348,76 @@ const calculateCommission = () => {
     bpForm.total_commission = 0;
   }
 };
+let isLifeLead = page.props.quoteType == quoteTypeCodeEnum.Life;
+let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
+
+const commissionVatNotApplicableTooltip = computed(() => {
+  let toolTip = productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE;
+  if (bpForm.commission_vat_applicable > 0) {
+    if (isLifeLead) {
+      toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
+    } else if (isBusinessLead) {
+      let insuranceBusinessType =
+        page.props.quote?.business_type_of_insurance_id;
+      let allowedBusinessTypes = [
+        quoteBusinessTypeIdEnum.MARINE_CARGO_INDIVIDUAL_SHIPMENT,
+        quoteBusinessTypeIdEnum.MARINE_HULL,
+        quoteBusinessTypeIdEnum.MARINE_CARGO_OPEN_COVER,
+        quoteBusinessTypeIdEnum.GROUP_LIFE,
+      ];
+      if (allowedBusinessTypes.includes(insuranceBusinessType)) {
+        toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
+      }
+    }
+  }
+
+  return toolTip;
+});
+const commissionVatApplicableTooltip = computed(() => {
+  let toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE;
+  if (bpForm.commission_vat_not_applicable > 0) {
+    if (isLifeLead) {
+      toolTip =
+        productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE_FILLED;
+    } else if (isBusinessLead) {
+      let insuranceBusinessType =
+        page.props.quote?.business_type_of_insurance_id;
+      let allowedBusinessTypes = [
+        quoteBusinessTypeIdEnum.MARINE_CARGO_INDIVIDUAL_SHIPMENT,
+        quoteBusinessTypeIdEnum.MARINE_HULL,
+        quoteBusinessTypeIdEnum.MARINE_CARGO_OPEN_COVER,
+        quoteBusinessTypeIdEnum.GROUP_LIFE,
+      ];
+      if (allowedBusinessTypes.includes(insuranceBusinessType)) {
+        toolTip =
+          productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE_FILLED;
+      }
+    }
+  }
+  return toolTip;
+});
 
 const disableCommissionVatNotApplicable = computed(() => {
-  // Disable Commission vat nor applicable for all LOBs
+  if (isLifeLead) {
+    return !bp.isEditing || bpForm.commission_vat_applicable > 0;
+  } else if (isBusinessLead) {
+    let insuranceBusinessType = page.props.quote?.business_type_of_insurance_id;
+    let allowedBusinessTypes = [
+      quoteBusinessTypeIdEnum.MARINE_CARGO_INDIVIDUAL_SHIPMENT,
+      quoteBusinessTypeIdEnum.MARINE_HULL,
+      quoteBusinessTypeIdEnum.MARINE_CARGO_OPEN_COVER,
+      quoteBusinessTypeIdEnum.GROUP_LIFE,
+    ];
+    if (allowedBusinessTypes.includes(insuranceBusinessType)) {
+      return !bp.isEditing || bpForm.commission_vat_applicable > 0;
+    }
+  }
   return true;
 });
 
 const disableCommissionVatApplicable = computed(() => {
-  // Enable Commission vat nor applicable for all LOBs
-  return !bp.isEditing;
+  // Enable Commission vat not applicable for all LOBs or when commission vat not applicable is  empty
+  return !bp.isEditing || bpForm.commission_vat_not_applicable > 0;
 });
 const showSendAndBookPolicyButtonBlock = computed(() => {
   const { quote_status_id } = props.quote;
@@ -800,7 +855,7 @@ onMounted(() => {
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
-                        productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE
+                        commissionVatNotApplicableTooltip
                       }}</span>
                     </template>
                   </x-tooltip>
@@ -842,7 +897,7 @@ onMounted(() => {
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
-                        productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE
+                        commissionVatApplicableTooltip
                       }}</span>
                     </template>
                   </x-tooltip>
@@ -941,7 +996,11 @@ onMounted(() => {
                               <td>{{ item.code }}</td>
                               <td>
                                 {{
-                                  formatAmount(item.commission_vat_applicable)
+                                  formatAmount(
+                                    item.commission_vat_applicable
+                                      ? item.commission_vat_applicable
+                                      : item.commission_vat_not_applicable,
+                                  )
                                 }}
                               </td>
                               <td>{{ formatAmount(item.commission_vat) }}</td>

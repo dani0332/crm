@@ -44,4 +44,7 @@ final class ProductionProcessTooltipEnum extends Enum
     const PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED = 'This payment is currently standalone and hasn\'t been associated with any insurer tax invoices. It\'s essential to review and link it to its relevant invoice(s) for accurate accounting.';
     const PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED = 'This payment is connected to one or more insurer tax invoices, but there\'s a balance remaining. The unallocated portion should be connected to relevant invoices or accounted for.';
     const PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED = 'This payment is thoroughly associated with insurer tax invoices, ensuring that there are no outstanding amounts or pending links.';
+
+    const COMMISSION_VAT_APPLICABLE_FILLED = 'This option is disabled because Commission (VAT applicable) has already been entered';
+    const COMMISSION_VAT_NOT_APPLICABLE_FILLED = 'This option is disabled because Commission (VAT not applicable) has already been entered.';
 }
