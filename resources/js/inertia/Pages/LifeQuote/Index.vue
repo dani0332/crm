@@ -10,6 +10,7 @@ const page = usePage();
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const cleanObj = obj => useCleanObj(obj);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -26,6 +27,11 @@ const rules = {
     return true;
   },
 };
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
+});
 
 const role = [rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.LifeManager];
 const roleLeadPool = [rolesEnum.LeadPool];
@@ -56,6 +62,8 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_date: null,
+  advisor_assigned_date: null,
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
 });
@@ -97,6 +105,11 @@ const tableHeader = reactive([
     is_active: true,
   },
   {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
+  {
     text: 'Renewal Batch',
     value: 'renewal_batch',
     is_active: true,
@@ -128,10 +141,13 @@ function filterQuotes(isValid) {
       delete filters[key];
     }
   }
+
+  serverOptions.value.page = 1;
   router.visit(route('life-quotes-list'), {
     method: 'get',
     data: {
       ...filters,
+      ...serverOptions.value,
     },
     preserveState: true,
     preserveScroll: true,
@@ -284,6 +300,23 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   setQueryFilters();
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
@@ -338,6 +371,14 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) filterQuotes(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -501,6 +542,21 @@ const validateDateRange = () => {
           multi-calendars
           multi-calendars-solo
         />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.LifeManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_number"
@@ -591,6 +647,7 @@ const validateDateRange = () => {
 
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"

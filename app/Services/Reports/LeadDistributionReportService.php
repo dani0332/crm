@@ -120,6 +120,9 @@ class LeadDistributionReportService extends BaseService
             $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
             $query->where('car_model.is_commercial', '=', $filters->isCommercial);
         }
+        if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
+            $query->where('car_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
+        }
 
         return $query;
     }

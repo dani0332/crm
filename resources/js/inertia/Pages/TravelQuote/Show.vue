@@ -3206,7 +3206,12 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
@@ -3388,6 +3393,7 @@ const onAddUpdate = () => {
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :quoteType="$page.props.modelType"
       :expanded="sectionExpanded"
     />
 

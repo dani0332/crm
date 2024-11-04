@@ -976,8 +976,6 @@ class RenewalsUploadService
             }
 
             $this->updateCustomer($quote, $customerData);
-            $quoteTypeVal = $quoteType->id == QuoteTypeId::Car ? 1 : null;
-            $batch = RenewalBatch::where([['name', $data['batch'], ['quote_type_id', $quoteTypeVal]]])->first() ?? null;
 
             $quoteData = $this->getNonEmptyValues([
                 'first_name' => $customerData['first_name'],
@@ -995,7 +993,7 @@ class RenewalsUploadService
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
-                'renewal_batch_id' => $batch->id,
+                'renewal_batch_id' => null,
                 'additional_notes' => $data['notes'],
                 'car_make_id' => $carMake->id ?? null,
                 'car_model_id' => $carModel->id ?? null,
@@ -1727,10 +1725,12 @@ class RenewalsUploadService
                                 $leadValidationErrors->push('Invalid Previous Advisor Email');
                             }
 
-                            if ($leadData->batch) {
-                                $batchRef = $leadData->batch == null ? false : RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
-                                ! $batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
-                            }
+                            // Validation batch for car removed as per the discussion with the team
+                            // click up: https://app.clickup.com/t/86eqmrdec
+                            // if ($leadData->batch) {
+                            //     $batchRef = $leadData->batch == null ? false : RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
+                            //     ! $batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+                            // }
                         }
                         break;
                     default:
