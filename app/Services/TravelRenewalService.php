@@ -170,7 +170,7 @@ class TravelRenewalService extends BaseService
         info("Travel quote successfully saved. Reference ID: {$newQuote->uuid} | Time:".now());
         info("Lead allocation process initiated for Reference ID: {$newQuote->uuid} | Time:".now());
         $this->leadAllocation($newQuote);
-        info("Lead allocation completed for Reference ID: {$newQuote->uuid} - | Time: " . now());
+        info("Lead allocation completed for Reference ID: {$newQuote->uuid} - | Time: ".now());
     }
     public function getPaymentStatusIdByCode($paymentStatus)
     {
@@ -220,7 +220,7 @@ class TravelRenewalService extends BaseService
         $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid, $currentTeamId);
         $response = $allocationStrategy->executeSteps();
         if ($response) {
-            info(self::class . ' - Going to dispatch SendOCBTravelRenewalIntroEmailJob ................ Ref-ID: ' . $lead->uuid);
+            info(self::class.' - Going to dispatch SendOCBTravelRenewalIntroEmailJob ................ Ref-ID: '.$lead->uuid);
             SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->delay(now()->addSeconds(30));
         }
     }
