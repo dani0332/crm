@@ -112,7 +112,7 @@ class PersonalQuoteRepository extends BaseRepository
 
             $isWaterMarkQualifyDoc = getWatermarkProperty($quote, $documentType);
 
-            $originalName = uniqid().'_'.sanitizeFileName($file->getClientOriginalName());
+            $originalName = sanitizeFileName($file->getClientOriginalName());
             $docName = preg_replace('/\s+/', '', $originalName);
             $fileMimeType = $file->getClientMimeType();
             //upload file to azure
@@ -165,20 +165,9 @@ class PersonalQuoteRepository extends BaseRepository
                     $quoteDocument = $quote->documents()->create($document);
                     info('Document uploaded - Ref: '.$quote->code);
                     if ($isWaterMarkQualifyDoc) {
-                        if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf')
-                        {
-                            $tempFilePath = storage_path('temp/' .$docName);
-                            shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$tempFilePath $file");
-                            info('PDF file moved to temp folder  '.$tempFilePath);
-                        } else {
-                            $tempFilePath = $file->move(storage_path('temp'), $docName)->getPathname();
-                            info('Other files moved to temp folder  '.$tempFilePath);
-                        }
-                        info(file_exists($tempFilePath) ? 'Befor Job File exists' : 'Before Job File not exists');
-
                         WatermarkDocumentsJob::dispatch(
                             $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
-                        )->delay(now()->addSeconds(5));
+                        );
                     }
                 });
 

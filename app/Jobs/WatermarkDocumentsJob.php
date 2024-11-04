@@ -45,22 +45,17 @@ class WatermarkDocumentsJob implements ShouldQueue
             return;
         }
 
-        // Get the file content
-        $fileContent = Storage::disk('temp')->get($this->tempFilePath);
-
-        info(file_exists(storage_path('temp/'. $this->tempFilePath)) ? 'After Job File exists' : 'After Job File not exists');
-
         // Perform watermarking based on file type
         $watermarkService = app()->make(QuoteDocumentService::class);
         $fileMimeType = $quoteDocument->doc_mime_type;
         $docName = str_replace('original_', '', $quoteDocument->doc_name);
 
         if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') {
-            $watermarkData = $watermarkService->watermarkPdf($this->tempFilePath, $docName, $this->data, $quoteDocument->quote, $documentType, $quoteDocument->original_name, $fileMimeType);
+            $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->data, $documentType);
         } elseif (in_array($fileMimeType, ['image/jpeg', 'image/png', 'image/jpg'])) {
-            $watermarkData = $watermarkService->watermarkImage($fileContent, $docName, $this->data, $quoteDocument->quote, $documentType, $quoteDocument->original_name, $fileMimeType);
+            $watermarkData = $watermarkService->watermarkImage($quoteDocument->doc_url, $docName, $this->data, $documentType);
         } elseif (in_array($fileMimeType, ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'])) {
-            $watermarkData = $watermarkService->watermarkWordDocs($fileContent, $docName, $this->data, $quoteDocument->quote, $documentType, $quoteDocument->original_name, $fileMimeType);
+            $watermarkData = $watermarkService->watermarkWordDocs($quoteDocument->doc_url, $docName, $this->data, $documentType);
         }
 
         // Update the document with watermark data
