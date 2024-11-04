@@ -12,22 +12,22 @@ class TravelRenewalLeads extends Command
      *
      * @var string
      */
-    protected $signature = 'travel-renewal-leads:cron';
+    protected $signature = 'leads:retrieve-travel-renewals';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '';
+    protected $description = 'Retrieves and processes travel renewal leads for upcoming policy renewals.';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        echo 'get renewals travel-renewal- leads';
+        info("Starting process to retrieve travel renewal leads | Time: " . now());
         app(TravelRenewalService::class)->getTravelRenewalLeads();
-        echo 'done';
+        info("Completed process to retrieve travel renewal leads | Time: " . now());
     }
 }

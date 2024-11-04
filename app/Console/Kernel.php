@@ -35,6 +35,7 @@ class Kernel extends ConsoleKernel
         Commands\ProcessCCPaymentsCommand::class,
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
+        Commands\TravelRenewalLeads::class,
         SageProcessesMarkFailedCommand::class,
     ];
 
@@ -131,6 +132,9 @@ class Kernel extends ConsoleKernel
         //     ->onFailure(function (Stringable $output) {
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
+        $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+
+        $schedule->command('leads:retrieve-travel-renewals')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping();
 
     }
 

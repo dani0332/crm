@@ -22,7 +22,7 @@ class TravelRenewalService extends BaseService
 {
     public function getTravelRenewalLeads()
     {
-
+        info("Travel Renewal Leads processing started with Start Date: " . Carbon::now()->subDays(320));
         TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
             QuoteStatusEnum::PolicyBooked,
