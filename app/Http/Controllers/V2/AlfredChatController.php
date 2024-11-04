@@ -66,7 +66,7 @@ class AlfredChatController extends Controller
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at)->startOfDay()->toIso8601String();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at)->endOfDay()->toIso8601String();
         }
-        
+
         $chat = AlfredChat::where('quote_id', $request->quoteId)
             ->where('quote_type', $request->quoteType)
             ->when($dateFrom && $dateTo, function ($query) use ($dateFrom, $dateTo) {
