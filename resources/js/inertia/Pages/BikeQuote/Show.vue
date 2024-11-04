@@ -5,7 +5,6 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import LazyBookingDetails from '../SendUpdateLog/Partials/BookingDetails.vue';
 
 defineProps({
   quote: Object,
@@ -797,6 +796,12 @@ const fetchUpdatedQuote = async () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">DATE OF BIRTH</dt>
               <dd>{{ quote?.dob }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+              <dd>
+                {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMIRATES ID NUMBER</dt>

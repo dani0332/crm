@@ -37,6 +37,7 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessDataCleanUpCommand::class,
         Commands\TravelRenewalLeads::class,
         SageProcessesMarkFailedCommand::class,
+        \App\Console\Commands\SyncCourierQuotesOnce::class,
     ];
 
     /**
@@ -136,6 +137,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('leads:retrieve-travel-renewals')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping();
 
+        $schedule->command('sync:courier-quotes-once')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
     }
 
     /**

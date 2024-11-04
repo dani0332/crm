@@ -91,5 +91,6 @@ console.log('teams', teams.value);
     :url="'\\auditable'"
     :type="'App\\Models\\Department'"
     :id="$page.props.department.id"
+    :quoteType="'Department'"
   />
 </template>
