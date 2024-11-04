@@ -11,7 +11,6 @@ let availableFilters = {
   page: 1,
 };
 
-console.log(props.customers.data);
 const filters = reactive(availableFilters);
 const loader = reactive({
   table: false,
