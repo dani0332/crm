@@ -119,19 +119,6 @@ class Kernel extends ConsoleKernel
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-
-        // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
-
-        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('10:50')
-        //     ->onOneServer()
-        //     ->withoutOverlapping()
-        //     ->onSuccess(function (Stringable $output) {
-        //         info('----------- Business Data Migrations Completed -----------'.$output);
-        //     })
-        //     ->onFailure(function (Stringable $output) {
-        //         info('----------- Business Data Migrations Failed -----------'.$output);
-        //     });
-
     }
 
     /**

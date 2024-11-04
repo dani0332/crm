@@ -72,8 +72,8 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
             'hqr.last_name',
             'hqr.payment_status_id',
-            'hqr.email',
-            'hqr.mobile_no',
+            // 'hqr.email',
+            // 'hqr.mobile_no',
             'hqr.preference',
             'hqr.details',
             'hqr.source',
@@ -151,6 +151,7 @@ class HealthQuoteService extends BaseService
             'c.insured_last_name',
             'c.emirates_id_number',
             'c.emirates_id_expiry_date',
+            'c.receive_marketing_updates',
             'qrem.entity_id',
             'ent.code as entity_code',
             'ent.trade_license_no',
@@ -214,7 +215,7 @@ class HealthQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('hqr.uuid', $id)->first();
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
