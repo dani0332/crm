@@ -868,7 +868,7 @@ class CentralService
             'send_update_log_id' => $sendUpdateLogId,
             'previous_status' => $previousStatus,
             'current_status' => $currentStatus,
-        ],[
+        ], [
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
