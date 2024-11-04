@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
 use App\Factories\PolicyIssuanceFactory;
-use App\Mail\PolicyIssuanceFailedNotification;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
