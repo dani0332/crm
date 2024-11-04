@@ -48,6 +48,8 @@ let availableFilters = {
   policy_expiry_date_end: '',
   last_modified_date: '',
   advisor_assigned_date: '',
+  insurer_tax_number: '',
+  insurer_commmission_invoice_number: '',
 };
 
 const filters = reactive(availableFilters);
@@ -631,6 +633,26 @@ const validateDateRange = () => {
           label="Advisor Assigned Date"
           range
           format="dd-MM-yyyy"
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_number"
+          type="text"
+          name="insurer_tax_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commmission_invoice_number"
+          type="text"
+          name="insurer_commmission_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

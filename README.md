@@ -88,7 +88,7 @@ This repo is integrated with [dhalsim](https://github.com/InsuranceMarket-ae/dha
 
 This guide outlines the steps to run the project locally on Docker. Docker provides a consistent environment for development and deployment, ensuring that the project runs smoothly across different systems.
 
-## Prerequisites
+### Prerequisites
 
 Before proceeding, ensure that you have the following prerequisites installed on your system:
 
