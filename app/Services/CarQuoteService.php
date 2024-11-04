@@ -33,7 +33,8 @@ use PDF;
 
 class CarQuoteService extends BaseService
 {
-    protected $query;
+    private $query;
+    private $exportQuery;
     protected $httpService;
     protected $childUserIds = [];
     protected $leadAllocationService;
@@ -58,8 +59,8 @@ class CarQuoteService extends BaseService
                 'cqr.first_name',
                 'cqr.last_name',
                 DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
-                'cqr.email',
-                'cqr.mobile_no',
+                // 'cqr.email',
+                // 'cqr.mobile_no',
                 DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
                 'cqr.car_value',
                 'cqr.additional_notes',
@@ -182,6 +183,7 @@ class CarQuoteService extends BaseService
                 'c.insured_last_name',
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
+                'c.receive_marketing_updates',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -480,7 +482,7 @@ class CarQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('cqr.uuid', $id)->first();
+        return $this->query->addSelect(['cqr.email', 'cqr.mobile_no'])->where('cqr.uuid', $id)->first();
     }
 
     public function updateChildRecord($id)
@@ -2091,6 +2093,7 @@ class CarQuoteService extends BaseService
             $this->exportQuery->where('cqr.advisor_id', Auth::user()->id);
         }
     }
+
     public function exportnonPUAAuthorized()
     {
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
@@ -2183,6 +2186,7 @@ class CarQuoteService extends BaseService
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
+
     public function exportPUAUpdates()
     {
         $startDate = Carbon::now()->subDay()->startOfDay();
