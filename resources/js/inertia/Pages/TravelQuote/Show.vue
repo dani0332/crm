@@ -3389,6 +3389,7 @@ const onAddUpdate = () => {
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :quoteType="$page.props.modelType"
       :expanded="sectionExpanded"
     />
 

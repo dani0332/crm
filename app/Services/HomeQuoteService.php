@@ -15,10 +15,9 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
-use Config;
-use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class HomeQuoteService extends BaseService
@@ -41,8 +40,8 @@ class HomeQuoteService extends BaseService
             'hqr.uuid',
             'hqr.first_name',
             'hqr.last_name',
-            'hqr.email',
-            'hqr.mobile_no',
+            // 'hqr.email',
+            // 'hqr.mobile_no',
             'hqr.address',
             'hqr.has_contents',
             'hqr.contents_aed',
@@ -147,7 +146,7 @@ class HomeQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('hqr.uuid', $id)->first();
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
     public function getSelectedLostReason($id)
@@ -170,8 +169,8 @@ class HomeQuoteService extends BaseService
 
     public function saveHomeQuote(Request $request)
     {
-        $sourceName = Config::get('constants.SOURCE_NAME');
-        $appUrl = Config::get('constants.APP_URL');
+        $sourceName = config('constants.SOURCE_NAME');
+        $appUrl = config('constants.APP_URL');
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,

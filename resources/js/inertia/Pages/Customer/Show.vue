@@ -89,6 +89,6 @@ const permissionsEnum = page.props.permissionsEnum;
         </dl>
       </div>
     </div>
-    <AuditLogs :id="page.props.customer.id" />
+    <AuditLogs :id="page.props.customer.id" :quoteType="'Customer'" />
   </div>
 </template>

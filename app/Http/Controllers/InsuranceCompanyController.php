@@ -108,7 +108,7 @@ class InsuranceCompanyController extends Controller
         $this->validate($request, [
             'name' => 'required|max:150',
         ]);
-        // return $request->is_active;
+
         $insurancecompany->name = $request->name;
         $insurancecompany->is_active = $request->is_active == 'on' ? 1 : 0;
         $insurancecompany->updated_by = Auth::user()->email;

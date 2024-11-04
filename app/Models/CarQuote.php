@@ -76,6 +76,12 @@ class CarQuote extends BaseModel
         });
     }
 
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->last_name;
