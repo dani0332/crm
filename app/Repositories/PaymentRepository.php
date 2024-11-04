@@ -407,10 +407,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * This method processes the decline of a payment by updating the payment record with the decline reason,
      * updating the status of the quote model, and logging the transaction decline.
      *
-     * @param \Illuminate\Http\Request $request The request object containing payment details.
+     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
      * @return string The result of the transaction processing.
      */
-    private function handlePaymentDecline($request){
+    private function handlePaymentDecline($request)
+    {
         $quoteModel = $this->getQuoteModel($request->modelType, $request->quote_id, $request->send_update_id);
         $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
         $firstPayment->update([
@@ -425,7 +426,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
         }
         $quoteModel->save();
-        info('Master payment code: ' . $request->payment_code .' Transaction declined');
+        info('Master payment code: '.$request->payment_code.' Transaction declined');
+
         return 'Transaction declined';
     }
 
@@ -433,17 +435,18 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * This method processes the approval of a payment by updating the collected amount for split payments,
      * logging the approval process, and calling the appropriate service to handle the approval.
      *
-     * @param \Illuminate\Http\Request $request The request object containing payment details.
+     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
      * @return mixed The result of the master payment approval process.
      */
-    private function handlePaymentApprove($request){
+    private function handlePaymentApprove($request)
+    {
         if ($request->is_capture) { //update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
                 $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
-                    info('Child payment code: '. $paymentSplit->code . ' with serial no: ' . $paymentSplit->sr_no .' approving process started');
+                    info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' approving process started');
 
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
@@ -451,7 +454,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
         }
         // Log the master payment approval process
-        info('Master payment code: ' . $request->payment_code .' processing master payment approval');
+        info('Master payment code: '.$request->payment_code.' processing master payment approval');
 
         // process master payment approve
         return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
@@ -657,25 +660,25 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             ->where('code', $payment->code)
             ->count();
 
-        info('Master payment code: ' . $payment->code .' Total paid payments: '.$totalPaidPayments.' out of '.$payment->total_payments);
+        info('Master payment code: '.$payment->code.' Total paid payments: '.$totalPaidPayments.' out of '.$payment->total_payments);
 
         if ($totalPaidPayments == $payment->total_payments && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)) {
-            info('Master payment code: ' . $payment->code .' All payments are captured. Updating Payment status to CAPTURED');
+            info('Master payment code: '.$payment->code.' All payments are captured. Updating Payment status to CAPTURED');
             $payment->update(['payment_status_id' => PaymentStatusEnum::CAPTURED]);
         } elseif ($totalPaidPayments > 0) {
-            info('Master payment code: ' . $payment->code .' Some payments are captured. Updating Payment status to PARTIAL_CAPTURED');
+            info('Master payment code: '.$payment->code.' Some payments are captured. Updating Payment status to PARTIAL_CAPTURED');
             $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]);
         } else {
             //verify credit approved status
             $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
                 PaymentStatusEnum::CREDIT_APPROVED,
             ])->where('code', $payment->code)->count();
-            info('Master payment code: ' . $payment->code .' Total credit approved payments: '.$totalCreditPayments);
+            info('Master payment code: '.$payment->code.' Total credit approved payments: '.$totalCreditPayments);
             if ($totalCreditPayments > 0) {
-                info('Master payment code: ' . $payment->code .' Updating payment status to CREDIT_APPROVED');
+                info('Master payment code: '.$payment->code.' Updating payment status to CREDIT_APPROVED');
                 $payment->update(['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]);
             } else {
-                info('Master payment code: ' . $payment->code .' Updating payment status to NEW');
+                info('Master payment code: '.$payment->code.' Updating payment status to NEW');
                 $payment->update(['payment_status_id' => PaymentStatusEnum::NEW]);
             }
         }
@@ -689,7 +692,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             } else {
                 $this->updatePaymentStatusNonUpFront($payment);
             }
-            info('Master payment code: ' . $payment->code .' Updating lead status');
+            info('Master payment code: '.$payment->code.' Updating lead status');
             app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
         }
     }
