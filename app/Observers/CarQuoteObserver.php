@@ -32,22 +32,19 @@ class CarQuoteObserver
         $changes = [];
 
         foreach ($dirty as $attribute => $value) {
-            if ($lead->isDirty($attribute)) {
-                $changes[$attribute] = [
-                    'old' => $lead->getOriginal($attribute),
-                    'new' => $value,
-                ];
-            }
+            $changes[$attribute] = [
+                'old' => $lead->getOriginal($attribute),
+                'new' => $value,
+            ];
         }
 
-        if ($lead->isDirty('advisor_id')) {
+        if (isset($dirty['advisor_id'])) {
             $lead->markLeadAllocationPassed();
             $oldAdvisorId = $changes['advisor_id']['old'];
             event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId));
         }
 
-        $dirty = $lead->getDirty();
-        if ($lead->isDirty('quote_status_id')) {
+        if (isset($dirty['quote_status_id'])) {
             if ($lead->quote_status_id === QuoteStatusEnum::TransactionApproved) {
                 MAWelcomeJob::dispatchIf(
                     isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $lead->customer,
@@ -83,7 +80,7 @@ class CarQuoteObserver
         }
 
         if (
-            $lead->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
