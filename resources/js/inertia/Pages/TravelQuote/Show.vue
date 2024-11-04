@@ -2007,6 +2007,10 @@ const onAddUpdate = () => {
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
                   <dd>
                     <DatePicker
@@ -3389,6 +3393,7 @@ const onAddUpdate = () => {
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :quoteType="$page.props.modelType"
       :expanded="sectionExpanded"
     />
 

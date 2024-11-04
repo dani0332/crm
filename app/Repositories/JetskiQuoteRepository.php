@@ -113,6 +113,7 @@ class JetskiQuoteRepository extends BaseRepository
      */
     public function fetchGetData($forExport = false)
     {
+
         $query = $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with([
             'quoteStatus',
             'currentlyInsuredWith',
@@ -123,11 +124,8 @@ class JetskiQuoteRepository extends BaseRepository
             $query->where('advisor_id', auth()->user()->id);
         })->filter(! $forExport)
             ->withFakeLeadCriteria();
-        // ->orderBy('created_at', 'desc');
 
-        if (request()->sortBy) {
-            $query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
-        }
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
 

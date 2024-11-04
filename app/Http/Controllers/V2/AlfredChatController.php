@@ -60,13 +60,19 @@ class AlfredChatController extends Controller
 
     public function getChatByDate(AlfredChatRequest $request)
     {
-        $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at)->startOfDay()->toIso8601String();
-        $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at)->endOfDay()->toIso8601String();
+        $dateFrom = $dateTo = null;
+
+        if ($request->created_at) {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at)->startOfDay()->toIso8601String();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at)->endOfDay()->toIso8601String();
+        }
 
         $chat = AlfredChat::where('quote_id', $request->quoteId)
             ->where('quote_type', $request->quoteType)
-            ->whereBetween('created_at', [$dateFrom, $dateTo])
-        // ->select('role', 'msg', 'created_at')
+            ->when($dateFrom && $dateTo, function ($query) use ($dateFrom, $dateTo) {
+                $query->whereBetween('created_at', [$dateFrom, $dateTo]);
+            })
+            // ->select('role', 'msg', 'created_at')
             ->get();
 
         if ($chat->isEmpty()) {

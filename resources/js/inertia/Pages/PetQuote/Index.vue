@@ -17,6 +17,9 @@ const props = defineProps({
 });
 
 const page = usePage();
+
+const hasRole = role => useHasRole(role);
+
 const notification = useNotifications('toast');
 const loader = reactive({
   table: false,
@@ -45,6 +48,8 @@ let availableFilters = {
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_date: '',
+  advisor_assigned_date: null,
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
 };
@@ -606,6 +611,21 @@ const validateDateRange = () => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.PetManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"

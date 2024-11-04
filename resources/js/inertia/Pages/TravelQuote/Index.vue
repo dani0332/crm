@@ -26,6 +26,8 @@ const rules = {
 const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
 const quoteSegments = page.props.quoteSegments?.filter(
@@ -61,6 +63,8 @@ const filters = reactive({
   policy_expiry_date_end: '',
   sic_advisor_requested: 'All',
   transaction_approved_dates: page.props.transaction_approved_dates || '',
+  last_modified_date: null,
+  advisor_assigned_date: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
 });
@@ -654,6 +658,21 @@ watch(
           :options="quoteSegments"
           class="w-full"
           :single="true"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.TravelManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
         />
         <ComboBox
           v-model="filters.sic_advisor_requested"
