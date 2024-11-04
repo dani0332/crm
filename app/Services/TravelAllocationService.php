@@ -113,10 +113,11 @@ class TravelAllocationService extends AllocationService
             if ($advisors->has($nextIndex)) {
                 $assignedAdvisor = $advisors[$nextIndex];
                 info(self::class." - Advisor assigned: {$assignedAdvisor->user_id}");
+
                 return $assignedAdvisor;
-            }
-            else {
+            } else {
                 info(self::class." - No eligible advisors found for this lead - {$nextIndex} - Ref-ID: {$quote->uuid} | Time: ".now());
+
                 return null;
             }
         }
