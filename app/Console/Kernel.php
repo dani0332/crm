@@ -3,8 +3,10 @@
 namespace App\Console;
 
 use App\Console\Commands\PolicyIssuanceCommand;
+use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\RetryTimeoutPolicyIssuanceCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
+use App\Console\Commands\SyncCourierQuotesOnce;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use Carbon\Carbon;
@@ -40,7 +42,8 @@ class Kernel extends ConsoleKernel
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         RetryTimeoutPolicyIssuanceCommand::class,
-        \App\Console\Commands\SyncCourierQuotesOnce::class,
+        PolicyIssuanceDataCleanUpCommand::class,
+        SyncCourierQuotesOnce::class,
     ];
 
     /**
@@ -127,6 +130,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('policy-issuance-automation:retry')->timezone('Asia/Dubai')->everyThreeHours()->onOneServer()->withoutOverlapping(4);
+        $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();
 
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 
