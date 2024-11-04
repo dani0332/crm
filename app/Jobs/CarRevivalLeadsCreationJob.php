@@ -179,6 +179,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $emailData->advisorName = $advisor[0];
                 $emailData->advisorEmail = $advisor[1];
                 $emailData->tag = 'dtt-initial-email';
+                $emailData->lob =  QuoteTypes::CAR->id();
 
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
 

@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Jobs\HealthRevivalFollowUpEmailJob;
 use App\Models\ApplicationStorage;
@@ -158,7 +159,7 @@ class DttHealthFollowUp extends Command
                 $emailData->uuid = $healthQuote->uuid;
                 $emailData->id = $healthQuote->id;
                 $emailData->fromEmail = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
-
+                $emailData->lob =  QuoteTypes::HEALTH->id();
                 // after two days
                 if ($today->eq($afterTwoDays)) {
                     $emailData->subject = 'Urgent: Renew your health insurance today! '.$healthQuote->code;
@@ -240,7 +241,7 @@ class DttHealthFollowUp extends Command
                 $emailData->customerName = $customerName;
                 $emailData->customerEmail = $lead->email;
                 $emailData->fromEmail = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
-
+                $emailData->lob =  QuoteTypes::HEALTH->id();
                 $response = Ken::request('/get-health-cheapest-plans', 'post', [
                     'quoteUID' => $lead->uuid,
                     'isPlanTypes' => true,

@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use League\CommonMark\Extension\SmartPunct\Quote;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -76,12 +77,12 @@ class SendEmailCustomerService extends BaseService
         }
 
         if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
-            info(self::class." - Going to stream email attachments for uuid: {$quoteId}");
+            info(self::class . " - Going to stream email attachments for uuid: {$quoteId}");
             $attachments[] = [
                 'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                 'name' => $emailData->pdfAttachment->name,
             ];
-            info(self::class." - Streamed email attachments for uuid: {$quoteId}");
+            info(self::class . " - Streamed email attachments for uuid: {$quoteId}");
         }
 
         return $attachments;
@@ -112,9 +113,9 @@ class SendEmailCustomerService extends BaseService
                     $sender = $body['sender'] ?? null;
                     $replyTo = $body['replyTo'] ?? null;
                     $to = $body['to'] ?? null;
-                    $sender != null && info('Mail Request sender details ----- '.json_encode($sender));
-                    $replyTo != null && info('Mail Request replyTo details ----- '.json_encode($replyTo));
-                    $to != null && info('Mail Request to details ----- '.json_encode($to));
+                    $sender != null && info('Mail Request sender details ----- ' . json_encode($sender));
+                    $replyTo != null && info('Mail Request replyTo details ----- ' . json_encode($replyTo));
+                    $to != null && info('Mail Request to details ----- ' . json_encode($to));
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 90000)
@@ -138,7 +139,7 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = "{$fnName}: Code/Message: {$responseCode}/{$ex->getMessage()}";
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $response = json_encode($ex->getCode() . ' ' . $ex->getMessage());
 
             Log::error($responseDetail);
 
@@ -159,7 +160,7 @@ class SendEmailCustomerService extends BaseService
         try {
             $appEnv = config('constants.APP_ENV');
 
-            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv . '-' . $tag;
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
@@ -205,9 +206,9 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
-            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'SIB Send Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail . ' QuoteCdbId: ' . $quoteCdbId . ' Class: ' . get_class();
             Log::error($responseDetail);
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $response = json_encode($ex->getCode() . ' ' . $ex->getMessage());
             $isEmailSent = 0;
         }
 
@@ -224,7 +225,7 @@ class SendEmailCustomerService extends BaseService
     public function sendOcbEmail($emailTemplateId, $emailData, $tag)
     {
         try {
-            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv . '-' . $tag;
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
@@ -252,7 +253,7 @@ class SendEmailCustomerService extends BaseService
 
             $body = [
                 'sender' => [
-                    'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
+                    'email' => strstr($emailData->advisorEmailAddress, '@', true) . '@renewals.insurancemarket.ae',
                     'name' => $emailData->advisorName,
                 ],
                 'to' => [[
@@ -272,7 +273,7 @@ class SendEmailCustomerService extends BaseService
                     'advisorEmailAddress' => isset($emailData->advisorEmailAddress) ? $emailData->advisorEmailAddress : null,
                     'notesForCustomer' => isset($emailData->notesForCustomer) ? nl2br(htmlentities(str_replace('<br />', '', $emailData->notesForCustomer))) : null,
                     'providerSupportNumber' => isset($emailData->providerSupportNumber) ? $emailData->providerSupportNumber : null,
-                    'previousPolicyExpiryDate' => isset($emailData->previousPolicyExpiryDate) ? date('l', strtotime($emailData->previousPolicyExpiryDate)).', '.date('d-M-Y', strtotime($emailData->previousPolicyExpiryDate)) : null,
+                    'previousPolicyExpiryDate' => isset($emailData->previousPolicyExpiryDate) ? date('l', strtotime($emailData->previousPolicyExpiryDate)) . ', ' . date('d-M-Y', strtotime($emailData->previousPolicyExpiryDate)) : null,
                     'currentlyInsuredWith' => isset($emailData->currentlyInsuredWith) ? $emailData->currentlyInsuredWith : null,
                     'carMake' => isset($emailData->carMake) ? $emailData->carMake : null,
                     'carModel' => isset($emailData->carModel) ? $emailData->carModel : null,
@@ -320,9 +321,9 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
-            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'SIB Send Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail . ' QuoteCdbId: ' . $quoteCdbId . ' Class: ' . get_class();
             info($responseDetail);
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $response = json_encode($ex->getCode() . ' ' . $ex->getMessage());
             $isEmailSent = 0;
         }
 
@@ -334,9 +335,9 @@ class SendEmailCustomerService extends BaseService
     public function sendRenewalsOcbEmail($emailTemplateId, $emailData, $tag)
     {
         try {
-            info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
+            info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: ' . $emailTemplateId . ', tag: ' . $tag);
 
-            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv . '-' . $tag;
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
@@ -359,7 +360,7 @@ class SendEmailCustomerService extends BaseService
 
             $body = [
                 'sender' => [
-                    'email' => strstr($emailData->advisorEmail, '@', true).'@renewals.insurancemarket.ae',
+                    'email' => strstr($emailData->advisorEmail, '@', true) . '@renewals.insurancemarket.ae',
                     'name' => $emailData->advisorName,
                 ],
                 'to' => [[
@@ -406,9 +407,9 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
-            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'SIB Send Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail . ' QuoteCdbId: ' . $quoteCdbId . ' Class: ' . get_class();
             info($responseDetail);
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $response = json_encode($ex->getCode() . ' ' . $ex->getMessage());
             $isEmailSent = 0;
         }
 
@@ -427,7 +428,7 @@ class SendEmailCustomerService extends BaseService
             $client = new \GuzzleHttp\Client;
             $response = $client->request(
                 'GET',
-                $this->url.'s?messageId='.$messageId.'&sort=desc&limit=1&offset=0',
+                $this->url . 's?messageId=' . $messageId . '&sort=desc&limit=1&offset=0',
                 [
                     'headers' => [
                         'Accept' => $this->accept,
@@ -443,7 +444,7 @@ class SendEmailCustomerService extends BaseService
             }
         } catch (Exception $ex) {
             $emailSubject = null;
-            $responseDetail = 'SIB Get Email Subject: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' messageId: '.$messageId.' Class: '.get_class();
+            $responseDetail = 'SIB Get Email Subject: Code/Message: ' . $ex->getCode() . '/' . $ex->getMessage() . ' messageId: ' . $messageId . ' Class: ' . get_class();
             Log::error($responseDetail);
         }
 
@@ -468,17 +469,17 @@ class SendEmailCustomerService extends BaseService
                 $emailTemplateId = (int) getAppStorageValueByKey(ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN);
             }
 
-            info('sendMyAlfredWelcomeEmail  , emailTemplateId: '.$emailTemplateId);
-            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+            info('sendMyAlfredWelcomeEmail  , emailTemplateId: ' . $emailTemplateId);
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv . '-' . $tag;
 
             $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
-                    'name' => $emailData->customerFirstName.' '.$emailData->customerLastName,
+                    'name' => $emailData->customerFirstName . ' ' . $emailData->customerLastName,
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
-                    'customerName' => $emailData->customerFirstName.' '.$emailData->customerLastName,
+                    'customerName' => $emailData->customerFirstName . ' ' . $emailData->customerLastName,
                     'customerEmail' => $emailData->customerEmail,
                     'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'email' => $emailData->customerEmail,
@@ -493,9 +494,9 @@ class SendEmailCustomerService extends BaseService
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
+            $responseDetail = 'Brevo Send Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail . ' Class: ' . get_class();
             Log::error($responseDetail);
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $response = json_encode($ex->getCode() . ' ' . $ex->getMessage());
             $isEmailSent = 0;
         }
 
@@ -514,9 +515,9 @@ class SendEmailCustomerService extends BaseService
         };
 
         try {
-            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv . '-' . $tag;
             info("sendLMSIntroEmail ---- Tag : {$tag} for ID : {$quoteId}");
-            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv . ' - ';
             if ($emailData->customerEmail === '0' || $emailData->customerEmail === 0) {
                 info("Customer email is missing or invalid for ID : {$quoteId}");
 
@@ -540,7 +541,7 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
+            $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true) . '@notify.insurancemarket.ae';
             $emailData->env = $subjectEnvTag;
 
             $bcc = array_merge($bccAdditional, $bcc);
@@ -575,13 +576,13 @@ class SendEmailCustomerService extends BaseService
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
             }
 
-            info(self::class." - Going to call final sendMail for uuid: {$quoteId}");
+            info(self::class . " - Going to call final sendMail for uuid: {$quoteId}");
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
-            info(self::class." - Email response code {$responseCode} received for uuid: {$quoteId}");
+            info(self::class . " - Email response code {$responseCode} received for uuid: {$quoteId}");
         } catch (Exception $ex) {
             $isEmailSent = false;
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$quoteId;
+            $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' ' . $quoteId;
             Log::error($responseDetail);
         }
 
@@ -592,9 +593,9 @@ class SendEmailCustomerService extends BaseService
 
     public function sendDttEmail($emailData)
     {
-        $tag = $this->appEnv == EnvEnum::PRODUCTION ? $emailData->tag : $this->appEnv.'-'.$emailData->tag;
+        $tag = $this->appEnv == EnvEnum::PRODUCTION ? $emailData->tag : $this->appEnv . '-' . $emailData->tag;
         $body = [
-            'subject' => $this->appEnv == EnvEnum::PRODUCTION ? $emailData->subject : $this->appEnv.' - '.$emailData->subject,
+            'subject' => $this->appEnv == EnvEnum::PRODUCTION ? $emailData->subject : $this->appEnv . ' - ' . $emailData->subject,
             'sender' => [
                 'email' => $emailData->fromEmail ?? 'no-reply@alert.insurancemarket.email',
                 'name' => 'InsuranceMarket.ae',
@@ -610,7 +611,15 @@ class SendEmailCustomerService extends BaseService
             'templateId' => $emailData->templateId,
         ];
 
-        $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO);
+
+        if ($emailData->lob == QuoteTypeId::Health) {
+
+            $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_HEALTH_REPLY_TO);
+        } else {
+            $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO);
+        }
+
+
         $body['replyTo'] = [
             'email' => $replyToEmail,
             'name' => 'InsuranceMarket.ae',
@@ -627,7 +636,7 @@ class SendEmailCustomerService extends BaseService
     {
         $healthQuote = HealthQuote::where('uuid', $quoteUuid)->first();
         if ($healthQuote && $healthQuote->isApplicationPending()) {
-            info('sendRMIntroEmail: Health quote is Application Pending, skipping RM Intro Email for uuid: '.$quoteUuid);
+            info('sendRMIntroEmail: Health quote is Application Pending, skipping RM Intro Email for uuid: ' . $quoteUuid);
 
             return;
         }
@@ -640,24 +649,23 @@ class SendEmailCustomerService extends BaseService
             $dataArr['isReassigned'] = true;
             $dataArr['previousAdvisorId'] = $previousAdvisorId;
         }
-        info('Params for intro email are : '.json_encode($dataArr));
+        info('Params for intro email are : ' . json_encode($dataArr));
         $response = Capi::request('/api/v1-send-health-quote-plan-email', 'post', $dataArr);
         if ($response && isset($response->status)) {
             $msg = '';
             if (isset($response->msg)) {
                 $msg = $response->msg;
             }
-            info('RM Intro Email Error for HEA-'.$quoteUuid.' - Response Code: '.$response->status.' - Message: '.$msg);
-
+            info('RM Intro Email Error for HEA-' . $quoteUuid . ' - Response Code: ' . $response->status . ' - Message: ' . $msg);
         } elseif ($response && isset($response->message)) {
 
-            info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
+            info('RM Intro Email Triggered to CAPI for HEA-' . $quoteUuid . ' - Message: ' . $response->message);
             $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
             // Send Automated Followup Email Job if Health Auto-Followups is enabled.
             if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                 $delayDays = isLeadSic($quoteUuid) ? 3 : 2;
                 OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addDays($delayDays));
-                info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
+                info('OCAHealthFollowupEmailJob dispatched for HEA-' . $quoteUuid . ' - Time: ' . now());
             }
         }
     }
@@ -674,7 +682,7 @@ class SendEmailCustomerService extends BaseService
             $appEnv = config('constants.APP_ENV');
 
             info("sendNonAdvisorIntroEmail  , emailTemplateId: {$emailTemplateId} with QuoteId: {$quoteId}");
-            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv . '-' . $tag;
             if ($emailData->customerEmail === '0' || $emailData->customerEmail === 0) {
                 info("Customer email is missing or invalid for QuoteId: {$quoteId}");
 
@@ -691,7 +699,7 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
-            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv . ' - ';
             $emailData->env = $subjectEnvTag;
 
             $body = [
@@ -721,7 +729,7 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $isEmailSent = 0;
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$quoteId;
+            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' ' . $quoteId;
             Log::error($responseDetail);
         }
 
@@ -741,7 +749,7 @@ class SendEmailCustomerService extends BaseService
         $emailTemplateId = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_TEMPLATE')->value('value');
         $advisorEmail = '';
         try {
-            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv . '-';
 
             $user->advisor = [
                 'name' => $user->name,
@@ -758,7 +766,7 @@ class SendEmailCustomerService extends BaseService
 
             foreach ($emailMapping as $role) {
                 if ($roles->contains($role)) {
-                    $HealthEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_'.$role)->value('value');
+                    $HealthEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_' . $role)->value('value');
                     $health = explode(',', $HealthEmail);
                     $advisorEmail = $health[1];
                     $advisorName = $health[0];
@@ -781,7 +789,7 @@ class SendEmailCustomerService extends BaseService
                 $i++;
             }
             $body = [
-                'sender' => ['name' => $tag.' '.' Urgent: '.$user->name.' IMCRM Inactivity Alert', 'email' => $advisorEmail],
+                'sender' => ['name' => $tag . ' ' . ' Urgent: ' . $user->name . ' IMCRM Inactivity Alert', 'email' => $advisorEmail],
                 'to' => [[
                     'email' => $advisorEmail,
                     'name' => $advisorName,
@@ -797,28 +805,28 @@ class SendEmailCustomerService extends BaseService
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'sendActivityAlertEmail: Code/Message: ' . $responseCode . '/' . $ex->getMessage();
         }
     }
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
-        info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called');
+        info('Quote Code: ' . $emailData->code . ' fn: sendBookPolicyDocumentsEmail called');
 
         $isEmailSent = 0;
         try {
-            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId);
+            info('Quote Code: ' . $emailData->code . ' sendBookPolicyDocumentsEmail , emailTemplateId: ' . $emailData->emailTemplateId);
 
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
             $documents = $emailData->quoteDocuments;
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
                     $path = $document->watermarked_doc_url ?? $document->doc_url;
-                    $documentURL = $path !== '' ? $websiteURL.$path : '';
+                    $documentURL = $path !== '' ? $websiteURL . $path : '';
                     $attachments[] = [
                         'url' => $this->encodeUrl($documentURL),
-                        'name' => 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
+                        'name' => 'InsuranceMarket.ae™ ' . $document->document_type_text . ' for Policy Number ' . $emailData->policy_number . '.' . pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }
@@ -826,7 +834,7 @@ class SendEmailCustomerService extends BaseService
                 $attachments = array_merge($attachments, $emailData->handBookDocuments);
             }
 
-            info('Quote Code: '.$emailData->code.' Attachments: '.json_encode($attachments));
+            info('Quote Code: ' . $emailData->code . ' Attachments: ' . json_encode($attachments));
 
             $headers = [
                 'Accept' => 'application/json',
@@ -873,7 +881,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalBcc->value,
                 ];
             }
-            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
+            info('Quote Code: ' . $emailData->code . ' sendBookPolicyDocumentsEmail ---- bcc ' . $additionalBcc->value);
 
             if ($emailData->advisorEmail) {
                 $bodyData['cc'] = [
@@ -886,7 +894,7 @@ class SendEmailCustomerService extends BaseService
 
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
             // Its a temp log and will be removed iin future
-            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- body '.$body);
+            info('Quote Code: ' . $emailData->code . ' sendBookPolicyDocumentsEmail ---- body ' . $body);
 
             $client = new \GuzzleHttp\Client;
             $clientResponse = $client->post(
@@ -898,17 +906,17 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
+            $response = json_decode($clientResponse->getStatusCode() . ' ' . $clientResponse->getBody()->getContents(), true);
             $responseCode = $clientResponse->getStatusCode();
             $isEmailSent = 1;
-            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientResponse->getBody()->getContents()));
-            info('Quote Code: '.$emailData->code.' Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
+            info('Quote Code: ' . $emailData->code . ' sendBookPolicyDocumentsEmail ---- response object : ' . json_encode($clientResponse->getBody()->getContents()));
+            info('Quote Code: ' . $emailData->code . ' Email sent successfully to ' . $emailData->customerEmail . ' with template ID ' . $emailData->emailTemplateId);
         } catch (Exception $ex) {
             $response = '';
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send error for: '.$emailData->code.' Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
+            $responseDetail = 'Brevo Send error for: ' . $emailData->code . ' Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail . ' Class: ' . get_class();
             Log::error($responseDetail);
-            info('Quote Code: '.$emailData->code.' Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
+            info('Quote Code: ' . $emailData->code . ' Error sending email to ' . $emailData->customerEmail . ' with template ID ' . $emailData->emailTemplateId . ': ' . $ex->getMessage());
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
@@ -921,16 +929,16 @@ class SendEmailCustomerService extends BaseService
         info('sendSICNotificationToAdvisor ---- Start');
 
         try {
-            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv . ' - ';
 
-            $subject = $subjectEnvTag.'CALL NOW! Customer with REF-ID '.$lead->code.' has requested for an advisor right now!';
+            $subject = $subjectEnvTag . 'CALL NOW! Customer with REF-ID ' . $lead->code . ' has requested for an advisor right now!';
 
             $htmlContent = '<html>
             <head></head>
             <body>
-              <p>Dear <b>'.$user->name.'</b>,</p>
+              <p>Dear <b>' . $user->name . '</b>,</p>
               <p>
-                  A customer with REF-ID <a href="'.$this->appUrl.'/quotes/car/'.$lead->uuid.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
+                  A customer with REF-ID <a href="' . $this->appUrl . '/quotes/car/' . $lead->uuid . '"><b>' . $lead->code . '</b></a> has requested for an advisor and we need you to contact them urgently.
               </p>
               <p>
                 Please call the customer urgently as they have requested for an advisor right now.
@@ -958,7 +966,7 @@ class SendEmailCustomerService extends BaseService
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'sendSICNotificationToAdvisor: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'sendSICNotificationToAdvisor: Code/Message: ' . $responseCode . '/' . $ex->getMessage();
             Log::error($responseDetail);
         }
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $user->email);
@@ -969,9 +977,9 @@ class SendEmailCustomerService extends BaseService
     public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
     {
         try {
-            info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
+            info('fn: sendUpdateEmail, email sending started. emailTemplateId: ' . $emailTemplateId . ', tag: ' . $tag);
 
-            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv . '-' . $tag;
 
             $headers = [
                 'Accept' => 'application/json',
@@ -979,24 +987,24 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
 
             $documents = $emailData->documents;
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
                     $path = $document['watermarked_doc_url'] ?? $document['doc_url'];
-                    $documentURL = $path !== '' ? $websiteURL.$path : '';
+                    $documentURL = $path !== '' ? $websiteURL . $path : '';
                     $attachments[] = [
                         'url' => $documentURL,
-                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.' - '.$emailData->carQuoteId.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
+                        'name' => 'InsuranceMarket.ae™ ' . $document['document_type_text'] . ' for Policy Number ' . $emailData->policyNumber . ' - ' . $emailData->carQuoteId . '.' . pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }
 
             $sendUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_UPDATE_EMAIL);
-            info('send update email fetched. email: '.$sendUpdateEmail);
-            info('template id is : '.$emailTemplateId);
+            info('send update email fetched. email: ' . $sendUpdateEmail);
+            info('template id is : ' . $emailTemplateId);
 
             $body = [
                 'sender' => [
@@ -1020,7 +1028,7 @@ class SendEmailCustomerService extends BaseService
             $ebServiceTeam = [];
             if ($checkIsHealthOrGroupMedical) {
                 $ebServiceEmail = getAppStorageValueByKey(ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL);
-                info('IM EB Service team email fetched. email: '.$ebServiceEmail);
+                info('IM EB Service team email fetched. email: ' . $ebServiceEmail);
                 $ebServiceTeam = [[
                     'email' => $ebServiceEmail,
                     'name' => 'IM EB Service',
@@ -1043,7 +1051,7 @@ class SendEmailCustomerService extends BaseService
             $body['cc'] = array_merge($ccAdvisor, $ebServiceTeam);
 
             $sendPolicyUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL);
-            info('Send Policy Update email fetched. email: '.$sendPolicyUpdateEmail);
+            info('Send Policy Update email fetched. email: ' . $sendPolicyUpdateEmail);
 
             $body['bcc'] = [[
                 'email' => $sendPolicyUpdateEmail,
@@ -1061,8 +1069,8 @@ class SendEmailCustomerService extends BaseService
 
             $message = json_decode($clientRequest->getBody()->getContents());
             if (isset($message->messageId)) {
-                info('fn: sendUpdateToCustomerEmail, email sending completed. messageId: '.$message->messageId);
-                $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+                info('fn: sendUpdateToCustomerEmail, email sending completed. messageId: ' . $message->messageId);
+                $response = json_decode(json_encode($clientRequest->getStatusCode() . ' ' . $clientRequest->getBody()->getContents()), true);
                 $responseCode = $clientRequest->getStatusCode();
 
                 if ($responseCode == 201) {
@@ -1074,9 +1082,9 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
-            $responseDetail = 'Send Update Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'Send Update Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail . ' QuoteCdbId: ' . $quoteCdbId . ' Class: ' . get_class();
             info($responseDetail);
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $response = json_encode($ex->getCode() . ' ' . $ex->getMessage());
             $isEmailSent = 0;
         }
 
@@ -1089,7 +1097,7 @@ class SendEmailCustomerService extends BaseService
     {
         $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
         try {
-            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv . '-';
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
@@ -1126,7 +1134,7 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $body = json_encode([
-                'sender' => ['name' => $tag.' '.'IMCRM Payment Notification Alert', 'email' => 'no-reply@alert.insurancemarket.email'],
+                'sender' => ['name' => $tag . ' ' . 'IMCRM Payment Notification Alert', 'email' => 'no-reply@alert.insurancemarket.email'],
                 'to' => $advisorData,
                 'replyTo' => $replyTo,
                 //  'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
@@ -1143,10 +1151,10 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
             $responseCode = $clientRequest->getStatusCode();
-            info('sendPaymentNotificationEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            info('sendPaymentNotificationEmail ---- response object : ' . json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'sendPaymentNotificationEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'sendPaymentNotificationEmail: Code/Message: ' . $responseCode . '/' . $ex->getMessage();
             Log::error($responseDetail);
         }
     }
@@ -1175,7 +1183,7 @@ class SendEmailCustomerService extends BaseService
             $response = Http::withHeaders($headers)
                 ->post($url, $body);
 
-            info('AlfredFollowUpEmail ---- Request Sent '.$customer->email);
+            info('AlfredFollowUpEmail ---- Request Sent ' . $customer->email);
 
             $responseCode = $response->status();
             if ($responseCode == 200 || $responseCode == 201) {
@@ -1187,8 +1195,8 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            info('AlfredFollowUpEmail ---- Received Code : '.$responseCode.' '.$customer->email);
-            info('AlfredFollowUpEmail ---- response object : '.json_encode($response->object()).'--'.$customer->email);
+            info('AlfredFollowUpEmail ---- Received Code : ' . $responseCode . ' ' . $customer->email);
+            info('AlfredFollowUpEmail ---- response object : ' . json_encode($response->object()) . '--' . $customer->email);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             Log::error($responseCode);
@@ -1228,9 +1236,9 @@ class SendEmailCustomerService extends BaseService
                 'replyTo' => ['name' => getAppStorageValueByKey(ApplicationStorageEnums::CAR_DISPLAY_NAME), 'email' => getAppStorageValueByKey(ApplicationStorageEnums::CAR_EMAIL_REPLY_TO)],
                 'templateId' => (int) $emailTemplateId,
                 'params' => [
-                    'requestAdvisorLink' => $quoteType?->ecomUrl().$lead->uuid.'/?assignAdvisor=true',
-                    strtolower($quoteType?->value).'QuoteLink' => $quoteType?->ecomUrl().$lead->uuid.'/?IA=true',
-                    strtolower($quoteType?->value).'QuoteId' => $lead->code,
+                    'requestAdvisorLink' => $quoteType?->ecomUrl() . $lead->uuid . '/?assignAdvisor=true',
+                    strtolower($quoteType?->value) . 'QuoteLink' => $quoteType?->ecomUrl() . $lead->uuid . '/?IA=true',
+                    strtolower($quoteType?->value) . 'QuoteId' => $lead->code,
                     'email' => $lead->email,
                     'clientFullName' => "{$lead->first_name} {$lead->last_name}",
                     ...$extraParams,
@@ -1247,11 +1255,11 @@ class SendEmailCustomerService extends BaseService
                 ->retry(3, 90000)
                 ->post(config('constants.SIB_URL'), $body);
 
-            info('SICFollowupEmail ---- Request Sent '.$lead->email);
+            info('SICFollowupEmail ---- Request Sent ' . $lead->email);
 
             $responseCode = $response->status();
             if ($responseCode == 200 || $responseCode == 201) {
-                info('SICFollowupEmail ---- | Response Code: '.$responseCode.' | Response Received  : '.json_encode($response->object()).'--'.$lead->email);
+                info('SICFollowupEmail ---- | Response Code: ' . $responseCode . ' | Response Received  : ' . json_encode($response->object()) . '--' . $lead->email);
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
@@ -1348,8 +1356,8 @@ class SendEmailCustomerService extends BaseService
         }
 
         return (object) [
-            'clientFullName' => $healthQuote->first_name.' '.$healthQuote->last_name,
-            'customerName' => $healthQuote->first_name.' '.$healthQuote->last_name,
+            'clientFullName' => $healthQuote->first_name . ' ' . $healthQuote->last_name,
+            'customerName' => $healthQuote->first_name . ' ' . $healthQuote->last_name,
             'customerEmail' => $healthQuote->email,
             'customerId' => $request->customer_id,
             'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
@@ -1367,8 +1375,8 @@ class SendEmailCustomerService extends BaseService
             'quoteId' => $healthQuote->code,
             'quoteTypeId' => QuoteTypeId::Health,
             'currentInsurer' => $currentInsurer ? $currentInsurer->text : null,
-            'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment
-            'requestAdvisorLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.'/?assignAdvisor=true'),
+            'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $healthQuote->uuid . ($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment
+            'requestAdvisorLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $healthQuote->uuid . '/?assignAdvisor=true'),
             'assignmentType' => $this->getAssignmentTypeText($healthQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
@@ -1413,7 +1421,7 @@ class SendEmailCustomerService extends BaseService
 
     private function getPlanBuyNowLink($plan, $uuid)
     {
-        $buyNowLink = url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$uuid.'/payment', ['providerCode' => $plan->providerCode, 'planId' => $plan->id, 'selectedCopayId' => $plan->selectedCopayId]);
+        $buyNowLink = url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $uuid . '/payment', ['providerCode' => $plan->providerCode, 'planId' => $plan->id, 'selectedCopayId' => $plan->selectedCopayId]);
 
         return $buyNowLink;
     }
@@ -1438,9 +1446,9 @@ class SendEmailCustomerService extends BaseService
     {
         $url = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL);
         $sicDedicatedEmailPayload = $this->buildDedicatedTravelEmailData($lead, $quoteType);
-        info("sendSICDedicatedEmail - Sending webhook request to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
+        info("sendSICDedicatedEmail - Sending webhook request to: {$url} with Ref-ID: {$lead->uuid} | Time:" . now());
         app(BirdService::class)->triggerWebHookRequest($url, (object) $sicDedicatedEmailPayload);
-        info("sendSICDedicatedEmail - Webhook request sent to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
+        info("sendSICDedicatedEmail - Webhook request sent to: {$url} with Ref-ID: {$lead->uuid} | Time:" . now());
     }
 
     private function encodeUrl($url)

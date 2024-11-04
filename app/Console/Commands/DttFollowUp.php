@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\TiersEnum;
 use App\Jobs\CarRevivalFollowUpEmailJob;
 use App\Models\ApplicationStorage;
@@ -124,6 +125,7 @@ class DttFollowUp extends Command
                 $emailData->advisorName = $advisor[0];
                 $emailData->advisorEmail = $advisor[1];
                 $emailData->id = $item->id;
+                $emailData->lob =  QuoteTypes::CAR->id();
                 // info($logPrefix.'emailData-'.json_encode($emailData));
 
                 // after two days

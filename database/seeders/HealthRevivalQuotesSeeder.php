@@ -139,5 +139,17 @@ class HealthRevivalQuotesSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+
+        $dttHealthReplyToProd = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_REPLY_TO)->get();
+        if (count($dttHealthReplyToProd) == 0) {
+            DB::table('application_storage')->insert([[
+                'key_name' => ApplicationStorageEnums::DTT_HEALTH_REPLY_TO,
+                'value' => 'health@insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]]);
+        }
     }
 }
