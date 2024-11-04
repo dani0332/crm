@@ -125,6 +125,7 @@ class TravelQuoteService extends BaseService
             'c.insured_last_name',
             'c.emirates_id_number',
             'c.emirates_id_expiry_date',
+            'c.receive_marketing_updates',
             'qrem.entity_id',
             'ent.code as entity_code',
             'ent.trade_license_no',
