@@ -274,7 +274,7 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-                $hayStack = Haystack::build()
+                Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
@@ -290,11 +290,7 @@ class RenewalsUploadService
                     })
                     ->allowFailures()
                     ->withDelay(2)
-                    ->create();
-                info('updating renewalsUploadLead with haystack_id: ' . $hayStack->id);
-                $renewalsUploadLead->haystack_id = $hayStack->id;
-                $renewalsUploadLead->save();
-                $hayStack->start();
+                    ->dispatch();
                 info($logPrefix.' all jobs are scheduled');
             } else {
                 info($logPrefix.' No jobs to create quotes');
@@ -324,7 +320,7 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-                $hayStack = Haystack::build()
+                Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
@@ -342,10 +338,6 @@ class RenewalsUploadService
                     ->allowFailures()
                     ->withDelay(2)
                     ->create();
-                info('Updating renewalsUploadLead with haystack_id: ' . $hayStack->id);
-                $renewalsUploadLead->haystack_id = $hayStack->id;
-                $renewalsUploadLead->save();
-                $hayStack->start();
                 info($logPrefix.' all jobs are scheduled');
             } else {
                 info($logPrefix.' no jobs to create quotes');
@@ -420,7 +412,7 @@ class RenewalsUploadService
             if ($jobs != null && count($jobs)) {
                 info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
-                $hayStack = Haystack::build()
+                Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalStatusProcess) {
@@ -437,10 +429,7 @@ class RenewalsUploadService
                     })
                     ->allowFailures()
                     ->withDelay(10)
-                    ->create();
-                $renewalStatusProcess->haystack_id = $hayStack->id;
-                $renewalStatusProcess->save();
-                $hayStack->start();
+                    ->dispatch();
                 info($logPrefix.' all jobs are scheduled');
             } else {
                 info($logPrefix.' no leads available for fetch plans, about to mark status as completed');
@@ -464,6 +453,7 @@ class RenewalsUploadService
     {
         info('FetchPlans FN: fetchRenewalPlans individual lead plan process started for policy_number: '.$renewalQuoteProcess->policy_number);
         $leadData = (object) $renewalQuoteProcess->data;
+
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
@@ -1834,7 +1824,7 @@ class RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
                 info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
-                $hayStack = Haystack::build()
+                Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
@@ -1860,10 +1850,6 @@ class RenewalsUploadService
                     ->allowFailures()
                     ->withDelay(1)
                     ->dispatch();
-                    info('Updating renewalsBatchEmail with haystack_id: ' . $hayStack->id);
-                    $renewalsBatchEmail->haystack_id = $hayStack->id;
-                    $renewalsBatchEmail->save();
-                    $hayStack->start();
                     info($logPrefix . ' all jobs are scheduled');
             } else {
                 info($logPrefix.' No leads to schedule OCB email');
@@ -1994,7 +1980,7 @@ class RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
                 info('the value of $jobs is : '.count($jobs));
-                $hayStack = Haystack::build()
+                Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
@@ -2010,11 +1996,7 @@ class RenewalsUploadService
                     })
                     ->allowFailures()
                     ->withDelay(2)
-                    ->create();
-                info('Updating travel renewalsUploadLead with haystack_id: ' . $hayStack->id);
-                $renewalsUploadLead->haystack_id = $hayStack->id;
-                $renewalsUploadLead->save();
-                $hayStack->start();
+                    ->dispatch();
                 info($logPrefix . ' all jobs are scheduled');
             } else {
                 info($logPrefix.' No jobs to create quotes');
