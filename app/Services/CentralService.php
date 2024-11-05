@@ -902,7 +902,8 @@ class CentralService
             in_array($businessTypeOfInsuranceId, [
                 quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoIndividual),
                 quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineHull),
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoOpenCover),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupLife),
             ])) ||
             $quoteType == quoteTypeCode::Life
         ) {
