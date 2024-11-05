@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Revival;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
@@ -174,7 +174,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $key = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
                 $emailData->fromEmail =  ApplicationStorage::where('key_name', $key)->value('value');
-                
+
                 $emailData->tag = 'health-revival-initial-email';
                 $emailData->templateType = 'revivalHealthInitial';
 

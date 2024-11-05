@@ -9,7 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
-use App\Jobs\HealthRevivalFollowUpEmailJob;
+use App\Jobs\Revival\HealthRevivalFollowUpEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\DttRevival;
 use App\Models\HealthQuote;
