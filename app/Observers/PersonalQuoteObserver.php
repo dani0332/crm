@@ -89,6 +89,14 @@ class PersonalQuoteObserver
             }
         }
 
+        if (
+            isset($dirty['quote_status_id']) &&
+            $personalQuote->quote_type_id === QuoteTypeId::Bike &&
+            $personalQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled
+        ) {
+            EmbeddedProductRepository::cancelEmbeddedProducts($personalQuote->id, quoteTypeCode::Bike);
+        }
+
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($personalQuote->quote_status_id)
             && in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
             PersonalQuote::withoutEvents(function () use ($personalQuote) {

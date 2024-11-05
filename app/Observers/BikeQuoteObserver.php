@@ -24,12 +24,5 @@ class BikeQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $bikeQuote->transaction_approved_at];
         }
-
-        if (
-            isset($dirty['quote_status_id']) &&
-            $bikeQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled
-        ) {
-            EmbeddedProductRepository::cancelEmbeddedProducts($bikeQuote->id, quoteTypeCode::Bike);
-        }
     }
 }
