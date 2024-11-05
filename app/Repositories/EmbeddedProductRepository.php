@@ -714,7 +714,7 @@ class EmbeddedProductRepository extends BaseRepository
                         'action_type' => 'REFUND',
                         'reason' => $data['reason'],
                         'amount' => $data['amount'],
-                        'created_by' => auth()->user()->email,
+                        'created_by' => auth()->user()->email ?? 'system',
                         'is_manager_approved' => 1,
                         'sr_no' => $sr,
                     ]);
@@ -818,7 +818,7 @@ class EmbeddedProductRepository extends BaseRepository
                     'action_type' => 'CAPTURE',
                     'amount' => $item->price_with_vat,
                     'is_fulfilled' => 0,
-                    'created_by' => auth()->user()->email,
+                    'created_by' => auth()->user()->email ?? 'system',
                     'reason' => 'Payment Captured',
                     'is_manager_approved' => 1,
                     'sr_no' => $sr,
