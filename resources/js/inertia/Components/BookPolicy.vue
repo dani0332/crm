@@ -425,6 +425,10 @@ const disableBookPolicyButton = computed(() => {
   );
 });
 
+let isPolicyBookingFailed =
+  props.quote.quote_status_id ==
+  page.props.quoteStatusEnum.POLICY_BOOKING_FAILED;
+
 const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   let disableEditBookingDetails = false;
 
@@ -434,9 +438,6 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
       policyIssuanceSteps?.isEditBookingDetailsDisabled;
   }
 
-  let isPolicyBookingFailed =
-    props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.POLICY_BOOKING_FAILED;
   let hasBookingFailedEditPermission = can(permissionsEnum.BOOKING_FAILED_EDIT);
 
   if (isPolicyBookingFailed && !hasBookingFailedEditPermission) {
@@ -449,9 +450,13 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
 const showBookingFailedAlert = () => {
   console.log(
     'showBookingFailedAlert',
-    disableIfPolicyFailedAndNoBookingFailedEditPermission.value,
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
+      isPolicyBookingFailed,
   );
-  if (disableIfPolicyFailedAndNoBookingFailedEditPermission.value) {
+  if (
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
+    isPolicyBookingFailed
+  ) {
     notification.error({
       title:
         'Policy Booking Failed! Please contact finance for correction of details',
