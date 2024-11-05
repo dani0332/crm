@@ -2927,6 +2927,13 @@ const onAddUpdate = () => {
               <template #item-name="item">
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
+              <template #item-actualPremium="item">
+                {{
+                  parseFloat(
+                    item.actualPremium,
+                  ).toFixed(2)
+                }}
+              </template>
               <template #item-premiumWithVat="item">
                 {{
                   parseFloat(
@@ -3011,6 +3018,13 @@ const onAddUpdate = () => {
                   <span class="text-primary-600 uppercase">{{
                     item.name
                   }}</span>
+                </template>
+                <template #item-actualPremium="item">
+                  {{
+                    parseFloat(
+                      item.actualPremium,
+                    ).toFixed(2)
+                  }}
                 </template>
                 <template #item-premiumWithVat="item">
                   {{
