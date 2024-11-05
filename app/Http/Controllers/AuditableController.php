@@ -83,6 +83,7 @@ class AuditableController extends Controller
 
         if ($auditableType == TravelQuote::class) {
             $query = TravelInsurerRequestResponses::with('insuranceProvider');
+            $query->whereNotIn('call_type', ['oAuth', 'login']);
         } else {
             $query = InsurerRequestResponse::with('insuranceProvider');
         }
