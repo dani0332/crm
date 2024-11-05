@@ -12,7 +12,7 @@ use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\Tier;
-use App\Revival\Jobs\CarRevivalFollowUpEmailJob;
+use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
 use App\Services\ApplicationStorageService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
