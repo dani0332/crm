@@ -389,11 +389,12 @@ const calculateCommission = () => {
           Number(total_vat_amount);
         bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
-        bookingDetailsForm.commission_percentage = convertToNegative(
-          (Number(bookingDetailsForm.commission_vat_applicable) /
-            total_price_with_vat_and_not_vat_applicable) *
-            100,
-        );
+        let commissionVatApplicable = Number(bookingDetailsForm.commission_vat_applicable);
+        let commissionVatNotApplicable = Number(bookingDetailsForm.commission_vat_not_applicable);
+        bookingDetailsForm.commission_percentage =
+            convertToNegative(
+                (Number(commissionVatApplicable + commissionVatNotApplicable) / total_price_with_vat_and_not_vat_applicable)
+                * 100);
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
