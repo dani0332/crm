@@ -172,6 +172,7 @@ const onUpdatePlan = () => {
                 color="primary"
                 class="mt-5"
                 size="sm"
+                :disabled="!planForm.isDirty"
                 @click.prevent="onUpdatePlan"
                 :loading="planForm.processing"
               >
