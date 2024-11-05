@@ -16,19 +16,14 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ApplicationStorageSeeder::class,
-            addInsuranceProvidersConfiguration::class,
-            HealthRevivalQuotesSeeder::class,
-            RevokeTempPaymentUpdatePermissionsSeeder::class,
-            ImcrmUsersRolesCleaner::class,
             RolePermissionSeeder::class,
+            HealthRevivalQuotesSeeder::class,
             AddSuperLeadStatusChangePermission::class,
             QuoteStatusSeeder::class,
-            AddReApprovePaymentPermission::class,
             SendUpdateAdditionalTaxInvoice::class,
             //DocumentTypeSeeder::class,
             InsurerTaxInvoicePermissionsSeeder::class,
             SendUpdatePermission::class,
-            GenericPermissionSeeder::class,
         ]);
     }
 }
