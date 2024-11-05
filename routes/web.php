@@ -21,7 +21,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
-use App\Http\Controllers\HealthRevivalQuoteController;
+use App\Http\Controllers\V2\HealthRevivalQuoteController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
