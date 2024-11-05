@@ -735,6 +735,11 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
+const onLoadAvailablePlansDataAndPlanDetails = async () => {
+    getPlanDetails(planDetails.value.id);
+    await onLoadAvailablePlansData();
+}
+
 const emailStatusesTable = reactive({
   isLoading: false,
   columns: [
@@ -3066,7 +3071,7 @@ const onAddUpdate = () => {
               :plan="planDetails"
               :quote="quote"
               :access="access"
-              @onLoadAvailablePlansData="onLoadAvailablePlansData"
+              @onLoadAvailablePlansData="onLoadAvailablePlansDataAndPlanDetails"
             />
           </x-modal>
         </template>

@@ -161,7 +161,7 @@ const onUpdatePlan = () => {
             </template>
             <x-divider class="mb-3 mt-3" />
             <div class="grid sm:grid-cols-4">
-              <dt class="font-bold">Total Price with VAT:</dt>
+              <dt class="font-bold">Total Premium with VAT:</dt>
               <dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
             </div>
             <div class="flex justify-end">
