@@ -997,7 +997,7 @@ onMounted(() => {
                               <td>
                                 {{
                                   formatAmount(
-                                    item.commission_vat_applicable
+                                    item.commission_vat_applicable != 0
                                       ? item.commission_vat_applicable
                                       : item.commission_vat_not_applicable,
                                   )
