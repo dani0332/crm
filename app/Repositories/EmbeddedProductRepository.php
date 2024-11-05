@@ -39,6 +39,7 @@ use PDF;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Enums\quoteTypeCode;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
+use App\Jobs\EP\CancelEPJob;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -666,9 +667,7 @@ class EmbeddedProductRepository extends BaseRepository
                     'uuid' => $item->quoteRequest->uuid,
                     'quote_id' => $item->quoteRequest->id,
                 ];
-                info("Auto cancel EP Payment: - {$item->quoteRequest->uuid} - " . json_encode($data) . ' ---- ');
-                $response = $this->fetchCancelPayment($data);
-                info("Auto cancel EP Payment: - {$item->quoteRequest->uuid} - " . json_encode($response) . ' ---- ');
+                CancelEPJob::dispatch($data);
             }
         }
     }
