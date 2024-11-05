@@ -645,7 +645,9 @@ class EmbeddedProductRepository extends BaseRepository
                 ['quote_request_id', $leadId],
                 ['is_selected', 1],
             ])
-            ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED])
+            ->whereHas('payments', function ($query) {
+                $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED);
+            })
             ->with(['payments', 'quoteRequest'])
             ->get();
 
@@ -659,13 +661,14 @@ class EmbeddedProductRepository extends BaseRepository
                 $data = [
                     'embedded_id' => $embedded_product_id,
                     'modelType' => ucfirst($modelType),
-                    'amount' => $payment->premium_authorized,
+                    'amount' => $payment->total_amount,
                     'reason' => 'policy cancelled',
                     'uuid' => $item->quoteRequest->uuid,
                     'quote_id' => $item->quoteRequest->id,
                 ];
+                info("Auto cancel EP Payment: - {$item->quoteRequest->uuid} - " . json_encode($data) . ' ---- ');
                 $response = $this->fetchCancelPayment($data);
-                info("Cancel EP Payment: - {$item->quoteRequest->uuid} - " . json_encode($data) . ' - ' .json_encode($response));
+                info("Auto cancel EP Payment: - {$item->quoteRequest->uuid} - " . json_encode($response) . ' ---- ');
             }
         }
     }
