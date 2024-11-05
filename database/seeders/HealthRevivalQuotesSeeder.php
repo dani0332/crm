@@ -150,5 +150,15 @@ class HealthRevivalQuotesSeeder extends Seeder
                 'updated_at' => now(),
             ]]);
         }
+        $dttHealthFollowupFromEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL)->get();
+        if (count($dttHealthFollowupFromEmail) == 0) {
+            DB::table('application_storage')->insert([[
+                'key_name' => ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL,
+                'value' => 'alfred@notify.insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]]);
+        }
     }
 }

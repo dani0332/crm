@@ -171,7 +171,10 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $emailData->templateId = (int) $emailTemplateId;
                 $emailData->lob = QuoteTypes::HEALTH->id();
 
-                $emailData->fromEmail = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
+
+                $key = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
+                $emailData->fromEmail =  ApplicationStorage::where('key_name', $key)->value('value');
+                
                 $emailData->tag = 'health-revival-initial-email';
                 $emailData->templateType = 'revivalHealthInitial';
 
