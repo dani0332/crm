@@ -47,7 +47,8 @@ class TravelAllocationService extends AllocationService
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quoteUUID}");
             if ($quote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-                $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC, true, $quote);
+                $previousAdvisorId = $this->getPreviousAdvisor($quote->customer_id);
+                $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC, $previousAdvisorId);
             } else {
                 $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC);
             }
@@ -61,9 +62,9 @@ class TravelAllocationService extends AllocationService
         return null;
     }
 
-    public function getAdvisorByStatus($status, $teamId = null, $isSIC = false, $enableRoundRobin = false, $quote = null)
+    public function getAdvisorByStatus($status, $teamId = null, $isSIC = false, $previousAdvisorId = null)
     {
-        $query = User::select('users.id as user_id')
+        return User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
@@ -88,42 +89,13 @@ class TravelAllocationService extends AllocationService
             ->when($isSIC, function ($q) {
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
-            ->orderBy('la.last_allocated', 'asc');
-        info(self::class." - getAdvisorByStatus query: {$query->toSql()}, bindings: ".json_encode($query->getBindings()));
-        // Get the list of eligible advisors
-        $advisors = $query->get();
+            ->when($previousAdvisorId, function ($q) use ($previousAdvisorId) {
+                $q->where('users.id', $previousAdvisorId);
+            })
+            ->when(!$previousAdvisorId, function ($q) {
+                $q->orderBy('la.last_allocated', 'asc');
+            })->orderBy('la.last_allocated', 'asc')->first();
 
-        // Implement round-robin logic if enabled and advisors are available
-        if ($enableRoundRobin && $advisors->isNotEmpty()) {
-            // Fetch the last assigned advisor for this specific lead
-            $lastAssignedAdvisor = $this->getPreviousAdvisor($quote);
-            info(self::class.' - Last assigned advisor ID: '.($lastAssignedAdvisor->id ?? 'null')." for quote UUID: {$quote->uuid}");
-
-            // Find the index of the last assigned advisor in the list of eligible advisors
-            $lastIndex = $lastAssignedAdvisor
-                ? $advisors->search(fn ($advisor) => $advisor->user_id == $lastAssignedAdvisor->id)
-                : false;
-            info(self::class.' - Last index of assigned advisor: '.($lastIndex !== false ? $lastIndex : 'none').' in eligible advisors list');
-
-            // Calculate the index of the next advisor to assign
-            $nextIndex = ($lastIndex === false || $lastIndex === $advisors->count() - 1) ? 0 : $lastIndex + 1;
-            info(self::class." - Next index to assign: {$nextIndex}");
-
-            // Assign and log the next advisor
-            if ($advisors->has($nextIndex)) {
-                $assignedAdvisor = $advisors[$nextIndex];
-                info(self::class." - Advisor assigned: {$assignedAdvisor->user_id}");
-
-                return $assignedAdvisor;
-            } else {
-                info(self::class." - No eligible advisors found for this lead - {$nextIndex} - Ref-ID: {$quote->uuid} | Time: ".now());
-
-                return null;
-            }
-        }
-
-        // If round-robin is not enabled or no advisors found, return the first eligible advisor
-        return $advisors->first();
     }
     public function assignLead(TravelQuote $lead, User $advisor, $assignmentType)
     {
@@ -157,16 +129,14 @@ class TravelAllocationService extends AllocationService
         return $oldAdvisorAssignedDate;
     }
 
-    private function getPreviousAdvisor($lead = null)
+    private function getPreviousAdvisor($customer_id = null)
     {
         // Retrieve the most recent TravelQuote for the given customer with an assigned advisor
         return TravelQuote::query()
-            // ->where('customer_id', $lead->customer_id)
+            ->where('customer_id', $customer_id)
             ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereNotNull('advisor_id')
-            ->with('advisor')
             ->latest('created_at')
-            ->first()
-            ?->advisor;
+            ->first();
     }
 }
