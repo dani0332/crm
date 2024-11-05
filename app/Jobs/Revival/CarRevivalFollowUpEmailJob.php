@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Revival\Jobs;
 
 use App\Models\DttRevival;
 use App\Services\SendEmailCustomerService;

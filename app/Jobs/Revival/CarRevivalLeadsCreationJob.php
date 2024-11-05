@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Revival;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
