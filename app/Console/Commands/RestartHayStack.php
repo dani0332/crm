@@ -20,24 +20,29 @@ class RestartHaystack extends Command
     {
         info('Haystack process is about to be restarted');
 
-        $haystack = Haystack::where('started_at', '!=', null)
-            ->where('created_at', '>=', Carbon::parse('20-oct-2024'))
-            ->orderBy('created_at', 'desc')
-            ->first();
-            
-        if ($haystack) {
-            if ($haystack->bales()->count() > 0 && $haystack->data->where('key','=','count')->first()->updated_at->diffInMinutes(Carbon::now()) > 20) {
+        $haystacks = Haystack::whereNotNull('started_at')
+            ->where('created_at', '>=', Carbon::parse('5-nov-2024'))
+            ->whereHas('bales')
+            ->whereHas('data', function ($query) {
+                $query->where('key', 'count');
+            })
+            ->get();
+
+        foreach ($haystacks as $haystack) {
+            $countExist = optional($haystack->data->where('key', 'count')->first())->updated_at;
+
+            if ($haystack->bales()->exists() && $countExist && $countExist->diffInMinutes(Carbon::now()) > 20) {
                 $haystack->restart();
                 $haystack->resume_at = Carbon::now();
                 $haystack->save();
-                info('HayStack:' . ' ---  process restarted successfully.');
-                $this->info('Haystack process restarted successfully.');
+
+                info('HayStack: --- process restarted successfully. Process ID:' . $haystack->id);
+                $this->info('Haystack process restarted successfully. Process ID: ' . $haystack->id);
                 return;
             } else {
-                info('HayStack:'.' ---  No bales found for the haystack process.');
+                info('HayStack: --- No bales found or currently haystack is been running. Process ID:' . $haystack->id);
             }
-        } else {
-            info('HayStack:'.' ---  process not found or already finished.');
         }
+        info('HayStack:' . ' ---  No Haystacks found to process.');
     }
 }
