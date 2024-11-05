@@ -1,4 +1,5 @@
 <script setup>
+import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
 
 defineProps({
@@ -186,9 +187,11 @@ onMounted(() => {
 
 const getS3TempUrl = async docURL => {
   try {
+    NProgress.start();
     const response = await axios.post('/quotes/documents/get-s3-temp-url', {
       docURL,
     });
+    NProgress.done();
     // Check if the request was successful and the response contains the URL
     if (response.status === 200 && response.data.url) {
       // Open the URL in a new tab
