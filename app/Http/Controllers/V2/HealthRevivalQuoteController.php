@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Http\Controllers\Controller;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\HealthTeamType;
@@ -12,6 +11,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Http\Controllers\Controller;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\HealthPlanType;
