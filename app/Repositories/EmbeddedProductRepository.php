@@ -661,7 +661,8 @@ class EmbeddedProductRepository extends BaseRepository
                     'modelType' => ucfirst($modelType),
                     'amount' => $payment->premium_authorized,
                     'reason' => 'policy cancelled',
-                    'uuid' => $item->quoteRequest->uuid
+                    'uuid' => $item->quoteRequest->uuid,
+                    'quote_id' => $item->quoteRequest->id,
                 ];
                 $response = $this->fetchCancelPayment($data);
                 info("Cancel EP Payment: - {$item->quoteRequest->uuid} - " . json_encode($data) . ' - ' .json_encode($response));
