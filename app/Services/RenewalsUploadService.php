@@ -490,7 +490,7 @@ class RenewalsUploadService
             }
 
             info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
-            $plansResponse = $this->getPlans($quote->uuid);
+            $plansResponse = $quote->car_make_id != null && $quote->car_model_id ? $this->getPlans($quote->uuid): true;
             info('FetchPlans FN: getPlans from ken api response completed.');
             if ($plansResponse === true) {
                 info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
@@ -1286,7 +1286,7 @@ class RenewalsUploadService
                 ]);
                 info('fn: renewalBatchEmailProcess renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
 
-                $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
+                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 $emailTemplateId = $this->getEmailTemplateId($carQuote, $quotePlansCount);
 
