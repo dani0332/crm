@@ -62,12 +62,12 @@ const showChat = item => {
     .post('/get-alfred-chat-by-date', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
-      created_at: item.id,
+      // created_at: item.id,
     })
     .then(response => {
       let { data } = { ...response.data };
       loader.value = false;
-      chatMessages.value.created_at = item.id;
+      // chatMessages.value.created_at = item.id;
       chatMessages.value.data = data;
       chatMessages.value.id = props.quoteType + '-' + props.quoteId;
       showChatLogs.value = true;
@@ -77,9 +77,9 @@ const showChat = item => {
     });
 };
 
-onMounted(async () => {
-  await getAllChat();
-});
+// onMounted(async () => {
+//   await getAllChat();
+// });
 </script>
 <template>
   <div>
@@ -93,27 +93,18 @@ onMounted(async () => {
           </div>
         </template>
         <template #body>
-          <x-divider class="mb-4 mt-1"></x-divider>
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="tableHeaders"
-            :items="tableData || []"
-            border-cell
-            hide-rows-per-page
-            hide-footer
-          >
-            <template #item-action="item">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click="showChat(item)"
-                :loading="loader"
-              >
-                View
-              </x-button>
-            </template>
-          </DataTable>
+          <x-divider class="my-4" />
+          <div class="text-center py-3">
+            <x-button
+              size="sm"
+              color="primary"
+              outlined
+              @click.prevent="showChat"
+              :loading="loader"
+            >
+              Load Chat Logs
+            </x-button>
+          </div>
         </template>
       </Collapsible>
 

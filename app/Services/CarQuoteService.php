@@ -183,6 +183,7 @@ class CarQuoteService extends BaseService
                 'c.insured_last_name',
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
+                'c.receive_marketing_updates',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -2201,12 +2202,9 @@ class CarQuoteService extends BaseService
             ->join('vehicle_type as vt', 'cqr.vehicle_type_id', '=', 'vt.id')
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
-            ->leftJoin('quote_tags as qt', 'cqr.uuid', '=', 'qt.quote_uuid')
             ->whereNotNull('cqp.pua_premium')
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
-            ->whereNotNull('cqr.paid_at')
-            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
-            ->whereColumn('cqp.plan_id', 'cqr.plan_id')
-            ->whereIn('qt.name', ['SPUA', 'APUA', 'NPUA']);
+            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
+            ->whereColumn('cqp.plan_id', 'cqr.plan_id');
     }
 }

@@ -34,6 +34,7 @@ class CustomerRequest extends FormRequest
             'nationality_id' => 'nullable|integer',
             'has_alfred_access' => 'nullable|boolean',
             'has_reward_access' => 'nullable|boolean',
+            'receive_marketing_updates' => 'nullable|boolean',
         ];
     }
 
