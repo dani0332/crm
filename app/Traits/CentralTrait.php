@@ -40,11 +40,11 @@ trait CentralTrait
      */
     public function createTempPdfFileForWatermark($pdfFile): File
     {
-        if (! file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0775, true);
+        if (! file_exists(storage_path('temp'))) {
+            mkdir(storage_path('temp'), 0775, true);
         }
         // Create a temporary file and write the PDF content to it
-        $tempDir = storage_path('app/temp');
+        $tempDir = storage_path('temp');
 
         // Generate a unique filename for the temp PDF file
         $tempFileName = 'pdf_'.uniqid().'.pdf';

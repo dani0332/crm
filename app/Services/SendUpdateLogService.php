@@ -666,10 +666,6 @@ class SendUpdateLogService
                     'invoice_description' => $insurerDetails['invoice_description'],
                     'broker_invoice_number' => $insurerDetails['broker_invoice_number'] ?? $sendUpdateLog->broker_invoice_number ?? null,
                 ];
-
-                if ($insurerDetails['is_non_self_billing_enabled']) {
-                    $sendUpdatePaymentDetails['insurer_commmission_invoice_number'] = $insurerDetails['broker_invoice_number'] ?? $sendUpdateLog->broker_invoice_number ?? null;
-                }
             } else {
                 $sendUpdatePaymentDetails = [
                     'policy_expiry_date' => $sendUpdateLog->expiry_date,
@@ -755,7 +751,7 @@ class SendUpdateLogService
                 'invoice_description' => $sendUpdateLog->invoice_description,
                 'insurer_invoice_date' => $sendUpdateLog->invoice_date,
                 'commission_vat' => abs($sendUpdateLog->vat_on_commission),
-                'total_price' => abs($sendUpdateLog->price_without_vat), // Need to verify this field
+                'total_price' => abs($sendUpdateLog->price_with_vat), // Reminder: AP CREDIT NOTE issue fix, Change price_with_vat instead of price_without_vat
                 'total_amount' => abs($sendUpdateLog->price_vat_applicable),
                 'commission' => abs($sendUpdateLog->total_commission),
                 'commission_vat_applicable' => abs($sendUpdateLog->commission_vat_applicable),
@@ -1221,7 +1217,7 @@ class SendUpdateLogService
 
     public function updatePaymentTotalPrice($payment, $totalPrice): void
     {
-        info('Payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
+        info('Master payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
         $payment->total_price = $totalPrice;
     }
 
@@ -1250,19 +1246,18 @@ class SendUpdateLogService
     {
         info('fn:generateBrokerInvoiceNumberForSU - SendUpdateLog - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
         $response = ['status' => false, 'message' => ''];
+        $generateBrokerInvoice = true;
 
         if (! empty($sendUpdateLog->broker_invoice_number) && ! $updateReversalBIN) {
             info('SendUpdateLog - Broker Invoice Number already exists - BIN: '.$sendUpdateLog->broker_invoice_number.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-            $response['message'] = 'Broker Invoice Number already exists';
-
-            return $response;
+            $generateBrokerInvoice = false;
+            $response['status'] = true;
         }
 
         if ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD && ! empty($sendUpdateLog->reversal_broker_invoice_number)) {
             info('SendUpdateLog - Reversal Broker Invoice Number already exists - BIN: '.$sendUpdateLog->notes.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-            $response['message'] = 'Reversal Broker Invoice Number already exists';
-
-            return $response;
+            $generateBrokerInvoice = false;
+            $response['status'] = true;
         }
 
         if (! $insuranceProviderId) {
@@ -1270,7 +1265,6 @@ class SendUpdateLogService
         }
 
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
-        $generateBrokerInvoice = true;
         if (! $insuranceProviderId) {
             $generateBrokerInvoice = false;
             $response['message'] = 'Insurance Provider not found for Send Update Log: '.$sendUpdateLog->uuid;

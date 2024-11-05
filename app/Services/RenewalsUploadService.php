@@ -25,6 +25,7 @@ use App\Enums\ThirdPartyTagEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Exports\RenewalQuotesExport;
+use App\Facades\Ken;
 use App\Imports\TravelUploadAndCreateImport;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
@@ -53,9 +54,11 @@ use App\Models\HealthPlan;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
+use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteStatus;
 use App\Models\QuoteTag;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
@@ -751,6 +754,8 @@ class RenewalsUploadService
 
             $customer = $this->getCustomer($customerData);
 
+            $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
+
             $quoteData = [
                 'customer_id' => $customer->id,
                 'first_name' => $customerData['first_name'],
@@ -762,6 +767,7 @@ class RenewalsUploadService
                 'source' => LeadSourceEnum::RENEWAL_UPLOAD,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
+                'renewal_batch_id' => $renewalBatchId ?? null,
                 'quote_status_id' => $transApprovedId,
                 'renewal_import_code' => $renewalUploadLead->renewal_import_code,
                 'previous_quote_policy_number' => $data['policy_number'],
@@ -861,6 +867,16 @@ class RenewalsUploadService
                 $quotType = strtolower($quoteType->code);
                 $class = $quotType.'QuoteRequestDetail';
                 $quote->{$class}()->create($detailData);
+            }
+            if ($quoteType->code == quoteTypeCode::Car) {
+
+                $quoteDetail = new QuoteAdditionalDetail;
+                $quoteDetail->quote_uuid = $quote->uuid;
+                $quoteDetail->quote_type_id = QuoteTypeId::Car;
+                $quoteDetail->flags = (object) ['whatsapp_consent' => true];
+                $quoteDetail->save();
+
+                info($logPrefix.'-insertion in mongo db for : UUID: '.$quote->uuid);
             }
 
             //update advisor assign date/time
@@ -989,6 +1005,7 @@ class RenewalsUploadService
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
+                'renewal_batch_id' => null,
                 'additional_notes' => $data['notes'],
                 'car_make_id' => $carMake->id ?? null,
                 'car_model_id' => $carModel->id ?? null,
@@ -1141,8 +1158,11 @@ class RenewalsUploadService
             'provider_id' => $provider->id,
         ])->with(['carAddons' => function ($q) {
             $q->whereIn('code', [
-                CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
-                CarPlanAddonsCode::CAR_HIRE, CarPlanAddonsCode::OMAN_COVER, CarPlanAddonsCode::BREAKDOWN_COVER,
+                CarPlanAddonsCode::DRIVER_COVER,
+                CarPlanAddonsCode::PASSENGER_COVER,
+                CarPlanAddonsCode::CAR_HIRE,
+                CarPlanAddonsCode::OMAN_COVER,
+                CarPlanAddonsCode::BREAKDOWN_COVER,
             ])->with('carAddonOptions');
         }])->first();
 
@@ -1255,6 +1275,17 @@ class RenewalsUploadService
             Log::info('Renewals OCB Email started for uuid: '.$carQuote->uuid);
 
             if ($carQuote->previous_quote_policy_number != null) {
+
+                $response = Ken::request('/send-motor-renewal-ocb-whatsapp', 'post', [
+                    'quoteUID' => $carQuote->uuid,
+                    'filters' => [[
+                        'field' => 'isRenewalSort',
+                        'value' => false,
+                    ]],
+                    'callSource' => 'imcrm',
+                ]);
+                info('fn: renewalBatchEmailProcess renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
+
                 $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 $emailTemplateId = $this->getEmailTemplateId($carQuote, $quotePlansCount);
@@ -1670,8 +1701,11 @@ class RenewalsUploadService
                                     $carPlan->load([
                                         'carAddons' => function ($q) {
                                             $q->whereIn('code', [
-                                                CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
-                                                CarPlanAddonsCode::CAR_HIRE, CarPlanAddonsCode::OMAN_COVER, CarPlanAddonsCode::BREAKDOWN_COVER,
+                                                CarPlanAddonsCode::DRIVER_COVER,
+                                                CarPlanAddonsCode::PASSENGER_COVER,
+                                                CarPlanAddonsCode::CAR_HIRE,
+                                                CarPlanAddonsCode::OMAN_COVER,
+                                                CarPlanAddonsCode::BREAKDOWN_COVER,
                                             ])->with('carAddonOptions');
                                         },
                                     ]);
@@ -1689,9 +1723,11 @@ class RenewalsUploadService
                                     foreach ($addons as $key => $addonCode) {
                                         info('planType:'.$leadData->plan_type.' insurer:'.$leadData->insurer.' addonCode:'.$addonCode);
 
-                                        if ($leadData->plan_type == CarPlanType::TPL &&
+                                        if (
+                                            $leadData->plan_type == CarPlanType::TPL &&
                                             $leadData->insurer == InsuranceProvidersEnum::TM &&
-                                            $addonCode == CarPlanAddonsCode::CAR_HIRE) {
+                                            $addonCode == CarPlanAddonsCode::CAR_HIRE
+                                        ) {
                                             continue;
                                         }
 
@@ -1719,9 +1755,18 @@ class RenewalsUploadService
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
                                 $leadValidationErrors->push('Invalid Previous Advisor Email');
                             }
+
+                            // Validation batch for car removed as per the discussion with the team
+                            // click up: https://app.clickup.com/t/86eqmrdec
+                            // if ($leadData->batch) {
+                            //     $batchRef = $leadData->batch == null ? false : RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
+                            //     ! $batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+                            // }
                         }
                         break;
                     default:
+                        $checkBatch = $this->validateBatch($leadData->batch, $leadData->end_date, $lead->type == RenewalsUploadType::CREATE_LEADS, $lead);
+                        ! $checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         break;
                 }
 
@@ -1743,6 +1788,54 @@ class RenewalsUploadService
         }, $column = 'id');
 
         return true;
+    }
+
+    /**
+     * This function use to validate batch for non motors only
+     *
+     * @param  string  $batchName
+     * @param  string  $endDate
+     * @return void
+     */
+    private function validateBatch($batchName, $endDate, $isCreated, &$lead)
+    {
+        info('Validating batch: '.$batchName.' with end date: '.$endDate);
+        // Extract year from endDate
+        $endDate = Carbon::createFromFormat('d/m/Y', $endDate);
+        $year = $endDate->format('Y');
+
+        // Extract week number from endDate and remove leading zero if present
+        $weekNumber = 'W'.$endDate->weekOfYear;
+
+        info('Validating year: '.$year.' with week number: '.$weekNumber);
+
+        // Validate batch name by checking if it contains the week number
+        // if ((strpos($batchName, $weekNumber) === false || $batchName != $weekNumber) && !$isCreated ) {
+        //     info('Batch name does not contain week number');
+
+        //     return false;
+        // }
+
+        // Check if the batch exists in the table with the extracted year and week number
+        $batch = RenewalBatch::where([
+            ['name', $weekNumber],
+            ['year', $year],
+            ['quote_type_id', null],
+        ])->first();
+
+        if ($batch) {
+            info('Batch found');
+            if ($isCreated) {
+                $data = $lead->data;
+                $data['renewal_batch_id'] = $batch->id;
+                $lead->data = $data;
+            }
+
+            return true;
+        }
+        info('Batch not found with year: '.$year.' and batch name: '.$batchName);
+
+        return false;
     }
 
     private function validateDate($date, $format = 'd/m/Y')

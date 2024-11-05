@@ -171,8 +171,8 @@ class CarRevivalQuoteController extends Controller
      */
     public function update($uuid, CarRevivalQuoteRequest $carRevivalQuoteRequest)
     {
-        CarRevivalQuoteRepository::where(['uuid' => $uuid])->update($carRevivalQuoteRequest->validated());
+        CarRevivalQuoteRepository::update($uuid, $carRevivalQuoteRequest->validated());
 
-        return back()->with('message', 'Quote updated successfully');
+        return redirect('quotes/revival/'.$uuid)->with('success', 'Quote updated successfully');
     }
 }
