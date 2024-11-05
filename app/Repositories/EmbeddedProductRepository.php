@@ -646,12 +646,11 @@ class EmbeddedProductRepository extends BaseRepository
                 ['is_selected', 1],
             ])
             ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED])
-            ->with(['payments'])
+            ->with(['payments', 'quoteRequest'])
             ->get();
 
         if ($epTransaction->isNotEmpty()) {
             
-            $quoteObject = $this->getQuoteObject($modelType, $leadId);
             foreach ($epTransaction as $item) {
                 $product_id = $item->product_id;
                 $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
@@ -662,18 +661,10 @@ class EmbeddedProductRepository extends BaseRepository
                     'modelType' => ucfirst($modelType),
                     'amount' => $payment->premium_authorized,
                     'reason' => 'policy cancelled',
-                    'uuid' => $quoteObject->uuid
+                    'uuid' => $item->quoteRequest->uuid
                 ];
                 $response = $this->fetchCancelPayment($data);
-                info("Cancel EP Payment: - {$quoteObject->uuid} - " . json_encode($data) . ' - ' .json_encode($response));
-
-                if (
-                    $item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                    && ucwords($modelType) == quoteTypeCode::Car
-                    && $response['code'] == 200
-                ) {
-                    CancelCourierQuoteOnMACRM::dispatch($quoteObject, $quoteTypeId);
-                }
+                info("Cancel EP Payment: - {$item->quoteRequest->uuid} - " . json_encode($data) . ' - ' .json_encode($response));
             }
         }
     }
@@ -683,7 +674,7 @@ class EmbeddedProductRepository extends BaseRepository
         $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
         $type = QuoteType::where('code', $data['modelType'])->first();
 
-        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $data['quote_id'])
+        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest'])->where('quote_request_id', $data['quote_id'])
             ->where('quote_type_id', $type->id)
             ->where('is_selected', true)
             ->whereIn('product_id', $embeddedProductOptionsIds)
@@ -734,6 +725,13 @@ class EmbeddedProductRepository extends BaseRepository
 
                     ];
                     $processResponse = $this->processCancelPayment($data);
+
+                    if (
+                        $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+                        && $type->code == quoteTypeCode::Car
+                    ) {
+                        CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
+                    }
 
                     return [
                         'data' => $processResponse,
