@@ -38,7 +38,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'insurer_commission_invoice_number' => 'required|string|max:50',
             'discount' => 'nullable|numeric',
             'commission_percentage' => 'required|numeric',
-            'commission_vat_not_applicable' => 'nullable|numeric',
+            'commission_vat_not_applicable' => 'required|numeric',
             'vat_on_commission' => 'required|numeric',
             'total_commission' => 'required|numeric',
             'total_vat_amount' => 'sometimes|numeric',
@@ -61,6 +61,14 @@ class SaveBookingDetailsRequest extends FormRequest
 
         $validatedCatForPrices = in_array($this->sendUpdate->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
             SendUpdateLogStatusEnum::CIR]);
+
+        if (request()->input('commission_vat_not_applicable') > 0) {
+            $rules['commission_vat_applicable'] = 'nullable|numeric';
+        }
+
+        if (request()->input('commission_vat_applicable') > 0) {
+            $rules['commission_vat_not_applicable'] = 'nullable|numeric';
+        }
 
         if ($validatedCatForPrices) {
             if (! in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Health])) {
