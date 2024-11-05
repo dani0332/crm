@@ -125,7 +125,7 @@ class DttFollowUp extends Command
                 $emailData->advisorName = $advisor[0];
                 $emailData->advisorEmail = $advisor[1];
                 $emailData->id = $item->id;
-                $emailData->lob =  QuoteTypes::CAR->id();
+                $emailData->lob = QuoteTypes::CAR->id();
                 // info($logPrefix.'emailData-'.json_encode($emailData));
 
                 // after two days

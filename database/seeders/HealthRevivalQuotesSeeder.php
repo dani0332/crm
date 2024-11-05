@@ -140,7 +140,6 @@ class HealthRevivalQuotesSeeder extends Seeder
             ]);
         }
 
-
         $dttHealthReplyToProd = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_REPLY_TO)->get();
         if (count($dttHealthReplyToProd) == 0) {
             DB::table('application_storage')->insert([[
