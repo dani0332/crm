@@ -47,18 +47,23 @@ class PaymentSplitsObserver
             }
         }
 
+        $splitAmount = $paymentSplits->payment_amount;
+        if ($paymentSplits->sr_no === 1) {
+            $splitAmount = $paymentSplits->payment_amount + $masterPayment->discount_value;
+        }
+
         [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat(
             $masterPayment->frequency,
             $masterPayment->total_price,
             $paymentSplits->sr_no,
-            $paymentSplits->payment_amount,
+            $splitAmount,
             $modelType,
             $quoteId,
             $totalSplitPayments,
             $masterPayment->send_update_log_id
         );
 
-        info('SplitPayment:Observer VAT updated for '.$masterPayment->code.' - Split No: '.$paymentSplits->sr_no);
+        info('Child payment code: '.$paymentSplits->code.' with serial no: '.$paymentSplits->sr_no.' SplitPayment:Observer VAT updated called');
         PaymentSplits::withoutEvents(function () use ($paymentSplits, $priceWithoutVat, $vat) {
             $paymentSplits->update([
                 'price_vat_applicable' => $priceWithoutVat,

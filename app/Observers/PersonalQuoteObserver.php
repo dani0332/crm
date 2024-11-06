@@ -4,10 +4,12 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\PersonalQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -85,6 +87,15 @@ class PersonalQuoteObserver
             PersonalQuote::withoutEvents(function () use ($personalQuote) {
                 $personalQuote->update(['stale_at' => null]);
             });
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $personalQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($personalQuote, $payment, QuoteTypes::PERSONAL->value);
+
         }
     }
 }

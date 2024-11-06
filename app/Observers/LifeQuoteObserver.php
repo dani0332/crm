@@ -4,9 +4,11 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\LifeQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class LifeQuoteObserver
@@ -27,7 +29,7 @@ class LifeQuoteObserver
     {
         $dirty = $lifeQuote->getDirty();
         if (
-            $lifeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $lifeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             LifeQuote::withoutEvents(function () use ($lifeQuote) {
@@ -39,11 +41,11 @@ class LifeQuoteObserver
         $this->syncQuote($lifeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($lifeQuote->uuid);
+            $this->updatePersonalQuote($lifeQuote->uuid, QuoteTypeId::Life, $dirty);
         }
 
         if (
-            $lifeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($lifeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Life, 'quoteUID' => $lifeQuote->uuid]);
@@ -52,6 +54,15 @@ class LifeQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $lifeQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
+
         }
     }
 }
