@@ -109,7 +109,7 @@ class CarQuoteObserver
             if (
                 $courierEmbeddedTransaction->isNotEmpty()
             ) {
-                info('Triggering Bird Courier Flow for policy reminder for lead : ' . $lead->uuid);
+                info('Triggering Bird Courier Flow for policy reminder for lead : '.$lead->uuid);
                 $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
                 $payload = [
                     'quoteUID' => $lead->uuid,
