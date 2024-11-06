@@ -7,10 +7,13 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SICFollowupEmailJob;
+use App\Models\ApplicationStorage;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\BaseService;
+use App\Services\BirdService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -289,5 +292,23 @@ class TravelEmailService extends BaseService
     public function sendSICNotificationToAdvisor(TravelQuote $lead, User $user)
     {
         return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
+    }
+
+    public function sendTravelAllianceFailedAllocationEmail($lead)
+    {
+        $advisor = User::where('id', $lead->advisor_id)->first();
+
+        $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION);
+        $travelEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL)->first();
+        if ($travelEvent) {
+            $response = app(BirdService::class)->triggerWebHookRequest($travelEvent->value, $emailData);
+            info("sendTravelAllianceFailedAllocationEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+
+            return $response->status_code;
+        } else {
+            info("sendTravelAllianceFailedAllocationEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+        }
+
+        return null;
     }
 }

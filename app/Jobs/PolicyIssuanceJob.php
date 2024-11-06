@@ -3,7 +3,11 @@
 namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\TeamNameEnum;
+use App\Factories\AllocationFactory;
 use App\Factories\PolicyIssuanceFactory;
+use App\Jobs\OCB\SendTravelAllianceFailedAllocationEmailJob;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -62,6 +66,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 if (! $response['status']) {
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
+                    $this->allocateFailedLead($this->process->model->uuid);
                 } else {
                     $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
@@ -85,8 +90,22 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         } else {
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
+            $this->allocateFailedLead($this->process->model->uuid);
         }
         Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+    }
+
+    public function allocateFailedLead($uuid)
+    {
+        info(self::class.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
+        $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        
+        $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $uuid, $unassistedTeamId);
+        $response = $allocationStrategy->executeSteps();
+        if ($response) {
+            info(self::class.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
+            SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+        }
     }
 
     public function middleware()
