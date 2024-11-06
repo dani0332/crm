@@ -28,7 +28,6 @@ const modals = reactive({
   apiLog: false,
 });
 
-
 const insuranceProviders = computed(() => {
   return page.props.insuranceProviders.map(item => ({
     value: item.value ? item.value : item.id,
@@ -145,7 +144,9 @@ const onLoadAuditLogData = async () => {
                 :color="status === 'failed' ? 'red' : 'success'"
                 class="mt-0.5 text-[10px]"
               >
-                <p>{{ status.toUpperCase() }}</p>
+                <p>
+                  {{ status === 'success' ? 'PASSED' : status.toUpperCase() }}
+                </p>
               </x-tag>
             </template>
             <template #item-created_at="{ created_at }">
