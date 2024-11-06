@@ -17,14 +17,6 @@ class RateCoveragesProcess extends Model
     ];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    //    public function renewalUploadLead()
-    //    {
-    //        return $this->belongsTo(RenewalsUploadLeads::class, 'renewals_upload_lead_id');
-    //    }
-
-    /**
      * json encode data.
      * todo: fix later as its not preserving order
      *

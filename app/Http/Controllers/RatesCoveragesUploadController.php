@@ -7,15 +7,15 @@ use App\Services\RatesCoveragesUploadService;
 
 class RatesCoveragesUploadController extends Controller
 {
-    private $ratesCoveragesUploadFile;
+    private $ratesCoveragesUploadService;
 
-    public function __construct(RatesCoveragesUploadService $ratesCoveragesUploadFile)
+    public function __construct(RatesCoveragesUploadService $ratesCoveragesUploadService)
     {
-        $this->ratesCoveragesUploadFile = $ratesCoveragesUploadFile;
+        $this->ratesCoveragesUploadService = $ratesCoveragesUploadService;
     }
     public function uploadCoverages()
     {
-        $coverages = $this->ratesCoveragesUploadFile->getUploadCoverages();
+        $coverages = $this->ratesCoveragesUploadService->getUploadCoverages();
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
@@ -28,15 +28,14 @@ class RatesCoveragesUploadController extends Controller
 
     public function coveragesUploadCreate(UploadRateCoverageRequest $request)
     {
-
-        $result = $this->ratesCoveragesUploadFile->coveragesUploadCreate($request->validated());
+        $this->ratesCoveragesUploadService->coveragesUploadCreate($request->validated());
 
         return response()->json(['message' => 'Coverages upload is being processed.']);
     }
 
     public function uploadRates()
     {
-        $rates = $this->ratesCoveragesUploadFile->getUploadRates();
+        $rates = $this->ratesCoveragesUploadService->getUploadRates();
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
@@ -49,7 +48,7 @@ class RatesCoveragesUploadController extends Controller
 
     public function rateUploadCreate(UploadRateCoverageRequest $request)
     {
-        $result = $this->ratesCoveragesUploadFile->rateUploadCreate($request->validated());
+        $this->ratesCoveragesUploadService->rateUploadCreate($request->validated());
 
         return response()->json(['message' => 'Rates upload is being processed.']);
     }

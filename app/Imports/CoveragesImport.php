@@ -78,12 +78,6 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
     public function getColumns()
     {
         return [
-            'code' => ['index' => 0, 'title' => 'code', 'rules' => 'required'],
-            'text' => ['index' => 1, 'title' => 'text', 'rules' => 'required'],
-            'description' => ['index' => 2, 'title' => 'description', 'rules' => 'required'],
-            'value' => ['index' => 3, 'title' => 'value', 'rules' => 'required'],
-            'type' => ['index' => 4, 'title' => 'type', 'rules' => 'required'],
-            'is_northern' => ['index' => 5, 'title' => 'is_northern', 'rules' => 'required'],
             'plan_code' => ['index' => 6, 'title' => 'plan_code', 'rules' => 'required'],
         ];
     }

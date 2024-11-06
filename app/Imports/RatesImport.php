@@ -70,11 +70,6 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
     public function getColumns()
     {
         return [
-            'is_northern' => ['index' => 0, 'title' => 'is_northern', 'rules' => 'required'],
-            'min_age' => ['index' => 1, 'title' => 'min_age', 'rules' => 'required'],
-            'max_age' => ['index' => 2, 'title' => 'max_age', 'rules' => 'required'],
-            'gender' => ['index' => 3, 'title' => 'gender', 'rules' => 'required'],
-            'premium' => ['index' => 4, 'title' => 'premium', 'rules' => 'required'],
             'eligibility_code' => ['index' => 5, 'title' => 'eligibility_code', 'rules' => 'required'],
             'plan_code' => ['index' => 6, 'title' => 'plan_code', 'rules' => 'required'],
             'copayment_code' => ['index' => 7, 'title' => 'copayment_code', 'rules' => 'required'],
@@ -125,7 +120,7 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
             'is_northern' => $row[0] ?? null,
             'min_age' => $row[1] ?? null,
             'max_age' => $row[2] ?? null,
-            'gender' => $row[3] ?? null,
+            'gender' => $row[3] ?? "M",
             'premium' => $row[4] ?? null,
             'eligibility_code' => $row[5] ?? null,
             'plan_code' => $row[6] ?? null,

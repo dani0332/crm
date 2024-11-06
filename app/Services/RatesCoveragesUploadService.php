@@ -56,8 +56,6 @@ class RatesCoveragesUploadService
         $uploadCoverages = $this->createCoverages($uploadedFile);
 
         UploadCoveragesJob::dispatch($uploadCoverages);
-
-        return true;
     }
 
     public function processUploadCoverages(RatesCoveragesUpload $uploadCoverages)
@@ -83,7 +81,7 @@ class RatesCoveragesUploadService
                 foreach ($rateCoveragesProcesses as $process) {
                     $data = $process->data;
 
-                    if (empty($data['code']) || empty($data['text']) || empty($data['description']) || empty($data['value']) || empty($data['type']) || empty($data['is_northern']) || empty($data['plan_code'])) {
+                    if (empty($data['plan_code'])) {
                         $failedDataCount++;
 
                         continue;
@@ -140,7 +138,7 @@ class RatesCoveragesUploadService
                 foreach ($coverages as $coverage) {
                     $data = is_string($coverage->data) ? json_decode($coverage->data, true) : $coverage->data;
 
-                    if (empty($data['code']) || empty($data['text']) || empty($data['description']) || empty($data['value']) || empty($data['type']) || empty($data['plan_code'])) {
+                    if (empty($data['plan_code'])) {
                         continue;
                     }
 
@@ -150,7 +148,7 @@ class RatesCoveragesUploadService
                         'description' => $data['description'] ?? '',
                         'value' => $data['value'] ?? '',
                         'type' => $data['type'] ?? '',
-                        'is_northern' => 1,
+                        'is_northern' => $data['is_northern'] ?? '',
                         'plan_id' => DB::table('health_plan')->where('code', $data['plan_code'])->value('id'),
                         'is_active' => 1,
                         'created_at' => now(),
@@ -174,6 +172,8 @@ class RatesCoveragesUploadService
             DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NULL THEN 1 ELSE 0 END) as good'),
             DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NOT NULL THEN 1 ELSE 0 END) as cannotUpload'),
             'rate_coverage_uploads.id as upload_id',
+            'rate_coverage_uploads.created_at as created_at',
+            'rate_coverage_uploads.updated_at as updated_at',
             'rate_coverage_processes.type as type',
             DB::raw('GROUP_CONCAT(rate_coverage_processes.validation_errors SEPARATOR \', \') as error')
         )
@@ -192,8 +192,6 @@ class RatesCoveragesUploadService
 
         $uploadRate = $this->createRate($uploadedFile);
         UploadRatesJob::dispatch($uploadRate);
-
-        return true;
     }
 
     public function createRate($uploadedFile)
@@ -233,7 +231,7 @@ class RatesCoveragesUploadService
                 foreach ($rateCoveragesProcesses as $process) {
                     $data = $process->data;
 
-                    if (empty($data['is_northern']) || empty($data['min_age']) || empty($data['max_age']) || empty($data['gender']) || empty($data['premium']) || empty($data['eligibility_code']) || empty($data['plan_code']) || empty($data['copayment_code'])) {
+                    if (empty($data['eligibility_code']) || empty($data['plan_code']) || empty($data['copayment_code'])) {
                         $failedDataCount++;
 
                         continue;
@@ -290,7 +288,7 @@ class RatesCoveragesUploadService
                 foreach ($coverages as $coverage) {
                     $data = is_string($coverage->data) ? json_decode($coverage->data, true) : $coverage->data;
 
-                    if (empty($data['is_northern']) || empty($data['min_age']) || empty($data['max_age']) || empty($data['gender']) || empty($data['premium']) || empty($data['eligibility_code']) || empty($data['plan_code']) || empty($data['copayment_code'])) {
+                    if (empty($data['eligibility_code']) || empty($data['plan_code']) || empty($data['copayment_code'])) {
                         continue;
                     }
 
@@ -324,6 +322,8 @@ class RatesCoveragesUploadService
             DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NULL THEN 1 ELSE 0 END) as good'),
             DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NOT NULL THEN 1 ELSE 0 END) as cannotUpload'),
             'rate_coverage_uploads.id as upload_id',
+            'rate_coverage_uploads.created_at as created_at',
+            'rate_coverage_uploads.updated_at as updated_at',
             'rate_coverage_processes.type as type',
             DB::raw('GROUP_CONCAT(rate_coverage_processes.validation_errors SEPARATOR \', \') as error')
         )

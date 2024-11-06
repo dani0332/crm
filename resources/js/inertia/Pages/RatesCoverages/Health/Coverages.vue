@@ -1,4 +1,5 @@
 <script setup>
+import dayjs from 'dayjs';
 defineProps({
   coverages: Array,
   azureStorageUrl: String,
@@ -9,6 +10,7 @@ const uploadForm = useForm({
   csvFile: '',
 });
 const contactLoader = ref(false);
+const page = usePage();
 
 const tableHeader = [
   { text: 'ID', value: 'upload_id' },
@@ -18,6 +20,8 @@ const tableHeader = [
   { text: 'Uploaded Record', value: 'good' },
   { text: 'Bad Record', value: 'cannotUpload' },
   { text: 'Error', value: 'error' },
+  { text: 'Created At', value: 'created_at' },
+  { text: 'Updated At', value: 'updated_at' },
 ];
 
 let errors = {
@@ -69,17 +73,20 @@ function onSubmit(isValid) {
         contactLoader.value = false;
         uploadForm.setError(
           error.response.data.error ||
-            error.response.data.errors.file_name[0] ||
+            error.response.data.errors.file_name?.[0] ||
             error.response.data.message,
         );
-        notification.error({
-          title:
-            error.response.data.error ||
-            error.response.data.errors.file_name[0],
-          position: 'top',
-        });
+        if(error.response.data.error) {
+          notification.error({
+            title:
+              error.response.data.error,
+            position: 'top',
+          });
+        }
 
-        document.getElementById('file_name').value = '';
+        uploadForm.csvFile = '';
+        files = [];
+        file = '';
       });
   } else {
     contactLoader.value = false;
@@ -89,6 +96,15 @@ function onSubmit(isValid) {
     });
   }
 }
+const formattedCoverages = computed(() => {
+  return page.props?.coverages.data.map(item => {
+    return {
+      ...item,
+      created_at: item.created_at ? dayjs(item.created_at).format('DD-MM-YYYY HH:mm:ss') : '',
+      updated_at: item.updated_at ? dayjs(item.updated_at).format('DD-MM-YYYY HH:mm:ss') : '',
+    };
+  });
+});
 </script>
 
 <template>
@@ -170,7 +186,7 @@ function onSubmit(isValid) {
     <DataTable
       table-class-name="tablefixed"
       :headers="tableHeader"
-      :items="coverages.data || []"
+      :items="formattedCoverages || []"
       border-cell
       hide-rows-per-page
       hide-footer
