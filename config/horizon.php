@@ -168,7 +168,7 @@ return [
         'production' => [
             'supervisor-prod' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals',
+                'queue' => 'default,renewals,insly',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,
@@ -179,7 +179,7 @@ return [
         'uat' => [
             'supervisor-uat' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals',
+                'queue' => 'default,renewals,insly',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,
@@ -201,7 +201,7 @@ return [
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals',
+                'queue' => 'default,renewals,insly',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,
@@ -212,7 +212,7 @@ return [
         'development' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals',
+                'queue' => 'default,renewals,insly',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,
@@ -223,7 +223,7 @@ return [
         'test' => [
             'supervisor-test' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals',
+                'queue' => 'default,renewals,insly',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,
@@ -234,7 +234,7 @@ return [
         'local' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals',
+                'queue' => 'default,renewals,insly',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,

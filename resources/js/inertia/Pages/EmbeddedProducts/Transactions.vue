@@ -117,7 +117,10 @@ function setQueryFilters() {
 }
 
 function exportReport() {
-  const data = useObjToUrl(filters);
+  const filteredData = Object.fromEntries(
+    Object.entries(filters).filter(([key, value]) => value !== null),
+  );
+  const data = useObjToUrl(filteredData);
   const url = route(
     'embedded-products.reports.certificates.export',
     page.props.embeddedProduct.detail.id,

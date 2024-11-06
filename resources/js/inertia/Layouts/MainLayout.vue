@@ -1,7 +1,7 @@
 <script setup>
-import PaymentNotification from '../Components/PaymentNotification.vue';
-import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
 import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
+import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
+import PaymentNotification from '../Components/PaymentNotification.vue';
 const page = usePage();
 
 const createLink = link => {
@@ -54,12 +54,37 @@ const onLogout = () => {
 };
 
 const urls = computed(() => {
-  if (checkAuthUserRole.value) {
-    return `/reports/payment-summary`;
-  } else {
-    return `/quotes/car?page=1&segment_filter=all&payment_status_id=4`;
-  }
+  return `/reports/payment-summary`;
 });
+
+const activitiesUrl = computed(() => {
+  const today = new Date();
+  const filters = {
+    status: '0',
+    due_date_time_start: '',
+    due_date_time_end: '',
+    page: 1,
+    isCustom: false,
+  };
+
+  const firstDayOfWeek = new Date(
+    today.setDate(today.getDate() - today.getDay() + 1),
+  );
+  const lastDayOfWeek = new Date(
+    today.setDate(today.getDate() - today.getDay() + 7),
+  );
+  filters.due_date_time_start = useDateFormat(
+    firstDayOfWeek,
+    'DD-MM-YYYY',
+  ).value;
+  filters.due_date_time_end = useDateFormat(lastDayOfWeek, 'DD-MM-YYYY').value;
+  return `/activities?due_date_time_start=${filters.due_date_time_start}&due_date_time_end=${filters.due_date_time_end}&page=1&isCustom=false&status=0&redirect=1`;
+});
+
+const getHTML = (buttonText, data) => {
+  return `<a target="_self" class="text-primary-500 hover:underline flex items-center space-x-1" href="${activitiesUrl.value}"> ${buttonText}
+    ${data}</a>`;
+};
 </script>
 
 <template>
@@ -184,19 +209,53 @@ const urls = computed(() => {
 
                 <div id="headerportal"></div>
                 <div class="lg:flex gap-1 hidden">
-                  <x-tag size="xs" class="border-gray-200" outlined>
-                    Pending Callbacks:
-                    <strong class="pl-1">
-                      {{ pendingActivityCount.pendingCallback }}
-                    </strong>
-                  </x-tag>
+                  <x-tooltip position="top">
+                    <x-button class="w-full" size="sm">
+                      <div class="items-center">
+                        <SanitizeHtml
+                          style="text-decoration: dotted underline"
+                          :html="
+                            getHTML(
+                              'Pending Callbacks: ',
+                              pendingActivityCount.pendingCallback,
+                            )
+                          "
+                        />
+                      </div>
+                    </x-button>
+                    <template #tooltip>
+                      <div class="font-bold">
+                        InstantAlfred needs your help!
+                        {{ pendingActivityCount.pendingCallback }} customers are
+                        waiting for your callback. Don't forget to mark your
+                        activity as DONE.
+                      </div>
+                    </template>
+                  </x-tooltip>
 
-                  <x-tag size="xs" class="border-gray-200" outlined>
-                    Pending Whatsapp:
-                    <strong class="pl-1">
-                      {{ pendingActivityCount.pendingWhatsapp }}
-                    </strong>
-                  </x-tag>
+                  <x-tooltip position="top">
+                    <x-button class="w-full" size="sm">
+                      <div class="items-center">
+                        <SanitizeHtml
+                          style="text-decoration: dotted underline"
+                          :html="
+                            getHTML(
+                              'Pending WhatsApp requests: ',
+                              pendingActivityCount.pendingWhatsapp,
+                            )
+                          "
+                        />
+                      </div>
+                    </x-button>
+                    <template #tooltip>
+                      <div class="font-bold">
+                        InstantAlfred needs your help!
+                        {{ pendingActivityCount.pendingWhatsapp }}
+                        customers are waiting for your WhatsApp message. Don't
+                        forget to mark your activity as DONE.
+                      </div>
+                    </template>
+                  </x-tooltip>
                 </div>
               </div>
             </div>
@@ -208,18 +267,26 @@ const urls = computed(() => {
               <PaymentNotification />
               <PaymentExpireNotifications />
 
-              <x-button class="w-full" size="sm">
-                <div class="items-center">
-                  <Link
-                    v-bind:href="urls"
-                    style="text-decoration: underline dotted"
-                  >
-                    Payment Authorised: {{ authorisePaymentCount }}
-                  </Link>
-                </div>
-              </x-button>
+              <x-tooltip>
+                <x-button class="w-full" size="sm">
+                  <div class="items-center">
+                    <Link
+                      v-bind:href="urls"
+                      style="text-decoration: underline dotted"
+                    >
+                      Payment Authorised: {{ authorisePaymentCount }}
+                    </Link>
+                  </div>
+                </x-button>
+                <template #tooltip>
+                  <div class="font-bold">
+                    {{ authorisePaymentCount }} customers are waiting for their
+                    policies - you're one step away from a sale.
+                  </div>
+                </template>
+              </x-tooltip>
 
-              <x-popover align="right" block>
+              <x-popover placement="bottom-end" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
                     <x-avatar
@@ -249,7 +316,7 @@ const urls = computed(() => {
                 <template #content>
                   <x-popover-container class="p-2">
                     <button
-                      class="flex gap-2 items-center px-2 group w-full"
+                      class="flex gap-2 items-center px-2 group"
                       @click="onLogout"
                     >
                       <svg
@@ -285,11 +352,11 @@ const urls = computed(() => {
             v-if="bannerInfo.total_count > 0"
             class="w-full h-10 rounded bg-error-50 border border-error-500 mb-3 flex items-center justify-center text-sm max-[500px]:h-auto"
           >
-            <span class="text-red-600"
-              >You have
-              <Link :href="bannerInfo.quote_route" class="underline">{{
-                bannerInfo.total_count
-              }}</Link>
+            <span class="text-red-600">
+              You have
+              <Link :href="bannerInfo.quote_route" class="underline">
+                {{ bannerInfo.total_count }}
+              </Link>
               stale leads, follow up with client and update the lead status
               accordingly</span
             >

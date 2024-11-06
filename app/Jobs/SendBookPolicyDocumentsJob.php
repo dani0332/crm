@@ -2,9 +2,13 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
 use App\Models\ApplicationStorage;
+use App\Models\HealthPlanCoPayment;
+use App\Models\QuoteTag;
 use App\Repositories\DocumentTypeRepository;
+use App\Services\ActivitiesService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -24,6 +28,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public $timeout = 100;
     public $tries = 3;
+    public $backoff = 120;
 
     /**
      * Create a new job instance.
@@ -34,9 +39,10 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function __construct($payload, $code)
     {
-        info('job: SendBookPolicyDocumentsJob constructor for: '.$code);
+        info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
         $this->data = $payload;
         $this->code = $code;
+        $this->onQueue('insly');
     }
 
     /**
@@ -44,20 +50,41 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
-        info('job: SendBookPolicyDocumentsJob started for: '.$this->code);
+        info('Quote Code: '.$this->code.' job: SendBookPolicyDocumentsJob started');
         $insuranceType = '';
         $planName = '';
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
         $modelType = ucfirst(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($this->data->model_type));
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
+
+        info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Type: '.$this->data->model_type.', Type Id: '.$quoteTypeId);
+
+        $isDocumentEmailSentToCustomer = QuoteTag::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_uuid' => $quote->uuid,
+            'name' => QuoteTagEnums::POLICY_SENT_TO_CUSTOMER,
+            'value' => 1,
+        ])->first();
+
+        if ($isDocumentEmailSentToCustomer) {
+            info('job: SendBookPolicyDocumentsJob skipped for: '.$quote->code.' as email already sent');
+
+            return;
+        }
+
         $handBookDocuments = [];
 
         try {
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
             if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
-                $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
+                $coPaymentIds = null;
+                if ($modelType == quoteTypeCode::Health) {
+                    $coPaymentIds = HealthPlanCoPayment::where('health_plan_id', $quote->plan_id)->where('id', '!=', $quote->health_plan_co_payment_id)->pluck('id')->toArray();
+                }
+                $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote, $coPaymentIds);
             }
             // First Retrieve document types marked for sending to the customer, then fetch the corresponding uploaded documents
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
@@ -80,7 +107,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
         // Prepare the data to be sent to Brevo for email template dispatch
         if (! empty($templateId)) {
-
+            // TODO:  Hard coded format and variable values should be form env file
             $roadsideAssistance = '';
             $emailData = new \stdClass;
             $emailData->code = $quote->code;
@@ -125,17 +152,26 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-            info('Send Book Policy Documents Job Response for '.$quote->code.' '.json_encode($response));
+            info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
         }
+
+        $quoteTag = QuoteTag::create([
+            'quote_type_id' => $quoteTypeId,
+            'quote_uuid' => $quote->uuid,
+            'name' => QuoteTagEnums::POLICY_SENT_TO_CUSTOMER,
+            'value' => 1,
+        ]);
+
+        info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Tag id: '.$quoteTag->id);
     }
 
     public function failed(Throwable $exception)
     {
-        info('SendBookPolicyDocumentsJob -: '.$this->data->quote_id.' Error: '.$exception->getMessage());
+        info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error: '.$exception->getMessage());
     }
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->data->quote_id))->dontRelease()];
+        return [(new WithoutOverlapping($this->code))->dontRelease()];
     }
 }

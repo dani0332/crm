@@ -45,7 +45,7 @@ class ScheduleRenewalsOcbRequest extends FormRequest
 
             $lastScheduleTime = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
 
-            if ($lastScheduleTime && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastScheduleTime->created_at) <= 5) {
+            if ($lastScheduleTime && Carbon::parse($lastScheduleTime->created_at)->timezone(config('app.timezone'))->diffInMinutes(Carbon::now()) <= 5) {
                 $validator->errors()->add('error', 'Batch process is already created, next can be created after 5 minutes');
             }
 

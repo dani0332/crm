@@ -43,6 +43,7 @@ const filters = reactive({
   due_date_time_end: '',
   page: 1,
   isCustom: false,
+  redirect: false,
 });
 
 const loader = reactive({
@@ -114,6 +115,12 @@ function setQueryFilters() {
       const [key, value] = item.split('=');
       filters[key] = value;
     });
+  }
+
+  if (filters.redirect) {
+    resetDates('tweek');
+  } else {
+    resetDates('today');
   }
 }
 
@@ -192,7 +199,7 @@ const onDeleteConfirmation = () => {
     preserveScroll: true,
     onSuccess: () => {
       modals.activityConfirm = false;
-      notification.error({
+      notification.success({
         title: 'Activity Deleted',
         position: 'top',
       });
@@ -267,10 +274,6 @@ const onSubmit = isValid => {
 
 // Component hooks
 watch(() => filters, { deep: true, immediate: true });
-
-onBeforeMount(() => {
-  resetDates('today');
-});
 
 onMounted(() => {
   setQueryFilters();
@@ -467,6 +470,7 @@ onMounted(() => {
           </x-button>
 
           <x-button
+            v-if="item.user_id && item.user_id != null"
             size="xs"
             color="error"
             :disabled="item.status === 1"

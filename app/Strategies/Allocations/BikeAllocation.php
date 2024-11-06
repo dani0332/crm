@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Models\Tier;
 use App\Services\BikeAllocationService;
@@ -32,6 +33,7 @@ class BikeAllocation implements Allocation
 
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId.' in BIKE allocation');
+
                 $response = AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 // Find the appropriate tier for the lead
@@ -55,6 +57,8 @@ class BikeAllocation implements Allocation
                         $this->assignLead($lead, $advisorId, $tier);
                         $response = AllocationFactory::createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
                     } else {
+                        $this->bikeAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::BIKE);
+
                         info('Advisor not found. Skipping for now.');
                         // Update the lead's tier information
                         $this->updateLeadTier($lead, $tier);
@@ -68,6 +72,8 @@ class BikeAllocation implements Allocation
             }
             info('Bike Allocation Ended.');
         } catch (\Throwable $th) {
+            $this->bikeAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::BIKE);
+
             $message = $th->getMessage() ?? '';
             info('exception occurred in bike lead allocation with error : '.$message);
             info('exception occurred in bike lead allocation with error stack as  : '.$th->getTraceAsString());

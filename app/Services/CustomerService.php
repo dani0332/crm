@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Models\CustomerAddress;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 class CustomerService extends BaseService
 {
@@ -125,9 +128,11 @@ class CustomerService extends BaseService
         $additionalEmail = CustomerAdditionalContact::where(['key' => GenericRequestEnum::EMAIL, 'value' => $newAdditionalEmail])
             ->first();
 
-        if ($newAdditionalEmail == strtolower($lead->email)
+        if (
+            $newAdditionalEmail == strtolower($lead->email)
             || $customer && $newAdditionalEmail == strtolower($customer->email)
-            || $additionalEmail && $newAdditionalEmail == strtolower($additionalEmail->value)) {
+            || $additionalEmail && $newAdditionalEmail == strtolower($additionalEmail->value)
+        ) {
             return true;
         } else {
             return false;
@@ -140,9 +145,11 @@ class CustomerService extends BaseService
         $additionalMobileNo = CustomerAdditionalContact::where(['key' => GenericRequestEnum::MOBILE_NO, 'value' => $newAdditionalMobileNo])
             ->first();
 
-        if ($newAdditionalMobileNo == $lead->mobile_no
-        || $customer && $newAdditionalMobileNo == $customer->mobile_no
-        || $additionalMobileNo && $newAdditionalMobileNo == $additionalMobileNo->value) {
+        if (
+            $newAdditionalMobileNo == $lead->mobile_no
+            || $customer && $newAdditionalMobileNo == $customer->mobile_no
+            || $additionalMobileNo && $newAdditionalMobileNo == $additionalMobileNo->value
+        ) {
             return true;
         } else {
             return false;
@@ -185,7 +192,6 @@ class CustomerService extends BaseService
                     if (isset($removeEmail->id)) {
                         $removeEmail->delete();
                     }
-
                 } else {
 
                     $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
@@ -306,5 +312,91 @@ class CustomerService extends BaseService
     public function getCustomerCampaignFollowups($id)
     {
         return Customer::select('id', 'email', 'campaign_followups', 'last_followup_sent_at')->where('id', $id)->first();
+    }
+
+    public function getCustomerIdByEmail(?string $email): ?int
+    {
+        if (empty($email)) {
+            Log::warning('Empty or null email provided to getCustomerIdByEmail.');
+
+            return null;
+        }
+
+        $customer = Customer::where('email', $email)->first();
+
+        if (! $customer) {
+            Log::info('Customer with the provided email not found.', ['email' => $email]);
+
+            return null;
+        }
+
+        return $customer->id;
+    }
+
+    public function getCustomerAddressData($data)
+    {
+        $customerId = $data->customer_id ?? null;
+        $quoteUuid = $data->uuid ?? null;
+
+        if (! $customerId || ! $quoteUuid) {
+            Log::warning('Missing required data: customerId or quote UUID is not provided.', [
+                'customerId' => $customerId,
+                'quote_uuid' => $quoteUuid,
+            ]);
+
+            return null;
+        }
+
+        // Retrieve customer address based on customerId and quoteUuid
+        $customerAddress = CustomerAddress::where('customer_id', $customerId)
+            ->where('quote_uuid', $quoteUuid)
+            ->first();
+
+        if (! $customerAddress) {
+            Log::info('Customer address not found.', [
+                'customerId' => $customerId,
+                'quote_uuid' => $quoteUuid,
+            ]);
+
+            return null;
+        }
+
+        return $customerAddress;
+    }
+
+    public function createCustomerIfNotExists($customerData)
+    {
+        $existingCustomer = CustomerService::getCustomerByEmail($customerData['email']);
+
+        if (! $existingCustomer) {
+            $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
+        }
+
+        return $customer ?? $existingCustomer;
+    }
+
+    public function addAdditionalContactsIfNotExists($customer, $additionalContacts)
+    {
+        // add additional emails
+        if (isset($additionalContacts['additional_emails']) && count($additionalContacts['additional_emails'])) {
+            foreach ($additionalContacts['additional_emails'] as $additionalEmail) {
+                $isExistEmail = CustomerAdditionalContact::where('customer_id', $customer->id)
+                    ->where('value', $additionalEmail)->where('key', GenericRequestEnum::EMAIL)->first();
+                if (! $isExistEmail) {
+                    $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
+                }
+            }
+        }
+
+        // add additional mobile numbers
+        if (isset($additionalContacts['additional_mobiles']) && count($additionalContacts['additional_mobiles'])) {
+            foreach ($additionalContacts['additional_mobiles'] as $additionalMobile) {
+                $isExistMobile = CustomerAdditionalContact::where('customer_id', $customer->id)
+                    ->where('value', $additionalMobile)->where('key', GenericRequestEnum::MOBILE_NO)->first();
+                if (! $isExistMobile) {
+                    $customer->additionalContactInfo()->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
+                }
+            }
+        }
     }
 }

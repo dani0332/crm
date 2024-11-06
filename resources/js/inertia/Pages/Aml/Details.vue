@@ -22,6 +22,7 @@ const props = defineProps({
   amlDecisionStatusEnum: Object,
   lookups: Object,
   cardHolderName: Object,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -155,11 +156,22 @@ onMounted(() => {
                 <template #tooltip> Reference ID</template>
               </x-tooltip>
             </div>
-            <div>{{ quoteRequest.code }}</div>
+            <div>
+              <Link
+                :href="quoteRequest?.quote_link"
+                class="text-primary-500 hover:underline"
+              >
+                {{ quoteRequest.code }}
+              </Link>
+            </div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">QUOTE STATUS</dt>
             <dd>{{ quoteRequest?.quote_status?.text ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AML STATUS</dt>
+            <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PHONE NUMBER</dt>
@@ -751,6 +763,7 @@ onMounted(() => {
     <AuditLogs
       :type="`App\\Models\\${quoteType.code}Quote`"
       :id="quoteRequest.id"
+      :quoteType="quoteType.code"
     />
   </div>
 </template>

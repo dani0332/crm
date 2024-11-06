@@ -1,8 +1,7 @@
 <script setup>
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import { computed } from 'vue';
-import DownloadDocuments from '../../Components/DownloadDocuments.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 const page = usePage();
@@ -62,6 +61,7 @@ defineProps({
   paymentDocument: Array,
   travelDestinations: Object,
   isAmlClearedForQuote: Boolean,
+  amlStatusName: String,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -1587,6 +1587,10 @@ const onAddUpdate = () => {
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
                 <dd>{{ field?.value }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt>
@@ -2001,6 +2005,10 @@ const onAddUpdate = () => {
                       :disabled="!isProfileUpdateAllow"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
@@ -3132,11 +3140,11 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="travel"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
       :isAmlClearedForQuote="isAmlClearedForQuote"
-      :modelClass="modelClass"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3198,7 +3206,12 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
@@ -3380,6 +3393,7 @@ const onAddUpdate = () => {
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :quoteType="$page.props.modelType"
       :expanded="sectionExpanded"
     />
 

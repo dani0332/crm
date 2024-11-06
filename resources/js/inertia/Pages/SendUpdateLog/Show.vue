@@ -37,6 +37,7 @@ const props = defineProps({
   },
   isPlanDetailAvailable: Boolean,
   quoteLink: String,
+  isEditDisabledForQueuedBooking: Boolean,
 });
 
 const page = usePage();
@@ -59,6 +60,10 @@ const transactionType = computed(() => {
     ].includes(props.sendUpdateLog.category.code)
   ) {
     return 'Endorsement';
+  } else if (
+    props.sendUpdateLog.option.code === props.sendUpdateStatusEnum.ATICB
+  ) {
+    return page.props.parentText;
   }
 
   return null;
@@ -109,8 +114,11 @@ onMounted(() => {
   state.redirectURL = params.get('refURL');
 });
 
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 const onEdit = () => {
-  if (isUpdateBooked.value) {
+  if (isUpdateBooked.value && !can(permissionsEnum.SEND_UPDATE_EDIT_NOTES)) {
     notification.error({
       title: 'Update already booked',
       position: 'top',
@@ -210,6 +218,24 @@ const isLegacyPolicy = computed(() => {
     props.realQuote?.insly_id
   );
 });
+
+const showBookingFailedAlert = () => {
+  if (
+    props.isEditDisabledForQueuedBooking &&
+    props.sendUpdateLog?.status ===
+      props.sendUpdateStatusEnum.UPDATE_BOOKING_FAILED
+  ) {
+    notification.error({
+      title: 'Endorsement Booking Failed! Please contact finance',
+      position: 'top',
+      timeout: 30000,
+    });
+  }
+};
+
+onBeforeMount(() => {
+  showBookingFailedAlert();
+});
 </script>
 
 <template>
@@ -255,7 +281,11 @@ const isLegacyPolicy = computed(() => {
                   v-model="sendUpdateForm.notes"
                   size="xs"
                   :disabled="!state.edit"
+                  maxlength="250"
                 />
+                <p class="text-xs text-right" v-if="state.edit">
+                  {{ sendUpdateForm.notes.length }} / 250
+                </p>
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
@@ -281,7 +311,7 @@ const isLegacyPolicy = computed(() => {
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ transactionType || page.props.parentText || '' }}</dd>
+                <dd>{{ transactionType || '' }}</dd>
               </template>
             </div>
             <div class="grid md:grid-cols-2 gap-y-4">
@@ -446,9 +476,24 @@ const isLegacyPolicy = computed(() => {
           </dl>
         </div>
         <div class="flex justify-end">
-          <x-button size="sm" @click="onEdit" v-if="!state.edit">
-            Edit
-          </x-button>
+          <template v-if="!state.edit">
+            <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+              <x-button
+                size="sm"
+                @click="onEdit"
+                :disabled="props.isEditDisabledForQueuedBooking"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  No further action can be taken on Update Booking Queued or
+                  Failed status.
+                </span>
+              </template>
+            </x-tooltip>
+            <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+          </template>
           <template v-else>
             <x-button
               size="sm"
@@ -478,6 +523,7 @@ const isLegacyPolicy = computed(() => {
       v-if="isLegacyPolicy"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
+      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
     />
 
     <!-- Indicative additional price & Plan details comp -->
@@ -488,6 +534,7 @@ const isLegacyPolicy = computed(() => {
       :insuranceProviders="props.insuranceProviders"
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
+      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
     />
 
     <PaymentTableNew
@@ -526,6 +573,7 @@ const isLegacyPolicy = computed(() => {
       :quote="props.realQuote"
       :isUpdateBooked="isUpdateBooked"
       :quote-type="props.quoteType"
+      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
     />
 
     <QuoteDocuments
@@ -560,11 +608,13 @@ const isLegacyPolicy = computed(() => {
       :payments="props.payments"
       :modelClass="modelClass"
       @update-error-status="handleErrorStatusUpdate"
+      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
     />
 
     <AuditLogs
-      :type="'App\\Models\\SendUpdateLog'"
+      :type="modelClass"
       :id="$page.props.sendUpdateLog.id"
+      :quoteType="'SendUpdateLog'"
       :expanded="true"
     />
   </div>

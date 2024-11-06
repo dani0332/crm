@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Models\KycLog;
 use App\Models\QuoteStatus;
@@ -38,13 +39,15 @@ class QuoteStatusService
             $kycLog = $fetchKycLog->first();
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
             $quoteStatusID = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? QuoteStatusEnum::AMLScreeningFailed : $quoteStatus->id;
-            $updateQuote->quote_status_id = $quoteStatusID;
+
+            $updateQuote->aml_status = AMLStatusCode::AMLScreeningCleared;
 
             $previousStatusId = $updateQuote->quote_status_id;
             $currentStatusId = $quoteStatusID;
         } else {
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
-            $updateQuote->quote_status_id = $quoteStatus->id;
+
+            $updateQuote->aml_status = AMLStatusCode::AMLScreeningFailed;
 
             $previousStatusId = $updateQuote->quote_status_id;
             $currentStatusId = $quoteStatus->id;
@@ -73,5 +76,36 @@ class QuoteStatusService
         } else {
             return 'false';
         }
+    }
+
+    public function markQuoteAsStale($quoteTypeId, $quoteRequestId)
+    {
+        $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
+        $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+        if (isset($updateQuote->quote_status_id) && ! empty($updateQuote->quote_status_id) && $updateQuote->quote_status_id == QuoteStatusEnum::FollowedUp) {
+            $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
+            $updateQuote->save();
+        }
+
+        return $updateQuote;
+    }
+
+    /**
+     * Check if a policy sent log exists for the given quote.
+     *
+     * @param  int  $quoteId  The ID of the quote to check.
+     * @return bool True if a policy sent log exists, false otherwise.
+     */
+    public function isPolicySentLogExists(int $quoteId): bool
+    {
+        // Check if a policy sent log exists for the given quote.
+        return QuoteStatusLog::where('quote_request_id', $quoteId)
+            ->where(function ($query) {
+                $query->where('previous_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicySentToCustomer);
+            })
+            ->select('id')
+            ->limit(1)
+            ->exists();
     }
 }

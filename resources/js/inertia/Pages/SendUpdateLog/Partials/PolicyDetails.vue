@@ -26,6 +26,7 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  isEditDisabledForQueuedBooking: Boolean,
 });
 
 const state = reactive({
@@ -89,13 +90,14 @@ const insuranceProvidersOptions = computed(() => {
 
 const providerName = computed(() => {
   let provider;
-  if (props.quote?.insurance_provider_id) {
+  let insuranceProviderId =
+    props.sendUpdateLog?.insurance_provider_id ||
+    props.quote?.insurance_provider_id ||
+    props.quote?.car_plan_provider_id ||
+    null;
+  if (insuranceProviderId) {
     provider = props?.insuranceProviders?.find(
-      provider => provider.id === props.quote?.insurance_provider_id,
-    );
-  } else if (props.quote?.car_plan_provider_id) {
-    provider = props?.insuranceProviders?.find(
-      provider => provider.id === props.quote?.car_plan_provider_id,
+      provider => provider.id === insuranceProviderId,
     );
   } else {
     return null;
@@ -556,9 +558,24 @@ const onCancel = () => {
         </div>
         <x-divider class="my-4 mt-10" />
         <div class="flex justify-end gap-2">
-          <x-button size="sm" @click="onEdit" v-if="!state.isEdit">
-            Edit
-          </x-button>
+          <template v-if="!state.isEdit">
+            <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+              <x-button
+                size="sm"
+                @click="onEdit"
+                :disabled="props.isEditDisabledForQueuedBooking"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  No further action can be taken on Update Booking Queued or
+                  Failed status.
+                </span>
+              </template>
+            </x-tooltip>
+            <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+          </template>
           <template v-else>
             <x-button
               size="sm"
