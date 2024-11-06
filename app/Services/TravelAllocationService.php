@@ -26,11 +26,10 @@ class TravelAllocationService extends AllocationService
             ->first();
     }
 
-    public function fetchAvailableAdvisor($isReassignmentJob = false, $teamId = null, $quoteUUID = null)
+    public function fetchAvailableAdvisor($quote, $teamId = null, $isReassignmentJob = false)
     {
-        Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$quoteUUID}");
+        Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$quote->uuid}");
 
-        $quote = $this->fetchLead($quoteUUID);
         if ($quote) {
             $isSIC = $quote->isSIC(QuoteTypes::TRAVEL);
         }
@@ -45,15 +44,14 @@ class TravelAllocationService extends AllocationService
         }
 
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quoteUUID}");
+            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quote->uuid}");
             if ($quote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
                 $previousAdvisorId = $this->getPreviousAdvisor($quote->customer_id);
-                $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC, $previousAdvisorId);
-            } else {
-                $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC);
+                info("lead is renewal pervious advisor-ID:{$previousAdvisorId} lead uuid: {$quote->uuid} | Time: ".now());
             }
+            $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC, $previousAdvisorId ?? null);
             if ($eligibleUser) {
-                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$quoteUUID}");
+                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$quote->uuid}");
 
                 return User::find($eligibleUser->user_id);
             }
@@ -61,41 +59,46 @@ class TravelAllocationService extends AllocationService
 
         return null;
     }
-
     public function getAdvisorByStatus($status, $teamId = null, $isSIC = false, $previousAdvisorId = null)
     {
+        // Prepare the SIC Unassisted Team ID if needed, to avoid multiple queries
+        $sicUnassistedTeamId = $teamId ? null : Team::where('name', TeamNameEnum::SIC_UNASSISTED)->value('id');
+
         return User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-            ->where('users.status', $status)
+            ->where([
+                ['users.status', $status],
+                ['users.is_active', true],
+                ['r.name', RolesEnum::TravelAdvisor],
+                ['la.quote_type_id', QuoteTypes::TRAVEL->id()],
+            ])
             ->where(function ($query) {
-                // Apply allocation count and max capacity conditions.
-                $query->whereRaw('la.allocation_count < la.max_capacity')
+                // Ensure allocation count is within capacity or allow if max capacity is unlimited
+                $query->where('la.allocation_count', '<', 'la.max_capacity')
                     ->orWhere('la.max_capacity', -1);
             })
             ->when($teamId, function ($q) use ($teamId) {
-                $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
-            }, function ($q) {
-                // if no team provided then user must not be part of SIC Unassisted 2.0 Team
-                $sicUnassistedTeam = Team::where('name', TeamNameEnum::SIC_UNASSISTED)->first();
-                if ($sicUnassistedTeam) {
-                    $q->whereNotIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $sicUnassistedTeam->id));
+                // Filter by team ID if provided
+                $q->whereIn('users.id', function ($query) use ($teamId) {
+                    $query->select('user_id')->from('user_team')->where('team_id', $teamId);
+                });
+            }, function ($q) use ($sicUnassistedTeamId) {
+                // Exclude users from SIC Unassisted team if no specific team is provided
+                if ($sicUnassistedTeamId) {
+                    $q->whereNotIn('users.id', function ($query) use ($sicUnassistedTeamId) {
+                        $query->select('user_id')->from('user_team')->where('team_id', $sicUnassistedTeamId);
+                    });
                 }
             })
-            ->whereIn('r.name', [RolesEnum::TravelAdvisor])
-            ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
-            ->where('users.is_active', true)
-            ->when($isSIC, function ($q) {
-                $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
-            })
-            ->when($previousAdvisorId, function ($q) use ($previousAdvisorId) {
-                $q->where('users.id', $previousAdvisorId);
-            })
-            ->when(!$previousAdvisorId, function ($q) {
-                $q->orderBy('la.last_allocated', 'asc');
-            })->orderBy('la.last_allocated', 'asc')->first();
-
+            ->when($isSIC, fn($q) => $q->where('la.is_hardstop', true)) // Only allow users with is_hardstop if $isSIC is true
+            ->when($previousAdvisorId,
+                fn($q) => $q->where('users.id', $previousAdvisorId),
+                fn($q) => $q->orderBy('la.last_allocated', 'asc')
+            )
+            ->orderBy('la.last_allocated', 'asc')
+            ->first();
     }
     public function assignLead(TravelQuote $lead, User $advisor, $assignmentType)
     {

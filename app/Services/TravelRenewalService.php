@@ -34,7 +34,7 @@ class TravelRenewalService extends BaseService
                 PaymentStatusEnum::PARTIAL_CAPTURED,
                 PaymentStatusEnum::CREDIT_APPROVED,
             ])
-            ->whereDate('start_date', '<=', Carbon::now()->subDays(15))
+            ->whereDate('start_date', Carbon::now()->subDays(320))
             ->chunkById(100, function ($quotes) {
                 $quoteCount = $quotes->count();
                 info("total quotes in chunk: {$quoteCount}");
@@ -200,12 +200,12 @@ class TravelRenewalService extends BaseService
         return RenewalBatch::firstOrCreate(
             [
                 'name' => $batchName,
-                'start_date' => $startDate,
-                'end_date' => $endDate
-            ],  // Check if batch with this name exists
-            [
                 'month' => $expiryDate->month,
                 'year' => $expiryDate->year
+            ],  // Check if batch with this name exists
+            [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
             ]   // If not, create with this name
         );
     }

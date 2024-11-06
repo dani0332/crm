@@ -41,7 +41,7 @@ class TravelAllocation implements Allocation
                 info(self::class." - executeSteps: Lead not found for : {$this->allocationId}");
                 $response = AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
-                $advisor = $this->fetchAvailableAdvisor();
+                $advisor = $this->fetchAvailableAdvisor( $lead);
 
                 if (! $advisor) {
                     $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
@@ -71,9 +71,9 @@ class TravelAllocation implements Allocation
         return $this->travelAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
     }
 
-    private function fetchAvailableAdvisor()
+    private function fetchAvailableAdvisor( $lead)
     {
-        return $this->travelAllocationService->fetchAvailableAdvisor(teamId: $this->teamId, quoteUUID: $this->allocationId);
+        return $this->travelAllocationService->fetchAvailableAdvisor($lead,$this->teamId,false);
     }
 
     private function assignLead(TravelQuote $lead, User $advisor)
