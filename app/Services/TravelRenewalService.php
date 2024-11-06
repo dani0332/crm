@@ -12,18 +12,18 @@ use App\Factories\AllocationFactory;
 use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 use App\Models\PaymentStatus;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\RenewalBatch;
 
 class TravelRenewalService extends BaseService
 {
     public function getTravelRenewalLeads()
     {
-        info('Travel Renewal Leads processing started with Start Date: ' . Carbon::now()->subDays(320));
+        info('Travel Renewal Leads processing started with Start Date: '.Carbon::now()->subDays(320));
         TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
             QuoteStatusEnum::PolicyBooked,
@@ -53,14 +53,14 @@ class TravelRenewalService extends BaseService
             try {
                 // Check if the quote is a duplicate
                 if ($this->isDuplicateQuote($quote)) {
-                    info('Duplicate quote detected for Quote Ref-ID: ' . $quote->uuid);
+                    info('Duplicate quote detected for Quote Ref-ID: '.$quote->uuid);
 
                     continue; // Skip processing this quote
                 }
                 $this->storeTravelRenewalQuote($quote);
             } catch (\Exception $e) {
                 // Log the exception or handle it as needed
-                Log::error('Error processing quote ID ' . $quote->uuid . ': ' . $e->getMessage());
+                Log::error('Error processing quote ID '.$quote->uuid.': '.$e->getMessage());
             }
         }
     }
@@ -75,7 +75,7 @@ class TravelRenewalService extends BaseService
         }
         // Calculate the policy expiry date based on the start date + 365 days
         $policyExpiryDate = $policyStartDate->copy()->addDays(365);
-        info('Calculating policy expiry date' . $policyExpiryDate);
+        info('Calculating policy expiry date'.$policyExpiryDate);
 
         return TravelQuote::where('customer_id', $quote->customer_id)
             ->whereDate('policy_expiry_date', Carbon::parse($policyExpiryDate)->format('Y-m-d'))
@@ -116,7 +116,7 @@ class TravelRenewalService extends BaseService
             'customer_id' => $quote->customer_id,
             'direction_code' => $quote->direction_code,
             'destination' => $quote->destination ?? null,
-            'code' => QuoteTypeShortCode::TRA . '-' . $quoteUuid,
+            'code' => QuoteTypeShortCode::TRA.'-'.$quoteUuid,
             'uuid' => $quoteUuid,
             'renewal_batch' => trim($batch->name),
             'renewal_batch_id' => $batch->id,
@@ -138,6 +138,7 @@ class TravelRenewalService extends BaseService
             'region_cover_for_id' => $quote->region_cover_for_id,
         ];
         $this->saveTravelRenewalQuote($travelQuote);
+
         return $travelQuote;
     }
 
@@ -169,8 +170,8 @@ class TravelRenewalService extends BaseService
 
         $newQuote = TravelQuote::create($quoteData);
         $this->storeMembers($newQuote, $travelQuote->members);
-        info("Travel quote successfully saved. Reference ID: {$newQuote->uuid} | Time:" . now());
-        info("Lead allocation process initiated for Reference ID: {$newQuote->uuid} | Time:" . now());
+        info("Travel quote successfully saved. Reference ID: {$newQuote->uuid} | Time:".now());
+        info("Lead allocation process initiated for Reference ID: {$newQuote->uuid} | Time:".now());
         $this->leadAllocation($newQuote);
         info("Lead allocation completed for Reference ID: {$newQuote->uuid} - | Time: ".now());
     }
@@ -189,23 +190,25 @@ class TravelRenewalService extends BaseService
         $currentDate = Carbon::now();
         // Calculate the number of weeks between the current date and the expiry date
         $weeksUntilExpiry = $currentDate->diffInWeeks($expiryDate);
-        return strtoupper("W-" . $weeksUntilExpiry);
+
+        return strtoupper('W-'.$weeksUntilExpiry);
     }
 
-    public function  getRenewalBatch($batchName, $newPolicyExpiryDate)
+    public function getRenewalBatch($batchName, $newPolicyExpiryDate)
     {
         $expiryDate = Carbon::parse($newPolicyExpiryDate);
         $startDate = $expiryDate->startOfMonth()->toDateString();  // Start of the expiry month
         $endDate = $expiryDate->endOfMonth()->toDateString();      // End of the expiry month
+
         return RenewalBatch::firstOrCreate(
             [
                 'name' => $batchName,
                 'start_date' => $startDate,
-                'end_date' => $endDate
+                'end_date' => $endDate,
             ],  // Check if batch with this name exists
             [
                 'month' => $expiryDate->month,
-                'year' => $expiryDate->year
+                'year' => $expiryDate->year,
             ]   // If not, create with this name
         );
     }
@@ -230,7 +233,7 @@ class TravelRenewalService extends BaseService
         })->toArray();
 
         // Insert only new member data associated with quote_id
-        if (!empty($membersData)) {
+        if (! empty($membersData)) {
             DB::table('customer_members')->insert($membersData);
             info("customer members created successfully for quote Ref-ID: {$quote->uuid}");
         } else {
@@ -240,7 +243,7 @@ class TravelRenewalService extends BaseService
 
     public function leadAllocation($lead)
     {
-        info('Processing Travel record for Quote Allocation with uuid: ' . $lead->uuid);
+        info('Processing Travel record for Quote Allocation with uuid: '.$lead->uuid);
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         // Only apply teamId if the payment status is AUTHORIZED
         $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;

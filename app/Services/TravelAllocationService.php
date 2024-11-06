@@ -92,7 +92,7 @@ class TravelAllocationService extends AllocationService
             ->when($previousAdvisorId, function ($q) use ($previousAdvisorId) {
                 $q->where('users.id', $previousAdvisorId);
             })
-            ->when(!$previousAdvisorId, function ($q) {
+            ->when(! $previousAdvisorId, function ($q) {
                 $q->orderBy('la.last_allocated', 'asc');
             })->orderBy('la.last_allocated', 'asc')->first();
 
