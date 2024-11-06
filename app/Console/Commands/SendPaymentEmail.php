@@ -139,7 +139,7 @@ class SendPaymentEmail extends Command
         $query = DB::table('payments as py')
             ->select(
                 DB::raw('COUNT(DISTINCT '.$table.'.code) as total_leads'),
-                DB::raw('SUM(DISTINCT '.$table.'.premium) as total_premium'),
+                DB::raw('SUM('.$table.'.premium) as total_premium'),
                 DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
             )
             ->leftJoin($table, 'py.code', '=', $table.'.code')

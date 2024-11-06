@@ -1312,7 +1312,7 @@ if (! function_exists('getLookupsEnum')) {
 }
 
 if (! function_exists('getCourierQuote')) {
-    function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [QuoteStatusEnum::PolicyIssued])
+    function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [])
     {
         try {
             $quoteModel = get_class($quote);
@@ -1349,7 +1349,9 @@ if (! function_exists('getCourierQuote')) {
                             default => "{$table}.emirate_of_registration_id"
                         });
                 })
-                ->whereIn("{$table}.quote_status_id", $quoteStatuses)
+                ->when(! empty($quoteStatuses) && is_array($quoteStatuses), function ($q) use ($table, $quoteStatuses) {
+                    $q->whereIn("{$table}.quote_status_id", $quoteStatuses);
+                })
                 ->leftJoin('customer_addresses', function (JoinClause $join) use ($table, $quoteTypeId) {
                     $join->on('customer_addresses.quote_uuid', '=', "{$table}.uuid")
                         ->where('customer_addresses.quote_type_id', $quoteTypeId);

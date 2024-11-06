@@ -39,6 +39,7 @@ const tableHeader = [
   { text: 'POLICY END DATE', value: 'policy_expiry_date' },
   { text: 'TYPE OF POLICY', value: 'quote_type_id' },
   { text: 'ADVISOR', value: 'advisor' },
+  { text: 'RECEIVE MARKETING', value: 'receive_marketing_updates' },
 ];
 
 function onSubmit(isValid) {
@@ -181,6 +182,21 @@ function onReset() {
 
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
+      </template>
+
+      <template #item-receive_marketing_updates="item">
+        <div class="text-center">
+          <x-tag
+            size="sm"
+            :color="
+              item.customer.receive_marketing_updates === 1
+                ? 'success'
+                : 'error'
+            "
+          >
+            {{ item.customer.receive_marketing_updates === 1 ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
       </template>
     </DataTable>
 
