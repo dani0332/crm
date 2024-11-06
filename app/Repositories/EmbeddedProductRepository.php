@@ -8,9 +8,11 @@ use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Facades\Marshall;
+use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
@@ -36,8 +38,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
-use App\Enums\quoteTypeCode;
-use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 
 class EmbeddedProductRepository extends BaseRepository
 {
