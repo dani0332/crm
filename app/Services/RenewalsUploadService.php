@@ -490,7 +490,7 @@ class RenewalsUploadService
             }
 
             info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
-            $plansResponse = $quoteType->code == quoteTypeCode::Car && $quote->car_make_id != null && $quote->car_model_id != null ? $this->getPlans($quote->uuid): true;
+            $plansResponse = $quoteType->code == quoteTypeCode::Car && $quote->car_make_id != null && $quote->car_model_id != null ? $this->getPlans($quote->uuid) : true;
             info('FetchPlans FN: getPlans from ken api response completed.');
             if ($plansResponse === true) {
                 info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
