@@ -130,7 +130,7 @@ class TravelEmailService extends BaseService
         return $sortedFixtures->first()->text.' and much more...';
     }
 
-    private function buildCommonEmailData(TravelQuote $lead, $advisor, $previousAdvisor): object
+    private function buildCommonEmailData(TravelQuote $lead, $advisor, $previousAdvisor, $workflowType = null): object
     {
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
 
@@ -156,6 +156,9 @@ class TravelEmailService extends BaseService
             'isReAssignment' => ! empty($previousAdvisor),
             'wfsBanner' => $emailCampaignBanner,
             'wfsBannerRedirectUrl' => $emailCampaignBannerRedirectUrl,
+            'workflowType' => $workflowType ?? null,
+            'quoteUUID' => $lead->uuid,
+            'refId' => $lead->code,
         ];
     }
 
