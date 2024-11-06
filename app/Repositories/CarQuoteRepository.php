@@ -134,7 +134,7 @@ class CarQuoteRepository extends BaseRepository
         $quote->carQuoteRequestDetail->updateOrCreate(
             ['car_quote_request_id' => $quote->id],
             ['followup_id' => $data['followup_id']],
-            ['email_pause_counter' => ($quote->carQuoteRequestDetail->email_pause_counter ?? 0) + 1]
+            ['followup_pause_count' => ($quote->carQuoteRequestDetail->followup_pause_count ?? 0) + 1]
         );
 
         return $quote;
