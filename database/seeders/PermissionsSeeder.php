@@ -13,6 +13,7 @@ class PermissionsSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->paidLeads();
         $this->leadAllocationDashboards();
     }
 
@@ -24,5 +25,10 @@ class PermissionsSeeder extends Seeder
         Permission::findOrCreate(PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD, 'web');
         Permission::findOrCreate(PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD, 'web');
         Permission::findOrCreate(PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD, 'web');
+    }
+
+    private function paidLeads()
+    {
+        Permission::findOrCreate(PermissionsEnum::ASSIGN_PAID_LEADS, 'web');
     }
 }

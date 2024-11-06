@@ -886,10 +886,11 @@ class CentralService extends BaseService
 
     public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
     {
-        SendUpdateStatusLog::create([
+        SendUpdateStatusLog::updateOrCreate([
             'send_update_log_id' => $sendUpdateLogId,
             'previous_status' => $previousStatus,
             'current_status' => $currentStatus,
+        ], [
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
@@ -897,10 +898,13 @@ class CentralService extends BaseService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
-        $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_log_id', $sendUpdateId)
-            ->where('current_status', $sendUpdateStatus)
-            ->orWhere('previous_status', $sendUpdateStatus)
-            ->count();
+        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatus) {
+            $query->where('send_update_log_id', $sendUpdateId)
+                ->where(function ($query) use ($sendUpdateStatus) {
+                    $query->where('current_status', $sendUpdateStatus)
+                        ->orWhere('previous_status', $sendUpdateStatus);
+                });
+        })->count();
 
         return $sendUpdateStatusCount > 0;
     }

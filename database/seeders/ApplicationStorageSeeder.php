@@ -54,8 +54,17 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        $this->seedHomeAdvisors();
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PROCESS_CC_PAYMENTS_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
 
+        $this->seedHomeAdvisors();
     }
 
     private function seedHomeAdvisors()

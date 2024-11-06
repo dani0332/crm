@@ -381,10 +381,12 @@ final class PermissionsEnum extends Enum
     public const PET_LEAD_ALLOCATION_DASHBOARD = 'pet-lead-allocation-dashboard';
     public const LIFE_LEAD_ALLOCATION_DASHBOARD = 'life-lead-allocation-dashboard';
     public const HOME_LEAD_ALLOCATION_DASHBOARD = 'home-lead-allocation-dashboard';
+    public const UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE = 'update-lead-status-to-fake-duplicate';
     public const SEARCH_INSURER_TAX_INVOICE_NUMBER = 'search-insurer-tax-invoice-number';
     public const SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER = 'search-insurer-commission-tax-invoice-number';
     public const SEND_UPDATE_EDIT_NOTES = 'send-update-edit-notes';
     public const DEPARTMENT_MANAGER = 'department-manager';
+    public const ASSIGN_PAID_LEADS = 'assign-paid-leads';
 
     public static function getAdvisorConversionReportPermissions()
     {

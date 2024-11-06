@@ -67,6 +67,12 @@ class User extends Authenticatable implements AuditableContract
         'profile_photo_url',
     ];
 
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
     public function getPermissionAttribute()
     {
         return $this->getAllPermissions();

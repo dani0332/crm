@@ -59,6 +59,12 @@ class LifeQuote extends Model implements AuditableContract
         });
     }
 
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
     public function getDobAttribute($value)
     {
         return Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY'));

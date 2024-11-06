@@ -225,5 +225,6 @@ const userRoles = computed(() => {
     :url="'\\auditable'"
     :type="'App\\Models\\User'"
     :id="$page.props.user.id"
+    :quoteType="'User'"
   />
 </template>

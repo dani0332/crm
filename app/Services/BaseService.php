@@ -244,6 +244,7 @@ class BaseService
                 'is_cold' => $activity->is_cold,
                 'quote_status_id' => $activity->quote_status_id,
                 'quote_status' => $activity?->quoteStatus,
+                'user_id' => $activity?->user_id,
             ];
             array_push($activities, $updatedActivity);
         }

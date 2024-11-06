@@ -56,6 +56,12 @@ class HomeQuote extends Model implements AuditableContract
             }
         });
     }
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
 
     public function quoteStatus()
     {
