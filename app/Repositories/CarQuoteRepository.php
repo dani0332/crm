@@ -133,7 +133,8 @@ class CarQuoteRepository extends BaseRepository
         //set followup id coming from kyo
         $quote->carQuoteRequestDetail->updateOrCreate(
             ['car_quote_request_id' => $quote->id],
-            ['followup_id' => $data['followup_id']]
+            ['followup_id' => $data['followup_id']],
+            ['email_pause_counter' => ($quote->carQuoteRequestDetail->email_pause_counter ?? 0) + 1]
         );
 
         return $quote;
