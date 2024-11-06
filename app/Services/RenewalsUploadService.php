@@ -454,7 +454,6 @@ class RenewalsUploadService
         info('FetchPlans FN: fetchRenewalPlans individual lead plan process started for policy_number: '.$renewalQuoteProcess->policy_number);
         $leadData = (object) $renewalQuoteProcess->data;
 
-
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
@@ -934,7 +933,6 @@ class RenewalsUploadService
 
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $renewalUploadLead, $logPrefix, &$isNameChanged) {
             throw_if($data['quote_type'] != QuoteTypeShortCode::CAR, 'Only Insurance Type Car is allowed to update lead');
-
 
             info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'].' ID: '.$renewalQuoteProcess->id.' UploadLeadId: '.$renewalUploadLead->id);
 
@@ -1850,7 +1848,7 @@ class RenewalsUploadService
                     ->allowFailures()
                     ->withDelay(1)
                     ->dispatch();
-                    info($logPrefix . ' all jobs are scheduled');
+                info($logPrefix.' all jobs are scheduled');
             } else {
                 info($logPrefix.' No leads to schedule OCB email');
                 $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -1997,7 +1995,7 @@ class RenewalsUploadService
                     ->allowFailures()
                     ->withDelay(2)
                     ->dispatch();
-                info($logPrefix . ' all jobs are scheduled');
+                info($logPrefix.' all jobs are scheduled');
             } else {
                 info($logPrefix.' No jobs to create quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);

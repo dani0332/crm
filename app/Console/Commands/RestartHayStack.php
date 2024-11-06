@@ -36,13 +36,14 @@ class RestartHaystack extends Command
                 $haystack->resume_at = Carbon::now();
                 $haystack->save();
 
-                info('HayStack: --- process restarted successfully. Process ID:' . $haystack->id);
-                $this->info('Haystack process restarted successfully. Process ID: ' . $haystack->id);
+                info('HayStack: --- process restarted successfully. Process ID:'.$haystack->id);
+                $this->info('Haystack process restarted successfully. Process ID: '.$haystack->id);
+
                 return;
             } else {
-                info('HayStack: --- No bales found or currently haystack is been running. Process ID:' . $haystack->id);
+                info('HayStack: --- No bales found or currently haystack is been running. Process ID:'.$haystack->id);
             }
         }
-        info('HayStack:' . ' ---  No Haystacks found to process.');
+        info('HayStack:'.' ---  No Haystacks found to process.');
     }
 }

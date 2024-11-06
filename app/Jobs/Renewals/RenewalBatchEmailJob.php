@@ -60,7 +60,7 @@ class RenewalBatchEmailJob implements ShouldQueue, StackableJob
     public function handle(RenewalsUploadService $renewalsUploadFileService)
     {
         info('Renewals OCB email job started processId: '.$this->renewalQuoteProcess->id);
-        
+
         $this->setHaystackData('count', $this->getHaystackData('count') + 1);
         $renewalsUploadFileService->renewalBatchEmailProcess($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
 
