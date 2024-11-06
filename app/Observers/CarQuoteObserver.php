@@ -6,11 +6,13 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Facades\Ken;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
+use App\Models\CustomerAddress;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -86,6 +88,38 @@ class CarQuoteObserver
         ) {
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
+
+            // check if policy is issued and address is not entered then call KEN API
+            $this->sendAddressReminderOnPolicyIssue($lead);
+        }
+    }
+
+    public function sendAddressReminderOnPolicyIssue(CarQuote $lead)
+    {
+        $address = CustomerAddress::where('quote_uuid', $lead->uuid)->first();
+        if (! $address) {
+            // send address reminder to customer if address is not entered
+            if ($lead->embeddedTransactions()->exists()) {
+                $courierEmbeddedTransaction = $lead->embeddedTransactions
+                    ->filter(function ($transaction) {
+                        return $transaction->product?->embeddedProduct?->short_code === 'COU';
+                    });
+            }
+
+            if (
+                $courierEmbeddedTransaction->isNotEmpty()
+            ) {
+                info('Triggering Bird Courier Flow for policy reminder for lead : ' . $lead->uuid);
+                $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
+                $payload = [
+                    'quoteUID' => $lead->uuid,
+                    'quoteTypeId' => QuoteTypes::CAR->id(),
+                    'actionType' => 'POLICY_ISSUED',
+                    'refId' => $embeddedTransactionRefId,
+                ];
+
+                Ken::request('/trigger-bird-courier-flow', 'post', $payload);
+            }
         }
     }
 }
