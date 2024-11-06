@@ -411,7 +411,7 @@ const disableSendAndBookPolicyButton = computed(() => {
   return (
     !props.bookPolicyDetails?.sendButton &&
     !isPolicyStatusCancellationPending &&
-    disableIfPolicyFailedAndNoBookingFailedEditPermission &&
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
     !can(permission)
   );
 });
@@ -433,7 +433,11 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   let disableEditBookingDetails = false;
 
   let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
-  if (policyIssuanceSteps?.isPolicyAutomationEnabled) {
+  if (
+    policyIssuanceSteps?.isPolicyAutomationEnabled &&
+    !isPolicyBookingFailed &&
+    !hasBookingFailedEditPermission
+  ) {
     disableEditBookingDetails =
       policyIssuanceSteps?.isEditBookingDetailsDisabled;
   }
