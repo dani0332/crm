@@ -36,6 +36,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
+use App\Enums\quoteTypeCode;
+use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -619,7 +621,7 @@ class EmbeddedProductRepository extends BaseRepository
         $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
         $type = QuoteType::where('code', $data['modelType'])->first();
 
-        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $data['quote_id'])
+        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest'])->where('quote_request_id', $data['quote_id'])
             ->where('quote_type_id', $type->id)
             ->where('is_selected', true)
             ->whereIn('product_id', $embeddedProductOptionsIds)
@@ -670,6 +672,13 @@ class EmbeddedProductRepository extends BaseRepository
 
                     ];
                     $processResponse = $this->processCancelPayment($data);
+
+                    if (
+                        $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+                        && $type->code == quoteTypeCode::Car
+                    ) {
+                        CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
+                    }
 
                     return [
                         'data' => $processResponse,
