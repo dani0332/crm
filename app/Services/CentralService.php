@@ -33,6 +33,7 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatusLog;
+use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -859,5 +860,30 @@ class CentralService
         }
 
         return $quoteStatuses;
+    }
+
+    public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
+    {
+        SendUpdateStatusLog::updateOrCreate([
+            'send_update_log_id' => $sendUpdateLogId,
+            'previous_status' => $previousStatus,
+            'current_status' => $currentStatus,
+        ], [
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+    }
+
+    public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
+    {
+        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatus) {
+            $query->where('send_update_log_id', $sendUpdateId)
+                ->where(function ($query) use ($sendUpdateStatus) {
+                    $query->where('current_status', $sendUpdateStatus)
+                        ->orWhere('previous_status', $sendUpdateStatus);
+                });
+        })->count();
+
+        return $sendUpdateStatusCount > 0;
     }
 }

@@ -1068,6 +1068,10 @@ const quoteDocumentsTable = reactive({
       value: 'original_name',
     },
     {
+      text: 'Original Document',
+      value: 'doc_name',
+    },
+    {
       text: 'Created At',
       value: 'created_at',
     },
@@ -1076,6 +1080,22 @@ const quoteDocumentsTable = reactive({
       value: 'created_by_name',
     },
   ],
+});
+
+const documentsTableItems = computed(() => {
+  return page.props.quoteDocuments.map(doc => {
+    return {
+      document_type_text:
+        doc.document_type_text.length > 0 ? doc.document_type_text : '',
+      doc_name: doc.doc_name,
+      original_name: doc.original_name,
+      created_at: doc.created_at,
+      doc_uuid: doc.doc_uuid,
+      doc_url: doc.doc_url,
+      created_by: doc.created_by ? doc.created_by.name : '',
+      watermarked_doc_url: doc.watermarked_doc_url ?? doc.doc_url,
+    };
+  });
 });
 
 const onDocDelete = name => {
@@ -2211,6 +2231,10 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
@@ -3735,7 +3759,12 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
@@ -3885,6 +3914,7 @@ const onAddUpdate = () => {
     />
 
     <AuditLogs
+      :quoteType="$page.props.modelType"
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -329,5 +330,14 @@ class AllocationService
             $leadAllocation->save();
         }
 
+    }
+
+    public function leadAllocationFailed(string $uuid, QuoteTypes $quoteType)
+    {
+        $quote = $quoteType->model()->where('uuid', $uuid)->first();
+
+        if ($quote) {
+            $quote->markLeadAllocationFailed();
+        }
     }
 }

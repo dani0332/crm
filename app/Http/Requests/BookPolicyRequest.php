@@ -56,11 +56,18 @@ class BookPolicyRequest extends FormRequest
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 
+            $isDuplicateOrCIRLead = ! empty($quoteModel->parent_duplicate_quote_id);
+            $payment = Payment::where('code', $quoteModel->code)->mainLeadPayment()->first();
+
+            if ($isDuplicateOrCIRLead && empty($payment)) {
+                $payment = Payment::where([
+                    'paymentable_id' => $quoteModel->id,
+                    'paymentable_type' => $quoteModel->getMorphClass(),
+                ])->mainLeadPayment()->first();
+            }
+
             $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')
-                ->where(function ($query) use ($quoteModel) {
-                    $query->where('paymentable_id', '!=', request()->quote_id)
-                        ->where('paymentable_type', '!=', $quoteModel::class);
-                })
+                ->whereNot('code', $payment->code)
                 ->where('insurer_tax_number', request()->insurer_tax_invoice_number)
                 ->select('insurer_tax_number')->first();
 
@@ -69,10 +76,7 @@ class BookPolicyRequest extends FormRequest
             }
 
             $isInsurerComTaxNumberExists = Payment::whereNotNull('insurer_commmission_invoice_number')
-                ->where(function ($query) use ($quoteModel) {
-                    $query->where('paymentable_id', '!=', request()->quote_id)
-                        ->where('paymentable_type', '!=', $quoteModel::class);
-                })
+                ->whereNot('code', $payment->code)
                 ->where('insurer_commmission_invoice_number', request()->insurer_commmission_invoice_number)
                 ->select('insurer_commmission_invoice_number')->first();
 

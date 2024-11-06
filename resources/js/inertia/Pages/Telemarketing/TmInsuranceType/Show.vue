@@ -79,6 +79,7 @@ const permissionsEnum = page.props.permissionsEnum;
   <AuditLogs
     v-if="can(permissionsEnum.Auditable)"
     :type="'App\\Models\\TmInsuranceType'"
+    :quoteType="'TmInsuranceType'"
     :id="$page.props.tminsurancetype.id"
   />
 </template>

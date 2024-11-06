@@ -14,6 +14,7 @@ const tableHeader = [
   { text: 'NAME', value: 'name' },
   { text: 'START DATE', value: 'start_date' },
   { text: 'END DATE', value: 'end_date' },
+  { text: 'Batch Type', value: 'quote_type_id' },
 ];
 </script>
 <template>
@@ -41,17 +42,22 @@ const tableHeader = [
     >
       <template #item-id="item">
         <a
+          v-if="item.quote_type_id == 1"
           :href="route('renewal-batches-edit', item)"
           class="text-primary-500 hover:underline"
         >
           {{ item.id }}
         </a>
+        <span v-else>{{ item.id }}</span>
       </template>
       <template #item-start_date="{ start_date }">
         {{ start_date ? formatted(start_date) : 'N/A' }}
       </template>
       <template #item-end_date="{ end_date }">
         {{ end_date ? formatted(end_date) : 'N/A' }}
+      </template>
+      <template #item-quote_type_id="{ quote_type_id }">
+        {{ quote_type_id == 1 ? 'Motor' : 'Non-motor' }}
       </template>
     </DataTable>
 
