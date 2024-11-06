@@ -1818,8 +1818,7 @@ class RenewalsUploadService
 
         // Check if the batch exists in the table with the extracted year and week number
         $batch = RenewalBatch::where([
-            ['name', $weekNumber],
-            ['year', $year],
+            ['name', $weekNumber.'-'.$year],
             ['quote_type_id', null],
         ])->first();
 
