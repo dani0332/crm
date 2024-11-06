@@ -34,9 +34,4 @@ class RenewalsUploadLeads extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class, 'created_by_id', 'id');
     }
-
-    public function hayStack()
-    {
-        return $this->belongsTo(Haystack::class, 'haystack_id');
-    }
 }
