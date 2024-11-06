@@ -92,10 +92,10 @@ class TravelAllocationService extends AllocationService
                     });
                 }
             })
-            ->when($isSIC, fn($q) => $q->where('la.is_hardstop', true)) // Only allow users with is_hardstop if $isSIC is true
+            ->when($isSIC, fn ($q) => $q->where('la.is_hardstop', true)) // Only allow users with is_hardstop if $isSIC is true
             ->when($previousAdvisorId,
-                fn($q) => $q->where('users.id', $previousAdvisorId),
-                fn($q) => $q->orderBy('la.last_allocated', 'asc')
+                fn ($q) => $q->where('users.id', $previousAdvisorId),
+                fn ($q) => $q->orderBy('la.last_allocated', 'asc')
             )
             ->orderBy('la.last_allocated', 'asc')
             ->first();

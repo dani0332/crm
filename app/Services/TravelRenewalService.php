@@ -204,7 +204,7 @@ class TravelRenewalService extends BaseService
             [
                 'name' => $batchName,
                 'month' => $expiryDate->month,
-                'year' => $expiryDate->year
+                'year' => $expiryDate->year,
             ],  // Check if batch with this name exists
             [
                 'start_date' => $startDate,

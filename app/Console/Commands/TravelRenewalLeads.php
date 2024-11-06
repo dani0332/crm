@@ -3,9 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
 use App\Services\TravelRenewalService;
 use Illuminate\Console\Command;
-use App\Models\ApplicationStorage;
 
 class TravelRenewalLeads extends Command
 {
@@ -28,7 +28,7 @@ class TravelRenewalLeads extends Command
      */
     public function handle()
     {
-        $isTravelRenewals = ApplicationStorage::where('key_name',ApplicationStorageEnums::TRAVEL_RENEWALS_SWITCH)->first();
+        $isTravelRenewals = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_RENEWALS_SWITCH)->first();
         if ($isTravelRenewals && $isTravelRenewals->value == 1) {
             info('Starting process to retrieve travel renewal leads | Time: '.now());
             app(TravelRenewalService::class)->getTravelRenewalLeads();
