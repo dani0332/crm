@@ -36,7 +36,6 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
         SageProcessesMarkFailedCommand::class,
-        \App\Console\Commands\SyncCourierQuotesOnce::class,
     ];
 
     /**

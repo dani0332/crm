@@ -1613,6 +1613,11 @@ const sendPolicyToClient = () => {
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\CarQuote'" :id="quote.id" />
+    <AuditLogs
+      :type="'App\\Models\\CarQuote'"
+      :quoteType="$page.props.quoteType"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
   </div>
 </template>
