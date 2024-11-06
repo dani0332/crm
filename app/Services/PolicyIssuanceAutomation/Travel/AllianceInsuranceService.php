@@ -202,7 +202,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'last_name_traveller' => [$quote->last_name],
             'dob' => [$dateOfBirth],
             'passport_number' => [$customerMember->passport],
-            'nationality_traveller' => [$quote->nationality_id],
+            'nationality_traveller' => [$quote->nationality?->alliance_nationality_id],
             'email' => $quote->email,
             'mobile' => $quote->mobile_no,
             'agency_reference' => 'asc',
