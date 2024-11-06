@@ -25,6 +25,7 @@ use App\Enums\ThirdPartyTagEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Exports\RenewalQuotesExport;
+use App\Facades\Ken;
 use App\Imports\TravelUploadAndCreateImport;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
@@ -53,6 +54,7 @@ use App\Models\HealthPlan;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
+use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteStatus;
 use App\Models\QuoteTag;
 use App\Models\QuoteType;
@@ -866,6 +868,16 @@ class RenewalsUploadService
                 $class = $quotType.'QuoteRequestDetail';
                 $quote->{$class}()->create($detailData);
             }
+            if ($quoteType->code == quoteTypeCode::Car) {
+
+                $quoteDetail = new QuoteAdditionalDetail;
+                $quoteDetail->quote_uuid = $quote->uuid;
+                $quoteDetail->quote_type_id = QuoteTypeId::Car;
+                $quoteDetail->flags = (object) ['whatsapp_consent' => true];
+                $quoteDetail->save();
+
+                info($logPrefix.'-insertion in mongo db for : UUID: '.$quote->uuid);
+            }
 
             //update advisor assign date/time
             if (! empty($advisorId)) {
@@ -1146,8 +1158,11 @@ class RenewalsUploadService
             'provider_id' => $provider->id,
         ])->with(['carAddons' => function ($q) {
             $q->whereIn('code', [
-                CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
-                CarPlanAddonsCode::CAR_HIRE, CarPlanAddonsCode::OMAN_COVER, CarPlanAddonsCode::BREAKDOWN_COVER,
+                CarPlanAddonsCode::DRIVER_COVER,
+                CarPlanAddonsCode::PASSENGER_COVER,
+                CarPlanAddonsCode::CAR_HIRE,
+                CarPlanAddonsCode::OMAN_COVER,
+                CarPlanAddonsCode::BREAKDOWN_COVER,
             ])->with('carAddonOptions');
         }])->first();
 
@@ -1260,6 +1275,17 @@ class RenewalsUploadService
             Log::info('Renewals OCB Email started for uuid: '.$carQuote->uuid);
 
             if ($carQuote->previous_quote_policy_number != null) {
+
+                $response = Ken::request('/send-motor-renewal-ocb-whatsapp', 'post', [
+                    'quoteUID' => $carQuote->uuid,
+                    'filters' => [[
+                        'field' => 'isRenewalSort',
+                        'value' => false,
+                    ]],
+                    'callSource' => 'imcrm',
+                ]);
+                info('fn: renewalBatchEmailProcess renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
+
                 $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 $emailTemplateId = $this->getEmailTemplateId($carQuote, $quotePlansCount);
@@ -1675,8 +1701,11 @@ class RenewalsUploadService
                                     $carPlan->load([
                                         'carAddons' => function ($q) {
                                             $q->whereIn('code', [
-                                                CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
-                                                CarPlanAddonsCode::CAR_HIRE, CarPlanAddonsCode::OMAN_COVER, CarPlanAddonsCode::BREAKDOWN_COVER,
+                                                CarPlanAddonsCode::DRIVER_COVER,
+                                                CarPlanAddonsCode::PASSENGER_COVER,
+                                                CarPlanAddonsCode::CAR_HIRE,
+                                                CarPlanAddonsCode::OMAN_COVER,
+                                                CarPlanAddonsCode::BREAKDOWN_COVER,
                                             ])->with('carAddonOptions');
                                         },
                                     ]);
@@ -1694,9 +1723,11 @@ class RenewalsUploadService
                                     foreach ($addons as $key => $addonCode) {
                                         info('planType:'.$leadData->plan_type.' insurer:'.$leadData->insurer.' addonCode:'.$addonCode);
 
-                                        if ($leadData->plan_type == CarPlanType::TPL &&
+                                        if (
+                                            $leadData->plan_type == CarPlanType::TPL &&
                                             $leadData->insurer == InsuranceProvidersEnum::TM &&
-                                            $addonCode == CarPlanAddonsCode::CAR_HIRE) {
+                                            $addonCode == CarPlanAddonsCode::CAR_HIRE
+                                        ) {
                                             continue;
                                         }
 

@@ -23,7 +23,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class PersonalQuoteRepository extends BaseRepository
 {
@@ -185,12 +184,12 @@ class PersonalQuoteRepository extends BaseRepository
 
                 return ['status' => true, 'message' => 'File Uploaded'];
             } catch (\Exception $exception) {
-                logger()->error('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
+                info('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
 
                 return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
             }
         } catch (\Exception $exception) {
-            Log::error('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
+            info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
 
             return ['status' => true, 'message' => 'Document upload failed, please try again'];
         }

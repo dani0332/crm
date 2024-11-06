@@ -29,7 +29,7 @@ class BusinessQuoteObserver
     {
         $dirty = $businessQuote->getDirty();
         if (
-            $businessQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $businessQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             BusinessQuote::withoutEvents(function () use ($businessQuote) {
