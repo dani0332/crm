@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\Revival\HealthRevivalLeadsCreationJob;
@@ -44,6 +45,10 @@ class DttHealth extends Command
         $dateOne = Carbon::now()->subMonths(11)->toDateString();
         $dateTwo = Carbon::now()->subMonths(11)->addDay(1)->toDateString();
         $logPrefix = 'HealthRevivalLeadsCreationJob-';
+
+        $excludeSources = [
+            LeadSourceEnum::REVIVAL,
+        ];
         $leads = HealthQuote::select(
             'id',
             'uuid',
@@ -75,6 +80,7 @@ class DttHealth extends Command
             ->where('is_revived', '=', false)
             ->where('created_at', '>=', $dateOne)
             ->where('created_at', '<', $dateTwo)
+            ->whereNotIn('source', $excludeSources)
             ->where(function ($q) {
                 $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved]);
                 $q->orWhereNull('quote_status_id');
