@@ -230,7 +230,7 @@ class EmbeddedProductRepository extends BaseRepository
         if ($transaction && in_array($transaction->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])) {
 
             if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
-                return $this->canCancelCourierPayment($transaction);
+                return empty($transaction->quoteRequest->customer?->address);
             }
 
             $paymentDate = Carbon::parse($transaction->payment_status_date);
@@ -238,11 +238,6 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return false;
-    }
-
-    private function canCancelCourierPayment($transaction)
-    {
-        return empty($transaction->quoteRequest->customer?->address);
     }
 
     private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
@@ -640,25 +635,15 @@ class EmbeddedProductRepository extends BaseRepository
         $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
         $type = QuoteType::where('code', $data['modelType'])->first();
 
-        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest.customer.address', 'product.embeddedProduct'])->where('quote_request_id', $data['quote_id'])
+        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $data['quote_id'])
             ->where('quote_type_id', $type->id)
             ->where('is_selected', true)
             ->whereIn('product_id', $embeddedProductOptionsIds)
             ->get();
 
         if ($embededTransaction->isNotEmpty()) {
-            $transaction = $embededTransaction[0];
-
-            if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                && $this->canCancelCourierPayment($transaction) == false) {
-
-                return [
-                    'data' => ['Cannot cancel payment for courier, address is already added'],
-                    'code' => 403,
-                ];
-            }
-
             if (! empty($embededTransaction[0]['payments'][0])) {
+                $transaction = $embededTransaction[0];
                 $payment = $transaction['payments'][0];
                 $paymentStatus = $payment['payment_status_id'];
 
