@@ -145,7 +145,7 @@ const formattedRates = computed(() => {
           <li>
             Please ensure there are no spaces in start and end of columns data.
           </li>
-          <li>Please ensure max allowed size is 2mb (2048kb).</li>
+          <li>Please ensure max allowed size is 5mb (5120kb).</li>
           <li>
             Please ensure all required columns data filled in the xlsx file.
           </li>

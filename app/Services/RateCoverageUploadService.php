@@ -8,12 +8,12 @@ use App\Imports\CoveragesImport;
 use App\Imports\RatesImport;
 use App\Jobs\UploadCoveragesJob;
 use App\Jobs\UploadRatesJob;
-use App\Models\RateCoveragesProcess;
-use App\Models\RatesCoveragesUpload;
+use App\Models\RateCoverageProcess;
+use App\Models\RateCoverageUpload;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class RatesCoveragesUploadService
+class RateCoverageUploadService
 {
     public function uploadFile()
     {
@@ -46,7 +46,7 @@ class RatesCoveragesUploadService
         ];
         info('Coverage Record Created in DB');
 
-        return RatesCoveragesUpload::create($uploadLeadData);
+        return RateCoverageUpload::create($uploadLeadData);
     }
 
     public function coveragesUploadCreate($data)
@@ -58,7 +58,7 @@ class RatesCoveragesUploadService
         UploadCoveragesJob::dispatch($uploadCoverages);
     }
 
-    public function processUploadCoverages(RatesCoveragesUpload $uploadCoverages)
+    public function processUploadCoverages(RateCoverageUpload $uploadCoverages)
     {
         $logPrefix = 'UAC FN: processUploadCreate CoverageId: '.$uploadCoverages->id.' FileName: '.$uploadCoverages->file_name;
 
@@ -73,12 +73,12 @@ class RatesCoveragesUploadService
                 $uploadRecord = new CoveragesImport($uploadCoverages);
                 $uploadRecord->import($uploadCoverages->file_path, 'azureIM');
 
-                $rateCoveragesProcesses = RateCoveragesProcess::where('rate_coverage_id', $uploadCoverages->id)->get();
+                $rateCoverageProcesses = RateCoverageProcess::where('rate_coverage_id', $uploadCoverages->id)->get();
 
                 $validDataCount = 0;
                 $failedDataCount = 0;
 
-                foreach ($rateCoveragesProcesses as $process) {
+                foreach ($rateCoverageProcesses as $process) {
                     $data = $process->data;
 
                     if (empty($data['plan_code'])) {
@@ -116,7 +116,7 @@ class RatesCoveragesUploadService
     public function createCoveragesData($uploadCoverages)
     {
         info('Coverage Record Created Start');
-        RateCoveragesProcess::where('rate_coverage_id', $uploadCoverages->id)
+        RateCoverageProcess::where('rate_coverage_id', $uploadCoverages->id)
             ->chunk(500, function ($coverages) {
                 $planCodes = $coverages->pluck('data')->map(function ($data) {
                     if (is_string($data)) {
@@ -165,7 +165,7 @@ class RatesCoveragesUploadService
 
     public function getUploadCoverages()
     {
-        $coverages = RateCoveragesProcess::select(
+        $coverages = RateCoverageProcess::select(
             'rate_coverage_uploads.file_name as fileName',
             'rate_coverage_uploads.status as status',
             'rate_coverage_uploads.total_records as totalRecords',
@@ -206,10 +206,10 @@ class RatesCoveragesUploadService
         ];
         info('Rate Record Created In DB');
 
-        return RatesCoveragesUpload::create($uploadLeadData);
+        return RateCoverageUpload::create($uploadLeadData);
     }
 
-    public function processUploadRate(RatesCoveragesUpload $uploadRate)
+    public function processUploadRate(RateCoverageUpload $uploadRate)
     {
         $logPrefix = 'UAC FN: processUploadCreate CoverageId: '.$uploadRate->id.' FileName: '.$uploadRate->file_name;
 
@@ -224,11 +224,11 @@ class RatesCoveragesUploadService
                 $uploadRecord = new RatesImport($uploadRate);
                 $uploadRecord->import($uploadRate->file_path, 'azureIM');
 
-                $rateCoveragesProcesses = RateCoveragesProcess::where('rate_coverage_id', $uploadRate->id)->get();
+                $rateCoverageProcesses = RateCoverageProcess::where('rate_coverage_id', $uploadRate->id)->get();
                 $validDataCount = 0;
                 $failedDataCount = 0;
 
-                foreach ($rateCoveragesProcesses as $process) {
+                foreach ($rateCoverageProcesses as $process) {
                     $data = $process->data;
 
                     if (empty($data['eligibility_code']) || empty($data['plan_code']) || empty($data['copayment_code'])) {
@@ -266,7 +266,7 @@ class RatesCoveragesUploadService
     public function createRateData($uploadRate)
     {
         info('Rate Record Created Start');
-        RateCoveragesProcess::where('rate_coverage_id', $uploadRate->id)
+        RateCoverageProcess::where('rate_coverage_id', $uploadRate->id)
             ->chunk(500, function ($coverages) {
                 $planCodes = $coverages->pluck('data')->map(function ($data) {
                     if (is_string($data)) {
@@ -315,7 +315,7 @@ class RatesCoveragesUploadService
 
     public function getUploadRates()
     {
-        $rates = RateCoveragesProcess::select(
+        $rates = RateCoverageProcess::select(
             'rate_coverage_uploads.file_name as fileName',
             'rate_coverage_uploads.status as status',
             'rate_coverage_uploads.total_records as totalRecords',

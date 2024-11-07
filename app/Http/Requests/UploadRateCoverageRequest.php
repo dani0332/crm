@@ -2,7 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Models\RatesCoveragesUpload;
+use App\Rules\FileNameExists;
+use App\Models\RateCoverageUpload;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UploadRateCoverageRequest extends FormRequest
@@ -24,11 +25,15 @@ class UploadRateCoverageRequest extends FormRequest
      */
     public function rules()
     {
-        $rules = [
-            'file_name' => 'required|file|mimes:xls,xlsx|max:2048',
+        return [
+            'file_name' => [
+                'required',
+                'file',
+                'mimes:xls,xlsx',
+                'max:5120',
+                new FileNameExists('rate_coverage_uploads', 'file_name'),
+            ],
         ];
-
-        return $rules;
     }
 
     /**
@@ -44,17 +49,5 @@ class UploadRateCoverageRequest extends FormRequest
             'file_name.mimes' => 'The file must be an Excel file with .xls or .xlsx extension.',
             'file_name.max' => 'The file size must not exceed 2MB.',
         ];
-    }
-
-    /**
-     * check for duplicate file name
-     */
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            if (request()->hasFile('file_name') && RatesCoveragesUpload::where('file_name', request()->file('file_name')->getClientOriginalName())->first()) {
-                $validator->errors()->add('type', 'This file has already been uploaded. Please upload a new file with a unique file name.');
-            }
-        });
     }
 }

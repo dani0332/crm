@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RateCoveragesProcess extends Model
+class RateCoverageProcess extends Model
 {
     use HasFactory;
 
     protected $fillable = ['rate_coverage_id', 'type', 'data', 'validation_errors'];
-    protected $table = 'rate_coverage_processes';
     protected $casts = [
         'data' => 'array',
         'validation_errors' => 'array',

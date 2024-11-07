@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Enums\ProcessStatusCode;
-use App\Models\RatesCoveragesUpload;
-use App\Services\RatesCoveragesUploadService;
+use App\Models\RateCoverageUpload;
+use App\Services\RateCoverageUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -26,7 +26,7 @@ class UploadCoveragesJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(RatesCoveragesUpload $uploadCoverages)
+    public function __construct(RateCoverageUpload $uploadCoverages)
     {
         $this->uploadCoverages = $uploadCoverages;
     }
@@ -36,7 +36,7 @@ class UploadCoveragesJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle(RatesCoveragesUploadService $uploadCoveragesService)
+    public function handle(RateCoverageUploadService $uploadCoveragesService)
     {
         info('Coverage Job DisPatch');
 

@@ -3,19 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UploadRateCoverageRequest;
-use App\Services\RatesCoveragesUploadService;
+use App\Services\RateCoverageUploadService;
 
-class RatesCoveragesUploadController extends Controller
+class RateCoverageUploadController extends Controller
 {
-    private $ratesCoveragesUploadService;
+    private $rateCoverageUploadService;
 
-    public function __construct(RatesCoveragesUploadService $ratesCoveragesUploadService)
+    public function __construct(RateCoverageUploadService $rateCoverageUploadService)
     {
-        $this->ratesCoveragesUploadService = $ratesCoveragesUploadService;
+        $this->rateCoverageUploadService = $rateCoverageUploadService;
     }
+
+    /**
+     * Fetch upload coverages
+     *
+     * @return \Inertia\Response
+     */
     public function uploadCoverages()
     {
-        $coverages = $this->ratesCoveragesUploadService->getUploadCoverages();
+        $coverages = $this->rateCoverageUploadService->getUploadCoverages();
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
@@ -26,16 +32,27 @@ class RatesCoveragesUploadController extends Controller
         ]);
     }
 
+    /**
+     * Upload coverages file.
+     *
+     * @param UploadRateCoverageRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function coveragesUploadCreate(UploadRateCoverageRequest $request)
     {
-        $this->ratesCoveragesUploadService->coveragesUploadCreate($request->validated());
+        $this->rateCoverageUploadService->coveragesUploadCreate($request->validated());
 
         return response()->json(['message' => 'Coverages upload is being processed.']);
     }
 
+    /**
+     * Fetch upload rates
+     *
+     * @return \Inertia\Response
+     */
     public function uploadRates()
     {
-        $rates = $this->ratesCoveragesUploadService->getUploadRates();
+        $rates = $this->rateCoverageUploadService->getUploadRates();
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
@@ -46,9 +63,15 @@ class RatesCoveragesUploadController extends Controller
         ]);
     }
 
+    /**
+     * Upload rates.
+     *
+     * @param UploadRateCoverageRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function rateUploadCreate(UploadRateCoverageRequest $request)
     {
-        $this->ratesCoveragesUploadService->rateUploadCreate($request->validated());
+        $this->rateCoverageUploadService->rateUploadCreate($request->validated());
 
         return response()->json(['message' => 'Rates upload is being processed.']);
     }

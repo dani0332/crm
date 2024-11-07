@@ -2,8 +2,8 @@
 
 namespace App\Imports;
 
-use App\Models\RateCoveragesProcess;
-use App\Models\RatesCoveragesUpload;
+use App\Models\RateCoverageProcess;
+use App\Models\RateCoverageUpload;
 use App\Traits\RenewalsImportTrait;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -28,7 +28,7 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
     private $uploadType;
     private $uploadCoverages;
 
-    public function __construct(RatesCoveragesUpload $uploadCoverages)
+    public function __construct(RateCoverageUpload $uploadCoverages)
     {
         $this->uploadCoverages = $uploadCoverages;
     }
@@ -40,7 +40,7 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
 
         $coverageData = $this->mapQuoteData($row);
 
-        return RateCoveragesProcess::create([
+        return RateCoverageProcess::create([
             'rate_coverage_id' => $this->uploadCoverages->id,
             'data' => $coverageData,
             'type' => 'coverage',
@@ -126,7 +126,7 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
 
                 foreach ($failed as $failedRecord) {
                     info('Record Added in Coverage Import');
-                    RateCoveragesProcess::create($failedRecord);
+                    RateCoverageProcess::create($failedRecord);
                 }
             },
         ];
