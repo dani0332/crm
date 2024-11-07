@@ -127,6 +127,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                     $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
                         'quoteUID' => $healthQuote->uuid,
+                        'isModified' => true,
                     ]);
 
                     if (! isset($response['quote']['plans'])) {
