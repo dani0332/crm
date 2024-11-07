@@ -111,7 +111,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'car_model_id' => $this->lead->car_model_id,
                 'vehicle_type_id' => $this->lead->vehicle_type_id,
                 'source' => LeadSourceEnum::REVIVAL,
-            ])->first();
+            ])->where('created_at', '>=', Carbon::now()->subMonths(11)->toDateString())->first();
 
             $revivedLead = null;
             if (! $carQuoteExists) {
@@ -126,7 +126,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 }
             } else {
                 $revivalCarQuoteUUID = $carQuoteExists->uuid;
-
+                info($logPrefix.$this->lead->uuid.' - childLeadFound - '.$revivalCarQuoteUUID);
                 $revivedLead = DttRevival::where([
                     'quote_type_id' => QuoteTypes::CAR->id(),
                     'uuid' => $revivalCarQuoteUUID,
