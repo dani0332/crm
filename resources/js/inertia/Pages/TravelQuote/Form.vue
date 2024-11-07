@@ -361,11 +361,6 @@ watch(mappedDestinationIds, newVal => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <!-- <x-alert class="mb-4" v-for="error in errors" :key="error">
-      <h4 class="text-red-500">
-        <b>{{ error }}</b>
-      </h4>
-    </x-alert> -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
         <x-field label="Where will your journey take you?" required>

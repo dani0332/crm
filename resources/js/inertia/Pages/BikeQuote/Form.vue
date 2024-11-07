@@ -219,16 +219,6 @@ const getModelDetails = onchange => {
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
-      <!-- <x-alert
-        color="error"
-        class="mb-5"
-        v-if="
-          $page.props?.errors && Object.keys($page.props?.errors).length > 0
-        "
-      >
-        {{ $page.props?.errors }}
-      </x-alert> -->
-
       <div class="grid sm:grid-cols-2 gap-4">
         <x-field label="FIRST NAME" required>
           <x-input

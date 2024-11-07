@@ -240,18 +240,6 @@ const addressTypes = [
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <!-- <x-alert
-          v-if="quoteForm.errors.length > 0"
-          color="error"
-          class="sm:col-span-2"
-        >
-          <ul class="list-disc list-inside">
-            <li v-for="error in quoteForm.errors" :key="error">
-              {{ error }}
-            </li>
-          </ul>
-        </x-alert> -->
-
         <!-- <x-field label="RENEWAL BATCH" v-if="isEdit" :required="isDisbaled ? false : hasRole(rolesEnum.CarManager)">
 					<x-input
 						v-model="quoteForm.renewal_batch"
