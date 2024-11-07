@@ -522,7 +522,7 @@ watch(mappedDestinationIds, newVal => {
             class="w-full"
             :disabled="editMode"
             :rules="[isEmail]"
-            :error="quoteForm.errors.last_name"
+            :error="quoteForm.errors.email"
           />
         </x-field>
         <x-field label="Mobile number" required>
