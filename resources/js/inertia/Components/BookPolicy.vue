@@ -352,7 +352,7 @@ let isLifeLead = page.props.quoteType == quoteTypeCodeEnum.Life;
 let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {
-  let toolTip = productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE;
+  let toolTip = '';
   if (bpForm.commission_vat_applicable > 0) {
     if (isLifeLead) {
       toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
@@ -374,7 +374,7 @@ const commissionVatNotApplicableTooltip = computed(() => {
   return toolTip;
 });
 const commissionVatApplicableTooltip = computed(() => {
-  let toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE;
+  let toolTip = '';
   if (bpForm.commission_vat_not_applicable > 0) {
     if (isLifeLead) {
       toolTip =
@@ -855,7 +855,7 @@ onMounted(() => {
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
-                        commissionVatNotApplicableTooltip
+                        productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE
                       }}</span>
                     </template>
                   </x-tooltip>
@@ -867,6 +867,7 @@ onMounted(() => {
                     placeholder="Commission VAT NOT APPLICABLE"
                     class="w-full"
                     :disabled="disableCommissionVatNotApplicable"
+                    :title="commissionVatNotApplicableTooltip"
                   />
                 </dd>
               </div>
@@ -897,7 +898,7 @@ onMounted(() => {
 
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
-                        commissionVatApplicableTooltip
+                        productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE
                       }}</span>
                     </template>
                   </x-tooltip>
@@ -909,6 +910,7 @@ onMounted(() => {
                     placeholder="Commission VAT APPLICABLE"
                     class="w-full"
                     :disabled="disableCommissionVatApplicable"
+                    :title="commissionVatApplicableTooltip"
                   />
                 </dd>
               </div>
