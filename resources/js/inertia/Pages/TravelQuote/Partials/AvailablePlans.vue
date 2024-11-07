@@ -49,12 +49,16 @@ const totalPremiumWithVat = computed(() => {
   return props.plan.discountPremium + addonVat + props.plan.vat;
 });
 
-const validateAddons = (addons) => {
+const validateAddons = addons => {
   const excludedAddons = ['myAlfred', 'fastTrackClaim'];
   for (let addon of addons) {
     for (let option of addon.addonOptions) {
-      if (option.isSelected === true && parseInt(option.price ?? 0) === 0 && !excludedAddons.includes(addon.code)) {
-          notification.error({
+      if (
+        option.isSelected === true &&
+        parseInt(option.price ?? 0) === 0 &&
+        !excludedAddons.includes(addon.code)
+      ) {
+        notification.error({
           title: 'Addon price must be greater than 0',
           position: 'top',
         });
@@ -63,7 +67,7 @@ const validateAddons = (addons) => {
     }
   }
   return true;
-}
+};
 
 const onUpdatePlan = () => {
   let addons = [];
