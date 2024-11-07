@@ -5,6 +5,7 @@ namespace App\Strategies\Allocations;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
+use App\Models\HealthQuote;
 use App\Services\HealthAllocationService;
 use App\Services\HealthEmailService;
 use Carbon\Carbon;
@@ -42,7 +43,7 @@ class HealthAllocation implements Allocation
                 return AllocationFactory::createResponse(0, 'No health team found', Response::HTTP_NOT_FOUND);
             }
 
-            $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
+            $advisor = $this->fetchAvailableAdvisor($lead->health_team_type, $lead);
 
             if (! $advisor) {
                 $this->healthAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::HEALTH);
@@ -81,9 +82,9 @@ class HealthAllocation implements Allocation
         $this->healthAllocationService->assignTeamBasedOnPrices($lead);
     }
 
-    private function fetchAvailableAdvisor($leadTeam)
+    private function fetchAvailableAdvisor($leadTeam, HealthQuote $lead)
     {
-        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, false);
+        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, false, $lead);
     }
 
     private function assignLead($lead, $advisor)

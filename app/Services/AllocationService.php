@@ -8,12 +8,12 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
+use App\Models\BuyLeadRequestLog;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadAllocation;
 use App\Models\Tier;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AllocationService
@@ -34,20 +34,6 @@ class AllocationService
     public function getTierById($tierId)
     {
         return Tier::where('id', $tierId)->first();
-    }
-
-    public function updateLeadAllocationCounts($userId): void
-    {
-        $timestamp = Carbon::now()->timestamp;
-
-        DB::table('lead_allocation')
-            ->where('user_id', $userId)
-            ->update([
-                'allocation_count' => DB::raw('allocation_count + 1'),
-                'auto_assignment_count' => DB::raw('auto_assignment_count + 1'),
-                'last_allocated' => $timestamp,
-                'updated_at' => now(),
-            ]);
     }
 
     public function getValuation($carModelDetailId, $yearOfManufacture)
@@ -73,9 +59,8 @@ class AllocationService
 
         if ($getStatusCode == 200) {
             $getContents = $request->getBody();
-            $getdecodeContents = json_decode($getContents);
 
-            return $getdecodeContents;
+            return json_decode($getContents);
         } else {
             return 'API failed';
         }
@@ -85,7 +70,6 @@ class AllocationService
     {
         try {
             $leadAllocation = LeadAllocation::latest();
-            info('Allocation Quote Type Id : '.$quoteTypeId);
             if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
@@ -97,17 +81,12 @@ class AllocationService
         }
     }
 
-    public function addAllocationCounts($userId, $quoteTypeId = null)
+    public function addAllocationCounts($userId, $quoteTypeId = null, bool $isBuyLead = false)
     {
-
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
         info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
         if (! empty($allocationRecord)) {
-            $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
-            $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
-            $allocationRecord->updated_at = now();
-            $allocationRecord->last_allocated = now()->timestamp;
-            $allocationRecord->save();
+            $allocationRecord->adjustAssignmentCounts($isBuyLead);
         } else {
             info('Allocation record not found against advisor');
         }
@@ -124,30 +103,7 @@ class AllocationService
         );
     }
 
-    public function getAssignmentTypeText($assignmentType)
-    {
-        $assignmentText = '';
-        switch ($assignmentType) {
-            case 1:
-                $assignmentText = 'System Assigned';
-                break;
-            case 2:
-                $assignmentText = 'System ReAssigned';
-                break;
-            case 3:
-                $assignmentText = 'Manual Assigned';
-                break;
-            case 4:
-                $assignmentText = 'Manual ReAssigned';
-                break;
-            default:
-                break;
-        }
-
-        return $assignmentText;
-    }
-
-    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null)
+    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null, bool $isBuyLead = false)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
@@ -156,15 +112,19 @@ class AllocationService
 
         info('Previous assignment type is : '.$previousAssignmentType);
 
+        if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD])) {
+            BuyLeadRequestLog::reAssign($quoteTypeId, $lead, $newAdvisorId);
+        }
+
         //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD];
 
         // Get the allocation record for the new advisor
         info('adjust Allocation Quote Type Id : '.$quoteTypeId);
         $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor
-        $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
+        $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes, $isBuyLead);
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
@@ -176,7 +136,7 @@ class AllocationService
         }
     }
 
-    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
+    private function updateAllocationCountsForNewAdvisor(LeadAllocation $advisorAllocationRecord, $lead, $systemAssignedTypes, bool $isBuyLead = false)
     {
         if ($advisorAllocationRecord === null || $lead === null) {
             return;
@@ -185,49 +145,41 @@ class AllocationService
         // Determine if the lead was system-assigned or manually assigned
         $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
 
-        // Update allocation counts based on assignment type
-        if ($isSystemAssigned) {
-            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
-        } else {
-            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
-        }
-
-        // Increment the total allocation count and update timestamps
-        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
-        $advisorAllocationRecord->last_allocated = now()->timestamp;
-        $advisorAllocationRecord->updated_at = now();
-
-        // Save the updated allocation record
-        $advisorAllocationRecord->save();
+        $advisorAllocationRecord->adjustAssignmentCounts($isBuyLead, $isSystemAssigned);
     }
 
     private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
     {
         // Check if there is a previous advisor and the lead assignment date is today
-        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
-            if ($previousAdvisorAllocationRecord !== null) {
-
-                // Determine if the previous assignment was system-assigned
-                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
-
-                // Update allocation counts based on assignment type (if applicable)
-                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('About to deduct from auto assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                } elseif (! $isSystemAssigned && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('About to deduct from manual assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-                }
-
-                // Decrement the total allocation count (if it's greater than 0) and update timestamps
-                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
-                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
-                    $previousAdvisorAllocationRecord->updated_at = now();
-                }
-
-                // Save the updated allocation record
-                $previousAdvisorAllocationRecord->save();
+        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay() && $previousAdvisorAllocationRecord !== null) {
+            // if someone's bought lead is re assigning then mark his buy_leas_status to disabled
+            if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD])) {
+                $previousAdvisorAllocationRecord->buy_lead_status = false;
             }
+
+            // Determine if the previous assignment was system-assigned
+            $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
+
+            // Update allocation counts based on assignment type (if applicable)
+            if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
+                info('About to deduct from auto assignment count for previous advisor');
+                $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
+            } elseif (! $isSystemAssigned && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
+                info('About to deduct from manual assignment count for previous advisor');
+                $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
+            }
+
+            // Decrement the total allocation count (if it's greater than 0) and update timestamps
+            if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD]) && $previousAdvisorAllocationRecord->buy_lead_allocation_count > 0) {
+                $previousAdvisorAllocationRecord->buy_lead_allocation_count = $previousAdvisorAllocationRecord->buy_lead_allocation_count - 1;
+                $previousAdvisorAllocationRecord->updated_at = now();
+            } elseif ($previousAdvisorAllocationRecord->allocation_count > 0) {
+                $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
+                $previousAdvisorAllocationRecord->updated_at = now();
+            }
+
+            // Save the updated allocation record
+            $previousAdvisorAllocationRecord->save();
         }
     }
 

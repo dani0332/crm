@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Models\HealthQuote;
 use App\Services\HealthAllocationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -56,7 +57,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
                 return false; // when system is not able to identify sub team based on price
             }
 
-            $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
+            $advisor = $this->fetchAvailableAdvisor($lead->health_team_type, $lead);
 
             if (! $advisor) {
                 info('No advisors found against lead : '.$lead->uuid);
@@ -80,9 +81,9 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         $this->healthAllocationService->assignTeamBasedOnPrices($lead);
     }
 
-    private function fetchAvailableAdvisor($leadTeam)
+    private function fetchAvailableAdvisor($leadTeam, HealthQuote $lead)
     {
-        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, true);
+        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, true, $lead);
     }
 
     private function assignLead($lead, $advisor)

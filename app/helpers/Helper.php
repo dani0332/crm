@@ -1226,6 +1226,12 @@ if (! function_exists('getAssignmentTypeText')) {
             case 4:
                 $assignmentText = 'Manual ReAssigned';
                 break;
+            case 5:
+                $assignmentText = 'Bought Lead';
+                break;
+            case 6:
+                $assignmentText = 'ReAssigned to Bought Lead';
+                break;
             default:
                 break;
         }

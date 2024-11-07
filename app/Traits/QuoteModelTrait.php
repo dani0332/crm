@@ -202,4 +202,10 @@ trait QuoteModelTrait
             $sq->where('sic_advisor_requested', 1)->orWhere('payment_status_id', PaymentStatusEnum::AUTHORISED);
         });
     }
+
+    // TODO: discuss with ahsan
+    public function isBuyLeadApplicable(): bool
+    {
+        return true;
+    }
 }
