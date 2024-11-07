@@ -352,7 +352,7 @@ let isLifeLead = page.props.quoteType == quoteTypeCodeEnum.Life;
 let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {
-  let toolTip = '';
+  let toolTip = null;
   if (bpForm.commission_vat_applicable > 0) {
     if (isLifeLead) {
       toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
@@ -374,7 +374,7 @@ const commissionVatNotApplicableTooltip = computed(() => {
   return toolTip;
 });
 const commissionVatApplicableTooltip = computed(() => {
-  let toolTip = '';
+  let toolTip = null;
   if (bpForm.commission_vat_not_applicable > 0) {
     if (isLifeLead) {
       toolTip =
@@ -861,14 +861,32 @@ onMounted(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input
-                    v-model="bpForm.commission_vat_not_applicable"
-                    @change="calculateCommission"
-                    placeholder="Commission VAT NOT APPLICABLE"
-                    class="w-full"
-                    :disabled="disableCommissionVatNotApplicable"
-                    :title="commissionVatNotApplicableTooltip"
-                  />
+                  <template v-if="commissionVatNotApplicableTooltip">
+                    <x-tooltip class="w-full">
+                      <x-input
+                        v-model="bpForm.commission_vat_not_applicable"
+                        @change="calculateCommission"
+                        placeholder="Commission VAT NOT APPLICABLE"
+                        class="w-full"
+                        :disabled="disableCommissionVatNotApplicable"
+                      />
+
+                      <template #tooltip>
+                        <span class="custom-tooltip-content">{{
+                          commissionVatNotApplicableTooltip
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </template>
+                  <template v-else>
+                    <x-input
+                      v-model="bpForm.commission_vat_not_applicable"
+                      @change="calculateCommission"
+                      placeholder="Commission VAT NOT APPLICABLE"
+                      class="w-full"
+                      :disabled="disableCommissionVatNotApplicable"
+                    />
+                  </template>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -904,14 +922,32 @@ onMounted(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input
-                    v-model="bpForm.commission_vat_applicable"
-                    @change="calculateCommission"
-                    placeholder="Commission VAT APPLICABLE"
-                    class="w-full"
-                    :disabled="disableCommissionVatApplicable"
-                    :title="commissionVatApplicableTooltip"
-                  />
+                  <template v-if="commissionVatApplicableTooltip">
+                    <x-tooltip class="w-full">
+                      <x-input
+                        v-model="bpForm.commission_vat_applicable"
+                        @change="calculateCommission"
+                        placeholder="Commission VAT APPLICABLE"
+                        class="w-full"
+                        :disabled="disableCommissionVatApplicable"
+                      />
+
+                      <template #tooltip>
+                        <span class="custom-tooltip-content">{{
+                          commissionVatApplicableTooltip
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </template>
+                  <template v-else>
+                    <x-input
+                      v-model="bpForm.commission_vat_applicable"
+                      @change="calculateCommission"
+                      placeholder="Commission VAT APPLICABLE"
+                      class="w-full"
+                      :disabled="disableCommissionVatApplicable"
+                    />
+                  </template>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
