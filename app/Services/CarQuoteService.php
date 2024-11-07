@@ -2241,12 +2241,13 @@ class CarQuoteService extends BaseService
                 ]);
             $payload = [
                 'quoteUID' => $lead->uuid,
-                'quoteTypeId' => QuoteTypes::CAR->id(),
+                'quoteTypeId' => (int) QuoteTypes::CAR->id(),
                 'actionType' => $actionType,
                 'refId' => $embeddedTransactionRefId,
                 'address' => $address,
                 'alternateNumber' => $customerAdditionalContact->value ?? '',
             ];
+            info('Payload for Bird Courier Flow : ' . json_encode($payload));
 
             Ken::request('/trigger-bird-courier-flow', 'post', $payload);
         }
