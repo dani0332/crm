@@ -96,6 +96,7 @@ class CarQuoteObserver
 
     public function sendAddressReminderOnPolicyIssue(CarQuote $lead)
     {
+        info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : ' . $lead->uuid);
         $address = CustomerAddress::where('quote_uuid', $lead->uuid)->first();
         if (! $address) {
             // send address reminder to customer if address is not entered
