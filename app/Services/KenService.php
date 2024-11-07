@@ -35,7 +35,6 @@ class KenService
     public function request($path, $method = 'post', $data = [])
     {
         $url = $this->baseUrl . $path;
-        info('KEN Service Request', ['url' => $url, 'data' => $data]);
         $response = $this->client->withBody(json_encode($data), 'application/json')
             ->send($method, $url)->onError(function ($response) use ($data, $url) {
                 info('KEN Service Exception', ['data' => $data, 'url' => $url]);
@@ -45,7 +44,6 @@ class KenService
                     vAbort('KEN Service Exception');
                 }
             });
-        info('KEN Service Response', ['response' => $response->json()]);
 
         return $response->json();
     }
