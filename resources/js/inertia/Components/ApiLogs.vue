@@ -195,7 +195,11 @@ const onLoadAuditLogData = async () => {
               :color="selectedLog.status === 'failed' ? 'red' : 'success'"
               class="mt-0.5 text-[10px]"
             >
-              {{ selectedLog.status.toUpperCase() }}
+              {{
+                selectedLog.status === 'success'
+                  ? 'PASSED'
+                  : selectedLog.status.toUpperCase()
+              }}
             </x-tag>
           </dd>
         </div>
