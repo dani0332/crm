@@ -219,7 +219,7 @@ const getModelDetails = onchange => {
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
-      <x-alert
+      <!-- <x-alert
         color="error"
         class="mb-5"
         v-if="
@@ -227,7 +227,7 @@ const getModelDetails = onchange => {
         "
       >
         {{ $page.props?.errors }}
-      </x-alert>
+      </x-alert> -->
 
       <div class="grid sm:grid-cols-2 gap-4">
         <x-field label="FIRST NAME" required>
