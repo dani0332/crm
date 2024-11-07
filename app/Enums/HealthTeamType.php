@@ -15,4 +15,5 @@ final class HealthTeamType extends Enum
     const RM_NB = 'Best';
     const RM_SPEED = 'Good';
     const GROUP_MEDICAL = 'Group Medical';
+    const PCP = 'PCP';
 }
