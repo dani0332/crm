@@ -125,7 +125,7 @@ class HealthAllocationService extends AllocationService
             }
         }
 
-        return null;
+        return [];
     }
 
     public function fetchAvailableAdvisor($leadTeam, $isReassignmentJob, HealthQuote $lead)
@@ -136,7 +136,7 @@ class HealthAllocationService extends AllocationService
             $advisor = $this->fetchAdvisor('getBLAdvisorByStatus', $leadTeam, $isReassignmentJob, $lead);
         }
 
-        if (! $advisor) {
+        if (empty($advisor) || ! $advisor) {
             $advisor = $this->fetchAdvisor('getAdvisorByStatus', $leadTeam, $isReassignmentJob, $lead);
         }
 

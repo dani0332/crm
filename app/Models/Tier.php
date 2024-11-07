@@ -28,4 +28,8 @@ class Tier extends Model implements AuditableContract
         return $this->belongsToMany(User::class, 'tier_users', 'tier_id', 'user_id');
     }
 
+    public function quadrants()
+    {
+        return $this->belongsToMany(Quadrant::class, 'quad_tiers', 'tier_id', 'quad_id');
+    }
 }

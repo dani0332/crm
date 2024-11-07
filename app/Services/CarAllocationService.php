@@ -8,6 +8,7 @@ use App\Enums\CarPlanType;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuadrantCodeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RuleTypeEnum;
@@ -16,6 +17,7 @@ use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
+use App\Models\BuyLeadRequest;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -37,6 +39,9 @@ use Illuminate\Support\Facades\DB;
 
 class CarAllocationService extends AllocationService
 {
+    public bool $isBuyLeadAdvisor = false;
+    protected ?BuyLeadRequest $buyLeadRequest = null;
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         // Check if Dubai Now exclusion should be applied
@@ -261,7 +266,7 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId, CarQuote $lead)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
         info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
@@ -279,7 +284,21 @@ class CarAllocationService extends AllocationService
             $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
         }
 
-        // Define the order in which user statuses should be considered.
+        $advisors = [];
+
+        if ($lead->isBuyLeadApplicable()) {
+            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tierUserIds, $advisorId, $teamId, $isReassignmentJob);
+        }
+
+        if (empty($advisors)) {
+            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tierUserIds, $advisorId, $teamId, $isReassignmentJob);
+        }
+
+        return $advisors;
+    }
+
+    private function fetchAdvisors(string $findAdvisorFn, $tierUserIds, $advisorId, $teamId, $isReassignmentJob)
+    {
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
@@ -289,12 +308,9 @@ class CarAllocationService extends AllocationService
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
-        // Iterate through user statuses in the specified order.
         foreach ($statusOrder as $status) {
-            // Get eligible users with the specified status.
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId, $teamId);
+            $eligibleUsers = $this->{$findAdvisorFn}($status, $tierUserIds, $advisorId, $teamId);
 
-            // If eligible users are found, log the results and return them.
             if ($eligibleUsers && count($eligibleUsers) > 0) {
                 info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
 
@@ -303,8 +319,62 @@ class CarAllocationService extends AllocationService
             info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
         }
 
-        // If no eligible users are found, return an empty array.
         return [];
+    }
+
+    private function getAdvisorBaseQuery($status, $tierUserIds, $advisorId = null, $teamId = null)
+    {
+        $excludedUserIds = $this->getExcludedUserIds($teamId);
+
+        $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
+
+        // Create a query to fetch lead allocations with their associated users.
+        $query = LeadAllocation::with('leadAllocationUser')
+            ->whereHas('leadAllocationUser', function ($query) use ($status) {
+                // Filter by advisor status.
+                $query->where('status', $status);
+            })
+            ->whereIn('user_id', $tierUserIds)
+            ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
+                $query->whereNotIn('user_id', $excludedUserIds);
+            })
+            ->where('quote_type_id', QuoteTypes::CAR->id());
+
+        // Exclude a specific advisor if an advisor ID is provided.
+        if (! empty($advisorId)) {
+            $query->where('user_id', '!=', $advisorId);
+        }
+
+        return $query;
+    }
+
+    public function getBLAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
+    {
+        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR);
+
+        $advisors = $this->getAdvisorBaseQuery($status, $tierUserIds, $advisorId, $teamId)
+            ->whereIn('user_id', $buyLeadRequestedUserIds)
+            ->where('buy_lead_status', true)
+            ->where(function ($query) {
+                $query->whereRaw('buy_lead_allocation_count < buy_lead_max_capacity')->orWhere('buy_lead_max_capacity', '=', -1);
+            })
+            ->orderBy('buy_lead_last_allocated')
+            ->get();
+
+        $this->isBuyLeadAdvisor = $advisors->count() > 0;
+
+        return $advisors;
+    }
+
+    public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
+    {
+        return $this->getAdvisorBaseQuery($status, $tierUserIds, $advisorId, $teamId)
+            ->where(function ($query) {
+                // Apply allocation count and max capacity conditions.
+                $query->whereRaw('allocation_count < max_capacity')->orWhere('max_capacity', -1);
+            })
+            ->orderBy('last_allocated')
+            ->get();
     }
 
     public function updateTierBeforeEligibleUserIdentification($lead)
@@ -322,39 +392,6 @@ class CarAllocationService extends AllocationService
                 return $lead->tier_id;
             }
         }
-    }
-
-    public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
-    {
-        $excludedUserIds = $this->getExcludedUserIds($teamId);
-
-        $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
-
-        // Create a query to fetch lead allocations with their associated users.
-        $query = LeadAllocation::with('leadAllocationUser')
-            ->whereHas('leadAllocationUser', function ($query) use ($status) {
-                // Filter by advisor status.
-                $query->where('status', $status);
-            })
-            ->where(function ($query) {
-                // Apply allocation count and max capacity conditions.
-                $query->whereRaw('allocation_count < max_capacity')
-                    ->orWhere('max_capacity', -1);
-            })
-            ->whereIn('user_id', $tierUserIds)
-            ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
-                $query->whereNotIn('user_id', $excludedUserIds);
-            })
-            ->where('quote_type_id', QuoteTypes::CAR->id())
-            ->orderBy('last_allocated');
-
-        // Exclude a specific advisor if an advisor ID is provided.
-        if (! empty($advisorId)) {
-            $query->where('user_id', '!=', $advisorId);
-        }
-
-        // Return the resulting collection of advisors.
-        return $query->get();
     }
 
     public function getRules($carLead)
@@ -460,7 +497,17 @@ class CarAllocationService extends AllocationService
             info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
 
-        // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
+        if ($this->isBuyLeadAdvisor) {
+            foreach ($finalEligibleUserIds as $advisorId) {
+                $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $advisorId);
+                if ($this->buyLeadRequest) {
+                    return $advisorId;
+                }
+            }
+
+            return 0;
+        }
+
         return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
     }
 
@@ -499,6 +546,24 @@ class CarAllocationService extends AllocationService
 
     public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
     {
+        if ($lead->advisor_id === $userId) {
+            info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
+
+            return;
+        }
+
+        if (! empty($lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
+            $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
+        }
+
+        if ($assignmentType === AssignmentTypeEnum::SYSTEM_ASSIGNED && $this->isBuyLeadAdvisor) {
+            $assignmentType = AssignmentTypeEnum::BOUGHT_LEAD;
+        }
+
+        if ($assignmentType === AssignmentTypeEnum::SYSTEM_REASSIGNED && $this->isBuyLeadAdvisor) {
+            $assignmentType = AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+        }
+
         info('About to assign car lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
 
         //Store the previous Assignment Type
@@ -518,12 +583,15 @@ class CarAllocationService extends AllocationService
         info('Updating user record in lead allocation table with count increment for User ID: '.$userId);
 
         // Depending on the assignment type, either add or adjust allocation counts.
-        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId, QuoteTypes::CAR->id()) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::CAR->id());
+        match ($assignmentType) {
+            AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($userId, QuoteTypes::CAR->id(), $this->isBuyLeadAdvisor),
+            default => $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::CAR->id(), $this->isBuyLeadAdvisor),
+        };
 
         info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
     }
 
-    private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
+    private function assignLeadToUserAndGetQuote(CarQuote $lead, $userId, $tier, $assignmentType): mixed
     {
         // Assign the lead to the advisor and send an email
         // Check if the lead was previously assigned to an advisor and log the change.
@@ -548,6 +616,14 @@ class CarAllocationService extends AllocationService
 
         // Save the updated lead.
         $lead->save();
+
+        if ($this->isBuyLeadAdvisor) {
+            $cost = $tier->quadrants()->where('code', QuadrantCodeEnum::VALUE)->exists() ? $this->buyLeadRequest->value_cost_per_lead : $this->buyLeadRequest->volume_cost_per_lead;
+            $this->buyLeadRequest->buyLead($lead, QuoteTypes::CAR, $cost);
+            info('Lead Id '.$lead->uuid.' assigned to advisor id : '.$userId.' as bought lead');
+        } else {
+            info('Lead Id '.$lead->uuid.' assigned to advisor id : '.$userId);
+        }
 
         return $lead;
     }
