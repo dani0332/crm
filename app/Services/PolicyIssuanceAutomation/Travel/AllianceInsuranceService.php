@@ -474,8 +474,9 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return isAllianceTravelAutomationEnabled();
     }
 
-    public function getStepsLockingStatus($policyIssuance): array
+    public function getStepsLockingStatus($quote): array
     {
+        $policyIssuance = $quote->policyIssuance;
         $response = [
             'policyIssuance' => $policyIssuance,
             'isEditPolicyDetailsDisabled' => true,
@@ -508,6 +509,11 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
+        }elseif (!$policyIssuance && $quote->insurer_api_status){
+            $response['isEditPolicyDetailsDisabled'] = false;
+            $response['isPolicyDocumentUploadDisabled'] = false;
+            $response['isEditBookingDetailsDisabled'] = false;
+            $response['message'] = $quote->insurer_api_status;
         }
 
         return $response;

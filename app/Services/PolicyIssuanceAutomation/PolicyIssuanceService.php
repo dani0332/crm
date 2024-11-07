@@ -21,10 +21,7 @@ class PolicyIssuanceService
 
             return $response;
         }
-
-        $policyIssuance = $quote->policyIssuance;
-
-        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($policyIssuance));
+        return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote));
 
     }
 

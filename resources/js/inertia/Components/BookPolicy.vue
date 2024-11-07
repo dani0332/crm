@@ -432,6 +432,8 @@ let isPolicyBookingFailed =
 const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   let disableEditBookingDetails = false;
 
+  let hasBookingFailedEditPermission = can(permissionsEnum.BOOKING_FAILED_EDIT);
+
   let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
   if (
     policyIssuanceSteps?.isPolicyAutomationEnabled &&
@@ -441,8 +443,6 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
     disableEditBookingDetails =
       policyIssuanceSteps?.isEditBookingDetailsDisabled;
   }
-
-  let hasBookingFailedEditPermission = can(permissionsEnum.BOOKING_FAILED_EDIT);
 
   if (isPolicyBookingFailed && !hasBookingFailedEditPermission) {
     disableEditBookingDetails = true;
