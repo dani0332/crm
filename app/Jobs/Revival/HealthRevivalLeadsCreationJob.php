@@ -146,7 +146,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         $planObj->providerCode = $item['providerCode'];
                         $planObj->total = $item['total'];
                         $planObj->buynowURL = $item['buynowURL'];
-                        $planObj->planBenefit =$item['planBenefit'];
+                        $planObj->planBenefit = $item['planBenefit'];
                         $plansArray[] = $planObj;
                     }
 
@@ -156,8 +156,8 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
-                    $emailData->quotePlanLink = $response['quote']['quotePlanLink'] ;
-                    $emailData->requestAdvisorLink = $response['quote']['requestAdvisorLink'] ;
+                    $emailData->quotePlanLink = $response['quote']['quotePlanLink'];
+                    $emailData->requestAdvisorLink = $response['quote']['requestAdvisorLink'];
 
                     $emailData->plans = $plansArray;
 
