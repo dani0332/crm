@@ -435,11 +435,8 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   let hasBookingFailedEditPermission = can(permissionsEnum.BOOKING_FAILED_EDIT);
 
   let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
-  if (
-    policyIssuanceSteps?.isPolicyAutomationEnabled &&
-    !isPolicyBookingFailed &&
-    !hasBookingFailedEditPermission
-  ) {
+  console.log('policyIssuanceSteps', policyIssuanceSteps);
+  if (policyIssuanceSteps?.isPolicyAutomationEnabled) {
     disableEditBookingDetails =
       policyIssuanceSteps?.isEditBookingDetailsDisabled;
   }

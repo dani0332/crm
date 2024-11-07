@@ -483,6 +483,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'isPolicyDocumentUploadDisabled' => true,
             'isEditBookingDetailsDisabled' => true,
             'message' => 'All steps are locked',
+            'insurer_api_status' => $quote->insurer_api_status,
         ];
 
         if ($policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS) {
@@ -513,7 +514,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isPolicyDocumentUploadDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
-            $response['message'] = $quote->insurer_api_status;
+            $response['message'] = 'All Steps are editable';
         }
 
         return $response;
