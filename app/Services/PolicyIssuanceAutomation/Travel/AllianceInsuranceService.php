@@ -180,13 +180,27 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY, 'error' => null, 'message' => null];
 
-        $title = 'Mr';
-        $dateOfBirth = $quote->dob ? Carbon::parse($quote->dob)->format('Y-m-d') : null;
-        if (in_array($quote->gender, [GenericRequestEnum::FEMALE, strtolower(GenericRequestEnum::FEMALE), GenericRequestEnum::FEMALE_SHORT_VALUE])) {
-            $title = 'Mrs';
+        $title = $this->getTitle($quote->gender);
+
+        $titleTraveller = [];
+        $firstNameTraveller = [];
+        $lastNameTraveller = [];
+        $dobTraveller = [];
+        $passportTraveller = [];
+        $nationalityTraveller = [];
+
+        $customerMember = $quote->customerMembers;
+        foreach ($customerMember as $member) {
+
+            $titleTraveller[] = $this->getTitle($member->gender);
+            $firstNameTraveller[] = $member->first_name;
+            $lastNameTraveller[] = $member->last_name;
+            $dobTraveller[] = $member->dob ? Carbon::parse($member->dob)->format('Y-m-d') : null;
+            $passportTraveller[] = $member->passport;
+            $nationalityTraveller[] = $member->nationality->alliance_nationality_id;
         }
 
-        $customerMember = $quote->customerMembers()->where('customer_entity_id', $quote->customer_id)->first();
+
 
         $endPoint = $this->baseUrl.'/v1/quote/'.$travelType.'/finalise';
         $payload = [
@@ -197,12 +211,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'title_customer' => $title,
             'first_name_customer' => $quote->first_name,
             'last_name_customer' => $quote->last_name,
-            'title_traveller' => [$title],
-            'first_name_traveller' => [$quote->first_name],
-            'last_name_traveller' => [$quote->last_name],
-            'dob' => [$dateOfBirth],
-            'passport_number' => [$customerMember->passport],
-            'nationality_traveller' => [$quote->nationality?->alliance_nationality_id],
+            'title_traveller' => $titleTraveller,
+            'first_name_traveller' => $firstNameTraveller,
+            'last_name_traveller' => $lastNameTraveller,
+            'dob' => $dobTraveller,
+            'passport_number' => $passportTraveller,
+            'nationality_traveller' => $nationalityTraveller,
             'email' => $quote->email,
             'mobile' => $quote->mobile_no,
             'agency_reference' => 'asc',
@@ -545,11 +559,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     private function getTravelDocumentMapping($docName): ?array
     {
-        return match ($docName) {
-            'Policy Tax Invoice' => ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_TAX_INVOICE],
-            'Certificate of Insurance' => ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE],
-            default => null,
-        };
+        if($docName === 'Policy Tax Invoice') {
+            return ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_TAX_INVOICE];
+        }else if(str_contains($docName, 'Certificate of Insurance')) {
+            return ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE];
+        }
+        return null;
+
     }
 
     private function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step, $status = 'success')
@@ -571,6 +587,19 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     private function fetchPolicyDocuments()
     {
         return config('constants.ALLIANCE_TRAVEL_AUTOMATION_ENABLED');
+    }
+
+    private function getTitle($gender)
+    {
+        $title = 'Mr';
+        if (in_array($gender, [GenericRequestEnum::FEMALE, strtolower(GenericRequestEnum::FEMALE), GenericRequestEnum::FEMALE_SHORT_VALUE, GenericRequestEnum::FEMALE_SINGLE, GenericRequestEnum::FEMALE_SINGLE_VALUE])) {
+            $title = 'Ms';
+        }
+        if (in_array($gender, [GenericRequestEnum::FEMALE_MARRIED, GenericRequestEnum::FEMALE_MARRIED_VALUE])) {
+            $title = 'Mrs';
+        }
+
+        return $title;
     }
 
 }

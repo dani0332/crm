@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\OCB;
+namespace App\Jobs;
 
 use App\Models\TravelQuote;
 use App\Services\EmailServices\TravelEmailService;
@@ -41,7 +41,7 @@ class SendTravelAllianceFailedAllocationEmailJob implements ShouldQueue
 
             if (! $lead) {
                 info(self::class." - Lead not found for uuid: {$this->quoteUuid}");
-    
+
                 return false;
             }
             $responseCode = $travelEmailService->sendTravelAllianceFailedAllocationEmail($lead);

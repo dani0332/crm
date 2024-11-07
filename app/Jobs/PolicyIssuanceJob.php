@@ -7,7 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\TeamNameEnum;
 use App\Factories\AllocationFactory;
 use App\Factories\PolicyIssuanceFactory;
-use App\Jobs\OCB\SendTravelAllianceFailedAllocationEmailJob;
+use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -99,7 +99,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     {
         info(self::class.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-        
+
         $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $uuid, $unassistedTeamId);
         $response = $allocationStrategy->executeSteps();
         if ($response) {
