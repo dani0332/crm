@@ -2210,6 +2210,7 @@ class CarQuoteService extends BaseService
 
     public function sendAddressNotificationToCustomer($lead, $addressObj)
     {
+        info('Sending address notification to customer for lead : ' . $lead->uuid);
         $address = CustomerAddress::where('quote_uuid', $lead->uuid)->first();
         $actionType = $address ? 'ADDRESS_UPDATED' : 'ADDRESS_ADDED';
         $this->triggerBirdFlow($lead, $addressObj, $actionType);
@@ -2218,6 +2219,7 @@ class CarQuoteService extends BaseService
     public function triggerBirdFlow($lead, $addressObj, $actionType)
     {
         if ($lead->embeddedTransactions()->exists()) {
+            info('Checking for courier transaction for lead : ' . $lead->uuid);
             $courierEmbeddedTransaction = $lead->embeddedTransactions
                 ->filter(function ($transaction) {
                     return $transaction->product?->embeddedProduct?->short_code === 'COU';
