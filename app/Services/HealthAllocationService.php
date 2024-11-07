@@ -85,7 +85,7 @@ class HealthAllocationService extends AllocationService
 
         if ($healthTeam) {
             info("Filtered team for {$lead->uuid} is: {$healthTeam->name}");
-            $lead->health_team_type = $healthTeam->name;
+            $lead->health_team_type = ($healthTeam->name === HealthTeamType::PCP && $lead->members->count() > 2) ? HealthTeamType::RM_NB : $healthTeam->name;
         } else {
             info("No team found for {$lead->uuid}");
             $lead->is_error_email_sent = true;
