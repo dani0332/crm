@@ -144,14 +144,9 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         $planObj->eligibilityName = $item['eligibilityName'];
                         $planObj->planCode = $item['planCode'];
                         $planObj->providerCode = $item['providerCode'];
-                        $planObj->total = $item['premium'];
-                        $planObj->buynowURL = $item['planLink'];
-
-                        $lowestRate = collect($item['ratesPerCopay'])->sortBy('discountPremium')->first();
-
-                        $coPaymentsCollection = collect($item['coPayments']);
-                        $filteredSelectedCopay = $coPaymentsCollection->where('id', $lowestRate['healthPlanCoPaymentId'])->first();
-                        $planObj->planBenefit = $this->getBenefitsDetails($item['benefits'], $filteredSelectedCopay);
+                        $planObj->total = $item['total'];
+                        $planObj->buynowURL = $item['buynowURL'];
+                        $planObj->planBenefit =$item['planBenefit'];
                         $plansArray[] = $planObj;
                     }
 
@@ -161,7 +156,8 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
-                    $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid;
+                    $emailData->quotePlanLink = $response['quote']['quotePlanLink'] ;
+                    $emailData->requestAdvisorLink = $response['quote']['requestAdvisorLink'] ;
 
                     $emailData->plans = $plansArray;
 
@@ -206,39 +202,5 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
         } catch (\Exception $exception) {
             Log::error($logPrefix.'health revival Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
         }
-    }
-
-    private function getBenefitsDetails($benefitList, $filteredSelectedCopay)
-    {
-        $benefitsTypes = [];
-        $getBenefitCode = ['annualLimit', 'regionsCovered'];
-
-        foreach ($benefitList as $key => $covers) {
-
-            if ($key == 'outpatient') {
-                foreach ($covers as $cover) {
-                    if ($cover['code'] === 'medicine') {
-                        $benefitsTypes[$cover['code']] = [
-                            'text' => $cover['value'] ?? '',
-                        ];
-                    }
-                }
-            } else {
-                foreach ($covers as $cover) {
-                    if (in_array($cover['code'], $getBenefitCode)) {
-                        $benefitsTypes[$cover['code']] = [
-                            'text' => $cover['value'] ?? '',
-                        ];
-                    }
-                    if ($cover['code'] == 'outpatientConsultation') {
-                        $benefitsTypes[$cover['code']] = [
-                            'text' => $filteredSelectedCopay['text'] ?? '',
-                        ];
-                    }
-                }
-            }
-        }
-
-        return $benefitsTypes;
     }
 }
