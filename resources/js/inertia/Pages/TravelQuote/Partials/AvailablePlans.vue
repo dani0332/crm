@@ -1,4 +1,6 @@
 <script setup>
+const notification = useNotifications('toast');
+
 const props = defineProps({
   plan: Object,
   quote: Object,
@@ -47,17 +49,31 @@ const totalPremiumWithVat = computed(() => {
   return props.plan.discountPremium + addonVat + props.plan.vat;
 });
 
+const validateAddons = (addons) => {
+  const excludedAddons = ['myAlfred', 'fastTrackClaim'];
+  for (let addon of addons) {
+    for (let option of addon.addonOptions) {
+      if (option.isSelected === true && parseInt(option.price ?? 0) === 0 && !excludedAddons.includes(addon.code)) {
+          notification.error({
+          title: 'Addon price must be greater than 0',
+          position: 'top',
+        });
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 const onUpdatePlan = () => {
-  if (planForm.discounted_premium > planForm.actual_premium) {
-    notification.error({
-      title: 'Discounted Price must be lower than Actual Price',
-      position: 'top',
-    });
+  let addons = [];
+  let tempAddons = planForm.addons;
+
+  //Validate addons
+  if (!validateAddons(tempAddons)) {
     return;
   }
 
-  let addons = [];
-  let tempAddons = planForm.addons;
   tempAddons.forEach(addon => {
     addon.addonOptions.forEach(option => {
       addons.push({
