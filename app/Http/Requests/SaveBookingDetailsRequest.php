@@ -64,6 +64,7 @@ class SaveBookingDetailsRequest extends FormRequest
 
         if (request()->input('commission_vat_not_applicable') > 0) {
             $rules['commission_vat_applicable'] = 'nullable|numeric';
+            $rules['vat_on_commission'] = 'nullable';
         }
 
         if (request()->input('commission_vat_applicable') > 0) {
