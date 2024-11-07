@@ -203,9 +203,8 @@ trait QuoteModelTrait
         });
     }
 
-    // TODO: discuss with ahsan
     public function isBuyLeadApplicable(): bool
     {
-        return true;
+        return request('isRequestedForAnAdvisor', false);
     }
 }
