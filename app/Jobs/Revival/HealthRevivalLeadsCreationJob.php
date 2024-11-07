@@ -19,9 +19,11 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
+use Throwable;
 
 class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 {
@@ -202,5 +204,15 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
         } catch (\Exception $exception) {
             Log::error($logPrefix.'health revival Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->lead->uuid))->dontRelease()];
+    }
+
+    public function failed(Throwable $exception)
+    {
+        Log::error('CarRevivalLeadsCreationJob - Failed - '.$this->lead->id.' Error: '.$exception->getMessage());
     }
 }
