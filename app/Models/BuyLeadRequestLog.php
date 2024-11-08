@@ -33,4 +33,9 @@ class BuyLeadRequestLog extends Model
             ]);
         }
     }
+
+    public function quoteType()
+    {
+        return $this->belongsTo(QuoteType::class);
+    }
 }
