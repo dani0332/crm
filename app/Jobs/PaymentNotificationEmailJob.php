@@ -16,7 +16,6 @@ class PaymentNotificationEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $lead = null;
-    private $totalLead = null;
     private $user = null;
     public $tries = 3;
     public $timeout = 30;
@@ -27,11 +26,10 @@ class PaymentNotificationEmailJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($lead, $user, $totalLead)
+    public function __construct($lead, $user)
     {
         $this->lead = $lead;
         $this->user = $user;
-        $this->totalLead = $totalLead;
     }
 
     /**
@@ -57,6 +55,6 @@ class PaymentNotificationEmailJob implements ShouldQueue
 
             return false;
         }
-        $sendEmailCustomerService->sendPaymentNotificationEmail($this->lead, $this->user, $this->totalLead);
+        $sendEmailCustomerService->sendPaymentNotificationEmail($this->lead, $this->user);
     }
 }

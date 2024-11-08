@@ -28,6 +28,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 
 class AMLService
@@ -251,62 +252,81 @@ class AMLService
             $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         }
 
-        self::sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser);
+        Mail::send(
+            ['html' => 'AmlComplianceMail'],
+            [
+                'amlUrl' => $amlQuoteUrl,
+                'resultsFound' => $amlResultCount,
+                'fullName' => $customerOrEntityName,
+                'quoteTypeName' => $quoteType,
+                'quoteCdbId' => $quoteRefId,
+            ],
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser) {
+                $message->to($emailRecipients);
+                if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
+                    $message->cc($loginUserEmail);
+                }
+                $message->subject($emailSubject);
+                $message->from($fromEmail, $fromName);
+            }
+        );
+
+        //        self::sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser);
     }
 
-    private static function sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser)
-    {
-        try {
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => config('constants.SENDINBLUE_KEY'),
-                'Content-Type' => 'application/json',
-            ];
-            $url = config('constants.SIB_URL');
-            $amlUrl = $amlQuoteUrl ? $amlQuoteUrl : 'N/A';
-            $resultsFound = $amlResultCount ? $amlResultCount : 0;
-            $fullName = $customerOrEntityName ? $customerOrEntityName : 'N/A';
-            $quoteTypeName = $quoteType;
-            $quoteCdbId = $quoteRefId;
-            $htmlContent = View::make('AmlComplianceMail', compact('amlUrl', 'resultsFound', 'fullName', 'quoteTypeName', 'quoteCdbId'))->render();
-
-            $toEmails = array_map(function ($email) {
-                return ['email' => $email];
-            }, $emailRecipients);
-
-            $ccEmail = [];
-            if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
-                $ccEmail[] = ['email' => $loginUserEmail];
-            }
-
-            $bodyData = [
-                'sender' => ['name' => $fromName, 'email' => $fromEmail],
-                'to' => $toEmails,
-                'subject' => $emailSubject,
-                'htmlContent' => $htmlContent,
-            ];
-
-            if (! empty($ccEmail)) {
-                $bodyData['cc'] = $ccEmail;
-            }
-            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client;
-            $clientRequest = $client->post(
-                $url,
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 10,
-                ]
-            );
-
-            $responseCode = $clientRequest->getStatusCode();
-            info('sendAmlComplianceMail ---- Received Code : '.$responseCode);
-        } catch (Exception $ex) {
-            $responseCode = $ex->getCode();
-            $responseDetail = 'sendAmlComplianceMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
-        }
-    }
+    //    private static function sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser)
+    //    {
+    //        try {
+    //            $headers = [
+    //                'Accept' => 'application/json',
+    //                'api-key' => config('constants.SENDINBLUE_KEY'),
+    //                'Content-Type' => 'application/json',
+    //            ];
+    //            $url = config('constants.SIB_URL');
+    //            $amlUrl = $amlQuoteUrl ? $amlQuoteUrl : 'N/A';
+    //            $resultsFound = $amlResultCount ? $amlResultCount : 0;
+    //            $fullName = $customerOrEntityName ? $customerOrEntityName : 'N/A';
+    //            $quoteTypeName = $quoteType;
+    //            $quoteCdbId = $quoteRefId;
+    //            $htmlContent = View::make('AmlComplianceMail', compact('amlUrl', 'resultsFound', 'fullName', 'quoteTypeName', 'quoteCdbId'))->render();
+    //
+    //            $toEmails = array_map(function ($email) {
+    //                return ['email' => $email];
+    //            }, $emailRecipients);
+    //
+    //            $ccEmail = [];
+    //            if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
+    //                $ccEmail[] = ['email' => $loginUserEmail];
+    //            }
+    //
+    //            $bodyData = [
+    //                'sender' => ['name' => $fromName, 'email' => $fromEmail],
+    //                'to' => $toEmails,
+    //                'subject' => $emailSubject,
+    //                'htmlContent' => $htmlContent,
+    //            ];
+    //
+    //            if (! empty($ccEmail)) {
+    //                $bodyData['cc'] = $ccEmail;
+    //            }
+    //            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+    //            $client = new \GuzzleHttp\Client;
+    //            $clientRequest = $client->post(
+    //                $url,
+    //                [
+    //                    'headers' => $headers,
+    //                    'body' => $body,
+    //                    'timeout' => 10,
+    //                ]
+    //            );
+    //
+    //            $responseCode = $clientRequest->getStatusCode();
+    //            info('sendAmlComplianceMail ---- Received Code : '.$responseCode);
+    //        } catch (Exception $ex) {
+    //            $responseCode = $ex->getCode();
+    //            $responseDetail = 'sendAmlComplianceMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+    //        }
+    //    }
 
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
@@ -415,70 +435,104 @@ class AMLService
             $ccRecipients = $complianceEmailRecipients;
         }
 
-        $amlUrl = config('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
-
-        $this->amlQuoteStatusUpdateMail($amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $toRecipient, $ccRecipients);
-    }
-
-    private function amlQuoteStatusUpdateMail($amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $toRecipient, $ccRecipients)
-    {
-        if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
+        $emailL_sys = config('constants.APP_ENV');
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
             $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         } else {
-            $emailSubject = config('constants.APP_ENV').' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         }
 
-        try {
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => config('constants.SENDINBLUE_KEY'),
-                'Content-Type' => 'application/json',
-            ];
-            $url = config('constants.SIB_URL');
-            $emailL_sys = config('constants.APP_ENV');
-            if ($emailL_sys == EnvEnum::PRODUCTION) {
-                $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
-                $fromName = config('constants.MAIL_FROM_NAME_AML');
-            } else {
-                $fromEmail = config('constants.MAIL_FROM_ADDRESS');
-                $fromName = config('constants.MAIL_FROM_NAME');
-            }
-            $amlUrl = $amlUrl ? $amlUrl : 'N/A';
-            $amlQuoteStatus = $quoteStatusText ? $quoteStatusText : 'N/A';
-            $clientFullName = $clientFullName ? $clientFullName : 'N/A';
-            $quoteTypeName = $quoteTypeText ? $quoteTypeText : 'N/A';
-            $quoteCdbId = $quoteCdbId ? $quoteCdbId : 'N/A';
-            $htmlContent = View::make('AmlQuoteStatusUpdateMail', compact('amlUrl', 'amlQuoteStatus', 'clientFullName', 'quoteTypeName', 'quoteCdbId'))->render();
+        $appUrl = config('constants.APP_URL');
+        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
 
-            $ccEmail = array_map(function ($email) {
-                return ['email' => $email];
-            }, $ccRecipients);
+        $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
+            'amlUrl' => $amlUrl,
+            'amlQuoteStatus' => $quoteStatusText,
+            'clientFullName' => $clientFullName,
+            'quoteTypeName' => $quoteTypeText,
+            'quoteCdbId' => $quoteCdbId,
+        ], $emailSubject, $toRecipient, $ccRecipients);
 
-            $bodyData = [
-                'sender' => ['name' => $fromName, 'email' => $fromEmail],
-                'to' => [['email' => $toRecipient]],
-                'subject' => $emailSubject,
-                'htmlContent' => $htmlContent,
-            ];
+        //        $this->amlQuoteStatusUpdateMail($amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $toRecipient, $ccRecipients);
+    }
 
-            if (! empty($ccEmail)) {
-                $bodyData['cc'] = $ccEmail;
-            }
-            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client;
-            $clientRequest = $client->post(
-                $url,
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 10,
-                ]
-            );
-
-            $responseCode = $clientRequest->getStatusCode();
-        } catch (Exception $ex) {
-            $responseCode = $ex->getCode();
-            Log::error('sendAmlQuoteStatusUpdateMail: '.$responseCode.'/'.$ex->getMessage());
+    private function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients)
+    {
+        $emailL_sys = config('constants.APP_ENV');
+        if ($emailL_sys == EnvEnum::PRODUCTION) {
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = config('constants.MAIL_FROM_NAME_AML');
+        } else {
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+            $fromName = config('constants.MAIL_FROM_NAME');
         }
+
+        Mail::send(
+            ['html' => $templateName],
+            $templateParams,
+            function ($message) use ($emailSubject, $toRecipient, $ccRecipients, $fromName, $fromEmail) {
+                $message->to($toRecipient)->cc($ccRecipients)->subject($emailSubject);
+                $message->from($fromEmail, $fromName);
+            }
+        );
+
+        //        if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
+        //            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+        //        } else {
+        //            $emailSubject = config('constants.APP_ENV').' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+        //        }
+        //
+        //        try {
+        //            $headers = [
+        //                'Accept' => 'application/json',
+        //                'api-key' => config('constants.SENDINBLUE_KEY'),
+        //                'Content-Type' => 'application/json',
+        //            ];
+        //            $url = config('constants.SIB_URL');
+        //            $emailL_sys = config('constants.APP_ENV');
+        //            if ($emailL_sys == EnvEnum::PRODUCTION) {
+        //                $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
+        //                $fromName = config('constants.MAIL_FROM_NAME_AML');
+        //            } else {
+        //                $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+        //                $fromName = config('constants.MAIL_FROM_NAME');
+        //            }
+        //            $amlUrl = $amlUrl ? $amlUrl : 'N/A';
+        //            $amlQuoteStatus = $quoteStatusText ? $quoteStatusText : 'N/A';
+        //            $clientFullName = $clientFullName ? $clientFullName : 'N/A';
+        //            $quoteTypeName = $quoteTypeText ? $quoteTypeText : 'N/A';
+        //            $quoteCdbId = $quoteCdbId ? $quoteCdbId : 'N/A';
+        //            $htmlContent = View::make('AmlQuoteStatusUpdateMail', compact('amlUrl', 'amlQuoteStatus', 'clientFullName', 'quoteTypeName', 'quoteCdbId'))->render();
+        //
+        //            $ccEmail = array_map(function ($email) {
+        //                return ['email' => $email];
+        //            }, $ccRecipients);
+        //
+        //            $bodyData = [
+        //                'sender' => ['name' => $fromName, 'email' => $fromEmail],
+        //                'to' => [['email' => $toRecipient]],
+        //                'subject' => $emailSubject,
+        //                'htmlContent' => $htmlContent,
+        //            ];
+        //
+        //            if (! empty($ccEmail)) {
+        //                $bodyData['cc'] = $ccEmail;
+        //            }
+        //            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+        //            $client = new \GuzzleHttp\Client;
+        //            $clientRequest = $client->post(
+        //                $url,
+        //                [
+        //                    'headers' => $headers,
+        //                    'body' => $body,
+        //                    'timeout' => 10,
+        //                ]
+        //            );
+        //
+        //            $responseCode = $clientRequest->getStatusCode();
+        //        } catch (Exception $ex) {
+        //            $responseCode = $ex->getCode();
+        //            Log::error('sendAmlQuoteStatusUpdateMail: '.$responseCode.'/'.$ex->getMessage());
+        //        }
     }
 }

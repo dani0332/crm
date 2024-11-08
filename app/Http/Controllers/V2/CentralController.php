@@ -10,6 +10,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -24,6 +25,7 @@ use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\PUAQuoteExport;
 use App\Exports\PUAUpdatesExport;
+use App\Exports\RetentionReportExport;
 use App\Exports\RMQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
@@ -134,6 +136,8 @@ class CentralController extends Controller
             case QuoteTypes::HEALTH->value:
                 return app(HealthQuotesExport::class)->download('Health-List');
 
+            case RetentionReportEnum::RETENTION:
+                return app(RetentionReportExport::class)->download('Retention-Report-List');
             default:
                 return false;
         }

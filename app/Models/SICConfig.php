@@ -20,5 +20,10 @@ class SICConfig extends Model implements AuditableContract
     {
         return $this->hasMany(SICConfigurables::class, 'sic_config_id', 'id');
     }
-
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
 }

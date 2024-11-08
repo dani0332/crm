@@ -17,6 +17,7 @@ class LegacyPolicyController extends Controller
     {
         $this->middleware('permission:'.PermissionsEnum::VIEW_LEGACY_DETAILS, ['only' => ['index', 'show', 'moveToImcrm']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -70,6 +71,7 @@ class LegacyPolicyController extends Controller
             return response()->json(['error' => 'File does not exists on server']);
         }
     }
+
     public function getPolicyByPolicyNumber($policyNumber)
     {
         $policy = InslyDetailRepository::getBy('policy_no', $policyNumber);

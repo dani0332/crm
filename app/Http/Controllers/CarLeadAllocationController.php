@@ -6,7 +6,6 @@ use App\Enums\QuoteTypes;
 use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
 use App\Services\CarLeadAllocationDashboardService;
-use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -50,13 +49,6 @@ class CarLeadAllocationController extends Controller
                 $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
                 $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
             }
-            // if ($request->ajax()) {
-            //     return Datatables::of($data)
-            //         ->addIndexColumn()
-            //         ->make(true);
-            // }
-
-            // return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO', 'todayTotalLeadCount', 'todayTotalUnAssignedLeadCount']));
 
             return inertia('LeadAllocation/Car', [
                 'totalAssignedLeadCount' => $totalAssignedLeadCount,

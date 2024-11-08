@@ -13,6 +13,7 @@ defineProps({
 
 const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const canExport = ref(false);
 const notification = useNotifications('toast');
@@ -72,6 +73,10 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_date: null,
+  advisor_assigned_date: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
 });
 
 watch(
@@ -161,6 +166,12 @@ const tableHeader = ref([
     value: 'previous_quote_policy_number',
     is_active: true,
   },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
 ]);
 
@@ -186,6 +197,8 @@ const setIntialState = () => {
     is_stale: false,
     policy_expiry_date: '',
     policy_expiry_date_end: '',
+    last_modified_date: null,
+    advisor_assigned_date: '',
   });
   filtersCount.value = 0;
 };
@@ -329,7 +342,11 @@ const onDataExport = () => {
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Business'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 
 function setQueryStringFilters() {
@@ -633,7 +650,8 @@ watch(() => {
               filters.renewal_batch ||
               filters.payment_due_date ||
               filters.booking_date ||
-              filters.company_name
+              filters.company_name ||
+              filters.advisor_assigned_date
                 ? []
                 : [isRequired]
             "
@@ -650,7 +668,8 @@ watch(() => {
               filters.renewal_batch ||
               filters.payment_due_date ||
               filters.booking_date ||
-              filters.company_name
+              filters.company_name ||
+              filters.advisor_assigned_date
                 ? []
                 : [isRequired]
             "
@@ -740,6 +759,41 @@ watch(() => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.CorplineManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
