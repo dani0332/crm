@@ -3,6 +3,10 @@ const props = defineProps({
   lobs: Array,
   list: Object,
 });
+
+const { isRequired } = useRules();
+const params = useUrlSearchParams('history');
+
 const tableHeader = reactive([
   { text: 'Ref-Id', value: 'uuid' },
   { text: 'Line Of Business', value: 'line_of_business' },
@@ -13,7 +17,6 @@ const tableHeader = reactive([
 ]);
 
 const table = ref({
-  data: props.list || [],
   loading: false,
 });
 
@@ -30,14 +33,14 @@ const onSubmit = isValid => {
       data: { ...filters },
       preserveState: true,
       preserveScroll: true,
-      onBefore: () => (loader.table = true),
-      onFinish: () => (loader.table = false),
+      onBefore: () => (table.loading = true),
+      onFinish: () => (table.loading = false),
     });
   }
 };
 
 onMounted(() => {
-  // setQueryStringFilters(filters);
+  setQueryStringFilters(params, filters);
 });
 </script>
 <template>
@@ -54,6 +57,7 @@ onMounted(() => {
           :options="props.lobs || []"
           filterable
           v-model="filters.quote_type"
+          :rules="[isRequired]"
         ></x-select>
       </x-field>
       <x-field label="Requested Date" required>
@@ -61,6 +65,7 @@ onMounted(() => {
           v-model="filters.date"
           name="created_at_start"
           format="dd-MM-yyyy"
+          :rules="[isRequired]"
         />
       </x-field>
     </div>
@@ -75,11 +80,20 @@ onMounted(() => {
   </x-form>
   <DataTable
     table-class-name="mt-4"
-    :loading="table.loader"
+    :loading="table.loading"
     :headers="tableHeader"
-    :items="table.data || []"
+    :items="list.data != null ? list.data : []"
     border-cell
     hide-rows-per-page
     hide-footer
   ></DataTable>
+  <Pagination
+    :links="{
+      next: list?.next_page_url,
+      prev: list?.prev_page_url,
+      current: list?.current_page,
+      from: list?.from,
+      to: list?.to,
+    }"
+  />
 </template>
