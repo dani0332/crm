@@ -1,13 +1,24 @@
 <script setup>
-defineProps({
+const props = defineProps({
   lobs: Array,
-  request: Array,
+  requests: Array,
 });
+
+const notification = useToast();
+const { isRequired } = useRules();
+
+const requestForm = useForm({
+  quote_type: '',
+  bought_leads: '',
+  total_cost: '',
+  requested_date: '',
+});
+
 const tableHeader = reactive([
-  { text: 'Line Of Business', value: 'line_of_business' },
-  { text: 'Bought Leads', value: 'bought_leads' },
-  { text: 'Total Costs', value: 'total_cost' },
-  { text: 'Requested Date', value: 'requested_date' },
+  { text: 'Line Of Business', value: 'quote_type.code' },
+  { text: 'Bought Leads', value: 'requested_count' },
+  { text: 'Total Costs', value: 'value_cost_per_lead' },
+  { text: 'Requested Date', value: 'created_at' },
 ]);
 
 const table = ref({
@@ -15,7 +26,53 @@ const table = ref({
   loading: false,
 });
 
-const maximumLeads = 5;
+const onSubmit = isValid => {
+  if (isValid) {
+    requestForm.submit('post', route('buy-leads.request.submit'), {
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
+      onSuccess: response => {
+        notification.success({
+          title: 'Buy Lead Configuration updated successfully',
+          position: 'top',
+        });
+      },
+    });
+  }
+};
+
+const maximumLeads = ref(0);
+
+watch(
+  () => requestForm.quote_type,
+  value => {
+    if (value) {
+      fetchMaximumLeads();
+    }
+  },
+);
+const fetchMaximumLeads = () => {
+  axios
+    .post(route('buy-leads.rate.fetch'), {
+      quote_type: requestForm.quote_type,
+    })
+    .then(response => {
+      let { maxCapacity } = response.data;
+      maximumLeads.value = maxCapacity;
+    })
+    .catch(error => {
+      notification.error({
+        title: 'failed to fetch maximum leads',
+        position: 'top',
+      });
+    });
+};
 </script>
 <template>
   <Head title="Buy Lead Configuration" />
@@ -28,18 +85,44 @@ const maximumLeads = 5;
       <x-field label="Line Of Business" required>
         <x-select
           placeholder="Select Line Of Business"
-          :options="[]"
+          :options="lobs"
           filterable
+          v-model="requestForm.quote_type"
+          :rules="[isRequired]"
         ></x-select>
       </x-field>
       <x-tooltip placement="top-left">
         <x-field label="Buy Leads" required>
-          <x-input type="number" />
+          <x-input
+            v-model="requestForm.bought_leads"
+            type="number"
+            :max="maximumLeads"
+            :min="0"
+            @keypress="
+              $event => {
+                // Prevent input if already 1 digit
+                if ($event.target.value.length >= 1) {
+                  $event.preventDefault();
+                  return;
+                }
+
+                // Get the key pressed
+                const key = String.fromCharCode($event.keyCode);
+                const value = parseInt(key);
+
+                // Check if value is within range
+                if (value < 0 || value > maximumLeads) {
+                  $event.preventDefault();
+                }
+              }
+            "
+            :rules="[isRequired]"
+          />
         </x-field>
         <template #tooltip>
           <div>
-            You may request up to 5 leads per day for the selected Line Of
-            Business.
+            You may request up to {{ maximumLeads }} leads per day for the
+            selected Line Of Business.
           </div>
         </template>
       </x-tooltip>
@@ -78,4 +161,13 @@ const maximumLeads = 5;
     hide-rows-per-page
     hide-footer
   ></DataTable>
+  <Pagination
+    :links="{
+      next: props.requests.next_page_url,
+      prev: props.requests.prev_page_url,
+      current: props.requests.current_page,
+      from: props.requests.from,
+      to: props.requests.to,
+    }"
+  />
 </template>

@@ -5,7 +5,7 @@ const props = defineProps({
 });
 
 const notification = useToast();
-const { isRequired, isMobileNo, isEmail, allowEmpty } = useRules();
+const { isRequired } = useRules();
 
 const buyForm = useForm({
   quote_type: '',
