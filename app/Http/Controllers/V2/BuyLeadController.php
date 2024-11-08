@@ -22,7 +22,7 @@ class BuyLeadController extends Controller
         $data['lobs'] = QuoteTypes::withLabels();
         $data['requests'] = BuyLeadRequest::where('user_id', Auth::id())->latest()->simplePaginate(20)->withQueryString();
 
-        return inertia('Admin/BuyLeads/Request/Show', $data);
+        return inertia('BuyLeads/BuyLeadsRequest', $data);
     }
 
     public function request(RequestBuyLeadsRequest $request)

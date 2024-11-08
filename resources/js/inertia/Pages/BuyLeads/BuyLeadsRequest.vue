@@ -1,4 +1,8 @@
 <script setup>
+defineProps({
+  lobs: Array,
+  request: Array,
+});
 const tableHeader = reactive([
   { text: 'Line Of Business', value: 'line_of_business' },
   { text: 'Bought Leads', value: 'bought_leads' },
@@ -10,6 +14,8 @@ const table = ref({
   data: [],
   loading: false,
 });
+
+const maximumLeads = 5;
 </script>
 <template>
   <Head title="Buy Lead Configuration" />
@@ -67,7 +73,7 @@ const table = ref({
     table-class-name="mt-4"
     :loading="table.loader"
     :headers="tableHeader"
-    :items="table.data || []"
+    :items="requests.data || []"
     border-cell
     hide-rows-per-page
     hide-footer

@@ -236,17 +236,17 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
+        if (auth()->user()->can(PermissionsEnum::BUY_LEADS)) {
             $nav = $nav->add('Buy Leads', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD),
+                        true,
                         'Buy Leads Request',
-                        route('lead-allocation.index'),
+                        route('buy-leads.request.show'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD),
+                        true,
                         'Buy Leads Tracking',
                         route('car-lead-allocation.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
