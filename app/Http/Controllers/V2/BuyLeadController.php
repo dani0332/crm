@@ -39,7 +39,7 @@ class BuyLeadController extends Controller
     public function show()
     {
         $data['lobs'] = QuoteTypes::withLabels();
-        $data['requests'] = BuyLeadRequest::where('user_id', Auth::id())->latest()->simplePaginate(20)->withQueryString();
+        $data['requests'] = BuyLeadRequest::with('quoteType:id,code')->where('user_id', Auth::id())->latest()->simplePaginate(20)->withQueryString();
 
         return inertia('BuyLeads/BuyLeadsRequest', $data);
     }
