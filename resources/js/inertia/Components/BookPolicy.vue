@@ -401,11 +401,7 @@ const showSendAndBookPolicyButton = computed(() => {
 const disableSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
-  if (
-    sendPolicyType == sendPolicyTypeEnum.SAGE &&
-    !isPolicyBookingFailed &&
-    !hasBookingFailedEditPermission
-  ) {
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
     permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
   }
 
@@ -440,7 +436,11 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
 
   let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
   console.log('policyIssuanceSteps', policyIssuanceSteps);
-  if (policyIssuanceSteps?.isPolicyAutomationEnabled) {
+  if (
+    policyIssuanceSteps?.isPolicyAutomationEnabled &&
+    !isPolicyBookingFailed &&
+    !hasBookingFailedEditPermission
+  ) {
     disableEditBookingDetails =
       policyIssuanceSteps?.isEditBookingDetailsDisabled;
   }
