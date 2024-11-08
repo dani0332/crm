@@ -6,7 +6,6 @@ use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\RetryTimeoutPolicyIssuanceCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
-use App\Console\Commands\SyncCourierQuotesOnce;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use Carbon\Carbon;
@@ -43,7 +42,6 @@ class Kernel extends ConsoleKernel
         PolicyIssuanceCommand::class,
         RetryTimeoutPolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
-        SyncCourierQuotesOnce::class,
     ];
 
     /**
