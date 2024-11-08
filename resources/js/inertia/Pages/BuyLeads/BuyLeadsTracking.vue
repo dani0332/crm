@@ -1,6 +1,7 @@
 <script setup>
 const props = defineProps({
   lobs: Array,
+  list: Object,
 });
 const tableHeader = reactive([
   { text: 'Ref-Id', value: 'uuid' },
@@ -12,14 +13,32 @@ const tableHeader = reactive([
 ]);
 
 const table = ref({
-  data: [],
+  data: props.list || [],
   loading: false,
+});
+
+const filters = reactive({
+  quote_type: null,
+  date: null,
 });
 
 const onSubmit = isValid => {
   if (isValid) {
+    filters.page = 1;
+    router.visit(route('buy-leads.request.tracking'), {
+      method: 'get',
+      data: { ...filters },
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loader.table = true),
+      onFinish: () => (loader.table = false),
+    });
   }
 };
+
+onMounted(() => {
+  // setQueryStringFilters(filters);
+});
 </script>
 <template>
   <Head title="My Leads Request" />
@@ -34,10 +53,15 @@ const onSubmit = isValid => {
           placeholder="Select Line Of Business"
           :options="props.lobs || []"
           filterable
+          v-model="filters.quote_type"
         ></x-select>
       </x-field>
       <x-field label="Requested Date" required>
-        <DatePicker name="created_at_start" range format="dd-MM-yyyy" />
+        <DatePicker
+          v-model="filters.date"
+          name="created_at_start"
+          format="dd-MM-yyyy"
+        />
       </x-field>
     </div>
     <x-divider class="my-4" />

@@ -248,7 +248,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         true,
                         'Buy Leads Tracking',
-                        route('car-lead-allocation.index'),
+                        route('buy-leads.request.tracking'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
