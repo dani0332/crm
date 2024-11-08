@@ -53,6 +53,7 @@ class BuyLeadController extends Controller
 
     public function tracking()
     {
+        $data['lobs'] = QuoteTypes::withLabels();
         $quoteType = QuoteTypes::tryFrom(request()->get('quote_type'));
         $data['lobs'] = QuoteTypes::withLabels();
         $date = request('date');
