@@ -408,6 +408,14 @@ const disableSendAndBookPolicyButton = computed(() => {
   let isPolicyStatusCancellationPending =
     props.quote.quote_status_id ==
     page.props.quoteStatusEnum.CancellationPending;
+  console.log(
+    'disableSendAndBookPolicyButton',
+    props.bookPolicyDetails,
+    !props.bookPolicyDetails?.sendButton,
+    !isPolicyStatusCancellationPending,
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value,
+    !can(permission),
+  );
   return (
     !props.bookPolicyDetails?.sendButton &&
     !isPolicyStatusCancellationPending &&
