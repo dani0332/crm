@@ -1135,11 +1135,9 @@ class SplitPaymentService
     private function handleAutomationError($quote, $quoteType, $payment)
     {
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
-
-        if ($insuranceProvider && $quoteType == QuoteTypes::TRAVEL->value && $payment->insuranceProvider->code == InsuranceProvidersEnum::ALNC) {
-            $quote->update([
-                'insurer_api_status' => PolicyIssuanceEnum::AUTO_CAPTURE_FAILED,
-            ]);
+        if ($insuranceProvider) {
+            $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED);
         }
     }
 }

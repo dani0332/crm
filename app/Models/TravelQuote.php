@@ -240,5 +240,9 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphOne(PolicyIssuance::class, 'model');
     }
+    public function sageProcess()
+    {
+        return $this->morphOne(SageProcess::class, 'model');
+    }
 
 }

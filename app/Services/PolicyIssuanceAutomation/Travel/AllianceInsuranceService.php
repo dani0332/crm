@@ -11,8 +11,11 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendPolicyTypeEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Factories\AllocationFactory;
 use App\Interfaces\PolicyIssuanceInterface;
+use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
 use App\Repositories\PaymentRepository;
@@ -97,7 +100,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                         $policyIssuanceResponse = $this->issuePolicyAndFillPolicyDetails($quote, $selectedPlan, $travelType);
                         if (! $policyIssuanceResponse['status']) {
-                            $quote->update(['insurer_api_status' => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED]);
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED);
 
                             return $policyIssuanceResponse;
                         }
@@ -109,7 +112,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                         $policyPurchaseResponse = $this->policyPurchase($quote, $payment, $travelType);
                         if (! $policyPurchaseResponse['status']) {
-                            $quote->update(['insurer_api_status' => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED]);
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED);
 
                             return $policyPurchaseResponse;
                         }
@@ -121,7 +124,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                         $uploadPolicyDocumentResponse = $this->fetchAndUploadDocument($quote, $travelType);
                         if (! $uploadPolicyDocumentResponse['status']) {
-                            $quote->update(['insurer_api_status' => PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED]);
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED);
 
                             return $uploadPolicyDocumentResponse;
                         }
@@ -134,7 +137,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                         $fillPolicyDetailsResponse = $this->uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment);
                         if (! $fillPolicyDetailsResponse['status']) {
-                            $quote->update(['insurer_api_status' => PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED]);
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED);
 
                             return $fillPolicyDetailsResponse;
                         }
@@ -516,6 +519,34 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         }
 
         return $response;
+    }
+
+    public function updateQuoteApiIssuanceStatusAndAllocate($quote, $status = null)
+    {
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Start');
+
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$status);
+        if ($status) {
+            $quote->update(['insurer_api_status' => $status]);
+        }
+
+        $this->allocateFailedLead($quote->uuid);
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' start allocation of failed lead ');
+
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+    }
+
+    public function allocateFailedLead($uuid)
+    {
+        info(self::class.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
+        $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+
+        $allocationStrategy = AllocationFactory::createStrategy(self::TYPE_ID, $uuid, $unassistedTeamId);
+        $response = $allocationStrategy->executeSteps();
+        if ($response) {
+            info(self::class.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
+            SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+        }
     }
 
     private function uploadAndAttachToQuoteDocuments($quote, $documentUrl, $documentCode, $originalName = null)

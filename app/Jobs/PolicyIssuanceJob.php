@@ -89,22 +89,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         } else {
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
-            $this->allocateFailedLead($this->process->model->uuid);
         }
         Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
-    }
-
-    public function allocateFailedLead($uuid)
-    {
-        info(self::class.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
-        $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-
-        $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $uuid, $unassistedTeamId);
-        $response = $allocationStrategy->executeSteps();
-        if ($response) {
-            info(self::class.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
-            SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
-        }
     }
 
     public function middleware()

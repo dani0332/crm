@@ -11,6 +11,7 @@ use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Factories\PolicyIssuanceFactory;
 use App\Factories\SagePayloadFactory;
 use App\Jobs\BookPolicyOnSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
@@ -22,6 +23,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
+use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -1948,6 +1950,8 @@ class SageApiService
         } else {
             QuoteStatusLog::create($quoteLogData);
         }
+
+        $this->assignAdvisor($quote);
     }
 
     public function createSageProcess($quote, $sageRequest, $request)
@@ -2022,5 +2026,33 @@ class SageApiService
         } else {
             info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command is already running, skipping execution.');
         }
+    }
+
+    public function assignAdvisor($quote)
+    {
+        info('Policy Book : assignAdvisor - start');
+        $policyIssuanceAutomation = $quote->policyIssuance;
+        $quoteType = $policyIssuanceAutomation->quote_type;
+        $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
+        $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
+
+        $user = User::where('email', 'api.notification@insurancemarket.ae')->first();
+        /* If advisor is not assigned already than check that if the the Policy Issuance exist for the Insurer and LOB and assign the Advisor */
+        if (! $quote->advisor_id && $insuranceProviderAutomation) {
+            info('Policy Book : assignAdvisor - assign advisor to quote');
+            if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked && $user) {
+                info('Policy Book : assignAdvisor - assign advisor to quote - status : '.QuoteStatusEnum::PolicyBooked.'User ID'.$user?->id);
+                $quote->advisor_id = $user->id;
+                $quote->save();
+            } elseif ($quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED) {
+                info('Policy Book : assignAdvisor - execute updateQuoteApiIssuanceStatusAndAllocate');
+                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote->uuid);
+                info('Policy Book : assignAdvisor - updateQuoteApiIssuanceStatusAndAllocate executed');
+            }
+
+        } else {
+            info('Policy Book : assignAdvisor - advisor is already assigned to quote');
+        }
+        info('Policy Book : assignAdvisor - end');
     }
 }
