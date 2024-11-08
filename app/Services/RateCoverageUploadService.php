@@ -115,24 +115,24 @@ class RateCoverageUploadService
 
     public function createCoveragesData($uploadCoverages)
     {
+        // Delete existing records
+        $planCodes = RateCoverageProcess::where('rate_coverage_id', $uploadCoverages->id)->pluck('data')->map(function ($data) {
+            if (is_string($data)) {
+                $decodedData = json_decode($data, true);
+            } else {
+                $decodedData = $data;
+            }
+
+            return $decodedData['plan_code'] ?? null;
+        })->filter();
+
+        DB::table('health_plan_coverage')->whereIn('plan_id', function ($query) use ($planCodes) {
+            $query->select('id')->from('health_plan')->whereIn('code', $planCodes);
+        })->delete();
+
         info('Coverage Record Created Start');
         RateCoverageProcess::where('rate_coverage_id', $uploadCoverages->id)
             ->chunk(500, function ($coverages) {
-                $planCodes = $coverages->pluck('data')->map(function ($data) {
-                    if (is_string($data)) {
-                        $decodedData = json_decode($data, true);
-                    } else {
-                        $decodedData = $data;
-                    }
-
-                    return $decodedData['plan_code'] ?? null;
-                })->filter();
-
-                if ($planCodes->isNotEmpty()) {
-                    DB::table('health_plan_coverage')->whereIn('plan_id', function ($query) use ($planCodes) {
-                        $query->select('id')->from('health_plan')->whereIn('code', $planCodes);
-                    })->delete();
-                }
 
                 $insertData = [];
                 foreach ($coverages as $coverage) {
@@ -266,24 +266,24 @@ class RateCoverageUploadService
 
     public function createRateData($uploadRate)
     {
+        // Delete existing records
+        $planCodes = RateCoverageProcess::where('rate_coverage_id', $uploadRate->id)->pluck('data')->map(function ($data) {
+            if (is_string($data)) {
+                $decodedData = json_decode($data, true);
+            } else {
+                $decodedData = $data;
+            }
+
+            return $decodedData['plan_code'] ?? null;
+        })->filter();
+
+        DB::table('health_rates')->whereIn('health_plan_id', function ($query) use ($planCodes) {
+            $query->select('id')->from('health_plan')->whereIn('code', $planCodes);
+        })->delete();
+
         info('Rate Record Created Start');
         RateCoverageProcess::where('rate_coverage_id', $uploadRate->id)
             ->chunk(500, function ($coverages) {
-                $planCodes = $coverages->pluck('data')->map(function ($data) {
-                    if (is_string($data)) {
-                        $decodedData = json_decode($data, true);
-                    } else {
-                        $decodedData = $data;
-                    }
-
-                    return $decodedData['plan_code'] ?? null;
-                })->filter();
-
-                if ($planCodes->isNotEmpty()) {
-                    DB::table('health_rates')->whereIn('health_plan_id', function ($query) use ($planCodes) {
-                        $query->select('id')->from('health_plan')->whereIn('code', $planCodes);
-                    })->delete();
-                }
 
                 $insertData = [];
                 foreach ($coverages as $coverage) {
