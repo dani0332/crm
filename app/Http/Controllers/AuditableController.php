@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CarQuote;
 use App\Models\InsurerRequestResponse;
-use App\Models\PersonalQuote;
 use App\Models\SageApiLog;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
@@ -79,7 +77,6 @@ class AuditableController extends Controller
         $auditableType = $request->get('auditableType');
 
         $quoteUuid = $request->auditableType::where('id', $request->auditableId)->value('uuid');
-
 
         if ($auditableType == TravelQuote::class) {
             $query = TravelInsurerRequestResponses::with('insuranceProvider');
