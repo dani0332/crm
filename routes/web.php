@@ -431,7 +431,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
-            Route::post('request', [BuyLeadController::class, 'requestBuyLeads'])->name('admin.buy-leads.request');
+        });
+    });
+
+    Route::prefix('buy-leads')->group(function () {
+        Route::prefix('request')->group(function () {
+            Route::get('show', [BuyLeadController::class, 'show'])->name('buy-leads.request');
+            Route::post('submit', [BuyLeadController::class, 'requesqt'])->name('buy-leads.request.show');
         });
     });
 

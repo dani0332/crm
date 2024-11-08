@@ -15,7 +15,7 @@ class BuyLeadConfigController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('role:'.Arr::join([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering], '|'), ['only' => ['upsert']]);
+        $this->middleware('role:'.Arr::join([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering], '|'), ['only' => ['show']]);
     }
 
     public function show()
@@ -34,19 +34,19 @@ class BuyLeadConfigController extends Controller
 
     public function fetch(BuyLeadsConfigFetchRequest $request)
     {
-        $config = BuyLeadConfiguration::where([
+        $data['config'] = BuyLeadConfiguration::where([
             'quote_type_id' => $request->getQuoteTypeId(),
-            'department_id' => $request->department_id,
+            'department_id' => $request->getDepartmentId(),
         ])->first();
 
-        return response()->json(['config' => $config]);
+        return response()->json($data);
     }
 
     public function upsert(BuyLeadConfigUpsertRequest $request)
     {
         $data = $request->validated();
 
-        $config = BuyLeadConfiguration::updateOrCreate(
+        $data['config'] = BuyLeadConfiguration::updateOrCreate(
             [
                 'quote_type_id' => $request->getQuoteTypeId(),
                 'department_id' => $data['department_id'],
