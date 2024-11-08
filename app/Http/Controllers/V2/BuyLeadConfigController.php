@@ -54,6 +54,6 @@ class BuyLeadConfigController extends Controller
             $data
         );
 
-        return response()->json(['config' => $config]);
+        return to_route('admin.buy-leads.config.show');
     }
 }

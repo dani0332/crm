@@ -237,6 +237,24 @@ class HandleInertiaRequests extends Middleware
         }
 
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
+            $nav = $nav->add('Buy Leads', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD),
+                        'Buy Leads Request',
+                        route('lead-allocation.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD),
+                        'Buy Leads Tracking',
+                        route('car-lead-allocation.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', route('activities.index'));
         }
 
@@ -571,8 +589,15 @@ class HandleInertiaRequests extends Middleware
                                 route('admin.sic-health-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
+                        'Buy Lead Config',
+                        route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
+
         }
 
         if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
