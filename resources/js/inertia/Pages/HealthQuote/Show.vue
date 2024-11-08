@@ -890,19 +890,19 @@ watchEffect(() => {
     .slice()
     .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
 
-  const matchingIndex = listQuotePlansFiltered.value.findIndex(
-    x => x.id === selectedProviderPlan.value?.id,
-  );
+  // const matchingIndex = listQuotePlansFiltered.value.findIndex(
+  //   x => x.id === selectedProviderPlan.value?.id,
+  // );
 
-  if (matchingIndex > 0) {
-    [
-      listQuotePlansFiltered.value[0],
-      listQuotePlansFiltered.value[matchingIndex],
-    ] = [
-      listQuotePlansFiltered.value[matchingIndex],
-      listQuotePlansFiltered.value[0],
-    ];
-  }
+  // if (matchingIndex > 0) {
+  //   [
+  //     listQuotePlansFiltered.value[0],
+  //     listQuotePlansFiltered.value[matchingIndex],
+  //   ] = [
+  //     listQuotePlansFiltered.value[matchingIndex],
+  //     listQuotePlansFiltered.value[0],
+  //   ];
+  // }
 });
 
 const computedListQuotePlans = computed(() => {
@@ -3311,6 +3311,8 @@ const onAddUpdate = () => {
               :rows-per-page="15"
               class="flex-wrap"
               :hide-footer="listQuotePlansFiltered.length < 15"
+              :sort-by="'actualPremium'"
+              :sort-type="'asc'"
             >
               <template #item-copayName="item">
                 <p class="copay-max">
