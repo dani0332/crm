@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
@@ -2036,7 +2037,8 @@ class SageApiService
         $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
         $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
 
-        $user = User::where('email', 'api.notification@insurancemarket.ae')->first();
+        // Advisor to be used when policy is booked using policy issuance automations
+        $user = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();
         /* If advisor is not assigned already than check that if the the Policy Issuance exist for the Insurer and LOB and assign the Advisor */
         if (! $quote->advisor_id && $insuranceProviderAutomation) {
             info('Policy Book : assignAdvisor - assign advisor to quote');

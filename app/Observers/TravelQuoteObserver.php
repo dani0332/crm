@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -9,6 +10,7 @@ use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\TravelQuote;
+use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -28,6 +30,8 @@ class TravelQuoteObserver
      */
     public function updated(TravelQuote $travelQuote): void
     {
+        // Advisor to be used when policy is booked using policy issuance automations
+        $user = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();
         $dirty = $travelQuote->getDirty();
         $changes = [];
 
@@ -38,7 +42,7 @@ class TravelQuoteObserver
             ];
         }
 
-        if (isset($dirty['advisor_id'])) {
+        if (isset($dirty['advisor_id']) && $dirty['advisor_id'] !== $user->id) {
             $travelQuote->markLeadAllocationPassed();
             $oldAdvisorId = $changes['advisor_id']['old'];
             TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
