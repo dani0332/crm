@@ -24,6 +24,11 @@ class BuyLeadRequest extends Model
         'expires_at' => 'datetime',
     ];
 
+    public function quoteType()
+    {
+        return $this->belongsTo(QuoteType::class);
+    }
+
     public function logs()
     {
         return $this->hasMany(BuyLeadRequestLog::class);
