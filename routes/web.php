@@ -437,7 +437,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::prefix('buy-leads')->group(function () {
         Route::prefix('request')->group(function () {
             Route::get('show', [BuyLeadController::class, 'show'])->name('buy-leads.request.show');
-            Route::post('submit', [BuyLeadController::class, 'request'])->name('buy-leads.request.submit');
+            Route::post('fetch-rate', [BuyLeadController::class, 'fetchRate'])->name('buy-leads.rate.fetch');
+            Route::post('submit', [BuyLeadController::class, 'submit'])->name('buy-leads.request.submit');
         });
     });
 

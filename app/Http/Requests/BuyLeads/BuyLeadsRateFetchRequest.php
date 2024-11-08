@@ -2,20 +2,20 @@
 
 namespace App\Http\Requests\BuyLeads;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
-class BuyLeadsConfigFetchRequest extends FormRequest
+class BuyLeadsRateFetchRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return Auth::user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]);
+        return Auth::user()->can(PermissionsEnum::BUY_LEADS);
     }
 
     /**
@@ -27,13 +27,12 @@ class BuyLeadsConfigFetchRequest extends FormRequest
     {
         return [
             'quote_type' => ['required', Rule::enum(QuoteTypes::class)],
-            'department_id' => 'required|exists:departments,id',
         ];
     }
 
     public function getDepartmentId()
     {
-        return $this->department_id;
+        return Auth::user()->department_id;
 
     }
 
