@@ -151,6 +151,9 @@ const formattedCoverages = computed(() => {
           <li>
             Please ensure all required columns data filled in the xlsx file.
           </li>
+          <li>
+            Please ensure each Excel file (.xlsx) contains only one sheet (no multiple sheets within a single file).
+          </li>
         </ul>
       </x-alert>
       <div class="flex justify-end gap-3 my-4">
