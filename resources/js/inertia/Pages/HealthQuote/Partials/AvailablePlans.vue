@@ -678,6 +678,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       newActualPremium +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
+                      (props.plan.icpFee || 0) +
                       totalLoadingPrice)?.toLocaleString()
                   }}
                 </dd>
@@ -687,6 +688,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       Number(selectedCopay.discountPremium) +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
+                      (props.plan.icpFee || 0) +
                       totalLoadingPrice)?.toLocaleString()
                   }}
                 </dd>
