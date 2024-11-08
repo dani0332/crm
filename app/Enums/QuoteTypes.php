@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Route;
 
 enum QuoteTypes: string
 {
+    use Enumable;
+
     case CAR = 'Car';
     case HOME = 'Home';
     case HEALTH = 'Health';

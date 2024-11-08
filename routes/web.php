@@ -57,6 +57,7 @@ use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\BuyLeadConfigController;
 use App\Http\Controllers\V2\BuyLeadController;
 use App\Http\Controllers\V2\CarQuoteController;
 use App\Http\Controllers\V2\CarRevivalQuoteController;
@@ -425,7 +426,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::prefix('buy-leads')->group(function () {
-            Route::post('config/upsert', [BuyLeadController::class, 'upsertConfiguration'])->name('admin.buy-leads.config.upsert');
+            Route::prefix('config')->group(function () {
+                Route::get('show', [BuyLeadConfigController::class, 'show'])->name('admin.buy-leads.config.show');
+                Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
+                Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
+            });
             Route::post('request', [BuyLeadController::class, 'requestBuyLeads'])->name('admin.buy-leads.request');
         });
     });

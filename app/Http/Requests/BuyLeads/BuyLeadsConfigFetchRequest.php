@@ -7,7 +7,7 @@ use App\Enums\RolesEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class BuyLeadConfigUpsertRequest extends FormRequest
+class BuyLeadsConfigFetchRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,8 +27,6 @@ class BuyLeadConfigUpsertRequest extends FormRequest
         return [
             'quote_type' => ['required', Rule::enum(QuoteTypes::class)],
             'department_id' => 'required|exists:departments,id',
-            'value' => 'required|numeric|min:0',
-            'volume' => 'required|numeric|min:0',
         ];
     }
 
