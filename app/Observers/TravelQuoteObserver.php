@@ -32,22 +32,20 @@ class TravelQuoteObserver
         $changes = [];
 
         foreach ($dirty as $attribute => $value) {
-            if ($travelQuote->isDirty($attribute)) {
-                $changes[$attribute] = [
-                    'old' => $travelQuote->getOriginal($attribute),
-                    'new' => $value,
-                ];
-            }
+            $changes[$attribute] = [
+                'old' => $travelQuote->getOriginal($attribute),
+                'new' => $value,
+            ];
         }
 
-        if ($travelQuote->isDirty('advisor_id')) {
+        if (isset($dirty['advisor_id'])) {
             $travelQuote->markLeadAllocationPassed();
             $oldAdvisorId = $changes['advisor_id']['old'];
             TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
         }
 
         if (
-            $travelQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $travelQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             TravelQuote::withoutEvents(function () use ($travelQuote) {
@@ -63,7 +61,7 @@ class TravelQuoteObserver
         }
 
         if (
-            $travelQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($travelQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Travel, 'quoteUID' => $travelQuote->uuid]);

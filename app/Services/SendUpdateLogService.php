@@ -381,6 +381,7 @@ class SendUpdateLogService
                 'quote_status_id' => QuoteStatusEnum::NewLead,
                 'parent_duplicate_quote_id' => $quoteObject->code,
                 'quote_link' => implode('/', $explodeQuoteLink),
+                'renewal_batch' => $quoteObject->renewal_batch ?? null,
             ])->save();
 
             foreach ($getRelations as $relation => $relationObject) {
@@ -1217,7 +1218,7 @@ class SendUpdateLogService
 
     public function updatePaymentTotalPrice($payment, $totalPrice): void
     {
-        info('Payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
+        info('Master payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
         $payment->total_price = $totalPrice;
     }
 
@@ -1246,19 +1247,18 @@ class SendUpdateLogService
     {
         info('fn:generateBrokerInvoiceNumberForSU - SendUpdateLog - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
         $response = ['status' => false, 'message' => ''];
+        $generateBrokerInvoice = true;
 
         if (! empty($sendUpdateLog->broker_invoice_number) && ! $updateReversalBIN) {
             info('SendUpdateLog - Broker Invoice Number already exists - BIN: '.$sendUpdateLog->broker_invoice_number.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-            $response['message'] = 'Broker Invoice Number already exists';
-
-            return $response;
+            $generateBrokerInvoice = false;
+            $response['status'] = true;
         }
 
         if ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD && ! empty($sendUpdateLog->reversal_broker_invoice_number)) {
             info('SendUpdateLog - Reversal Broker Invoice Number already exists - BIN: '.$sendUpdateLog->notes.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-            $response['message'] = 'Reversal Broker Invoice Number already exists';
-
-            return $response;
+            $generateBrokerInvoice = false;
+            $response['status'] = true;
         }
 
         if (! $insuranceProviderId) {
@@ -1266,7 +1266,6 @@ class SendUpdateLogService
         }
 
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
-        $generateBrokerInvoice = true;
         if (! $insuranceProviderId) {
             $generateBrokerInvoice = false;
             $response['message'] = 'Insurance Provider not found for Send Update Log: '.$sendUpdateLog->uuid;

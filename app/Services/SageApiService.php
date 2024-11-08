@@ -255,7 +255,7 @@ class SageApiService
         }
 
         // Create AP Premium Invoice
-        $extraDetails = ['sage_request_type' => ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AP_PREM_INV : SageEnum::SRT_CREATE_AP_SPPAY_INV];
+        $extraDetails['sage_request_type'] = ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AP_PREM_INV : SageEnum::SRT_CREATE_AP_SPPAY_INV;
         if ($preparedData['sendUpdateLog']?->option?->code !== SendUpdateLogStatusEnum::ACB) {
             $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
             if (! $createAPInvoicePrem['status']) {

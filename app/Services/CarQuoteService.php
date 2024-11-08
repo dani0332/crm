@@ -1638,7 +1638,7 @@ class CarQuoteService extends BaseService
 
     public function validateRequest($request)
     {
-        $isLeadPool = Auth::user()->isLeadPool();
+        $canReAssignAdvisor = Auth::user()->isLeadPool() || auth()->user()->can(PermissionsEnum::ASSIGN_PAID_LEADS);
         $userId = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
         if ($leadsIds == '' || $leadsIds == null) {
@@ -1650,7 +1650,7 @@ class CarQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! ($isLeadPool)) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! $canReAssignAdvisor) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }
@@ -2202,12 +2202,9 @@ class CarQuoteService extends BaseService
             ->join('vehicle_type as vt', 'cqr.vehicle_type_id', '=', 'vt.id')
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
-            ->leftJoin('quote_tags as qt', 'cqr.uuid', '=', 'qt.quote_uuid')
             ->whereNotNull('cqp.pua_premium')
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
-            ->whereNotNull('cqr.paid_at')
-            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
-            ->whereColumn('cqp.plan_id', 'cqr.plan_id')
-            ->whereIn('qt.name', ['SPUA', 'APUA', 'NPUA']);
+            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
+            ->whereColumn('cqp.plan_id', 'cqr.plan_id');
     }
 }
