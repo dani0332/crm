@@ -7,7 +7,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\TeamNameEnum;
 use App\Factories\AllocationFactory;
 use App\Factories\PolicyIssuanceFactory;
-use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;

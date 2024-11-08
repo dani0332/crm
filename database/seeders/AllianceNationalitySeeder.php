@@ -273,8 +273,8 @@ class AllianceNationalitySeeder extends Seeder
             ['id' => '258', 'nationality' => 'Portuguese', 'nationality_id' => '147'],
         ];
         foreach ($allianceNationalities as $allianceNationality) {
-            $nationality = Nationality::find((int)$allianceNationality['id']);
-            if ($nationality && ! empty($allianceNationality['nationality_id']) && !$nationality->alliance_nationality_id) {
+            $nationality = Nationality::find((int) $allianceNationality['id']);
+            if ($nationality && ! empty($allianceNationality['nationality_id']) && ! $nationality->alliance_nationality_id) {
                 $nationality->update(['alliance_nationality_id' => (int) $allianceNationality['nationality_id']]);
             }
         }

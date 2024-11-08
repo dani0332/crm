@@ -33,7 +33,6 @@ class SendTravelAllianceFailedAllocationEmailJob implements ShouldQueue
     /**
      * Execute the job.
      */
-
     public function handle(TravelEmailService $travelEmailService)
     {
         try {

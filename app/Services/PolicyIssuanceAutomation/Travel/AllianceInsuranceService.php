@@ -200,8 +200,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $nationalityTraveller[] = $member->nationality->alliance_nationality_id;
         }
 
-
-
         $endPoint = $this->baseUrl.'/v1/quote/'.$travelType.'/finalise';
         $payload = [
             'agency_id' => $this->agencyId,
@@ -510,7 +508,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
-        }elseif (!$policyIssuance && $quote->insurer_api_status){
+        } elseif (! $policyIssuance && $quote->insurer_api_status) {
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isPolicyDocumentUploadDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
@@ -566,11 +564,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     private function getTravelDocumentMapping($docName): ?array
     {
-        if($docName === 'Policy Tax Invoice') {
+        if ($docName === 'Policy Tax Invoice') {
             return ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_TAX_INVOICE];
-        }else if(str_contains($docName, 'Certificate of Insurance')) {
+        } elseif (str_contains($docName, 'Certificate of Insurance')) {
             return ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE];
         }
+
         return null;
 
     }

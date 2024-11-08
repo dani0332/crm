@@ -21,6 +21,7 @@ class PolicyIssuanceService
 
             return $response;
         }
+
         return array_merge($response, $insuranceProviderAutomation->getStepsLockingStatus($quote));
 
     }
