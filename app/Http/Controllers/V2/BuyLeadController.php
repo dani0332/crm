@@ -5,8 +5,11 @@ namespace App\Http\Controllers\V2;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BuyLeads\BuyLeadsRateFetchRequest;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
+use App\Models\BuyLeadConfiguration;
 use App\Models\BuyLeadRequest;
+use App\Models\LeadAllocation;
 use App\Services\BuyLeads\BuyLeadService;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,6 +20,22 @@ class BuyLeadController extends Controller
         $this->middleware('permission:'.PermissionsEnum::BUY_LEADS, ['only' => ['show']]);
     }
 
+    public function fetchRate(BuyLeadsRateFetchRequest $request)
+    {
+        $config = BuyLeadConfiguration::where([
+            'quote_type_id' => $request->getQuoteTypeId(),
+            'department_id' => $request->getDepartmentId(),
+        ])->first();
+
+        $data['value'] = $config?->value ?? 0;
+        $data['volume'] = $config?->volume ?? 0;
+
+        $leadAllocation = LeadAllocation::where('user_id', Auth::id())->where('quote_type_id', $request->getQuoteTypeId())->first();
+        $data['maxCapacity'] = $leadAllocation?->buy_lead_max_capacity ?? 0;
+
+        return response()->json($data);
+    }
+
     public function show()
     {
         $data['lobs'] = QuoteTypes::withLabels();
@@ -25,7 +44,7 @@ class BuyLeadController extends Controller
         return inertia('Admin/BuyLeads/Request/Show', $data);
     }
 
-    public function request(RequestBuyLeadsRequest $request)
+    public function submit(RequestBuyLeadsRequest $request)
     {
         return $this->buyLeadService->requestBuyLeads($request);
     }
