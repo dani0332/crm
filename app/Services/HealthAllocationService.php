@@ -132,7 +132,7 @@ class HealthAllocationService extends AllocationService
     {
         $advisor = null;
 
-        if ($lead->isBuyLeadApplicable() && in_array($leadTeam, [HealthTeamType::EBP, HealthTeamType::RM_SPEED])) {
+        if ($lead->isBuyLeadApplicable() && ($lead->isValueLead() || $lead->isVolumeLead())) {
             $advisor = $this->fetchAdvisor('getBLAdvisorByStatus', $leadTeam, $isReassignmentJob, $lead);
         }
 
@@ -162,20 +162,25 @@ class HealthAllocationService extends AllocationService
     {
         info(self::class."::getBLAdvisorByStatus - trying to get advisors for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
 
-        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::HEALTH);
+        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::HEALTH, $lead->isValueLead());
 
         $advisor = $this->getAdvisorBaseQuery($status, $leadTeam)
+            ->when($lead->isValueLead(), function ($q) {
+                $q->isValueUser();
+            }, function ($q) {
+                $q->isVolumeUser();
+            })
             ->whereIn('users.id', $buyLeadRequestedUserIds)
             ->where('la.buy_lead_status', true)
             ->where(function ($query) {
-                $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity')->orWhere('la.buy_lead_max_capacity', '=', -1);
+                $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity')->orWhere('la.buy_lead_max_capacity', -1);
             })
             ->orderBy('la.buy_lead_last_allocated', 'asc')
             ->first();
 
         if ($advisor) {
             info(self::class."::getBLAdvisorByStatus - found Advisor : {$advisor->user_id} for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
-            $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::HEALTH, $advisor->user_id);
+            $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::HEALTH, $advisor->user_id, $lead->isValueLead());
             if ($this->buyLeadRequest) {
                 $this->isBuyLeadAdvisor = true;
             } else {
@@ -230,8 +235,7 @@ class HealthAllocationService extends AllocationService
         $lead->save();
 
         if ($this->isBuyLeadAdvisor) {
-            $cost = $lead->health_team_type === HealthTeamType::EBP ? $this->buyLeadRequest->volume_cost_per_lead : $this->buyLeadRequest->value_cost_per_lead;
-            $this->buyLeadRequest->buyLead($lead, QuoteTypes::HEALTH, $cost);
+            $this->buyLeadRequest->buyLead($lead, QuoteTypes::HEALTH);
             info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' as bought lead');
         } else {
             info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
