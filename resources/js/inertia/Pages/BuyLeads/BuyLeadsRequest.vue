@@ -67,6 +67,7 @@ watch(
   },
 );
 const fetchMaximumLeads = () => {
+  table.value.loading = true;
   axios
     .post(route('buy-leads.rate.fetch'), {
       quote_type: requestForm.quote_type,
@@ -74,12 +75,14 @@ const fetchMaximumLeads = () => {
     .then(response => {
       let { maxCapacity } = response.data;
       maximumLeads.value = maxCapacity;
+      table.value.loading = false;
     })
     .catch(error => {
       notification.error({
         title: 'failed to fetch maximum leads',
         position: 'top',
       });
+      table.value.loading = false;
     });
 };
 </script>
@@ -128,6 +131,7 @@ const fetchMaximumLeads = () => {
               }
             "
             :rules="[isRequired]"
+            :loading="table.loading"
           />
         </x-field>
         <template #tooltip>
@@ -164,7 +168,7 @@ const fetchMaximumLeads = () => {
         size="md"
         color="primary"
         type="submit"
-        :loading="table.loader"
+        :loading="table.loading"
         :disabled="maximumLeads == 0"
       >
         Submit
