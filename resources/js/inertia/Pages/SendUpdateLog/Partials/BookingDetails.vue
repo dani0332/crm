@@ -1037,6 +1037,9 @@ const checkDiscount = (newPrice, oldPrice) => {
       bookingDetailsForm.discount = savedDiscount;
     }
   }
+
+  bookingDetailsForm.discount =
+    bookingDetailsForm.discount > 0.99 ? 0 : bookingDetailsForm.discount;
 };
 
 const dateToDMY = date => {
