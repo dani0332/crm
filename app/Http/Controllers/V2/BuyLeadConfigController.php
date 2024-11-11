@@ -36,7 +36,7 @@ class BuyLeadConfigController extends Controller
     {
         $data['config'] = BuyLeadConfiguration::where([
             'quote_type_id' => $request->getQuoteTypeId(),
-            'department_id' => $request->getDepartmentId(),
+            'department_id' => $request->department_id,
         ])->first();
 
         return response()->json($data);
