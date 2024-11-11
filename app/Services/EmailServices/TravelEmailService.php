@@ -161,6 +161,7 @@ class TravelEmailService extends BaseService
             'workflowType' => $workflowType ?? null,
             'quoteUUID' => $lead->uuid,
             'refId' => $lead->code,
+            'refID' => $lead->code,
         ];
     }
 
