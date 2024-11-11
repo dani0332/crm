@@ -59,6 +59,30 @@ class SUAdditionalCRNSubTypesSeeder extends Seeder
                     'description' => $endorsementDetails['description'],
                 ]);
             }
+
+            //        The same seeder is being used to rename some of the already created send update subtypes.
+            $getSendUpdateSubTypes = Lookup::where([
+                'quote_type_id' => $quoteTypeId,
+                'parent_id' => $parent->id,
+            ])->whereIn('code', [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATICB])->get();
+
+            foreach ($getSendUpdateSubTypes as $getSendUpdateSubType) {
+                if ($getSendUpdateSubType->code == SendUpdateLogStatusEnum::ACB) {
+                    $getSendUpdateSubType->text = 'Additional tax invoice raised by buyer booking';
+                    $getSendUpdateSubType->description = 'Select this option to record additional commission tax invoices. This helps ensure accurate financial records and facilitates proper commission tracking.';
+
+                    if ($getSendUpdateSubType->isDirty(['text', 'description'])) {
+                        $getSendUpdateSubType->save();
+                    }
+                } elseif ($getSendUpdateSubType->code == SendUpdateLogStatusEnum::ATICB) {
+                    $getSendUpdateSubType->text = 'Additional tax invoice and tax invoice raised by buyer booking';
+                    $getSendUpdateSubType->description = 'Select this option when you need to book additional tax invoices and commission. This may involve collection of an additional premium amount, please check with the insurer.';
+
+                    if ($getSendUpdateSubType->isDirty(['text', 'description'])) {
+                        $getSendUpdateSubType->save();
+                    }
+                }
+            }
         }
     }
 }
