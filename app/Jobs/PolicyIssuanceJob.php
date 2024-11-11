@@ -3,9 +3,6 @@
 namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\TeamNameEnum;
-use App\Factories\AllocationFactory;
 use App\Factories\PolicyIssuanceFactory;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
