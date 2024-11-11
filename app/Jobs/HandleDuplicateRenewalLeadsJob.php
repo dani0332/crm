@@ -1,0 +1,78 @@
+<?php
+namespace App\Jobs;
+
+use Exception;
+use Carbon\Carbon;
+use App\Models\CarQuote;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use League\CommonMark\Extension\SmartPunct\Quote;
+use Sammyjo20\LaravelHaystack\Concerns\Stackable;
+
+class HandleDuplicateRenewalLeadsJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, Stackable;
+
+    public function handle()
+    {
+        $date = request()->date ? request()->date : '2024-10-04';
+        $dateFormat = config("constants.DATE_FORMAT_ONLY");
+        $date = Carbon::parse($date)->format($dateFormat);
+        info("Starting to handle duplicat   e renewal leads for date: " . $date);
+
+        $totalDuplicates = 0;
+
+        try
+        {
+            CarQuote::select("previous_quote_policy_number", "previous_policy_expiry_date")->selectRaw("COUNT(*) as total")
+                ->groupBy("previous_quote_policy_number", "previous_policy_expiry_date")
+                ->having("total", ">", 1)
+                ->where("source", LeadSourceEnum::RENEWAL_UPLOAD)
+                ->whereRaw("DATE(created_at) = ?", [$date])
+                ->whereNotNull("previous_quote_policy_number")
+                ->whereNotNull("previous_policy_expiry_date")
+                ->orderBy("previous_quote_policy_number")
+                ->orderBy("previous_policy_expiry_date")
+                ->chunk(500, function ($duplicateLeads) use ($date, &$totalDuplicates)
+            {
+                foreach ($duplicateLeads as $lead)
+                {
+                    Log::info("Processing duplicate lead for policy number: " . $lead->previous_quote_policy_number);
+
+                    CarQuote::where("previous_quote_policy_number", $lead->previous_quote_policy_number)
+                        ->where("previous_policy_expiry_date", $lead->previous_policy_expiry_date)
+                        ->where("source", LeadSourceEnum::RENEWAL_UPLOAD)
+                        ->whereRaw("DATE(created_at) = ?", [$date])->chunk(500, function ($duplicateLeadInfo) use (&$totalDuplicates)
+                    {
+                        $isRecordIgnored = false;
+
+                        foreach ($duplicateLeadInfo as $key => $leadInfo)
+                        {
+                            if ($leadInfo->advisor_id != null && !$isRecordIgnored){
+                                $isRecordIgnored = true;
+                                continue;
+                            }
+                            $leadInfo->previous_quote_policy_number = $leadInfo->previous_quote_policy_number . "-duplicate";
+                            $leadInfo->quote_status_id = QuoteStatusEnum::Duplicate;
+                            $leadInfo->save();
+
+                            info("Updated duplicate lead ID: " . $leadInfo->id . " with new policy number: " . $leadInfo->previous_quote_policy_number);
+                            $totalDuplicates++;
+                        }
+                    });
+                }
+            });
+
+            info("Completed handling duplicate renewal leads for date: " . $date);
+            info("Total number of duplicate records processed: " . $totalDuplicates);
+        } catch(Exception $e){
+            Log::error("Error handling duplicate renewal leads for date: " . $date . ". Error: " . $e->getMessage());
+        }
+    }
+}
+

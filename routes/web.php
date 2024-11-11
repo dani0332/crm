@@ -76,6 +76,7 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Jobs\HandleDuplicateRenewalLeadsJob;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -671,5 +672,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 Route::get('/add-batch-number', function () {
     $addBtchNuimber = new AddBatchForNonMotors;
     $addBtchNuimber->handle();
+    echo 'Done';
+});
+
+Route::get('/send-payment-email', [CRUDController::class, 'triggerSendPaymentEmail']);
+
+Route::get('handling-duplicate-renewal-leads', function(){
+    $duplicateRenewalLeads = new HandleDuplicateRenewalLeadsJob;
+    $duplicateRenewalLeads->handle();
     echo 'Done';
 });
