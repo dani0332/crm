@@ -675,7 +675,7 @@ Route::get('/add-batch-number', function () {
     echo 'Done';
 });
 
-Route::get('handling-duplicate-renewal-leads', function(){
+Route::get('handling-duplicate-renewal-leads', function () {
     $duplicateRenewalLeads = new HandleDuplicateRenewalLeadsJob;
     $duplicateRenewalLeads->handle();
     echo 'Done';

@@ -1,19 +1,19 @@
 <?php
+
 namespace App\Jobs;
 
-use Exception;
-use Carbon\Carbon;
-use App\Models\CarQuote;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Models\CarQuote;
 use App\Models\QuoteStatusLog;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use League\CommonMark\Extension\SmartPunct\Quote;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 
 class HandleDuplicateRenewalLeadsJob implements ShouldQueue
@@ -23,69 +23,64 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
     public function handle()
     {
         $date = '2024-10-04';
-        $dateFormat = config("constants.DATE_FORMAT_ONLY");
+        $dateFormat = config('constants.DATE_FORMAT_ONLY');
         $date = Carbon::parse($date)->format($dateFormat);
-        info("Starting to handle duplicate renewal leads for date: " . $date);
+        info('Starting to handle duplicate renewal leads for date: '.$date);
 
         $totalDuplicates = 0;
 
-        try
-        {
-            CarQuote::select("previous_quote_policy_number", "previous_policy_expiry_date")->selectRaw("COUNT(*) as total")
-                ->groupBy("previous_quote_policy_number", "previous_policy_expiry_date")
-                ->having("total", ">", 1)
-                ->where("source", LeadSourceEnum::RENEWAL_UPLOAD)
-                ->whereRaw("DATE(created_at) = ?", [$date])
-                ->whereNotNull("previous_quote_policy_number")
-                ->whereNotNull("previous_policy_expiry_date")
-                ->orderBy("previous_quote_policy_number")
-                ->orderBy("previous_policy_expiry_date")
-                ->chunk(500, function ($duplicateLeads) use ($date, &$totalDuplicates)
-            {
-                foreach ($duplicateLeads as $lead)
-                {
-                    Log::info("Processing duplicate lead for policy number: " . $lead->previous_quote_policy_number);
+        try {
+            CarQuote::select('previous_quote_policy_number', 'previous_policy_expiry_date')->selectRaw('COUNT(*) as total')
+                ->groupBy('previous_quote_policy_number', 'previous_policy_expiry_date')
+                ->having('total', '>', 1)
+                ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
+                ->whereRaw('DATE(created_at) = ?', [$date])
+                ->whereNotNull('previous_quote_policy_number')
+                ->whereNotNull('previous_policy_expiry_date')
+                ->orderBy('previous_quote_policy_number')
+                ->orderBy('previous_policy_expiry_date')
+                ->chunk(500, function ($duplicateLeads) use ($date, &$totalDuplicates) {
+                    foreach ($duplicateLeads as $lead) {
+                        Log::info('Processing duplicate lead for policy number: '.$lead->previous_quote_policy_number);
 
-                    CarQuote::where("previous_quote_policy_number", $lead->previous_quote_policy_number)
-                        ->where("previous_policy_expiry_date", $lead->previous_policy_expiry_date)
-                        ->where("source", LeadSourceEnum::RENEWAL_UPLOAD)
-                        ->whereRaw("DATE(created_at) = ?", [$date])->chunk(500, function ($duplicateLeadInfo) use (&$totalDuplicates)
-                    {
-                        $isRecordIgnored = false;
+                        CarQuote::where('previous_quote_policy_number', $lead->previous_quote_policy_number)
+                            ->where('previous_policy_expiry_date', $lead->previous_policy_expiry_date)
+                            ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
+                            ->whereRaw('DATE(created_at) = ?', [$date])->chunk(500, function ($duplicateLeadInfo) use (&$totalDuplicates) {
+                                $isRecordIgnored = false;
 
-                        foreach ($duplicateLeadInfo as $key => $leadInfo)
-                        {
-                            if ($leadInfo->advisor_id != null && !$isRecordIgnored){
-                                $isRecordIgnored = true;
-                                info("Record ignored as it has advisor ID: " . $leadInfo->advisor_id . " for lead code: " . $leadInfo->code);
-                                continue;
-                            }
-                            $oldQuoteStatusId  = $leadInfo->quote_status_id;
-                            $leadInfo->previous_quote_policy_number = $leadInfo->previous_quote_policy_number . "-duplicate";
-                            $leadInfo->quote_status_id = QuoteStatusEnum::Duplicate;
-                            $leadInfo->save();
+                                foreach ($duplicateLeadInfo as $key => $leadInfo) {
+                                    if ($leadInfo->advisor_id != null && ! $isRecordIgnored) {
+                                        $isRecordIgnored = true;
+                                        info('Record ignored as it has advisor ID: '.$leadInfo->advisor_id.' for lead code: '.$leadInfo->code);
 
-                            if($oldQuoteStatusId != QuoteStatusEnum::Duplicate){
-                                QuoteStatusLog::create([
-                                    'quote_type_id' => QuoteTypeId::Car,
-                                    'quote_request_id' => $leadInfo->id,
-                                    'current_quote_status_id' => $leadInfo->quote_status_id,
-                                    'previous_quote_status_id' => $oldQuoteStatusId,
-                                ]);
-                            }
+                                        continue;
+                                    }
+                                    $oldQuoteStatusId = $leadInfo->quote_status_id;
+                                    $leadInfo->previous_quote_policy_number = $leadInfo->previous_quote_policy_number.'-duplicate';
+                                    $leadInfo->quote_status_id = QuoteStatusEnum::Duplicate;
+                                    $leadInfo->save();
 
-                            info("Record process: " .($totalDuplicates + 1). " Updated duplicate lead ID: " . $leadInfo->id . " with new policy number: " . $leadInfo->previous_quote_policy_number);
-                            $totalDuplicates++;
-                        }
-                    });
-                }
-            });
+                                    if ($oldQuoteStatusId != QuoteStatusEnum::Duplicate) {
+                                        QuoteStatusLog::create([
+                                            'quote_type_id' => QuoteTypeId::Car,
+                                            'quote_request_id' => $leadInfo->id,
+                                            'current_quote_status_id' => $leadInfo->quote_status_id,
+                                            'previous_quote_status_id' => $oldQuoteStatusId,
+                                        ]);
+                                    }
 
-            info("Completed handling duplicate renewal leads for date: " . $date);
-            info("Total number of duplicate records processed: " . $totalDuplicates);
-        } catch(Exception $e){
-            Log::error("Error handling duplicate renewal leads for date: " . $date . ". Error: " . $e->getMessage());
+                                    info('Record process: '.($totalDuplicates + 1).' Updated duplicate lead ID: '.$leadInfo->id.' with new policy number: '.$leadInfo->previous_quote_policy_number);
+                                    $totalDuplicates++;
+                                }
+                            });
+                    }
+                });
+
+            info('Completed handling duplicate renewal leads for date: '.$date);
+            info('Total number of duplicate records processed: '.$totalDuplicates);
+        } catch (Exception $e) {
+            Log::error('Error handling duplicate renewal leads for date: '.$date.'. Error: '.$e->getMessage());
         }
     }
 }
-
