@@ -16,6 +16,7 @@ use App\Models\BusinessInsuranceType;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
@@ -350,19 +351,8 @@ class SagePayloadFactory
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $commissionDescription = 'C.'.$request->invoiceDescription;
         $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
-        $optionalFields = self::createOptionalFields($request);
-        /*$optionalFields[] = [
-            'OptionalField' => 'COMAMOUNT',
-            'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
-        ];
-        $optionalFields[] = [
-            'OptionalField' => 'TOTALCOMM',
-            'Value' => (string) $request->commission,
-        ];
-        $optionalFields[] = [
-            'OptionalField' => 'INSURER',
-            'Value' => (string) $request->insurerName,
-        ];*/
+        $optionalFields = self::createOptionalFields($request, SageEnum::SRT_CREATE_AR_PREM_COMM_INV);
+
         $payLoad = [
             'Invoices' => [
                 [
@@ -502,19 +492,8 @@ class SagePayloadFactory
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $commissionDescription = 'C.'.$request->invoiceDescription;
         $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
-        $optionalFields = self::createOptionalFields($request);
-        /* $optionalFields[] = [
-             'OptionalField' => 'COMAMOUNT',
-             'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
-         ];
-         $optionalFields[] = [
-             'OptionalField' => 'TOTALCOMM',
-             'Value' => (string) $request->commission,
-         ];
-         $optionalFields[] = [
-             'OptionalField' => 'INSURER',
-             'Value' => (string) $request->insurerName,
-         ];*/
+        $optionalFields = self::createOptionalFields($request, SageEnum::SRT_CREATE_AR_SPPAY_INV);
+
         $payLoad = [
             'Invoices' => [
                 [
@@ -973,7 +952,7 @@ class SagePayloadFactory
         }
     }
 
-    private static function createOptionalFields($request)
+    private static function createOptionalFields($request, $forSpecificInvoices = null)
     {
         $optionalArray = [
             [
@@ -1066,6 +1045,28 @@ class SagePayloadFactory
             ],
         ];
 
+        if (in_array($forSpecificInvoices, [SageEnum::SRT_CREATE_AR_PREM_COMM_INV, SageEnum::SRT_CREATE_AR_SPPAY_INV])) {
+            $optionalArray[] = [
+                'OptionalField' => 'COMAMOUNT',
+                'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
+            ];
+
+            $optionalArray[] = [
+                'OptionalField' => 'TOTALCOMM',
+                'Value' => (string) $request->commission,
+            ];
+
+            $optionalArray[] = [
+                'OptionalField' => 'INSURER',
+                'Value' => (string) $request->insurerName,
+            ];
+
+            $optionalArray[] = ['OptionalField' => 'REFID', 'Value' => (string) (($request->quoteCode ?? $request->quoteRefId) ?? '')];
+            $optionalArray[] = ['OptionalField' => 'SUREFID', 'Value' => (string) $request->endorsementNumber];
+            $optionalArray[] = ['OptionalField' => 'ENDORSUBTYPE', 'Value' => (string) $request->endorsementSubType];
+            $optionalArray[] = ['OptionalField' => 'DEPARTMENT', 'Value' => (string) $request->advisorDepartment];
+        }
+
         return $optionalArray;
     }
 
@@ -1147,9 +1148,15 @@ class SagePayloadFactory
         $firstChildPayment = $paymentSplits->first();
         $insuredFullName = isset($quote->customer_id) ? $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name : '';
         $latestEndorsementCode = '';
+        $endorsementSubType = '';
+
         if (isset($quote->personal_quote_id) && $quote?->personal_quote_id) {
             $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
             $latestEndorsementCode = $latestEndorsement?->code;
+
+            if (! empty($latestEndorsement->option_id)) {
+                $endorsementSubType = Lookup::find($latestEndorsement?->option_id)?->text ?? '';
+            }
         }
 
         $businessTypeOfInsuranceCode = '';
@@ -1168,6 +1175,7 @@ class SagePayloadFactory
 
         $sageRequest = new stdClass;
 
+        $sageRequest->quoteRefId = PersonalQuote::find($quote?->personal_quote_id)?->code ?? '';
         $sageRequest->userId = auth()->id();
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
@@ -1191,20 +1199,24 @@ class SagePayloadFactory
         $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
         $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
         $sageRequest->endorsementNumber = $latestEndorsementCode;
+        $sageRequest->endorsementSubType = $endorsementSubType;
         $sageRequest->insured = $insuredFullName;
         $sageRequest->policyHolder = $insuredFullName;
         $sageRequest->premiumCollectedBy = $premiumCollectedBy;
 
         $sageRequest->invoicePaymentStatus = $payment->payment_status_id;
         $advisorName = '';
+        $advisorDepartment = '';
         $managerName = '';
         if (! empty($quote->advisor_id)) {
-            $advisor = User::where('id', $quote->advisor_id)->first();
+            $advisor = User::with('department')->where('id', $quote->advisor_id)->first();
             $advisorName = $advisor->name;
             $managerName = implode(',', getManagersByUser($advisor->id)->pluck('name')->toArray());
+            $advisorDepartment = $advisor?->department?->name;
         }
         $sageRequest->advisorName = $advisorName;
         $sageRequest->manager = $managerName;
+        $sageRequest->advisorDepartment = $advisorDepartment;
 
         //calculate vat
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
@@ -1234,7 +1246,7 @@ class SagePayloadFactory
             $sageRequest->invoicePaymentStatus = $firstChildPayment->payment_status_id;
         }
 
-        $insuranceProvider = getInsuranceProvider($payment, $modelType);
+        $insuranceProvider = getInsuranceProvider($payment, $modelType, $quote);
 
         if ($quote?->insly_migrated && ! empty($payment->send_update_log_id)) {
             $insuranceProviderDetails = InsuranceProvider::where('id', $quote->insurance_provider_id)->first();
