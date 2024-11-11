@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -32,32 +31,20 @@ class CarQuoteObserver
         $changes = [];
 
         foreach ($dirty as $attribute => $value) {
-            if ($lead->isDirty($attribute)) {
-                $changes[$attribute] = [
-                    'old' => $lead->getOriginal($attribute),
-                    'new' => $value,
-                ];
-            }
+            $changes[$attribute] = [
+                'old' => $lead->getOriginal($attribute),
+                'new' => $value,
+            ];
         }
 
-        if ($lead->isDirty('advisor_id')) {
+        if (isset($dirty['advisor_id'])) {
             $lead->markLeadAllocationPassed();
             $oldAdvisorId = $changes['advisor_id']['old'];
             event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId));
         }
 
-        $dirty = $lead->getDirty();
-        if ($lead->isDirty('quote_status_id')) {
+        if (isset($dirty['quote_status_id'])) {
             if ($lead->quote_status_id === QuoteStatusEnum::TransactionApproved) {
-                MAWelcomeJob::dispatchIf(
-                    isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $lead->customer,
-                    $lead->customer?->first_name,
-                    $lead->customer?->last_name,
-                    $lead->customer?->email,
-                    $lead->customer?->mobile_no,
-                    'CUSTOMER_UPDATE',
-                    'customer-update-myalfred-we'
-                );
                 CarQuote::withoutEvents(function () use ($lead) {
                     $lead->update([
                         'transaction_approved_at' => now(),
@@ -83,7 +70,7 @@ class CarQuoteObserver
         }
 
         if (
-            $lead->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
@@ -98,7 +85,7 @@ class CarQuoteObserver
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $lead->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::CAR->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
         }
     }
 }

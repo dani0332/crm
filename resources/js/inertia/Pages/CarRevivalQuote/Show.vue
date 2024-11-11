@@ -1,9 +1,8 @@
 <script setup>
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import QuotePolicy from '@/inertia/Pages/PersonalQuote/Partials/QuotePolicy.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import PaymentTable from './Partials/PaymentTable.vue';
-import QuotePolicy from '@/inertia/Pages/PersonalQuote/Partials/QuotePolicy.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 defineProps({
   quote: Object,
@@ -1249,7 +1248,7 @@ const sendPolicyToClient = () => {
       >
         <template #item-original_name="item">
           <a
-            :href="cdnPath + item.doc_url"
+            :href="cdnPath + (item.watermarked_doc_url ?? item.doc_url)"
             target="_blank"
             class="text-primary-600"
           >
@@ -1359,6 +1358,11 @@ const sendPolicyToClient = () => {
               :disabled="item.status === 1"
               outlined
               @click.prevent="activityDelete(item.id)"
+              v-if="
+                readOnlyMode.isDisable === true &&
+                item.user_id &&
+                item.user_id != null
+              "
             >
               Delete
             </x-button>
@@ -1609,6 +1613,11 @@ const sendPolicyToClient = () => {
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\CarQuote'" :id="quote.id" />
+    <AuditLogs
+      :type="'App\\Models\\CarQuote'"
+      :quoteType="$page.props.quoteType"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
   </div>
 </template>

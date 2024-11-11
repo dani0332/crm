@@ -18,6 +18,7 @@ use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthQuote;
+use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
@@ -816,15 +817,56 @@ if (! function_exists('strToFloat')) {
 if (! function_exists('getCardViewRequestFilters')) {
     function getCardViewRequestFilters($partialQuery, Request $request, $modelType)
     {
-        if ($modelType == HealthQuote::class && ! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+        // Mapping model types to relationships and column names
+        $modelTypeMappings = [
+            HealthQuote::class => [
+                'relation' => 'healthQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+            HomeQuote::class => [
+                'relation' => 'homeQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+            PersonalQuote::class => [
+                'relation' => 'quoteDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+            BusinessQuote::class => [
+                'relation' => 'businessQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+        ];
 
-            $partialQuery->whereHas('healthQuoteRequestDetail', function ($query) use ($dateFrom, $dateTo) {
-                $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
-            });
+        if (array_key_exists($modelType, $modelTypeMappings)) {
+            $mapping = $modelTypeMappings[$modelType];
+
+            // Handle HealthQuote type filtering
+            if (! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
+                $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
+                $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+
+                // Dynamically applying filter for the model type
+                $partialQuery->whereHas($mapping['relation'], function ($query) use ($dateFrom, $dateTo, $mapping) {
+                    $query->whereBetween($mapping['column'], [$dateFrom, $dateTo]);
+                });
+            }
+
+            // Handle HomeQuote type filtering
+            if (! empty($request->advisor_assigned_date)) {
+                $dateArray = $request['advisor_assigned_date'];
+
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+
+                // Dynamically applying filter for the model type
+                $partialQuery->whereHas($mapping['relation'], function ($query) use ($dateFrom, $dateTo, $mapping) {
+                    $query->whereBetween($mapping['column'], [$dateFrom, $dateTo]);
+                });
+            }
+
             $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
+
         if (isset($request->code) && $request->code != '') {
             $partialQuery->where('code', $request->code);
         }
@@ -905,6 +947,14 @@ if (! function_exists('getCardViewRequestFilters')) {
             if ($request->is_renewal == quoteTypeCode::noText) {
                 $partialQuery->whereNull('previous_quote_policy_number');
             }
+        }
+
+        if ($request->has('last_modified_date') && $request->filled('last_modified_date')) {
+            $dateArray = $request['last_modified_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $partialQuery->whereBetween('updated_at', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->advisors) && ! empty($request->advisors)) {
@@ -1262,7 +1312,7 @@ if (! function_exists('getLookupsEnum')) {
 }
 
 if (! function_exists('getCourierQuote')) {
-    function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [QuoteStatusEnum::PolicyIssued])
+    function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [])
     {
         try {
             $quoteModel = get_class($quote);
@@ -1299,7 +1349,9 @@ if (! function_exists('getCourierQuote')) {
                             default => "{$table}.emirate_of_registration_id"
                         });
                 })
-                ->whereIn("{$table}.quote_status_id", $quoteStatuses)
+                ->when(! empty($quoteStatuses) && is_array($quoteStatuses), function ($q) use ($table, $quoteStatuses) {
+                    $q->whereIn("{$table}.quote_status_id", $quoteStatuses);
+                })
                 ->leftJoin('customer_addresses', function (JoinClause $join) use ($table, $quoteTypeId) {
                     $join->on('customer_addresses.quote_uuid', '=', "{$table}.uuid")
                         ->where('customer_addresses.quote_type_id', $quoteTypeId);
@@ -1479,10 +1531,32 @@ if (! function_exists('isNonSelfBillingEnabledForInsuranceProvider')) {
 }
 
 if (! function_exists('getInsuranceProvider')) {
-    function getInsuranceProvider($payment, $quoteType)
+    function getInsuranceProvider($payment, $quoteType, $quote = null)
     {
         $insuranceProvider = null;
         $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+
+        //        Reminder:: Add Commercial vehicle logic for fetch correct provider
+        if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+
+            $quoteDetails = $payment->paymentable; // For Main Lead
+
+            if (empty($quoteDetails) && isset($quote->personal_quote_id) && $quote?->personal_quote_id) { // For Endorsements
+                $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
+                $quoteDetails = CarQuote::where('uuid', $personalQuote?->uuid)->first();
+            }
+
+            if (! empty($quoteDetails)) {
+                $quoteDetails->fill(['full_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name]);
+                $isCommercialVehicle = app(\App\Services\LeadAllocationService::class)->isCommercialVehicles($quoteDetails);
+                $vehicleType = \App\Models\VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
+
+                if ($isCommercialVehicle || ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD && $vehicleType == strtoupper(QuoteTypes::BIKE->value))) {
+                    return $payment?->insuranceProvider;
+                }
+            }
+        }
+
         if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
             $planRelationName = strtolower($quoteType).'Plan';
             $payment->load($planRelationName);

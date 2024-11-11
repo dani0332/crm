@@ -12,7 +12,13 @@ defineProps({
 const canExport = ref(false);
 const page = usePage();
 const notification = useNotifications('toast');
+const cleanObj = obj => useCleanObj(obj);
 const { isRequired } = useRules();
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
+});
 
 const created_at_rule = v => {
   if (filters.created_at_end) {
@@ -53,6 +59,8 @@ const filters = reactive({
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   company_name: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -89,6 +97,11 @@ const tableHeader = [
     sortable: true,
   },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
@@ -133,10 +146,13 @@ function filterQuotes(isValid) {
   // if (filters.created_at_end) {
   //   filters.created_at_end = filters.created_at_end.split('T')[0];
   // }
+
+  serverOptions.value.page = 1;
   router.visit(route('amt.index'), {
     method: 'get',
     data: {
       ...filters,
+      ...serverOptions.value,
     },
     preserveState: true,
     preserveScroll: true,
@@ -229,7 +245,11 @@ const onDataExport = () => {
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'amt');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Business'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 
 watch(
@@ -253,6 +273,24 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   setQueryFilters();
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const resetDateFilters = filterName => {
@@ -350,6 +388,14 @@ watch(() => {
     filters.created_at_end = '';
   }
 });
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) filterQuotes(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -541,6 +587,26 @@ watch(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -610,6 +676,7 @@ watch(() => {
 
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"

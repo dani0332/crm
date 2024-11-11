@@ -410,8 +410,7 @@ class AdvisorDistributionReportService extends BaseService
         $freshLoad = ! isset($filters->page);
 
         $startDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
-            ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
@@ -456,6 +455,9 @@ class AdvisorDistributionReportService extends BaseService
         if (isset($filters->leadSources) && count($filters->leadSources) > 0) {
             $query->whereIn('car_quote_request.source', $filters->leadSources);
         }
+        if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
+            $query->where('car_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
+        }
 
         if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
             $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
@@ -474,8 +476,7 @@ class AdvisorDistributionReportService extends BaseService
         $freshLoad = ! isset($filters->page);
 
         $startDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
-                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
@@ -534,6 +535,15 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Health) {
+
+            if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
+
+                $query->join('health_quote_request', function ($join) use ($filters) {
+                    $join->on('health_quote_request.uuid', 'personal_quotes.uuid')
+                        ->where('health_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                });
+            }
+
             if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
                 $query->join('health_quote_request', function ($join) use ($filters) {
                     $join->on('health_quote_request.uuid', 'personal_quotes.uuid')
@@ -554,7 +564,8 @@ class AdvisorDistributionReportService extends BaseService
         if ($lob === quoteTypeCode::Travel) {
             $isTravelQuote = false;
             if ((! empty($filters->insurance_type) && $filters->insurance_type != '') ||
-                (! empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
+                (! empty($filters->travel_coverage) && $filters->travel_coverage != '')
+            ) {
                 $isTravelQuote = true;
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
             }
@@ -569,6 +580,14 @@ class AdvisorDistributionReportService extends BaseService
             if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false') {
                 $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
                 $query->where($table, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+            }
+
+            if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
+
+                $query->join('travel_quote_request', function ($join) use ($filters) {
+                    $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
+                        ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                });
             }
         }
 

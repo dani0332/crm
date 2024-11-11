@@ -20,6 +20,7 @@ use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class CarRevivalQuoteRepository extends BaseRepository
@@ -223,5 +224,35 @@ class CarRevivalQuoteRepository extends BaseRepository
         }
 
         return $data;
+    }
+
+    public function fetchUpdate($uuid, $data)
+    {
+        $lead = $this->where('uuid', $uuid)->firstOrFail();
+        $lead->update(Arr::only($data, [
+            'first_name',
+            'last_name',
+            'dob',
+            'email',
+            'mobile_no',
+            'nationality_id',
+            'uae_license_held_for_id',
+            'back_home_license_held_for_id',
+            'car_make_id',
+            'car_model_id',
+            'cylinder',
+            'car_model_detail_id',
+            'year_of_manufacture',
+            'car_value',
+            'vehicle_type_id',
+            'seat_capacity',
+            'emirate_of_registration_id',
+            'car_type_insurance_id',
+            'currently_insured_with',
+            'claim_history_id',
+            'additional_notes',
+        ]));
+
+        return $lead;
     }
 }
