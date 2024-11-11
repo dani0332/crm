@@ -1,4 +1,6 @@
 <script setup>
+import { computed, ref, watch } from 'vue';
+
 const props = defineProps({
   lobs: Array,
   requests: Array,
@@ -7,9 +9,16 @@ const props = defineProps({
 const notification = useToast();
 const { isRequired } = useRules();
 
+const maximumLeads = ref(0);
+const maximumValue = ref(1);
+
+const calculateMaximumCost = computed(() => {
+  return requestForm.count * maximumValue.value;
+});
+
 const requestForm = useForm({
   quote_type: '',
-  bought_leads: '',
+  count: '',
   total_cost: '',
   requested_date: '',
 });
@@ -28,6 +37,7 @@ const table = ref({
 
 const onSubmit = isValid => {
   if (isValid) {
+    table.value.loading = true;
     requestForm.submit('post', route('buy-leads.request.submit'), {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
@@ -42,12 +52,11 @@ const onSubmit = isValid => {
           title: 'Buy Lead Configuration updated successfully',
           position: 'top',
         });
+        table.value.loading = false;
       },
     });
   }
 };
-
-const maximumLeads = ref(0);
 
 watch(
   () => requestForm.quote_type,
@@ -89,12 +98,14 @@ const fetchMaximumLeads = () => {
           filterable
           v-model="requestForm.quote_type"
           :rules="[isRequired]"
+          @update:modelValue="requestForm.count = null"
         ></x-select>
       </x-field>
       <x-tooltip placement="top-left">
         <x-field label="Buy Leads" required>
           <x-input
-            v-model="requestForm.bought_leads"
+            :disabled="requestForm.quote_type == null || maximumLeads == 0"
+            v-model="requestForm.count"
             type="number"
             :max="maximumLeads"
             :min="0"
@@ -127,7 +138,7 @@ const fetchMaximumLeads = () => {
         </template>
       </x-tooltip>
       <x-field label="The total cost for the leads is:">
-        <x-input type="number" disabled />
+        <x-input type="number" disabled :value="calculateMaximumCost" />
       </x-field>
     </div>
     <div>
@@ -149,7 +160,15 @@ const fetchMaximumLeads = () => {
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">
-      <x-button size="md" color="primary" type="submit"> Submit </x-button>
+      <x-button
+        size="md"
+        color="primary"
+        type="submit"
+        :loading="table.loader"
+        :disabled="maximumLeads == 0"
+      >
+        Submit
+      </x-button>
     </div>
   </x-form>
   <DataTable
