@@ -1685,9 +1685,7 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <label
-                    class="font-medium text-gray-800 text-sm"
-                  >
+                  <label class="font-medium text-gray-800 text-sm">
                     DEPARTING FROM
                   </label>
                 </dt>

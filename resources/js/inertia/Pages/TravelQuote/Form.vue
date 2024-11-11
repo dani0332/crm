@@ -162,8 +162,7 @@ function onSubmit(isValid) {
     quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND &&
     quoteForm?.departure_country_id == null
   ) {
-    quoteForm.errors.departure_country_id =
-      'Please select departing from.';
+    quoteForm.errors.departure_country_id = 'Please select departing from.';
     return;
   }
 
@@ -485,9 +484,7 @@ watch(mappedDestinationIds, newVal => {
         </x-field>
 
         <x-field
-          v-if="
-            quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND
-          "
+          v-if="quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND"
           label="Departing From"
           required
         >
