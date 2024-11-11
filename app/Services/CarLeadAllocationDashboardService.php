@@ -52,6 +52,9 @@ class CarLeadAllocationDashboardService extends BaseService
                     'la.manual_assignment_count as manualAllocationCount',
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.reset_cap',
+                    'la.buy_lead_max_capacity as BLMaxCapacity',
+                    'la.buy_lead_allocation_count as BLAllocationCount',
+                    'la.buy_lead_status as BLStatus',
                 );
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();

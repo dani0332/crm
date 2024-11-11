@@ -192,7 +192,12 @@ class LeadAllocationController extends Controller
                 if ($item['userId'] && $item['maxCap']) {
                     if ($quoteTypeId) {
                         $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('quote_type_id', $quoteTypeId)->where('user_id', $item['userId'])->first();
-                        $leadAllocationObj->max_capacity = (int) $item['maxCap'];
+
+                        if ($request->type === 'buy-lead') {
+                            $leadAllocationObj->buy_lead_max_capacity = (int) $item['maxCap'];
+                        } else {
+                            $leadAllocationObj->max_capacity = (int) $item['maxCap'];
+                        }
                         $leadAllocationObj->save();
                         info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
                     }
@@ -216,6 +221,21 @@ class LeadAllocationController extends Controller
             $leadAllocationObj->reset_cap = (int) $request->resetCap;
             $leadAllocationObj->save();
             info('Updated reset cap flag of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $request->resetCap.' by user : '.auth()->user()->email);
+        }
+    }
+
+    public function updateBlStatus(Request $request)
+    {
+        if (isset($request->buyLeadStatus)) {
+            $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
+            if (isset($request->leadId)) {
+                $leadAllocationObj = $leadAllocationObj->where('id', $request->leadId);
+            } else {
+                $leadAllocationObj = $leadAllocationObj->where('user_id', $request->userId);
+            }
+            $leadAllocationObj = $leadAllocationObj->first();
+            $leadAllocationObj->buy_lead_status = (int) $request->buyLeadStatus;
+            $leadAllocationObj->save();
         }
     }
 
