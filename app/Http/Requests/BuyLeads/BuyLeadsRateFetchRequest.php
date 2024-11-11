@@ -30,14 +30,8 @@ class BuyLeadsRateFetchRequest extends FormRequest
         ];
     }
 
-    public function getDepartmentId()
+    public function getQuoteType(): QuoteTypes
     {
-        return Auth::user()->department_id;
-
-    }
-
-    public function getQuoteTypeId()
-    {
-        return QuoteTypes::from($this->quote_type)->id();
+        return QuoteTypes::from($this->quote_type);
     }
 }

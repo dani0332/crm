@@ -31,12 +31,6 @@ class BuyLeadsConfigFetchRequest extends FormRequest
         ];
     }
 
-    public function getDepartmentId()
-    {
-        return $this->department_id;
-
-    }
-
     public function getQuoteTypeId()
     {
         return QuoteTypes::from($this->quote_type)->id();
