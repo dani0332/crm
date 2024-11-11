@@ -42,7 +42,7 @@ class BuyLeadController extends Controller
             return response()->json(['message' => $message], 422);
         }
 
-        return to_route('buy-leads.request.show');
+        return response()->json(['message' => 'Buy leads requested successfully']);
     }
 
     public function tracking()

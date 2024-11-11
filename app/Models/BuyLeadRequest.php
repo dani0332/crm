@@ -12,15 +12,14 @@ class BuyLeadRequest extends Model
         'user_id',
         'requested_count',
         'allocated_count',
-        'value_cost_per_lead',
-        'volume_cost_per_lead',
+        'cost_per_lead',
+        'request_type',
         'expires_at',
     ];
     protected $casts = [
         'requested_count' => 'integer',
         'allocated_count' => 'integer',
-        'value_cost_per_lead' => 'float',
-        'volume_cost_per_lead' => 'float',
+        'cost_per_lead' => 'float',
         'expires_at' => 'datetime',
     ];
 

@@ -72,12 +72,27 @@ class BuyLeadService
             return 'No configuration found for this quote type';
         }
 
+        $cost = null;
+        $requestType = null;
+
+        if (Auth::user()->isValueUser()) {
+            $cost = $config->value;
+            $requestType = 'value';
+        } elseif (Auth::user()->isVolumeUser()) {
+            $cost = $config->volume;
+            $requestType = 'volume';
+        }
+
+        if (! $cost) {
+            return "You're neither a value user nor a volume user";
+        }
+
         BuyLeadRequest::create([
             'quote_type_id' => $request->getQuoteTypeId(),
             'user_id' => Auth::id(),
             'requested_count' => $request->count,
-            'value_cost_per_lead' => $config->value,
-            'volume_cost_per_lead' => $config->volume,
+            'cost_per_lead' => $cost,
+            'request_type' => $requestType,
             'expires_at' => now()->endOfDay(),
         ]);
 
@@ -86,7 +101,14 @@ class BuyLeadService
 
     public function getTodaysRequests()
     {
-        return BuyLeadRequest::with('quoteType:id,code')->where('user_id', Auth::id())->latest()->whereDate('created_at', today())->simplePaginate(20)->withQueryString();
+        return BuyLeadRequest::select('id', 'quote_type_id', 'requested_count', 'cost_per_lead', 'created_at')
+            ->selectRaw('requested_count * cost_per_lead as total_cost')
+            ->with('quoteType:id,code')
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->whereDate('created_at', today())
+            ->simplePaginate(20)
+            ->withQueryString();
     }
 
     public function getTrackingData(QuoteTypes $quoteType, string $date)
