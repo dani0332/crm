@@ -58,6 +58,12 @@ class HealthAllocation implements Allocation
                 return AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
             }
 
+            if ($advisor->id == $lead->advisor_id) {
+                info('Advisor is same as previous advisor. Skipping for now.');
+
+                return AllocationFactory::createResponse($advisor->id, 'Advisor is same as previous advisor. Skipping for now.', Response::HTTP_OK);
+            }
+
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
 
             return AllocationFactory::createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
