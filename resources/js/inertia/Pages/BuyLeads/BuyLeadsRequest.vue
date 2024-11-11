@@ -11,6 +11,7 @@ const { isRequired } = useRules();
 
 const maximumLeads = ref(0);
 const maximumValue = ref(1);
+const formatted = date => useDateFormat(date, 'YYYY-MM-DD HH:mm:ss').value;
 
 const calculateMaximumCost = computed(() => {
   return requestForm.count * maximumValue.value;
@@ -184,7 +185,13 @@ const fetchMaximumLeads = () => {
     border-cell
     hide-rows-per-page
     hide-footer
-  ></DataTable>
+  >
+    <template #item-created_at="{ created_at }">
+      <span>
+        {{ created_at ? formatted(created_at) : 'N/A' }}
+      </span>
+    </template>
+  </DataTable>
   <Pagination
     :links="{
       next: props.requests.next_page_url,
