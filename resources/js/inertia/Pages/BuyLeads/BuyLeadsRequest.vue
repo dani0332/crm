@@ -27,7 +27,7 @@ const requestForm = useForm({
 const tableHeader = reactive([
   { text: 'Line Of Business', value: 'quote_type.code' },
   { text: 'Bought Leads', value: 'requested_count' },
-  { text: 'Total Costs', value: 'value_cost_per_lead' },
+  { text: 'Total Cost', value: 'value_cost_per_lead' },
   { text: 'Requested Date', value: 'created_at' },
 ]);
 
