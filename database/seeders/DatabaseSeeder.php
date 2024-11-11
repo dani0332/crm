@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             QuoteStatusSeeder::class,
             AddReApprovePaymentPermission::class,
             SendUpdateAdditionalTaxInvoice::class,
+            SUAdditionalCRNSubTypesSeeder::class,
             //DocumentTypeSeeder::class,
             InsurerTaxInvoicePermissionsSeeder::class,
             SendUpdatePermission::class,

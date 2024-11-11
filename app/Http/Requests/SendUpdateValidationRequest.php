@@ -109,7 +109,7 @@ class SendUpdateValidationRequest extends FormRequest
                             SendUpdateLogStatusEnum::PPE,
                         ])) {
                             if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
-                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer and receipt');
+                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
                             }
                         }
 
@@ -136,7 +136,7 @@ class SendUpdateValidationRequest extends FormRequest
                     $validator->errors()->add('error', 'Please update the missing booking details');
                 }
 
-                // Check all policy details have been corretly filled
+                // Check all policy details have been correctly filled
                 if (($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $categorySubType == SendUpdateLogStatusEnum::PPE) ||
                     $sendUpdateCategoryCode == SendUpdateLogStatusEnum::CPD) {
                     if (! $sendUpdateLog->is_policy_filled) {

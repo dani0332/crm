@@ -447,6 +447,7 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::ATCRN_CRNRBB
             ])) {
                 return true;
             }
@@ -573,7 +574,7 @@ class SendUpdateLogService
         $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
-        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATICB])) {
+        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATICB, SendUpdateLogStatusEnum::ATCRN_CRNRBB])) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
@@ -635,6 +636,9 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
+            SendUpdateLogStatusEnum::ATCRNB,
+            SendUpdateLogStatusEnum::ATCRNB_RBB,
+            SendUpdateLogStatusEnum::ATCRN_CRNRBB
         ];
 
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
@@ -1176,6 +1180,9 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::ACB,
                 SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
+                SendUpdateLogStatusEnum::ATCRNB,
+                SendUpdateLogStatusEnum::ATCRNB_RBB,
+                SendUpdateLogStatusEnum::ATCRN_CRNRBB
             ])) {
             return false;
         }

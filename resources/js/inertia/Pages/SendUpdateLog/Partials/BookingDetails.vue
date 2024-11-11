@@ -1656,11 +1656,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
+                v-if="!([sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2 pb-1.5"
               >
                 <div>
@@ -1746,9 +1742,7 @@ watch(
                 <div>N/A</div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
-                "
+                v-if="!([sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -1799,9 +1793,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
+                v-if="!([sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -1833,11 +1825,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
+                v-if="!([sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -1862,9 +1850,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
-                "
+                v-if="!([sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -1903,11 +1889,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
+                v-if="!([sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -1931,9 +1913,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
-                "
+                v-if="!([sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -1976,9 +1956,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
+                v-if="!([sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -2002,9 +1980,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
+                v-if="!([sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -2041,9 +2017,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
+                v-if="!([sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -2068,9 +2042,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
+                v-if="!([sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -2095,9 +2067,7 @@ watch(
                 </div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
-                "
+                v-if="!([sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog.option?.code))"
                 class="grid sm:grid-cols-2"
               >
                 <div>
@@ -2126,10 +2096,8 @@ watch(
                 <div></div>
               </div>
               <div
-                v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
-                "
-                class="grid sm:grid-cols-2"
+                v-if="!([sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog.option?.code))"
+                    class="grid sm:grid-cols-2"
               >
                 <div>
                   <x-tooltip placement="left">
