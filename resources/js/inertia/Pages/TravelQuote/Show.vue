@@ -3397,6 +3397,13 @@ const onAddUpdate = () => {
       :expanded="sectionExpanded"
     />
 
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
     <x-modal
       v-model="modals.mixInquiryConfirm"
       title="SORRY!"
