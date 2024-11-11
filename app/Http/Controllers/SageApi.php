@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Factories\SagePayloadFactory;
 use App\Services\SageApiService;
-use Inertia\Inertia; // Import Inertia class
 
 class SageApi extends Controller
 {
     protected $sageApiService;
+
     public function __construct(SageApiService $sageApi)
     {
         $this->sageApiService = $sageApi;

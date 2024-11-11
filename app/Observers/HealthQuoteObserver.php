@@ -38,7 +38,7 @@ class HealthQuoteObserver
     {
         $dirty = $healthQuote->getDirty();
 
-        if ($healthQuote->isDirty('advisor_id')) {
+        if (isset($dirty['advisor_id'])) {
             info(self::class." - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
                 'current_advisor_id' => $healthQuote->advisor_id,
                 'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),
@@ -48,7 +48,7 @@ class HealthQuoteObserver
         }
 
         if (
-            $healthQuote->isDirty('quote_status_id')
+            isset($dirty['quote_status_id'])
         ) {
             if ($healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
                 HealthQuote::withoutEvents(function () use ($healthQuote) {

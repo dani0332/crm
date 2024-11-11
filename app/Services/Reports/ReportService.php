@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -596,17 +597,17 @@ class ReportService extends BaseService
         $expiryDays = $authorizedDays->value;
 
         $lobTable = [
-            quoteTypeCode::Car => ['table' => 'car_quote_request'],
-            quoteTypeCode::Home => ['table' => 'home_quote_request'],
-            quoteTypeCode::Health => ['table' => 'health_quote_request'],
-            quoteTypeCode::Business => ['table' => 'business_quote_request'],
-            quoteTypeCode::Travel => ['table' => 'travel_quote_request'],
-            quoteTypeCode::Life => ['table' => 'life_quote_request'],
-            quoteTypeCode::Pet => ['table' => 'personal_quotes'],
-            quoteTypeCode::Yacht => ['table' => 'personal_quotes'],
-            quoteTypeCode::Bike => ['table' => 'personal_quotes'],
-            quoteTypeCode::Cycle => ['table' => 'personal_quotes'],
-            quoteTypeCode::Jetski => ['table' => 'personal_quotes'],
+            quoteTypeCode::Car => ['table' => 'car_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Home => ['table' => 'home_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Health => ['table' => 'health_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Business => ['table' => 'business_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Travel => ['table' => 'travel_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Life => ['table' => 'life_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Pet => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Pet],
+            quoteTypeCode::Yacht => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Yacht],
+            quoteTypeCode::Bike => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],
+            quoteTypeCode::Cycle => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Cycle],
+            quoteTypeCode::Jetski => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Jetski],
         ];
 
         $quoteTypes = [
@@ -641,7 +642,6 @@ class ReportService extends BaseService
         }
         $dataCollection = collect();
         foreach ($allowedLOBs as $details) {
-
             $premiumColumn = $details['table'].'.premium';
 
             $query = DB::table($details['table'])
@@ -650,13 +650,17 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     'quote_status_id',
                     DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
-                    DB::raw('SUM(DISTINCT '.$premiumColumn.') as total_premium'),
+                    DB::raw('SUM('.$premiumColumn.') as total_premium'),
                     DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                     DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days")
                 )
                 ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
-                ->join('users', 'users.id', $details['table'].'.advisor_id');
+                ->join('users', 'users.id', $details['table'].'.advisor_id')
+                ->when($details['quoteTypeId'] !== null, function ($query) use ($details) {
+                    return $query->where($details['table'].'.quote_type_id', $details['quoteTypeId']);
+                });
             $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED);
+            $query->where($details['table'].'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             if ($user->isAdvisor()) {
                 $query->where($details['table'].'.advisor_id', $user->id);
             } else {
@@ -677,11 +681,11 @@ class ReportService extends BaseService
             }
 
             if (isset($request->todayDate)) {
-                $query->having('expiry_days', '=', 1);
+                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 1);
             }
 
             if (isset($request->tomorrowDate)) {
-                $query->having('expiry_days', '=', 2);
+                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 2);
             }
 
             if (isset($request->thisWeek)) {
@@ -696,8 +700,8 @@ class ReportService extends BaseService
                 $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
             }
 
-            $dataCollection = $query->groupBy('users.id')
-                ->orderBy('total_leads', 'desc')->get();
+            $dataCollection = $dataCollection->merge($query->groupBy('users.id')
+                ->orderBy('total_leads', 'desc')->get());
         }
         $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
             return [
