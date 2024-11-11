@@ -61,13 +61,9 @@ class BuyLeadService
         return BuyLeadConfiguration::where('quote_type_id', $quoteType->id())->whereIn('department_id', $userDepartmentIds)->first();
     }
 
-    public function requestBuyLeads(RequestBuyLeadsRequest $request)
+    private function findConfigCost(QuoteTypes $quoteType)
     {
-        if ($message = $this->verifyPreChecks($request)) {
-            return $message;
-        }
-
-        $config = $this->findConfig($request->getQuoteType());
+        $config = $this->findConfig($quoteType);
         if (! $config) {
             return 'No configuration found for this quote type';
         }
@@ -86,6 +82,22 @@ class BuyLeadService
         if (! $cost) {
             return "You're neither a value user nor a volume user";
         }
+
+        return [$cost, $requestType];
+    }
+
+    public function requestBuyLeads(RequestBuyLeadsRequest $request)
+    {
+        if ($message = $this->verifyPreChecks($request)) {
+            return $message;
+        }
+
+        $configCost = $this->findConfigCost($request->getQuoteType());
+        if (is_string($configCost)) {
+            return $configCost;
+        }
+
+        [$cost, $requestType] = $configCost;
 
         BuyLeadRequest::create([
             'quote_type_id' => $request->getQuoteTypeId(),
