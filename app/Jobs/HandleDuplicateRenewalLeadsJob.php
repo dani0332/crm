@@ -22,7 +22,7 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
 
     public function handle()
     {
-        $date = request()->date ? request()->date : '2024-10-04';
+        $date = '2024-10-04';
         $dateFormat = config("constants.DATE_FORMAT_ONLY");
         $date = Carbon::parse($date)->format($dateFormat);
         info("Starting to handle duplicate renewal leads for date: " . $date);
