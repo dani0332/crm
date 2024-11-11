@@ -42,7 +42,7 @@ class TravelQuoteObserver
             ];
         }
 
-        if (isset($dirty['advisor_id']) && $dirty['advisor_id'] !== $user->id) {
+        if (isset($dirty['advisor_id']) && $dirty['advisor_id'] !== $user?->id) {
             $travelQuote->markLeadAllocationPassed();
             $oldAdvisorId = $changes['advisor_id']['old'];
             TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);

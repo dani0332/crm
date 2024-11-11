@@ -46,8 +46,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             $this->process->update(['status' => PolicyIssuanceEnum::PROCESSING_STATUS]);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
 
-            $quoteType = $this->process->quote_type;
-            $insuranceProvider = $this->process->insuranceProvider;
+            $quoteType = $this->process?->quote_type;
+            $insuranceProvider = $this->process?->insuranceProvider;
 
             if (! $insuranceProvider) {
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
@@ -85,6 +85,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         if (str_contains($message, self::TIMEOUT_MESSAGE)) {
             $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         } else {
+            $this->allocateFailedLead($this->process->model->uuid);
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         }
         Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
@@ -103,6 +104,13 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     private function isProcessable($process)
     {
         return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
+    }
+    private function allocateFailedLead($uuid)
+    {
+        $quoteType = $this->process?->quote_type;
+        $insuranceProvider = $this->process?->insuranceProvider;
+        $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider?->code);
+        $insuranceProviderAutomation?->allocateFailedLead($uuid);
     }
 
 }

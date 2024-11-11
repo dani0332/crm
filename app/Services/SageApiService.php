@@ -2031,30 +2031,35 @@ class SageApiService
 
     public function assignAdvisor($quote)
     {
-        info('Policy Book : assignAdvisor - start');
+        info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - start');
         $policyIssuanceAutomation = $quote->policyIssuance;
-        $quoteType = $policyIssuanceAutomation->quote_type;
-        $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
-        $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
+        if($policyIssuanceAutomation){
+            $quoteType = $policyIssuanceAutomation->quote_type;
+            $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
+            $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
 
-        // Advisor to be used when policy is booked using policy issuance automations
-        $user = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();
-        /* If advisor is not assigned already than check that if the the Policy Issuance exist for the Insurer and LOB and assign the Advisor */
-        if (! $quote->advisor_id && $insuranceProviderAutomation) {
-            info('Policy Book : assignAdvisor - assign advisor to quote');
-            if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked && $user) {
-                info('Policy Book : assignAdvisor - assign advisor to quote - status : '.QuoteStatusEnum::PolicyBooked.'User ID'.$user?->id);
-                $quote->advisor_id = $user->id;
-                $quote->save();
-            } elseif ($quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED) {
-                info('Policy Book : assignAdvisor - execute updateQuoteApiIssuanceStatusAndAllocate');
-                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote->uuid);
-                info('Policy Book : assignAdvisor - updateQuoteApiIssuanceStatusAndAllocate executed');
+            // Advisor to be used when policy is booked using policy issuance automations
+            $user = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();
+            /* If advisor is not assigned already than check that if the the Policy Issuance exist for the Insurer and LOB and assign the Advisor */
+            if (! $quote->advisor_id && $insuranceProviderAutomation) {
+                info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - assign advisor to quote');
+                if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked && $user) {
+                    info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - assign advisor to quote - status : '.QuoteStatusEnum::PolicyBooked.'User ID'.$user?->id);
+                    $quote->advisor_id = $user->id;
+                    $quote->save();
+                } elseif ($quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED) {
+                    info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - execute updateQuoteApiIssuanceStatusAndAllocate');
+                    $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote->uuid);
+                    info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - updateQuoteApiIssuanceStatusAndAllocate executed');
+                }
+
+            } else {
+                info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - advisor is already assigned to quote');
             }
-
-        } else {
-            info('Policy Book : assignAdvisor - advisor is already assigned to quote');
+        }else{
+            info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - advisor is already assigned to quote');
         }
-        info('Policy Book : assignAdvisor - end');
+
+        info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - end');
     }
 }
