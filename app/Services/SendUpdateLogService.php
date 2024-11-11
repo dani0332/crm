@@ -831,7 +831,7 @@ class SendUpdateLogService
             'policy_expiry_date' => $sendUpdateLog->expiry_date,
             'policy_number' => $sendUpdateLog->policy_number,
             'transaction_type_id' => $quoteDetails->transaction_type_id,
-            'advisor_id' => $sendUpdateLog->advisor_id,
+            'advisor_id' => $quoteDetails?->advisor_id ?? null,
             'price_vat_applicable' => abs($preparedDetailsForEndorsement['payment']->total_price),
             'price_with_vat' => abs($sendUpdateLog->price_with_vat),
             'insly_migrated' => $quoteDetails->insly_migrated,
