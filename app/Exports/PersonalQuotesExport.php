@@ -87,6 +87,7 @@ class PersonalQuotesExport
                     'IS ECOMMERCE',
                     'PREVIOUS POLICY EXPIRY DATE',
                     'PREVIOUS POLICY PREMIUM',
+                    'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
                 ];
@@ -108,6 +109,7 @@ class PersonalQuotesExport
                     'RENEWAL BATCH',
                     'PREVIOUS POLICY EXPIRY DATE',
                     'PREVIOUS POLICY PREMIUM',
+                    'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
                 ];
@@ -140,6 +142,7 @@ class PersonalQuotesExport
                     'RENEWAL BATCH',
                     'PREVIOUS POLICY EXPIRY DATE',
                     'PREVIOUS POLICY PREMIUM',
+                    'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
                 ];
@@ -160,6 +163,7 @@ class PersonalQuotesExport
                     'RENEWAL BATCH',
                     'PREVIOUS POLICY EXPIRY DATE',
                     'PREVIOUS POLICY PREMIUM',
+                    'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
                 ];
@@ -211,6 +215,7 @@ class PersonalQuotesExport
                     $quote->is_ecommerce ? 'Yes' : 'No',
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                     $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+                    $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
                 ];
@@ -232,6 +237,7 @@ class PersonalQuotesExport
                     $quote->renewal_batch,
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                     $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+                    $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
                 ];
@@ -264,6 +270,7 @@ class PersonalQuotesExport
                     $quote->renewal_batch,
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                     $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+                    $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
                 ];
@@ -284,6 +291,7 @@ class PersonalQuotesExport
                     $quote->renewal_batch,
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                     $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+                    $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
                 ];
