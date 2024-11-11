@@ -42,12 +42,12 @@ class BuyLeadController extends Controller
     }
 
     public function tracking()
-    {
+     {
         $quoteType = QuoteTypes::tryFrom(request()->get('quote_type'));
         $data['lobs'] = QuoteTypes::withLabels();
         $date = request('date');
 
-        $data['list'] = null;
+        $data['list'] = ['data' => []];
 
         if ($quoteType && $date) {
             $data['list'] = $this->buyLeadService->getTrackingData($quoteType, Carbon::parse($date));
