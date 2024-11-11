@@ -96,6 +96,9 @@ const tableHeader = ref([
   { text: 'A. Assigned', value: 'autoAllocationCount', sortable: true },
   { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
+  { text: 'BL Cap Limit', value: 'cap_limit', sortable: true, width: '100' },
+  { text: 'BL Status', value: 'bl_status', sortable: true, width: '100' },
+  { text: 'BL Assigned', value: 'bl_assigned', sortable: true, width: '100' },
   { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);

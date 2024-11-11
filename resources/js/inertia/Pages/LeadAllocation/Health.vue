@@ -169,6 +169,9 @@ const tableHeader = ref([
   { text: 'Last Allocations', value: 'last_allocated', sortable: true },
   { text: 'Max Cap Limit', value: 'max_capacity', sortable: true },
   { text: 'Status', value: 'is_available', sortable: true, width: '100' },
+  { text: 'BL Cap Limit', value: 'cap_limit', sortable: true, width: '100' },
+  { text: 'BL Status', value: 'bl_status', sortable: true, width: '100' },
+  { text: 'BL Assigned', value: 'bl_assigned', sortable: true, width: '100' },
   { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
 ]);
 
