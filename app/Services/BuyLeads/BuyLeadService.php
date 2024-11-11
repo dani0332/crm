@@ -64,14 +64,15 @@ class BuyLeadService
     public function requestBuyLeads(RequestBuyLeadsRequest $request)
     {
         if ($message = $this->verifyPreChecks($request)) {
-            return response()->json(['message' => $message], 422);
+            return $message;
         }
 
         $config = $this->findConfig($request->getQuoteType());
         if (! $config) {
-            return response()->json(['message' => 'No Buy Lead configuration found for this quote type'], 404);
+            return 'No configuration found for this quote type';
         }
-        $buyLeadRequest = BuyLeadRequest::create([
+
+        BuyLeadRequest::create([
             'quote_type_id' => $request->getQuoteTypeId(),
             'user_id' => Auth::id(),
             'requested_count' => $request->count,
@@ -80,7 +81,7 @@ class BuyLeadService
             'expires_at' => now()->endOfDay(),
         ]);
 
-        return response()->json(['message' => 'Buy Lead Request created successfully', 'buy_lead_request_id' => $buyLeadRequest->id], 201);
+        return null;
     }
 
     public function getTodaysRequests()

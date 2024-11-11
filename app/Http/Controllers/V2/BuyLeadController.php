@@ -38,11 +38,15 @@ class BuyLeadController extends Controller
 
     public function submit(RequestBuyLeadsRequest $request)
     {
-        return $this->buyLeadService->requestBuyLeads($request);
+        if ($message = $this->buyLeadService->requestBuyLeads($request)) {
+            return response()->json(['message' => $message], 422);
+        }
+
+        return to_route('buy-leads.request.show');
     }
 
     public function tracking()
-     {
+    {
         $quoteType = QuoteTypes::tryFrom(request()->get('quote_type'));
         $data['lobs'] = QuoteTypes::withLabels();
         $date = request('date');
