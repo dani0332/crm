@@ -21,9 +21,14 @@ class BuyLeadController extends Controller
     {
         $data['maxCapacity'] = $this->buyLeadService->getBlLeadRemainingLimit($request->getQuoteType());
 
-        $config = $this->buyLeadService->findConfig($request->getQuoteType());
-        $data['value'] = $config?->value ?? 0;
-        $data['volume'] = $config?->volume ?? 0;
+        $config = $this->buyLeadService->findConfigCost($request->getQuoteType());
+        if (is_string($config)) {
+            $data['cost'] = 0;
+        }
+
+        [$cost] = $config;
+
+        $data['cost'] = $cost;
 
         return response()->json($data);
     }

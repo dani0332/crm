@@ -61,7 +61,7 @@ class BuyLeadService
         return BuyLeadConfiguration::where('quote_type_id', $quoteType->id())->whereIn('department_id', $userDepartmentIds)->first();
     }
 
-    private function findConfigCost(QuoteTypes $quoteType)
+    public function findConfigCost(QuoteTypes $quoteType)
     {
         $config = $this->findConfig($quoteType);
         if (! $config) {

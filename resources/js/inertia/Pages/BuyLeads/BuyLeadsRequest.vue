@@ -10,11 +10,11 @@ const notification = useToast();
 const { isRequired } = useRules();
 
 const maximumLeads = ref(0);
-const maximumValue = ref(1);
+const perLeadCost = ref(1);
 const formatted = date => useDateFormat(date, 'YYYY-MM-DD HH:mm:ss').value;
 
 const calculateMaximumCost = computed(() => {
-  return requestForm.count * maximumValue.value;
+  return requestForm.count * perLeadCost.value;
 });
 
 const requestForm = useForm({
@@ -91,9 +91,9 @@ const fetchMaximumLeads = () => {
       quote_type: requestForm.quote_type,
     })
     .then(response => {
-      let { maxCapacity, value } = response.data;
+      let { maxCapacity, cost } = response.data;
       maximumLeads.value = maxCapacity;
-      maximumValue.value = value;
+      perLeadCost.value = cost;
       table.value.loading = false;
     })
     .catch(error => {
