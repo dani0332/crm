@@ -15,7 +15,7 @@ const tableHeader = reactive([
   { text: 'Lead Cost', value: 'cost' },
 ]);
 
-const table = ref({
+const table = reactive({
   loading: false,
 });
 
@@ -26,6 +26,7 @@ const filters = reactive({
 
 const onSubmit = isValid => {
   if (isValid) {
+    table.loading = true;
     filters.page = 1;
     router.visit(route('buy-leads.request.tracking'), {
       method: 'get',
@@ -37,6 +38,16 @@ const onSubmit = isValid => {
     });
   }
 };
+
+function onReset() {
+  router.visit(route('buy-leads.request.tracking'), {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (table.loading = true),
+    onSuccess: () => (table.loading = false),
+  });
+}
 
 onMounted(() => {
   setQueryStringFilters(params, filters);
@@ -70,8 +81,17 @@ onMounted(() => {
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">
-      <x-button size="md" color="orange" type="submit"> Search </x-button>
-      <x-button size="md" color="primary" type="submit"> Submit </x-button>
+      <x-button size="md" color="orange" type="submit" :loading="table.loading">
+        Search
+      </x-button>
+      <x-button
+        size="md"
+        color="primary"
+        type="submit"
+        @click.prevent="onReset()"
+      >
+        Reset
+      </x-button>
       <x-button size="md" color="secondary" type="submit">
         Download PDF
       </x-button>
