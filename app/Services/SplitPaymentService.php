@@ -895,21 +895,25 @@ class SplitPaymentService
         $commissionSplitSumWithoutLastSplit = 0;
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
         foreach ($paymentSplits as $paymentSplit) {
-            $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
-            /*
-             to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
-             and then subtract that amount from the total commission without vat and use the result as commission for last commission split
-            */
-            if ($paymentSplit->sr_no == count($paymentSplits)) {
-                $commissionSplitAmount = (float) sprintf('%.2f',
-                    $commission - $commissionSplitSumWithoutLastSplit);
-            } else {
-                $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
-            }
-            $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
-            /* Add Vat on commission to the first Installment of commission */
-            $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
-            $paymentSplit->save();
+
+            DB::transaction(function ($payment, $paymentSplits, $paymentSplit, $commission, $commissionSplitSumWithoutLastSplit) {
+                $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
+                /*
+                 to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
+                 and then subtract that amount from the total commission without vat and use the result as commission for last commission split
+                */
+                if ($paymentSplit->sr_no == count($paymentSplits)) {
+                    $commissionSplitAmount = (float) sprintf('%.2f',
+                        $commission - $commissionSplitSumWithoutLastSplit);
+                } else {
+                    $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+                }
+                $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
+                /* Add Vat on commission to the first Installment of commission */
+                $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
+                $paymentSplit->save();
+            }, 5);
+
         }
     }
 

@@ -200,34 +200,38 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
+        try {
+            $validatedData = $bookPolicyRequest->validated();
+            info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
-        $validatedData = $bookPolicyRequest->validated();
-        info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
+            $paymentInformation = [
+                'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
+                'transaction_payment_status' => $validatedData['transaction_payment_status'],
+                'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
+                'broker_invoice_number' => $validatedData['broker_invoice_number'],
+                'insurer_invoice_date' => $validatedData['invoice_date'],
+                'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
+                'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
+                'commmission_percentage' => $validatedData['commission_percentage'],
+                'commission_vat' => $validatedData['vat_on_commission'],
+                'commission' => $validatedData['total_commission'],
+                'invoice_description' => $validatedData['invoice_description'],
+            ];
+            $payment = Payment::where('code', $validatedData['payment_code'])->first();
+            if (! $payment) {
+                return back()->with('message', 'Payment record not found');
+            }
+            $payment->update($paymentInformation);
+            info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
-        $paymentInformation = [
-            'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
-            'transaction_payment_status' => $validatedData['transaction_payment_status'],
-            'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
-            'broker_invoice_number' => $validatedData['broker_invoice_number'],
-            'insurer_invoice_date' => $validatedData['invoice_date'],
-            'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
-            'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
-            'commmission_percentage' => $validatedData['commission_percentage'],
-            'commission_vat' => $validatedData['vat_on_commission'],
-            'commission' => $validatedData['total_commission'],
-            'invoice_description' => $validatedData['invoice_description'],
-        ];
-        $payment = Payment::where('code', $validatedData['payment_code'])->first();
-        if (! $payment) {
-            return back()->with('message', 'Payment record not found');
+            (new SplitPaymentService)->updateCommissionSchedule($payment);
+            info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
+
+            return redirect()->back()->with('success', 'Booking details has been updated.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-        $payment->update($paymentInformation);
-        info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
-        (new SplitPaymentService)->updateCommissionSchedule($payment);
-        info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
-
-        return redirect()->back()->with('success', 'Booking details has been updated.');
     }
 
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
