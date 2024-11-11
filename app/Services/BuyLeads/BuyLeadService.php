@@ -6,7 +6,9 @@ use App\Enums\QuoteTypes;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
 use App\Models\BuyLeadConfiguration;
 use App\Models\BuyLeadRequest;
+use App\Models\BuyLeadRequestLog;
 use App\Models\LeadAllocation;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -17,7 +19,7 @@ class BuyLeadService
         return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->active()->sum('requested_count');
     }
 
-    private function getBlLeadRemainingLimit(QuoteTypes $quoteType)
+    public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
     {
         $leadAllocation = LeadAllocation::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->first();
 
@@ -79,5 +81,25 @@ class BuyLeadService
         ]);
 
         return response()->json(['message' => 'Buy Lead Request created successfully', 'buy_lead_request_id' => $buyLeadRequest->id], 201);
+    }
+
+    public function getTodaysRequests()
+    {
+        return BuyLeadRequest::with('quoteType:id,code')->where('user_id', Auth::id())->latest()->whereDate('created_at', today())->simplePaginate(20)->withQueryString();
+    }
+
+    public function getTrackingData(QuoteTypes $quoteType, string $date)
+    {
+        return BuyLeadRequestLog::select('buy_lead_request_logs.id', 'buy_lead_request_logs.quote_type_id', 'buy_lead_request_logs.uuid as ref_id', 'buy_lead_request_logs.cost_per_lead as cost', 'buy_lead_requests.created_at as requested_date', 'departments.name as department')
+            ->with('quoteType:id,code')
+            ->join('buy_lead_requests', 'buy_lead_requests.id', '=', 'buy_lead_request_logs.buy_lead_request_id')
+            ->join('users', 'users.id', '=', 'buy_lead_requests.user_id')
+            ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
+            ->where('buy_lead_requests.user_id', Auth::id())
+            ->where('buy_lead_request_logs.quote_type_id', $quoteType->id())
+            ->whereDate('buy_lead_request_logs.created_at', Carbon::parse($date))
+            ->latest('buy_lead_request_logs.created_at')
+            ->simplePaginate(20)
+            ->withQueryString();
     }
 }

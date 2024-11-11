@@ -36,8 +36,13 @@ class BuyLeadsRateFetchRequest extends FormRequest
 
     }
 
+    public function getQuoteType(): QuoteTypes
+    {
+        return QuoteTypes::from($this->quote_type);
+    }
+
     public function getQuoteTypeId()
     {
-        return QuoteTypes::from($this->quote_type)->id();
+        return $this->getQuoteType()->id();
     }
 }
