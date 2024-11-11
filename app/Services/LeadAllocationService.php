@@ -68,6 +68,9 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.last_allocated',
                 't.name as teamName',
                 'u.name as userName',
+                'lead_allocation.buy_lead_max_capacity as BLMaxCapacity',
+                'lead_allocation.buy_lead_allocation_count as BLAllocationCount',
+                'lead_allocation.buy_lead_status as BLStatus',
             ])
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
