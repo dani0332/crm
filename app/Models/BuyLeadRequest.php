@@ -33,6 +33,11 @@ class BuyLeadRequest extends Model
         return $this->hasMany(BuyLeadRequestLog::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function scopeActive($q)
     {
         $q->where('expires_at', '>=', now());
@@ -43,24 +48,49 @@ class BuyLeadRequest extends Model
         $q->whereColumn('requested_count', '>', 'allocated_count');
     }
 
-    public static function getRequestedUserIds(QuoteTypes $quoteType): array
+    public function scopeIsValue($q)
     {
-        return self::where('quote_type_id', $quoteType->id())->active()->unfulfilled()->pluck('user_id')->toArray();
+        $q->where('request_type', 'value');
     }
 
-    public static function getRequest(QuoteTypes $quoteType, int $userId): ?BuyLeadRequest
+    public function scopeIsVolume($q)
     {
-        return self::where('user_id', $userId)->where('quote_type_id', $quoteType->id())->active()->unfulfilled()->first();
+        $q->where('request_type', 'volume');
     }
 
-    public function buyLead($lead, QuoteTypes $quoteType, $cost)
+    public function scopeValueVolume($q, bool $isValue)
+    {
+        $q->when($isValue, function ($q) {
+            $q->whereHas('user', function ($q) {
+                $q->isValueUser();
+            })->isValue();
+        }, function ($q) {
+            $q->whereHas('user', function ($q) {
+                $q->isVolumeUser();
+            })->isVolume();
+        });
+    }
+
+    public static function getRequestedUserIds(QuoteTypes $quoteType, bool $isValue): array
+    {
+        $userIds = self::valueVolume($isValue)->where('quote_type_id', $quoteType->id())->active()->unfulfilled()->pluck('user_id')->toArray();
+
+        return array_values(array_unique($userIds));
+    }
+
+    public static function getRequest(QuoteTypes $quoteType, int $userId, bool $isValue): ?BuyLeadRequest
+    {
+        return self::valueVolume($isValue)->where('quote_type_id', $quoteType->id())->where('user_id', $userId)->active()->unfulfilled()->first();
+    }
+
+    public function buyLead($lead, QuoteTypes $quoteType)
     {
         $this->increment('allocated_count');
         $this->logs()->create([
             'quote_type_id' => $quoteType->id(),
             'quote_id' => $lead->id,
             'uuid' => $lead->uuid,
-            'cost_per_lead' => $cost,
+            'cost_per_lead' => $this->cost_per_lead,
         ]);
     }
 }
