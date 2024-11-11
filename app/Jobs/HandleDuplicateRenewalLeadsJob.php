@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use App\Models\CarQuote;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\QuoteStatusLog;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -57,11 +59,21 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
                                 $isRecordIgnored = true;
                                 continue;
                             }
+                            $oldQuoteStatusId  = $leadInfo->quote_status_id;
                             $leadInfo->previous_quote_policy_number = $leadInfo->previous_quote_policy_number . "-duplicate";
                             $leadInfo->quote_status_id = QuoteStatusEnum::Duplicate;
                             $leadInfo->save();
 
-                            info("Updated duplicate lead ID: " . $leadInfo->id . " with new policy number: " . $leadInfo->previous_quote_policy_number);
+                            if($oldQuoteStatusId != QuoteStatusEnum::Duplicate){
+                                QuoteStatusLog::create([
+                                    'quote_type_id' => QuoteTypeId::Car,
+                                    'quote_request_id' => $leadInfo->id,
+                                    'current_quote_status_id' => $leadInfo->quote_status_id,
+                                    'previous_quote_status_id' => $oldQuoteStatusId,
+                                ]);
+                            }
+
+                            info("Record process: " .($totalDuplicates + 1). " Updated duplicate lead ID: " . $leadInfo->id . " with new policy number: " . $leadInfo->previous_quote_policy_number);
                             $totalDuplicates++;
                         }
                     });
