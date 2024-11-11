@@ -62,5 +62,15 @@ class SendUpdateAdditionalSubType extends Seeder
                 'description' => 'This endorsement allows for adjustments to the policy that have a financial impact, such as changes to the insured amount or coverage details. Any changes affecting the policy’s financial terms may require an additional premium or credit adjustment. Please consult with the insurer to confirm any cost implications associated with this endorsement.',
             ]);
         }
+
+        Lookup::firstOrCreate([
+            'quote_type_id' => QuoteTypeId::Travel,
+            'key' => 'correction-and-amendments-with-financial-effect',
+            'text' => 'Correction and Amendments (with Financial Effect)',
+            'code' => SendUpdateLogStatusEnum::MPC,
+            'parent_id' => $parent->id,
+        ], [
+            'description' => 'This option allows policyholders to terminate their insurance before its scheduled end date. Common reasons include leaving the country, obtaining a new insurance policy elsewhere (e.g., a new employer), or the premium payments has lapsed from the policyholder. Always confirm the reason before processing.',
+        ]);
     }
 }
