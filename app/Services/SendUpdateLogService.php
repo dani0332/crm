@@ -1446,7 +1446,6 @@ class SendUpdateLogService
      *
      * @param  $quoteType  - Life, Business etc.
      * @param  $businessTypeOfInsuranceId  - Business type of insurance id, if quote type is Business.
-     * @return bool
      */
     public function commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId): bool
     {
