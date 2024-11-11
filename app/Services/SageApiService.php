@@ -2033,7 +2033,7 @@ class SageApiService
     {
         info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - start');
         $policyIssuanceAutomation = $quote->policyIssuance;
-        if($policyIssuanceAutomation){
+        if ($policyIssuanceAutomation) {
             $quoteType = $policyIssuanceAutomation->quote_type;
             $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
             $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
@@ -2056,7 +2056,7 @@ class SageApiService
             } else {
                 info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - advisor is already assigned to quote');
             }
-        }else{
+        } else {
             info('Policy Book : Quote '.$quote?->code.' : assignAdvisor - advisor is already assigned to quote');
         }
 
