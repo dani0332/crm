@@ -65,8 +65,8 @@ class SendUpdateAdditionalSubType extends Seeder
 
         Lookup::firstOrCreate([
             'quote_type_id' => QuoteTypeId::Travel,
-            'key' => 'correction-and-amendments-with-financial-effect',
-            'text' => 'Correction and Amendments (with Financial Effect)',
+            'key' => 'midterm-policy-cancellation',
+            'text' => 'Midterm policy cancellation',
             'code' => SendUpdateLogStatusEnum::MPC,
             'parent_id' => $parent->id,
         ], [
