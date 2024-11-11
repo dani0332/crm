@@ -8,12 +8,11 @@ const { isRequired } = useRules();
 const params = useUrlSearchParams('history');
 
 const tableHeader = reactive([
-  { text: 'Ref-Id', value: 'uuid' },
-  { text: 'Line Of Business', value: 'line_of_business' },
+  { text: 'Ref-Id', value: 'ref_id' },
+  { text: 'Line Of Business', value: 'quote_type.code' },
   { text: 'Department', value: 'department' },
-  { text: 'Lead Costs', value: 'lead_cost' },
-  { text: 'Lead Costs', value: 'lead_cost' },
   { text: 'Requested Date', value: 'requested_date' },
+  { text: 'Lead Cost', value: 'cost' },
 ]);
 
 const table = ref({
