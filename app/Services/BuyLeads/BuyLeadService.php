@@ -51,14 +51,14 @@ class BuyLeadService
         return $message;
     }
 
-    private function findConfig(RequestBuyLeadsRequest $request): ?BuyLeadConfiguration
+    public function findConfig(QuoteTypes $quoteType): ?BuyLeadConfiguration
     {
         $userDepartmentIds = [
-            auth()->user()->department_id ?? 0,
-            ...auth()->user()->departments->pluck('id')->toArray(),
+            Auth::user()->department_id ?? 0,
+            ...(Auth::user()->departments?->pluck('id')?->toArray() ?? []),
         ];
 
-        return BuyLeadConfiguration::where('quote_type_id', $request->getQuoteTypeId())->whereIn('department_id', $userDepartmentIds)->first();
+        return BuyLeadConfiguration::where('quote_type_id', $quoteType->id())->whereIn('department_id', $userDepartmentIds)->first();
     }
 
     public function requestBuyLeads(RequestBuyLeadsRequest $request)
@@ -67,7 +67,7 @@ class BuyLeadService
             return response()->json(['message' => $message], 422);
         }
 
-        $config = $this->findConfig($request);
+        $config = $this->findConfig($request->getQuoteType());
         if (! $config) {
             return response()->json(['message' => 'No Buy Lead configuration found for this quote type'], 404);
         }

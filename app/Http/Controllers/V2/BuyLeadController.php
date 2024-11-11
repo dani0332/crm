@@ -7,7 +7,6 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BuyLeads\BuyLeadsRateFetchRequest;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
-use App\Models\BuyLeadConfiguration;
 use App\Services\BuyLeads\BuyLeadService;
 use Carbon\Carbon;
 
@@ -20,14 +19,11 @@ class BuyLeadController extends Controller
 
     public function fetchRate(BuyLeadsRateFetchRequest $request)
     {
-        $config = BuyLeadConfiguration::where([
-            'quote_type_id' => $request->getQuoteTypeId(),
-            'department_id' => $request->getDepartmentId(),
-        ])->first();
+        $data['maxCapacity'] = $this->buyLeadService->getBlLeadRemainingLimit($request->getQuoteType());
 
+        $config = $this->buyLeadService->findConfig($request->getQuoteType());
         $data['value'] = $config?->value ?? 0;
         $data['volume'] = $config?->volume ?? 0;
-        $data['maxCapacity'] = $this->buyLeadService->getBlLeadRemainingLimit($request->getQuoteType());
 
         return response()->json($data);
     }
