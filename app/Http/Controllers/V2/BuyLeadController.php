@@ -28,7 +28,6 @@ class BuyLeadController extends Controller
             $data['cost'] = $config[0];
         }
 
-
         return response()->json($data);
     }
 

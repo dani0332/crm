@@ -8,7 +8,6 @@ use App\Enums\CarPlanType;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\QuadrantCodeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RuleTypeEnum;
@@ -266,10 +265,10 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId, CarQuote $lead)
+    public function getEligibleUserForAllocation(Tier $tier, $advisorId, $isReassignmentJob, $leadSource, $teamId, CarQuote $lead)
     {
-        $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
-        info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
+        $tierUserIds = $this->getTierUserIds($tier->id, $advisorId);
+        info('Users against tierID '.$tier->id.' are: '.json_encode($tierUserIds->toArray()));
 
         $tierUserIds = $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
@@ -286,18 +285,18 @@ class CarAllocationService extends AllocationService
 
         $advisors = [];
 
-        if ($lead->isBuyLeadApplicable()) {
-            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tierUserIds, $advisorId, $teamId, $isReassignmentJob);
+        if ($lead->isBuyLeadApplicable() && ($tier->isValue() || $tier->isVolume())) {
+            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
 
         if (empty($advisors)) {
-            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tierUserIds, $advisorId, $teamId, $isReassignmentJob);
+            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
 
         return $advisors;
     }
 
-    private function fetchAdvisors(string $findAdvisorFn, $tierUserIds, $advisorId, $teamId, $isReassignmentJob)
+    private function fetchAdvisors(string $findAdvisorFn, $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead)
     {
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -309,7 +308,7 @@ class CarAllocationService extends AllocationService
         }
 
         foreach ($statusOrder as $status) {
-            $eligibleUsers = $this->{$findAdvisorFn}($status, $tierUserIds, $advisorId, $teamId);
+            $eligibleUsers = $this->{$findAdvisorFn}($lead, $status, $tier, $tierUserIds, $advisorId, $teamId);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
                 info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
@@ -348,9 +347,10 @@ class CarAllocationService extends AllocationService
         return $query;
     }
 
-    public function getBLAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
+    public function getBLAdvisorsByStatus($lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
     {
-        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR);
+        info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
+        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $tier->isValue());
 
         $advisors = $this->getAdvisorBaseQuery($status, $tierUserIds, $advisorId, $teamId)
             ->whereIn('user_id', $buyLeadRequestedUserIds)
@@ -366,8 +366,10 @@ class CarAllocationService extends AllocationService
         return $advisors;
     }
 
-    public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
+    public function getAdvisorsByStatus($lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
     {
+        info(self::class."::getAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
+
         return $this->getAdvisorBaseQuery($status, $tierUserIds, $advisorId, $teamId)
             ->where(function ($query) {
                 // Apply allocation count and max capacity conditions.
@@ -461,7 +463,7 @@ class CarAllocationService extends AllocationService
             )->get();
     }
 
-    public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId): mixed
+    public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
@@ -499,7 +501,7 @@ class CarAllocationService extends AllocationService
 
         if ($this->isBuyLeadAdvisor) {
             foreach ($finalEligibleUserIds as $advisorId) {
-                $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $advisorId);
+                $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $advisorId, $tier->isValue());
                 if ($this->buyLeadRequest) {
                     return $advisorId;
                 }
@@ -546,12 +548,6 @@ class CarAllocationService extends AllocationService
 
     public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
     {
-        if ($lead->advisor_id === $userId) {
-            info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
-
-            return;
-        }
-
         if (! empty($lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
             $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
         }
@@ -618,8 +614,7 @@ class CarAllocationService extends AllocationService
         $lead->save();
 
         if ($this->isBuyLeadAdvisor) {
-            $cost = $tier->quadrants()->where('code', QuadrantCodeEnum::VALUE)->exists() ? $this->buyLeadRequest->value_cost_per_lead : $this->buyLeadRequest->volume_cost_per_lead;
-            $this->buyLeadRequest->buyLead($lead, QuoteTypes::CAR, $cost);
+            $this->buyLeadRequest->buyLead($lead, QuoteTypes::CAR);
             info('Lead Id '.$lead->uuid.' assigned to advisor id : '.$userId.' as bought lead');
         } else {
             info('Lead Id '.$lead->uuid.' assigned to advisor id : '.$userId);

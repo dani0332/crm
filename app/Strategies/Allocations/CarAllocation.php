@@ -94,7 +94,7 @@ class CarAllocation implements Allocation
         }
 
         info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
-        $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $lead);
+        $availableUsers = $this->findAvailableUsers($tier, $lead->source, $lead);
         $rules = $this->findRules($lead);
         $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
 
@@ -137,9 +137,9 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId, $leadSource, $lead): array|Collection
+    protected function findAvailableUsers($tier, $leadSource, $lead): array|Collection
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $this->teamId, $lead);
+        return $this->carAllocationService->getEligibleUserForAllocation($tier, null, false, $leadSource, $this->teamId, $lead);
     }
 
     protected function findRules($lead)
@@ -149,7 +149,7 @@ class CarAllocation implements Allocation
 
     protected function finalizeAdvisors($lead, $tier, $users, $rules): int
     {
-        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, $this->teamId);
+        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, $this->teamId, $tier);
     }
 
     protected function assignLead($lead, $userId, $tier): void
