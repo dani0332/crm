@@ -56,7 +56,8 @@ class SendUpdateValidationRequest extends FormRequest
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
             } elseif ($sendUpdateLog->status == SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS) {
-                if (! $checkTransactionApprovedInSUStatusLogs) {
+                if (! $checkTransactionApprovedInSUStatusLogs && ! in_array($sendUpdateLog?->option->code, [
+                    SendUpdateLogStatusEnum::ATCRNB, SendUpdateLogStatusEnum::ATCRNB_RBB, SendUpdateLogStatusEnum::ATCRN_CRNRBB])) {
                     $validator->errors()->add('error', 'Transaction approval is required');
                 }
             }
@@ -163,6 +164,9 @@ class SendUpdateValidationRequest extends FormRequest
                         SendUpdateLogStatusEnum::ATIB,
                         SendUpdateLogStatusEnum::ATICB,
                         SendUpdateLogStatusEnum::ACB,
+                        SendUpdateLogStatusEnum::ATCRNB,
+                        SendUpdateLogStatusEnum::ATCRNB_RBB,
+                        SendUpdateLogStatusEnum::ATCRN_CRNRBB,
                     ])) {
                     $validator->errors()->add('error', 'Transaction approval is required');
                 }

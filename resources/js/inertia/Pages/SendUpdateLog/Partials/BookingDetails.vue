@@ -135,6 +135,8 @@ const checkSectionToEdit = () => {
   const additionalInvoiceTypes = [
     sendUpdateStatusEnum.ACB,
     sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
   ];
 
   if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
@@ -162,7 +164,7 @@ const checkSectionToEdit = () => {
     additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)
   ) {
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB &&
+      [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog?.option?.code) &&
       !props.uploadedDocuments.includes('SUTAXINVRB')
     ) {
       notification.error({
@@ -173,7 +175,7 @@ const checkSectionToEdit = () => {
     }
 
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB &&
+      [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(props.sendUpdateLog?.option?.code) &&
       !props.uploadedDocuments.includes('SUTAXINV')
     ) {
       notification.error({
