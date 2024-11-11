@@ -24,11 +24,10 @@ class BuyLeadController extends Controller
         $config = $this->buyLeadService->findConfigCost($request->getQuoteType());
         if (is_string($config)) {
             $data['cost'] = 0;
+        } else {
+            $data['cost'] = $config[0];
         }
 
-        [$cost] = $config;
-
-        $data['cost'] = $cost;
 
         return response()->json($data);
     }
