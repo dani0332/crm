@@ -62,7 +62,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 if (! $response['status']) {
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
-                    $this->allocateFailedLead($this->process->model->uuid);
                 } else {
                     $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
                     info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
@@ -85,7 +84,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         if (str_contains($message, self::TIMEOUT_MESSAGE)) {
             $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         } else {
-            $this->allocateFailedLead($this->process->model->uuid);
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
         }
         Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
@@ -105,12 +103,6 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     {
         return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
     }
-    private function allocateFailedLead($uuid)
-    {
-        $quoteType = $this->process?->quote_type;
-        $insuranceProvider = $this->process?->insuranceProvider;
-        $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider?->code);
-        $insuranceProviderAutomation?->allocateFailedLead($uuid);
-    }
+
 
 }
