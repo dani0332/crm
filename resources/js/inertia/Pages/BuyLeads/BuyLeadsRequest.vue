@@ -73,8 +73,9 @@ const fetchMaximumLeads = () => {
       quote_type: requestForm.quote_type,
     })
     .then(response => {
-      let { maxCapacity } = response.data;
+      let { maxCapacity, value } = response.data;
       maximumLeads.value = maxCapacity;
+      maximumValue.value = value;
       table.value.loading = false;
     })
     .catch(error => {
@@ -142,7 +143,7 @@ const fetchMaximumLeads = () => {
         </template>
       </x-tooltip>
       <x-field label="The total cost for the leads is:">
-        <x-input type="number" disabled :value="calculateMaximumCost" />
+        <x-input disabled v-model="calculateMaximumCost" />
       </x-field>
     </div>
     <div>
