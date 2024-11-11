@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             SendUpdateAdditionalTaxInvoice::class,
             DocumentTypeSeeder::class,
             GenericPermissionSeeder::class,
+            SendUpdateAdditionalSubType::class,
         ]);
     }
 }

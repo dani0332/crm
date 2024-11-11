@@ -1,0 +1,66 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\BusinessInsuranceType;
+use App\Models\Lookup;
+use Illuminate\Database\Seeder;
+
+class SendUpdateAdditionalSubType extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $parent = Lookup::where('code', SendUpdateLogStatusEnum::EF)->first();
+        $quoteTypes = [
+            QuoteTypeId::Car,
+            QuoteTypeId::Home,
+            QuoteTypeId::Health,
+            QuoteTypeId::Life,
+            QuoteTypeId::Business,
+            QuoteTypeId::Bike,
+            QuoteTypeId::Yacht,
+            QuoteTypeId::Travel,
+            QuoteTypeId::Pet,
+            QuoteTypeId::Cycle,
+        ];
+
+        foreach ($quoteTypes as $quoteTypeId) {
+            Lookup::firstOrCreate([
+                'quote_type_id' => $quoteTypeId,
+                'business_insurance_type_id' => null,
+                'key' => 'correction-and-amendments-with-financial-effect',
+                'text' => 'Correction and Amendments (with Financial Effect)',
+                'code' => SendUpdateLogStatusEnum::CAAFE,
+                'parent_id' => $parent->id,
+            ], [
+                'description' => 'This endorsement allows for adjustments to the policy that have a financial impact, such as changes to the insured amount or coverage details. Any changes affecting the policy’s financial terms may require an additional premium or credit adjustment. Please consult with the insurer to confirm any cost implications associated with this endorsement.',
+            ]);
+        }
+
+        $businessInsuranceTypes = [
+            quoteBusinessTypeCode::groupMedical,
+            quoteBusinessTypeCode::carFleet,
+        ];
+
+        foreach ($businessInsuranceTypes as $businessTypeCode) {
+            $businessInsuranceTypeId = BusinessInsuranceType::where('code', $businessTypeCode)->first()->id;
+
+            Lookup::firstOrCreate([
+                'quote_type_id' => QuoteTypeId::Business,
+                'business_insurance_type_id' => $businessInsuranceTypeId,
+                'key' => 'correction-and-amendments-with-financial-effect',
+                'text' => 'Correction and Amendments (with Financial Effect)',
+                'code' => SendUpdateLogStatusEnum::CAAFE,
+                'parent_id' => $parent->id,
+            ], [
+                'description' => 'This endorsement allows for adjustments to the policy that have a financial impact, such as changes to the insured amount or coverage details. Any changes affecting the policy’s financial terms may require an additional premium or credit adjustment. Please consult with the insurer to confirm any cost implications associated with this endorsement.',
+            ]);
+        }
+    }
+}
