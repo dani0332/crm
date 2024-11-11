@@ -266,11 +266,11 @@ class SageApiService
         // Create AR Discount Invoice
         $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
         if ($sageRequestPayload->discount > 0 && ! in_array(($preparedData['sendUpdateLog']?->option?->code ?? ''), [
-                SendUpdateLogStatusEnum::ATIB,
-                SendUpdateLogStatusEnum::ACB,
-                SendUpdateLogStatusEnum::ATCRNB,
-                SendUpdateLogStatusEnum::ATCRNB_RBB,
-            ])) {
+            SendUpdateLogStatusEnum::ATIB,
+            SendUpdateLogStatusEnum::ACB,
+            SendUpdateLogStatusEnum::ATCRNB,
+            SendUpdateLogStatusEnum::ATCRNB_RBB,
+        ])) {
             $extraDetails['paymentFrequency'] = $preparedData['payment']->frequency;
             $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
             if (! $createARInvoiceDis['status']) {

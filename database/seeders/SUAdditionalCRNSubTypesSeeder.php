@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Lookup;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SUAdditionalCRNSubTypesSeeder extends Seeder
