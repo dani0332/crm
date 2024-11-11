@@ -25,7 +25,7 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
         $date = request()->date ? request()->date : '2024-10-04';
         $dateFormat = config("constants.DATE_FORMAT_ONLY");
         $date = Carbon::parse($date)->format($dateFormat);
-        info("Starting to handle duplicat   e renewal leads for date: " . $date);
+        info("Starting to handle duplicate renewal leads for date: " . $date);
 
         $totalDuplicates = 0;
 
@@ -57,6 +57,7 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
                         {
                             if ($leadInfo->advisor_id != null && !$isRecordIgnored){
                                 $isRecordIgnored = true;
+                                info("Record ignored as it has advisor ID: " . $leadInfo->advisor_id . " for lead code: " . $leadInfo->code);
                                 continue;
                             }
                             $oldQuoteStatusId  = $leadInfo->quote_status_id;
