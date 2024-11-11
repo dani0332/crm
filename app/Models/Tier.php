@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuadrantCodeEnum;
 use App\Traits\FilterCriteria;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -31,5 +32,15 @@ class Tier extends Model implements AuditableContract
     public function quadrants()
     {
         return $this->belongsToMany(Quadrant::class, 'quad_tiers', 'tier_id', 'quad_id');
+    }
+
+    public function isValue()
+    {
+        return $this->quadrants()->where('code', QuadrantCodeEnum::VALUE)->exists();
+    }
+
+    public function isVolume()
+    {
+        return $this->quadrants()->where('code', QuadrantCodeEnum::VOLUME)->exists();
     }
 }

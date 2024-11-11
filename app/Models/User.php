@@ -394,4 +394,18 @@ class User extends Authenticatable implements AuditableContract
     {
         return $this->subTeam?->name === TeamNameEnum::VOLUME;
     }
+
+    public function scopeIsValueUser($q)
+    {
+        $q->whereHas('subTeam', function ($q) {
+            $q->where('name', TeamNameEnum::VALUE);
+        });
+    }
+
+    public function scopeIsVolumeUser($q)
+    {
+        $q->whereHas('subTeam', function ($q) {
+            $q->where('name', TeamNameEnum::VOLUME);
+        });
+    }
 }
