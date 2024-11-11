@@ -538,13 +538,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function allocateFailedLead($uuid)
     {
-        info(self::class.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
+        info(self::class.' fn:'.__FUNCTION__.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         $allocationStrategy = AllocationFactory::createStrategy(self::TYPE_ID, $uuid, $unassistedTeamId);
         $response = $allocationStrategy->executeSteps();
         if ($response) {
-            info(self::class.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
+            info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
             SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
         }
     }

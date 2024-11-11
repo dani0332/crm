@@ -15,7 +15,7 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-
+        $this->seedBirdWorkflowUrls();
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
             [
