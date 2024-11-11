@@ -54,9 +54,9 @@ onMounted(() => {
 });
 </script>
 <template>
-  <Head title="My Leads Request" />
+  <Head title="My Lead Request" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">My Leads Requests</h2>
+    <h2 class="text-xl font-semibold">My Lead Requests</h2>
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">

@@ -27,7 +27,7 @@ const requestForm = useForm({
 const tableHeader = reactive([
   { text: 'Line Of Business', value: 'quote_type.code' },
   { text: 'Bought Leads', value: 'requested_count' },
-  { text: 'Total Cost', value: 'value_cost_per_lead' },
+  { text: 'Total Cost', value: 'total_cost' },
   { text: 'Requested Date', value: 'created_at' },
 ]);
 
@@ -39,23 +39,40 @@ const table = ref({
 const onSubmit = isValid => {
   if (isValid) {
     table.value.loading = true;
-    requestForm.submit('post', route('buy-leads.request.submit'), {
-      onError: errors => {
-        Object.keys(errors).forEach(function (key) {
-          notification.error({
-            title: errors[key],
-            position: 'top',
-          });
-        });
-      },
-      onSuccess: response => {
+    axios
+      .post(route('buy-leads.request.submit'), {
+        quote_type: requestForm.quote_type,
+        count: requestForm.count,
+      })
+      .then(response => {
         notification.success({
-          title: 'Buy Lead Configuration updated successfully',
+          title: 'Buy Lead Request submitted successfully',
           position: 'top',
         });
+        requestForm.count = null;
+        requestForm.quote_type = null;
+        router.reload({
+          preserveScroll: true,
+          preserveState: true,
+        });
         table.value.loading = false;
-      },
-    });
+      })
+      .catch(errors => {
+        table.value.loading = false;
+        if (errors.response.status === 422) {
+          notification.error({
+            title: errors.response.data.message,
+            position: 'top',
+          });
+        } else {
+          Object.keys(errors).forEach(function (key) {
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
+          });
+        }
+      });
   }
 };
 
@@ -89,9 +106,9 @@ const fetchMaximumLeads = () => {
 };
 </script>
 <template>
-  <Head title="Buy Lead Configuration" />
+  <Head title="Buy Lead" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">Buy Leads Configuration</h2>
+    <h2 class="text-xl font-semibold">Buy Lead</h2>
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
