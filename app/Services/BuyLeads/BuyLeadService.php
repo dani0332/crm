@@ -123,7 +123,7 @@ class BuyLeadService
             ->withQueryString();
     }
 
-    public function getTrackingData(QuoteTypes $quoteType, string $date)
+    public function getTrackingData(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate)
     {
         return BuyLeadRequestLog::select('buy_lead_request_logs.id', 'buy_lead_request_logs.quote_type_id', 'buy_lead_request_logs.uuid as ref_id', 'buy_lead_request_logs.cost_per_lead as cost', 'buy_lead_requests.created_at as requested_date', 'departments.name as department')
             ->with('quoteType:id,code')
@@ -132,7 +132,7 @@ class BuyLeadService
             ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
             ->where('buy_lead_requests.user_id', Auth::id())
             ->where('buy_lead_request_logs.quote_type_id', $quoteType->id())
-            ->whereDate('buy_lead_request_logs.created_at', Carbon::parse($date))
+            ->whereBetween('buy_lead_request_logs.created_at', [$startDate, $endDate])
             ->latest('buy_lead_request_logs.created_at')
             ->simplePaginate(20)
             ->withQueryString();

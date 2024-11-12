@@ -52,12 +52,12 @@ class BuyLeadController extends Controller
     {
         $quoteType = QuoteTypes::tryFrom(request()->get('quote_type'));
         $data['lobs'] = QuoteTypes::withLabels();
-        $date = request('date');
+        [$startDate, $endDate] = request('date');
 
         $data['list'] = ['data' => []];
 
-        if ($quoteType && $date) {
-            $data['list'] = $this->buyLeadService->getTrackingData($quoteType, Carbon::parse($date));
+        if ($quoteType && $startDate && $endDate) {
+            $data['list'] = $this->buyLeadService->getTrackingData($quoteType, Carbon::parse($startDate), Carbon::parse($endDate));
         }
 
         return inertia('BuyLeads/BuyLeadsTracking', $data);
