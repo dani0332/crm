@@ -9,6 +9,7 @@ use App\Models\CarQuote;
 use App\Models\QuoteStatusLog;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -16,15 +17,17 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 
-class HandleDuplicateRenewalLeadsJob implements ShouldQueue
+class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, Stackable;
 
     public $tries = 1;
     public $timeout = 300;
-
-    public function __construct()
+    public $uniqueFor = 640;
+    private $uniqueId;
+    public function __construct($uniqueId)
     {
+        $this->uniqueId = $uniqueId;
         $this->onQueue('renewals');
     }
 
@@ -91,5 +94,10 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
         } catch (Exception $e) {
             Log::error('Error handling duplicate renewal leads for date: '.$date.'. Error: '.$e->getMessage());
         }
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->uniqueId;
     }
 }
