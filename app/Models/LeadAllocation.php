@@ -45,7 +45,7 @@ class LeadAllocation extends Model implements AuditableContract
 
         if (! $ignoreAssignmentCount) {
             if ($isAuto) {
-                $this->auto_assignment_count += $adjustment;  // TODO: need to discuss with ahsan for $isBuyLead
+                $this->auto_assignment_count += $adjustment;
             } else {
                 $this->manual_assignment_count += $adjustment;
             }
