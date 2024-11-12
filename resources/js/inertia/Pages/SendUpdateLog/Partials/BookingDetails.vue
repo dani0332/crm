@@ -350,9 +350,9 @@ const calculatePriceDetailsForATIB = () => {
 
 const calculateCommission = () => {
   ignoreCheckDiscount.value = false;
-  if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
+  if ([sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(props.sendUpdateLog?.option?.code)) {
     calculateCommisionDetailsForACB();
-  } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
+  } else if ([sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(props.sendUpdateLog?.option?.code)) {
     calculatePriceDetailsForATIB();
   } else {
     if (
@@ -1079,6 +1079,9 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.ED,
     sendUpdateStatusEnum.ATIB,
     sendUpdateStatusEnum.ACB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
+    sendUpdateStatusEnum.ATCRN_CRNRBB,
   ];
 
   return (
