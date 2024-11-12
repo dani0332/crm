@@ -23,6 +23,11 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
     public $tries = 1;
     public $timeout = 300;
 
+    public function __construct()
+    {
+        $this->onQueue('renewals');
+    }
+
     public function handle()
     {
         $date = '2024-10-04';
