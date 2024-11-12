@@ -24,6 +24,9 @@ const filters = reactive({
   date: null,
 });
 
+const getLink = (quote_uuid, quote_type_id) =>
+  buildCdbidLink(quote_uuid, quote_type_id);
+
 const onSubmit = isValid => {
   if (isValid) {
     table.loading = true;
@@ -122,7 +125,16 @@ onMounted(() => {
     border-cell
     hide-rows-per-page
     hide-footer
-  ></DataTable>
+  >
+    <template #item-ref_id="item">
+      <SanitizeHtml
+        v-if="(item.ref_id, item.quote_type_id)"
+        :html="getLink(item.ref_id, item.quote_type_id)"
+        class="text-primary-500 hover:underline"
+        :key="item.ref_id"
+      />
+    </template>
+  </DataTable>
   <Pagination
     :links="{
       next: list?.next_page_url,
