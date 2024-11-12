@@ -36,9 +36,11 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
     public function onRow(Row $row)
     {
         $this->validCount++;
+        $rowNumber = $row->getIndex();
         $row = $row->toArray();
 
         $coverageData = $this->mapQuoteData($row);
+        $coverageData['row_number'] = $rowNumber;
 
         return RateCoverageProcess::create([
             'rate_coverage_id' => $this->uploadCoverages->id,
@@ -108,8 +110,10 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
                     if (! isset($failed[$failure->row()])) {
                         $quoteData = $this->mapQuoteData($failure->values());
                         if (empty($quoteData)) {
-                            continue;
+                            continue; // Skip empty quote data
                         }
+                        $rowNumber = $failure->row();
+                        $quoteData['row_number'] = $rowNumber;
                         info('DATAAA', [$quoteData]);
                         $failed[$failure->row()] = [
                             'rate_coverage_id' => $this->uploadCoverages->id,
@@ -143,10 +147,6 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
             'is_northern' => $row[5] ?? null,
             'plan_code' => $row[6] ?? null,
         ];
-
-        if (is_null($data['plan_code']) || $data['plan_code'] === '') {
-            return [];
-        }
 
         $filteredData = array_filter($data, function ($value) {
             return ! is_null($value) && $value !== ''; // Exclude nulls and empty strings

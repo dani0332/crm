@@ -76,4 +76,17 @@ class RateCoverageUploadController extends Controller
         return response()->json(['message' => 'Rates upload is being processed.']);
     }
 
+    /**
+     * Fetch bad records.
+     *
+     * @param int $id
+     * @return \Inertia\Response
+     */
+    public function badRecords($id)
+    {
+        $badRecords = $this->rateCoverageUploadService->getBadRecords($id);
+
+        return response()->json(['status' => true, 'data' => $badRecords]);
+    }
+
 }

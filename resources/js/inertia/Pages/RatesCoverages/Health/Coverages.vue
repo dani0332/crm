@@ -9,7 +9,10 @@ const notification = useToast();
 const uploadForm = useForm({
   csvFile: '',
 });
+const badCoveragesModal = ref(false);
+const badCoverages = ref([]);
 const contactLoader = ref(false);
+const tableLoader = ref(false); 
 const page = usePage();
 
 const tableHeader = [
@@ -19,9 +22,20 @@ const tableHeader = [
   { text: 'Total Record', value: 'totalRecords' },
   { text: 'Uploaded Record', value: 'good' },
   { text: 'Bad Record', value: 'cannotUpload' },
-  { text: 'Error', value: 'error' },
   { text: 'Created At', value: 'created_at' },
   { text: 'Updated At', value: 'updated_at' },
+];
+
+const badRecordsTableHeader = [
+  { text: 'Row', value: 'row_number' },
+  { text: 'Code', value: 'code' },
+  { text: 'Text', value: 'text' },
+  { text: 'Description', value: 'description' },
+  { text: 'Value', value: 'value' },
+  { text: 'Type', value: 'type' },
+  { text: 'Is Northern', value: 'is_northern' },
+  { text: 'Plan Code', value: 'plan_code' },
+  { text: 'Errors', value: 'errors' },
 ];
 
 let errors = {
@@ -105,6 +119,41 @@ const formattedCoverages = computed(() => {
     };
   });
 });
+
+const showFailedCoverages = (id, badCount) => {
+  if(badCount == 0) {
+    badCoverages.value = [];
+    badCoveragesModal.value = true;
+    return;
+  }
+  
+  tableLoader.value = true;
+  axios
+    .get(`/rates-coverages/bad-records/${id}`)
+    .then(response => {
+      const data = response.data.data;
+      
+      data.map((item, index) => {
+        item.row_number = item.data?.row_number ?? '';
+        item.code = item.data?.code ?? '';
+        item.text = item.data?.text ?? '';
+        item.description = item.data?.description ?? '';
+        item.value = item.data?.value ?? '';
+        item.type = item.data?.type ?? '';
+        item.is_northern = item.data?.is_northern ?? '';
+        item.plan_code = item.data?.plan_code ?? '';
+        item.errors = item.validation_errors ?? '';
+      });
+      badCoverages.value = data;
+    })
+    .catch(error => {
+      badCoverages.value = [];
+    })
+    .finally(() => {
+      tableLoader.value = false;
+      badCoveragesModal.value = true;
+    });
+};
 </script>
 
 <template>
@@ -186,6 +235,25 @@ const formattedCoverages = computed(() => {
     </div>
     <x-divider class="my-4" />
 
+    <x-modal
+      v-model="badCoveragesModal"
+      size="xl"
+      :title="`Bad Coverages`"
+      show-close
+      backdrop
+    >
+      <DataTable
+        table-class-name="tablefixed"
+        :headers="badRecordsTableHeader"
+        :items="badCoverages || []"
+        border-cell
+        hide-rows-per-page
+        hide-footer
+      >
+        
+      </DataTable>
+    </x-modal>
+
     <DataTable
       table-class-name="tablefixed"
       :headers="tableHeader"
@@ -193,7 +261,16 @@ const formattedCoverages = computed(() => {
       border-cell
       hide-rows-per-page
       hide-footer
+      :loading="tableLoader"
     >
+      <template #item-cannotUpload="item">
+        <Button
+          @click="showFailedCoverages(item.upload_id, item.cannotUpload)"
+          class="text-primary-500 hover:underline flex items-center space-x-1"
+        >
+          <span>{{ item.cannotUpload }} </span>
+        </Button>
+      </template>
     </DataTable>
 
     <Pagination

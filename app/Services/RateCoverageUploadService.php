@@ -175,7 +175,6 @@ class RateCoverageUploadService
             'rate_coverage_uploads.created_at as created_at',
             'rate_coverage_uploads.updated_at as updated_at',
             'rate_coverage_processes.type as type',
-            DB::raw('GROUP_CONCAT(rate_coverage_processes.validation_errors SEPARATOR \', \') as error')
         )
             ->where('rate_coverage_uploads.type', '=', RateCoverageEnum::COVERAGES)
             ->leftJoin('rate_coverage_processes', 'rate_coverage_processes.rate_coverage_id', '=', 'rate_coverage_uploads.id')
@@ -326,7 +325,6 @@ class RateCoverageUploadService
             'rate_coverage_uploads.created_at as created_at',
             'rate_coverage_uploads.updated_at as updated_at',
             'rate_coverage_processes.type as type',
-            DB::raw('GROUP_CONCAT(rate_coverage_processes.validation_errors SEPARATOR \', \') as error')
         )
             ->where('rate_coverage_uploads.type', '=', RateCoverageEnum::RATES)
             ->leftJoin('rate_coverage_processes', 'rate_coverage_processes.rate_coverage_id', '=', 'rate_coverage_uploads.id')
@@ -336,6 +334,13 @@ class RateCoverageUploadService
             ->withQueryString();
 
         return $rates;
+    }
+
+    public function getBadRecords($id)
+    {
+        return RateCoverageProcess::where('rate_coverage_id', $id)
+            ->whereNotNull('validation_errors')
+            ->get(['data', 'validation_errors']);
     }
 
 }

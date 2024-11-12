@@ -9,7 +9,10 @@ const notification = useToast();
 const uploadForm = useForm({
   csvFile: '',
 });
+const badRatesModal = ref(false);
+const badRates = ref([]);
 const contactLoader = ref(false);
+const tableLoader = ref(false); 
 const page = usePage();
 
 const tableHeader = [
@@ -19,9 +22,21 @@ const tableHeader = [
   { text: 'Total Record', value: 'totalRecords' },
   { text: 'Uploaded Record', value: 'good' },
   { text: 'Bad Record', value: 'cannotUpload' },
-  { text: 'Error', value: 'error' },
   { text: 'Created At', value: 'created_at' },
   { text: 'Updated At', value: 'updated_at' },
+];
+
+const badRecordsTableHeader = [
+  { text: 'Row', value: 'row_number' },
+  { text: 'Is Northern', value: 'is_northern' },
+  { text: 'Min Age', value: 'min_age' },
+  { text: 'Max Age', value: 'max_age' },
+  { text: 'Gender', value: 'gender' },
+  { text: 'Premium', value: 'premium' },
+  { text: 'Eligibility Code', value: 'eligibility_code' },
+  { text: 'Plan Code', value: 'plan_code' },
+  { text: 'Copayment Code', value: 'copayment_code' },
+  { text: 'Errors', value: 'errors' },
 ];
 
 let errors = {
@@ -103,6 +118,41 @@ const formattedRates = computed(() => {
     };
   });
 });
+
+const showFailedRates = (id, badCount) => {
+  if(badCount == 0) {
+    badRates.value = [];
+    badRatesModal.value = true;
+    return;
+  }
+  tableLoader.value = true;
+  axios
+    .get(`/rates-coverages/bad-records/${id}`)
+    .then(response => {
+      const data = response.data.data;
+      
+      data.map((item, index) => {
+        item.row_number = item.data?.row_number ?? '';
+        item.is_northern = item.data?.is_northern ?? '';
+        item.min_age = item.data?.min_age ?? '';
+        item.max_age = item.data?.max_age ?? '';
+        item.gender = item.data?.gender ?? '';
+        item.premium = item.data?.premium ?? '';
+        item.eligibility_code = item.data?.eligibility_code ?? '';
+        item.plan_code = item.data?.plan_code ?? '';
+        item.copayment_code = item.data?.copayment_code ?? '';
+        item.errors = item.validation_errors ?? '';
+      });
+      badRates.value = data;
+    })
+    .catch(error => {
+      badRates.value = [];
+    })
+    .finally(() => {
+      tableLoader.value = false;
+      badRatesModal.value = true;
+    });
+};
 </script>
 
 <template>
@@ -184,6 +234,25 @@ const formattedRates = computed(() => {
     </div>
     <x-divider class="my-4" />
 
+    <x-modal
+      v-model="badRatesModal"
+      size="xl"
+      :title="`Bad Rates`"
+      show-close
+      backdrop
+    >
+      <DataTable
+        table-class-name="tablefixed"
+        :headers="badRecordsTableHeader"
+        :items="badRates || []"
+        border-cell
+        hide-rows-per-page
+        hide-footer
+      >
+        
+      </DataTable>
+    </x-modal>
+
     <DataTable
       table-class-name="tablefixed"
       :headers="tableHeader"
@@ -191,7 +260,16 @@ const formattedRates = computed(() => {
       border-cell
       hide-rows-per-page
       hide-footer
+      :loading="tableLoader"
     >
+      <template #item-cannotUpload="item">
+        <Button
+          @click="showFailedRates(item.upload_id, item.cannotUpload)"
+          class="text-primary-500 hover:underline flex items-center space-x-1"
+        >
+          <span>{{ item.cannotUpload }} </span>
+        </Button>
+      </template>
     </DataTable>
 
     <Pagination

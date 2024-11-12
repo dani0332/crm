@@ -32,6 +32,7 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
 
     public function onRow(Row $row)
     {
+        $rowNumber = $row->getIndex();
         $row = $row->toArray();
 
         $rateData = $this->mapQuoteData($row);
@@ -39,6 +40,7 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
         // Only proceed if rateData is valid
         if (! empty($rateData)) {
             $this->validCount++;
+            $rateData['row_number'] = $rowNumber;
             RateCoverageProcess::create([
                 'rate_coverage_id' => $this->uploadRate->id,
                 'data' => $rateData,
@@ -93,6 +95,8 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
                         if (empty($quoteData)) {
                             continue; // Skip empty quote data
                         }
+                        $rowNumber = $failure->row();
+                        $quoteData['row_number'] = $rowNumber;
                         $failed[$failure->row()] = [
                             'rate_coverage_id' => $this->uploadRate->id,
                             'data' => $quoteData,
@@ -120,17 +124,12 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
             'is_northern' => $row[0] ?? null,
             'min_age' => $row[1] ?? null,
             'max_age' => $row[2] ?? null,
-            'gender' => $row[3] ?? "M",
+            'gender' => $row[3] ?? "",
             'premium' => $row[4] ?? null,
             'eligibility_code' => $row[5] ?? null,
             'plan_code' => $row[6] ?? null,
             'copayment_code' => $row[7] ?? null,
         ];
-
-        // Return empty if crucial fields are missing
-        if (empty($data['plan_code']) || empty($data['eligibility_code']) || empty($data['copayment_code'])) {
-            return [];
-        }
 
         $filteredData = array_filter($data, function ($value) {
             return ! is_null($value) && $value !== '';
