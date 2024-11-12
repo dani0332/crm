@@ -11,7 +11,6 @@ class BuyLeadRequestLog extends Model
         'quote_type_id',
         'quote_id',
         'uuid',
-        'cost_per_lead',
         're_assigned_at',
         're_assigned_to',
         're_assignment_reason',

@@ -90,7 +90,6 @@ class BuyLeadRequest extends Model
             'quote_type_id' => $quoteType->id(),
             'quote_id' => $lead->id,
             'uuid' => $lead->uuid,
-            'cost_per_lead' => $this->cost_per_lead,
         ]);
     }
 }
