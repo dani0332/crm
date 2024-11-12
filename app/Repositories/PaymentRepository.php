@@ -186,7 +186,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'updated_by' => $request->user()->id,
                 ];
 
-                if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)){
+                if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)) {
                     $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
                 }
             } else {
@@ -242,6 +242,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
         $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isCreditApprovalRemoved = $payment->credit_approval !== $masterPayment->credit_approval;
+
         return $isCreditApprovalRemoved || ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod));
     }
 
