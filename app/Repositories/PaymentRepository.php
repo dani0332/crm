@@ -171,8 +171,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $masterPayment = (object) $request->payment;
-
-            // dd($masterPayment->payment_methods);
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
                 info('Payment does not exist for Payment Code: '.$request->paymentCode);
