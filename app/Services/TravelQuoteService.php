@@ -148,6 +148,7 @@ class TravelQuoteService extends BaseService
             'tqr.insly_migrated',
             'tqr.sic_advisor_requested',
             'tqr.aml_status',
+            'tqr.departure_country_id'
         )
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -188,6 +189,7 @@ class TravelQuoteService extends BaseService
             'tripStarted' => ($request->has_arrived_uae == '1' || $request->has_arrived_destination == '1') ? 1 : 0,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
+            'departureCountryId' => $request->departure_country_id ?? null,
         ];
 
         info(self::class.' - saveTravelQuote', ['data' => $travelQuote]);
@@ -699,6 +701,7 @@ class TravelQuoteService extends BaseService
             'policy_start_date' => 'input|date',
             'members' => 'input|array|required',
             'direction_code' => 'input|text|required',
+            'departure_country_id' => 'select|title|required',
 
         ];
     }

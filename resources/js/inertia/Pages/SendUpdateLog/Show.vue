@@ -38,6 +38,7 @@ const props = defineProps({
   isPlanDetailAvailable: Boolean,
   quoteLink: String,
   isEditDisabledForQueuedBooking: Boolean,
+  isCommVatNotAppEnabled: Boolean,
 });
 
 const page = usePage();
@@ -614,6 +615,7 @@ onBeforeMount(() => {
       :modelClass="modelClass"
       @update-error-status="handleErrorStatusUpdate"
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
+      :is-comm-vat-not-app-enabled="props.isCommVatNotAppEnabled"
     />
 
     <AuditLogs
