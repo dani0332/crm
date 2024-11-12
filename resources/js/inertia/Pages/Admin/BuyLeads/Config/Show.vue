@@ -45,6 +45,8 @@ const computedValueText = computed(() => {
 });
 
 const fetchValues = () => {
+  buyForm.value = '';
+  buyForm.volume = '';
   loader.value = true;
   axios
     .post(route('admin.buy-leads.config.fetch'), {
@@ -56,9 +58,6 @@ const fetchValues = () => {
       if (config) {
         buyForm.value = config.value;
         buyForm.volume = config.volume;
-      } else {
-        buyForm.value = '';
-        buyForm.volume = '';
       }
       loader.value = false;
     })
@@ -115,12 +114,13 @@ watch(
         <div class="grid grid-cols-3 items-center">
           <p>{{ computedValueText }}</p>
           <p>Enter Cost ({{ computedValueText }})</p>
-          <x-input :loading="loader" v-model="buyForm.value" class="!mb-0">
+          <x-input v-model="buyForm.value" class="!mb-0" :disabled="loader">
             <template #suffix>
               <div
                 class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
               >
-                AED
+                <x-spinner v-if="loader" size="sm" class="text-primary" />
+                <span v-if="!loader">AED</span>
               </div>
             </template>
           </x-input>
@@ -130,15 +130,16 @@ watch(
 
     <div class="grid sm:grid-cols-2 gap-4">
       <div class="grid sm:grid-cols-1 gap-4">
-        <div class="grid sm:grid-cols-3 gap-1 items-center">
+        <div class="grid grid-cols-3 items-center">
           <p>{{ computedVolumeText }}</p>
           <p>Enter Cost ({{ computedVolumeText }})</p>
-          <x-input :loading="loader" v-model="buyForm.volume" class="!mb-0">
+          <x-input v-model="buyForm.volume" class="!mb-0" :disabled="loader">
             <template #suffix>
               <div
                 class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
               >
-                AED
+                <x-spinner v-if="loader" size="sm" class="text-primary" />
+                <span v-if="!loader">AED</span>
               </div>
             </template>
           </x-input>

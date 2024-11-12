@@ -126,7 +126,11 @@ const fetchMaximumLeads = () => {
       <x-tooltip placement="top-left">
         <x-field label="Buy Leads" required>
           <x-input
-            :disabled="requestForm.quote_type == null || maximumLeads == 0"
+            :disabled="
+              requestForm.quote_type == null ||
+              maximumLeads == 0 ||
+              table.loading
+            "
             v-model="requestForm.count"
             type="number"
             :max="maximumLeads"
@@ -150,12 +154,23 @@ const fetchMaximumLeads = () => {
               }
             "
             :rules="[isRequired]"
-            :loading="table.loading"
-          />
+          >
+            <template #suffix>
+              <div
+                class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+              >
+                <x-spinner
+                  v-if="table.loading"
+                  size="sm"
+                  class="text-primary"
+                />
+              </div>
+            </template>
+          </x-input>
         </x-field>
         <template #tooltip>
           <div>
-            You may request up to {{ maximumLeads }} leads per day for the
+            You may request up to {{ maximumLeads }} lead(s) per day for the
             selected Line Of Business.
           </div>
         </template>
