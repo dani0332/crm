@@ -5,12 +5,12 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\UserStatusEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\TravelQuote;
@@ -22,22 +22,39 @@ class TravelAllocationService extends AllocationService
 {
     public function fetchLead($quoteId, $overrideAdvisorId = false)
     {
+        $travelQuote = TravelQuote::where('uuid', $quoteId)->first();
+
+        // Return null if no record is found
+        if (! $travelQuote) {
+            return null;
+        }
+
+        // Check if the lead is associated with the ALNC provider
+        $payment = $travelQuote->payments()->mainLeadPayment()->first();
+        $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
+        $isALNC = $insurer->code == InsuranceProvidersEnum::ALNC;
+
+        // Check if the insurer_api_status_id is in the list of failed statuses
+        $isFailedStatus = in_array($travelQuote->insurer_api_status_id, [
+            PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+        ]);
+
+        // Skip the lead if it's Alliance Provider, Automation is enabled for Alliance and insurer api status is failed
+        if ($isALNC && ! $isFailedStatus && isAllianceTravelAutomationEnabled()) {
+            return null;
+        }
+
+        // allocate the lead if it's Alliance Provider, Automation is disabled for Alliance
         return TravelQuote::where('uuid', $quoteId)
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->whereNotIn('quote_status_id', [
+                QuoteStatusEnum::Fake,
+                QuoteStatusEnum::Duplicate,
+                QuoteStatusEnum::Lost,
+            ])
             ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
-            ->when(
-                in_array(optional(TravelQuote::where('uuid', $quoteId)->first('insurer_api_status_id'))->insurer_api_status_id, [
-                    PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID,
-                    PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
-                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
-                    PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID
-                ]),
-                fn ($query) => $query->whereHas('payments', function ($q) {
-                    $q->whereHas('insuranceProvider', function ($subQuery) {
-                        $subQuery->where('code', '!=', InsuranceProvidersEnum::ALNC);
-                    });
-                })
-            )
             ->first();
     }
 
