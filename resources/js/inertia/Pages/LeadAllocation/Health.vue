@@ -194,6 +194,7 @@ const tableHeader = ref([
   { text: 'Last Allocations', value: 'last_allocated', sortable: true },
   { text: 'Max Cap Limit', value: 'max_capacity', sortable: true },
   { text: 'Status', value: 'is_available', sortable: true, width: '100' },
+  { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
   {
     text: 'BL Cap Limit',
     value: 'BLMaxCapacity',
@@ -206,8 +207,9 @@ const tableHeader = ref([
     value: 'BLAllocationCount',
     sortable: true,
     width: '100',
+    tooltip:
+      'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
   },
-  { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
 ]);
 
 const onStatusSubmit = async () => {
@@ -407,6 +409,15 @@ const onToggleBlStatus = async (active, userId, leadId) => {
     hide-rows-per-page
     hide-footer
   >
+    <template #header-BLAllocationCount="header">
+      <x-tooltip placement="top">
+        <p class="underline decoration-dotted decoration-primary-600">
+          {{ header.text }}
+        </p>
+        <template #tooltip>{{ header.tooltip }}</template>
+      </x-tooltip>
+    </template>
+
     <template #item-max_capacity="{ max_capacity, id }">
       <div v-if="!currentRow(id)" @click="editCap(id)">
         {{ max_capacity }}

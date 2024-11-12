@@ -60,7 +60,7 @@ class LeadAllocationService extends BaseService
             $query = LeadAllocation::select([
                 'lead_allocation.id as id',
                 'lead_allocation.user_id as userId',
-                'lead_allocation.allocation_count',
+                DB::RAW('(lead_allocation.manual_assignment_count  + lead_allocation.auto_assignment_count) as allocation_count'),
                 'lead_allocation.max_capacity',
                 'lead_allocation.reset_cap',
                 'u.status as is_available',
