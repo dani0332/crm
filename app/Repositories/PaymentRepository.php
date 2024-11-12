@@ -172,6 +172,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $masterPayment = (object) $request->payment;
 
+            // dd($masterPayment->payment_methods);
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
                 info('Payment does not exist for Payment Code: '.$request->paymentCode);
@@ -187,14 +188,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'updated_by' => $request->user()->id,
                 ];
 
-                // Check if payment frequency is upfron and Old or new Payment method is Proforma Payment Request, only than update parent payment method
-                $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
-                $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
-                $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
-                if ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod)) {
+                if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)){
                     $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
                 }
-
             } else {
 
                 $paymentInformation = [
@@ -237,6 +233,28 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
         }, $maxRetries);
+    }
+
+    /**
+     * Check if credit approval has been removed.
+     */
+    private function isCreditApprovalRemoved($payment, $masterPayment): bool
+    {
+        return !empty($payment->credit_approval) && empty($masterPayment->credit_approval);
+    }
+
+
+    /**
+     * Determine if the parent payment method should be updated.
+     */
+    private function shouldUpdateParentPaymentMethod($payment, $masterPayment): bool
+    {
+        $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
+        $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
+        $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+        $isCreditApprovalRemoved = $this->isCreditApprovalRemoved($payment, $masterPayment);
+
+        return $isParentPaymentFrequencyUpfront && ($isCreditApprovalRemoved || $isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod);
     }
 
     //Add split payments
