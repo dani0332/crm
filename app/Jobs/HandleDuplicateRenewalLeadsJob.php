@@ -25,16 +25,15 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
     public $timeout = 300;
     public $uniqueFor = 640;
     private $uniqueId;
-    // public function __construct($uniqueId)
-    // {
-    //     // $this->uniqueId = $uniqueId;
-    //     // $this->onQueue('renewals');
-    // }
+    public function __construct($uniqueId)
+    {
+        $this->uniqueId = $uniqueId;
+        $this->onQueue('renewals');
+    }
 
     public function handle()
     {
         $date = '2024-10-04';
-        $date = '2022-08-11';
         info('Starting to handle duplicate renewal leads for date: '.$date);
         $totalDuplicates = 0;
         try {
@@ -107,8 +106,8 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
         }
     }
 
-    // public function uniqueId(): string
-    // {
-    //     return $this->uniqueId;
-    // }
+    public function uniqueId(): string
+    {
+        return $this->uniqueId;
+    }
 }
