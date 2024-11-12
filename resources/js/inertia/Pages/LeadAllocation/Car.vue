@@ -96,6 +96,7 @@ const tableHeader = ref([
   { text: 'A. Assigned', value: 'autoAllocationCount', sortable: true },
   { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
+  { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
   {
     text: 'BL Cap Limit',
     value: 'BLMaxCapacity',
@@ -108,8 +109,9 @@ const tableHeader = ref([
     value: 'BLAllocationCount',
     sortable: true,
     width: '100',
+    tooltip:
+      'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
   },
-  { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
 
@@ -512,6 +514,15 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
+      <template #header-BLAllocationCount="header">
+        <x-tooltip placement="top">
+          <p class="underline decoration-dotted decoration-primary-600">
+            {{ header.text }}
+          </p>
+          <template #tooltip>{{ header.tooltip }}</template>
+        </x-tooltip>
+      </template>
+
       <template #item-tiers="{ tiers }">
         <div class="relative">
           <x-tooltip placement="top">
