@@ -63,7 +63,9 @@ class SendUpdateToCustomerJob implements ShouldQueue
                     ]);
                     $sendUpdateLog->refresh();
 
-                    ResendEPJob::dispatch($sendUpdateLog->quote_uuid, $sendUpdateLog->quote_type_id);
+                    if($sendUpdateLog->category->code === SendUpdateLogStatusEnum::EN) {
+                        ResendEPJob::dispatch($sendUpdateLog->quote_uuid, $sendUpdateLog->quote_type_id);
+                    }
 
                 } else {
                     info('job:SendUpdateToCustomerJob - SendUpdateCode: '.$sendUpdateLog->uuid.' - Job failed - SendUpdateCode: '.$sendUpdateLog->code);
