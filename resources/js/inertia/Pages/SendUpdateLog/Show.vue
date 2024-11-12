@@ -59,7 +59,10 @@ const transactionType = computed(() => {
       props.sendUpdateStatusEnum.CIR,
       props.sendUpdateStatusEnum.CPD,
     ].includes(props.sendUpdateLog.category.code) ||
-    props.sendUpdateLog.option.code === props.sendUpdateStatusEnum.MPC
+    [
+      props.sendUpdateStatusEnum.MPC,
+      props.sendUpdateStatusEnum.CAAFE,
+    ].includes(props.sendUpdateLog?.option?.code)
   ) {
     return 'Endorsement';
   } else if (
