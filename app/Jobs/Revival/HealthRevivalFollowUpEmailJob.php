@@ -28,6 +28,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
     public function __construct($data)
     {
         $this->data = $data;
+        $this->onQueue('renewals');
     }
 
     /**
