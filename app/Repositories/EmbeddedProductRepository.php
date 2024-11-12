@@ -256,7 +256,7 @@ class EmbeddedProductRepository extends BaseRepository
         return false;
     }
 
-    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)
+    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $resendEmail = false)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
@@ -267,7 +267,9 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_type_id', $quoteTypeId],
             ['quote_request_id', $leadId],
             ['is_selected', 1],
-        ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
+        ])
+        ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+        ->with(['product.embeddedProduct']);
 
         if (! empty($epId)) {
             $ep = $this->where('id', $epId)->first();
@@ -276,6 +278,12 @@ class EmbeddedProductRepository extends BaseRepository
                 $optionsIds = $ep->prices->pluck('id');
             }
             $epTransaction = $epTransaction->whereIn('product_id', $optionsIds);
+        }
+
+        if($resendEmail) {
+            $epTransaction->whereHas('product.embeddedProduct', function ($query) {
+                $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
+            });
         }
 
         $epTransaction = $epTransaction->get();
@@ -303,6 +311,7 @@ class EmbeddedProductRepository extends BaseRepository
                     $data['quoteId'] = $leadId;
                     $data['modelType'] = $modelType;
                     $data['epId'] = $embedded_product_id;
+                    $data['regenerate'] = $resendEmail;
                     $this->fetchSendDocument($data);
                 }
             }
@@ -326,6 +335,7 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
+        $regenerate = $data['regenerate'];
 
         $ep = $this->where('id', $epId)->first();
         if (! $ep) {
@@ -354,7 +364,7 @@ class EmbeddedProductRepository extends BaseRepository
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
         } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
-            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep);
+            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep, $regenerate);
         }
     }
 
@@ -452,9 +462,9 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendMedexEmail($short_code, $quoteObject, $transaction, $modelType, $attachments, $advisorData, $ep)
+    private function sendMedexEmail($short_code, $quoteObject, $transaction, $modelType, $attachments, $advisorData, $ep, $regenerate)
     {
-        $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType);
+        $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType, $regenerate);
         $certificatesConfig = config('embedded-products.certificates');
 
         if ($pdf) {
@@ -518,7 +528,8 @@ class EmbeddedProductRepository extends BaseRepository
         $short_code,
         $quoteObject,
         $transaction,
-        $modelType
+        $modelType,
+        $regenerate = false
     ) {
 
         $certificateDocument = null;
@@ -527,7 +538,7 @@ class EmbeddedProductRepository extends BaseRepository
         $capturedAt = $transaction->payment_status_date;
 
         $certificateDocument = $transaction->documents->where('document_type_code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->first();
-        if ($certificateDocument) {
+        if ($certificateDocument && $regenerate === false) {
             return $certificateDocument;
         }
 
@@ -583,7 +594,10 @@ class EmbeddedProductRepository extends BaseRepository
                 'created_by_id' => null,
             ];
 
-            $certificateDocument = $transaction->documents()->create($documentData);
+            $certificateDocument = $transaction->documents()->updateOrCreate(
+                ['document_type_code' => $documentType->code],
+                $documentData
+            );
         }
 
         return $certificateDocument;
