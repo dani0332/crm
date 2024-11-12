@@ -48,6 +48,7 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
                 ->whereBetween('created_at', [$startOfDay, $endOfDay])
                 ->whereNotNull('previous_quote_policy_number')
                 ->whereNotNull('previous_policy_expiry_date')
+                ->where('quote_status_id', '<>', QuoteStatusEnum::Duplicate)
                 ->orderBy('previous_quote_policy_number')
                 ->orderBy('previous_policy_expiry_date')
                 ->chunk(500, function ($duplicateLeads) use ($date, &$totalDuplicates) {
