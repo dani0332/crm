@@ -34,7 +34,7 @@ class KenService
      */
     public function request($path, $method = 'post', $data = [])
     {
-        $url = 'https://uatapi.alfred.ae/capi/api/v1-get-home-models';
+        $url = $this->baseUrl . $path;
         $response = $this->client->withBody(json_encode($data), 'application/json')
             ->send($method, $url)->onError(function ($response) use ($data, $url) {
                 info('KEN Service Exception', ['data' => $data, 'url' => $url]);

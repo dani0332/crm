@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
+use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -208,7 +209,6 @@ class LookupService extends BaseService
 
     public function getHomeLookUpData()
     {
-        //https://uatapi.alfred.ae/capi/api/v1-get-home-models
-        return Ken::request('/v1-get-home-models', 'post');
+        return Capi::request('/api/v1-get-home-models', 'post');
     }
 }
