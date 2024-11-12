@@ -25,15 +25,16 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
     public $timeout = 300;
     public $uniqueFor = 640;
     private $uniqueId;
-    public function __construct($uniqueId)
-    {
-        $this->uniqueId = $uniqueId;
-        $this->onQueue('renewals');
-    }
+    // public function __construct($uniqueId)
+    // {
+    //     // $this->uniqueId = $uniqueId;
+    //     // $this->onQueue('renewals');
+    // }
 
     public function handle()
     {
         $date = '2024-10-04';
+        $date = '2022-08-11';
         info('Starting to handle duplicate renewal leads for date: '.$date);
         $totalDuplicates = 0;
         try {
@@ -60,14 +61,23 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
                             ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                             ->whereBetween('created_at', [Carbon::parse($date)->startOfDay(), Carbon::parse($date)->endOfDay()])
                             ->get();
+                        
+                        $totalDuplicatesRecords = $duplicateLeadInfo->count();
+                        $totalDuplicatesRecordsAdvisorAssigned = $duplicateLeadInfo->where('advisor_id', '!=', null)->count();
+                        $totalDuplicatesRecordsNotAssigned = $duplicateLeadInfo->where('advisor_id', null)->count();
 
+                        info('Total duplicate records found for policy number: '.$lead->previous_quote_policy_number.' is: '.$totalDuplicatesRecords);
                         $isRecordIgnored = false;
 
-                        foreach ($duplicateLeadInfo as $key => $leadInfo) {
-                            if ($leadInfo->advisor_id != null && ! $isRecordIgnored) {
+                        foreach ($duplicateLeadInfo as $leadInfo) {
+                            if (($totalDuplicatesRecords == $totalDuplicatesRecordsAdvisorAssigned || $totalDuplicatesRecords == $totalDuplicatesRecordsNotAssigned) && ! $isRecordIgnored) {
                                 $isRecordIgnored = true;
-                                info('Record ignored as it has advisor ID: '.$leadInfo->advisor_id.' for lead code: '.$leadInfo->code);
-
+                                info('Record ignored as it has code: '.$leadInfo->code.' for lead code: '.$leadInfo->code);
+                                continue; 
+                            }
+                            else if ($leadInfo->advisor_id != null && ! $isRecordIgnored) {
+                                $isRecordIgnored = true;
+                                info('Record ignored as it has code: '.$leadInfo->code.' for lead code: '.$leadInfo->code);
                                 continue;
                             }
                             $oldQuoteStatusId = $leadInfo->quote_status_id;
@@ -84,7 +94,7 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
                                 ]);
                             }
 
-                            info('Record process: '.($totalDuplicates + 1).' Updated duplicate lead ID: '.$leadInfo->id.' with new policy number: '.$leadInfo->previous_quote_policy_number);
+                            info('Record process: '.($totalDuplicates + 1).' Updated duplicate lead code: '.$leadInfo->code.' with new policy number: '.$leadInfo->previous_quote_policy_number);
                             $totalDuplicates++;
                         }
                     }
@@ -97,8 +107,8 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
         }
     }
 
-    public function uniqueId(): string
-    {
-        return $this->uniqueId;
-    }
+    // public function uniqueId(): string
+    // {
+    //     return $this->uniqueId;
+    // }
 }

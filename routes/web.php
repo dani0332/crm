@@ -676,6 +676,13 @@ Route::get('/add-batch-number', function () {
 });
 
 Route::get('handling-duplicate-renewal-leads', function () {
+    
+    $duplicateRenewalLeads = new HandleDuplicateRenewalLeadsJob();
+    $duplicateRenewalLeads->handle();
+    echo 'Done';
+
+
+    dd('done');
     HandleDuplicateRenewalLeadsJob::dispatch('rn-duplicate-1024');
     echo 'job dispatched';
 });
