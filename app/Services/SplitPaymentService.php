@@ -896,7 +896,7 @@ class SplitPaymentService
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
         foreach ($paymentSplits as $paymentSplit) {
 
-            DB::transaction(function ($payment, $paymentSplits, $paymentSplit, $commission, $commissionSplitSumWithoutLastSplit) {
+            DB::transaction(function () use ($payment, $paymentSplits, $paymentSplit, $commission, $commissionSplitSumWithoutLastSplit) {
                 $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
                 /*
                  to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
