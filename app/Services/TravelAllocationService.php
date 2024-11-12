@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -23,6 +24,11 @@ class TravelAllocationService extends AllocationService
         return TravelQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
+            ->whereHas('payments', function ($query) {
+                $query->whereHas('insuranceProvider', function ($subQuery) {
+                    $subQuery->where('code', '!=', InsuranceProvidersEnum::ALNC);
+                });
+            })
             ->first();
     }
 
