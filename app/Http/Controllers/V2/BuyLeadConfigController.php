@@ -46,7 +46,7 @@ class BuyLeadConfigController extends Controller
     {
         $data = $request->validated();
 
-        $data['config'] = BuyLeadConfiguration::updateOrCreate(
+        BuyLeadConfiguration::updateOrCreate(
             [
                 'quote_type_id' => $request->getQuoteTypeId(),
                 'department_id' => $data['department_id'],

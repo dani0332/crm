@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Observers\BuyLeadConfigurationObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy(BuyLeadConfigurationObserver::class)]
 class BuyLeadConfiguration extends Model
 {
     protected $fillable = [
