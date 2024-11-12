@@ -161,7 +161,15 @@ const fetchMaximumLeads = () => {
         </template>
       </x-tooltip>
       <x-field label="The total cost for the leads is:">
-        <x-input disabled v-model="calculateMaximumCost" />
+        <x-input disabled v-model="calculateMaximumCost">
+          <template #suffix>
+            <div
+              class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+            >
+              AED
+            </div>
+          </template>
+        </x-input>
       </x-field>
     </div>
     <div>

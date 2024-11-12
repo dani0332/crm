@@ -115,7 +115,15 @@ watch(
         <div class="grid grid-cols-3 items-center">
           <p>{{ computedValueText }}</p>
           <p>Enter Cost ({{ computedValueText }})</p>
-          <x-input :loading="loader" v-model="buyForm.value" class="!mb-0" />
+          <x-input :loading="loader" v-model="buyForm.value" class="!mb-0">
+            <template #suffix>
+              <div
+                class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+              >
+                AED
+              </div>
+            </template>
+          </x-input>
         </div>
       </div>
     </div>
@@ -125,7 +133,15 @@ watch(
         <div class="grid sm:grid-cols-3 gap-1 items-center">
           <p>{{ computedVolumeText }}</p>
           <p>Enter Cost ({{ computedVolumeText }})</p>
-          <x-input :loading="loader" v-model="buyForm.volume" class="!mb-0" />
+          <x-input :loading="loader" v-model="buyForm.volume" class="!mb-0">
+            <template #suffix>
+              <div
+                class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+              >
+                AED
+              </div>
+            </template>
+          </x-input>
         </div>
       </div>
     </div>
