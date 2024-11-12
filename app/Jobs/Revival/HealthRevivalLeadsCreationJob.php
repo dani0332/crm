@@ -102,6 +102,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 if ($capiResponse->isDuplicate) {
                     info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadNotCreated - '.$capiResponse->quoteUID.' -isduplicate-'.$capiResponse->isDuplicate);
+                    HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
 
                     return false;
                 }
