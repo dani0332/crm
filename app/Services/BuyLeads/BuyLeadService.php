@@ -11,6 +11,7 @@ use App\Models\LeadAllocation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use PDF;
 
 class BuyLeadService
 {
@@ -137,5 +138,15 @@ class BuyLeadService
             ->latest('buy_lead_request_logs.created_at')
             ->simplePaginate(20)
             ->withQueryString();
+    }
+
+    public function exportTrackingReportPDF(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate)
+    {
+        $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate);
+        $pdf = PDF::loadView('pdf.buy-lead-requests', $data);
+
+        $pdfName = 'InsuranceMarket.ae™ Buy Leads Tracking Report.pdf';
+
+        return $pdf->download($pdfName);
     }
 }

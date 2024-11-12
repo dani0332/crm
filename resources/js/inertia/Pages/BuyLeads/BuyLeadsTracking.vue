@@ -39,6 +39,15 @@ const onSubmit = isValid => {
   }
 };
 
+const onExport = () => {
+  if (filters.quote_type && filters.date) {
+    window.location.href = route('buy-leads.request.tracking', {
+      ...filters,
+      export: true,
+    });
+  }
+};
+
 function onReset() {
   router.visit(route('buy-leads.request.tracking'), {
     method: 'get',
@@ -94,7 +103,13 @@ onMounted(() => {
       >
         Reset
       </x-button>
-      <x-button size="md" color="secondary" type="submit">
+      <x-button
+        size="md"
+        color="secondary"
+        @click.prevent="onExport()"
+        :loading="table.loading"
+        :disabled="!(filters.quote_type && filters.date)"
+      >
         Download PDF
       </x-button>
     </div>

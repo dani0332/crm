@@ -57,7 +57,11 @@ class BuyLeadController extends Controller
         $data['list'] = ['data' => []];
 
         if ($quoteType && $startDate && $endDate) {
-            $data['list'] = $this->buyLeadService->getTrackingData($quoteType, Carbon::parse($startDate), Carbon::parse($endDate));
+            if (request()->has('export')) {
+                return $this->buyLeadService->exportTrackingReportPDF($quoteType, Carbon::parse($startDate), Carbon::parse($endDate));
+            } else {
+                $data['list'] = $this->buyLeadService->getTrackingData($quoteType, Carbon::parse($startDate), Carbon::parse($endDate));
+            }
         }
 
         return inertia('BuyLeads/BuyLeadsTracking', $data);
