@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
+use App\Models\CustomerAddress;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -199,7 +200,7 @@ class EmbeddedProductRepository extends BaseRepository
             $optionsIds = $item->prices->pluck('id');
             $item->sync_document_button = false;
 
-            $transaction = EmbeddedTransaction::with('documents', 'quoteRequest.customer.address', 'product.embeddedProduct')->where([
+            $transaction = EmbeddedTransaction::with('documents', 'product.embeddedProduct')->where([
                 ['quote_type_id', '=', $quoteTypeId],
                 ['quote_request_id',  '=', $quoteRequestId],
                 ['is_selected',  '=', true],
@@ -219,18 +220,18 @@ class EmbeddedProductRepository extends BaseRepository
 
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
             $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
-            $item->can_cancel_payment = $this->canCancelPayment($transaction->first());
+            $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
         });
 
         return $ep;
     }
 
-    private function canCancelPayment($transaction)
+    private function canCancelPayment($transaction, $quoteTypeId)
     {
         if ($transaction && in_array($transaction->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])) {
 
             if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
-                return empty($transaction->quoteRequest->customer?->address);
+                return (CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->count() == 0);
             }
 
             $paymentDate = Carbon::parse($transaction->payment_status_date);
