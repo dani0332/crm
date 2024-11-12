@@ -76,6 +76,8 @@ onMounted(() => {
           name="created_at_start"
           format="dd-MM-yyyy"
           :rules="[isRequired]"
+          range
+          :max-range="30"
         />
       </x-field>
     </div>

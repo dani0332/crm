@@ -175,9 +175,9 @@ class LeadAllocationController extends Controller
                 if ($quoteTypeId && isset($item['max_cap'])) {
                     $updateLogString = $updateLogString.' max_cap to : '.$item['max_cap'];
                     if ($item['type'] === 'buy-lead') {
-                        $leadAllocationUser->buy_lead_max_capacity =  (int) $item['max_cap'];
+                        $leadAllocationUser->buy_lead_max_capacity = (int) $item['max_cap'];
                     } else {
-                        $leadAllocationUser->max_capacity =  (int) $item['max_cap'];
+                        $leadAllocationUser->max_capacity = (int) $item['max_cap'];
                     }
                 }
 
