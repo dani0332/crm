@@ -535,6 +535,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
+                        'Buy Lead Config',
+                        route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->hasAnyPermission([
                             PermissionsEnum::RULE_CONFIG_LIST,
                             PermissionsEnum::QUAD_CONFIG_LIST,
@@ -589,12 +595,6 @@ class HandleInertiaRequests extends Middleware
                                 route('admin.sic-health-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
-                    )
-                    ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
-                        'Buy Lead Config',
-                        route('admin.buy-leads.config.show'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
 
