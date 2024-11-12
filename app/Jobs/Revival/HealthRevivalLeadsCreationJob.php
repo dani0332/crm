@@ -30,7 +30,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     use AddPremiumAllLobs, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, Stackable;
 
     public $tries = 3;
-    public $timeout = 90;
+    public $timeout = 100;
     public $backoff = 300;
     private $lead = null;
 
@@ -110,7 +110,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $healthQuote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $capiResponse->quoteUID);
 
                 $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
-
+                sleep(5);
                 if (empty($healthQuote->health_plan_type_id)) {
 
                     $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM;
