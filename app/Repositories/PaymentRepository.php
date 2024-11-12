@@ -236,15 +236,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     /**
-     * Check if credit approval has been removed.
-     */
-    private function isCreditApprovalRemoved($payment, $masterPayment): bool
-    {
-        return !empty($payment->credit_approval) && empty($masterPayment->credit_approval);
-    }
-
-
-    /**
      * Determine if the parent payment method should be updated.
      */
     private function shouldUpdateParentPaymentMethod($payment, $masterPayment): bool
@@ -252,7 +243,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
         $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
         $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
-        $isCreditApprovalRemoved = $this->isCreditApprovalRemoved($payment, $masterPayment);
+        $isCreditApprovalRemoved = $payment->credit_approval !== $masterPayment->credit_approval;
         return $isCreditApprovalRemoved || ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod));
     }
 
