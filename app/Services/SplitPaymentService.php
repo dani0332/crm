@@ -1126,7 +1126,7 @@ class SplitPaymentService
 
         if ($insuranceProvider) {
             $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
-            if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status)) {
+            if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status_id)) {
                 $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
             }
         }
@@ -1138,7 +1138,7 @@ class SplitPaymentService
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
         if ($insuranceProvider) {
             $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
-            $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED);
+            $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID);
         }
     }
 }

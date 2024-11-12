@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\TravelQuoteEnum;
 use App\Events\QuoteEmailUpdated;
@@ -40,6 +41,9 @@ class TravelQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
+    protected $appends = [
+        'insurer_api_status'
+    ];
 
     protected static function booted()
     {
@@ -59,6 +63,11 @@ class TravelQuote extends Model implements AuditableContract
                 unset($model->policy_booking_date); // lock the policy booking date field
             }
         });
+    }
+
+    public function getInsurerApiStatusAttribute()
+    {
+        return PolicyIssuanceEnum::getInsurerAPIStatuses($this->insurer_api_status_id);
     }
 
     public function getAuditables()

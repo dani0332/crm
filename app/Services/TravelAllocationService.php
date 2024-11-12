@@ -26,11 +26,11 @@ class TravelAllocationService extends AllocationService
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
             ->when(
-                in_array(optional(TravelQuote::where('uuid', $quoteId)->first('insurer_api_status'))->insurer_api_status, [
-                    PolicyIssuanceEnum::AUTO_CAPTURE_FAILED,
-                    PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED,
-                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
-                    PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED
+                in_array(optional(TravelQuote::where('uuid', $quoteId)->first('insurer_api_status_id'))->insurer_api_status_id, [
+                    PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                    PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID
                 ]),
                 fn ($query) => $query->whereHas('payments', function ($q) {
                     $q->whereHas('insuranceProvider', function ($subQuery) {

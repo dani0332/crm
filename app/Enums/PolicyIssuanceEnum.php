@@ -19,9 +19,16 @@ final class PolicyIssuanceEnum extends Enum
 
     /* Insurer API Generic Status */
 
+    const AUTO_CAPTURE_FAILED_STATUS_ID = 1;
     const AUTO_CAPTURE_FAILED = 'Auto Capture Failed';
+
+    const POLICY_DETAIL_API_FAILED_STATUS_ID = 2;
     const POLICY_DETAIL_API_FAILED = 'Policy Details API Failed';
+
+    const UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID = 3;
     const UPLOAD_POLICY_DOCUMENTS_API_FAILED = 'Document Upload API Failed';
+
+    const BOOKING_DETAILS_API_FAILED_STATUS_ID = 4;
     const BOOKING_DETAILS_API_FAILED = 'Booking Details API Failed';
 
     /* Insurer API Generic Status */
@@ -55,13 +62,15 @@ final class PolicyIssuanceEnum extends Enum
             self::ALLIANCE_TRAVEL_BOOK_POLICY,
         ];
     }
-    public static function getInsurerAPIStatuses()
+    public static function getInsurerAPIStatuses($status = null)
     {
-        return [
-            self::AUTO_CAPTURE_FAILED,
-            self::POLICY_DETAIL_API_FAILED,
-            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
-            self::BOOKING_DETAILS_API_FAILED,
+        $statuses = [
+            self::AUTO_CAPTURE_FAILED_STATUS_ID => self::AUTO_CAPTURE_FAILED,
+            self::POLICY_DETAIL_API_FAILED_STATUS_ID => self::POLICY_DETAIL_API_FAILED,
+            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
+            self::BOOKING_DETAILS_API_FAILED_STATUS_ID => self::BOOKING_DETAILS_API_FAILED,
         ];
+
+        return $status ? $statuses[$status] : $statuses;
     }
 }
