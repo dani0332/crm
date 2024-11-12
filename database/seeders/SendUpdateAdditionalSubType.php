@@ -41,6 +41,19 @@ class SendUpdateAdditionalSubType extends Seeder
             ], [
                 'description' => 'This endorsement allows for adjustments to the policy that have a financial impact, such as changes to the insured amount or coverage details. Any changes affecting the policy’s financial terms may require an additional premium or credit adjustment. Please consult with the insurer to confirm any cost implications associated with this endorsement.',
             ]);
+
+            if ($quoteTypeId != QuoteTypeId::Home) {
+                Lookup::firstOrCreate([
+                    'quote_type_id' => $quoteTypeId,
+                    'business_insurance_type_id' => null,
+                    'key' => 'decrease-sum-insured',
+                    'text' => 'Decrease the sum insured',
+                    'code' => SendUpdateLogStatusEnum::DTSI,
+                    'parent_id' => $parent->id,
+                ], [
+                    'description' => 'Choose this option if you wish to reduce the overall amount for which your home is covered. This could be in scenarios where certain insured items are no longer in possession or if the property value has depreciated.',
+                ]);
+            }
         }
 
         $businessInsuranceTypes = [
