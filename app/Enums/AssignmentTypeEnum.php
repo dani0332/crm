@@ -25,4 +25,14 @@ final class AssignmentTypeEnum extends Enum
     {
         return getAssignmentTypeText($assignmentType);
     }
+
+    public static function withLabels()
+    {
+        $item = ['value' => 'all', 'label' => 'All'];
+        $items = collect(self::AssignmentTypeList)->map(function ($value) {
+            return ['value' => $value, 'label' => self::getAssignmentTypeText($value)];
+        })->toArray();
+
+        return array_merge([$item], $items);
+    }
 }
