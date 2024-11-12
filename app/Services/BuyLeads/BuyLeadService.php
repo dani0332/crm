@@ -114,7 +114,7 @@ class BuyLeadService
     public function getTodaysRequests()
     {
         return BuyLeadRequest::select('id', 'quote_type_id', 'requested_count', 'cost_per_lead', 'created_at')
-            ->selectRaw('requested_count * cost_per_lead as total_cost')
+            ->selectRaw('CONCAT(ROUND(requested_count * cost_per_lead, 0), " AED") as total_cost')
             ->with('quoteType:id,code')
             ->where('user_id', Auth::id())
             ->latest()
