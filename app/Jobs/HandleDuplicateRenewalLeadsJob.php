@@ -60,7 +60,7 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
                             ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                             ->whereBetween('created_at', [Carbon::parse($date)->startOfDay(), Carbon::parse($date)->endOfDay()])
                             ->get();
-                        
+
                         $totalDuplicatesRecords = $duplicateLeadInfo->count();
                         $totalDuplicatesRecordsAdvisorAssigned = $duplicateLeadInfo->where('advisor_id', '!=', null)->count();
                         $totalDuplicatesRecordsNotAssigned = $duplicateLeadInfo->where('advisor_id', null)->count();
@@ -72,11 +72,12 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
                             if (($totalDuplicatesRecords == $totalDuplicatesRecordsAdvisorAssigned || $totalDuplicatesRecords == $totalDuplicatesRecordsNotAssigned) && ! $isRecordIgnored) {
                                 $isRecordIgnored = true;
                                 info('Record ignored as it has code: '.$leadInfo->code.' for lead code: '.$leadInfo->code);
-                                continue; 
-                            }
-                            else if ($leadInfo->advisor_id != null && ! $isRecordIgnored) {
+
+                                continue;
+                            } elseif ($leadInfo->advisor_id != null && ! $isRecordIgnored) {
                                 $isRecordIgnored = true;
                                 info('Record ignored as it has code: '.$leadInfo->code.' for lead code: '.$leadInfo->code);
+
                                 continue;
                             }
                             $oldQuoteStatusId = $leadInfo->quote_status_id;
