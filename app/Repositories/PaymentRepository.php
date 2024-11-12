@@ -253,8 +253,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
         $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isCreditApprovalRemoved = $this->isCreditApprovalRemoved($payment, $masterPayment);
-
-        return $isParentPaymentFrequencyUpfront && ($isCreditApprovalRemoved || $isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod);
+        return $isCreditApprovalRemoved || ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod));
     }
 
     //Add split payments
