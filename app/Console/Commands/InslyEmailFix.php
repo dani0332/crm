@@ -33,7 +33,6 @@ class InslyEmailFix extends Command
             
             // Step 1: Find leads with comma-separated emails in the other_email_address field
             $carLeadsWithCommaEmails = CarQuote::where('email', 'LIKE', '%,%')->get();            
-            echo $carLeadsWithCommaEmails->count();
             if($carLeadsWithCommaEmails->count() > 0){
                 foreach ($carLeadsWithCommaEmails as $lead) {
                     // Split the email addresses by comma and trim whitespace
