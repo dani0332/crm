@@ -26,7 +26,7 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
     public function handle()
     {
         $date = '2024-10-04';
-        info('Starting to handle duplicate renewal leads for date: ' . $date);
+        info('Starting to handle duplicate renewal leads for date: '.$date);
         $totalDuplicates = 0;
         try {
             $startOfDay = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($date));
@@ -44,7 +44,7 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
                 ->orderBy('previous_policy_expiry_date')
                 ->chunk(500, function ($duplicateLeads) use ($date, &$totalDuplicates) {
                     foreach ($duplicateLeads as $lead) {
-                        Log::info('Processing duplicate lead for policy number: ' . $lead->previous_quote_policy_number);
+                        Log::info('Processing duplicate lead for policy number: '.$lead->previous_quote_policy_number);
 
                         $duplicateLeadInfo = CarQuote::where('previous_quote_policy_number', $lead->previous_quote_policy_number)
                             ->where('previous_policy_expiry_date', $lead->previous_policy_expiry_date)
@@ -55,13 +55,14 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
                         $isRecordIgnored = false;
 
                         foreach ($duplicateLeadInfo as $key => $leadInfo) {
-                            if ($leadInfo->advisor_id != null && !$isRecordIgnored) {
+                            if ($leadInfo->advisor_id != null && ! $isRecordIgnored) {
                                 $isRecordIgnored = true;
-                                info('Record ignored as it has advisor ID: ' . $leadInfo->advisor_id . ' for lead code: ' . $leadInfo->code);
+                                info('Record ignored as it has advisor ID: '.$leadInfo->advisor_id.' for lead code: '.$leadInfo->code);
+
                                 continue;
                             }
                             $oldQuoteStatusId = $leadInfo->quote_status_id;
-                            $leadInfo->previous_quote_policy_number = $leadInfo->previous_quote_policy_number . '-duplicate';
+                            $leadInfo->previous_quote_policy_number = $leadInfo->previous_quote_policy_number.'-duplicate';
                             $leadInfo->quote_status_id = QuoteStatusEnum::Duplicate;
                             $leadInfo->save();
 
@@ -74,16 +75,16 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
                                 ]);
                             }
 
-                            info('Record process: ' . ($totalDuplicates + 1) . ' Updated duplicate lead ID: ' . $leadInfo->id . ' with new policy number: ' . $leadInfo->previous_quote_policy_number);
+                            info('Record process: '.($totalDuplicates + 1).' Updated duplicate lead ID: '.$leadInfo->id.' with new policy number: '.$leadInfo->previous_quote_policy_number);
                             $totalDuplicates++;
                         }
                     }
                 });
 
-            info('Completed handling duplicate renewal leads for date: ' . $date);
-            info('Total number of duplicate records processed: ' . $totalDuplicates);
+            info('Completed handling duplicate renewal leads for date: '.$date);
+            info('Total number of duplicate records processed: '.$totalDuplicates);
         } catch (Exception $e) {
-            Log::error('Error handling duplicate renewal leads for date: ' . $date . '. Error: ' . $e->getMessage());
+            Log::error('Error handling duplicate renewal leads for date: '.$date.'. Error: '.$e->getMessage());
         }
     }
 }
