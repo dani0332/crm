@@ -189,6 +189,7 @@ class EmbeddedProductRepository extends BaseRepository
                 'prices.transactions' => function ($query) use ($quoteRequestId) {
                     $query->where('quote_request_id', $quoteRequestId);
                 },
+                'prices.transactions.payments',
             ])
             ->whereHas('prices.transactions', function ($query) use ($quoteRequestId) {
                 $query->where('quote_request_id', $quoteRequestId);
