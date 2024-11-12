@@ -54,15 +54,16 @@ const state = reactive({
 // as per the link 'Transaction Type' column -> https://docs.google.com/spreadsheets/d/1TE7RfMpEtL7kenl8s1DUVKRvP_DbUvCJ82XyCFYJ7Rw/edit#gid=803033517
 const transactionType = computed(() => {
   if (
-      ([
+    [
       props.sendUpdateStatusEnum.CI,
       props.sendUpdateStatusEnum.CIR,
       props.sendUpdateStatusEnum.CPD,
-    ].includes(props.sendUpdateLog?.category?.code)) ||
-      (props.sendUpdateStatusEnum.EF === props.sendUpdateLog?.category?.code && [
-          props.sendUpdateStatusEnum.ATCRNB,
-          props.sendUpdateStatusEnum.ATCRNB_RBB,
-          props.sendUpdateStatusEnum.ATCRN_CRNRBB,
+    ].includes(props.sendUpdateLog?.category?.code) ||
+    (props.sendUpdateStatusEnum.EF === props.sendUpdateLog?.category?.code &&
+      [
+        props.sendUpdateStatusEnum.ATCRNB,
+        props.sendUpdateStatusEnum.ATCRNB_RBB,
+        props.sendUpdateStatusEnum.ATCRN_CRNRBB,
       ].includes(props.sendUpdateLog?.option?.code))
   ) {
     return 'Endorsement';
