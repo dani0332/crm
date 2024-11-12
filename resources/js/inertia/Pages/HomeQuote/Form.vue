@@ -1,4 +1,6 @@
 <script setup>
+import { options } from 'sanitize-html';
+
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -6,6 +8,7 @@ const props = defineProps({
   dropdownSource: Object,
   homePossessionTypeEnum: Object,
   model: String,
+  lookUpData: Object,
 });
 const page = usePage();
 const hasContentOrBuilding = ref(true);
@@ -152,32 +155,6 @@ const formFieldReq = reactive({
   sub_area_id: false,
 });
 
-const typeOfOwnerOccupancyOptions = computed(() => {
-  return [
-    { value: '0', label: 'Owner renting out (annually)' },
-    { value: '1', label: 'Owner renting out short term/Holiday home' },
-  ];
-});
-const contentValueInAEDOptions = computed(() => {
-  return [
-    { value: '50000', label: 'AED 1 - 50,000' },
-    { value: '100000', label: 'AED 50,001 - 100,000' },
-    { value: '150000.00', label: 'AED 100,001 - 150,000' },
-    { value: '200000', label: 'AED 150,001 - 200,000' },
-    { value: '250000', label: 'AED 200,001 - 250,000' },
-    { value: '300000', label: 'AED 250,001 - 300,000' },
-    { value: '400000', label: 'AED 300,001 - 400,000' },
-  ];
-});
-const personalBelongingsInAEDOptions = computed(() => {
-  return [
-    { value: '25000', label: 'AED 1-25,000' },
-    { value: '50000', label: 'AED 25,001 - 50,000' },
-    { value: '100000', label: 'AED 50,001 - 100,000' },
-    { value: '150000', label: 'AED 100,001 - 150,000' },
-    { value: '150001', label: 'AED 150,001 and above' },
-  ];
-});
 const claimOptions = computed(() => {
   return [
     { value: '1', label: 'Yes' },
@@ -203,38 +180,18 @@ function showToast(type, title, message) {
   });
 }
 
-const coverageTypes = [
-  {
-    id: 1,
-    text: 'Building only',
-    applicableForPossessionTypes: [1, 2],
-  },
-  {
-    id: 2,
-    text: 'Contents only',
-    applicableForPossessionTypes: [1, 3],
-  },
-  {
-    id: 3,
-    text: 'Building and Contents',
-    applicableForPossessionTypes: [1, 2],
-  },
-  {
-    id: 4,
-    text: 'Building, Contents and Personal Belongings',
-    applicableForPossessionTypes: [1],
-  },
-  {
-    id: 5,
-    text: 'Contents and Personal Belongings',
-    applicableForPossessionTypes: [1, 3],
-  },
-];
+const coverageTypes = page.props?.lookUpData?.coverages || [];
 
 const typeOfCoverageYouNeedOptions = computed(() => {
   if (!quoteForm.iam_possesion_type_id) {
     return [
       { value: '', label: 'CHOOSE OWNERSHIP STATUS FIRST', disabled: true },
+    ];
+  }
+
+  if (!coverageTypes?.length) {
+    return [
+      { value: '', label: 'NO COVERAGE TYPES AVAILABLE', disabled: true },
     ];
   }
 
@@ -246,7 +203,7 @@ const typeOfCoverageYouNeedOptions = computed(() => {
       ),
     )
     .map(coverage => ({
-      value: `coverage_${coverage.id}`,
+      value: coverage.id,
       label: coverage.text,
     }));
 });
@@ -258,10 +215,12 @@ const handleCoverageChange = () => {
   showPersonalBelongingsField.value = false;
 
   //   Update field visibility based on the selected coverage
-  const selectedCoverage = coverageTypes.find(
-    coverage =>
-      `coverage_${coverage.id}` === quoteForm.type_of_coverage_you_need,
-  );
+  const selectedCoverage = coverageTypes.length
+    ? coverageTypes.find(
+        coverage =>
+        coverage.id === quoteForm.type_of_coverage_you_need,
+      )
+    : null;
 
   if (!selectedCoverage) return;
 
@@ -288,25 +247,6 @@ const handleCoverageChange = () => {
   }
 };
 
-// onMounted(() => {
-//   console.log('Home Quote Form mounted');
-//   if (props.quote?.home_quote?.iam_possesion_type_id) {
-//     let types = coverageTypes
-//     .filter(coverage =>
-//       coverage.applicableForPossessionTypes.includes(
-//         quoteForm.iam_possesion_type_id
-//       )
-//     )
-//     .map(coverage => ({
-//       value: `coverage_${coverage.id}`,  // Customize the value format as needed
-//       label: coverage.text,  // Text to display in the dropdown
-//     }));
-
-//     console.log('Types:', types);
-//     quoteForm.type_of_coverage_you_need = types;
-//   }
-// });
-
 const setCoverageBasedOnBooleans = () => {
   if (props.quote?.home_quote?.iam_possesion_type_id) {
     const { has_building, has_contents, has_personal_belongings } =
@@ -314,24 +254,26 @@ const setCoverageBasedOnBooleans = () => {
 
     let selectedCoverage = null;
 
-    coverageTypes.forEach(coverage => {
-      if (
-        isMatchingCoverage(
-          coverage,
-          has_building,
-          has_contents,
-          has_personal_belongings,
-        )
-      ) {
-        selectedCoverage = `coverage_${coverage.id}`;
+    if (coverageTypes.length) {
+      coverageTypes.forEach(coverage => {
+        if (
+          isMatchingCoverage(
+            coverage,
+            has_building,
+            has_contents,
+            has_personal_belongings,
+          )
+        ) {
+          selectedCoverage = coverage.id;
+        }
+      });
+
+      console.log('Selected coverage:', selectedCoverage);
+
+      if (selectedCoverage) {
+        quoteForm.type_of_coverage_you_need = selectedCoverage;
+        handleCoverageChange();
       }
-    });
-
-    console.log('Selected coverage:', selectedCoverage);
-
-    if (selectedCoverage) {
-      quoteForm.type_of_coverage_you_need = selectedCoverage;
-      handleCoverageChange();
     }
   }
 };
@@ -366,6 +308,61 @@ watch(
   },
   { immediate: true },
 );
+
+const locationAreaOptions = computed(() => {
+  return page.props?.lookUpData?.subAreas?.length
+    ? page.props.lookUpData.subAreas.map(item => ({
+        value: item.id,
+        label: item.description,
+      }))
+    : [];
+});
+const possessionTypeOptions = computed(() => {
+  return page.props?.lookUpData?.possessionType?.length
+    ? page.props.lookUpData.possessionType.map(item => ({
+        value: item.id,
+        label: item.description,
+      }))
+    : [];
+});
+const accommodationTypeOptions = computed(() => {
+  return page.props?.lookUpData?.accommodationType?.length
+    ? page.props.lookUpData.accommodationType.map(item => ({
+        value: item.id,
+        label: item.text,
+      }))
+    : [];
+});
+
+const typeOfOwnerOccupancyOptions = computed(() => {
+  //   return [
+  //     { value: '0', label: 'Owner renting out (annually)' },
+  //     { value: '1', label: 'Owner renting out short term/Holiday home' },
+  //   ];
+  return page.props?.lookUpData?.ownerOccupancies?.length
+    ? page.props.lookUpData.ownerOccupancies.map(item => ({
+        value: item.id,
+        label: item.text,
+      }))
+    : [];
+});
+
+const contentValueInAEDOptions = computed(() => {
+  return page.props?.lookUpData?.contentValues?.length
+    ? page.props.lookUpData.contentValues.map(item => ({
+        value: item.id,
+        label: item.text,
+      }))
+    : [];
+});
+const personalBelongingsInAEDOptions = computed(() => {
+  return page.props?.lookUpData?.personalBelongingValues?.length
+    ? page.props.lookUpData.personalBelongingValues.map(item => ({
+        value: item.id,
+        label: item.text,
+      }))
+    : [];
+});
 </script>
 
 <template>
@@ -435,12 +432,7 @@ watch(
             v-model="quoteForm.sub_area_id"
             :rules="[isRequired]"
             :single="true"
-            :options="
-              dropdownSource.sub_area_id.map(item => ({
-                value: item.id,
-                label: item.description,
-              }))
-            "
+            :options="locationAreaOptions"
             class="w-full"
             :hasError="formFieldReq.sub_area_id"
             :error="quoteForm.errors.sub_area_id"
@@ -451,12 +443,7 @@ watch(
           <x-select
             v-model="quoteForm.iam_possesion_type_id"
             :rules="[isRequired]"
-            :options="
-              dropdownSource.iam_possesion_type_id.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
+            :options="possessionTypeOptions"
             @update:modelValue="handleConditionalFields"
             class="w-full"
           />
@@ -465,12 +452,7 @@ watch(
           <x-select
             v-model="quoteForm.ilivein_accommodation_type_id"
             :rules="[isRequired]"
-            :options="
-              dropdownSource.ilivein_accommodation_type_id.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
+            :options="accommodationTypeOptions"
             class="w-full"
           />
         </x-field>

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
+use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -73,8 +74,13 @@ class LookupService extends BaseService
     {
         return QuoteStatus::select('id', 'text')
             ->whereNotIn('id', [
-                QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-                QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyInvoiced,
+                QuoteStatusEnum::AMLScreeningCleared,
+                QuoteStatusEnum::Draft,
+                QuoteStatusEnum::Cancelled,
+                QuoteStatusEnum::AMLScreeningFailed,
+                QuoteStatusEnum::TransactionDeclined,
+                QuoteStatusEnum::PolicyIssued,
+                QuoteStatusEnum::PolicyInvoiced,
                 QuoteStatusEnum::Issued,
             ])
             ->where('is_active', true)
@@ -198,5 +204,11 @@ class LookupService extends BaseService
     public function getCompanyTypes()
     {
         return Lookup::where('key', LookupsEnum::COMPANY_TYPE)->get();
+    }
+
+    public function getHomeLookUpData()
+    {
+        //https://uatapi.alfred.ae/capi/api/v1-get-home-models
+        return Ken::request('/v1-get-home-models', 'post');
     }
 }

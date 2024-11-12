@@ -88,7 +88,7 @@ class HomeQuoteRepository extends BaseRepository
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->when(request()->filled('advisors'), fn ($q) => $q->whereIn('advisor_id', (array) request('advisors')))
+            ->when(request()->filled('advisors'), fn($q) => $q->whereIn('advisor_id', (array) request('advisors')))
             ->when(request()->has('is_renewal'), function ($query) {
                 if (request('is_renewal') === quoteTypeCode::yesText) {
                     $query->whereNotNull('previous_quote_policy_number');
@@ -104,8 +104,8 @@ class HomeQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
-                fn ($q) => $q->count(),
-                fn ($query) => $query->when($forExport, fn ($q) => $q->get(), fn ($q) => $q->simplePaginate())
+                fn($q) => $q->count(),
+                fn($query) => $query->when($forExport, fn($q) => $q->get(), fn($q) => $q->simplePaginate())
             );
 
         return $homeQuery;
@@ -116,9 +116,11 @@ class HomeQuoteRepository extends BaseRepository
         $dropdownSource['iam_possesion_type_id'] = app(DropdownSourceService::class)->getDropdownSource('iam_possesion_type_id');
         $dropdownSource['ilivein_accommodation_type_id'] = app(DropdownSourceService::class)->getDropdownSource('ilivein_accommodation_type_id');
         $dropdownSource['sub_area_id'] = app(DropdownSourceService::class)->getDropdownSource('sub_area_id');
+        $lookUpData = app(LookupService::class)->getHomeLookUpData();
 
         return [
             'dropdownSource' => $dropdownSource,
+            'lookUpData' => $lookUpData,
             'homePossessionTypeEnum' => HomePossessionType::asArray(),
         ];
     }
@@ -128,15 +130,16 @@ class HomeQuoteRepository extends BaseRepository
         $quoteData = [
             'hasContents' => $data['has_contents'],
             'hasBuilding' => $data['has_building'],
-            'haveClaimedLosses' => $data['have_claimed_losses'],
-            'buildingAed' => $data['building_aed'],
+            'hasClaimedLosses' => $data['have_claimed_losses'],
+            'buildingValue' => $data['building_aed'],
             'hasPersonalBelongings' => $data['has_personal_belongings'],
-            'isPropertyRentedHolidayHome' => $data['is_property_rented_holiday_home'],
-            'propertyAccommodationTypeId' => $data['ilivein_accommodation_type_id'],
-            'possesionTypeId' => $data['iam_possesion_type_id'],
+            'ownerOccupancyTypeId' => $data['is_property_rented_holiday_home'],
+            'accommodationTypeId' => $data['ilivein_accommodation_type_id'],
+            'possessionTypeId' => $data['iam_possesion_type_id'],
             'subAreaId' => $data['sub_area_id'],
             'contentsValueId' => $data['contents_aed'],
             'personalBelongingsValueId' => $data['personal_belongings_aed'],
+            'coverageTypeId' => $data['type_of_coverage_you_need'],
             'quoteTypeId' => intval(QuoteTypes::HOME->id()),
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
@@ -150,11 +153,13 @@ class HomeQuoteRepository extends BaseRepository
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->id() : null,
         ];
 
-        info('Home Quote Create :'.json_encode($quoteData));
+        info('Home Quote Create :' . json_encode($quoteData));
 
         $response = Capi::request('/api/v2-save-home-quote-test', 'post', $quoteData);
 
-        info('Home Quote Create Response :'.json_encode($response));
+        dd($response);
+
+        info('Home Quote Create Response :' . json_encode($response));
 
         // if (isset($response->quoteUID)) {
         //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);
@@ -210,12 +215,12 @@ class HomeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable().'.*',
+                $this->getTable() . '.*',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                    WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
+                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
                 as customer_type'),
             ])
             ->firstOrFail();
@@ -305,7 +310,7 @@ class HomeQuoteRepository extends BaseRepository
             'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -326,7 +331,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::HOME->value) . '-quote', 'post', $dataArr);
     }
 
     public function fetchUpdate($uuid, $data)
