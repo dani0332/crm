@@ -34,11 +34,10 @@ class CapiService
      */
     public function request($path, $method = 'post', $data = [])
     {
-        $url = 'https://uatapi.alfred.ae/capi/api/v2-save-home-quote';
+        $url = $this->baseUrl . $path;
         $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) use ($data, $url) {
             info('CAPI Service Exception', ['data' => $data, 'url' => $url]);
             info('CAPI Service Exception', ['response' => $response->json()]);
-            dd($response->json());
             if (isset($response->json()['msg'])) {
                 vAbort($response->json()['msg']);
             } else {

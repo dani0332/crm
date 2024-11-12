@@ -5,7 +5,6 @@ const notification = useNotifications('toast');
 
 const props = defineProps({
   quote: Object,
-  dropdownSource: Object,
   homePossessionTypeEnum: Object,
   model: String,
   lookUpData: Object,
