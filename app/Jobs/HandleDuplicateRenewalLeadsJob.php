@@ -25,7 +25,7 @@ class HandleDuplicateRenewalLeadsJob implements ShouldQueue
 
     public function handle()
     {
-        $date = '2022-08-11';
+        $date = '2024-10-04';
         info('Starting to handle duplicate renewal leads for date: ' . $date);
         $totalDuplicates = 0;
         try {
