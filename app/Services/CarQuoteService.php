@@ -1909,8 +1909,12 @@ class CarQuoteService extends BaseService
                     $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
                 }
 
-                // Decrement the total allocation count (if it's greater than 0) and update timestamps
-                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
+                if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD])) {
+                    if ($previousAdvisorAllocationRecord->buy_lead_allocation_count > 0) {
+                        $previousAdvisorAllocationRecord->buy_lead_allocation_count = $previousAdvisorAllocationRecord->buy_lead_allocation_count - 1;
+                        $previousAdvisorAllocationRecord->updated_at = now();
+                    }
+                } elseif ($previousAdvisorAllocationRecord->allocation_count > 0) {
                     $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
                     $previousAdvisorAllocationRecord->updated_at = now();
                 }
