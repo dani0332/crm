@@ -1234,7 +1234,7 @@ class SendUpdateLogService
                         SendUpdateLogStatusEnum::ATICB,
                         SendUpdateLogStatusEnum::ATCRNB,
                         SendUpdateLogStatusEnum::ATCRNB_RBB,
-                        SendUpdateLogStatusEnum::ATCRN_CRNRBB
+                        SendUpdateLogStatusEnum::ATCRN_CRNRBB,
                     ]) &&
                     in_array($documentType['code'], [
                         DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
