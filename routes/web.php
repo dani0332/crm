@@ -677,8 +677,7 @@ Route::get('/add-batch-number', function () {
 
 Route::get('handling-duplicate-renewal-leads', function () {
 
-    if( \Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Engineering))
-    {
+    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Engineering)) {
         HandleDuplicateRenewalLeadsJob::dispatch('rn-duplicate-1024');
     }
 
