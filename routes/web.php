@@ -682,3 +682,11 @@ Route::get('handling-duplicate-renewal-leads', function () {
     }
 
 });
+
+Route::get('run-insly-email-fix', function () {
+
+    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+        Artisan::queue('InslyEmailFix:cron');
+    }
+
+});
