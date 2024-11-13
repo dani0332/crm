@@ -42,7 +42,8 @@ class TravelQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
     protected $appends = [
-        'insurer_api_status'
+        'insurer_api_status',
+        'insurer_api_email_action',
     ];
 
     protected static function booted()
@@ -68,6 +69,10 @@ class TravelQuote extends Model implements AuditableContract
     public function getInsurerApiStatusAttribute()
     {
         return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIStatuses($this->insurer_api_status_id) : '';
+    }
+    public function getInsurerApiEmailActionAttribute()
+    {
+        return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIEmailActionMessage($this->insurer_api_status_id) : '';
     }
 
     public function getAuditables()

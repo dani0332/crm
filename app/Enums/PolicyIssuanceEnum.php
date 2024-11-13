@@ -21,15 +21,19 @@ final class PolicyIssuanceEnum extends Enum
 
     const AUTO_CAPTURE_FAILED_STATUS_ID = 1;
     const AUTO_CAPTURE_FAILED = 'Auto Capture Failed';
+    const AUTO_CAPTURE_ACTION_MESSAGE = 'Auto Capture Payment';
 
     const POLICY_DETAIL_API_FAILED_STATUS_ID = 2;
     const POLICY_DETAIL_API_FAILED = 'Policy Details API Failed';
+    const POLICY_DETAIL_API_ACTION_MESSAGE = 'Retrieval of Required Policy Details via API / Policy Issuance API';
 
     const UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID = 3;
     const UPLOAD_POLICY_DOCUMENTS_API_FAILED = 'Document Upload API Failed';
+    const UPLOAD_POLICY_DOCUMENTS_API_ACTION_MESSAGE = 'Document Upload via API';
 
     const BOOKING_DETAILS_API_FAILED_STATUS_ID = 4;
     const BOOKING_DETAILS_API_FAILED = 'Booking Details API Failed';
+    const BOOKING_DETAILS_API_ACTION_MESSAGE = 'Retrieval of Required Booking Details via API';
 
     /* Insurer API Generic Status */
 
@@ -72,5 +76,17 @@ final class PolicyIssuanceEnum extends Enum
         ];
 
         return $status ? $statuses[$status] : $statuses;
+    }
+
+    public static function getInsurerAPIEmailActionMessage($status = null)
+    {
+        $statuses = [
+            self::AUTO_CAPTURE_FAILED_STATUS_ID => self::AUTO_CAPTURE_ACTION_MESSAGE,
+            self::POLICY_DETAIL_API_FAILED_STATUS_ID => self::POLICY_DETAIL_API_ACTION_MESSAGE,
+            self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_ACTION_MESSAGE,
+            self::BOOKING_DETAILS_API_FAILED_STATUS_ID => self::BOOKING_DETAILS_API_ACTION_MESSAGE,
+        ];
+
+        return $status ? '' : $statuses;
     }
 }

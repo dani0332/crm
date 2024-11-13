@@ -148,7 +148,7 @@ class TravelEmailService extends BaseService
             'advisorEmail' => (! empty($advisor?->email) ? $advisor?->email : ''),
             'advisorName' => (! empty($advisor?->name) ? $advisor?->name : ''),
             'travelQuoteId' => $lead->code,
-            'action' => $lead->insurer_api_status,
+            'action' => $lead->insurer_api_email_action,
             'imcrmLink' => QuoteTypes::TRAVEL->url($lead->uuid),
             'travelQuoteLink' => QuoteTypes::TRAVEL->quoteLink($lead->uuid, $isRevivalLead ? ['dla' => 'true'] : []), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => QuoteTypes::TRAVEL->quoteLink($lead->uuid, ['assignAdvisor' => 'true']),
