@@ -16,6 +16,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
+use App\Services\CentralService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -164,6 +165,11 @@ class SendUpdateLogRepository extends BaseRepository
     {
         try {
             $sendUpdate = $this->find($data['id']);
+            if (! in_array($sendUpdate->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER])) {
+                $status = SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS;
+                info('Send Update uuid -> '.$sendUpdate->uuid.' - Status changing to -> '.$status);
+                app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $sendUpdate->status, SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS);
+            }
 
             $result = $sendUpdate->update([
                 'price_with_vat' => $data['price_with_vat'],
@@ -171,6 +177,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'price_vat_not_applicable' => $data['price_vat_not_applicable'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
+                'status' => $status ?? $sendUpdate->status,
             ]);
             $this->updatePayment($data);
         } catch (\Exception $ex) {

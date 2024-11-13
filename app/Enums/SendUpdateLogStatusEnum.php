@@ -91,6 +91,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const ACB = 'ACB'; // Additional commission booking
     const ATIB = 'ATIB'; // Additional tax invoice booking
     const ATICB = 'ATICB'; // Additional tax invoice and commission booking
+    const CAAFE = 'CAAFE'; // Correction and amendments (with Financial Effect).
     const ATCRNB = 'ATCRNB'; // Additional tax credit note booking
     const ATCRNB_RBB = 'ATCRNB_RBB'; // Additional tax credit note raised by buyer booking
     const ATCRN_CRNRBB = 'ATCRN_CRNRBB'; // Additional tax credit note and tax credit note raised by buyer booking
