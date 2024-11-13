@@ -76,7 +76,6 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
-use App\Jobs\HandleDuplicateRenewalLeadsJob;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -673,12 +672,4 @@ Route::get('/add-batch-number', function () {
     $addBtchNuimber = new AddBatchForNonMotors;
     $addBtchNuimber->handle();
     echo 'Done';
-});
-
-Route::get('handling-duplicate-renewal-leads', function () {
-
-    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Engineering)) {
-        HandleDuplicateRenewalLeadsJob::dispatch('rn-duplicate-1024');
-    }
-
 });
