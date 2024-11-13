@@ -379,6 +379,14 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
   createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])){
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+});
+
 </script>
 
 <template>
@@ -996,11 +1004,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   v-model="leadStatusForm.leadStatus"
                   label="Status"
                   :options="leadStatusOptions"
-                  :disabled="
-                    quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved ||
-                    lockLeadSectionsDetails.lead_status
-                  "
+                  :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
                   placeholder="Lead Status"
                   class="w-full"
                   filterable
@@ -1011,11 +1015,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   label="Notes"
                   placeholder="Lead Notes"
                   class="w-full"
-                  :disabled="
-                    quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved ||
-                    lockLeadSectionsDetails.lead_status
-                  "
+                  :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
                 />
               </div>
             </div>
@@ -1052,10 +1052,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                isDisabled
-              "
+              :disabled="allowStatusUpdate || isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Change Status

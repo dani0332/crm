@@ -86,6 +86,7 @@ const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
@@ -108,6 +109,9 @@ const confirmData = reactive({
 });
 
 const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])){
+    return page.props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked;
+  }
   return (
     (props.quote.quote_status_id ==
       page.props.quoteStatusEnum.TransactionApproved ||

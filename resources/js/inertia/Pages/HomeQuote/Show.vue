@@ -72,6 +72,12 @@ const modals = reactive({
 });
 
 const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])){
+    if (props.quote.quote_status_id == quoteStatusEnum.PolicyBooked) {
+      return true;
+    }
+    return false;
+  }
   return (
     (props.quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
       props.quote.quote_status_id == quoteStatusEnum.Lost) ??

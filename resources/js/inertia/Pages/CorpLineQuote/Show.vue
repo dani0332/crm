@@ -67,10 +67,10 @@ const rules = {
 };
 
 const disableStatusSection = computed(() => {
-  return props.quote?.quote_status_id == quoteStatusEnum?.Lost ||
-    props.quote?.quote_status_id == quoteStatusEnum?.TransactionApproved
-    ? true
-    : false;
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])){
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
 });
 
 const dateToYMD = date => {
