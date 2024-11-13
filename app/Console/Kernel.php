@@ -35,7 +35,6 @@ class Kernel extends ConsoleKernel
         Commands\ProcessCCPaymentsCommand::class,
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
-        Commands\InslyEmailFix::class,
         SageProcessesMarkFailedCommand::class,
     ];
 
@@ -120,8 +119,6 @@ class Kernel extends ConsoleKernel
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-
-        $schedule->command('InslyEmailFix:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
     }
 
     /**
