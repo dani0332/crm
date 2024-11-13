@@ -62,6 +62,7 @@ const transactionType = computed(() => {
     [
       props.sendUpdateStatusEnum.MPC,
       props.sendUpdateStatusEnum.CAAFE,
+      props.sendUpdateStatusEnum.DTSI,
     ].includes(props.sendUpdateLog?.option?.code)
   ) {
     return 'Endorsement';
