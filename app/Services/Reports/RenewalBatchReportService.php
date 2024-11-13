@@ -319,7 +319,7 @@ class RenewalBatchReportService extends BaseService
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->dateFilter($reportDateEnd, false)
+                ->dateFilter($reportDateEnd, true)
                 ->where('quote_type_id', QuoteTypeId::Car)
                 ->orderByDesc('end_date')
                 ->pluck('name', 'id')
@@ -528,7 +528,7 @@ class RenewalBatchReportService extends BaseService
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
                 ->where('quote_type_id', QuoteTypeId::Car)
-                ->dateFilter($reportDateEnd, false)
+                ->dateFilter($reportDateEnd, true)
                 ->orderByDesc('end_date')
                 ->pluck('name', 'id')
                 ->toArray();
