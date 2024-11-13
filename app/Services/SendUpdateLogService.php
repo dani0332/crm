@@ -447,6 +447,8 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::ATCRNB,
+                SendUpdateLogStatusEnum::ATCRNB_RBB,
                 SendUpdateLogStatusEnum::ATCRN_CRNRBB,
             ])) {
                 return true;
