@@ -1015,7 +1015,7 @@ class SendUpdateLogService
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            logger()->error('Book Update - Error while moving updates to main lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
+            info('Book Update - Error while moving updates to main lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
             return ['status' => false, 'message' => 'Update not booked'];
         }
