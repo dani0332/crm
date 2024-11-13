@@ -1336,8 +1336,8 @@ class HealthQuoteService extends BaseService
                         if (isset($plan['ratesPerCopay'])) {
                             foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
                                 if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
-                                    $response['priceWithVAT'] = (float) $ratePerCopay['premium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
-                                    $response['priceWithLP'] = (float) $ratePerCopay['premium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
+                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
+                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
                                 }
                             }
                         }

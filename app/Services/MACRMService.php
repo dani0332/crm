@@ -111,15 +111,7 @@ class MACRMService
     public static function cancelCourierQuote($quote, $quoteTypeId)
     {
         try {
-            $cancelCriteria = [QuoteStatusEnum::PolicyCancelled];
-
-            if (! in_array($quote->quote_status_id, $cancelCriteria)) {
-                info("Cannot cancel Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} as quote status is not 'Policy Cancelled'");
-
-                return false;
-            }
-
-            $leadData = getCourierQuote($quote, $quoteTypeId, $cancelCriteria);
+            $leadData = getCourierQuote($quote, $quoteTypeId);
             if (! $leadData) {
                 info("No lead data found for Courier Quote UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
 

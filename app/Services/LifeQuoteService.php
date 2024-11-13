@@ -92,6 +92,7 @@ class LifeQuoteService extends BaseService
                 'lqr.insurer_quote_number',
                 'lqr.policy_issuance_date',
                 'lqrd.insly_id',
+                'lu.text as transaction_type_text',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -104,6 +105,7 @@ class LifeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'lqr.transaction_type_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'lqr.insurance_provider_id');
     }
 
