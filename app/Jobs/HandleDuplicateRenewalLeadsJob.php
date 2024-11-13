@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 
@@ -105,6 +106,11 @@ class HandleDuplicateRenewalLeadsJob implements ShouldBeUnique, ShouldQueue
         } catch (Exception $e) {
             Log::error('Error handling duplicate renewal leads for date: '.$date.'. Error: '.$e->getMessage());
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->uniqueId))->dontRelease()];
     }
 
     public function uniqueId(): string
