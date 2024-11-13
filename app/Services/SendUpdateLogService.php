@@ -1221,9 +1221,21 @@ class SendUpdateLogService
                         DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
                     ])
                 ) {
-                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
+                    $isRequired = true;
+                    if ($option == SendUpdateLogStatusEnum::ATCRNB && $documentType['code'] == DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER) {
+                        $isRequired = false;
+                    }
+                    if ($option == SendUpdateLogStatusEnum::ATCRNB_RBB && $documentType['code'] == DocumentTypeCode::SEND_UPDATE_TAX_INVOICE) {
+                        $isRequired = false;
+                    }
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) $isRequired;
                 } elseif (
-                    $option == SendUpdateLogStatusEnum::ATICB &&
+                    in_array($option, [
+                        SendUpdateLogStatusEnum::ATICB,
+                        SendUpdateLogStatusEnum::ATCRNB,
+                        SendUpdateLogStatusEnum::ATCRNB_RBB,
+                        SendUpdateLogStatusEnum::ATCRN_CRNRBB
+                    ]) &&
                     in_array($documentType['code'], [
                         DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
                         DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
