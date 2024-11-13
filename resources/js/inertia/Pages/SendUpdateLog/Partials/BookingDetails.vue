@@ -60,6 +60,7 @@ const props = defineProps({
     default: '',
   },
   isEditDisabledForQueuedBooking: Boolean,
+  isCommVatNotAppEnabled: Boolean,
 });
 
 const state = reactive({
@@ -74,6 +75,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -112,7 +114,7 @@ const hasTaxDocuments = computed(() => {
   );
 });
 
-const checkSectionTwoEdit = () => {
+const checkSectionToEdit = () => {
   if (props.isUpdateBooked) {
     notification.error({
       title: 'Update already booked',
@@ -387,8 +389,14 @@ const calculateCommission = () => {
           Number(total_vat_amount);
         bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
+        let commissionVatApplicable = Number(
+          bookingDetailsForm.commission_vat_applicable,
+        );
+        let commissionVatNotApplicable = Number(
+          bookingDetailsForm.commission_vat_not_applicable,
+        );
         bookingDetailsForm.commission_percentage = convertToNegative(
-          (Number(bookingDetailsForm.commission_vat_applicable) /
+          (Number(commissionVatApplicable + commissionVatNotApplicable) /
             total_price_with_vat_and_not_vat_applicable) *
             100,
         );
@@ -497,7 +505,8 @@ const paymentInvoiceNumberOptions = computed(() => {
 const reversalEntry = reactive({
   booking_date: null,
   invoice_description: props.bookingDetails?.reversal_invoice_description || '',
-  broker_invoice_number: null,
+  broker_invoice_number:
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null,
   transaction_payment_status: null,
   invoice_date: null,
   insurer_tax_invoice_number: null,
@@ -583,9 +592,8 @@ function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
     ? payment.insurer_tax_number + '-REV'
     : sendUpdate.insurer_tax_invoice_number + '-REV';
-  reversalEntry.broker_invoice_number = payment?.broker_invoice_number
-    ? payment.broker_invoice_number + '-REV'
-    : sendUpdate.broker_invoice_number + '-REV';
+  reversalEntry.broker_invoice_number =
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null;
   reversalEntry.insurer_commission_invoice_number =
     payment?.insurer_commmission_invoice_number
       ? payment.insurer_commmission_invoice_number + '-REV'
@@ -640,7 +648,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.insurer_tax_invoice_number =
     reversalEntry.insurer_tax_invoice_number.replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number =
-    reversalEntry.broker_invoice_number.replace('REV', 'NEW') || '';
+    props.sendUpdateLog?.broker_invoice_number ?? '';
   bookingDetailsForm.insurer_commission_invoice_number =
     reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
   bookingDetailsForm.price_vat_applicable =
@@ -946,12 +954,14 @@ const onCancel = () => {
   bookingDetailsForm.invoice_date = props.bookingDetails?.invoice_date || null;
   bookingDetailsForm.insurer_tax_invoice_number =
     props.bookingDetails?.insurer_tax_invoice_number || '';
-  bookingDetailsForm.insurer_commission_invoice_number =
-    props.bookingDetails?.insurer_commission_invoice_number || '';
+
   bookingDetailsForm.price_vat_applicable =
     props.bookingDetails?.price_vat_applicable || '';
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
+
+  bookingDetailsForm.insurer_commission_invoice_number =
+    props.bookingDetails?.insurer_commission_invoice_number || '';
 };
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] =
@@ -1002,9 +1012,7 @@ const onReversalEdit = () => {
 const checkDiscount = (newPrice, oldPrice) => {
   let paymentTotalPrice = Number(props?.payments[0]?.total_price);
   let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
-  let savedPriceWithVat = isCPD.value
-    ? Number(reversalEntry.price_with_vat)
-    : Number(props.sendUpdateLog?.price_with_vat);
+  let savedPriceWithVat = Number(props.sendUpdateLog?.price_with_vat);
   let savedDiscount =
     Number(props?.payments[0]?.discount_value) ||
     Number(props.sendUpdateLog.discount) ||
@@ -1022,14 +1030,21 @@ const checkDiscount = (newPrice, oldPrice) => {
         // don't use ===
         bookingDetailsForm.discount = savedDiscount;
       } else {
-        bookingDetailsForm.discount = Number(
+        let discount = Number(
           savedDiscount - (savedPriceWithVat - newPrice),
         ).toFixed(2);
+        if (!(discount < 0)) {
+          // negative value should not apply.
+          bookingDetailsForm.discount = discount;
+        }
       }
     } else {
       bookingDetailsForm.discount = savedDiscount;
     }
   }
+
+  bookingDetailsForm.discount =
+    bookingDetailsForm.discount > 0.99 ? 0 : bookingDetailsForm.discount;
 };
 
 const dateToDMY = date => {
@@ -1082,6 +1097,39 @@ watch(
   (newValue, oldValue) => {
     if (!(noDiscountType.value || ignoreCheckDiscount.value)) {
       checkDiscount(newValue, oldValue);
+    }
+  },
+);
+
+watch(
+  () => props.bookingDetails?.broker_invoice_number,
+  (newValue, oldValue) => {
+    bookingDetailsForm.broker_invoice_number = newValue;
+  },
+);
+
+const disableCommissionVatNotApplicable = ref(false);
+
+watch(
+  () => bookingDetailsForm.commission_vat_applicable,
+  (newValue, oldValue) => {
+    if (props.isCommVatNotAppEnabled && newValue > 0) {
+      disableCommissionVatNotApplicable.value = true;
+    } else {
+      disableCommissionVatNotApplicable.value = false;
+    }
+  },
+);
+
+const disableCommissionVatApplicable = ref(false);
+
+watch(
+  () => bookingDetailsForm.commission_vat_not_applicable,
+  (newValue, oldValue) => {
+    if (props.isCommVatNotAppEnabled && newValue > 0) {
+      disableCommissionVatApplicable.value = true;
+    } else {
+      disableCommissionVatApplicable.value = false;
     }
   },
 );
@@ -1297,8 +1345,9 @@ watch(
                     INSURER COMMISSION TAX INVOICE NUMBER
                   </label>
                   <template #tooltip>
-                    Input the invoice number issued by the insurer for
-                    commission purposes. Double-check for accuracy.
+                    {{
+                      productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                    }}
                   </template>
                 </x-tooltip>
               </div>
@@ -1621,14 +1670,7 @@ watch(
                   </span>
                 </div>
               </div>
-              <div
-                v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
-                class="grid sm:grid-cols-2 pb-1.5"
-              >
+              <div class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
                   <x-tooltip placement="left">
                     <label
@@ -1803,8 +1845,9 @@ watch(
                       INSURER COMMISSION TAX INVOICE NUMBER
                     </label>
                     <template #tooltip>
-                      Input the invoice number issued by the insurer for
-                      commission purposes. Double-check for accuracy.
+                      {{
+                        productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      }}
                     </template>
                   </x-tooltip>
                 </div>
@@ -2013,7 +2056,28 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
+                  <x-tooltip
+                    placement="left"
+                    v-if="disableCommissionVatApplicable"
+                  >
+                    <x-input
+                      v-model="bookingDetailsForm.commission_vat_applicable"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="
+                        !state.isEdit || disableCommissionVatApplicable
+                      "
+                      placeholder="Enter Commission Amount"
+                      size="xs"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                    <template #tooltip>
+                      This option is disabled because Commission (VAT not
+                      applicable) has already been entered.
+                    </template>
+                  </x-tooltip>
                   <x-input
+                    v-else
                     type="number"
                     min="0"
                     add
@@ -2022,7 +2086,7 @@ watch(
                     @change="calculateCommission"
                     class="!mb-0 w-full"
                     :class="isNegativeValue ? ' icon-padding' : ''"
-                    :disabled="!state.isEdit"
+                    :disabled="!state.isEdit || disableCommissionVatApplicable"
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
                     size="xs"
@@ -2076,7 +2140,46 @@ watch(
                     </template>
                   </x-tooltip>
                 </div>
-                <div>
+                <div v-if="props.isCommVatNotAppEnabled">
+                  <x-tooltip
+                    placement="left"
+                    v-if="disableCommissionVatNotApplicable"
+                  >
+                    <x-input
+                      type="number"
+                      v-model="bookingDetailsForm.commission_vat_not_applicable"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="
+                        !state.isEdit || disableCommissionVatNotApplicable
+                      "
+                      placeholder="Enter Commission Amount"
+                      size="xs"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                    <template #tooltip>
+                      This option is disabled because Commission (VAT
+                      applicable) has already been entered.
+                    </template>
+                  </x-tooltip>
+                  <x-input
+                    v-else
+                    type="number"
+                    min="0"
+                    add
+                    step="any"
+                    v-model="bookingDetailsForm.commission_vat_not_applicable"
+                    @change="calculateCommission"
+                    class="!mb-0 w-full"
+                    :class="isNegativeValue ? ' icon-padding' : ''"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Commission Amount"
+                    :rules="[isRequired]"
+                    size="xs"
+                    :icon-left="isNegativeValue ? 'minus' : ''"
+                  />
+                </div>
+                <div v-else>
                   <span>{{
                     bookingDetailsForm.commission_vat_not_applicable !== null
                       ? bookingDetailsForm.commission_vat_not_applicable
@@ -2159,7 +2262,7 @@ watch(
               <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                 <x-button
                   size="sm"
-                  @click="checkSectionTwoEdit"
+                  @click="checkSectionToEdit"
                   :disabled="props.isEditDisabledForQueuedBooking"
                 >
                   Edit
@@ -2171,7 +2274,7 @@ watch(
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="checkSectionTwoEdit">
+              <x-button v-else size="sm" @click="checkSectionToEdit">
                 Edit
               </x-button>
 
@@ -2365,8 +2468,12 @@ watch(
   </div>
 </template>
 
-<style>
+<style scoped>
 .icon-padding input {
   padding-left: 4vh !important;
+}
+
+.v-popper {
+  width: 100% !important;
 }
 </style>

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RetentionReportEnum;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -18,7 +19,8 @@ class ExportValidationRequest extends FormRequest
     {
         $rules = [];
 
-        $exportType = $this->route('exportType');
+        $exportType = $this->route('quoteType');
+        $quoteType = $this->route('quoteType');
 
         if ($exportType != GenericRequestEnum::EXPORT_MAKES_MODELS) {
             if ($exportType == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
@@ -30,6 +32,14 @@ class ExportValidationRequest extends FormRequest
                 $rules['payment_due_date.*'] = 'required|date';
             } elseif ($this->has('booking_date')) {
                 $rules['booking_date.*'] = 'required|date';
+            } elseif ($quoteType == RetentionReportEnum::RETENTION) {
+                $rules = [
+                    'lob' => 'required',
+                    'displayBy' => 'required',
+                    'policyExpiryDate.*' => 'required|date',
+                ];
+            } elseif ($this->has('transaction_approved_dates')) {
+                $rules['transaction_approved_dates.*'] = 'required|date';
             } else {
                 $rules = [
                     'created_at_start' => 'required|date',
@@ -50,7 +60,7 @@ class ExportValidationRequest extends FormRequest
                 $exportTye = $this->route('exportTye');
                 $quoteType = $this->route('quoteType');
 
-                if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                if ((ucfirst($quoteType) == QuoteTypes::CAR->value) || $quoteType == RetentionReportEnum::RETENTION) {
                     $diffInDays = 31;
                 }
 
@@ -71,15 +81,25 @@ class ExportValidationRequest extends FormRequest
                         $start = Carbon::parse($this->input('created_at_start'));
                         $end = Carbon::parse($this->input('created_at_end'));
                         $error_fields = 'created date';
+                    } elseif ($quoteType == RetentionReportEnum::RETENTION) {
+                        if ($this->input('policyExpiryDate')) {
+                            $diffInDays = 92;
+                            $start = Carbon::parse($this->input('policyExpiryDate')[0])->startOfDay();
+                            $end = Carbon::parse($this->input('policyExpiryDate')[1])->endOfDay();
+                            $error_fields = 'start & end date';
+                        }
+                    } elseif ($this->has('transaction_approved_dates')) {
+                        $start = Carbon::parse($this->input('transaction_approved_dates')[0])->startOfDay();
+                        $end = Carbon::parse($this->input('transaction_approved_dates')[1])->endOfDay();
+                        $error_fields = 'transaction approved dates';
                     }
-
                     $diff = $start->diffInDays($end);
                     if ($diff > $diffInDays) {
                         $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
                     }
+                } else {
+                    $validator->errors()->add('flash', 'Valid dates are required to export.');
                 }
-            } else {
-                $validator->errors()->add('flash', 'Valid dates are required to export.');
             }
         });
     }

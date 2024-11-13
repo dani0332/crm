@@ -6,7 +6,9 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Repositories\InsuranceProviderRepository;
 use App\Rules\NotZero;
+use App\Services\SendUpdateLogService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
@@ -36,7 +38,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'insurer_commission_invoice_number' => 'required|string|max:50',
             'discount' => 'nullable|numeric',
             'commission_percentage' => 'required|numeric',
-            'commission_vat_not_applicable' => 'nullable|numeric',
+            'commission_vat_not_applicable' => 'required|numeric',
             'vat_on_commission' => 'required|numeric',
             'total_commission' => 'required|numeric',
             'total_vat_amount' => 'sometimes|numeric',
@@ -44,7 +46,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'price_vat_not_applicable' => 'sometimes|numeric',
             'total_price' => 'sometimes|numeric',
             'price_with_vat' => 'required|numeric',
-            'broker_invoice_number' => 'required|string',
+            'broker_invoice_number' => 'sometimes',
             'transaction_payment_status' => 'required|string',
             'commission_percentage' => 'required|numeric',
             'vat_on_commission' => 'required|numeric',
@@ -59,6 +61,15 @@ class SaveBookingDetailsRequest extends FormRequest
 
         $validatedCatForPrices = in_array($this->sendUpdate->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD, SendUpdateLogStatusEnum::CI,
             SendUpdateLogStatusEnum::CIR]);
+
+        if (request()->input('commission_vat_not_applicable') > 0) {
+            $rules['commission_vat_applicable'] = 'nullable|numeric';
+            $rules['vat_on_commission'] = 'nullable';
+        }
+
+        if (request()->input('commission_vat_applicable') > 0) {
+            $rules['commission_vat_not_applicable'] = 'nullable|numeric';
+        }
 
         if ($validatedCatForPrices) {
             if (! in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Health])) {
@@ -87,6 +98,13 @@ class SaveBookingDetailsRequest extends FormRequest
         if ($this->get('send_update_option') !== null && $this->get('send_update_option') === SendUpdateLogStatusEnum::ATIB) {
             $skipRules = ['insurer_commission_invoice_number', 'vat_on_commission', 'commission_percentage', 'commission_vat_applicable', 'commission_vat_not_applicable', 'total_commission'];
             $rules = array_diff_key($rules, array_flip($skipRules));
+        }
+
+        [$insuranceProviderId, $planId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($this->sendUpdate);
+        $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
+
+        if ($insuranceProvider?->non_self_billing) {
+            $rules['broker_invoice_number'] = 'required|string';
         }
 
         return $rules;

@@ -74,6 +74,7 @@ class ActivityRepository extends BaseRepository
             'description' => $data['description'],
             'title' => $data['title'],
             'source' => LeadSourceEnum::IMCRM,
+            'user_id' => auth()->user()->id ?? null,
         ];
 
         if (isset($data['quote_id'])) {

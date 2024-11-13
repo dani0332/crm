@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
 use App\Models\ApplicationStorage;
+use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\ActivitiesService;
@@ -27,6 +28,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public $timeout = 100;
     public $tries = 3;
+    public $backoff = 120;
 
     /**
      * Create a new job instance.
@@ -40,6 +42,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
         $this->data = $payload;
         $this->code = $code;
+        $this->onQueue('insly');
     }
 
     /**
@@ -77,7 +80,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         try {
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
             if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
-                $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
+                $coPaymentIds = null;
+                if ($modelType == quoteTypeCode::Health) {
+                    $coPaymentIds = HealthPlanCoPayment::where('health_plan_id', $quote->plan_id)->where('id', '!=', $quote->health_plan_co_payment_id)->pluck('id')->toArray();
+                }
+                $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote, $coPaymentIds);
             }
             // First Retrieve document types marked for sending to the customer, then fetch the corresponding uploaded documents
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
@@ -165,6 +172,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->data->quote_id))->dontRelease()];
+        return [(new WithoutOverlapping($this->code))->dontRelease()];
     }
 }

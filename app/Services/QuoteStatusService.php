@@ -77,4 +77,35 @@ class QuoteStatusService
             return 'false';
         }
     }
+
+    public function markQuoteAsStale($quoteTypeId, $quoteRequestId)
+    {
+        $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
+        $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+        if (isset($updateQuote->quote_status_id) && ! empty($updateQuote->quote_status_id) && $updateQuote->quote_status_id == QuoteStatusEnum::FollowedUp) {
+            $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
+            $updateQuote->save();
+        }
+
+        return $updateQuote;
+    }
+
+    /**
+     * Check if a policy sent log exists for the given quote.
+     *
+     * @param  int  $quoteId  The ID of the quote to check.
+     * @return bool True if a policy sent log exists, false otherwise.
+     */
+    public function isPolicySentLogExists(int $quoteId): bool
+    {
+        // Check if a policy sent log exists for the given quote.
+        return QuoteStatusLog::where('quote_request_id', $quoteId)
+            ->where(function ($query) {
+                $query->where('previous_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicySentToCustomer);
+            })
+            ->select('id')
+            ->limit(1)
+            ->exists();
+    }
 }

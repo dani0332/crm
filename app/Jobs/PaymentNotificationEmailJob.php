@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,7 +16,6 @@ class PaymentNotificationEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $lead = null;
-    private $totalLead = null;
     private $user = null;
     public $tries = 3;
     public $timeout = 30;
@@ -25,11 +26,10 @@ class PaymentNotificationEmailJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($lead, $user, $totalLead)
+    public function __construct($lead, $user)
     {
         $this->lead = $lead;
         $this->user = $user;
-        $this->totalLead = $totalLead;
     }
 
     /**
@@ -39,6 +39,12 @@ class PaymentNotificationEmailJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService)
     {
+        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL)->first();
+        if ($emailEnable && $emailEnable->value == 0) {
+            info('ENABLE_PAYMENT_NOTIFICATION_EMAIL is Disable');
+
+            return false;
+        }
         if (! $this->lead) {
             info('PaymentNotificationEmailJob: Email data is not found');
 
@@ -49,6 +55,6 @@ class PaymentNotificationEmailJob implements ShouldQueue
 
             return false;
         }
-        $sendEmailCustomerService->sendPaymentNotificationEmail($this->lead, $this->user, $this->totalLead);
+        $sendEmailCustomerService->sendPaymentNotificationEmail($this->lead, $this->user);
     }
 }
