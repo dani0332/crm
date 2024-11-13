@@ -1685,31 +1685,15 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      TRAVELING WHERE
-                    </label>
-                    <template #tooltip> Traveling Where</template>
-                  </x-tooltip>
+                  <label class="font-medium text-gray-800 text-sm">
+                    DEPARTING FROM
+                  </label>
                 </dt>
                 <dt class="font-medium uppercase">
                   {{
-                    quote.direction_code != null
-                      ? quote.direction_code
-                      : quote?.currently_located_in_id_text ==
-                            enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                          quote?.region_cover_for_id !=
-                            enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                        ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                        : quote?.destination_id_text ==
-                              enums.travelQuoteEnum
-                                .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                            quote?.region_cover_for_id ==
-                              enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                          ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                          : ''
+                    quote.departure_country_text != null
+                      ? quote.departure_country_text
+                      : ''
                   }}
                 </dt>
               </div>
@@ -3394,6 +3378,13 @@ const onAddUpdate = () => {
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :quoteType="$page.props.modelType"
+      :expanded="sectionExpanded"
+    />
+
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
 
