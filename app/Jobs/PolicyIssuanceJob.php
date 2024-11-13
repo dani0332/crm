@@ -104,5 +104,4 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
     }
 
-
 }
