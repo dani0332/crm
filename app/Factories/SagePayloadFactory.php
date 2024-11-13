@@ -137,8 +137,6 @@ class SagePayloadFactory
         if (! empty($extras['mainLeadDetails']) && isset($extras['extras']['option_id']) && ! in_array($extras['extras']['option_id'], [
             SendUpdateLogStatusEnum::ACB,
             SendUpdateLogStatusEnum::ATIB,
-            SendUpdateLogStatusEnum::ATCRNB,
-            SendUpdateLogStatusEnum::ATCRNB_RBB,
         ])) {
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
         }
@@ -226,8 +224,6 @@ class SagePayloadFactory
         if (! empty($extras['mainLeadDetails']) && isset($extras['extras']['option_id']) && ! in_array($extras['extras']['option_id'], [
             SendUpdateLogStatusEnum::ACB,
             SendUpdateLogStatusEnum::ATIB,
-            SendUpdateLogStatusEnum::ATCRNB,
-            SendUpdateLogStatusEnum::ATCRNB_RBB,
         ])) {
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
         }
@@ -433,8 +429,6 @@ class SagePayloadFactory
             ! in_array($extras['extras']['option_id'], [
                 SendUpdateLogStatusEnum::ACB,
                 SendUpdateLogStatusEnum::ATIB,
-                SendUpdateLogStatusEnum::ATCRNB,
-                SendUpdateLogStatusEnum::ATCRNB_RBB,
             ])) {
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
@@ -580,8 +574,6 @@ class SagePayloadFactory
             ! in_array($extras['extras']['option_id'], [
                 SendUpdateLogStatusEnum::ACB,
                 SendUpdateLogStatusEnum::ATIB,
-                SendUpdateLogStatusEnum::ATCRNB,
-                SendUpdateLogStatusEnum::ATCRNB_RBB,
             ])) {
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
