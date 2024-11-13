@@ -84,6 +84,6 @@ final class PolicyIssuanceEnum extends Enum
             self::BOOKING_DETAILS_API_FAILED_STATUS_ID => self::BOOKING_DETAILS_API_ACTION_MESSAGE,
         ];
 
-        return $status ? $statuses[$status] : '' ;
+        return $status ? $statuses[$status] : '';
     }
 }
