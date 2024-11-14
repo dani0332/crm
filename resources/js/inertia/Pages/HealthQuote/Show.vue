@@ -890,19 +890,27 @@ watchEffect(() => {
     .slice()
     .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
 
-  // const matchingIndex = listQuotePlansFiltered.value.findIndex(
-  //   x => x.id === selectedProviderPlan.value?.id,
-  // );
+  listQuotePlansFiltered.value = listQuotePlansFiltered.value.sort((a, b) => {
+    // Convert undefined or falsy `actualPremium` values to 0 for comparison, if needed
+    const premiumA = a.actualPremium || 0;
+    const premiumB = b.actualPremium || 0;
 
-  // if (matchingIndex > 0) {
-  //   [
-  //     listQuotePlansFiltered.value[0],
-  //     listQuotePlansFiltered.value[matchingIndex],
-  //   ] = [
-  //     listQuotePlansFiltered.value[matchingIndex],
-  //     listQuotePlansFiltered.value[0],
-  //   ];
-  // }
+    return premiumA - premiumB;
+  });
+
+  const matchingIndex = listQuotePlansFiltered.value.findIndex(
+    x => x.id === selectedProviderPlan.value?.id,
+  );
+
+  if (matchingIndex > 0) {
+    [
+      listQuotePlansFiltered.value[0],
+      listQuotePlansFiltered.value[matchingIndex],
+    ] = [
+      listQuotePlansFiltered.value[matchingIndex],
+      listQuotePlansFiltered.value[0],
+    ];
+  }
 });
 
 const computedListQuotePlans = computed(() => {
@@ -3305,14 +3313,12 @@ const onAddUpdate = () => {
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="plansTable.columns"
-              :items="listQuotePlansFiltered || []"
+              :items="computedListQuotePlans || []"
               border-cell
               hide-rows-per-page
               :rows-per-page="15"
               class="flex-wrap"
-              :hide-footer="listQuotePlansFiltered.length < 15"
-              :sort-by="'actualPremium'"
-              :sort-type="'asc'"
+              :hide-footer="computedListQuotePlans.length < 15"
             >
               <template #item-copayName="item">
                 <p class="copay-max">
