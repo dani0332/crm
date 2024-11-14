@@ -240,6 +240,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('reports/{ep}', [EmbeddedProductController::class, 'reportTransactions'])->name('embedded-products.reports.certificates');
         Route::get('reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
         Route::resource('products', EmbeddedProductController::class, ['names' => 'embedded-products']);
+        Route::get('get-by-quote', [EmbeddedProductController::class, 'getByQuote'])->name('embedded-products.get-by-quote');
     });
 
     Route::resource('legacy-policy', LegacyPolicyController::class);
@@ -672,4 +673,12 @@ Route::get('/add-batch-number', function () {
     $addBtchNuimber = new AddBatchForNonMotors;
     $addBtchNuimber->handle();
     echo 'Done';
+});
+
+Route::get('run-insly-email-fix', function () {
+
+    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+        Artisan::queue('InslyEmailFix:cron');
+    }
+
 });
