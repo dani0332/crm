@@ -941,7 +941,7 @@ class SendEmailCustomerService extends BaseService
             <body>
               <p>Dear <b>'.$user->name.'</b>,</p>
               <p>
-                  A customer with REF-ID <a href="'.$this->appUrl.$path.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
+                  A customer with REF-ID <a href="'.$this->appUrl.'/'.$path.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
               </p>
               <p>
                 Please call the customer urgently as they have requested for an advisor right now.
