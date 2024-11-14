@@ -145,7 +145,7 @@ class BuyLeadService
 
     public function exportTrackingReportPDF(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate)
     {
-        $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate);
+        $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, true);
         $pdf = PDF::loadView('pdf.buy-lead-requests', $data);
 
         $pdfName = 'InsuranceMarket.ae™ Buy Leads Tracking Report.pdf';
