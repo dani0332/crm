@@ -34,7 +34,7 @@ class TravelAllocationService extends AllocationService
             // Check if the lead is associated with the ALNC provider
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
-            $isALNC = $insurer->code == InsuranceProvidersEnum::ALNC;
+            $isALNC = isset($insurer) ? $insurer->code == InsuranceProvidersEnum::ALNC : false;
 
             // Check if the insurer_api_status_id is in the list of failed statuses
             $isFailedStatus = in_array($travelQuote->insurer_api_status_id, [
