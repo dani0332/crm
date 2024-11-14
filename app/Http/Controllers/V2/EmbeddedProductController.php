@@ -224,6 +224,7 @@ class EmbeddedProductController extends Controller
     public function getByQuote(Request $request)
     {
         $embeddedProducts = EmbeddedProductRepository::byQuoteType($request->quote_type_id, $request->quote_id);
+
         return response()->json($embeddedProducts);
     }
 }
