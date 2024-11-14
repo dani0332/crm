@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\Payment;
 use App\Models\SendUpdateLog;
 use App\Repositories\InsuranceProviderRepository;
 use App\Rules\NotZero;
@@ -138,6 +139,26 @@ class SaveBookingDetailsRequest extends FormRequest
 
             if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
                 return $validator->errors()->add('error', 'Update booking already in queued');
+            }
+
+            $payment = $this->sendUpdate->payments->first();
+
+            $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')
+                ->whereNot('code', $payment->code)
+                ->where('insurer_tax_number', request()->insurer_tax_invoice_number)
+                ->select('insurer_tax_number')->first();
+
+            if ($isInsurerTaxNumberExists) {
+                $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists, Please enter a unique value.');
+            }
+
+            $isInsurerComTaxNumberExists = Payment::whereNotNull('insurer_commmission_invoice_number')
+                ->whereNot('code', $payment->code)
+                ->where('insurer_commmission_invoice_number', request()->insurer_commission_invoice_number)
+                ->select('insurer_commmission_invoice_number')->first();
+
+            if ($isInsurerComTaxNumberExists) {
+                $validator->errors()->add('error', 'Insurer Commission Invoice Number already exists, Please enter a unique value.');
             }
         });
     }
