@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             SendUpdatePermission::class,
             GenericPermissionSeeder::class,
             PermissionsSeeder::class,
+            CallBackNotificationDataMigrationSeeder::class,
         ]);
     }
 }

@@ -85,11 +85,10 @@ class CallBackNotification extends Command
                                 : ActivityTypeEnum::WHATS_APP;
 
                             if ($notificationType) {
-                                ActivityNotificationLogs::create([
-                                    'activity_id' => $activity->id,
-                                    'advisor_id' => $activity->assignee_id,
-                                    'notification_type' => strtoupper($notificationType),
-                                ]);
+                                if (isset($activity->id)) {
+                                    $activity->reminders_sent = $activity->reminders_sent += 1;
+                                    $activity->save();
+                                }
                                 if (strtoupper($notificationType) === ActivityTypeEnum::CALL_BACK) {
                                     $title = 'InstantAlfred CallBack Reminder';
                                     $message = 'Urgent reminder callback request for ';
