@@ -526,7 +526,7 @@ const onAddDocumentSubmit = event => {
 
           <template #item-updated_at="{ prices }">
             <span v-if="getFirstPriceWithTransaction(prices)?.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED">
-              {{ dateFormat(getFirstPriceWithTransaction(prices)?.transactions[0]?.payments[0]?.captured_at) }}
+              {{ getFirstPriceWithTransaction(prices)?.transactions[0]?.payments[0]?.captured_at }}
             </span>
             <span v-else>
               -
