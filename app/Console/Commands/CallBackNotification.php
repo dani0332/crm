@@ -86,7 +86,7 @@ class CallBackNotification extends Command
 
                             if ($notificationType) {
                                 if (isset($activity->id)) {
-                                    $activity->reminders_sent = $activity->reminders_sent += 1;
+                                    $activity->reminders_sent += 1;
                                     $activity->save();
                                 }
                                 if (strtoupper($notificationType) === ActivityTypeEnum::CALL_BACK) {
