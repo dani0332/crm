@@ -7,7 +7,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Events\CallBackNotifications;
 use App\Models\Activities;
-use App\Models\ActivityNotificationLogs;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;

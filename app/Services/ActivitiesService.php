@@ -8,7 +8,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\CallBackNotifications;
 use App\Models\Activities;
-use App\Models\ActivityNotificationLogs;
 use App\Models\PersonalQuote;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
