@@ -20,10 +20,15 @@ class DatabaseSeeder extends Seeder
             HealthRevivalQuotesSeeder::class,
             AddSuperLeadStatusChangePermission::class,
             QuoteStatusSeeder::class,
-            SendUpdateAdditionalTaxInvoice::class,
+            AddReApprovePaymentPermission::class,
+            // SendUpdateAdditionalTaxInvoice::class,
+            SUAdditionalCRNSubTypesSeeder::class,
             //DocumentTypeSeeder::class,
             InsurerTaxInvoicePermissionsSeeder::class,
             SendUpdatePermission::class,
+            GenericPermissionSeeder::class,
+            SendUpdateAdditionalSubType::class,
+            PermissionsSeeder::class,
         ]);
     }
 }

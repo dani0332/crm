@@ -58,7 +58,18 @@ const transactionType = computed(() => {
       props.sendUpdateStatusEnum.CI,
       props.sendUpdateStatusEnum.CIR,
       props.sendUpdateStatusEnum.CPD,
-    ].includes(props.sendUpdateLog.category.code)
+    ].includes(props.sendUpdateLog?.category?.code) ||
+    [
+      props.sendUpdateStatusEnum.MPC,
+      props.sendUpdateStatusEnum.CAAFE,
+      props.sendUpdateStatusEnum.DTSI,
+    ].includes(props.sendUpdateLog?.option?.code) ||
+    (props.sendUpdateStatusEnum.EF === props.sendUpdateLog?.category?.code &&
+      [
+        props.sendUpdateStatusEnum.ATCRNB,
+        props.sendUpdateStatusEnum.ATCRNB_RBB,
+        props.sendUpdateStatusEnum.ATCRN_CRNRBB,
+      ].includes(props.sendUpdateLog?.option?.code))
   ) {
     return 'Endorsement';
   } else if (

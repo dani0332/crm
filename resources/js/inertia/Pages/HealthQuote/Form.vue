@@ -194,6 +194,7 @@ function onSubmit(isValid) {
             :rules="[isRequired, isEmail]"
             class="w-full"
             :disabled="isEdit"
+            :error="quoteForm.errors.email"
           />
         </x-field>
 
