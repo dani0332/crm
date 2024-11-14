@@ -136,6 +136,8 @@ const checkSectionToEdit = () => {
   const additionalInvoiceTypes = [
     sendUpdateStatusEnum.ACB,
     sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
   ];
 
   if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
@@ -163,7 +165,9 @@ const checkSectionToEdit = () => {
     additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)
   ) {
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB &&
+      [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
+        props.sendUpdateLog?.option?.code,
+      ) &&
       !props.uploadedDocuments.includes('SUTAXINVRB')
     ) {
       notification.error({
@@ -174,7 +178,9 @@ const checkSectionToEdit = () => {
     }
 
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB &&
+      [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
+        props.sendUpdateLog?.option?.code,
+      ) &&
       !props.uploadedDocuments.includes('SUTAXINV')
     ) {
       notification.error({
@@ -349,9 +355,17 @@ const calculatePriceDetailsForATIB = () => {
 
 const calculateCommission = () => {
   ignoreCheckDiscount.value = false;
-  if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
+  if (
+    [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
+      props.sendUpdateLog?.option?.code,
+    )
+  ) {
     calculateCommisionDetailsForACB();
-  } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
+  } else if (
+    [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
+      props.sendUpdateLog?.option?.code,
+    )
+  ) {
     calculatePriceDetailsForATIB();
   } else {
     if (
@@ -1084,6 +1098,9 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.ED,
     sendUpdateStatusEnum.ATIB,
     sendUpdateStatusEnum.ACB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
+    sendUpdateStatusEnum.ATCRN_CRNRBB,
   ];
 
   return (
@@ -1690,9 +1707,12 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2 pb-1.5"
               >
@@ -1780,7 +1800,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1833,7 +1856,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1867,9 +1893,12 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1896,7 +1925,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1937,9 +1969,12 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1965,7 +2000,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2010,7 +2048,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2036,7 +2077,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2096,7 +2140,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2123,7 +2170,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2189,7 +2239,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2220,7 +2273,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
