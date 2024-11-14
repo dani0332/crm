@@ -131,17 +131,27 @@ class CarQuoteRepository extends BaseRepository
         $quote = $this->where('uuid', $data['quote_uuid'])->first();
 
         //set followup id coming from kyo
-        info('quote id: '.$quote->id);
-        info('followup_pause_count: '.$quote->carQuoteRequestDetail->followup_pause_count);
         $quote->carQuoteRequestDetail->updateOrCreate(
             ['car_quote_request_id' => $quote->id],
             [
                 'followup_id' => $data['followup_id'],
-                'followup_pause_count' => ($quote->carQuoteRequestDetail->followup_pause_count ?? 0) + 1,
             ]
         );
 
-        info('quote: '.$quote->carQuoteRequestDetail);
         return $quote;
+    }
+
+    public function pauseAndResumeFollowUpCounters($data){
+        $quote = $this->where('uuid', $data['quote_uuid'])->first();
+        $field = $data['action'] === 'pause' ? 'followup_pause_count' : 'followup_resume_count';
+
+        $quote->carQuoteRequestDetail->updateOrCreate(
+            ['car_quote_request_id' => $quote->id],
+            [
+                $field => ($quote->carQuoteRequestDetail->$field ?? 0) + 1,
+            ]
+        );
+
+        return response()->json(['success' => true]);
     }
 }
