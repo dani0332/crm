@@ -18,7 +18,11 @@ class CallBackNotificationDataMigrationSeeder extends Seeder
             ->chunk(500, function ($activities) {
                 foreach ($activities as $activity) {
                     $logsCount = ActivityNotificationLogs::where('activity_id', $activity->id)->count();
-                    $activity->update(['reminders_sent' => $logsCount]);
+                    if ($logsCount > 0) {
+                        $activity->update(['reminders_sent' => $logsCount]);
+                    } else {
+                        $activity->update(['reminders_sent' => 1]);
+                    }
                 }
             });
     }
