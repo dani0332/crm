@@ -448,7 +448,8 @@ const loadEmbeddedProducts = async () => {
     jsonData: true,
   };
   lazyEmbeddedProductsLoading.value = true;
-  axios.get(url, data)
+  axios
+    .get(url, data)
     .then(res => {
       lazyEmbeddedProducts.value = res.data;
       lazyEmbeddedProductsLoading.value = false;
