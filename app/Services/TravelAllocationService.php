@@ -29,22 +29,25 @@ class TravelAllocationService extends AllocationService
             return null;
         }
 
-        // Check if the lead is associated with the ALNC provider
-        $payment = $travelQuote->payments()->mainLeadPayment()->first();
-        $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
-        $isALNC = $insurer->code == InsuranceProvidersEnum::ALNC;
+        // Run Alliance Check only when the travel quote is a parent lead
+        if($travelQuote->isParentLead()) {
+            // Check if the lead is associated with the ALNC provider
+            $payment = $travelQuote->payments()->mainLeadPayment()->first();
+            $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
+            $isALNC = $insurer->code == InsuranceProvidersEnum::ALNC;
 
-        // Check if the insurer_api_status_id is in the list of failed statuses
-        $isFailedStatus = in_array($travelQuote->insurer_api_status_id, [
-            PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID,
-            PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
-            PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
-            PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
-        ]);
+            // Check if the insurer_api_status_id is in the list of failed statuses
+            $isFailedStatus = in_array($travelQuote->insurer_api_status_id, [
+                PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID,
+                PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+                PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+                PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+            ]);
 
-        // Skip the lead if it's Alliance Provider, Automation is enabled for Alliance and insurer api status is failed
-        if ($isALNC && ! $isFailedStatus && isAllianceTravelAutomationEnabled()) {
-            return null;
+            // Skip the lead if it's Alliance Provider, Automation is enabled for Alliance and insurer api status is failed
+            if ($isALNC && ! $isFailedStatus && isAllianceTravelAutomationEnabled()) {
+                return null;
+            }
         }
 
         // allocate the lead if it's Alliance Provider, Automation is disabled for Alliance

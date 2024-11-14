@@ -259,4 +259,8 @@ class TravelQuote extends Model implements AuditableContract
         return $this->morphOne(SageProcess::class, 'model');
     }
 
+    public function isParentLead()
+    {
+        return is_null($this->parent_id) || empty($this->parent_id);
+    }
 }
