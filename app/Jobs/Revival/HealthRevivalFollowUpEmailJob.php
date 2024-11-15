@@ -100,7 +100,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             if (empty($response['quote']['plans'])) {
                 info($this->logPrefix.'noPlansReturned - '.$healthQuote->uuid);
 
-                continue;
+                return false;
             }
             $plansArray = [];
             foreach ($response['quote']['plans'] as $plan) {
@@ -233,7 +233,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             if (empty($response['planTypes'])) {
                 info($this->logPrefix.'noPlansReturned - '.$lead->uuid);
 
-                continue;
+                return false;
             }
 
             // after two days
