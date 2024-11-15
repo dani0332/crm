@@ -390,3 +390,20 @@ export const getIp = async () => {
     return null;
   }
 };
+
+export const resolveUserStatusText = statusId => {
+  switch (parseInt(statusId)) {
+    case 1:
+      return 'Online';
+    case 2:
+      return 'Offline';
+    case 3:
+      return 'Unavailable';
+    case 4:
+      return 'Sick';
+    case 5:
+      return 'On leave';
+    default:
+      return 'Unavailable';
+  }
+};
