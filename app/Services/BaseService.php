@@ -327,4 +327,29 @@ class BaseService
             }
         }
     }
+
+    protected function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
+    {
+        if ($advisorAllocationRecord === null || $lead === null) {
+            return;
+        }
+
+        // Determine if the lead was system-assigned or manually assigned
+        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
+
+        // Update allocation counts based on assignment type
+        if ($isSystemAssigned) {
+            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
+        } else {
+            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
+        }
+
+        // Increment the total allocation count and update timestamps
+        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
+        $advisorAllocationRecord->last_allocated = now()->timestamp;
+        $advisorAllocationRecord->updated_at = now();
+
+        // Save the updated allocation record
+        $advisorAllocationRecord->save();
+    }
 }
