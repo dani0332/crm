@@ -407,3 +407,15 @@ export const resolveUserStatusText = statusId => {
       return 'Unavailable';
   }
 };
+
+export const getStatusModal = () =>
+  reactive({
+    show: false,
+    loader: false,
+    data: {
+      id: 0,
+      userId: 0,
+      reason: 1,
+      loader: false,
+    },
+  });

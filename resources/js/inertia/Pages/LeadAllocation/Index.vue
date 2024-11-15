@@ -37,16 +37,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const notification = useToast();
 
-const statusModal = reactive({
-  show: false,
-  loader: false,
-  data: {
-    id: 0,
-    userId: 0,
-    reason: 1,
-    loader: false,
-  },
-});
+const statusModal = getStatusModal();
 
 const loaders = reactive({
   submit: false,
