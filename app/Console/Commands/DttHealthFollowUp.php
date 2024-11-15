@@ -108,7 +108,7 @@ class DttHealthFollowUp extends Command
 
         $jobs = [];
         foreach ($revivalLeads as $item) {
-            $jobs[] = new HealthRevivalFollowUpEmailJob($item->uuid, $item->type);
+            $jobs[] = new HealthRevivalFollowUpEmailJob($item['uuid'], $item['type']);
         }
 
         if ($jobs != null && count($jobs)) {
