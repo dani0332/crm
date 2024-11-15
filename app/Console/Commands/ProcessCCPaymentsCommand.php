@@ -31,18 +31,6 @@ class ProcessCCPaymentsCommand extends Command
      */
     public function handle()
     {
-
-        if (auth()->check() && auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
-            info('User has permission');
-
-            return 1;
-        } else {
-            info('User does not have permission');
-
-            return 0;
-        }
-
-        dd('test');
         info('CC Payments Job Started');
 
         $processCcPaymentsEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::PROCESS_CC_PAYMENTS_ENABLED)->first();
