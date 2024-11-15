@@ -30,7 +30,7 @@ class TravelAllocationService extends AllocationService
         }
 
         // Run Alliance Check only when the travel quote is a parent lead
-        if($travelQuote->isParentLead()) {
+        if ($travelQuote->isParentLead()) {
             // Check if the lead is associated with the ALNC provider
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
