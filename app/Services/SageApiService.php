@@ -153,13 +153,13 @@ class SageApiService
             $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
             $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quoteDetails, $sendUpdateRequest->reversalInvoice);
             if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
-                //                This case if the Reversal Invoice is Endorsement itself
+                // This case if the Reversal Invoice is Endorsement itself
                 $getReverseInvoiceRelation = [
                     'section_type' => $sendUpdateLog->getMorphClass(),
                     'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
                 ];
             } else {
-                //                This case if the Reversal Invoice is Main Lead
+                // This case if the Reversal Invoice is Main Lead
                 $getReverseInvoiceRelation = [
                     'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
                     'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
@@ -171,7 +171,6 @@ class SageApiService
                     SageEnum::SRT_GET_AR_INVOICE,
                     SageEnum::SRT_GET_AP_INVOICE,
                     SageEnum::SCT_REVERSAL,
-                    SageEnum::SCT_CORRECTION,
                 ])->orderBy('step')->get()->toArray();
 
             info('fn:sendUpdateSageLogs - Fetching reversal invoice logs for reverse and correction - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
@@ -194,12 +193,9 @@ class SageApiService
                 info('fn:sendUpdateSageLogs - Reversal invoice logs not found for reverse and correction- QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
             }
 
-            $sageLogsArray = $sendUpdateLog->sageApiLogs?->whereIn('entry_type', [
-                SageEnum::SRT_GET_AR_INVOICE,
-                SageEnum::SRT_GET_AP_INVOICE,
-                SageEnum::SCT_REVERSAL,
-                SageEnum::SCT_CORRECTION,
-            ])->keyBy('step')->toArray();
+            // The Sage logs array for CPD should include GET logs for AR, AP, and Reversal/Correction invoices. Additionally, for discount adjustments, "Straight" should be included.
+            // Reminder:: After including "Straight" for the discount, all entry types will be included in the logs array.
+            $sageLogsArray = $sendUpdateLog->sageApiLogs?->keyBy('step')->toArray();
         }
 
         return [$sageLogsArray, $reversalInvoiceLogs];
@@ -220,7 +216,11 @@ class SageApiService
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
-        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD && ! empty($reversalInvoiceLogs)) {
+        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
+            if (empty($reversalInvoiceLogs)) {
+                return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
+            }
+
             $response = $this->bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog);
         } else {
             $response = $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray);
@@ -259,7 +259,7 @@ class SageApiService
 
         // Create AP Premium Invoice
         $extraDetails['sage_request_type'] = ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AP_PREM_INV : SageEnum::SRT_CREATE_AP_SPPAY_INV;
-        if ($preparedData['sendUpdateLog']?->option?->code !== SendUpdateLogStatusEnum::ACB) {
+        if (! in_array($preparedData['sendUpdateLog']?->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATCRNB_RBB])) {
             $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
             if (! $createAPInvoicePrem['status']) {
                 return $createAPInvoicePrem;
@@ -268,7 +268,12 @@ class SageApiService
 
         // Create AR Discount Invoice
         $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
-        if ($sageRequestPayload->discount > 0 && ! in_array(($preparedData['sendUpdateLog']?->option?->code ?? ''), [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ACB])) {
+        if ($sageRequestPayload->discount > 0 && ! in_array(($preparedData['sendUpdateLog']?->option?->code ?? ''), [
+            SendUpdateLogStatusEnum::ATIB,
+            SendUpdateLogStatusEnum::ACB,
+            SendUpdateLogStatusEnum::ATCRNB,
+            SendUpdateLogStatusEnum::ATCRNB_RBB,
+        ])) {
             $extraDetails['paymentFrequency'] = $preparedData['payment']->frequency;
             $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
             if (! $createARInvoiceDis['status']) {
@@ -296,13 +301,20 @@ class SageApiService
         }
 
         $invoiceTypeForCPD = [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION];
-        $arInvoiceTypes = [
+        $arInvoiceTypesWithDiscount = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_INV,
             SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV,
             SageEnum::SRT_CREATE_AR_DISC_INV,
             SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
+        ];
+
+        $arInvoiceTypes = [
+            SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
+            SageEnum::SRT_CREATE_AR_SPPAY_INV,
+            SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV,
+            SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV,
         ];
 
         $apInvoiceTypes = [
@@ -328,7 +340,7 @@ class SageApiService
         }
 
         foreach ($reverseSageRequestTypes as $reverseSageRequestTypeKey => $reverseSageRequestType) {
-            $invoiceType = in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $arInvoiceTypes) ?
+            $invoiceType = in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $arInvoiceTypesWithDiscount) ?
                 SageEnum::SRT_GET_AR_INVOICE : (in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $apInvoiceTypes) ? SageEnum::SRT_GET_AP_INVOICE : null);
 
             if (is_null($invoiceType)) {
@@ -359,7 +371,7 @@ class SageApiService
                     unset($extraDetails['reversalFrequency']);
                 }
 
-                if (in_array($reverseSageRequestType, [SageEnum::SRT_CREATE_AR_PREM_COMM_INV, SageEnum::SRT_CREATE_AR_SPPAY_INV])) {
+                if (in_array($reverseSageRequestType, $arInvoiceTypes)) {
                     // Create AR Commission and Premium Invoice (Reversal and Correction)
                     $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
                     if (! $createARInvoicePremAndComm['status']) {
@@ -367,7 +379,7 @@ class SageApiService
                     }
                 }
 
-                if (in_array($reverseSageRequestType, [SageEnum::SRT_CREATE_AP_PREM_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV])) {
+                if (in_array($reverseSageRequestType, $apInvoiceTypes)) {
                     // Create AP Premium Invoice (Reversal and Correction)
                     $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
                     if (! $createAPInvoicePrem['status']) {
