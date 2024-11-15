@@ -35,8 +35,8 @@ class SaveBookingDetailsRequest extends FormRequest
             'commission_vat_applicable' => 'required|numeric',
             'invoice_description' => 'required|string',
             'invoice_date' => 'required|date',
-            'insurer_tax_invoice_number' => 'required|string|max:50',
-            'insurer_commission_invoice_number' => 'required|string|max:50',
+            'insurer_tax_invoice_number' => 'required|string|max:50|unique:send_update_logs,insurer_tax_invoice_number,'.request()->id,
+            'insurer_commission_invoice_number' => 'required|string|max:50|unique:send_update_logs,insurer_commission_invoice_number,'.request()->id,
             'discount' => 'nullable|numeric',
             'commission_percentage' => 'required|numeric',
             'commission_vat_not_applicable' => 'required|numeric',
@@ -141,23 +141,11 @@ class SaveBookingDetailsRequest extends FormRequest
                 return $validator->errors()->add('error', 'Update booking already in queued');
             }
 
-            $payment = $this->sendUpdate->payments->first();
-
-            $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')
-                ->whereNot('code', $payment->code)
-                ->where('insurer_tax_number', request()->insurer_tax_invoice_number)
-                ->select('insurer_tax_number')->first();
-
-            if ($isInsurerTaxNumberExists) {
+            if (Payment::where('insurer_tax_number', request()->insurer_tax_invoice_number)->limit(1)->first()) {
                 $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists, Please enter a unique value.');
             }
 
-            $isInsurerComTaxNumberExists = Payment::whereNotNull('insurer_commmission_invoice_number')
-                ->whereNot('code', $payment->code)
-                ->where('insurer_commmission_invoice_number', request()->insurer_commission_invoice_number)
-                ->select('insurer_commmission_invoice_number')->first();
-
-            if ($isInsurerComTaxNumberExists) {
+            if (Payment::where('insurer_commmission_invoice_number', request()->insurer_commission_invoice_number)->limit(1)->first()) {
                 $validator->errors()->add('error', 'Insurer Commission Invoice Number already exists, Please enter a unique value.');
             }
         });
