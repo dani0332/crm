@@ -57,7 +57,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
             if ($insuranceProviderAutomation) {
-                $response = $insuranceProviderAutomation->handle($this->process);
+                $response = $insuranceProviderAutomation->executeSteps($this->process);
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
                 if (! $response['status']) {
                     $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);

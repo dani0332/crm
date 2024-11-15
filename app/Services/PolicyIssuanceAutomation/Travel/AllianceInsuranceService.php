@@ -67,7 +67,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $this->policyIssuance;
     }
 
-    public function handle($process)
+    public function executeSteps($process)
     {
         $response = ['status' => false, 'error' => null, 'message' => null];
 
