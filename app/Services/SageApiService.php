@@ -12,7 +12,6 @@ use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Factories\PolicyIssuanceFactory;
 use App\Factories\SagePayloadFactory;
 use App\Jobs\BookPolicyOnSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
@@ -27,6 +26,7 @@ use App\Models\SageProcess;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
@@ -2048,7 +2048,7 @@ class SageApiService
         if ($policyIssuanceAutomation) {
             $quoteType = $policyIssuanceAutomation->quote_type;
             $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
-            $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->make($quoteType, $insuranceProvider->code);
 
             // Advisor to be used when policy is booked using policy issuance automations
             $user = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();

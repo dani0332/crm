@@ -20,7 +20,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Factories\PolicyIssuanceFactory;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
@@ -35,6 +34,7 @@ use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\CentralTrait;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
@@ -1125,7 +1125,7 @@ class SplitPaymentService
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
         if ($insuranceProvider) {
-            $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->($quoteType, $insuranceProvider->code);
             if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status_id)) {
                 $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
             }
@@ -1137,7 +1137,7 @@ class SplitPaymentService
     {
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
         if ($insuranceProvider) {
-            $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->make($quoteType, $insuranceProvider->code);
             $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID);
         }
     }

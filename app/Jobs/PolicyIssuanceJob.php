@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
-use App\Factories\PolicyIssuanceFactory;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -55,7 +55,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 return;
             }
 
-            $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->make($quoteType, $insuranceProvider->code);
             if ($insuranceProviderAutomation) {
                 $response = $insuranceProviderAutomation->handle($this->process);
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
