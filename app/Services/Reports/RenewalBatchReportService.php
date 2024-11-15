@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
@@ -238,6 +239,7 @@ class RenewalBatchReportService extends BaseService
             ->select('name', 'start_date', 'end_date', 'id');
 
         $batches = $batches->orderBy('id')
+            ->where('quote_type_id', QuoteTypes::CAR->id())
             ->get()
             ->keyBy('name')
             ->map(function ($batch) {
