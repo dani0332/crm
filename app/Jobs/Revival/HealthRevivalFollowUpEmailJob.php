@@ -45,7 +45,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle()
     {
         if ($this->uuid == null || $this->type == null) {
             info('HealthRevivalFollowUpEmailJob - UUID or Type Null. UUID: '.$this->uuid.' - Type: '.$this->type);
