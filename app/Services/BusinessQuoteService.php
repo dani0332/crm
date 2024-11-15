@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
@@ -643,14 +642,7 @@ class BusinessQuoteService extends BaseService
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
 
-            $oldAssignmentType = $lead->assignment_type;
-            $isReassignment = $lead->advisor_id != null ? true : false;
-            $previousAdvisorId = $lead->advisor_id;
-
-            $lead->advisor_id = $userId;
-            $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
+            [$oldAssignmentType, $previousAdvisorId] = $this->adjustAssignmentType($lead, $userId, $quoteBatch);
 
             $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, BusinessQuoteRequestDetail::class, 'business_quote_request_id');
 

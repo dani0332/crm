@@ -436,4 +436,18 @@ class BaseService
 
         return $oldAdvisorAssignedDate;
     }
+
+    public function adjustAssignmentType($lead, $userId, $quoteBatch)
+    {
+        $oldAssignmentType = $lead->assignment_type;
+        $isReassignment = $lead->advisor_id != null ? true : false;
+        $previousAdvisorId = $lead->advisor_id;
+
+        $lead->advisor_id = $userId;
+        $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
+        $lead->quote_batch_id = $quoteBatch->id;
+        $lead->save();
+
+        return [$oldAssignmentType, $previousAdvisorId];
+    }
 }
