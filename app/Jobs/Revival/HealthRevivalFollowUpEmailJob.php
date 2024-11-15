@@ -73,7 +73,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $leadStatusArray = [QuoteStatusEnum::ApplicationPending, QuoteStatusEnum::Stale, QuoteStatusEnum::Lost];
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
 
-        $item = DttRevival::where('uuid', $this->uuid)->first();
+        $item = DttRevival::where('uuid', $this->uuid)->where('is_active', 1)->first();
         $created_at = $item->created_at;
 
         $today = Carbon::today();
