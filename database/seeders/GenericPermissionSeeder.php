@@ -273,6 +273,25 @@ class GenericPermissionSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
+        // Add Search across all LOBs permission
+        $searchAcrossLOBsPermissions = [PermissionsEnum::SEARCH_ALL_LEAD_LOB];
+
+        foreach ($searchAcrossLOBsPermissions as $searchAcrossLOBsPermission) {
+            $permission = Permission::where('name', $searchAcrossLOBsPermission)->first();
+
+            if (! $permission) {
+                Permission::create([
+                    'name' => $searchAcrossLOBsPermission,
+                    'guard_name' => 'web',
+                ]);
+                $role = Role::where('name', RolesEnum::Admin)->first();
+
+                if (! $role->hasPermissionTo($searchAcrossLOBsPermission)) {
+                    $role->givePermissionTo($searchAcrossLOBsPermission);
+                }
+            }
+        }
+
         $this->syncBulkPolicyBookingOnSagePermissionList();
         $this->syncMasterPermissionList();
 
