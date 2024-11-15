@@ -24,7 +24,8 @@ const sicConfigurableForm = useForm({
   is_nationality: props.sicConfigurable?.is_nationality ?? false,
   is_member_category: props.sicConfigurable?.is_member_category ?? false,
   is_age: props.sicConfigurable?.is_age ?? false,
-  is_price_starting_from: props.sicConfigurable?.is_price_starting_from ?? false,
+  is_price_starting_from:
+    props.sicConfigurable?.is_price_starting_from ?? false,
 });
 
 onMounted(() => {
@@ -195,7 +196,10 @@ const ageRangeValid = computed(() => {
           </div>
         </div>
         <div class="col-span-1 sm:col-span-1">
-          <x-checkbox v-model="sicConfigurableForm.is_price_starting_from" label="Price Starting From" />
+          <x-checkbox
+            v-model="sicConfigurableForm.is_price_starting_from"
+            label="Price Starting From"
+          />
           <div
             class="grid sm:grid-cols-1 gap-4"
             v-if="sicConfigurableForm.is_price_starting_from"
