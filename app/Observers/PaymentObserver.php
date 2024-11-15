@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
@@ -26,6 +28,11 @@ class PaymentObserver
         // Only update VAT if total_price has changed
         if ($payment->isDirty('total_price')) {
             $this->updatePriceVat($payment);
+        }
+        // If payment status is changed to PAID, update the payment split to update the updated_at field of the payment split which is called the payment split observer  
+        if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->isDirty('payment_status_id') && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            info("Payment:Observer - Payment status changed to " .PaymentStatusEnum::PAID. " for payment code: ".$payment->code);
+            $payment->paymentSplits()->first()->touch();
         }
     }
 
