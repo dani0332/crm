@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentProcessJobEnum;
-use App\Enums\PermissionsEnum;
 use App\Jobs\ProcessCCPaymentJob;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
