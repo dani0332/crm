@@ -705,18 +705,8 @@ class HomeQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            [$oldAssignmentType, $previousAdvisorId] = $this->adjustAssignmentType($lead, $userId, $quoteBatch);
 
-            $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, HomeQuoteRequestDetail::class, 'home_quote_request_id');
-
-            info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
-
-            $this->upsertManualAllocationCount($lead->advisor_id, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, QuoteTypes::HOME->id());
-
-            $this->addOrUpdateQuoteViewCount($lead, QuoteTypes::HOME->id(), $userId);
-            $lead->auto_assigned = false;
-
-            $lead->save();
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::HOME, HomeQuoteRequestDetail::class, 'home_quote_request_id');
         }
 
         return $result;

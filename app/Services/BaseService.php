@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Models\GenericModel;
 use App\Models\QuoteViewCount;
 use App\Models\User;
@@ -449,5 +450,21 @@ class BaseService
         $lead->save();
 
         return [$oldAssignmentType, $previousAdvisorId];
+    }
+
+    public function handleAssignment($lead, $userId, $quoteBatch, QuoteTypes $quoteType, $detailModel, $foreignKey)
+    {
+        [$oldAssignmentType, $previousAdvisorId] = $this->adjustAssignmentType($lead, $userId, $quoteBatch);
+
+        $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, $detailModel, $foreignKey);
+
+        info("Manual assignment done for lead : {$lead->uuid} and old advisor assigned date is : {$oldAdvisorAssignedDate}");
+
+        $this->upsertManualAllocationCount($lead->advisor_id, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType->id());
+
+        $this->addOrUpdateQuoteViewCount($lead, $quoteType->id(), $userId);
+        $lead->auto_assigned = false;
+
+        $lead->save();
     }
 }

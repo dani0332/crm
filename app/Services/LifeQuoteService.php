@@ -609,18 +609,7 @@ class LifeQuoteService extends BaseService
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
 
-            [$oldAssignmentType, $previousAdvisorId] = $this->adjustAssignmentType($lead, $userId, $quoteBatch);
-
-            $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, LifeQuoteRequestDetail::class, 'life_quote_request_id');
-
-            info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
-
-            $this->upsertManualAllocationCount($lead->advisor_id, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, QuoteTypes::LIFE->id());
-
-            $this->addOrUpdateQuoteViewCount($lead, QuoteTypes::LIFE->id(), $userId);
-            $lead->auto_assigned = false;
-
-            $lead->save();
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::LIFE, LifeQuoteRequestDetail::class, 'life_quote_request_id');
         }
 
         return $result;
