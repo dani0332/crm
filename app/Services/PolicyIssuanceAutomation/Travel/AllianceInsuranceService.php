@@ -208,8 +208,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $payload = [
             'agency_id' => $this->agencyId,
             'agency_code' => $this->agencyCode,
-            'quote_id' => $selectedPlan->insurer_quote_id,
-            'scheme_id' => $selectedPlan->alliance_scheme_id,
+            'quote_id' => $selectedPlan?->insurer_quote_id,
+            'scheme_id' => $selectedPlan?->alliance_scheme_id,
             'title_customer' => $title,
             'first_name_customer' => $quote->first_name,
             'last_name_customer' => $quote->last_name,
