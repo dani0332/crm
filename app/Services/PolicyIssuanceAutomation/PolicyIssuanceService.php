@@ -10,7 +10,7 @@ class PolicyIssuanceService
 {
     public function __construct() {}
 
-    public function make($quoteType, $insurerCode)
+    public function init($quoteType, $insurerCode)
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {

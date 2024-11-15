@@ -2048,7 +2048,7 @@ class SageApiService
         if ($policyIssuanceAutomation) {
             $quoteType = $policyIssuanceAutomation->quote_type;
             $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
-            $insuranceProviderAutomation = (new PolicyIssuanceService)->make($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
             // Advisor to be used when policy is booked using policy issuance automations
             $user = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();
