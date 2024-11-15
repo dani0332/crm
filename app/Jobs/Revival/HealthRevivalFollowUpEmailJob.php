@@ -26,7 +26,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
     use Dispatchable, InteractsWithQueue, Queueable, Stackable;
 
     public $tries = 3;
-    public $timeout = 60;
+    public $timeout = 120;
     public $backoff = 300;
     private $uuid = null;
     private $type = null;
