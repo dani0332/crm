@@ -193,6 +193,9 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                     $this->sendDTTFollowUpEmail($emailData);
                 }
             }
+        } else {
+            info($this->logPrefix.'Disabling DTT Revival Follow Up - UUID: '.$item->uuid);
+            DttRevival::where('uuid', $item->uuid)->update(['is_active' => false]);
         }
     }
 
@@ -280,6 +283,9 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                     $this->sendDTTFollowUpEmail($emailData);
                 }
             }
+        } else {
+            info($this->logPrefix.'Disabling DTT Revival Follow Up - UUID: '.$item->uuid);
+            DttRevival::where('uuid', $item->uuid)->update(['is_active' => false]);
         }
     }
 

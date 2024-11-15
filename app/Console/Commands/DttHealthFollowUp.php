@@ -62,13 +62,13 @@ class DttHealthFollowUp extends Command
             $q->orWhereDate('created_at', '=', $twelveDaysBefore);
             $q->orWhereDate('created_at', '=', $sixteenDaysBefore);
             $q->orWhereDate('created_at', '=', $twentyDaysBefore);
-        })->where('reply_received', 0)->where('quote_type_id', QuoteTypeId::Health)->where('previous_health_plan_type', 1)->get();
+        })->where('reply_received', 0)->where('quote_type_id', QuoteTypeId::Health)->where('previous_health_plan_type', 1)->where('is_active', true)->get();
 
         $unrepliedWithoutPreviousPlantype = DttRevival::select('uuid')->where(function ($q) use ($twoDaysBefore, $fourDaysBefore, $sixDaysBefore) {
             $q->whereDate('created_at', '=', $twoDaysBefore);
             $q->orWhereDate('created_at', '=', $fourDaysBefore);
             $q->orWhereDate('created_at', '=', $sixDaysBefore);
-        })->where('reply_received', 0)->where('quote_type_id', QuoteTypeId::Health)->where('previous_health_plan_type', 0)->get();
+        })->where('reply_received', 0)->where('quote_type_id', QuoteTypeId::Health)->where('previous_health_plan_type', 0)->where('is_active', true)->get();
 
         $revivalLeads = collect();
         // email payload with  previous health plan type
