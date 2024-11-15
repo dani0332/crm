@@ -200,12 +200,13 @@ const ageRangeValid = computed(() => {
             class="grid sm:grid-cols-1 gap-4"
             v-if="sicConfigurableForm.is_price_starting_from"
           >
-            <x-field label="Price Starting From">
+            <x-field label="Price Starting From" required>
               <x-input
                 v-model="sicConfigurableForm.price_starting_from"
                 required
                 placeholder="Price Starting From"
                 class="w-full"
+                :rules="[isRequired]"
                 :error="errors.price_starting_from"
               />
             </x-field>
