@@ -55,7 +55,6 @@ class CRUDService extends BaseService
     protected $lifeQuoteService;
     protected $homeQuoteService;
     protected $businessQuoteService;
-    protected $petQuoteService;
     protected $quoteTypes;
     protected $insuranceproviderService;
     protected $carplancoverageService;

@@ -88,7 +88,6 @@ use App\Services\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
-use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
@@ -118,7 +117,6 @@ class CRUDController extends Controller
     protected $lifeQuoteService;
     protected $homeQuoteService;
     protected $businessQuoteService;
-    protected $petQuoteService;
     protected $userService;
     protected $activityService;
     protected $emailStatusService;
@@ -144,7 +142,6 @@ class CRUDController extends Controller
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
-        PetQuoteService $petQuoteService,
         UserService $userService,
         Request $request,
         ActivitiesService $activityService,
@@ -169,7 +166,6 @@ class CRUDController extends Controller
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
-        $this->petQuoteService = $petQuoteService;
         $this->activityService = $activityService;
         $this->userService = $userService;
         $this->emailStatusService = $emailStatusService;
