@@ -54,7 +54,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     {
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
-        if (isAllianceTravelAutomationEnabled()) {
+        if ($this->isPolicyIssuanceAutomationEnabled()) {
 
             $this->policyIssuance = PolicyIssuanceRepository::schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
 
@@ -77,7 +77,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' started');
 
         try {
-            if (isAllianceTravelAutomationEnabled()) {
+            if ($this->isPolicyIssuanceAutomationEnabled()) {
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id);
 
                 $selectedPlan = $quote->travelQuotePlanDetails()->where('plan_id', $quote->plan_id)->first();
@@ -476,6 +476,11 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return isAllianceTravelAutomationEnabled();
     }
 
+    public function isPolicyIssuanceAutomationRetryEnabledForTimeout()
+    {
+        return isAllianceTravelPolicyIssuanceRetryEnabledForTimeout();
+    }
+
     public function getStepsLockingStatus($quote): array
     {
         $policyIssuance = $quote->policyIssuance;
@@ -578,6 +583,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
+
     private function getMimeTypeAndFileName($documentUrl): array
     {
         $httpHeaders = Http::head($documentUrl);
@@ -620,11 +626,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ]);
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Policy Issuance ID : '.$this->policyIssuance?->id.' Log ID : '.$log->id);
-    }
-
-    private function fetchPolicyDocuments()
-    {
-        return config('constants.ALLIANCE_TRAVEL_AUTOMATION_ENABLED');
     }
 
     private function getTitle($gender)

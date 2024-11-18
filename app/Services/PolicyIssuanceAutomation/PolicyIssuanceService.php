@@ -21,6 +21,15 @@ class PolicyIssuanceService
         };
     }
 
+    public function isPolicyIssuanceAutomationEnabled($quoteType, $insurerCode)
+    {
+        return $this->init($quoteType, $insurerCode)?->isPolicyIssuanceAutomationEnabled();
+    }
+    public function isPolicyIssuanceAutomationRetryEnabledForTimeout($quoteType, $insurerCode)
+    {
+        return $this->init($quoteType, $insurerCode)?->isPolicyIssuanceAutomationRetryEnabledForTimeout();
+    }
+
     public function getPolicyIssuanceStepsStatus($quote, $quoteType): array
     {
         $response = [
