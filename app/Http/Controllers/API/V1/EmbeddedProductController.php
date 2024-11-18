@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
-use App\Repositories\EmbeddedProductRepository;
+use App\Jobs\EP\SendEPJob;
 use Illuminate\Http\Response;
 
 class EmbeddedProductController extends Controller
@@ -15,7 +15,7 @@ class EmbeddedProductController extends Controller
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
-        $message = EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
+        SendEPJob::dispatch($quoteId, $modelType, $epId)->delay(now()->addSeconds(30));
 
         return apiResponse(null, Response::HTTP_OK, '');
     }
