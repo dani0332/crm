@@ -149,6 +149,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                         $fillPolicyDetailsResponse = $this->triggerBookPolicyProcess($quote);
                         if (! $fillPolicyDetailsResponse['status']) {
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID);
                             return $fillPolicyDetailsResponse;
                         }
                         $process->update(['completed_step' => $fillPolicyDetailsResponse['completed_step']]);
