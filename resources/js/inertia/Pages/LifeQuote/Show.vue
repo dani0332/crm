@@ -1,9 +1,8 @@
 <script setup>
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
-import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 const page = usePage();
 defineProps({
@@ -891,6 +890,14 @@ const onAddUpdate = () => {
                   <dd>{{ quote.dob }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>
+                    {{
+                      quote.customer.receive_marketing_updates ? 'Yes' : 'No'
+                    }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
                   <dd>
                     <x-input
@@ -1432,7 +1439,12 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
@@ -1568,6 +1580,7 @@ const onAddUpdate = () => {
       </Collapsible>
     </div>
     <AuditLogs
+      :quoteType="$page.props.modelType"
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"

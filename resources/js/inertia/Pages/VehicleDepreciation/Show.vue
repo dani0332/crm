@@ -117,6 +117,7 @@ const can = permission => useCan(permission);
   </div>
   <AuditLogs
     :type="'App\\Models\\VehicleDepreciation'"
+    :quoteType="'VehicleDepreciation'"
     :id="vehicledepreciation.id"
   />
 </template>

@@ -75,11 +75,11 @@ class EndorsementReportService extends ManagementReport
                 THEN IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_not_applicable )
                 ELSE 0 END as price_vat_not_applicable'),
 
-                DB::raw('IFNULL(ps.discount_value, send_update_logs.discount) as discount'),
+                DB::raw('IF(ps.discount_value IS NULL OR ps.discount_value = 0, send_update_logs.discount, ps.discount_value) as discount'),
 
                 DB::raw('((
                     IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ) ) +
-                    IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 )) as total_price'),
+                    IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IF(ps.discount_value IS NULL OR ps.discount_value = 0, send_update_logs.discount, ps.discount_value) , 0 )) as total_price'),
 
                 DB::raw('CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN send_update_logs.commission_vat_applicable ELSE 0 END as commission_vat_applicable'),
 
@@ -92,7 +92,7 @@ class EndorsementReportService extends ManagementReport
                 'ps.verified_at as payment_date',
                 DB::raw('((
                     IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ) ) +
-                    IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 )) -
+                    IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IF(ps.discount_value IS NULL OR ps.discount_value = 0, send_update_logs.discount, ps.discount_value) , 0 )) -
                     IFNULL( IFNULL(ps.collection_amount, send_update_logs.price_with_vat), 0) as pending_balance'),
                 'pq.collection_type as collects',
                 DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
@@ -162,7 +162,7 @@ class EndorsementReportService extends ManagementReport
                 DB::raw('-1 * (CASE WHEN send_update_logs.price_vat_applicable is null THEN
                 IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))
                 ELSE 0 END) as price_vat_not_applicable'),
-                'p.discount_value as discount',
+                DB::raw('-1 * IFNULL(p.discount_value, 0) as discount'),
                 DB::raw('-1 * ((
                  IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0)) +
                  IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0)) -

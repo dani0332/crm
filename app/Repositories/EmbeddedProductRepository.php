@@ -8,12 +8,15 @@ use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Facades\Marshall;
+use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
@@ -199,7 +202,7 @@ class EmbeddedProductRepository extends BaseRepository
             $optionsIds = $item->prices->pluck('id');
             $item->sync_document_button = false;
 
-            $transaction = EmbeddedTransaction::with('documents')->where([
+            $transaction = EmbeddedTransaction::with('documents', 'product.embeddedProduct')->where([
                 ['quote_type_id', '=', $quoteTypeId],
                 ['quote_request_id',  '=', $quoteRequestId],
                 ['is_selected',  '=', true],
@@ -219,9 +222,26 @@ class EmbeddedProductRepository extends BaseRepository
 
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
             $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+            $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
         });
 
         return $ep;
+    }
+
+    private function canCancelPayment($transaction, $quoteTypeId)
+    {
+        if ($transaction && in_array($transaction->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])) {
+
+            if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
+                return CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->count() == 0;
+            }
+
+            $paymentDate = Carbon::parse($transaction->payment_status_date);
+
+            return $paymentDate->diffInDays(Carbon::now()) <= 3;
+        }
+
+        return false;
     }
 
     private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
@@ -619,7 +639,7 @@ class EmbeddedProductRepository extends BaseRepository
         $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
         $type = QuoteType::where('code', $data['modelType'])->first();
 
-        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $data['quote_id'])
+        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest'])->where('quote_request_id', $data['quote_id'])
             ->where('quote_type_id', $type->id)
             ->where('is_selected', true)
             ->whereIn('product_id', $embeddedProductOptionsIds)
@@ -628,7 +648,6 @@ class EmbeddedProductRepository extends BaseRepository
         if ($embededTransaction->isNotEmpty()) {
             if (! empty($embededTransaction[0]['payments'][0])) {
                 $transaction = $embededTransaction[0];
-
                 $payment = $transaction['payments'][0];
                 $paymentStatus = $payment['payment_status_id'];
 
@@ -670,6 +689,13 @@ class EmbeddedProductRepository extends BaseRepository
 
                     ];
                     $processResponse = $this->processCancelPayment($data);
+
+                    if (
+                        $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+                        && $type->code == quoteTypeCode::Car
+                    ) {
+                        CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
+                    }
 
                     return [
                         'data' => $processResponse,

@@ -240,6 +240,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('reports/{ep}', [EmbeddedProductController::class, 'reportTransactions'])->name('embedded-products.reports.certificates');
         Route::get('reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
         Route::resource('products', EmbeddedProductController::class, ['names' => 'embedded-products']);
+        Route::get('get-by-quote', [EmbeddedProductController::class, 'getByQuote'])->name('embedded-products.get-by-quote');
     });
 
     Route::resource('legacy-policy', LegacyPolicyController::class);
@@ -283,7 +284,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/delete-split-payment', [CentralController::class, 'deleteSplitPayment'])->name('payment-edit')->middleware('check_route_access');
 
     Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
-    // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
 
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
@@ -300,7 +300,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::patch('activities/v2/{id}/update-status', [ActivityController::class, 'updateStatus']);
     Route::delete('activities/v2/{id}/', [ActivityController::class, 'destroy']);
 
-    //Route::get('activities', [ActivitesController::class, 'index'])->name('activities.index');
     Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
     Route::get('activities/create', [ActivityController::class, 'create'])->name('activities.create');
 
@@ -674,4 +673,12 @@ Route::get('/add-batch-number', function () {
     $addBtchNuimber = new AddBatchForNonMotors;
     $addBtchNuimber->handle();
     echo 'Done';
+});
+
+Route::get('run-insly-email-fix', function () {
+
+    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+        Artisan::queue('InslyEmailFix:cron');
+    }
+
 });

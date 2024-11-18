@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
 
@@ -104,14 +105,15 @@ class UpdatePolicyDetailRequest extends FormRequest
             $quote_policy_number = trim(request()->quote_policy_number);
 
             // Check if a policy with the same number and expiry date already exists, excluding the current quote
+            $formattedExpiryDate = Carbon::parse(request()->quote_policy_expiry_date)->format(config('constants.DATE_FORMAT_ONLY'));
             $isExists = $model::where('policy_number', $quote_policy_number)
-                ->where('policy_expiry_date', request()->quote_policy_expiry_date)
+                ->where('policy_expiry_date', $formattedExpiryDate)
                 ->where('code', '!=', $quoteModel->code)
-                ->whereNotIn('id', function ($query) use ($model, $quote_policy_number) {
+                ->whereNotIn('id', function ($query) use ($model, $quote_policy_number, $formattedExpiryDate) {
                     $query->select('id')
                         ->from((new $model)->getTable())
                         ->where('policy_number', $quote_policy_number)
-                        ->where('policy_expiry_date', request()->quote_policy_expiry_date)
+                        ->where('policy_expiry_date', $formattedExpiryDate)
                         ->whereNotNull('parent_duplicate_quote_id');
                 });
 
@@ -129,6 +131,7 @@ class UpdatePolicyDetailRequest extends FormRequest
                 }
             }
 
+            $isExists->select('id')->limit(1);
             if ($isExists->exists()) {
                 // Add an error to the validator if a matching policy is found
                 $validator->errors()->add('quote_policy_number', 'Policy number already exists for this line of business with the same expiry date.');

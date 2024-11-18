@@ -31,6 +31,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  isEpLoading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const propsDataReactive = ref(props.data);
@@ -235,27 +239,6 @@ const getBlog = file => useObjectUrl(file);
 const ppDoc = str => {
   const doc = JSON.parse(str);
   return doc[0]?.path !== '' ? usePage().props.cdnPath + doc[0]?.path : '';
-};
-const checkTransactionExist = item => {
-  for (let price of item.prices) {
-    for (let transaction of price.transactions) {
-      const paymentStatusDate = transaction.payment_status_date;
-      if (paymentStatusDate) {
-        var timeStart = new Date(paymentStatusDate);
-        var timeEnd = new Date();
-        var timeDifferenceInMiliseconds =
-          timeEnd.getTime() - timeStart.getTime();
-        if (
-          (transaction.payment_status_id == 6 ||
-            transaction.payment_status_id == 4) &&
-          timeDifferenceInMiliseconds <= 259200000
-        ) {
-          return false;
-        }
-      }
-    }
-  }
-  return true;
 };
 
 const { copy, copied } = useClipboard();
@@ -482,6 +465,7 @@ const onAddDocumentSubmit = event => {
           border-cell
           hide-rows-per-page
           hide-footer
+          :loading="isEpLoading"
         >
           <template #item-code="{ short_code }">
             {{ short_code + '-' + props.code }}
@@ -568,7 +552,7 @@ const onAddDocumentSubmit = event => {
                 v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
                 size="xs"
                 color="#ff5e00"
-                :disabled="checkTransactionExist(item)"
+                :disabled="!item.can_cancel_payment"
                 @click.prevent="cancelPaymentForm(item)"
               >
                 Cancel Payments
