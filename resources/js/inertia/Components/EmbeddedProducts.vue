@@ -31,6 +31,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  isEpLoading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const propsDataReactive = ref(props.data);
@@ -461,6 +465,7 @@ const onAddDocumentSubmit = event => {
           border-cell
           hide-rows-per-page
           hide-footer
+          :loading="isEpLoading"
         >
           <template #item-code="{ short_code }">
             {{ short_code + '-' + props.code }}

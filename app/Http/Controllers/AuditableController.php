@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CarQuote;
 use App\Models\InsurerRequestResponse;
-use App\Models\PersonalQuote;
 use App\Models\SageApiLog;
+use App\Models\TravelInsurerRequestResponses;
+use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
@@ -76,14 +76,16 @@ class AuditableController extends Controller
     {
         $auditableType = $request->get('auditableType');
 
-        $uuid = $request->auditableType::where('id', $request->auditableId)->value('uuid');
+        $quoteUuid = $request->auditableType::where('id', $request->auditableId)->value('uuid');
 
-        $quoteUuid = (strpos($auditableType, 'PersonalQuote') !== false) ? PersonalQuote::where('uuid', $uuid)->value('uuid') : CarQuote::where('id', $request->auditableId)->value('uuid');
-
-        $query = InsurerRequestResponse::with('insuranceProvider')
-            ->select('*')
-            ->where('insurer_request_response.quote_uuid', $quoteUuid)
-            ->orderByDesc('insurer_request_response.created_at');
+        if ($auditableType == TravelQuote::class) {
+            $query = TravelInsurerRequestResponses::with('insuranceProvider');
+            $query->whereNotIn('call_type', ['oAuth', 'login']);
+        } else {
+            $query = InsurerRequestResponse::with('insuranceProvider');
+        }
+        $query->select('*')->where('quote_uuid', $quoteUuid)
+            ->orderByDesc('created_at');
 
         if ($request->insurance_provider) {
             $query->where('insurer_request_response.provider_id', $request->insurance_provider);
