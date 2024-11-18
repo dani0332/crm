@@ -154,4 +154,12 @@ class SaveBookingDetailsRequest extends FormRequest
             }
         });
     }
+
+    public function messages()
+    {
+        return [
+            'insurer_tax_invoice_number.unique' => 'Insurer Tax Invoice Number already exists, Please enter a unique value.',
+            'insurer_commission_invoice_number.unique' => 'The insurer commission invoice number has already been taken.',
+        ];
+    }
 }
