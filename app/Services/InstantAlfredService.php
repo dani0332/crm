@@ -261,7 +261,7 @@ class InstantAlfredService extends BaseService
 
         $modelType = $request->quoteType ?? 'Car';
         $nameSpace = 'App\\Models\\';
-        $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+        $modelType = (checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
         $aliases = $this->buildQueryByModel($modelType);
 
