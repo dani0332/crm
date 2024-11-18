@@ -9,6 +9,7 @@ use App\Models\Tier;
 use App\Services\CarAllocationService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
+use App\Services\SendEmailCustomerService;
 
 class CarAllocation implements Allocation
 {
@@ -106,6 +107,7 @@ class CarAllocation implements Allocation
 
         if ($advisorId && $advisorId != 0) {
             $this->assignLead($lead, $advisorId, $tier);
+            app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($lead,$advisorId);
 
             return AllocationFactory::createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
         } else {

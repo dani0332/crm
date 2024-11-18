@@ -1484,4 +1484,27 @@ class SendEmailCustomerService extends BaseService
 
         return $responseCode;
     }
+
+    public function sendWhatsappNotificationToCustomer($quote, $advisorId = null){
+
+        $user = User::where('id',$advisorId)->first();
+        $payload = [
+            'customerEmail' => $quote->email,
+            'customerName' => $quote->first_name.' '.$quote->last_name,
+            'advisor' => $user ?? null,
+            'quoteUID' => $quote->code,
+            'refID' => $quote->uuid,
+            'workflowType' => workflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
+        ];
+
+        $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
+        if(!empty($customerWANotificationWorkflow->value)){
+            app(BirdService::class)->triggerWebHookRequest($customerWANotificationWorkflow->value, (object) $payload);
+            info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$customerWANotificationWorkflow->value.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+        }
+        else
+        {
+            info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:' . $quote->uuid . ' | Time:' . now());
+        }
+    }
 }
