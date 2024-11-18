@@ -37,7 +37,7 @@ class PolicyIssuanceService
         ];
         $payment = $quote->payments()->mainLeadPayment()->first();
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
-        $insuranceProviderAutomation = $this->make($quoteType, $insuranceProvider?->code);
+        $insuranceProviderAutomation = $this->init($quoteType, $insuranceProvider?->code);
         if (! $insuranceProviderAutomation || ! $insuranceProviderAutomation?->isPolicyIssuanceAutomationEnabled()) {
             $response['isPolicyAutomationEnabled'] = false;
 
