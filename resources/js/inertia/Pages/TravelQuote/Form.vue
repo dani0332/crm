@@ -371,11 +371,6 @@ watch(mappedDestinationIds, newVal => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-alert class="mb-4" v-for="error in errors" :key="error">
-      <h4 class="text-red-500">
-        <b>{{ error }}</b>
-      </h4>
-    </x-alert>
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
         <x-field label="Where will your journey take you?" required>
@@ -384,6 +379,7 @@ watch(mappedDestinationIds, newVal => {
             :options="subTeamOptions"
             class="w-full"
             :rules="[isRequired]"
+            :error="quoteForm.errors.direction_code"
           />
         </x-field>
         <x-field
@@ -396,6 +392,7 @@ watch(mappedDestinationIds, newVal => {
             :options="alreadylived"
             class="w-full"
             :rules="[isRequired]"
+            :error="quoteForm.errors.has_arrived_uae"
           />
         </x-field>
         <x-field v-else :label="'Has your trip started?'" required>
@@ -404,6 +401,7 @@ watch(mappedDestinationIds, newVal => {
             :options="alreadylived"
             class="w-full"
             :rules="[isRequired]"
+            :error="quoteForm.errors.has_arrived_destination"
           />
         </x-field>
       </div>
@@ -418,6 +416,7 @@ watch(mappedDestinationIds, newVal => {
             "
             class="w-full"
             :rules="[isRequired]"
+            :error="quoteForm.errors.coverage_code"
           />
         </x-field>
         <x-field
@@ -458,6 +457,7 @@ watch(mappedDestinationIds, newVal => {
             :disabled="true"
             :rules="[isRequired]"
             class="w-full"
+            :error="quoteForm.errors.region_cover_for_id"
           />
         </x-field>
         <x-field v-if="isArrivedUAE()" label="Travel Start Date" required>
@@ -552,6 +552,7 @@ watch(mappedDestinationIds, newVal => {
             class="w-full"
             :disabled="editMode"
             :rules="[isEmail]"
+            :error="quoteForm.errors.email"
           />
         </x-field>
         <x-field label="Mobile number" required>
@@ -613,6 +614,7 @@ watch(mappedDestinationIds, newVal => {
               name="created_at_start"
               format="dd-MM-yyyy"
               :rules="[rules.isRequired]"
+              :error="quoteForm.errors.dob"
             />
           </x-field>
           <x-field label="Gender" required>
