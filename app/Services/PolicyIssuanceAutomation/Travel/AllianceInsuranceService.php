@@ -199,7 +199,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
             $titleTraveller[] = $this->getTitle($member->gender);
             $firstNameTraveller[] = $member->first_name;
-            $lastNameTraveller[] = $member->last_name;
+            $lastNameTraveller[] = $member->last_name ?? ' ';
             $dobTraveller[] = $member->dob ? Carbon::parse($member->dob)->format('Y-m-d') : null;
             $passportTraveller[] = $member->passport;
             $nationalityTraveller[] = $member->nationality->alliance_nationality_id;
