@@ -104,7 +104,7 @@ class DttHealthFollowUp extends Command
 
         }
 
-        info($logPrefix.' count - '.$revivalLeads->count().' - leads - '.$revivalLeads->pluck('uuid')->toJson());
+        info($logPrefix.'count - '.$revivalLeads->count().' - leads - '.$revivalLeads->pluck('uuid')->toJson());
 
         $jobs = [];
         foreach ($revivalLeads as $item) {
