@@ -148,6 +148,10 @@ class SaveBookingDetailsRequest extends FormRequest
             if (Payment::where('insurer_commmission_invoice_number', request()->insurer_commission_invoice_number)->limit(1)->first()) {
                 $validator->errors()->add('error', 'Insurer Commission Invoice Number already exists, Please enter a unique value.');
             }
+
+            if (request()->insurer_tax_invoice_number == request()->insurer_commission_invoice_number) {
+                $validator->errors()->add('error', 'Insurer Tax Invoice Number and Insurer Commission Invoice Number should not be the same.');
+            }
         });
     }
 }
