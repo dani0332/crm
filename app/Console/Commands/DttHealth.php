@@ -44,8 +44,7 @@ class DttHealth extends Command
 
         $dateOne = Carbon::now()->subMonths(11)->toDateString();
         $dateTwo = Carbon::now()->subMonths(11)->addDay(1)->toDateString();
-        $logPrefix = 'HealthRevivalLeadsCreationJob-';
-
+        $logPrefix = 'DTTHealth - RevivalLeadsCreationJob -';
         $excludeSources = [
             LeadSourceEnum::REVIVAL,
         ];
