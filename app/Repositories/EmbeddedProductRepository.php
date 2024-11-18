@@ -16,6 +16,7 @@ use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
@@ -38,7 +39,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
-use App\Models\CustomerAddress;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -233,10 +233,11 @@ class EmbeddedProductRepository extends BaseRepository
         if ($transaction && in_array($transaction->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED])) {
 
             if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
-                return (CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->count() == 0);
+                return CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->count() == 0;
             }
 
             $paymentDate = Carbon::parse($transaction->payment_status_date);
+
             return $paymentDate->diffInDays(Carbon::now()) <= 3;
         }
 
