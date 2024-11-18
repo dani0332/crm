@@ -30,7 +30,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
     public $backoff = 300;
     private $uuid = null;
     private $type = null;
-    private $logPrefix = 'DTTHealth - RevivalFollowUpEmailJob - ';
+    private $logPrefix = 'DTTHealth - HealthRevivalFollowUpEmailJob - ';
 
     /**
      * Create a new job instance.
