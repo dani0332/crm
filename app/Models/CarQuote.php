@@ -11,7 +11,6 @@ use Auth;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use LookUpModel;
 use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel

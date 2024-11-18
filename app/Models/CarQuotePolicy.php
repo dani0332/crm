@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Arr;
 use LookUpModel;
 
 class CarQuotePolicy extends BaseModel
