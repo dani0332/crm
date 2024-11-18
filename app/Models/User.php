@@ -223,17 +223,6 @@ class User extends Authenticatable implements AuditableContract
         return Team::whereIn('id', $userTeamIds)->get()->pluck('name');
     }
 
-    public function processGetDSL($filters = [])
-    {
-        if (Auth::user()->hasAnyRole([RolesEnum::ProductionApprovalManager, RolesEnum::Advisor, RolesEnum::Admin])) {
-            return $this->getUserRoles();
-        }
-
-        return self::with(['usersroles' => function ($query) {
-            $query->where('name', 'admin');
-        }])->get();
-    }
-
     public function hasMyLeadAccess()
     {
         return Auth::user()->hasAnyRole([
