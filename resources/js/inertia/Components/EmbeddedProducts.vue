@@ -509,12 +509,18 @@ const onAddDocumentSubmit = event => {
           </template>
 
           <template #item-updated_at="{ prices }">
-            <span v-if="getFirstPriceWithTransaction(prices)?.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED">
-              {{ getFirstPriceWithTransaction(prices)?.transactions[0]?.payments[0]?.captured_at }}
+            <span
+              v-if="
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payment_status_id == paymentStatusEnum.CAPTURED
+              "
+            >
+              {{
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payments[0]?.captured_at
+              }}
             </span>
-            <span v-else>
-              -
-            </span>
+            <span v-else> - </span>
           </template>
 
           <template #item-actions="item">
