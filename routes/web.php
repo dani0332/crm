@@ -2,12 +2,10 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
-use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BusinessQuoteController;
@@ -171,17 +169,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
         Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
-        
+
         Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
-        
+
         Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
         Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
-        
+
         Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
         Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
-        
+
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
-        
 
         Route::group(['prefix' => 'quotes/'], function () {
             Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
@@ -426,10 +423,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
-        
+
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
         Route::resource('business', BusinessQuoteController::class);
-        
+
         Route::resource('travel', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');

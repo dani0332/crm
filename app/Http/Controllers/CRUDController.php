@@ -1824,7 +1824,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->status) {
             // $results = getDataAgainstEveryStatus($request->modelType, $request);
             $results = getDataAgainstStatus($request->modelType, $request->status, $request);
-            
+
             if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht])) {
                 return $results;
             }
