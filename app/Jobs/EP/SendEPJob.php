@@ -22,15 +22,17 @@ class SendEPJob implements ShouldQueue
     private $quoteId = null;
     private $modelType = null;
     private $epId = null;
+    private $isResend = null;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteId, $modelType, $epId)
+    public function __construct($quoteId, $modelType, $epId, $isResend = false)
     {
         $this->quoteId = $quoteId;
         $this->modelType = $modelType;
         $this->epId = $epId;
+        $this->isResend = $isResend;
     }
 
     /**
@@ -40,12 +42,12 @@ class SendEPJob implements ShouldQueue
     {
         try {
 
-            info("Sent EP - {$this->quoteId} - {$this->modelType} - {$this->epId} ---- ");
-            EmbeddedProductRepository::sendDocumentsByLead($this->quoteId, $this->modelType, $this->epId);
-            info("Sent EP completed- {$this->quoteId} - {$this->modelType} - {$this->epId} ---- ");
+            info("Sent EP - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
+            EmbeddedProductRepository::sendDocumentsByLead($this->quoteId, $this->modelType, $this->epId, $this->isResend);
+            info("Sent EP completed- {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
 
         } catch (Exception $e) {
-            Log::error("Resent EP - {$this->quoteId} - {$this->modelType} - {$this->epId} - ERROR - " . $e->getMessage());
+            Log::error("Resent EP - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} - ERROR - " . $e->getMessage());
         }
     }
 }
