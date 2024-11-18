@@ -411,7 +411,7 @@ class SendUpdateLogRepository extends BaseRepository
             });
         }
 
-        return $response;
+        return $response->values();
     }
 
     /*
