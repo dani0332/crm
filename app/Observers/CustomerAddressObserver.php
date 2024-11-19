@@ -39,7 +39,7 @@ class CustomerAddressObserver
                             'city' => $customerAddress->city,
                             'landmark' => $customerAddress->landmark,
                         ];
-                        info('Sending address notification to customer for lead : ' . $carQuote->uuid);
+                        info('Sending address notification to customer for lead : '.$carQuote->uuid);
                         app(CarQuoteService::class)->triggerBirdFlow($carQuote, $formattedAddress, 'ADDRESS_UPDATED');
                     }
                 }
