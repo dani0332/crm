@@ -123,7 +123,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -995,6 +995,10 @@ watch(() => {
 
       <template #item-premium="item">
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p v-if="item.renewal_batch_text != null">{{ item.renewal_batch_text }}</p>
+        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 
