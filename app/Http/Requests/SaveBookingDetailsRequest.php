@@ -35,8 +35,8 @@ class SaveBookingDetailsRequest extends FormRequest
             'commission_vat_applicable' => 'required|numeric',
             'invoice_description' => 'required|string',
             'invoice_date' => 'required|date',
-            'insurer_tax_invoice_number' => 'required|string|max:50|unique:send_update_logs,insurer_tax_invoice_number,'.request()->id,
-            'insurer_commission_invoice_number' => 'required|string|max:50|unique:send_update_logs,insurer_commission_invoice_number,'.request()->id,
+            'insurer_tax_invoice_number' => 'required|string|max:50',
+            'insurer_commission_invoice_number' => 'required|string|max:50',
             'discount' => 'nullable|numeric',
             'commission_percentage' => 'required|numeric',
             'commission_vat_not_applicable' => 'required|numeric',
@@ -141,8 +141,16 @@ class SaveBookingDetailsRequest extends FormRequest
                 return $validator->errors()->add('error', 'Update booking already in queued');
             }
 
-            $taxInvoiceValidation = Payment::where('insurer_tax_number', request()->insurer_tax_invoice_number)
-                ->orWhere('insurer_commmission_invoice_number', request()->insurer_tax_invoice_number)
+            $insurerTaxInvoiceNumber = request()->insurer_tax_invoice_number;
+
+            $taxInvoiceValidation = Payment::where('insurer_tax_number', $insurerTaxInvoiceNumber)
+                ->orWhere('insurer_commmission_invoice_number', $insurerTaxInvoiceNumber)
+                ->limit(1)
+                ->first() || SendUpdateLog::whereNot('uuid', $this->sendUpdate->uuid)
+                ->where(function ($query) use ($insurerTaxInvoiceNumber) {
+                    $query->where('insurer_tax_invoice_number', $insurerTaxInvoiceNumber)
+                        ->orWhere('insurer_commission_invoice_number', $insurerTaxInvoiceNumber);
+                })
                 ->limit(1)
                 ->first();
 
@@ -150,8 +158,16 @@ class SaveBookingDetailsRequest extends FormRequest
                 $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists, Please enter a unique value.');
             }
 
-            $commissionInvoiceValidation = Payment::where('insurer_commmission_invoice_number', request()->insurer_commission_invoice_number)
-                ->orWhere('insurer_tax_number', request()->insurer_commission_invoice_number)
+            $insurerCommissionInvoiceNumber = request()->insurer_commission_invoice_number;
+
+            $commissionInvoiceValidation = Payment::where('insurer_commmission_invoice_number', $insurerCommissionInvoiceNumber)
+                ->orWhere('insurer_tax_number', $insurerCommissionInvoiceNumber)
+                ->limit(1)
+                ->first() || SendUpdateLog::whereNot('uuid', $this->sendUpdate->uuid)
+                ->where(function ($query) use ($insurerCommissionInvoiceNumber) {
+                    $query->where('insurer_commission_invoice_number', $insurerCommissionInvoiceNumber)
+                        ->orWhere('insurer_tax_invoice_number', $insurerCommissionInvoiceNumber);
+                })
                 ->limit(1)
                 ->first();
 
@@ -159,27 +175,20 @@ class SaveBookingDetailsRequest extends FormRequest
                 $validator->errors()->add('error', 'Insurer Commission Invoice Number already exists, Please enter a unique value.');
             }
 
-            if (request()->insurer_tax_invoice_number == request()->insurer_commission_invoice_number) {
+            if ($insurerTaxInvoiceNumber == $insurerCommissionInvoiceNumber) {
+                info('here');
                 $validator->errors()->add('error', 'Insurer Tax Invoice Number and Insurer Commission Invoice Number should not be the same.');
             }
 
             if ($this->sendUpdate->category?->code == SendUpdateLogStatusEnum::CPD) {
                 $payment = Payment::where('insurer_tax_number', request()->reversal_invoice)->first();
                 if (
-                    (($payment->insurer_tax_number.'-REV') == request()->insurer_tax_invoice_number) ||
-                    (($payment->insurer_commmission_invoice_number.'-REV') == request()->insurer_commission_invoice_number)
+                    (($payment->insurer_tax_number.'-REV') == $insurerTaxInvoiceNumber) ||
+                    (($payment->insurer_commmission_invoice_number.'-REV') == $insurerCommissionInvoiceNumber)
                 ) {
                     $validator->errors()->add('error', 'Reversal Document Number should not be the same as the New Document Number.');
                 }
             }
         });
-    }
-
-    public function messages()
-    {
-        return [
-            'insurer_tax_invoice_number.unique' => 'Insurer Tax Invoice Number already exists, Please enter a unique value.',
-            'insurer_commission_invoice_number.unique' => 'The insurer commission invoice number has already been taken.',
-        ];
     }
 }
