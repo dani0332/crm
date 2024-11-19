@@ -1638,7 +1638,7 @@ class RenewalsUploadService
                     }
                 }
 
-                switch ($lead->quote_type) {
+                switch (strtoupper($lead->quote_type)) {
                     case QuoteTypeShortCode::CAR:
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
                             if ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
