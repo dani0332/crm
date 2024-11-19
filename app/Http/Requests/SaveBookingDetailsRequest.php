@@ -152,6 +152,16 @@ class SaveBookingDetailsRequest extends FormRequest
             if (request()->insurer_tax_invoice_number == request()->insurer_commission_invoice_number) {
                 $validator->errors()->add('error', 'Insurer Tax Invoice Number and Insurer Commission Invoice Number should not be the same.');
             }
+
+            if ($this->sendUpdate->category?->code == SendUpdateLogStatusEnum::CPD) {
+                $payment = Payment::where('insurer_tax_number', request()->reversal_invoice)->first();
+                if (
+                    (($payment->insurer_tax_number.'-REV') == request()->insurer_tax_invoice_number) ||
+                    (($payment->insurer_commmission_invoice_number.'-REV') == request()->insurer_commission_invoice_number)
+                ) {
+                    $validator->errors()->add('error', 'Reversal Document Number should not be the same as the New Document Number.');
+                }
+            }
         });
     }
 
