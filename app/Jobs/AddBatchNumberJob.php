@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Console\Commands\Common\Batchable;
 use App\Models\QuoteBatches;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,7 +12,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class AddBatchNumberJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 1;
     public $timeout = 30;
@@ -33,15 +33,17 @@ class AddBatchNumberJob implements ShouldQueue
     public function handle()
     {
         try {
-            $type = 'motor';
-            $this->logTodayDate($type);
+            info('today date for batch job is : '.json_encode(now()->toDateString()));
             $lastBatch = QuoteBatches::orderBy('id', 'desc')->first();
             info('last batch : '.json_encode($lastBatch));
-
             if ($lastBatch == null) {
-                $this->processBatchesFromScratch('2018-08-06', $type);
-            } elseif (! $this->isBatchCurrent($lastBatch)) {
-                $this->processBatchesFromLastEndDate($lastBatch, $type);
+                info('inside creating batches from scratch');
+                $batches = $this->generateBatchNumbers(Carbon::parse('2018-08-06'));
+                $this->createBatches($batches);
+            } elseif (! (now()->startOfDay() >= Carbon::parse($lastBatch->start_date)->startOfDay() && now()->endOfDay() <= Carbon::parse($lastBatch->end_date)->endOfDay())) {
+                info('inside creating batch of current week');
+                $batches = $this->generateBatchNumbers(Carbon::parse($lastBatch->end_date)->addDays(1));
+                $this->createBatches($batches);
             } else {
                 info('batches are update to date');
 
@@ -53,7 +55,17 @@ class AddBatchNumberJob implements ShouldQueue
         }
     }
 
-    protected function insertQuoteBatch($batch)
+    private function createBatches($batches)
+    {
+        if (count($batches) > 0) {
+                    foreach ($batches as $batch) {
+                        $this->insertQuoteBatch($batch);
+                    }
+                    info('batches created');
+                }
+    }
+
+    private function insertQuoteBatch($batch)
     {
         QuoteBatches::insert([
             'name' => explode('|', $batch)[1],
@@ -64,7 +76,7 @@ class AddBatchNumberJob implements ShouldQueue
         ]);
     }
 
-    protected function generateBatchNumbers($startDate)
+    private function generateBatchNumbers($startDate)
     {
         $batchArray = [];
         $count = QuoteBatches::all()->count() + 1;
