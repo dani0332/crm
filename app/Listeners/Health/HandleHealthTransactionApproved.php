@@ -69,9 +69,10 @@ class HandleHealthTransactionApproved
     {
         $date = today()->toDateString();
 
-        // Find the renewal batch for the current date
+        // Find the motor renewal batch for the current date
         $renewalBatch = RenewalBatch::whereDate('start_date', '<=', $date)
             ->whereDate('end_date', '>=', $date)
+            ->where('quote_type_id', 1)
             ->first();
 
         if ($renewalBatch) {
