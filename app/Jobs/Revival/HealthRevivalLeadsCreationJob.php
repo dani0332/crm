@@ -179,7 +179,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
                 if ($response == 201) {
-                    info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'- emailSent -- '.$emailData->customerEmail);
+                    info($logPrefix.'ParentLead - '.$this->lead->uuid.' - childLead - '.$capiResponse->quoteUID.' - emailSent - '.$emailData->customerEmail);
 
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
@@ -197,13 +197,13 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     // update parent lead
                     HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
                 } else {
-                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'emailIsNotSent - '.$emailData->customerEmail);
+                    info($logPrefix.'ParentLead - '.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'emailIsNotSent - '.$emailData->customerEmail);
                 }
             } else {
-                info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- capiResponseError - '.json_encode($capiResponse));
+                info($logPrefix.'healthRevivalParentLead - '.$this->lead->uuid.' - capiResponseError - '.json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
-            Log::error($logPrefix.'health revival Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
+            Log::error($logPrefix.'health revival Exception - '.$this->lead->uuidd.' - Exception:'.$exception->getMessage());
         }
     }
 
@@ -214,6 +214,6 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
     public function failed(Throwable $exception)
     {
-        Log::error('CarRevivalLeadsCreationJob - Failed - '.$this->lead->id.' Error: '.$exception->getMessage());
+        Log::error('DTTHealth - HealthRevivalLeadsCreationJob - Failed - '.$this->lead->uuid.' Error: '.$exception->getMessage());
     }
 }
