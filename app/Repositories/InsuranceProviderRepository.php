@@ -88,7 +88,7 @@ class InsuranceProviderRepository extends BaseRepository
 
     public function fetchGetInslyProviderId($insurerName)
     {
-        return InslyInsuranceProvider::select('insurance_provider')
+        return InslyInsuranceProvider::select('insurance_provider_id')
             ->where('insly_insurer_name', '=', $insurerName)
             ->first();
     }
