@@ -856,6 +856,7 @@ const options = reactive({
   network: [],
   loading: false,
 });
+
 watch(
   () => planFilters?.insurer,
   value => {
@@ -886,12 +887,8 @@ watch(
 
 const listQuotePlansFiltered = ref([]);
 
-watchEffect(() => {
-  listQuotePlansFiltered.value = plansTable.data
-    .slice()
-    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
-
-  listQuotePlansFiltered.value = listQuotePlansFiltered.value.sort((a, b) => {
+const sortPlans = incommingPlans => {
+  incommingPlans = incommingPlans.sort((a, b) => {
     // Convert undefined or falsy `actualPremium` values to 0 for comparison, if needed
     const premiumA = a.actualPremium || 0;
     const premiumB = b.actualPremium || 0;
@@ -899,19 +896,52 @@ watchEffect(() => {
     return premiumA - premiumB;
   });
 
-  const matchingIndex = listQuotePlansFiltered.value.findIndex(
+  const matchingIndex = incommingPlans.findIndex(
     x => x.id === selectedProviderPlan.value?.id,
   );
 
   if (matchingIndex > 0) {
-    [
-      listQuotePlansFiltered.value[0],
-      listQuotePlansFiltered.value[matchingIndex],
-    ] = [
-      listQuotePlansFiltered.value[matchingIndex],
-      listQuotePlansFiltered.value[0],
+    [incommingPlans[0], incommingPlans[matchingIndex]] = [
+      incommingPlans[matchingIndex],
+      incommingPlans[0],
     ];
   }
+  listQuotePlansFiltered.value = [...incommingPlans];
+};
+
+watchEffect(() => {
+  listQuotePlansFiltered.value = plansTable.data
+    .slice()
+    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+
+  console.log(planFilters?.insurer?.length);
+  if (
+    planFilters?.insurer?.length === 0 ||
+    planFilters?.insurer?.length === undefined
+  ) {
+    sortPlans(listQuotePlansFiltered.value);
+  }
+  // listQuotePlansFiltered.value = listQuotePlansFiltered.value.sort((a, b) => {
+  //   // Convert undefined or falsy `actualPremium` values to 0 for comparison, if needed
+  //   const premiumA = a.actualPremium || 0;
+  //   const premiumB = b.actualPremium || 0;
+
+  //   return premiumA - premiumB;
+  // });
+
+  // const matchingIndex = listQuotePlansFiltered.value.findIndex(
+  //   x => x.id === selectedProviderPlan.value?.id,
+  // );
+
+  // if (matchingIndex > 0) {
+  //   [
+  //     listQuotePlansFiltered.value[0],
+  //     listQuotePlansFiltered.value[matchingIndex],
+  //   ] = [
+  //     listQuotePlansFiltered.value[matchingIndex],
+  //     listQuotePlansFiltered.value[0],
+  //   ];
+  // }
 });
 
 const computedListQuotePlans = computed(() => {
@@ -972,7 +1002,7 @@ const onPlanFiltersSubmit = () => {
     planDataTable.value.updatePage(1);
   }
 
-  // sortPlans();
+  sortPlans(listQuotePlansFiltered.value);
 };
 
 const onPlanFiltersReset = () => {
