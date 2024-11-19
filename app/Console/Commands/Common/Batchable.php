@@ -20,10 +20,10 @@ trait Batchable
         $this->insertBatches($batches, $type);
     }
 
-    protected function processBatchesFromLastEndDate($lastBatch, $type = '')
+    protected function processBatchesFromLastEndDate($lastBatch = null, $type = '')
     {
         info('inside creating '.$type.' batch of current week');
-        $batches = $this->generateBatchNumbers(Carbon::parse($lastBatch->end_date)->addDays(1));
+        $batches = $this->generateBatchNumbers($lastBatch ? Carbon::parse($lastBatch->end_date)->addDays(1) : null);
         $this->insertBatches($batches, $type);
     }
 
@@ -56,27 +56,49 @@ trait Batchable
         ]);
     }
 
-    protected function generateBatchNumbers($startDate)
+    protected function generateBatchNumbers($startDate = null)
     {
         $batchArray = [];
 
-        while ($startDate < now()) {
-            $currentDate = $startDate->copy();
-            $nextWeek = $startDate->copy()->addDays(6);
+        $today = $startDate ? Carbon::parse($startDate) : now()->startOfWeek();
+        $endDate = $today->copy()->addDays(90);
 
-            $monthNumber = $currentDate->format('m');
-            $fullYear = $currentDate->format('Y');
-            $weekNumber = $currentDate->weekOfYear;
+        $currentDate = $today;
 
-            $batchArray[] = [
-                'name' => 'W'.$weekNumber,
-                'startDate' => $currentDate->toDateString(),
-                'endDate' => $nextWeek->toDateString(),
-                'month' => $monthNumber,
-                'year' => $fullYear,
+        while ($currentDate->lessThan($endDate)) {
+            $startOfWeek = $currentDate->copy()->startOfWeek();
+            $endOfWeek = $currentDate->copy()->endOfWeek();
+
+            $year = $startOfWeek->year;
+            $month = $startOfWeek->month;
+            $weekOfYear = $startOfWeek->weekOfYear;
+
+            if($weekOfYear === 1 && $startOfWeek->month === 12) {
+                $year = $year + 1;
+                $month = 1;
+            }
+
+            $batchName = 'W' . $weekOfYear . '-' . $year;
+
+            $batchData = [
+                'name' => $batchName,
+                'startDate' => $startOfWeek->toDateString(),
+                'endDate' => $endOfWeek->toDateString(),
+                'month' => $month,
+                'year' => $year,
             ];
 
-            $startDate->addWeek();
+            $existingBatch = RenewalBatch::nonMotor()->where('start_date', $batchData['startDate'])->first();
+
+            if (!$existingBatch) {
+                $batchArray[] = $batchData;
+                $this->info("Going to Create: {$batchName}");
+            } else {
+                $this->info("Batch already exists: {$batchName}");
+            }
+
+            $currentDate->addWeek();
+
         }
 
         return $batchArray;
@@ -87,12 +109,12 @@ trait Batchable
         try {
             $this->logTodayDate();
 
-            $lastBatch = RenewalBatch::whereNull('quote_type_id')->orderBy('id', 'desc')->first();
+            $lastBatch = RenewalBatch::nonMotor()->orderBy('id', 'desc')->first();
             info('last batch : '.json_encode($lastBatch));
             if ($lastBatch == null) {
                 $this->processBatchesFromScratch($date);
             } elseif (! $this->isBatchCurrent($lastBatch)) {
-                $this->processBatchesFromLastEndDate($lastBatch);
+                $this->processBatchesFromLastEndDate();
             } else {
                 info('batches are update to date');
 
