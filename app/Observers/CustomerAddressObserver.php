@@ -6,6 +6,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\CustomerAddress;
+use App\Services\CarQuoteService;
 use Illuminate\Support\Facades\Log;
 
 class CustomerAddressObserver
@@ -26,6 +27,20 @@ class CustomerAddressObserver
                     if ($carQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
                         // Dispatch the job to sync courier quote with MACRM
                         SyncCourierQuoteWithMacrm::dispatch($carQuote, QuoteTypeId::Car);
+                    }
+                    if ($customerAddress) {
+                        $formattedAddress = [
+                            'address_type' => $customerAddress->type,
+                            'villa_apartment_office_no' => $customerAddress->office_number,
+                            'floor_no' => $customerAddress->floor_number,
+                            'villa_building_name' => $customerAddress->building_name,
+                            'street_name' => $customerAddress->street,
+                            'area' => $customerAddress->area,
+                            'city' => $customerAddress->city,
+                            'landmark' => $customerAddress->landmark,
+                        ];
+                        info('Sending address notification to customer for lead : ' . $carQuote->uuid);
+                        app(CarQuoteService::class)->triggerBirdFlow($carQuote, $formattedAddress, 'ADDRESS_UPDATED');
                     }
                 }
             }
