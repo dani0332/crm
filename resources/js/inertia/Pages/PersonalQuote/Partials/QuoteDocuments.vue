@@ -566,6 +566,7 @@ const getS3TempUrl = async docURL => {
     <x-modal
       v-model="modals.docConfirm"
       title="Delete Document"
+      size="md"
       show-close
       backdrop
     >
