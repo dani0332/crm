@@ -27,6 +27,7 @@ class TravelAllocationService extends AllocationService
         // Return null if no record is found
         if (! $travelQuote) {
             info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - lead not found.');
+
             return null;
         }
 
