@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 
@@ -240,6 +241,7 @@ const subTeamOptions = [
   { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
+  { value: 'PCP', label: 'PCP' },
 ];
 
 const advisorOptions = computed(() => {
@@ -638,10 +640,14 @@ const plansTable = reactive({
       text: 'Provider Name',
       value: 'providerName',
       sortable: true,
+      fixed: true,
+      width: 400,
     },
     {
       text: 'Plan Name',
       value: 'name',
+      fixed: true,
+      width: 100,
     },
     {
       text: 'Plan Type',
@@ -655,24 +661,25 @@ const plansTable = reactive({
     {
       text: 'CO-PAY/CO-INSURANCE',
       value: 'copayName',
-      width: 100,
+      width: 230,
     },
     {
       text: 'Price',
       value: 'actualPremium',
       sortable: true,
     },
-    {
-      text: 'Basmah',
-      value: 'basmah',
-    },
-    {
-      text: 'Policy Fee (if applicable)',
-      value: 'policyFee',
-    },
+    // {
+    //   text: 'Basmah',
+    //   value: 'basmah',
+    // },
+    // {
+    //   text: 'Policy Fee (if applicable)',
+    //   value: 'policyFee',
+    // },
     {
       text: 'Total Indicative Price (with VAT)',
       value: 'total',
+      width: 20,
     },
     {
       text: 'Action',
@@ -705,6 +712,7 @@ const onLoadAvailablePlansData = async () => {
         let plans = plansTable.data.filter(x => x.id == selectedPlan.value?.id);
         selectedPlan.value = { ...plans[0] };
       }
+
       setTimeout(() => {
         onPlanFiltersSubmit();
       }, 800);
@@ -882,6 +890,32 @@ watchEffect(() => {
   listQuotePlansFiltered.value = plansTable.data
     .slice()
     .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+
+  listQuotePlansFiltered.value = listQuotePlansFiltered.value.sort((a, b) => {
+    // Convert undefined or falsy `actualPremium` values to 0 for comparison, if needed
+    const premiumA = a.actualPremium || 0;
+    const premiumB = b.actualPremium || 0;
+
+    return premiumA - premiumB;
+  });
+
+  const matchingIndex = listQuotePlansFiltered.value.findIndex(
+    x => x.id === selectedProviderPlan.value?.id,
+  );
+
+  if (matchingIndex > 0) {
+    [
+      listQuotePlansFiltered.value[0],
+      listQuotePlansFiltered.value[matchingIndex],
+    ] = [
+      listQuotePlansFiltered.value[matchingIndex],
+      listQuotePlansFiltered.value[0],
+    ];
+  }
+});
+
+const computedListQuotePlans = computed(() => {
+  return listQuotePlansFiltered.value;
 });
 
 const onPlanFiltersSubmit = () => {
@@ -937,6 +971,8 @@ const onPlanFiltersSubmit = () => {
   if (planDataTable.value) {
     planDataTable.value.updatePage(1);
   }
+
+  // sortPlans();
 };
 
 const onPlanFiltersReset = () => {
@@ -2233,6 +2269,10 @@ const onAddUpdate = () => {
                   <dd>{{ quote.dob }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
                   <dd>
                     <x-input
@@ -3278,17 +3318,17 @@ const onAddUpdate = () => {
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="plansTable.columns"
-              :items="listQuotePlansFiltered || []"
+              :items="computedListQuotePlans || []"
               border-cell
               hide-rows-per-page
               :rows-per-page="15"
               class="flex-wrap"
-              :sort-by="'actualPremium'"
-              :sort-type="'asc'"
-              :hide-footer="listQuotePlansFiltered.length < 15"
+              :hide-footer="computedListQuotePlans.length < 15"
             >
               <template #item-copayName="item">
-                <span class="copay-max">{{ item.copayName }}</span>
+                <p class="copay-max">
+                  {{ item.copayName }}
+                </p>
               </template>
 
               <template #item-planTypeId="item">
@@ -3755,7 +3795,12 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
@@ -3905,6 +3950,7 @@ const onAddUpdate = () => {
     />
 
     <AuditLogs
+      :quoteType="$page.props.modelType"
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"

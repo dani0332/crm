@@ -22,6 +22,7 @@ use App\Services\Reports\Reportable;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ConversionAsAtReportService extends BaseService
@@ -99,6 +100,54 @@ class ConversionAsAtReportService extends BaseService
             // map operation to calculate gross and net conversions of records
             return $this->mapConversionData($query, $request);
         }
+    }
+
+    /**
+     * Get the count of unassigned leads based on the request parameters.
+     */
+    public function getUnassignedLeadsCount(Request $request): int
+    {
+        $unassignedLeadsCount = 0;
+
+        if ($request->lob && $request->createdAtDate) {
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+
+            $model = $request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)
+                                    ? app(CarQuote::class)
+                                    : app(PersonalQuote::class);
+
+            $alias = $model->getTable();
+
+            $createdAtDate = $request->createdAtDate;
+            $startDate = Carbon::parse($createdAtDate[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse($createdAtDate[1])->endOfDay()->format($dateFormat);
+            $leadSourcesToExclude = [
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+                LeadSourceEnum::AQEED_REVIVAL,
+            ];
+
+            $query = $model::query()
+                ->whereNull("{$alias}.advisor_id")
+                ->whereNotIn("{$alias}.source", $leadSourcesToExclude);
+
+            if ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::CORPLINE)) {
+                $query->join('business_quote_request', 'business_quote_request.uuid', "{$alias}.uuid")
+                    ->where('business_quote_request.business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+            } elseif ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::GroupMedical)) {
+                $query->join('business_quote_request', 'business_quote_request.uuid', "{$alias}.uuid")
+                    ->where('business_quote_request.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+            } elseif ($request->lob != QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+                $query->where("{$alias}.quote_type_id", $request->lob);
+            }
+
+            $unassignedLeadsCount = $query
+                ->whereBetween("{$alias}.created_at", [$startDate, $endDate])
+                ->count();
+        }
+
+        return $unassignedLeadsCount;
     }
 
     public function getFilterOptions()

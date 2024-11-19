@@ -19,10 +19,12 @@ use App\Services\EmailServices\CarEmailService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
@@ -111,7 +113,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'car_model_id' => $this->lead->car_model_id,
                 'vehicle_type_id' => $this->lead->vehicle_type_id,
                 'source' => LeadSourceEnum::REVIVAL,
-            ])->first();
+            ])->where('created_at', '>=', Carbon::now()->subMonths(11)->toDateString())->first();
 
             $revivedLead = null;
             if (! $carQuoteExists) {
@@ -126,7 +128,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 }
             } else {
                 $revivalCarQuoteUUID = $carQuoteExists->uuid;
-
+                info($logPrefix.$this->lead->uuid.' - childLeadFound - '.$revivalCarQuoteUUID);
                 $revivedLead = DttRevival::where([
                     'quote_type_id' => QuoteTypes::CAR->id(),
                     'uuid' => $revivalCarQuoteUUID,
@@ -216,5 +218,10 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     public function failed(Throwable $exception)
     {
         Log::error('CarRevivalLeadsCreationJob - Failed - '.$this->lead->id.' Error: '.$exception->getMessage());
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->lead->uuid))->dontRelease()];
     }
 }

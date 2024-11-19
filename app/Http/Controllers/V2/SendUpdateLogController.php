@@ -152,6 +152,8 @@ class SendUpdateLogController extends Controller
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
 
+        $isCommVatNotAppEnabled = $this->sendUpdateLogService->commissionVatNotApplicableEnabled($quoteType, $realQuote?->business_type_of_insurance_id ?? null);
+
         $parentText = $sendUpdateLog?->option?->code == SendUpdateLogStatusEnum::ATICB ? $realQuote?->transaction_type_text : $sendUpdateLog->category->parent->text;
 
         // the business_type_of_insurance_id is only on business quotes.
@@ -238,6 +240,7 @@ class SendUpdateLogController extends Controller
             'isPaidEditable' => $this->isSplitPaymentFullyPaid($sendUpdatePayments->first()),
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
             'insuranceProviderId' => $insuranceProviderId ?? null,
+            'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
         ]);
     }
 

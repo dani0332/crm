@@ -81,7 +81,10 @@ class CarEmailService extends BaseService
         if (! $triggerOnlyWorkflow) {
             if ($lead->advisor_id) {
                 $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
-                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(2));
+
+                $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
+                $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
+                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
                 info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
             } else {
                 info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
@@ -375,8 +378,6 @@ class CarEmailService extends BaseService
             'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
             'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
-            'ApiToken' => config('constants.KEN_API_TOKEN'),
-            'basicAuth' => 'Basic '.base64_encode(config('constants.KEN_API_USER').':'.config('constants.KEN_API_PWD')),
             'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',

@@ -31,12 +31,17 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  isEpLoading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const propsDataReactive = ref(props.data);
 const documentsReactive = ref([]);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const embeddedProductEnum = page.props.embeddedProductEnum;
 const modals = reactive({
   cancelPayment: false,
   viewDocuments: false,
@@ -196,7 +201,7 @@ const epTable = reactive({
       value: 'prices',
     },
     {
-      text: 'Last Updated Date',
+      text: 'Payment Captured date',
       value: 'updated_at',
     },
     {
@@ -234,27 +239,6 @@ const getBlog = file => useObjectUrl(file);
 const ppDoc = str => {
   const doc = JSON.parse(str);
   return doc[0]?.path !== '' ? usePage().props.cdnPath + doc[0]?.path : '';
-};
-const checkTransactionExist = item => {
-  for (let price of item.prices) {
-    for (let transaction of price.transactions) {
-      const paymentStatusDate = transaction.payment_status_date;
-      if (paymentStatusDate) {
-        var timeStart = new Date(paymentStatusDate);
-        var timeEnd = new Date();
-        var timeDifferenceInMiliseconds =
-          timeEnd.getTime() - timeStart.getTime();
-        if (
-          (transaction.payment_status_id == 6 ||
-            transaction.payment_status_id == 4) &&
-          timeDifferenceInMiliseconds <= 259200000
-        ) {
-          return false;
-        }
-      }
-    }
-  }
-  return true;
 };
 
 const { copy, copied } = useClipboard();
@@ -481,6 +465,7 @@ const onAddDocumentSubmit = event => {
           border-cell
           hide-rows-per-page
           hide-footer
+          :loading="isEpLoading"
         >
           <template #item-code="{ short_code }">
             {{ short_code + '-' + props.code }}
@@ -523,8 +508,19 @@ const onAddDocumentSubmit = event => {
             }}
           </template>
 
-          <template #item-updated_at="{ updated_at }">
-            {{ dateFormat(updated_at) }}
+          <template #item-updated_at="{ prices }">
+            <span
+              v-if="
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payment_status_id == paymentStatusEnum.CAPTURED
+              "
+            >
+              {{
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payments[0]?.captured_at
+              }}
+            </span>
+            <span v-else> - </span>
           </template>
 
           <template #item-actions="item">
@@ -545,7 +541,10 @@ const onAddDocumentSubmit = event => {
               <x-button
                 size="xs"
                 color="emerald"
-                :disabled="!item.send_document_button"
+                :disabled="
+                  !item.send_document_button ||
+                  item.short_code == embeddedProductEnum.COURIER
+                "
                 :loading="sendDocumentLoader"
                 @click.prevent="sendDcoument(item.id)"
               >
@@ -554,6 +553,7 @@ const onAddDocumentSubmit = event => {
               <x-button
                 size="xs"
                 color="#ff5e00"
+                :disabled="item.short_code == embeddedProductEnum.COURIER"
                 :loading="viewDocumentLoader"
                 @click.prevent="viewDocument(item.id)"
               >
@@ -563,7 +563,7 @@ const onAddDocumentSubmit = event => {
                 v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
                 size="xs"
                 color="#ff5e00"
-                :disabled="checkTransactionExist(item)"
+                :disabled="!item.can_cancel_payment"
                 @click.prevent="cancelPaymentForm(item)"
               >
                 Cancel Payments

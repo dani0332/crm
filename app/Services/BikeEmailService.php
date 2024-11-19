@@ -51,7 +51,7 @@ class BikeEmailService extends BaseService
             }
         }
 
-        $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+        $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::BIKE);
 
         return $responseCode;
     }
@@ -124,7 +124,7 @@ class BikeEmailService extends BaseService
             'advisorEmail' => $advisor->email,
             'advisorName' => $advisor->name,
             'documentUrl' => $documentUrl ? [$documentUrl] : [],
-            'carQuoteId' => $bikeQuoteId,
+            'bikeQuoteId' => $bikeQuoteId,
             'yearOfManufacture' => $lead->bikeQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($lead),
             'currentInsurer' => $lead->bikeQuote->currently_insured_with,

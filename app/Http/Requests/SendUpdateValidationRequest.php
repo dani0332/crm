@@ -51,10 +51,15 @@ class SendUpdateValidationRequest extends FormRequest
                 $validator->errors()->add('error', 'Update booking already in queued');
             }
 
+            $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
             } elseif ($sendUpdateLog->status == SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS) {
-                $validator->errors()->add('error', 'Transaction approval is required');
+                if (! $checkTransactionApprovedInSUStatusLogs && ! in_array($sendUpdateLog?->option->code, [
+                    SendUpdateLogStatusEnum::ATCRNB, SendUpdateLogStatusEnum::ATCRNB_RBB, SendUpdateLogStatusEnum::ATCRN_CRNRBB])) {
+                    $validator->errors()->add('error', 'Transaction approval is required');
+                }
             }
 
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';
@@ -105,7 +110,7 @@ class SendUpdateValidationRequest extends FormRequest
                             SendUpdateLogStatusEnum::PPE,
                         ])) {
                             if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
-                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer and receipt');
+                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
                             }
                         }
 
@@ -132,7 +137,7 @@ class SendUpdateValidationRequest extends FormRequest
                     $validator->errors()->add('error', 'Please update the missing booking details');
                 }
 
-                // Check all policy details have been corretly filled
+                // Check all policy details have been correctly filled
                 if (($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $categorySubType == SendUpdateLogStatusEnum::PPE) ||
                     $sendUpdateCategoryCode == SendUpdateLogStatusEnum::CPD) {
                     if (! $sendUpdateLog->is_policy_filled) {
@@ -144,8 +149,6 @@ class SendUpdateValidationRequest extends FormRequest
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
                 ];
-
-                $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
 
                 if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && ! $checkTransactionApprovedInSUStatusLogs &&
                     ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
@@ -161,6 +164,9 @@ class SendUpdateValidationRequest extends FormRequest
                         SendUpdateLogStatusEnum::ATIB,
                         SendUpdateLogStatusEnum::ATICB,
                         SendUpdateLogStatusEnum::ACB,
+                        SendUpdateLogStatusEnum::ATCRNB,
+                        SendUpdateLogStatusEnum::ATCRNB_RBB,
+                        SendUpdateLogStatusEnum::ATCRN_CRNRBB,
                     ])) {
                     $validator->errors()->add('error', 'Transaction approval is required');
                 }
