@@ -94,6 +94,7 @@ class TravelQuoteService extends BaseService
             'nationality.country_name as destination_id_text',
             'tqr.is_ecommerce',
             'tqr.renewal_batch',
+            'rb.name as renewal_batch_text',
             'tqr.renewal_import_code',
             'tqr.previous_quote_policy_number',
             DB::raw('DATE_FORMAT(tqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
@@ -106,8 +107,8 @@ class TravelQuoteService extends BaseService
             'tqr.parent_duplicate_quote_id',
             'tqr.has_arrived_destination',
             'tqr.has_arrived_uae',
-            'start_date',
-            'end_date',
+            'tqr.start_date',
+            'tqr.end_date',
             'direction_code',
             'coverage_code',
             'tqr.primary_member_id',
@@ -166,6 +167,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
             ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
+            ->leftJoin('renewal_batches as rb', 'tqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('embedded_transactions as et', 'et.code', 'tqr.code')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));

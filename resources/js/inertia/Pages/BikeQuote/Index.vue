@@ -165,7 +165,7 @@ const tableHeader = [
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Renewal Batch', value: 'renewal_batch_model.name' },
 ];
 
 const can = permission => useCan(permission);
@@ -622,6 +622,10 @@ watch(
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-renewal_batch_model.name="item">
+        <p v-if="item.renewal_batch_model != null">{{ item.renewal_batch_model.name }}</p>
+        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 

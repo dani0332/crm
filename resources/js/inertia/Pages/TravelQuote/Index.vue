@@ -119,7 +119,7 @@ const tableHeader = [
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Renewal Batch', value: 'renewal_batch_text' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -876,6 +876,10 @@ watch(
                     : ''
           }}
         </div>
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p v-if="item.renewal_batch_text != null">{{ item.renewal_batch_text }}</p>
+        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 

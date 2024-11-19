@@ -111,7 +111,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Renewal Batch',
-    value: 'renewal_batch',
+    value: 'renewal_batch_model.name',
     is_active: true,
   },
 ]);
@@ -706,6 +706,10 @@ watch(
           </x-tag>
         </div>
       </template> -->
+      <template #item-renewal_batch_model.name="item">
+        <p v-if="item.renewal_batch_model != null">{{ item.renewal_batch_model.name }}</p>
+        <p v-else>{{ item.renewal_batch }}</p>
+      </template>
     </DataTable>
 
     <Pagination

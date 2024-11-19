@@ -146,7 +146,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_model.name', is_active: true },
 ]);
 
 function onSubmit(isValid) {
@@ -752,6 +752,10 @@ const validateDateRange = () => {
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-renewal_batch_model.name="item">
+        <p v-if="item.renewal_batch_model != null">{{ item.renewal_batch_model.name }}</p>
+        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 

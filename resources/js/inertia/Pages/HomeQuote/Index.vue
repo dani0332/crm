@@ -79,7 +79,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
 ]);
 
 const filters = reactive({
@@ -743,6 +743,10 @@ const formatDate = dateString =>
             ? formatDate(previous_policy_expiry_date)
             : ''
         }}
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p v-if="item.renewal_batch_text != null">{{ item.renewal_batch_text }}</p>
+        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 
