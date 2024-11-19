@@ -877,11 +877,13 @@ class CentralService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
-        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatus) {
+        $sendUpdateStatusArray = is_string($sendUpdateStatus) ? [$sendUpdateStatus] : $sendUpdateStatus;
+
+        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatusArray) {
             $query->where('send_update_log_id', $sendUpdateId)
-                ->where(function ($query) use ($sendUpdateStatus) {
-                    $query->where('current_status', $sendUpdateStatus)
-                        ->orWhere('previous_status', $sendUpdateStatus);
+                ->where(function ($query) use ($sendUpdateStatusArray) {
+                    $query->whereIn('current_status', $sendUpdateStatusArray)
+                        ->orWhereIn('previous_status', $sendUpdateStatusArray);
                 });
         })->count();
 
