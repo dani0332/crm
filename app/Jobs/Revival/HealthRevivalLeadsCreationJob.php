@@ -55,7 +55,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             return false;
         }
 
-        $logPrefix = 'DTT Health - HealthRevivalLeadsCreationJob -';
+        $logPrefix = 'DTTHealth - HealthRevivalLeadsCreationJob -';
 
         $this->lead->refresh();
         if ($this->lead->is_revived) {
