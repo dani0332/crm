@@ -172,8 +172,7 @@ class SendUpdateValidationRequest extends FormRequest
                 }
             }
 
-            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-            if (! $isSageEnabled) {
+            if (! isSageEnabled()) {
                 return ['status' => false, 'message' => 'Sage300 is not enabled'];
             }
 

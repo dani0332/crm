@@ -31,8 +31,7 @@ class BookBulkPoliciesRequest extends FormRequest
     public function withValidator($validator)
     {
         // check sage is enabled or not
-        $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-        if ($isSageEnabled) {
+        if (! isSageEnabled()) {
             return response()->json(['errors' => [
                 'message' => 'Sage is not enabled',
             ]], 403);
