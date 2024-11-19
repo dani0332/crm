@@ -1501,13 +1501,10 @@ class SendEmailCustomerService extends BaseService
             'advisorMobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'quoteUID' => $quote->code,
             'refID' => $quote->uuid,
-            'CarMake' => $quote->car_make_id_text ?? null,
-            'CarModel' => $quote->car_model_id_text ?? null,
+            'CarMake' => $quote->car_make_id->text ?? null,
+            'CarModel' => $quote->car_model_id->text ?? null,
             'workflowType' => workflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
         ];
-
-        if(!empty($quote->car_make_id->text) && !empty($quote->car_model_id->text))
-         info("CarMake : ".$quote->car_make_id->text." | CarModel : ".$quote->car_model_id->text);
 
         $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
         if(!empty($customerWANotificationWorkflow)){
