@@ -32,11 +32,17 @@ class TravelAllocationService extends AllocationService
         // Run Alliance Check only when the travel quote is a parent lead
         if ($travelQuote->isParentLead()) {
             info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - isParentLead : '.$travelQuote->isParentLead());
+
             // Check if the lead is associated with the ALNC provider
-            $payment = $travelQuote->payments()->mainLeadPayment()->first();
-            $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
-            $isALNC = isset($insurer) ? $insurer->code == InsuranceProvidersEnum::ALNC : false;
-            info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - isALNC : '.$isALNC.' - Insurer Code : '.$insurer?->code.' - Payment Code : '.$payment?->code);
+            /*$payment = $travelQuote->payments()->mainLeadPayment()->first();
+            $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);*/
+
+            $selectedPlan = $travelQuote?->travelQuotePlanDetails()->where('plan_id', $travelQuote->plan_id)->first();
+            $insurerCode = $selectedPlan?->provider_code;
+
+            $isALNC = $insurerCode == InsuranceProvidersEnum::ALNC;
+
+            info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - isALNC : '.$isALNC.' - Insurer Code : '.$insurerCode.' - Plan ID : '.$selectedPlan?->id);
             // Check if the insurer_api_status_id is in the list of failed statuses
             $isFailedStatus = in_array($travelQuote->insurer_api_status_id, [
                 PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID,

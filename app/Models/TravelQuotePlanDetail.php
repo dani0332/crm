@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class TravelQuotePlanDetail extends Model
 {
     use HasFactory;
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
 }
