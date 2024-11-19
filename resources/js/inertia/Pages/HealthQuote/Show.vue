@@ -224,17 +224,6 @@ const memberCategoryText = memberCategoryId =>
     )?.text;
   });
 
-// const subTeamOptions = computed(() => {
-//     let subteamArray = page.props.teams?.map(team => ({
-//         value: team.name,
-//         label: team.name,
-//     }));
-
-//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
-
-//     return subteamArray;
-// });
-
 const subTeamOptions = [
   { value: 'Best', label: 'Best' },
   { value: 'Good', label: 'Good' },
@@ -668,14 +657,6 @@ const plansTable = reactive({
       value: 'actualPremium',
       sortable: true,
     },
-    // {
-    //   text: 'Basmah',
-    //   value: 'basmah',
-    // },
-    // {
-    //   text: 'Policy Fee (if applicable)',
-    //   value: 'policyFee',
-    // },
     {
       text: 'Total Indicative Price (with VAT)',
       value: 'total',
@@ -718,7 +699,10 @@ const onLoadAvailablePlansData = async () => {
       }, 800);
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error loading plans',
+        position: 'top',
+      });
     });
 };
 
@@ -776,7 +760,10 @@ const onExportPlans = () => {
       });
     })
     .catch(error => {
-      console.log(error);
+      notification.error({
+        title: 'Error exporting plans',
+        position: 'top',
+      });
     })
     .finally(() => {
       exportLoader.value = false;
@@ -876,7 +863,10 @@ watch(
           }
         })
         .catch(err => {
-          console.log(err);
+          notification.error({
+            title: 'Error!',
+            position: 'top',
+          });
         })
         .finally(() => {
           options.loading = false;
@@ -914,34 +904,12 @@ watchEffect(() => {
     .slice()
     .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
 
-  console.log(planFilters?.insurer?.length);
   if (
     planFilters?.insurer?.length === 0 ||
     planFilters?.insurer?.length === undefined
   ) {
     sortPlans(listQuotePlansFiltered.value);
   }
-  // listQuotePlansFiltered.value = listQuotePlansFiltered.value.sort((a, b) => {
-  //   // Convert undefined or falsy `actualPremium` values to 0 for comparison, if needed
-  //   const premiumA = a.actualPremium || 0;
-  //   const premiumB = b.actualPremium || 0;
-
-  //   return premiumA - premiumB;
-  // });
-
-  // const matchingIndex = listQuotePlansFiltered.value.findIndex(
-  //   x => x.id === selectedProviderPlan.value?.id,
-  // );
-
-  // if (matchingIndex > 0) {
-  //   [
-  //     listQuotePlansFiltered.value[0],
-  //     listQuotePlansFiltered.value[matchingIndex],
-  //   ] = [
-  //     listQuotePlansFiltered.value[matchingIndex],
-  //     listQuotePlansFiltered.value[0],
-  //   ];
-  // }
 });
 
 const computedListQuotePlans = computed(() => {
@@ -1588,7 +1556,10 @@ const searchByTradeLicense = trigger => {
       }
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error!',
+        position: 'top',
+      });
     });
 };
 
@@ -1623,7 +1594,10 @@ const linkEntity = () => {
       }
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error linking entity',
+        position: 'top',
+      });
     });
 };
 const readOnlyMode = reactive({
