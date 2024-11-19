@@ -912,9 +912,9 @@ trait GenericQueriesAllLobs
                 $totalPrice = round($payment->total_price, 2);
                 $totalAmount = round($payment->total_amount, 2);
                 $discountValue = round($payment->discount_value, 2);
+                $sumValue = round(($totalAmount + $discountValue), 2);
 
-                // Check if the total price is less than the sum of the total amount and discount value
-                return $totalPrice < ($totalAmount + $discountValue);
+                return $totalPrice < $sumValue;
             }
         }
 
