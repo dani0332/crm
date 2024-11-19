@@ -324,7 +324,6 @@ const dateFormat = date => {
             v-show="true"
             size="sm"
             color="#ff5e00"
-            :disabled="policy?.moved_to_imcrm"
             @click="moveToImcrm(policy.policy?.policy_oid)"
           >
             Move to IMCRM
