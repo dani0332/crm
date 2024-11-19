@@ -1,11 +1,19 @@
 {
   "resources/js/inertia/inertia.js": {
+<<<<<<< HEAD
     "file": "assets/inertia-B4miJ1DX.js",
+=======
+    "file": "assets/inertia-gI28kWs5.js",
+>>>>>>> 4f3058e979550fe332b8d47caa3ef6371cf69bb0
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
     "css": [
+<<<<<<< HEAD
       "assets/inertia-DRQ1OY4B.css"
+=======
+      "assets/inertia-DAonRKEg.css"
+>>>>>>> 4f3058e979550fe332b8d47caa3ef6371cf69bb0
     ]
   }
 }
