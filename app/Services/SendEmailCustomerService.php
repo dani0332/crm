@@ -1487,15 +1487,27 @@ class SendEmailCustomerService extends BaseService
 
     public function sendWhatsappNotificationToCustomer($quote, $advisorId = null){
 
-        $user = User::where('id',$advisorId)->first();
+        $advisor = User::where('id',$advisorId)->first();
         $payload = [
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
-            'advisor' => $user ?? null,
+            'customerMobile' => (! empty($quote->mobile_no) ? $quote->mobile_no : ''),
+            'advisor' => $advisor ?? null,
+            'advisorName' => $advisor?->name ?? '',
+            'advisorEmail' => $advisor?->email ?? '',
+            'advisorLandLine' => (! empty($advisor?->landline_no) ? $advisor->landline_no : ''),
+            'advisorMobilePhone' => (! empty($advisor?->mobile_no) ? $advisor->mobile_no : ''),
+            'advisorWhatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'advisorMobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'quoteUID' => $quote->code,
             'refID' => $quote->uuid,
+            'CarMake' => $quote->car_make_id_text ?? null,
+            'CarModel' => $quote->car_model_id_text ?? null,
             'workflowType' => workflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
         ];
+
+        if(!empty($quote->car_make_id->text) && !empty($quote->car_model_id->text))
+         info("CarMake : ".$quote->car_make_id->text." | CarModel : ".$quote->car_model_id->text);
 
         $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
         if(!empty($customerWANotificationWorkflow)){
