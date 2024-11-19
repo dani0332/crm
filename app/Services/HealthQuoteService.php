@@ -402,7 +402,7 @@ class HealthQuoteService extends BaseService
         }
         if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
-            // $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
+            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
         if (isset($request->code) && $request->code != '') {
             $this->query->where('hqr.code', $request->code);
@@ -439,7 +439,7 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        // $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
@@ -493,7 +493,7 @@ class HealthQuoteService extends BaseService
 
         if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
-            // $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
+            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
         if (isset($request->assignment_type) && ! empty($request->assignment_type)) {
             $this->query->where('hqr.assignment_type', $request->assignment_type);
@@ -522,7 +522,7 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        // $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == quoteTypeCode::yesText) {
