@@ -30,8 +30,8 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     use AddPremiumAllLobs, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, Stackable;
 
     public $tries = 3;
-    public $timeout = 100;
-    public $backoff = 300;
+    public $timeout = 300;
+    public $backoff = 320;
     private $lead = null;
 
     /**
@@ -99,7 +99,6 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             $capiResponse = Capi::request('/api/v1-save-health-quote', 'post', $dataArr);
 
             if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
-
                 if ($capiResponse->isDuplicate) {
                     info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadNotCreated - '.$capiResponse->quoteUID.' -isduplicate-'.$capiResponse->isDuplicate);
                     HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
