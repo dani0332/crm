@@ -54,6 +54,7 @@ class InstantAlfredService extends BaseService
                     // 'ps.created_at AS payment_created_at',
                     DB::raw('DATE_FORMAT(cqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                     DB::raw('DATE_FORMAT(cqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+                    DB::raw('DATE_FORMAT(cqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
                     // 'ep.display_name',
                 )
                 ->leftJoin('payments as py', function ($join) {
@@ -130,6 +131,7 @@ class InstantAlfredService extends BaseService
                 // 'ps.created_at AS payment_created_at',
                 DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                 DB::raw('DATE_FORMAT(hqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+                DB::raw('DATE_FORMAT(hqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
                 // 'ep.display_name',
 
             )
@@ -202,6 +204,7 @@ class InstantAlfredService extends BaseService
                 'py.total_price',
                 DB::raw('DATE_FORMAT(tqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                 DB::raw('DATE_FORMAT(tqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+                DB::raw('DATE_FORMAT(tqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
                 // 'ps.created_at AS payment_created_at',
                 // 'ep.display_name',
 
