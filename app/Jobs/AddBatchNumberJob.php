@@ -58,11 +58,11 @@ class AddBatchNumberJob implements ShouldQueue
     private function createBatches($batches)
     {
         if (count($batches) > 0) {
-                    foreach ($batches as $batch) {
-                        $this->insertQuoteBatch($batch);
-                    }
-                    info('batches created');
-                }
+            foreach ($batches as $batch) {
+                $this->insertQuoteBatch($batch);
+            }
+            info('batches created');
+        }
     }
 
     private function insertQuoteBatch($batch)

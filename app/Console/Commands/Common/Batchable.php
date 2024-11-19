@@ -73,12 +73,12 @@ trait Batchable
             $month = $startOfWeek->month;
             $weekOfYear = $startOfWeek->weekOfYear;
 
-            if($weekOfYear === 1 && $startOfWeek->month === 12) {
+            if ($weekOfYear === 1 && $startOfWeek->month === 12) {
                 $year = $year + 1;
                 $month = 1;
             }
 
-            $batchName = 'W' . $weekOfYear . '-' . $year;
+            $batchName = 'W'.$weekOfYear.'-'.$year;
 
             $batchData = [
                 'name' => $batchName,
@@ -90,7 +90,7 @@ trait Batchable
 
             $existingBatch = RenewalBatch::nonMotor()->where('start_date', $batchData['startDate'])->first();
 
-            if (!$existingBatch) {
+            if (! $existingBatch) {
                 $batchArray[] = $batchData;
                 $this->info("Going to Create: {$batchName}");
             } else {
