@@ -1498,9 +1498,9 @@ class SendEmailCustomerService extends BaseService
         ];
 
         $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
-        if(!empty($customerWANotificationWorkflow->value)){
-            app(BirdService::class)->triggerWebHookRequest($customerWANotificationWorkflow->value, (object) $payload);
-            info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$customerWANotificationWorkflow->value.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+        if(!empty($customerWANotificationWorkflow)){
+            app(BirdService::class)->triggerWebHookRequest($customerWANotificationWorkflow, (object) $payload);
+            info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$customerWANotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
         }
         else
         {
