@@ -141,11 +141,21 @@ class SaveBookingDetailsRequest extends FormRequest
                 return $validator->errors()->add('error', 'Update booking already in queued');
             }
 
-            if (Payment::where('insurer_tax_number', request()->insurer_tax_invoice_number)->limit(1)->first()) {
+            $taxInvoiceValidation = Payment::where('insurer_tax_number', request()->insurer_tax_invoice_number)
+                ->orWhere('insurer_commmission_invoice_number', request()->insurer_tax_invoice_number)
+                ->limit(1)
+                ->first();
+
+            if ($taxInvoiceValidation) {
                 $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists, Please enter a unique value.');
             }
 
-            if (Payment::where('insurer_commmission_invoice_number', request()->insurer_commission_invoice_number)->limit(1)->first()) {
+            $commissionInvoiceValidation = Payment::where('insurer_commmission_invoice_number', request()->insurer_commission_invoice_number)
+                ->orWhere('insurer_tax_number', request()->insurer_commission_invoice_number)
+                ->limit(1)
+                ->first();
+
+            if ($commissionInvoiceValidation) {
                 $validator->errors()->add('error', 'Insurer Commission Invoice Number already exists, Please enter a unique value.');
             }
 
