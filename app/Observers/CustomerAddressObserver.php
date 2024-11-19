@@ -13,7 +13,7 @@ class CustomerAddressObserver
 {
     public function updated(CustomerAddress $customerAddress)
     {
-        Log::info('CustomerAddressObserver@updated');
+        Log::info('CustomerAddressObserver@updated for quote_uuid: ' . $customerAddress->quote_uuid);
         try {
             // Check if any attributes have been modified
             $dirty = $customerAddress->getDirty();
@@ -39,7 +39,7 @@ class CustomerAddressObserver
                             'city' => $customerAddress->city,
                             'landmark' => $customerAddress->landmark,
                         ];
-                        info('Sending address notification to customer for lead : '.$carQuote->uuid);
+                        info('Sending address notification to customer for lead in CustomerAddressObserver : ' . $carQuote->uuid);
                         app(CarQuoteService::class)->triggerBirdFlow($carQuote, $formattedAddress, 'ADDRESS_UPDATED');
                     }
                 }
