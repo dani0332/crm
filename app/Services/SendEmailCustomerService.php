@@ -1501,11 +1501,10 @@ class SendEmailCustomerService extends BaseService
             'advisorMobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'quoteUID' => $quote->uuid,
             'refID' => $quote->code,
-            'CarMake' => $quote->car_make_id->text ?? null,
-            'CarModel' => $quote->car_model_id->text ?? null,
+            'CarMake' => $quote->carMake->text ?? null,
+            'CarModel' => $quote->carModel->text ?? null,
             'workflowType' => workflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
         ];
-
         $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
         if(!empty($customerWANotificationWorkflow)){
             app(BirdService::class)->triggerWebHookRequest($customerWANotificationWorkflow, (object) $payload);
