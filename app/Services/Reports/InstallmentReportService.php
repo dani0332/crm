@@ -72,6 +72,7 @@ class InstallmentReportService extends ManagementReport
                 'l.text as transaction_type',
                 DB::raw('CASE WHEN ps.sr_no=1 THEN p.commmission_percentage ELSE 0 END as commmission_percentage'),
                 'personal_quotes.source',
+                'ps.sage_reciept_id',
             )
             ->join('payments as p', function ($join) {
                 $join->on('personal_quotes.code', '=', 'p.code')

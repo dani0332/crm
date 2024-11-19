@@ -88,6 +88,7 @@ class TransactionReportService extends ManagementReport
                 'p.commmission_percentage',
                 'personal_quotes.source',
                 'personal_quotes.policy_booking_date',
+                'ps.sage_reciept_id',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')

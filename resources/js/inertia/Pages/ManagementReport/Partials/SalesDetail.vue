@@ -154,6 +154,10 @@ const tableHeader = reactive([
     text: 'Booking Date',
     value: 'policy_booking_date',
   },
+  {
+    text: 'Sage Receipt ID',
+    value: 'sage_reciept_id',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;
@@ -300,6 +304,9 @@ const isIntegerColumn = key => {
     </template>
     <template #item-policy_booking_date="{ policy_booking_date }">
       {{ dateFormat(policy_booking_date).value ?? 'N/A' }}
+    </template>
+    <template #item-sage_reciept_id="{ sage_reciept_id }">
+      {{ sage_reciept_id ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
