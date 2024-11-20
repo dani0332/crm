@@ -55,7 +55,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             return false;
         }
 
-        $logPrefix = 'DTTHealth - HealthRevivalLeadsCreationJob -';
+        $logPrefix = 'DTTHealth - HealthRevivalLeadsCreationJob - ';
 
         $this->lead->refresh();
         if ($this->lead->is_revived) {
@@ -99,15 +99,31 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             $capiResponse = Capi::request('/api/v1-save-health-quote', 'post', $dataArr);
 
             if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
+                $healthQuote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $capiResponse->quoteUID);
+                // Get the latest quote batch and assign it to the lead.
+                $quoteBatch = QuoteBatches::latest()->first();
+
                 if ($capiResponse->isDuplicate) {
                     info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadNotCreated - '.$capiResponse->quoteUID.' -isduplicate-'.$capiResponse->isDuplicate);
                     HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
 
-                    return false;
-                }
-                info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID);
+                    $revivalRecord = DttRevival::where([
+                        'quote_type_id' => QuoteTypes::HEALTH->id(),
+                        'quote_id' => $healthQuote->id,
+                        'uuid' => $capiResponse->quoteUID,
+                        'revival_quote_batch_id' => $quoteBatch->id,
+                        'email_sent' => true,
+                        'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
+                    ])->first();
 
-                $healthQuote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $capiResponse->quoteUID);
+                    if ($revivalRecord) {
+                        info($logPrefix.' UUID - '.$capiResponse->quoteUID.' - Revival Record Found');
+
+                        return false;
+                    }
+                } else {
+                    info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID);
+                }
 
                 $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
                 sleep(5);
@@ -180,9 +196,6 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 if ($response == 201) {
                     info($logPrefix.'ParentLead - '.$this->lead->uuid.' - childLead - '.$capiResponse->quoteUID.' - emailSent - '.$emailData->customerEmail);
 
-                    // Get the latest quote batch and assign it to the lead.
-                    $quoteBatch = QuoteBatches::latest()->first();
-
                     DttRevival::create([
                         'quote_type_id' => QuoteTypes::HEALTH->id(),
                         'quote_id' => $healthQuote->id,
@@ -202,7 +215,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 info($logPrefix.'healthRevivalParentLead - '.$this->lead->uuid.' - capiResponseError - '.json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
-            Log::error($logPrefix.'health revival Exception - '.$this->lead->uuidd.' - Exception:'.$exception->getMessage());
+            Log::error($logPrefix.'health revival Exception - '.$this->lead->uuid.' - Exception:'.$exception->getMessage());
         }
     }
 
