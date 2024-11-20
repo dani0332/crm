@@ -4,6 +4,7 @@ defineProps({
   dropdownSource: Object,
   permissions: Object,
   advisors: Object,
+  renewalBatches: Array,
   authorizedDays: Number,
 });
 
@@ -55,7 +56,7 @@ const filters = reactive({
   direction_code: '',
   coverage_code: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   payment_due_date: '',
   booking_date: '',
   segment_filter: '',
@@ -146,6 +147,13 @@ const advisorsOptions = computed(() => {
     },
   ];
 });
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+})
 
 const leadsStatusOptions = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(item => {
@@ -626,13 +634,11 @@ watch(
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+       <ComboBox
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
         />
         <DatePicker
           v-model="filters.payment_due_date"
