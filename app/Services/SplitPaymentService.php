@@ -897,7 +897,7 @@ class SplitPaymentService
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
         $maxRetries = 5;
 
-        $reponse = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $commission, $commissionSplitSumWithoutLastSplit) {
+        $response = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $commission, $commissionSplitSumWithoutLastSplit) {
             foreach ($paymentSplits as $paymentSplit) {
                 $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
                 /* to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
@@ -915,10 +915,10 @@ class SplitPaymentService
             }
         }, $maxRetries);
 
-        if (isset($reponse['status']) && in_array($reponse['status'], [GenericRequestEnum::FAILED, GenericRequestEnum::ERROR])) {
-            info(self::class.' : updateCommissionSchedule - Payment Code: '.$payment->code.' - Failed to update Commission Split Schedule with error: '.$reponse['message']);
+        if (isset($response['status']) && in_array($response['status'], [GenericRequestEnum::FAILED, GenericRequestEnum::ERROR])) {
+            info(self::class.' : updateCommissionSchedule - Payment Code: '.$payment->code.' - Failed to update Commission Split Schedule with error: '.$response['message']);
 
-            return ['status' => false, 'message' => $reponse['message'] ?? 'Failed to update Commission Split Schedule.'];
+            return ['status' => false, 'message' => $response['message'] ?? 'Failed to update Commission Split Schedule.'];
         }
         info(self::class.' : updateCommissionSchedule - Payment Code: '.$payment->code.' - Commission Split Schedule updated successfully');
 
