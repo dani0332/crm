@@ -897,7 +897,7 @@ class SplitPaymentService
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
         $maxRetries = 5;
 
-        $reponse = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $paymentSplit, $commission, $commissionSplitSumWithoutLastSplit) {
+        $reponse = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $commission, $commissionSplitSumWithoutLastSplit) {
             foreach ($paymentSplits as $paymentSplit) {
                     $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
                     /* to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
