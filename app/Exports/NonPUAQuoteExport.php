@@ -49,7 +49,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
         ]);
         $exportData->push((object) [
             'NonPUA' => 'Non-PUA: ',
-            'Total' => $nonPUALeadCounts,
+            'Total' => $nonPUALeadCounts ?: '0',
         ]);
         // ADD BlANK LINE
         $exportData->push((object) [' ' => ' ']);
@@ -58,7 +58,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
         foreach ($teamCounts as $team) {
             $exportData->push((object) [
                 'Team' => $team->Team,
-                'Total' => $team->Total,
+                'Total' => $team->Total ?: '0',
             ]);
         }
 
