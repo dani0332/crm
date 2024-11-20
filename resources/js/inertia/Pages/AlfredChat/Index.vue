@@ -385,7 +385,8 @@ const downloadReport = () => {
           ]"
           placeholder="Select the Report type"
           class="w-full"
-        />
+        >
+        </x-select>
       </x-field>
       <x-field label="Email">
         <x-input

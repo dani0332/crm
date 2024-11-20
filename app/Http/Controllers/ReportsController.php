@@ -424,15 +424,20 @@ class ReportsController extends Controller
     {
 
         $displayBy = $request->displayBy ?? null;
+        $createdAtDate = $request->createdAtDate ?? null;
+        $includeUnassignedLeads = $request->includeUnassignedLeads ?? null;
         $quoteTypes = QuoteTypeId::getOptions();
         $quoteTypeCodes = quoteTypeCode::asArray();
         $quoteTypeIdEnum = QuoteTypeId::asArray();
 
         return inertia('Reports/ConversionAsAt', [
             'reportData' => $conversionAsAtReportService->getReportData($request),
+            'unassignedLeadsCount' => $conversionAsAtReportService->getUnassignedLeadsCount($request),
             'filterOptions' => $conversionAsAtReportService->getFilterOptions(),
             'quoteTypes' => $quoteTypes,
             'displayByColumn' => $displayBy,
+            'createdAtDate' => $createdAtDate,
+            'includeUnassignedLeads' => $includeUnassignedLeads,
             'quoteTypeCodes' => $quoteTypeCodes,
             'quoteTypeIdEnum' => $quoteTypeIdEnum,
         ]);

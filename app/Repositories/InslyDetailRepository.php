@@ -100,6 +100,11 @@ class InslyDetailRepository extends BaseRepository
 
     public function fetchSaveToImcrm($data)
     {
+        $policyID = $data['policy_oid'];
+        $validateAll = $data['validateAll'];
+
+        $policy = $this->where('policy_oid', $policyID)->first();
+
         $email = $policy['customer']['email'] ?? null;
 
         if (empty($email)) {
@@ -110,10 +115,6 @@ class InslyDetailRepository extends BaseRepository
             ];
         }
 
-        $policyID = $data['policy_oid'];
-        $validateAll = $data['validateAll'];
-
-        $policy = $this->where('policy_oid', $policyID)->first();
         $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
 
         if ($inslyPolicyIssueDate) {

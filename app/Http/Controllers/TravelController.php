@@ -24,6 +24,7 @@ use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
+use App\Models\Nationality;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -148,6 +149,12 @@ class TravelController extends Controller
         })->values();
         $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $leadStatuses);
 
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+            $leadStatuses = collect($leadStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            })->values();
+        }
+
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
@@ -175,6 +182,7 @@ class TravelController extends Controller
         $this->travelQuoteService->fillData();
         $nationalities = NationalityRepository::withActive()->get();
         $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
+        $record->departure_country_text = $record->departure_country_id ? Nationality::find($record->departure_country_id)->country_name : null;
 
         $ecomDetails = [
             'premium' => $record->premium,

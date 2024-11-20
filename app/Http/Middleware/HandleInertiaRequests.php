@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -94,6 +95,7 @@ class HandleInertiaRequests extends Middleware
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
+            'quoteBusinessTypeIdEnum' => BusinessTypeOfInsuranceIdEnum::asArray(),
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),

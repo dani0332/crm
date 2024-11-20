@@ -53,6 +53,12 @@ class BusinessQuote extends Model implements AuditableContract
             }
         });
     }
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
 
     public function getCreatedAtAttribute($table)
     {

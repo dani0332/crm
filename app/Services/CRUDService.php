@@ -1148,14 +1148,19 @@ class CRUDService extends BaseService
 
     public function hasAtleastOneStatusPolicyIssued($record): bool
     {
-        if (isset($record->quote_status_id) && in_array($record->quote_status_id, [
-            QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::PolicySentToCustomer,
-            QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued,
-        ]) || $record?->insly_migrated || $record?->insly_id) {
+        if (
+            isset($record->quote_status_id) && in_array($record->quote_status_id, [
+                QuoteStatusEnum::PolicyIssued,
+                QuoteStatusEnum::PolicySentToCustomer,
+                QuoteStatusEnum::PolicyBooked,
+                QuoteStatusEnum::CancellationPending,
+                QuoteStatusEnum::PolicyCancelled,
+                QuoteStatusEnum::PolicyCancelledReissued,
+            ]) ||
+            $record?->insly_migrated || $record?->insly_id ||
+            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id) ||
+            $record?->source == LeadSourceEnum::RENEWAL_UPLOAD
+        ) {
             return true;
         }
 
