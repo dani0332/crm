@@ -11,6 +11,6 @@ use BenSampo\Enum\Enum;
  */
 final class InstantChatReportsEnum extends Enum
 {
-    public const DETAILED_REPORT = 'Detailed Report';
-    public const CONSOLIDATED_REPORT = 'Consolidated Report';
+    public const DETAILED_REPORT = 'Detailed';
+    public const CONSOLIDATED_REPORT = 'Summary';
 }

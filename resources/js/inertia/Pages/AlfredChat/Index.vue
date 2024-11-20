@@ -375,13 +375,13 @@ const downloadReport = () => {
           class="w-full"
         />
       </x-field>
-      <x-field label="Report">
+      <x-field label="Report Category">
         <x-select
           v-model="filters.report"
           :options="[
             { value: null, label: 'All' },
-            { value: 'Consolidated Report', label: 'Consolidated Report' },
-            { value: 'Detailed Report', label: 'Detailed Report' },
+            { value: 'Summary', label: 'Summary' },
+            { value: 'Detailed', label: 'Detailed' },
           ]"
           placeholder="Select the Report type"
           class="w-full"
