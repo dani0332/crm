@@ -108,6 +108,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class CRUDController extends Controller
 {
@@ -2267,6 +2269,14 @@ class CRUDController extends Controller
     {
         $addressRequest = CustomerAddressRequest::createFrom($request);
 
-        return app()->call([$addressRequest, 'validateResolved']);
+        // Manually validate the request
+        $validator = Validator::make($addressRequest->all(), $addressRequest->rules());
+
+        if ($validator->fails()) {
+            // Handle validation errors
+            throw new ValidationException($validator);
+        }
+
+        return true; // Validation passed
     }
 }
