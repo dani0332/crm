@@ -5,6 +5,11 @@ const props = defineProps({
   plan: Object,
   quote: Object,
   access: Object,
+  quoteType: String,
+  extraDetails: {
+    type: Object,
+    default: {},
+  },
 });
 
 const emit = defineEmits(['onLoadAvailablePlansData']);
@@ -98,7 +103,11 @@ const onUpdatePlan = () => {
       preserveScroll: true,
       preserveState: true,
       onSuccess: () => {
-        emit('onLoadAvailablePlansData');
+        emit('onLoadAvailablePlansData', {
+          plan: props.plan,
+          quoteType: props.quoteType,
+          extraDetails: props.extraDetails,
+        });
       },
     });
 };
