@@ -80,10 +80,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             if ($this->isPolicyIssuanceAutomationEnabled()) {
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id);
 
-                $selectedPlan = $quote->travelQuotePlanDetails()->where('plan_id', $quote->plan_id)->first();
+                $payment = PaymentRepository::mainQuotePayment($quote);
+
+                $selectedPlan = $quote->travelQuotePlanDetails()->where('plan_id', $payment->plan_id)->first();
+
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - TravelQuotePlanDetails ID : '.$selectedPlan?->id);
 
-                $payment = PaymentRepository::mainQuotePayment($quote);
 
                 $travelType = TravelQuoteEnum::ALLIANCE_IN_BOUND;
                 $directionCode = $quote->direction_code;

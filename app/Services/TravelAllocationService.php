@@ -16,6 +16,7 @@ use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
+use App\Repositories\PaymentRepository;
 use Illuminate\Support\Facades\Log;
 
 class TravelAllocationService extends AllocationService
@@ -36,7 +37,7 @@ class TravelAllocationService extends AllocationService
             info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - isParentLead : '.$travelQuote->isParentLead());
 
             // Check if the lead is associated with the ALNC provider
-            $payment = $travelQuote->payments()->mainLeadPayment()->first();
+            $payment = PaymentRepository::mainQuotePayment($travelQuote);
             $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
             $insurerCode = $insurer?->code;
 
