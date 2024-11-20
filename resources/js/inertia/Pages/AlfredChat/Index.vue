@@ -390,7 +390,7 @@ const downloadReport = () => {
               value: 'Detailed',
               label: 'Detailed',
               suffix:
-                ' Detailed InstantAlfred\'s interactions across all channels for each',
+                ' Detailed InstantAlfred\'s interactions across all channels for each lead',
             },
           ]"
           placeholder="Select the Report type"
