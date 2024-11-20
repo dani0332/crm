@@ -222,33 +222,32 @@ const addressTypes = [
 ];
 
 const villaApartmentOfficeLabel = computed(() => {
-    return quoteForm.addressObj.address_type === 'Home'
-        ? 'Villa / Apartment Number'
-        : quoteForm.addressObj.address_type === 'Office'
-        ? 'Office Name'
-        : 'Villa / Apartment / Office No.';
+  return quoteForm.addressObj.address_type === 'Home'
+    ? 'Villa / Apartment Number'
+    : quoteForm.addressObj.address_type === 'Office'
+      ? 'Office Name'
+      : 'Villa / Apartment / Office No.';
 });
 
 const villaBuildingLabel = computed(() => {
-    return quoteForm.addressObj.address_type === 'Home'
-        ? 'Community / Building Name'
-        : quoteForm.addressObj.address_type === 'Office'
-        ? 'Building Name'
-        : 'Villa / Building Name';
+  return quoteForm.addressObj.address_type === 'Home'
+    ? 'Community / Building Name'
+    : quoteForm.addressObj.address_type === 'Office'
+      ? 'Building Name'
+      : 'Villa / Building Name';
 });
 
 const floorLabel = computed(() => {
-    return quoteForm.addressObj.address_type === 'Home'
-        ? 'Floor / Block'
-        : quoteForm.addressObj.address_type === 'Office'
-        ? 'Floor'
-        : 'Floor No.';
+  return quoteForm.addressObj.address_type === 'Home'
+    ? 'Floor / Block'
+    : quoteForm.addressObj.address_type === 'Office'
+      ? 'Floor'
+      : 'Floor No.';
 });
 
 const isCourierStatusPending = computed(() => {
-    return quoteForm.courierQuoteStatus === 'Pending' ? false : true;
+  return quoteForm.courierQuoteStatus === 'Pending' ? false : true;
 });
-
 </script>
 
 <template>
@@ -331,7 +330,14 @@ const isCourierStatusPending = computed(() => {
             :disabled="isCourierStatusPending"
           />
         </x-field>
-        <x-field label="ADDRESS" required v-if="quoteForm.addressObj.address_type === 'Home' || quoteForm.addressObj.address_type === 'Office'">
+        <x-field
+          label="ADDRESS"
+          required
+          v-if="
+            quoteForm.addressObj.address_type === 'Home' ||
+            quoteForm.addressObj.address_type === 'Office'
+          "
+        >
           <div class="flex flex-wrap -mx-2">
             <div class="w-1/2 px-2">
               <x-input
