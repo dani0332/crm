@@ -9,6 +9,7 @@ use App\Enums\DocumentTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
@@ -894,27 +895,32 @@ class SplitPaymentService
         $paymentSplits = $payment->paymentSplits;
         $commissionSplitSumWithoutLastSplit = 0;
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
-        foreach ($paymentSplits as $paymentSplit) {
+        $maxRetries = 5;
 
-            DB::transaction(function () use ($payment, $paymentSplits, $paymentSplit, $commission, $commissionSplitSumWithoutLastSplit) {
-                $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
-                /*
-                 to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
-                 and then subtract that amount from the total commission without vat and use the result as commission for last commission split
-                */
-                if ($paymentSplit->sr_no == count($paymentSplits)) {
-                    $commissionSplitAmount = (float) sprintf('%.2f',
-                        $commission - $commissionSplitSumWithoutLastSplit);
-                } else {
-                    $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
-                }
-                $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
-                /* Add Vat on commission to the first Installment of commission */
-                $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
-                $paymentSplit->save();
-            }, 5);
+        $reponse = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $paymentSplit, $commission, $commissionSplitSumWithoutLastSplit) {
+            foreach ($paymentSplits as $paymentSplit) {
+                    $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
+                    /* to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
+                     and then subtract that amount from the total commission without vat and use the result as commission for last commission split */
+                    if ($paymentSplit->sr_no == count($paymentSplits)) {
+                        $commissionSplitAmount = (float) sprintf('%.2f',
+                            $commission - $commissionSplitSumWithoutLastSplit);
+                    } else {
+                        $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+                    }
+                    $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
+                    /* Add Vat on commission to the first Installment of commission */
+                    $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
+                    $paymentSplit->save();
+            }
+        }, $maxRetries);
 
+        if (isset($reponse['status']) && in_array($reponse['status'] , [GenericRequestEnum::FAILED, GenericRequestEnum::ERROR])) {
+            info(self::class.' : updateCommissionSchedule - Payment Code: '.$payment->code.' - Failed to update Commission Split Schedule with error: '.$reponse['message']);
+            return ['status' => false, 'message' => $reponse['message'] ?? 'Failed to update Commission Split Schedule.'];
         }
+        info(self::class.' : updateCommissionSchedule - Payment Code: '.$payment->code.' - Commission Split Schedule updated successfully');
+        return ['status' => true, 'message' => 'Commission Split Schedule updated successfully.'];
     }
 
     private function calculateCommissionSplit($payment, $paymentSplit)

@@ -224,7 +224,10 @@ class CentralController extends Controller
             $payment->update($paymentInformation);
             info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
-            (new SplitPaymentService)->updateCommissionSchedule($payment);
+            $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
+            if (!$response['status']) {
+                return back()->with('error', $response['message']);
+            }
             info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
