@@ -222,31 +222,49 @@ const addressTypes = [
 ];
 
 const villaApartmentOfficeLabel = computed(() => {
-  return quoteForm.addressObj.address_type === 'Home'
-    ? 'Villa / Apartment Number'
-    : quoteForm.addressObj.address_type === 'Office'
-      ? 'Office Name'
-      : 'Villa / Apartment / Office No.';
+  let label;
+
+  if (quoteForm.addressObj.address_type === 'Home') {
+    label = 'Villa / Apartment Number';
+  } else if (quoteForm.addressObj.address_type === 'Office') {
+    label = 'Office Name';
+  } else {
+    label = 'Villa / Apartment / Office No.';
+  }
+
+  return label;
 });
 
 const villaBuildingLabel = computed(() => {
-  return quoteForm.addressObj.address_type === 'Home'
-    ? 'Community / Building Name'
-    : quoteForm.addressObj.address_type === 'Office'
-      ? 'Building Name'
-      : 'Villa / Building Name';
+  let label;
+
+  if (quoteForm.addressObj.address_type === 'Home') {
+    label = 'Community / Building Name';
+  } else if (quoteForm.addressObj.address_type === 'Office') {
+    label = 'Building Name';
+  } else {
+    label = 'Villa / Building Name';
+  }
+
+  return label;
 });
 
 const floorLabel = computed(() => {
-  return quoteForm.addressObj.address_type === 'Home'
-    ? 'Floor / Block'
-    : quoteForm.addressObj.address_type === 'Office'
-      ? 'Floor'
-      : 'Floor No.';
+  let label;
+
+  if (quoteForm.addressObj.address_type === 'Home') {
+    label = 'Floor / Block';
+  } else if (quoteForm.addressObj.address_type === 'Office') {
+    label = 'Floor';
+  } else {
+    label = 'Floor No.';
+  }
+
+  return label;
 });
 
 const isCourierStatusPending = computed(() => {
-  return quoteForm.courierQuoteStatus === 'Pending' ? false : true;
+  return quoteForm.courierQuoteStatus !== 'Pending';
 });
 </script>
 

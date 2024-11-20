@@ -7,6 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ValidateAddressRequest extends FormRequest
 {
+    const STRING_REQUIRED_MAX_100 = 'sometimes|required|string|max:100';
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -35,9 +36,9 @@ class ValidateAddressRequest extends FormRequest
                     'address_type' => 'nullable|string|max:50',
                     'villa_apartment_office_no' => 'sometimes|required|string|max:20',
                     'floor_no' => 'sometimes|required|string|max:20',
-                    'villa_building_name' => 'sometimes|required|string|max:100',
-                    'area' => 'sometimes|required|string|max:100',
-                    'city' => 'sometimes|required|string|max:100',
+                    'villa_building_name' => self::STRING_REQUIRED_MAX_100,
+                    'area' => self::STRING_REQUIRED_MAX_100,
+                    'city' => self::STRING_REQUIRED_MAX_100,
                     // `street_name` and `landmark` are optional
                 ];
             }
