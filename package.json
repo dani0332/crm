@@ -22,7 +22,7 @@
     },
     "dependencies": {
         "@headlessui/vue": "1.7.18",
-        "@indielayer/ui": "1.9.3",
+        "@indielayer/ui": "^1.10.0",
         "@inertiajs/vue3": "^1.2.0",
         "@vueuse/core": "^11.1.0",
         "@vueuse/integrations": "^11.1.0",

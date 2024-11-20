@@ -379,13 +379,35 @@ const downloadReport = () => {
         <x-select
           v-model="filters.report"
           :options="[
-            { value: null, label: 'All' },
-            { value: 'Summary', label: 'Summary' },
-            { value: 'Detailed', label: 'Detailed' },
+            { value: null, label: 'All', tooltip: null },
+            {
+              value: 'Summary',
+              label: 'Summary',
+              suffix:
+                'A summary of InstantAlfred\'s interactions for each lead',
+            },
+            {
+              value: 'Detailed',
+              label: 'Detailed',
+              suffix:
+                ' Detailed InstantAlfred\'s interactions across all channels for each',
+            },
           ]"
           placeholder="Select the Report type"
           class="w-full"
         >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.label != 'All'">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{
+                  item.label == 'Detailed'
+                    ? "Detailed InstantAlfred's interactions across all channels for each"
+                    : "A summary of InstantAlfred's interactions for each lead"
+                }}
+              </template>
+            </x-tooltip>
+          </template>
         </x-select>
       </x-field>
       <x-field label="Email">
