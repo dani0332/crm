@@ -103,4 +103,10 @@ class TmLead extends Model implements AuditableContract
     {
         return $this->hasMany(TmLeadContactInformation::class, 'tm_lead_id', 'id');
     }
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
 }

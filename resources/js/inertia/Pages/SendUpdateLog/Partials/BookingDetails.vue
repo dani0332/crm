@@ -60,14 +60,13 @@ const props = defineProps({
     default: '',
   },
   isEditDisabledForQueuedBooking: Boolean,
+  isCommVatNotAppEnabled: Boolean,
 });
 
 const state = reactive({
   isEdit: false,
   reversalSectionEdit: false,
 });
-
-const insCommTaxInvNumState = ref(false);
 
 const page = usePage();
 const notification = useToast();
@@ -137,6 +136,8 @@ const checkSectionToEdit = () => {
   const additionalInvoiceTypes = [
     sendUpdateStatusEnum.ACB,
     sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
   ];
 
   if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
@@ -164,7 +165,9 @@ const checkSectionToEdit = () => {
     additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)
   ) {
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB &&
+      [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
+        props.sendUpdateLog?.option?.code,
+      ) &&
       !props.uploadedDocuments.includes('SUTAXINVRB')
     ) {
       notification.error({
@@ -175,7 +178,9 @@ const checkSectionToEdit = () => {
     }
 
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB &&
+      [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
+        props.sendUpdateLog?.option?.code,
+      ) &&
       !props.uploadedDocuments.includes('SUTAXINV')
     ) {
       notification.error({
@@ -185,9 +190,7 @@ const checkSectionToEdit = () => {
       return;
     }
   }
-  if (props.bookingDetails?.is_non_self_billing_enabled) {
-    insCommTaxInvNumState.value = true;
-  }
+
   state.isEdit = !state.isEdit;
 };
 
@@ -233,10 +236,6 @@ function isNotZero(value) {
   return value;
 }
 
-const isNonSelfBillingEnabled = computed(() => {
-  return props.bookingDetails?.is_non_self_billing_enabled ?? false;
-});
-
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.sendUpdateLog.category.code,
@@ -257,12 +256,10 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.discount_value ||
     props.sendUpdateLog?.discount ||
     '0.00',
-  insurer_commission_invoice_number: props.bookingDetails
-    ?.is_non_self_billing_enabled
-    ? (props.bookingDetails?.broker_invoice_number ?? '')
-    : props.sendUpdateLog?.insurer_commission_invoice_number ||
-      props?.payments[0]?.insurer_commmission_invoice_number ||
-      '',
+  insurer_commission_invoice_number:
+    props.sendUpdateLog?.insurer_commission_invoice_number ||
+    props?.payments[0]?.insurer_commmission_invoice_number ||
+    '',
   commission_percentage:
     props.sendUpdateLog?.commission_percentage ||
     props?.payments[0]?.commmission_percentage ||
@@ -358,9 +355,17 @@ const calculatePriceDetailsForATIB = () => {
 
 const calculateCommission = () => {
   ignoreCheckDiscount.value = false;
-  if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
+  if (
+    [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
+      props.sendUpdateLog?.option?.code,
+    )
+  ) {
     calculateCommisionDetailsForACB();
-  } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
+  } else if (
+    [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
+      props.sendUpdateLog?.option?.code,
+    )
+  ) {
     calculatePriceDetailsForATIB();
   } else {
     if (
@@ -398,8 +403,14 @@ const calculateCommission = () => {
           Number(total_vat_amount);
         bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
+        let commissionVatApplicable = Number(
+          bookingDetailsForm.commission_vat_applicable,
+        );
+        let commissionVatNotApplicable = Number(
+          bookingDetailsForm.commission_vat_not_applicable,
+        );
         bookingDetailsForm.commission_percentage = convertToNegative(
-          (Number(bookingDetailsForm.commission_vat_applicable) /
+          (Number(commissionVatApplicable + commissionVatNotApplicable) /
             total_price_with_vat_and_not_vat_applicable) *
             100,
         );
@@ -653,12 +664,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.broker_invoice_number =
     props.sendUpdateLog?.broker_invoice_number ?? '';
   bookingDetailsForm.insurer_commission_invoice_number =
-    (isNonSelfBillingEnabled.value
-      ? (props.sendUpdateLog?.broker_invoice_number ?? '')
-      : reversalEntry.insurer_commission_invoice_number.replace(
-          'REV',
-          'NEW',
-        )) || '';
+    reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
   bookingDetailsForm.price_vat_applicable =
     Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage =
@@ -968,10 +974,8 @@ const onCancel = () => {
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
 
-  if (!props.bookingDetails?.is_non_self_billing_enabled) {
-    bookingDetailsForm.insurer_commission_invoice_number =
-      props.bookingDetails?.insurer_commission_invoice_number || '';
-  }
+  bookingDetailsForm.insurer_commission_invoice_number =
+    props.bookingDetails?.insurer_commission_invoice_number || '';
 };
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] =
@@ -1052,6 +1056,9 @@ const checkDiscount = (newPrice, oldPrice) => {
       bookingDetailsForm.discount = savedDiscount;
     }
   }
+
+  bookingDetailsForm.discount =
+    bookingDetailsForm.discount > 0.99 ? 0 : bookingDetailsForm.discount;
 };
 
 const dateToDMY = date => {
@@ -1091,6 +1098,9 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.ED,
     sendUpdateStatusEnum.ATIB,
     sendUpdateStatusEnum.ACB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
+    sendUpdateStatusEnum.ATCRN_CRNRBB,
   ];
 
   return (
@@ -1104,6 +1114,39 @@ watch(
   (newValue, oldValue) => {
     if (!(noDiscountType.value || ignoreCheckDiscount.value)) {
       checkDiscount(newValue, oldValue);
+    }
+  },
+);
+
+watch(
+  () => props.bookingDetails?.broker_invoice_number,
+  (newValue, oldValue) => {
+    bookingDetailsForm.broker_invoice_number = newValue;
+  },
+);
+
+const disableCommissionVatNotApplicable = ref(false);
+
+watch(
+  () => bookingDetailsForm.commission_vat_applicable,
+  (newValue, oldValue) => {
+    if (props.isCommVatNotAppEnabled && newValue > 0) {
+      disableCommissionVatNotApplicable.value = true;
+    } else {
+      disableCommissionVatNotApplicable.value = false;
+    }
+  },
+);
+
+const disableCommissionVatApplicable = ref(false);
+
+watch(
+  () => bookingDetailsForm.commission_vat_not_applicable,
+  (newValue, oldValue) => {
+    if (props.isCommVatNotAppEnabled && newValue > 0) {
+      disableCommissionVatApplicable.value = true;
+    } else {
+      disableCommissionVatApplicable.value = false;
     }
   },
 );
@@ -1320,9 +1363,7 @@ watch(
                   </label>
                   <template #tooltip>
                     {{
-                      isNonSelfBillingEnabled
-                        ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
-                        : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
                     }}
                   </template>
                 </x-tooltip>
@@ -1646,14 +1687,7 @@ watch(
                   </span>
                 </div>
               </div>
-              <div
-                v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
-                class="grid sm:grid-cols-2 pb-1.5"
-              >
+              <div class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
                   <x-tooltip placement="left">
                     <label
@@ -1673,9 +1707,12 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2 pb-1.5"
               >
@@ -1763,7 +1800,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1816,7 +1856,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1829,9 +1872,7 @@ watch(
                     </label>
                     <template #tooltip>
                       {{
-                        isNonSelfBillingEnabled
-                          ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
-                          : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                        productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
                       }}
                     </template>
                   </x-tooltip>
@@ -1843,7 +1884,7 @@ watch(
                       bookingDetailsForm.insurer_commission_invoice_number
                     "
                     class="!mb-0 w-full"
-                    :disabled="!state.isEdit || insCommTaxInvNumState"
+                    :disabled="!state.isEdit"
                     placeholder="Enter Commission Tax Invoice No"
                     :rules="[isRequired]"
                     size="xs"
@@ -1852,9 +1893,12 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1881,7 +1925,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1922,9 +1969,12 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1950,7 +2000,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1995,7 +2048,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2021,7 +2077,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2041,7 +2100,28 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
+                  <x-tooltip
+                    placement="left"
+                    v-if="disableCommissionVatApplicable"
+                  >
+                    <x-input
+                      v-model="bookingDetailsForm.commission_vat_applicable"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="
+                        !state.isEdit || disableCommissionVatApplicable
+                      "
+                      placeholder="Enter Commission Amount"
+                      size="xs"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                    <template #tooltip>
+                      This option is disabled because Commission (VAT not
+                      applicable) has already been entered.
+                    </template>
+                  </x-tooltip>
                   <x-input
+                    v-else
                     type="number"
                     min="0"
                     add
@@ -2050,7 +2130,7 @@ watch(
                     @change="calculateCommission"
                     class="!mb-0 w-full"
                     :class="isNegativeValue ? ' icon-padding' : ''"
-                    :disabled="!state.isEdit"
+                    :disabled="!state.isEdit || disableCommissionVatApplicable"
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
                     size="xs"
@@ -2060,7 +2140,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2087,7 +2170,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2104,7 +2190,46 @@ watch(
                     </template>
                   </x-tooltip>
                 </div>
-                <div>
+                <div v-if="props.isCommVatNotAppEnabled">
+                  <x-tooltip
+                    placement="left"
+                    v-if="disableCommissionVatNotApplicable"
+                  >
+                    <x-input
+                      type="number"
+                      v-model="bookingDetailsForm.commission_vat_not_applicable"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="
+                        !state.isEdit || disableCommissionVatNotApplicable
+                      "
+                      placeholder="Enter Commission Amount"
+                      size="xs"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                    <template #tooltip>
+                      This option is disabled because Commission (VAT
+                      applicable) has already been entered.
+                    </template>
+                  </x-tooltip>
+                  <x-input
+                    v-else
+                    type="number"
+                    min="0"
+                    add
+                    step="any"
+                    v-model="bookingDetailsForm.commission_vat_not_applicable"
+                    @change="calculateCommission"
+                    class="!mb-0 w-full"
+                    :class="isNegativeValue ? ' icon-padding' : ''"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Commission Amount"
+                    :rules="[isRequired]"
+                    size="xs"
+                    :icon-left="isNegativeValue ? 'minus' : ''"
+                  />
+                </div>
+                <div v-else>
                   <span>{{
                     bookingDetailsForm.commission_vat_not_applicable !== null
                       ? bookingDetailsForm.commission_vat_not_applicable
@@ -2114,7 +2239,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2145,7 +2273,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2393,8 +2524,12 @@ watch(
   </div>
 </template>
 
-<style>
+<style scoped>
 .icon-padding input {
   padding-left: 4vh !important;
+}
+
+.v-popper {
+  width: 100% !important;
 }
 </style>

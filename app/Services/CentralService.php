@@ -10,6 +10,7 @@ use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -864,10 +865,11 @@ class CentralService
 
     public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
     {
-        SendUpdateStatusLog::create([
+        SendUpdateStatusLog::updateOrCreate([
             'send_update_log_id' => $sendUpdateLogId,
             'previous_status' => $previousStatus,
             'current_status' => $currentStatus,
+        ], [
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
@@ -875,10 +877,38 @@ class CentralService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
-        $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_log_id', $sendUpdateId)
-            ->where('current_status', $sendUpdateStatus)
-            ->count();
+        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatus) {
+            $query->where('send_update_log_id', $sendUpdateId)
+                ->where(function ($query) use ($sendUpdateStatus) {
+                    $query->where('current_status', $sendUpdateStatus)
+                        ->orWhere('previous_status', $sendUpdateStatus);
+                });
+        })->count();
 
         return $sendUpdateStatusCount > 0;
+    }
+
+    /**
+     * This method is used to check if the COMMISSION (VAT NOT APPLICABLE) is enabled or not.
+     *
+     * @param  $quoteType  - Life, Business etc.
+     * @param  $businessTypeOfInsuranceId  - Business type of insurance id, if quote type is Business.
+     */
+    public function commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId = null): bool
+    {
+        if (
+            ($quoteType == quoteTypeCode::Business &&
+            in_array($businessTypeOfInsuranceId, [
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoIndividual),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineHull),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoOpenCover),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupLife),
+            ])) ||
+            $quoteType == quoteTypeCode::Life
+        ) {
+            return true;
+        }
+
+        return false;
     }
 }

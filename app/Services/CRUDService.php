@@ -34,7 +34,7 @@ use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
-use App\Traits\GenericQueriesAllLobs;
+use App\Traits\CentralTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -44,7 +44,7 @@ use PDF;
 
 class CRUDService extends BaseService
 {
-    use GenericQueriesAllLobs, TeamHierarchyTrait;
+    use CentralTrait, TeamHierarchyTrait;
 
     protected $healthQuoteService;
     protected $carQuoteService;
@@ -1139,20 +1139,28 @@ class CRUDService extends BaseService
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true);
+            // Create a temporary file and write the PDF content to it
+            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
+
+            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false, $tempFile);
         }
     }
 
     public function hasAtleastOneStatusPolicyIssued($record): bool
     {
-        if (isset($record->quote_status_id) && in_array($record->quote_status_id, [
-            QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::PolicySentToCustomer,
-            QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued,
-        ]) || $record?->insly_migrated || $record?->insly_id) {
+        if (
+            isset($record->quote_status_id) && in_array($record->quote_status_id, [
+                QuoteStatusEnum::PolicyIssued,
+                QuoteStatusEnum::PolicySentToCustomer,
+                QuoteStatusEnum::PolicyBooked,
+                QuoteStatusEnum::CancellationPending,
+                QuoteStatusEnum::PolicyCancelled,
+                QuoteStatusEnum::PolicyCancelledReissued,
+            ]) ||
+            $record?->insly_migrated || $record?->insly_id ||
+            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id) ||
+            $record?->source == LeadSourceEnum::RENEWAL_UPLOAD
+        ) {
             return true;
         }
 

@@ -37,7 +37,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         $this->quote = $quote;
         $this->request = $request;
         $this->sageProcess = $sageProcess;
-        $this->lockPostfix = Carbon::now()->timestamp;
+        $this->lockPostfix = Carbon::now()->format('YmdHi'); // lock postfix to release the WithoutOverlapping lock i.e 2024102113
     }
 
     /**
@@ -78,7 +78,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         }
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for Insurer - '.$this->sageRequest->insurerID);
+        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for  code -'.$this->quote->code.'Insurer - '.$this->sageRequest->insurerID);
     }
 
     public function failed(Throwable $exception)

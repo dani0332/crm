@@ -29,7 +29,7 @@ class LifeQuoteObserver
     {
         $dirty = $lifeQuote->getDirty();
         if (
-            $lifeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $lifeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             LifeQuote::withoutEvents(function () use ($lifeQuote) {
@@ -45,7 +45,7 @@ class LifeQuoteObserver
         }
 
         if (
-            $lifeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($lifeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Life, 'quoteUID' => $lifeQuote->uuid]);
@@ -61,7 +61,7 @@ class LifeQuoteObserver
             $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::LIFE->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
 
         }
     }

@@ -54,11 +54,7 @@ const onLogout = () => {
 };
 
 const urls = computed(() => {
-  if (checkAuthUserRole.value) {
-    return `/reports/payment-summary`;
-  } else {
-    return `/quotes/car?page=1&segment_filter=all&payment_status_id=4`;
-  }
+  return `/reports/payment-summary`;
 });
 
 const activitiesUrl = computed(() => {

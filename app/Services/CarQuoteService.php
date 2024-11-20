@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -18,6 +20,8 @@ use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\CustomerAdditionalContact;
+use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
@@ -33,7 +37,8 @@ use PDF;
 
 class CarQuoteService extends BaseService
 {
-    protected $query;
+    private $query;
+    private $exportQuery;
     protected $httpService;
     protected $childUserIds = [];
     protected $leadAllocationService;
@@ -58,8 +63,8 @@ class CarQuoteService extends BaseService
                 'cqr.first_name',
                 'cqr.last_name',
                 DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
-                'cqr.email',
-                'cqr.mobile_no',
+                // 'cqr.email',
+                // 'cqr.mobile_no',
                 DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
                 'cqr.car_value',
                 'cqr.additional_notes',
@@ -67,6 +72,7 @@ class CarQuoteService extends BaseService
                 'cqr.year_of_manufacture',
                 'cqr.code',
                 'cqr.is_ecommerce',
+                'cqr.sic_advisor_requested',
                 'cqr.premium',
                 DB::raw('DATE_FORMAT(cqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                 'cqr.payment_gateway',
@@ -181,6 +187,7 @@ class CarQuoteService extends BaseService
                 'c.insured_last_name',
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
+                'c.receive_marketing_updates',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -479,7 +486,7 @@ class CarQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('cqr.uuid', $id)->first();
+        return $this->query->addSelect(['cqr.email', 'cqr.mobile_no'])->where('cqr.uuid', $id)->first();
     }
 
     public function updateChildRecord($id)
@@ -925,14 +932,13 @@ class CarQuoteService extends BaseService
             $dateFrom = $this->parseDate($request['policy_expiry_date'], true);
             $dateTo = $this->parseDate($request['policy_expiry_date_end'], false);
             $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! $request->code && ! $request->email && ! $request->mobile_no && ! $request->created_at && ! $request->payment_due_date && ! $request->booking_date && ! $request->previous_quote_policy_number && ! $request->renewal_batch) {
+        if (! $request->code && ! $request->email && ! $request->mobile_no && ! $request->created_at && ! $request->payment_due_date && ! $request->booking_date && ! $request->previous_quote_policy_number && ! $request->renewal_batch && ! $request->insurer_tax_invoice_number && ! $request->insurer_commission_tax_invoice_number) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (
@@ -945,6 +951,8 @@ class CarQuoteService extends BaseService
             && empty($request->payment_due_date)
             && empty($request->booking_date)
             && ! isset($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
@@ -954,6 +962,19 @@ class CarQuoteService extends BaseService
         if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
             CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr', QuoteTypeId::Car);
         }
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
+
+            $this->query->where('cqr.sic_advisor_requested', $request->sic_advisor_requested);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
         if ($request->transaction_approved_dates) {
 
             $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
@@ -1019,8 +1040,14 @@ class CarQuoteService extends BaseService
         }
 
         $wheres = collect($this->query->wheres)->pluck('', 'column')->toArray();
-        if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch'])) {
+        if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch', 'insurer_tax_invoice_number', 'insurer_commission_tax_invoice_number'])) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
+
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
+        } else {
+            return $this->query->orderBy('cqr.created_at', 'DESC');
         }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -1614,7 +1641,7 @@ class CarQuoteService extends BaseService
 
     public function validateRequest($request)
     {
-        $isLeadPool = Auth::user()->isLeadPool();
+        $canReAssignAdvisor = Auth::user()->isLeadPool() || auth()->user()->can(PermissionsEnum::ASSIGN_PAID_LEADS);
         $userId = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
         if ($leadsIds == '' || $leadsIds == null) {
@@ -1626,7 +1653,7 @@ class CarQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! ($isLeadPool)) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! $canReAssignAdvisor) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }
@@ -2069,6 +2096,7 @@ class CarQuoteService extends BaseService
             $this->exportQuery->where('cqr.advisor_id', Auth::user()->id);
         }
     }
+
     public function exportnonPUAAuthorized()
     {
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
@@ -2119,7 +2147,6 @@ class CarQuoteService extends BaseService
             ->groupBy('t.name');
 
         return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
-
     }
 
     public function exportPUAAuthorized()
@@ -2161,6 +2188,7 @@ class CarQuoteService extends BaseService
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
+
     public function exportPUAUpdates()
     {
         $startDate = Carbon::now()->subDay()->startOfDay();
@@ -2176,12 +2204,65 @@ class CarQuoteService extends BaseService
             ->join('vehicle_type as vt', 'cqr.vehicle_type_id', '=', 'vt.id')
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
-            ->leftJoin('quote_tags as qt', 'cqr.uuid', '=', 'qt.quote_uuid')
             ->whereNotNull('cqp.pua_premium')
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
-            ->whereNotNull('cqr.paid_at')
-            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
-            ->whereColumn('cqp.plan_id', 'cqr.plan_id')
-            ->whereIn('qt.name', ['SPUA', 'APUA', 'NPUA']);
+            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
+            ->whereColumn('cqp.plan_id', 'cqr.plan_id');
+    }
+
+    public function sendAddressNotificationToCustomer($lead, $address)
+    {
+        info('Checking for sending courier notification : '.$lead->uuid);
+
+        // Use a different variable name for the result of the query
+        $existingAddress = CustomerAddress::where([
+            'quote_uuid' => $lead->uuid,
+            'customer_id' => $lead->customer_id,
+        ])->first();
+
+        if (! $existingAddress) {
+            info('Sending address notification to customer for lead : '.$lead->uuid);
+            // only trigger bird flow if address is not already added
+            $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);
+        }
+    }
+
+    public function triggerBirdFlow($lead, $address, $actionType)
+    {
+        if ($lead->embeddedTransactions()->exists()) {
+            info('Checking for courier transaction for lead : '.$lead->uuid);
+            $courierEmbeddedTransaction = $lead->embeddedTransactions
+                ->filter(function ($transaction) {
+                    return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
+                });
+        }
+
+        if (
+            $courierEmbeddedTransaction->isNotEmpty() &&
+            ($courierEmbeddedTransaction->first()->payment_status_id == PaymentStatusEnum::CAPTURED ||
+                $courierEmbeddedTransaction->first()->payment_status_id == PaymentStatusEnum::AUTHORISED)
+        ) {
+            info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
+            $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
+            $address = app(CustomerAddressService::class)->fetchFormattedAddress($address);
+            $customerAdditionalContact = CustomerAdditionalContact::select('value')
+                ->firstWhere([
+                    ['customer_id', $lead->customer_id],
+                    ['key', 'alternate_mobile_no'],
+                ]);
+            $payload = [
+                'quoteUID' => $lead->uuid,
+                'quoteTypeId' => (int) QuoteTypes::CAR->id(),
+                'actionType' => $actionType,
+                'refId' => $embeddedTransactionRefId,
+                'address' => $address,
+                'alternateNumber' => $customerAdditionalContact->value ?? '',
+            ];
+            info('Payload for Bird Courier Flow : '.json_encode($payload));
+
+            Ken::request('/trigger-bird-courier-flow', 'post', $payload);
+        } else {
+            info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
+        }
     }
 }

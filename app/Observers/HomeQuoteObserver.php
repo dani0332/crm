@@ -30,7 +30,7 @@ class HomeQuoteObserver
     {
         $dirty = $homeQuote->getDirty();
         if (
-            $homeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $homeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             HomeQuote::withoutEvents(function () use ($homeQuote) {
@@ -53,7 +53,7 @@ class HomeQuoteObserver
         }
 
         if (
-            $homeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($homeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Home, 'quoteUID' => $homeQuote->uuid]);
@@ -69,7 +69,7 @@ class HomeQuoteObserver
             $homeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $homeQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::HOME->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($homeQuote, $payment, QuoteTypes::HOME->value);
 
         }
     }

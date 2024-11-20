@@ -763,6 +763,7 @@ onMounted(() => {
     <AuditLogs
       :type="`App\\Models\\${quoteType.code}Quote`"
       :id="quoteRequest.id"
+      :quoteType="quoteType.code"
     />
   </div>
 </template>

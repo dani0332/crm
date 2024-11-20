@@ -165,9 +165,10 @@ class SendUpdateLogRepository extends BaseRepository
     {
         try {
             $sendUpdate = $this->find($data['id']);
-            $sendUpdateStatus = ! in_array($sendUpdate->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) ? SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS : $sendUpdate->status;
-            if ($sendUpdateStatus !== $sendUpdate->status) {
-                app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $sendUpdate->status, $sendUpdateStatus);
+            if (! in_array($sendUpdate->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER])) {
+                $status = SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS;
+                info('Send Update uuid -> '.$sendUpdate->uuid.' - Status changing to -> '.$status);
+                app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $sendUpdate->status, SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS);
             }
 
             $result = $sendUpdate->update([
@@ -176,7 +177,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'price_vat_not_applicable' => $data['price_vat_not_applicable'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
-                'status' => $sendUpdateStatus,
+                'status' => $status ?? $sendUpdate->status,
             ]);
             $this->updatePayment($data);
         } catch (\Exception $ex) {
@@ -406,11 +407,11 @@ class SendUpdateLogRepository extends BaseRepository
         $checkAdditionalBookingPermission = auth()->user()->hasPermissionTo(PermissionsEnum::SEND_UPDATE_ADD_BOOKING);
         if (! $checkAdditionalBookingPermission) {
             $response = $response->filter(function ($item) {
-                return ! in_array($item->slug, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATICB]);
+                return ! in_array($item->slug, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATICB, SendUpdateLogStatusEnum::ATCRNB, SendUpdateLogStatusEnum::ATCRNB_RBB]);
             });
         }
 
-        return $response;
+        return $response->values();
     }
 
     /*
@@ -458,10 +459,6 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurance_provider_id' => $insurerDetails['insurance_provider_id'],
                 'plan_id' => $insurerDetails['plan_id'],
             ];
-
-            if ($insurerDetails['is_non_self_billing_enabled']) {
-                $sendUpdatePayload['insurer_commission_invoice_number'] = $insurerDetails['broker_invoice_number'];
-            }
 
             $sendUpdate->update($sendUpdatePayload);
 
