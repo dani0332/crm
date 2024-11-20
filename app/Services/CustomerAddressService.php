@@ -3,7 +3,11 @@
 namespace App\Services;
 
 use App\Enums\QuoteTypes;
+use App\Http\Requests\CustomerAddressRequest;
 use App\Models\CustomerAddress;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class CustomerAddressService
 {
@@ -117,8 +121,23 @@ class CustomerAddressService
         ];
 
         return implode(', ', array_filter(array_map(
-            fn ($key) => $address[$key] ?? null,
+            fn($key) => $address[$key] ?? null,
             $addressOrder
         )));
+    }
+
+    public function validateAddress(Request $request)
+    {
+        $addressRequest = CustomerAddressRequest::createFrom($request);
+
+        // Manually validate the request
+        $validator = Validator::make($addressRequest->all(), $addressRequest->rules());
+
+        if ($validator->fails()) {
+            // Handle validation errors
+            throw new ValidationException($validator);
+        }
+
+        return true; // Validation passed
     }
 }
