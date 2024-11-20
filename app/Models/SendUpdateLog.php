@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -70,5 +71,17 @@ class SendUpdateLog extends Model implements AuditableContract
         return [
             'auditable_type' => self::class,
         ];
+    }
+
+    public function personalQuote(): BelongsTo
+    {
+        return $this->belongsTo(PersonalQuote::class);
+    }
+
+    protected function createdAt(): Attribute
+    {
+        return Attribute::make(
+            get: fn (string $value) => $this->asDateTime($value)->timezone(config('app.timezone'))->format(config('constants.datetime_format'))
+        );
     }
 }

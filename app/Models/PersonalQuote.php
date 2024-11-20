@@ -324,4 +324,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
+
+    public function businessTypeOfInsurance(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(BusinessInsuranceType::class);
+    }
 }

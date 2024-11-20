@@ -14,6 +14,11 @@ class BusinessInsuranceType extends Model implements AuditableContract
 
     protected $table = 'business_type_of_insurance';
 
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');

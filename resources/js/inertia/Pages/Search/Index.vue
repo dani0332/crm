@@ -1,55 +1,215 @@
 <script setup>
 
-const isSendUpdateListView = ref(false);
-const modals = reactive({
-    filterLoading: false,
-    filters: false,
+const props = defineProps({
+    leadsOrEndorsementData: Object,
+    quoteStatuses: Array,
+    paymentStatuses: Array,
+    quoteTypes: Array,
+    businessInsuranceTypes: Array,
+    insuranceProviders: Array,
+    advisors: Array,
 });
 
-const filtersModal = () => {
-    modals.filterLoading = true;
-    modals.filters = true;
-};
+const isSendUpdateListView = ref(false);
+const filterModal = ref(false);
+const cleanObj = obj => useCleanObj(obj);
+const loader = reactive({
+    table: false,
+    export: false,
+});
 
-const resetFilter = () => {
-    modals.filterLoading = false;
-    modals.filters = false;
-};
+function listChange() {
+    isSendUpdateListView.value = !isSendUpdateListView.value;
+    const listType = isSendUpdateListView.value ? 'endorsements' : 'leads';
+    updateTableDetails();
+    router.visit(route('search-leads'), {
+        method: 'get',
+        data: {
+            'list': listType,
+        },
+        preserveState: true,
+        preserveScroll: true,
+        onBefore: () => (loader.table = true),
+        onFinish: () => (loader.table = false),
+    });
+}
 
-const searchRecords = () => {
-    modals.filterLoading = false;
-    modals.filters = false;
-};
+const dateFormat = dateString =>
+    dateString ? useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY hh:mma').value : '';
 
-const leadsListTable = [
-    { text: 'Ref-ID', value: '' },
-    { text: 'First Name', value: '' },
-    { text: 'Last Name', value: '' },
-    { text: 'Company Name', value: '' },
-    { text: 'Line of Business', value: '' },
-    { text: 'Business Insurance Type', value: '' },
-    { text: 'Created Date', value: '' },
-    { text: 'Policy Expiry Date ', value: '' },
-    { text: 'Policy Number', value: '', width: 60, align: 'center' },
-    { text: 'Status', value: '' },
+const getDetailPageRoute = (
+    uuid,
+    quote_type_id,
+    business_type_of_insurance_id,
+) => useGetShowPageRoute(uuid, quote_type_id, business_type_of_insurance_id);
+
+function statusTitleFormat(str) {
+    return str
+        .toLowerCase()              // Convert the entire string to lowercase
+        .replace(/_/g, ' ')          // Replace underscores with spaces
+        .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize the first letter of each word
+}
+
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+    page: 1,
+    sortBy: 'created_at',
+    sortType: 'desc',
+});
+
+let tableHeader = ref([]);
+let tableData = props.leadsOrEndorsementData.data;
+
+function getTableHeader() {
+    return [
+        { text: 'Ref-ID', value: 'code', sortingOrder: 1 },
+        { text: 'First Name', value: 'first_name', sortingOrder: 2 },
+        { text: 'Last Name', value: 'last_name', sortingOrder: 3 },
+        { text: 'Company Name', value: 'company_name', sortingOrder: 4 },
+        { text: 'Line of Business', value: 'quote_type_id', sortingOrder: 5 },
+        { text: 'Business Insurance Type', value: 'business_type_of_insurance_id', sortingOrder: 6 },
+        { text: 'Created Date', value: 'created_at', sortable: true, sortingOrder: 7 },
+        { text: 'Policy Expiry Date ', value: 'policy_expiry_date', sortable: true, sortingOrder: 8 },
+        { text: 'Policy Number', value: 'policy_number', width: 60, align: 'center', sortingOrder: 9 },
+        { text: 'Status', value: 'quote_status_id', sortingOrder: 10 },
+    ];
+}
+
+function updateTableDetails(){
+    tableHeader = ref(getTableHeader());
+    if (isSendUpdateListView.value) {
+        // Define the sortingOrder values to be excluded
+        const excludedSortingOrders = [1, 10];
+        // Filter out columns with sortingOrder matching any of the excludedSortingOrders
+        tableHeader.value = tableHeader.value.filter(item => !excludedSortingOrders.includes(item.sortingOrder));
+        tableHeader.value.push(
+            { text: 'SU Ref-ID', value: 'code', sortingOrder: 1 },
+            { text: 'Type', value: 'category_id', sortingOrder: 10 },
+            { text: 'Sub type', value: 'option_id', sortingOrder: 11 },
+            { text: 'Notes', value: 'notes', sortingOrder: 12 },
+            { text: 'Status', value: 'status', sortingOrder: 13 },
+        );
+    }
+    tableHeader.value.sort((a, b) => a.sortingOrder - b.sortingOrder);
+    tableData = props.leadsOrEndorsementData.data;
+}
+
+const availableFilters = reactive({
+    code: '',
+    insured_name: '',
+    member_name: '',
+    company_name: '',
+    policy_number: '',
+    mobile_no: '',
+    email: '',
+    su_code: '',
+    date_type: '',
+    date_range: '',
+    quote_status: [],
+    payment_status: [],
+    line_of_business: [],
+    business_insurance_type: [],
+    currently_insured_with: [],
+    department: [],
+    advisors: [],
+    insurer_tax_invoice_number: '',
+    insurer_commission_tax_invoice_number: '',
+    update_status: '',
+    send_update_type: '',
+});
+const dateTypesFilter = ref([
+    { value: 'created_date', label: 'Created Date' },
+    { value: 'payment_due_date', label: 'Payment Due Date' },
+    { value: 'payment_date', label: 'Payment Date' },
+    { value: 'transaction_approved_date', label: 'Transaction Approved Date' },
+    { value: 'booking_date', label: 'Booking Date' },
+    { value: 'policy_start_date', label: 'Policy Start Date' },
+    { value: 'policy_end_date', label: 'Policy End Date' },
+]);
+dateTypesFilter.value.sort((a, b) => a.label.localeCompare(b.label));
+
+function onReset() {
+    removedSavedParams();
+    router.visit(route('search-leads'));
+}
+
+function onSubmit(isValid) {
+    if (isValid) {
+        // if (validateDateRange()) {
+        //     notification.error({
+        //         title:
+        //             'The selected date range exceeds one month. Please select a range within one month.',
+        //         position: 'top',
+        //     });
+        //     return;
+        // }
+
+        const filtersCleaned = cleanObj(availableFilters);
+        filtersCleaned.list = isSendUpdateListView.value ? 'endorsements' : 'leads';
+        filtersCount.value = Object.keys(filtersCleaned).length;
+        serverOptions.value.page = 1;
+        filterModal.value = false;
+
+        router.visit(route('search-leads'), {
+            method: 'get',
+            data: {
+                ...filtersCleaned,
+                ...serverOptions.value,
+            },
+            preserveState: true,
+            preserveScroll: true,
+            onBefore: () => (loader.table = true),
+            onFinish: () => (loader.table = false),
+        });
+    } else {
+        console.log('Validation failed');
+    }
+}
+
+const [
+    today,
+    last7Days,
+    last30Days,
+    lastMonthStart,
+    lastMonthEnd,
+    thisMonthStart,
+    thisMonthEnd,
+] = useDateRange();
+
+const presetDates = [
+    {
+        label: 'Today',
+        value: [today, today],
+    },
+    {
+        label: 'Last 7 days',
+        value: [last7Days, today],
+    },
+    {
+        label: 'Last 30 days',
+        value: [last30Days, today],
+    },
+    {
+        label: 'Last month',
+        value: [lastMonthStart, lastMonthEnd],
+    },
+    {
+        label: 'This month',
+        value: [thisMonthStart, thisMonthEnd],
+    },
 ];
 
-const sendUpdateListTable = [
-    { text: 'SU Ref-ID', value: '' },
-    { text: 'First Name', value: '' },
-    { text: 'Last Name', value: '' },
-    { text: 'Company Name', value: '' },
-    { text: 'Line of Business', value: '' },
-    { text: 'Business Insurance Type', value: '' },
-    { text: 'Created Date', value: '' },
-    { text: 'Policy Expiry Date ', value: '' },
-    { text: 'Policy Number', value: '', width: 60, align: 'center' },
-    { text: 'Type', value: '' },
-    { text: 'Sub type', value: '' },
-    { text: 'Notes', value: '' },
-    { text: 'Status', value: '' },
-];
 
+watch(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('list') === 'endorsements') {
+        isSendUpdateListView.value = true;
+    } else {
+        isSendUpdateListView.value = false;
+    }
+    updateTableDetails();
+});
 
 </script>
 
@@ -57,15 +217,21 @@ const sendUpdateListTable = [
     <div>
         <Head title="Search" />
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">{{ isSendUpdateListView ? 'Send Update' : 'Lead'}} List</h2>
+            <x-tooltip placement="bottom">
+                <h2 class="font-semibold text-gray-800 text-xl underline decoration-dotted decoration-primary-600">{{ isSendUpdateListView ? 'Send Update' : 'Lead'}} List</h2>
+                <template #tooltip>{{ isSendUpdateListView ?
+                    'Displays here are the requests created or booked under send update' :
+                    'Displays here are the leads created or booked under the main lead' }}
+                </template>
+            </x-tooltip>
             <div class="space-x-3">
                 <x-button size="sm" color="emerald">
                     Export to Excel
                 </x-button>
-                <x-button size="sm" color="primary" @click="isSendUpdateListView=!isSendUpdateListView">
+                <x-button size="sm" color="primary" @click="listChange()">
                     {{ isSendUpdateListView ? 'Lead' : 'Send Update'}} List
                 </x-button>
-                <x-button size="sm" color="orange" @click.prevent="filtersModal" :loading="modals.filterLoading">
+                <x-button size="sm" color="orange" @click.prevent="filterModal = true">
                     <x-icon
                         icon="magnifyingGlass"
                         size="sm"
@@ -75,37 +241,381 @@ const sendUpdateListTable = [
                 </x-button>
             </div>
         </div>
+
         <x-divider class="my-4" />
+
         <DataTable
             table-class-name="tablefixed"
-            :headers="isSendUpdateListView ? sendUpdateListTable : leadsListTable"
-            :items="[]"
+            :headers="tableHeader"
+            :loading="loader.table"
+            :items="tableData || []"
             border-cell
             hide-rows-per-page
             hide-footer
         >
+            <!-- Datatable Header Tooltips Start -->
+            <template #header-code="header">
+                <x-tooltip placement="top">
+                    <p class="underline decoration-dotted">
+                        {{ header.text }}
+                    </p>
+                    <template #tooltip>{{ isSendUpdateListView ?
+                        'A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.' :
+                        'Ref ID of the lead/policy' }}</template>
+                </x-tooltip>
+            </template>
+
+            <template #header-quote_type_id="header">
+                <x-tooltip placement="top">
+                    <p class="underline decoration-dotted">
+                        {{ header.text }}
+                    </p>
+                    <template #tooltip>Line of business of the lead</template>
+                </x-tooltip>
+            </template>
+
+            <template #header-business_type_of_insurance_id="header">
+                <x-tooltip placement="top">
+                    <p class="underline decoration-dotted">
+                        {{ header.text }}
+                    </p>
+                    <template #tooltip>The business insurance type (i.e. property, holiday homes, etc). This is only applicable for Business/Corpline</template>
+                </x-tooltip>
+            </template>
+
+            <template v-if="isSendUpdateListView" #header-created_at="header">
+                <x-tooltip placement="top">
+                    <p class="underline decoration-dotted">
+                        {{ header.text }}
+                    </p>
+                    <template #tooltip>The date when the "Send Update" request was created. It indicates when the action was initiated</template>
+                </x-tooltip>
+            </template>
+
+            <template v-if="! isSendUpdateListView" #header-policy_number="header">
+                <x-tooltip placement="top">
+                    <p class="underline decoration-dotted">
+                        {{ header.text }}
+                    </p>
+                    <template #tooltip>The policy number of the lead</template>
+                </x-tooltip>
+            </template>
+
+            <template v-if="! isSendUpdateListView" #header-quote_status_id="header">
+                <x-tooltip placement="top">
+                    <p class="underline decoration-dotted">
+                        {{ header.text }}
+                    </p>
+                    <template #tooltip>The status of the lead</template>
+                </x-tooltip>
+            </template>
+
+            <template v-if="isSendUpdateListView" #header-status="header">
+                <x-tooltip placement="top">
+                    <p class="underline decoration-dotted">
+                        {{ header.text }}
+                    </p>
+                    <template #tooltip>The current status of the "Send Update" request, indicating whether it is pending, transaction approved, or declined, among other possible states.
+                    </template>
+                </x-tooltip>
+            </template>
+
+            <template v-if="isSendUpdateListView" #header-category_id="header">
+                <x-tooltip placement="top">
+                    <p class="underline decoration-dotted">
+                        {{ header.text }}
+                    </p>
+                    <template #tooltip>The type of "Send Update" request, categorizing the nature of the action being taken.</template>
+                </x-tooltip>
+            </template>
+
+            <template v-if="isSendUpdateListView" #header-option_id="header">
+                <x-tooltip placement="top">
+                    <p class="underline decoration-dotted">
+                        {{ header.text }}
+                    </p>
+                    <template #tooltip>A further classification of the "Send Update" request, providing additional context or details.</template>
+                </x-tooltip>
+            </template>
+            <!-- Datatable Header Tooltips End -->
+
+            <template #item-code="{ code, uuid, quote_type_id, business_type_of_insurance_id }">
+                <Link
+                    :href="(isSendUpdateListView) ? '' : getDetailPageRoute(
+                          uuid,
+                          quote_type_id,
+                          business_type_of_insurance_id,
+                        )"
+                    class="text-primary-500 hover:underline flex items-center space-x-1"
+                >
+                    <span>{{ code }}</span>
+                </Link>
+            </template>
+            <template v-if="isSendUpdateListView" #item-first_name="{ personal_quote }">
+                {{ personal_quote?.first_name }}
+            </template>
+            <template v-if="isSendUpdateListView" #item-last_name="{ personal_quote }">
+                {{ personal_quote?.last_name }}
+            </template>
+            <template #item-quote_type_id="{ quote_type }">
+               {{ quote_type?.code }}
+            </template>
+            <!-- Need to remove hardcoded quoteTypeId  -->
+            <template #item-business_type_of_insurance_id="{ business_type_of_insurance, quote_type_id }">
+                {{ (quote_type_id === 5) ? business_type_of_insurance?.text : 'N/A' }}
+            </template>
+            <template #item-policy_expiry_date="{ policy_expiry_date, personal_quote }">
+                {{ isSendUpdateListView ? dateFormat(personal_quote?.policy_expiry_date) : dateFormat(policy_expiry_date) }}
+            </template>
+            <template #item-policy_number="{ policy_number, personal_quote }">
+                {{ (isSendUpdateListView ? personal_quote?.policy_number : policy_number) ?? 'N/A' }}
+            </template>
+            <template v-if="isSendUpdateListView" #item-category_id="{ category }">
+                {{ category?.text }}
+            </template>
+            <template v-if="isSendUpdateListView" #item-option_id="{ option }">
+                {{ option?.text }}
+            </template>
+            <template v-if="!isSendUpdateListView" #item-quote_status_id="{ quote_status, policy_number }">
+                {{  (policy_number == null) ? 'N/A' : quote_status?.text }}
+            </template>
+            <template v-if="isSendUpdateListView" #item-status="{ status }">
+                {{  statusTitleFormat(status) }}
+            </template>
         </DataTable>
+
+        <Pagination
+            :links="{
+            next: leadsOrEndorsementData.next_page_url,
+            prev: leadsOrEndorsementData.prev_page_url,
+            current: leadsOrEndorsementData.current_page,
+            from: leadsOrEndorsementData.from,
+            to: leadsOrEndorsementData.to,
+          }"
+        />
+
         <x-modal
-            v-model="modals.filters"
+            v-model="filterModal"
             size="lg"
             title="Search Filters"
             show-close
             backdrop
+            is-form
+            @submit="onSubmit"
         >
-            <template #title>
-                <h2 class="text-lg font-semibold">Search Filters</h2>
-            </template>
-            <template #body>
-                <div class="space-y-4">
-                    <x-input label="Subject" />
-                    <x-textarea label="Message" />
+            <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <x-tooltip placement="bottom">
+                        <label
+                            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+                        >
+                            Ref-ID
+                        </label>
+                        <template #tooltip> Reference ID </template>
+                    </x-tooltip>
+                    <x-input
+                        v-model="availableFilters.code"
+                        type="search"
+                        name="code"
+                        class="w-full"
+                        placeholder="Search by Ref-ID"
+                    />
                 </div>
+                <x-field label="Insured Name">
+                    <x-input
+                        v-model="availableFilters.insured_name"
+                        type="search"
+                        name="insured_name"
+                        class="w-full"
+                        placeholder="Search by Insured Name"
+                    />
+                </x-field>
+                <x-field label="Member Name">
+                    <x-input
+                        v-model="availableFilters.member_name"
+                        type="search"
+                        name="member_name"
+                        class="w-full"
+                        placeholder="Search by Member Name"
+                    />
+                </x-field>
+                <x-field label="Company Name">
+                    <x-input
+                        v-model="availableFilters.company_name"
+                        type="search"
+                        name="company_name"
+                        class="w-full"
+                        placeholder="Search by Company Name"
+                    />
+                </x-field>
+                <x-field label="Policy Number">
+                    <x-input
+                        v-model="availableFilters.policy_number"
+                        type="search"
+                        name="policy_number"
+                        class="w-full"
+                        placeholder="Search by Policy Number"
+                    />
+                </x-field>
+                <x-field label="Mobile Number">
+                    <x-input
+                        v-model="availableFilters.mobile_no"
+                        type="search"
+                        name="mobile_no"
+                        class="w-full"
+                        placeholder="Search by Mobile Number"
+                    />
+                </x-field>
+                <x-field label="Email">
+                    <x-input
+                        v-model="availableFilters.email"
+                        type="search"
+                        name="email"
+                        class="w-full"
+                        placeholder="Search by Email"
+                    />
+                </x-field>
+                <x-field label="SU Ref-ID">
+                    <x-input
+                        v-model="availableFilters.su_code"
+                        type="search"
+                        name="su_code"
+                        class="w-full"
+                        placeholder="Search by SU Ref-ID"
+                    />
+                </x-field>
+                <x-field label="Search By Date Type">
+                    <x-select
+                        v-model="availableFilters.date_type"
+                        placeholder="Search By Date Type"
+                        :options="dateTypesFilter"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Date Range">
+                    <DatePicker
+                        v-model="availableFilters.date_range"
+                        :disabled="!availableFilters.date_type"
+                        range
+                        :max-range="365"
+                        size="sm"
+                        placeholder="Select Date Range"
+                        model-type="yyyy-MM-dd"
+                        :preset-dates="presetDates"
+                    />
+                </x-field>
+                <x-field label="Lead Status">
+                    <ComboBox
+                        v-model="availableFilters.quote_status"
+                        name="quote_status"
+                        placeholder="Search by Lead Status"
+                        :options="quoteStatuses.map(item => ({
+                            value: item.id,
+                            label: item.text,
+                        }))"
+                    />
+                </x-field>
+                <x-field label="Payment Status">
+                    <ComboBox
+                        v-model="availableFilters.payment_status"
+                        name="payment_status"
+                        placeholder="Search by Payment Status"
+                        :options="paymentStatuses.map(item => ({
+                            value: item.id,
+                            label: item.text,
+                        }))"
+                    />
+                </x-field>
+                <x-field label="Line of Business">
+                    <ComboBox
+                        v-model="availableFilters.line_of_business"
+                        name="line_of_business"
+                        placeholder="Search by Line of Business"
+                        :options="quoteTypes.map(item => ({
+                            value: item.id,
+                            label: item.text,
+                        }))"
+                    />
+                </x-field>
+                <x-field label="Business Insurance Type">
+                    <ComboBox
+                        v-model="availableFilters.business_insurance_type"
+                        name="business_insurance_type"
+                        placeholder="Search by Business Insurance Type"
+                        :options="businessInsuranceTypes.map(item => ({
+                            value: item.id,
+                            label: item.text,
+                        }))"
+                    />
+                </x-field>
+                <x-field label="Currently Insured with">
+                    <ComboBox
+                        v-model="availableFilters.currently_insured_with"
+                        name="currently_insured_with"
+                        placeholder="Search by Currently Insured with"
+                        :options="insuranceProviders.map(item => ({
+                            value: item.id,
+                            label: item.text,
+                        }))"
+                    />
+                </x-field>
+                <x-field label="Department">
+                    <ComboBox
+                        v-model="availableFilters.department"
+                        name="department"
+                        placeholder="Search by Department"
+                        :options="[]"
+                    />
+                </x-field>
+                <x-field label="Advisor">
+                    <ComboBox
+                        v-model="availableFilters.advisors"
+                        name="advisors"
+                        placeholder="Search by Advisor"
+                        :options="[]"
+                    />
+                </x-field>
+                <x-field label="Insurer Tax Invoice No">
+                    <x-input
+                        v-model="availableFilters.insurer_tax_invoice_number"
+                        type="search"
+                        name="insurer_tax_invoice_number"
+                        class="w-full"
+                        placeholder="Search by Insurer Tax Invoice No"
+                    />
+                </x-field>
+                <x-field label="Insurer Commission Tax Invoice No">
+                    <x-input
+                        v-model="availableFilters.insurer_commission_tax_invoice_number"
+                        type="search"
+                        name="insurer_commission_tax_invoice_number"
+                        class="w-full"
+                        placeholder="Search by Insurer Commission Tax Invoice No"
+                    />
+                </x-field>
+                <x-field v-if="isSendUpdateListView" label="Update Status">
+                    <x-select
+                        v-model="availableFilters.update_status"
+                        placeholder="Search By Update Status"
+                        :options="[]"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field v-if="isSendUpdateListView" label="Send Update Type">
+                    <x-select
+                        v-model="availableFilters.send_update_type"
+                        placeholder="Search By Send Update Type"
+                        :options="[]"
+                        class="w-full"
+                    />
+                </x-field>
+            </div>
+            <template #primary-action>
+                <!--                tabindex="-1"-->
+                <x-button size="sm" color="primary" @click="filterModal = false" @click.prevent="onReset">Reset</x-button>
             </template>
-            <template #footer>
-                <div class="flex justify-end space-x-3">
-                    <x-button size="sm" color="orange" @click="searchRecords">Search</x-button>
-                    <x-button size="sm" color="primary" @click="resetFilter">Reset</x-button>
-                </div>
+            <template #secondary-action>
+                <x-button size="sm" color="orange" type="submit">Search</x-button>
             </template>
         </x-modal>
     </div>

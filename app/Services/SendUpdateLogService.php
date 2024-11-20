@@ -1491,4 +1491,14 @@ class SendUpdateLogService
     {
         return app(CentralService::class)->commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId);
     }
+
+    public function sendUpdateStatuses(): array
+    {
+        return [
+            SendUpdateLogStatusEnum::NEW_REQUEST,
+            SendUpdateLogStatusEnum::UPDATE_BOOKED,
+
+        ];
+    }
+
 }
