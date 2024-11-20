@@ -10,6 +10,7 @@ const props = defineProps({
   filters: Array,
   productName: String,
   retentionReportEnum: Array,
+  departments: Array,
 });
 
 const page = usePage();
@@ -49,6 +50,7 @@ const getFiltersObject = () => {
   return {
     lob: props.productName,
     displayBy: '',
+    department: '',
     policyExpiryDate: [],
     asAtDate: '',
     teams: [],
@@ -172,6 +174,34 @@ const loadAdvisorsByLob = e => {
     });
 };
 
+const loadAdvisorsByDepartment = e => {
+  if (e.length == 0) {
+    return;
+  }
+
+  if (isMounted.value) {
+    isDirty.value = true;
+  }
+
+  loaders.advisorOptions = true;
+
+  axios
+    .post(`/reports/fetch-advisors-by-department`, {
+      department_id: e,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
+};
+
 const onTeamChange = (e, isOnMounted = false) => {
   if (!isOnMounted) {
     filters.advisors = [];
@@ -180,11 +210,20 @@ const onTeamChange = (e, isOnMounted = false) => {
   loadAdvisors(e);
 };
 
+const onDepartmentChange = (e, isOnMounted = false) => {
+  if (!isOnMounted) {
+    filters.advisors = [];
+    advisorOptions.value = [];
+  }
+  loadAdvisorsByDepartment(e);
+};
+
 const onLobChange = (e, isOnMounted = false) => {
   if (!isOnMounted) {
     filters.teams = [];
     filters.advisors = [];
     advisorOptions.value = [];
+    filters.department = '';
     filters.displayBy = '';
     filters.policyExpiryDate = [];
     filters.asAtDate = '';
@@ -194,9 +233,7 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.insurance_type = '';
   }
 
-  if (
-    [quoteTypeCodeEnum.Health, quoteTypeCodeEnum.CORPLINE].includes(filters.lob)
-  ) {
+  if ([quoteTypeCodeEnum.CORPLINE].includes(filters.lob)) {
     loadTeams(e);
   } else {
     loadAdvisorsByLob(e);
@@ -224,9 +261,7 @@ const isDisabled = element => {
 const getAdvisorLabel = () => {
   let label = 'Advisors';
   if (
-    [quoteTypeCodeEnum.Health, quoteTypeCodeEnum.CORPLINE].includes(
-      filters.lob,
-    ) &&
+    [quoteTypeCodeEnum.CORPLINE].includes(filters.lob) &&
     (!filters.teams || filters.teams.length == 0)
   ) {
     label = 'Advisors (select teams first)';
@@ -278,10 +313,17 @@ onMounted(() => {
     filters.displayBy = RetentionReportEnum.BATCH;
     filters.lob = props.productName;
   }
-  if (
-    [quoteTypeCodeEnum.Health, quoteTypeCodeEnum.CORPLINE].includes(filters.lob)
-  ) {
+  filters.department = queryParams.get('department')
+    ? +queryParams.get('department')
+    : '';
+
+  if ([quoteTypeCodeEnum.CORPLINE].includes(filters.lob)) {
     loadTeams(filters.lob);
+  } else if (
+    [quoteTypeCodeEnum.Health].includes(filters.lob) &&
+    filters.department
+  ) {
+    loadAdvisorsByDepartment(filters.department);
   } else {
     loadAdvisorsByLob(filters.lob);
   }
@@ -730,6 +772,16 @@ function handleDateChange(dateRange) {
           :options="teamOptions"
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
+        />
+
+        <ComboBox
+          v-model="filters.department"
+          placeholder="Select Department"
+          label="Department"
+          :options="departments"
+          class="w-full"
+          @update:model-value="onDepartmentChange"
+          :single="true"
         />
 
         <ComboBox
