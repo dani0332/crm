@@ -104,7 +104,7 @@ class CustomerAddressService
         }
     }
 
-    public function fetchFormattedAddress($address)
+    private function fetchFormattedAddress($address)
     {
         $addressOrder = [
             'villa_apartment_office_no',
