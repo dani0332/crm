@@ -2244,7 +2244,7 @@ class CarQuoteService extends BaseService
         ) {
             info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
             $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
-            $address = fetchFormattedAddress($address);
+            $address = app(CustomerAddressService::class)->fetchFormattedAddress($address);
             $customerAdditionalContact = CustomerAdditionalContact::select('value')
                 ->firstWhere([
                     ['customer_id', $lead->customer_id],

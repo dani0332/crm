@@ -2,13 +2,12 @@
 
 namespace App\Observers;
 
-use App\Enums\BirdFlowStatusEnum;
-use App\Enums\EmbeddedProductEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Facades\Ken;
+use App\Jobs\AddressReminderJob;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
@@ -92,36 +91,11 @@ class CarQuoteObserver
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
 
             // check if policy is issued and address is not entered then call KEN API
-            $this->sendAddressReminderOnPolicyIssue($lead);
-        }
-    }
-
-    public function sendAddressReminderOnPolicyIssue(CarQuote $lead)
-    {
-        info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : '.$lead->uuid);
-        $address = CustomerAddress::where('quote_uuid', $lead->uuid)->first();
-        if (! $address) {
-            // send address reminder to customer if address is not entered
-            if ($lead->embeddedTransactions()->exists()) {
-                $courierEmbeddedTransaction = $lead->embeddedTransactions
-                    ->filter(function ($transaction) {
-                        return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
-                    });
-            }
-
-            if (
-                $courierEmbeddedTransaction->isNotEmpty()
-            ) {
-                info('Triggering Bird Courier Flow for policy reminder for lead : '.$lead->uuid);
-                $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
-                $payload = [
-                    'quoteUID' => $lead->uuid,
-                    'quoteTypeId' => (int) QuoteTypes::CAR->id(),
-                    'actionType' => BirdFlowStatusEnum::POLICY_ISSUED,
-                    'refId' => $embeddedTransactionRefId,
-                ];
-
-                Ken::request('/trigger-bird-courier-flow', 'post', $payload);
+            // Dispatch the job for sending an address reminder
+            info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : '.$lead->uuid);
+            $address = CustomerAddress::where('quote_uuid', $lead->uuid)->first();
+            if (! $address) {
+                AddressReminderJob::dispatch($lead);
             }
         }
     }

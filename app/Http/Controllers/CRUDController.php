@@ -38,14 +38,12 @@ use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePolicyDetailRequest;
-use App\Http\Requests\ValidateAddressRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
-use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -78,6 +76,7 @@ use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
@@ -160,7 +159,7 @@ class CRUDController extends Controller
         SendEmailCustomerService $sendEmailCustomerService,
         QuoteDocumentService $quoteDocumentService,
         EmailDataService $emailDataService,
-        AllocationService $allocationService,
+        AllocationService $allocationService
     ) {
         $this->genericModel = new GenericModel;
         $this->healthQuoteService = $healthService;
@@ -512,14 +511,14 @@ class CRUDController extends Controller
         }
 
         $this->validate($request, $validateArray);
-        $this->validateAddress($request);
+        app(CustomerAddressService::class)->validateAddress($request);
         $record = $this->crudService->saveModelByType($modelType, $request);
 
         if ($record) {
             $customerId = $this->customerService->getCustomerIdByEmail($request->email);
 
             if ($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) {
-                $this->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $record->quoteUID);
+                app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $record->quoteUID);
             }
         }
 
@@ -1328,7 +1327,7 @@ class CRUDController extends Controller
 
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         $this->validate($request, $validateArray);
-        $this->validateAddress($request);
+        app(CustomerAddressService::class)->validateAddress($request);
         $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
         // check if request addressObj is not empty then insert/update the address of user in customer address table
@@ -1338,7 +1337,7 @@ class CRUDController extends Controller
             $lead = CarQuote::where('uuid', $id)->first();
             if ($lead) {
                 $this->carQuoteService->sendAddressNotificationToCustomer($lead, $request->input('addressObj'));
-                $this->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $id);
+                app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $id);
                 SyncCourierQuoteWithMacrm::dispatch($lead, QuoteTypeId::Car);
             }
         }
@@ -2261,109 +2260,5 @@ class CRUDController extends Controller
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
-    }
-
-    public function createOrUpdateAddress(array $address)
-    {
-        info('Attempting to save CustomerAddress:', [
-            'customer_id' => $address['customer_id'],
-            'quote_uuid' => $address['quote_uuid'],
-        ]);
-
-        try {
-            // Find the existing record by customer_id and quote_uuid
-            $customerAddress = CustomerAddress::where([
-                'customer_id' => $address['customer_id'],
-                'quote_uuid' => $address['quote_uuid'],
-            ])->first();
-
-            if ($customerAddress) {
-                // Fill the model with new data
-                $customerAddress->fill([
-                    'type' => $address['address_type'],
-                    'quote_type_id' => $address['quote_type_id'],
-                    'office_number' => $address['office_number'],
-                    'floor_number' => $address['floor_number'],
-                    'building_name' => $address['building_name'],
-                    'street' => $address['street'],
-                    'area' => $address['area'],
-                    'city' => $address['city'],
-                    'landmark' => $address['landmark'],
-                    'is_default' => $address['is_default'],
-                ]);
-
-                // Check if any fields are dirty (modified)
-                if ($customerAddress->isDirty()) {
-                    $customerAddress->save(); // Save only if changes exist
-                    info(
-                        'CustomerAddress updated successfully:',
-                        ['customer_address_id' => $customerAddress->id],
-                        ['quote_uuid' => $customerAddress->quote_uuid],
-                    );
-                } else {
-                    info(
-                        'No changes detected in CustomerAddress:',
-                        ['customer_address_id' => $customerAddress->id],
-                        ['quote_uuid' => $customerAddress->quote_uuid],
-                    );
-                }
-            } else {
-                // If no record exists, create a new one
-                $customerAddress = CustomerAddress::create([
-                    'customer_id' => $address['customer_id'],
-                    'quote_uuid' => $address['quote_uuid'],
-                    'type' => $address['address_type'],
-                    'quote_type_id' => $address['quote_type_id'],
-                    'office_number' => $address['office_number'],
-                    'floor_number' => $address['floor_number'],
-                    'building_name' => $address['building_name'],
-                    'street' => $address['street'],
-                    'area' => $address['area'],
-                    'city' => $address['city'],
-                    'landmark' => $address['landmark'],
-                    'is_default' => $address['is_default'],
-                ]);
-                info(
-                    'CustomerAddress created successfully:',
-                    ['customer_address_id' => $customerAddress->id],
-                    ['quote_uuid' => $customerAddress->quote_uuid],
-                );
-            }
-        } catch (\Exception $e) {
-            // Log the error if something goes wrong
-            Log::error('Error saving CustomerAddress:', [
-                'customer_id' => $address['customer_id'],
-                'quote_uuid' => $address['quote_uuid'],
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid)
-    {
-        if (! empty(array_filter((array) $address))) {
-            $address = [
-                'customer_id' => $customerId,
-                'address_type' => $address['address_type'],
-                'quote_type_id' => QuoteTypes::CAR->id(),
-                'quote_uuid' => $quoteUuid,
-                'office_number' => $address['villa_apartment_office_no'],
-                'floor_number' => $address['floor_no'],
-                'building_name' => $address['villa_building_name'],
-                'street' => $address['street_name'],
-                'area' => $address['area'],
-                'city' => $address['city'],
-                'landmark' => $address['landmark'],
-                'is_default' => $address['address_type'] == 'Home' ? 1 : 0,
-            ];
-            $this->createOrUpdateAddress($address);
-        }
-    }
-
-    public function validateAddress(Request $request)
-    {
-        $addressRequest = ValidateAddressRequest::createFrom($request);
-
-        return app()->call([$addressRequest, 'validateResolved']);
     }
 }
