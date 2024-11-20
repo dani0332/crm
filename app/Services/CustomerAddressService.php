@@ -7,7 +7,6 @@ use App\Models\CustomerAddress;
 
 class CustomerAddressService
 {
-
     public function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid)
     {
         if (! empty(array_filter((array) $address))) {

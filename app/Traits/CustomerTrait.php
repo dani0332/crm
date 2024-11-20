@@ -2,9 +2,6 @@
 
 namespace App\Traits;
 
-use App\Enums\QuoteTypes;
-use Illuminate\Http\File;
-
 trait CustomerTrait
 {
     public function fetchFormattedAddress($address)
@@ -20,7 +17,7 @@ trait CustomerTrait
         ];
 
         return implode(', ', array_filter(array_map(
-            fn($key) => $address[$key] ?? null,
+            fn ($key) => $address[$key] ?? null,
             $addressOrder
         )));
     }

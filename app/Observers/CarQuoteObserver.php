@@ -2,8 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\BirdFlowStatusEnum;
-use App\Enums\EmbeddedProductEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -94,7 +92,7 @@ class CarQuoteObserver
 
             // check if policy is issued and address is not entered then call KEN API
             // Dispatch the job for sending an address reminder
-            info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : ' . $lead->uuid);
+            info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : '.$lead->uuid);
             $address = CustomerAddress::where('quote_uuid', $lead->uuid)->first();
             if (! $address) {
                 AddressReminderJob::dispatch($lead);
