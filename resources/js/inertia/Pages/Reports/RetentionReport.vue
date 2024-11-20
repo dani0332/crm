@@ -775,6 +775,7 @@ function handleDateChange(dateRange) {
         />
 
         <ComboBox
+          v-if="canShow('department')"
           v-model="filters.department"
           placeholder="Select Department"
           label="Department"
