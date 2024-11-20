@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\quoteTypeCode;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ValidateAddressRequest extends FormRequest
+class CustomerAddressRequest extends FormRequest
 {
     const STRING_REQUIRED_MAX_100 = 'sometimes|required|string|max:100';
     /**
