@@ -117,7 +117,7 @@ class CustomerAddressService
         ];
 
         return implode(', ', array_filter(array_map(
-            fn($key) => $address[$key] ?? null,
+            fn ($key) => $address[$key] ?? null,
             $addressOrder
         )));
     }
