@@ -86,7 +86,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - TravelQuotePlanDetails ID : '.$selectedPlan?->id);
 
-
                 $travelType = TravelQuoteEnum::ALLIANCE_IN_BOUND;
                 $directionCode = $quote->direction_code;
                 if ($directionCode === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND) {
