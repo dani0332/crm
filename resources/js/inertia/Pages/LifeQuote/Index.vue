@@ -113,7 +113,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Renewal Batch',
-    value: 'renewal_batch_model.name',
+    value: 'renewal_batch_model',
     is_active: true,
   },
 ]);
@@ -724,7 +724,7 @@ watch(
           </x-tag>
         </div>
       </template> -->
-      <template #item-renewal_batch_model.name="item">
+      <template #item-renewal_batch_model="item">
         <p v-if="item.renewal_batch_model != null">
           {{ item.renewal_batch_model.name }}
         </p>
