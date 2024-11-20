@@ -3,6 +3,7 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   teams: Object,
   userMaxCap: Number,
   todayAutoCount: Number,
@@ -152,7 +153,7 @@ const filters = reactive({
   is_ecommerce: '',
   is_renewal: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   date: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
@@ -219,6 +220,13 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+})
 
 const modifiedAdvisorOptions = ref([]);
 
@@ -749,14 +757,20 @@ watch(() => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
+        <ComboBox
+          v-model="filters.renewal_batches"
+          label="Renewal Batch"
+          placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
+        />
+        <!-- <x-input
           v-model="filters.renewal_batch"
           type="text"
           name="renewal_batch"
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
-        />
+        /> -->
 
         <DatePicker
           v-if="!hasAnyRole([rolesEnum.CarAdvisor])"

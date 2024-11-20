@@ -90,6 +90,7 @@ use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
@@ -247,6 +248,7 @@ class CRUDController extends Controller
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $isLeadPool = Auth::user()->isLeadPool();
         $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
         $dropdownSource = $customTitles = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -285,6 +287,7 @@ class CRUDController extends Controller
 
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
+                'renewalBatches' => $renewalBatches,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
                 'teams' => $teams,
@@ -310,6 +313,7 @@ class CRUDController extends Controller
 
             return inertia('HomeQuote/Index', [
                 'quotes' => $gridData,
+                'renewalBatches' => $renewalBatches,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
