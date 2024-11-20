@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 
 class CustomerAddressService
 {
-    private function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid)
+    public function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid)
     {
         if (! empty(array_filter((array) $address))) {
             $address = [
@@ -32,7 +32,7 @@ class CustomerAddressService
         }
     }
 
-    private function createOrUpdateAddress(array $address)
+    public function createOrUpdateAddress(array $address)
     {
         info('Attempting to save CustomerAddress:', [
             'customer_id' => $address['customer_id'],
@@ -108,7 +108,7 @@ class CustomerAddressService
         }
     }
 
-    private function fetchFormattedAddress($address)
+    public function fetchFormattedAddress($address)
     {
         $addressOrder = [
             'villa_apartment_office_no',
@@ -126,7 +126,7 @@ class CustomerAddressService
         )));
     }
 
-    private function validateAddress(Request $request)
+    public function validateAddress(Request $request)
     {
         $addressRequest = CustomerAddressRequest::createFrom($request);
 
