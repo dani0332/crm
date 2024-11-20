@@ -36,15 +36,13 @@ class TravelAllocationService extends AllocationService
             info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - isParentLead : '.$travelQuote->isParentLead());
 
             // Check if the lead is associated with the ALNC provider
-            /*$payment = $travelQuote->payments()->mainLeadPayment()->first();
-            $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);*/
-
-            $selectedPlan = $travelQuote?->travelQuotePlanDetails()->where('plan_id', $travelQuote->plan_id)->first();
-            $insurerCode = $selectedPlan?->provider_code;
+            $payment = $travelQuote->payments()->mainLeadPayment()->first();
+            $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
+            $insurerCode = $insurer?->code;
 
             $isALNC = $insurerCode == InsuranceProvidersEnum::ALNC;
 
-            info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - isALNC : '.$isALNC.' - Insurer Code : '.$insurerCode.' - Plan ID : '.$selectedPlan?->id);
+            info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - isALNC : '.$isALNC.' - Insurer Code : '.$insurerCode.' - Payment ID : '.$payment?->code);
             // Check if the insurer_api_status_id is in the list of failed statuses
             $isFailedStatus = in_array($travelQuote->insurer_api_status_id, [
                 PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID,
