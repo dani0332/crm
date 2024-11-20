@@ -38,7 +38,9 @@ use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePolicyDetailRequest;
+use App\Http\Requests\ValidateAddressRequest;
 use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -86,6 +88,7 @@ use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
 use App\Services\LookupService;
+use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
 use App\Services\PetQuoteService;
@@ -509,7 +512,16 @@ class CRUDController extends Controller
         }
 
         $this->validate($request, $validateArray);
+        $this->validateAddress($request);
         $record = $this->crudService->saveModelByType($modelType, $request);
+
+        if ($record) {
+            $customerId = $this->customerService->getCustomerIdByEmail($request->email);
+
+            if ($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) {
+                $this->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $record->quoteUID);
+            }
+        }
 
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
@@ -1262,6 +1274,10 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
+            $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($record->uuid, QuoteTypeId::Car);
+            $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
+                ? $courierQuoteResponse['data']['status']
+                : 'Pending';
 
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
@@ -1270,6 +1286,7 @@ class CRUDController extends Controller
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
                 'customerAddressData' => $customerAddressData,
+                'courierQuoteStatus' => $courierQuoteStatus,
             ]);
         }
 
@@ -1311,27 +1328,19 @@ class CRUDController extends Controller
 
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         $this->validate($request, $validateArray);
+        $this->validateAddress($request);
         $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+
         // check if request addressObj is not empty then insert/update the address of user in customer address table
-        if (! empty($request->addressObj)) {
-            $addressObj = $request->addressObj;
-            $customerId = $this->customerService->getCustomerIdByEmail($request->email);
-            $quoteUuid = $id;
-            $dataObject = [
-                'customer_id' => $customerId,
-                'address_type' => $addressObj['address_type'],
-                'quote_type_id' => QuoteTypes::CAR->id(),
-                'quote_uuid' => $quoteUuid,
-                'office_number' => $addressObj['villa_apartment_office_no'],
-                'floor_number' => $addressObj['floor_no'],
-                'building_name' => $addressObj['villa_building_name'],
-                'street' => $addressObj['street_name'],
-                'area' => $addressObj['area'],
-                'city' => $addressObj['city'],
-                'landmark' => $addressObj['landmark'],
-                'is_default' => $addressObj['address_type'] == 'Home' ? 1 : 0,
-            ];
-            $this->saveCustomerAddress($dataObject);
+        $customerId = $this->customerService->getCustomerIdByEmail($request->email);
+
+        if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) && $modelType == quoteTypeCode::Car) {
+            $lead = CarQuote::where('uuid', $id)->first();
+            if ($lead) {
+                $this->carQuoteService->sendAddressNotificationToCustomer($lead, $request->input('addressObj'));
+                $this->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $id);
+                SyncCourierQuoteWithMacrm::dispatch($lead, QuoteTypeId::Car);
+            }
         }
         if (! is_null($response) && ! $response) {
             return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id.'/edit')->with('error', json_decode($request->modelType, true).' has not been updated');
@@ -2254,32 +2263,107 @@ class CRUDController extends Controller
         return $response;
     }
 
-    public function saveCustomerAddress(array $dataObject)
+    public function createOrUpdateAddress(array $address)
     {
-        Log::info('Attempting to save CustomerAddress: ', ['customer_id' => $dataObject['customer_id'], 'quote_uuid' => $dataObject['quote_uuid']]);
+        info('Attempting to save CustomerAddress:', [
+            'customer_id' => $address['customer_id'],
+            'quote_uuid' => $address['quote_uuid'],
+        ]);
 
         try {
-            $customerAddress = CustomerAddress::updateOrCreate(
-                [
-                    'customer_id' => $dataObject['customer_id'],
-                    'quote_uuid' => $dataObject['quote_uuid'],
-                ],
-                [
-                    'type' => $dataObject['address_type'],
-                    'quote_type_id' => $dataObject['quote_type_id'],
-                    'office_number' => $dataObject['office_number'],
-                    'floor_number' => $dataObject['floor_number'],
-                    'building_name' => $dataObject['building_name'],
-                    'street' => $dataObject['street'],
-                    'area' => $dataObject['area'],
-                    'city' => $dataObject['city'],
-                    'landmark' => $dataObject['landmark'],
-                    'is_default' => $dataObject['is_default'],
-                ]
-            );
-            Log::info('CustomerAddress saved successfully', ['customer_address_id' => $customerAddress->id]);
+            // Find the existing record by customer_id and quote_uuid
+            $customerAddress = CustomerAddress::where([
+                'customer_id' => $address['customer_id'],
+                'quote_uuid' => $address['quote_uuid'],
+            ])->first();
+
+            if ($customerAddress) {
+                // Fill the model with new data
+                $customerAddress->fill([
+                    'type' => $address['address_type'],
+                    'quote_type_id' => $address['quote_type_id'],
+                    'office_number' => $address['office_number'],
+                    'floor_number' => $address['floor_number'],
+                    'building_name' => $address['building_name'],
+                    'street' => $address['street'],
+                    'area' => $address['area'],
+                    'city' => $address['city'],
+                    'landmark' => $address['landmark'],
+                    'is_default' => $address['is_default'],
+                ]);
+
+                // Check if any fields are dirty (modified)
+                if ($customerAddress->isDirty()) {
+                    $customerAddress->save(); // Save only if changes exist
+                    info(
+                        'CustomerAddress updated successfully:',
+                        ['customer_address_id' => $customerAddress->id],
+                        ['quote_uuid' => $customerAddress->quote_uuid],
+                    );
+                } else {
+                    info(
+                        'No changes detected in CustomerAddress:',
+                        ['customer_address_id' => $customerAddress->id],
+                        ['quote_uuid' => $customerAddress->quote_uuid],
+                    );
+                }
+            } else {
+                // If no record exists, create a new one
+                $customerAddress = CustomerAddress::create([
+                    'customer_id' => $address['customer_id'],
+                    'quote_uuid' => $address['quote_uuid'],
+                    'type' => $address['address_type'],
+                    'quote_type_id' => $address['quote_type_id'],
+                    'office_number' => $address['office_number'],
+                    'floor_number' => $address['floor_number'],
+                    'building_name' => $address['building_name'],
+                    'street' => $address['street'],
+                    'area' => $address['area'],
+                    'city' => $address['city'],
+                    'landmark' => $address['landmark'],
+                    'is_default' => $address['is_default'],
+                ]);
+                info(
+                    'CustomerAddress created successfully:',
+                    ['customer_address_id' => $customerAddress->id],
+                    ['quote_uuid' => $customerAddress->quote_uuid],
+                );
+            }
         } catch (\Exception $e) {
-            Log::error('Error saving CustomerAddress: ', ['customer_id' => $dataObject['customer_id'], 'quote_uuid' => $dataObject['quote_uuid'], 'error' => $e->getMessage()]);
+            // Log the error if something goes wrong
+            Log::error('Error saving CustomerAddress:', [
+                'customer_id' => $address['customer_id'],
+                'quote_uuid' => $address['quote_uuid'],
+                'error' => $e->getMessage(),
+            ]);
         }
+    }
+
+    public function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid)
+    {
+        if (! empty(array_filter((array) $address))) {
+            $address = [
+                'customer_id' => $customerId,
+                'address_type' => $address['address_type'],
+                'quote_type_id' => QuoteTypes::CAR->id(),
+                'quote_uuid' => $quoteUuid,
+                'office_number' => $address['villa_apartment_office_no'],
+                'floor_number' => $address['floor_no'],
+                'building_name' => $address['villa_building_name'],
+                'street' => $address['street_name'],
+                'area' => $address['area'],
+                'city' => $address['city'],
+                'landmark' => $address['landmark'],
+                'is_default' => $address['address_type'] == 'Home' ? 1 : 0,
+            ];
+            $this->createOrUpdateAddress($address);
+        }
+    }
+
+    public function validateAddress(Request $request)
+    {
+        $addressRequest = ValidateAddressRequest::createFrom($request);
+
+        return app()->call([$addressRequest, 'validateResolved']);
     }
 }
