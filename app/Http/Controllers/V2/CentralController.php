@@ -225,7 +225,7 @@ class CentralController extends Controller
             info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
             $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
-            if (!$response['status']) {
+            if (! $response['status']) {
                 return back()->with('error', $response['message']);
             }
             info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
