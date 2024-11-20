@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Services\CarQuoteService;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -24,25 +23,12 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 
     public function collection()
     {
-        $leads = $this->nonPUALeads[0]->select(
-            'q.code as RefID',
-            'q.premium_authorized as premiumauthorized',
-            'q.payment_status_date as paymentauthdate',
-            DB::raw('qs.text as `leadstatus`'),
-            DB::raw("'AUTHORIZED' as `paymentstatus`"),
-            'q.source as source',
-            'cmk.text as make',
-            'cmd.text as model',
-            'u.email as assignedadvisoremail'
-        )->get();
+        $leads = $this->nonPUALeads[0];
 
         $nonPUALeadCounts = $this->nonPUALeads[0]->count();
         $puaLeadCounts = $this->puaLeads[0]->count();
 
-        $teamCounts = $this->nonPUALeads[1]->select(
-            't.name as Team',
-            DB::raw('COUNT(*) as Total')
-        )->get();
+        $teamCounts = $this->nonPUALeads[1];
 
         $exportData = collect();
 
@@ -59,7 +45,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 
         $exportData->push((object) [
             'NonPUA' => 'PUA: ',
-            'Total' => $puaLeadCounts,
+            'Total' => $puaLeadCounts ?: '0',
         ]);
         $exportData->push((object) [
             'NonPUA' => 'Non-PUA: ',
