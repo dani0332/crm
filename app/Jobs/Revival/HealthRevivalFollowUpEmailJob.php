@@ -74,6 +74,11 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
 
         $item = DttRevival::where('uuid', $this->uuid)->where('is_active', 1)->first();
+        if (! $item) {
+            info($this->logPrefix.'Revival Follow Up Not Active - UUID: '.$item->uuid);
+
+            return false;
+        }
         $created_at = $item->created_at;
 
         $today = Carbon::today();
@@ -206,6 +211,11 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
 
         $item = DttRevival::where('uuid', $this->uuid)->first();
+        if (! $item) {
+            info($this->logPrefix.'Revival Follow Up Not Active - UUID: '.$item->uuid);
+
+            return false;
+        }
         $created_at = $item->created_at;
 
         $today = Carbon::today();
