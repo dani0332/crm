@@ -745,7 +745,9 @@ const formatDate = dateString =>
         }}
       </template>
       <template #item-renewal_batch_text="item">
-        <p v-if="item.renewal_batch_text != null">{{ item.renewal_batch_text }}</p>
+        <p v-if="item.renewal_batch_text != null">
+          {{ item.renewal_batch_text }}
+        </p>
         <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
