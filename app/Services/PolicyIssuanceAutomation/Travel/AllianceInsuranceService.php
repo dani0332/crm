@@ -406,10 +406,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Buyer Tax Invoice is uploaded');
 
         $payment->update([
-            'commission' => $bookingDetails->agency_commission_inc_tax,
-            'commission_vat' => $bookingDetails->agency_commission_tax,
-            'commission_vat_applicable' => $bookingDetails->agency_commission,
-            'commmission_percentage' => ($bookingDetails->agency_commission / ($bookingDetails->premium / (1 + (float) $bookingDetails->tax_rate))) * 100,
+            'commission' => roundNumber($bookingDetails->agency_commission_inc_tax),
+            'commission_vat' => roundNumber($bookingDetails->agency_commission_tax),
+            'commission_vat_applicable' => roundNumber($bookingDetails->agency_commission),
+            'commmission_percentage' => roundNumber((($bookingDetails->agency_commission / ($bookingDetails->premium / (1 + (float) $bookingDetails->tax_rate))) * 100)),
             'insurer_commmission_invoice_number' => $bookingDetails->tax_invoice_number,
             'insurer_invoice_date' => $insurerInvoiceDate,
             'invoice_description' => (new PaymentRepository)->generateInvoiceDescription($payment, self::TYPE, $quote),
