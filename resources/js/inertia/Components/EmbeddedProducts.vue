@@ -31,12 +31,17 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  isEpLoading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const propsDataReactive = ref(props.data);
 const documentsReactive = ref([]);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const embeddedProductEnum = page.props.embeddedProductEnum;
 const modals = reactive({
   cancelPayment: false,
   viewDocuments: false,
@@ -196,7 +201,7 @@ const epTable = reactive({
       value: 'prices',
     },
     {
-      text: 'Last Updated Date',
+      text: 'Payment Captured date',
       value: 'updated_at',
     },
     {
@@ -460,6 +465,7 @@ const onAddDocumentSubmit = event => {
           border-cell
           hide-rows-per-page
           hide-footer
+          :loading="isEpLoading"
         >
           <template #item-code="{ short_code }">
             {{ short_code + '-' + props.code }}
@@ -502,8 +508,19 @@ const onAddDocumentSubmit = event => {
             }}
           </template>
 
-          <template #item-updated_at="{ updated_at }">
-            {{ dateFormat(updated_at) }}
+          <template #item-updated_at="{ prices }">
+            <span
+              v-if="
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payment_status_id == paymentStatusEnum.CAPTURED
+              "
+            >
+              {{
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payments[0]?.captured_at
+              }}
+            </span>
+            <span v-else> - </span>
           </template>
 
           <template #item-actions="item">
@@ -524,7 +541,10 @@ const onAddDocumentSubmit = event => {
               <x-button
                 size="xs"
                 color="emerald"
-                :disabled="!item.send_document_button"
+                :disabled="
+                  !item.send_document_button ||
+                  item.short_code == embeddedProductEnum.COURIER
+                "
                 :loading="sendDocumentLoader"
                 @click.prevent="sendDcoument(item.id)"
               >
@@ -533,6 +553,7 @@ const onAddDocumentSubmit = event => {
               <x-button
                 size="xs"
                 color="#ff5e00"
+                :disabled="item.short_code == embeddedProductEnum.COURIER"
                 :loading="viewDocumentLoader"
                 @click.prevent="viewDocument(item.id)"
               >

@@ -44,10 +44,10 @@ class SendEPJob implements ShouldQueue
 
             info("Sent EP - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
             EmbeddedProductRepository::sendDocumentsByLead($this->quoteId, $this->modelType, $this->epId, $this->isResend);
-            info("Sent EP completed- {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
+            info("Sent EP completed - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
 
         } catch (Exception $e) {
-            Log::error("Resent EP - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} - ERROR - " . $e->getMessage());
+            Log::error("Sent EP ERROR - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} - " . $e->getMessage());
         }
     }
 }

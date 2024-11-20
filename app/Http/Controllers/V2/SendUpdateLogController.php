@@ -152,6 +152,8 @@ class SendUpdateLogController extends Controller
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
 
+        $isCommVatNotAppEnabled = $this->sendUpdateLogService->commissionVatNotApplicableEnabled($quoteType, $realQuote?->business_type_of_insurance_id ?? null);
+
         $parentText = $sendUpdateLog?->option?->code == SendUpdateLogStatusEnum::ATICB ? $realQuote?->transaction_type_text : $sendUpdateLog->category->parent->text;
 
         // the business_type_of_insurance_id is only on business quotes.
@@ -236,6 +238,7 @@ class SendUpdateLogController extends Controller
             'vatValue' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0,
             'isPaidEditable' => $this->isSplitPaymentFullyPaid($sendUpdatePayments->first()),
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
+            'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
         ]);
     }
 
@@ -418,7 +421,7 @@ class SendUpdateLogController extends Controller
         info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
         app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
 
-        app(SageApiService::class)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
+        (new SageApiService)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
         info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
 
         return response()->json(['message' => $endorsementResponse['message']], 200);

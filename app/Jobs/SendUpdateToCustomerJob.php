@@ -82,7 +82,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
             unset($this->payload['sageRequestPayload']);
             $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);
 
-            app(SageApiService::class)->scheduleSageProcesses($sageRequestPayload->insurerID);
+            (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);
             info('job:SendUpdateToCustomerJob - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
         }
 

@@ -38,6 +38,7 @@ const props = defineProps({
   isPlanDetailAvailable: Boolean,
   quoteLink: String,
   isEditDisabledForQueuedBooking: Boolean,
+  isCommVatNotAppEnabled: Boolean,
 });
 
 const page = usePage();
@@ -57,7 +58,18 @@ const transactionType = computed(() => {
       props.sendUpdateStatusEnum.CI,
       props.sendUpdateStatusEnum.CIR,
       props.sendUpdateStatusEnum.CPD,
-    ].includes(props.sendUpdateLog.category.code)
+    ].includes(props.sendUpdateLog?.category?.code) ||
+    [
+      props.sendUpdateStatusEnum.MPC,
+      props.sendUpdateStatusEnum.CAAFE,
+      props.sendUpdateStatusEnum.DTSI,
+    ].includes(props.sendUpdateLog?.option?.code) ||
+    (props.sendUpdateStatusEnum.EF === props.sendUpdateLog?.category?.code &&
+      [
+        props.sendUpdateStatusEnum.ATCRNB,
+        props.sendUpdateStatusEnum.ATCRNB_RBB,
+        props.sendUpdateStatusEnum.ATCRN_CRNRBB,
+      ].includes(props.sendUpdateLog?.option?.code))
   ) {
     return 'Endorsement';
   } else if (
@@ -114,8 +126,11 @@ onMounted(() => {
   state.redirectURL = params.get('refURL');
 });
 
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 const onEdit = () => {
-  if (isUpdateBooked.value) {
+  if (isUpdateBooked.value && !can(permissionsEnum.SEND_UPDATE_EDIT_NOTES)) {
     notification.error({
       title: 'Update already booked',
       position: 'top',
@@ -278,7 +293,11 @@ onBeforeMount(() => {
                   v-model="sendUpdateForm.notes"
                   size="xs"
                   :disabled="!state.edit"
+                  maxlength="250"
                 />
+                <p class="text-xs text-right" v-if="state.edit">
+                  {{ sendUpdateForm.notes.length }} / 250
+                </p>
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
@@ -602,11 +621,13 @@ onBeforeMount(() => {
       :modelClass="modelClass"
       @update-error-status="handleErrorStatusUpdate"
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
+      :is-comm-vat-not-app-enabled="props.isCommVatNotAppEnabled"
     />
 
     <AuditLogs
       :type="modelClass"
       :id="$page.props.sendUpdateLog.id"
+      :quoteType="'SendUpdateLog'"
       :expanded="true"
     />
   </div>

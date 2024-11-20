@@ -2,11 +2,13 @@
 
 namespace App\Traits;
 
+use App\Enums\DatabaseColumnsString;
 use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
@@ -50,8 +52,14 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
         $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
-
         if (! class_exists($model)) {
+            if (in_array(ucwords($quoteType), [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])) {
+                $model = $nameSpace.'BusinessQuote';
+                if (class_exists($model)) {
+                    return $model;
+                }
+            }
+
             return false;
         }
 
@@ -838,6 +846,25 @@ trait GenericQueriesAllLobs
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
 
+    public function adjustQueryByInsurerInvoiceFilters($query)
+    {
+        $request = request();
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_number')) {
+            $value = $request->get('insurer_tax_number');
+            $query->whereHas('payments', function ($query) use ($value) {
+                $query->where(DatabaseColumnsString::INSURER_TAX_INVOICE_NUMBER, $value);
+            });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commmission_invoice_number')) {
+            $value = $request->get('insurer_commmission_invoice_number');
+            $query->whereHas('payments', function ($query) use ($value) {
+                $query->where(DatabaseColumnsString::INSURER_COMMISSION_TAX_INVOICE_NUMBER, $value);
+            });
+        }
+    }
+
     public function getSendUpdatePaymentCode($sendUpdateLogId): string
     {
         $code = Payment::where('send_update_log_id', $sendUpdateLogId)->pluck('code')->first();
@@ -885,9 +912,9 @@ trait GenericQueriesAllLobs
                 $totalPrice = round($payment->total_price, 2);
                 $totalAmount = round($payment->total_amount, 2);
                 $discountValue = round($payment->discount_value, 2);
+                $sumValue = round(($totalAmount + $discountValue), 2);
 
-                // Check if the total price is less than the sum of the total amount and discount value
-                return $totalPrice < ($totalAmount + $discountValue);
+                return $totalPrice < $sumValue;
             }
         }
 

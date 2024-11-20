@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\HealthQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
@@ -37,8 +38,17 @@ class HealthQuoteObserver
     {
         $dirty = $healthQuote->getDirty();
 
+        if (isset($dirty['advisor_id'])) {
+            info(self::class." - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
+                'current_advisor_id' => $healthQuote->advisor_id,
+                'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),
+            ]);
+            HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
+            $healthQuote->markLeadAllocationPassed();
+        }
+
         if (
-            $healthQuote->isDirty('quote_status_id')
+            isset($dirty['quote_status_id'])
         ) {
             if ($healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
                 HealthQuote::withoutEvents(function () use ($healthQuote) {
@@ -62,10 +72,6 @@ class HealthQuoteObserver
                 $healthQuote->update(['stale_at' => null]);
             });
             $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
-        }
-
-        if ($healthQuote->isDirty('advisor_id')) {
-            $healthQuote->markLeadAllocationPassed();
         }
 
         $this->syncQuote($healthQuote, $dirty);
@@ -95,7 +101,7 @@ class HealthQuoteObserver
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::HEALTH->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
 
         }
     }
