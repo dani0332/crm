@@ -8,12 +8,13 @@ use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\CustomerAddress;
 use App\Services\CarQuoteService;
 use Illuminate\Support\Facades\Log;
+use App\Enums\BirdFlowStatusEnum;
 
 class CustomerAddressObserver
 {
     public function updated(CustomerAddress $customerAddress)
     {
-        Log::info('CustomerAddressObserver@updated for quote_uuid: '.$customerAddress->quote_uuid);
+        Log::info('CustomerAddressObserver@updated for quote_uuid: ' . $customerAddress->quote_uuid);
         try {
             // Check if any attributes have been modified
             $dirty = $customerAddress->getDirty();
@@ -29,7 +30,7 @@ class CustomerAddressObserver
                         SyncCourierQuoteWithMacrm::dispatch($carQuote, QuoteTypeId::Car);
                     }
                     if ($customerAddress) {
-                        $formattedAddress = [
+                        $address = [
                             'address_type' => $customerAddress->type,
                             'villa_apartment_office_no' => $customerAddress->office_number,
                             'floor_no' => $customerAddress->floor_number,
@@ -39,8 +40,8 @@ class CustomerAddressObserver
                             'city' => $customerAddress->city,
                             'landmark' => $customerAddress->landmark,
                         ];
-                        info('Sending address notification to customer for lead in CustomerAddressObserver : '.$carQuote->uuid);
-                        app(CarQuoteService::class)->triggerBirdFlow($carQuote, $formattedAddress, 'ADDRESS_UPDATED');
+                        info('Sending address notification to customer for lead in CustomerAddressObserver : ' . $carQuote->uuid);
+                        app(CarQuoteService::class)->triggerBirdFlow($carQuote, $address, BirdFlowStatusEnum::ADDRESS_UPDATED);
                     }
                 }
             }

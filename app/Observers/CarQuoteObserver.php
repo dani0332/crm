@@ -15,6 +15,8 @@ use App\Models\CarQuote;
 use App\Models\CustomerAddress;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
+use App\Enums\BirdFlowStatusEnum;
+use App\Enums\EmbeddedProductEnum;
 
 class CarQuoteObserver
 {
@@ -96,26 +98,26 @@ class CarQuoteObserver
 
     public function sendAddressReminderOnPolicyIssue(CarQuote $lead)
     {
-        info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : '.$lead->uuid);
+        info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : ' . $lead->uuid);
         $address = CustomerAddress::where('quote_uuid', $lead->uuid)->first();
         if (! $address) {
             // send address reminder to customer if address is not entered
             if ($lead->embeddedTransactions()->exists()) {
                 $courierEmbeddedTransaction = $lead->embeddedTransactions
                     ->filter(function ($transaction) {
-                        return $transaction->product?->embeddedProduct?->short_code === 'COU';
+                        return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
                     });
             }
 
             if (
                 $courierEmbeddedTransaction->isNotEmpty()
             ) {
-                info('Triggering Bird Courier Flow for policy reminder for lead : '.$lead->uuid);
+                info('Triggering Bird Courier Flow for policy reminder for lead : ' . $lead->uuid);
                 $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
                 $payload = [
                     'quoteUID' => $lead->uuid,
                     'quoteTypeId' => (int) QuoteTypes::CAR->id(),
-                    'actionType' => 'POLICY_ISSUED',
+                    'actionType' => BirdFlowStatusEnum::POLICY_ISSUED,
                     'refId' => $embeddedTransactionRefId,
                 ];
 
