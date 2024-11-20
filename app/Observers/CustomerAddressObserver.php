@@ -2,19 +2,19 @@
 
 namespace App\Observers;
 
+use App\Enums\BirdFlowStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\CustomerAddress;
 use App\Services\CarQuoteService;
 use Illuminate\Support\Facades\Log;
-use App\Enums\BirdFlowStatusEnum;
 
 class CustomerAddressObserver
 {
     public function updated(CustomerAddress $customerAddress)
     {
-        Log::info('CustomerAddressObserver@updated for quote_uuid: ' . $customerAddress->quote_uuid);
+        Log::info('CustomerAddressObserver@updated for quote_uuid: '.$customerAddress->quote_uuid);
         try {
             // Check if any attributes have been modified
             $dirty = $customerAddress->getDirty();
@@ -40,7 +40,7 @@ class CustomerAddressObserver
                             'city' => $customerAddress->city,
                             'landmark' => $customerAddress->landmark,
                         ];
-                        info('Sending address notification to customer for lead in CustomerAddressObserver : ' . $carQuote->uuid);
+                        info('Sending address notification to customer for lead in CustomerAddressObserver : '.$carQuote->uuid);
                         app(CarQuoteService::class)->triggerBirdFlow($carQuote, $address, BirdFlowStatusEnum::ADDRESS_UPDATED);
                     }
                 }
