@@ -763,15 +763,6 @@ watch(() => {
           placeholder="Search by Renewal Batch"
           :options="renewalBatchOptions"
         />
-        <!-- <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
-          label="Renewal Batch"
-          class="w-full"
-          placeholder="Search by Renewal Batch"
-        /> -->
-
         <DatePicker
           v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
           v-model="filters.assigned_to_date_start"

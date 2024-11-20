@@ -3,6 +3,7 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   isManualAllocationAllowed: Boolean,
   totalCount: {
     type: Number,
@@ -94,7 +95,7 @@ const filters = reactive({
   advisors: [],
   is_renewal: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   payment_status: [],
   is_cold: false,
   is_stale: false,
@@ -137,6 +138,13 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+})
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
@@ -570,14 +578,13 @@ const formatDate = dateString =>
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+        <ComboBox
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
         />
+       
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
