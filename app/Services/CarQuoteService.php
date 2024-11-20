@@ -24,7 +24,6 @@ use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
-use App\Traits\CustomerTrait;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -48,7 +47,7 @@ class CarQuoteService extends BaseService
     protected $applicationStorageService;
     protected $activityService;
 
-    use CustomerTrait, GenericQueriesAllLobs;
+    use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService)
