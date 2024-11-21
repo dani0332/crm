@@ -250,4 +250,9 @@ enum QuoteTypes: string
             default => [],
         };
     }
+
+    public function refId(string $uuid)
+    {
+        return "{$this->shortCode()}{$uuid}";
+    }
 }
