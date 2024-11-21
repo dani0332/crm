@@ -66,6 +66,10 @@ class BookPolicyRequest extends FormRequest
                 ])->mainLeadPayment()->first();
             }
 
+            if (! $payment) {
+                $validator->errors()->add('error', 'Payment record not found');
+            }
+
             $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')
                 ->whereNot('code', $payment->code)
                 ->where('insurer_tax_number', request()->insurer_tax_invoice_number)

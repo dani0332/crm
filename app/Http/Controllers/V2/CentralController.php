@@ -218,9 +218,7 @@ class CentralController extends Controller
                 'invoice_description' => $validatedData['invoice_description'],
             ];
             $payment = Payment::where('code', $validatedData['payment_code'])->first();
-            if (! $payment) {
-                return back()->with('message', 'Payment record not found');
-            }
+
             $payment->update($paymentInformation);
             info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
