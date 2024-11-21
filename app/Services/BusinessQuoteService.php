@@ -67,6 +67,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.previous_quote_id',
                 'bqr.policy_expiry_date',
                 'bqr.renewal_batch',
+                'rb.name as renewal_batch_text',
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
                 'bqr.previous_quote_policy_premium',
@@ -124,6 +125,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
+            ->leftJoin('renewal_batches as rb', 'bqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
@@ -149,12 +151,10 @@ class BusinessQuoteService extends BaseService
                 'u.name AS advisor_name',
                 DB::raw("'Business' as lead_type"),
                 'u.id as advisor_id',
-                'rb.name as renewal_batch_text',
                 'qs.text as lead_status'
             )
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
-            ->leftJoin('renewal_batches as rb', 'bqr.renewal_batch_id', '=', 'rb.id')
             ->orderBy('advisor_id', 'ASC');
         if (! empty($CDBID)) {
             $query->where('bqr.id', '=', $CDBID);
