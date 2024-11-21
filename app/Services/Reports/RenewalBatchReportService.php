@@ -1066,7 +1066,7 @@ class RenewalBatchReportService extends BaseService
 
     public function getAllNonMotorBatches()
     {
-        $renewalBatches = RenewalBatch::select('id', 'name')->whereNull('quote_type_id');
+        $renewalBatches = RenewalBatch::select('id', 'name', 'start_date', 'end_date')->whereNull('quote_type_id');
         $renewalBatches->orderBy('id');
         $renewalBatches = $renewalBatches->get()
             ->map(function ($batch) {
@@ -1079,7 +1079,7 @@ class RenewalBatchReportService extends BaseService
                 // Return an associative array with the batch 'name' and 'id'
                 return [
                     'id' => $batch->id,
-                    'name' => $batch->name.'-('.$start_date.' to '.$end_date.')',
+                    'name' => $batch->name.'-('. $start_date.' to '. $end_date.')',
                 ];
             })
             ->toArray();
