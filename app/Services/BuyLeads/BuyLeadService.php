@@ -134,7 +134,7 @@ class BuyLeadService
             ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
             ->where('buy_lead_requests.user_id', Auth::id())
             ->where('buy_lead_request_logs.quote_type_id', $quoteType->id())
-            ->whereBetween('buy_lead_request_logs.created_at', [$startDate, $endDate])
+            ->whereBetween('buy_lead_request_logs.created_at', [$startDate->startOfDay(), $endDate->endOfDay()])
             ->latest('buy_lead_request_logs.created_at')
             ->when($isExport,
                 fn ($q) => $q->get(),
