@@ -45,7 +45,7 @@ class UpdatePolicyDetailRequest extends FormRequest
 
                 'quote_policy_number' => 'required|max:75',
                 'quote_policy_issuance_date' => 'required',
-                'quote_policy_start_date' => 'required|date|after_or_equal:' . Carbon::now()->startOfDay() . '|before_or_equal:' . Carbon::now()->addMonths(2)->endOfDay(),
+                'quote_policy_start_date' => 'required|date|after_or_equal:'.Carbon::now()->startOfDay().'|before_or_equal:'.Carbon::now()->addMonths(2)->endOfDay(),
                 'quote_policy_expiry_date' => 'required|date|after:quote_policy_start_date',
                 'price_vat_notapplicable' => 'required_without:price_vat_applicable|nullable|numeric|between:0,9999999.99',
                 'price_vat_applicable' => 'nullable|numeric|between:0,9999999.99',
