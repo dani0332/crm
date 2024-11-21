@@ -110,8 +110,11 @@ const confirmData = reactive({
 });
 
 const allowStatusUpdate = computed(() => {
-  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])){
-    return page.props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked;
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return (
+      page.props.quote.quote_status_id ==
+      page.props.quoteStatusEnum.PolicyBooked
+    );
   }
   return (
     (props.quote.quote_status_id ==

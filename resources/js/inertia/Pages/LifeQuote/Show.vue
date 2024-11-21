@@ -295,10 +295,12 @@ const leadStatusOptions = computed(() => {
 });
 
 const allowStatusUpdate = computed(() => {
-  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])){
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
     return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
   }
-  return page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
 });
 
 const leadStatusForm = useForm({

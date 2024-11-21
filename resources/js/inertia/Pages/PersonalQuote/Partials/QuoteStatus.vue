@@ -74,12 +74,13 @@ onMounted(() => {
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
 
-
 const allowStatusUpdate = computed(() => {
-  if (canAny([permissionsEnum.SUPER_LEAD_STATUS_CHANGE])){
+  if (canAny([permissionsEnum.SUPER_LEAD_STATUS_CHANGE])) {
     return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
   }
-  return page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
 });
 </script>
 
