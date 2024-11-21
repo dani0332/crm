@@ -217,7 +217,18 @@ class CentralController extends Controller
                 'commission' => $validatedData['total_commission'],
                 'invoice_description' => $validatedData['invoice_description'],
             ];
-            $payment = Payment::where('code', $validatedData['payment_code'])->first();
+
+            $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
+
+            $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+            $payment = Payment::where('code', $quote->code)->mainLeadPayment()->first();
+
+            if ($isDuplicateOrCIRLead && empty($payment)) {
+                $payment = Payment::where([
+                    'paymentable_id' => $quote->id,
+                    'paymentable_type' => $quote->getMorphClass(),
+                ])->mainLeadPayment()->first();
+            }
 
             $payment->update($paymentInformation);
             info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');

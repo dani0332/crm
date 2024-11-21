@@ -57,13 +57,13 @@ class BookPolicyRequest extends FormRequest
             }
 
             $isDuplicateOrCIRLead = ! empty($quoteModel->parent_duplicate_quote_id);
-            $payment = Payment::where('code', $quoteModel->code)->mainLeadPayment()->first();
+            $payment = Payment::where('code', $quoteModel->code)->mainLeadPayment()->select(['id', 'code'])->first();
 
             if ($isDuplicateOrCIRLead && empty($payment)) {
                 $payment = Payment::where([
                     'paymentable_id' => $quoteModel->id,
                     'paymentable_type' => $quoteModel->getMorphClass(),
-                ])->mainLeadPayment()->first();
+                ])->mainLeadPayment()->select(['id', 'code'])->first();
             }
 
             if (! $payment) {
