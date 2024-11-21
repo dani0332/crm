@@ -819,7 +819,7 @@ const validateDateRange = () => {
         {{ previous_quote_policy_number ?? 'N/A' }}
       </template>
       <template #item-renewal_batch_model="item">
-        <p v-if="item.renewal_batch_model.name">
+        <p v-if="item.renewal_batch_model != null">
           {{ item.renewal_batch_model.name }}
         </p>
         <p v-else>{{ item.renewal_batch }}</p>
