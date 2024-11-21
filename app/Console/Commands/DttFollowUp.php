@@ -210,7 +210,6 @@ class DttFollowUp extends Command
 
         $jobs = [];
         foreach ($leads as $item) {
-            info($logPrefix.'-'.$item->uuid.'-email-'.$item->customerEmail);
             $jobs[] = new CarRevivalFollowUpEmailJob($item);
         }
 

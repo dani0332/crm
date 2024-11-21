@@ -41,9 +41,9 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $response = app(SendEmailCustomerService::class)->sendDttEmail($this->data);
         if ($response == 201) {
             DttRevival::where('id', $this->data->id)->increment('follow_up_email_count');
-            info('carRevivalFollowUp email is sent  -'.$this->data->customerEmail);
+            info('CarRevivalFollowUpEmailJob email is sent '.$this->data->uuid.' - '.$this->data->customerEmail);
         } else {
-            info('carRevivalFollowUp email is not sent -'.$this->data->customerEmail);
+            info('CarRevivalFollowUpEmailJob email not sent '.$this->data->uuid.' - '.$this->data->customerEmail);
         }
     }
 }
