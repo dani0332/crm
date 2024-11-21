@@ -40,16 +40,14 @@ class TravelQuoteService extends BaseService
 {
     protected $query;
     protected $leadAllocationService;
-    protected $httpService;
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
-    public function __construct(LeadAllocationService $leadAllocationService, HttpRequestService $httpService)
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
-        $this->httpService = $httpService;
         $this->query = TravelQuote::as('tqr')->select(
             'tqr.id',
             'tqr.uuid',
