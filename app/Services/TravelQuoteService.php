@@ -1184,7 +1184,7 @@ class TravelQuoteService extends BaseService
         return $response;
     }
 
-    public function isPlanModifyAllowed($data)
+    private function isPlanModifyAllowed($data)
     {
         if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
             if (! $enablePlanValidation->value) {
