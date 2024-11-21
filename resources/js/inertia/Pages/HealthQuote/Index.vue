@@ -3,6 +3,7 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   teams: Object,
   userMaxCap: Number,
   todayAutoCount: Number,
@@ -123,7 +124,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -152,7 +153,7 @@ const filters = reactive({
   is_ecommerce: '',
   is_renewal: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   date: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
@@ -217,6 +218,13 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
+  }));
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
   }));
 });
 
@@ -749,15 +757,12 @@ watch(() => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+        <ComboBox
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
         />
-
         <DatePicker
           v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
           v-model="filters.assigned_to_date_start"
@@ -995,6 +1000,12 @@ watch(() => {
 
       <template #item-premium="item">
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p v-if="item.renewal_batch_text != null">
+          {{ item.renewal_batch_text }}
+        </p>
+        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 

@@ -5,6 +5,7 @@ const props = defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   quoteType: {
     type: String,
     default: 'pet',
@@ -38,6 +39,7 @@ let availableFilters = {
   advisor_id: [],
   is_ecommerce: '',
   is_renewal: '',
+  renewal_batch_id: [],
   page: 1,
   previous_quote_policy_number_text: '',
   renewal_batch: '',
@@ -136,7 +138,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
 ]);
 
 function onSubmit(isValid) {
@@ -223,6 +225,13 @@ const advisorOptions = computed(() => {
     label: advisor.roles[0].name
       ? advisor.name + ' - ' + advisor.roles[0]?.name
       : advisor.name,
+  }));
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
   }));
 });
 
@@ -587,14 +596,13 @@ const validateDateRange = () => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
-          label="Renewal Batch"
-          class="w-full"
-          placeholder="Search by Renewal Batch"
-        />
+        <x-field label="Renewal Batch">
+          <ComboBox
+            v-model="filters.renewal_batch_id"
+            placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
+          />
+        </x-field>
 
         <DatePicker
           v-model="filters.payment_due_date"
@@ -809,6 +817,12 @@ const validateDateRange = () => {
         #item-previous_quote_policy_number="{ previous_quote_policy_number }"
       >
         {{ previous_quote_policy_number ?? 'N/A' }}
+      </template>
+      <template #item-renewal_batch_model="item">
+        <p v-if="item.renewal_batch_model != null">
+          {{ item.renewal_batch_model.name }}
+        </p>
+        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 

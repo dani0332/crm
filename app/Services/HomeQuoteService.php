@@ -88,6 +88,7 @@ class HomeQuoteService extends BaseService
             'hqr.previous_quote_id',
             'hqr.policy_expiry_date',
             'hqr.renewal_batch',
+            'rb.name as renewal_batch_text',
             'hqr.previous_quote_policy_number',
             'hqr.previous_quote_policy_premium',
             'hqr.customer_id',
@@ -137,6 +138,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+            ->leftJoin('renewal_batches as rb', 'hqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
