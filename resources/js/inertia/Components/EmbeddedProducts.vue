@@ -201,7 +201,7 @@ const epTable = reactive({
       value: 'prices',
     },
     {
-      text: 'Last Updated Date',
+      text: 'Payment Captured date',
       value: 'updated_at',
     },
     {
@@ -508,8 +508,19 @@ const onAddDocumentSubmit = event => {
             }}
           </template>
 
-          <template #item-updated_at="{ updated_at }">
-            {{ dateFormat(updated_at) }}
+          <template #item-updated_at="{ prices }">
+            <span
+              v-if="
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payment_status_id == paymentStatusEnum.CAPTURED
+              "
+            >
+              {{
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payments[0]?.captured_at
+              }}
+            </span>
+            <span v-else> - </span>
           </template>
 
           <template #item-actions="item">
