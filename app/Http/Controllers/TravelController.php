@@ -22,6 +22,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Http\Requests\TravelPlanUpdateManualProcessRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
@@ -553,8 +554,8 @@ class TravelController extends Controller
         return $this->renewalQuoteService->travelRenewalsUploadCreate($request->validated());
     }
 
-    public function travelPlanUpdateManualProcess(Request $request)
+    public function travelPlanUpdateManualProcess(TravelPlanUpdateManualProcessRequest $request)
     {
-        app(TravelQuoteService::class)->travelPlanModify($request);
+        app(TravelQuoteService::class)->travelPlanModify($request->validated());
     }
 }

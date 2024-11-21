@@ -1123,39 +1123,32 @@ class TravelQuoteService extends BaseService
         return $transactionApprovedAudit;
     }
 
-    public function travelPlanModify($request)
+    public function travelPlanModify($data)
     {
-        if (($response = $this->isPlanModifyAllowed($request->all())) === true) {
-            if (isset($request->is_create)) {
-                if ($request->is_create == 1) {
-                    $discountedPremium = $request->actual_premium;
-                    $isUpdate = false;
-                } else {
-                    $discountedPremium = $request->discounted_premium;
-                    $isUpdate = true;
-                }
-            } else {
-                $discountedPremium = $request->actual_premium;
+        if (($response = $this->isPlanModifyAllowed($data)) === true) {
+            $isUpdate = false;
+            $discountedPremium = $data['actual_premium'];
+
+            if (isset($data['is_create']) && $data['is_create'] == 1) {
+                $discountedPremium = $data['actual_premium'];
+            } elseif (isset($data['discounted_premium'])) {
+                $discountedPremium = $data['discounted_premium'];
+                $isUpdate = true;
             }
 
-            $addons = [];
-            if ($request->addons != null && count($request->addons) > 0) {
-                $addons = $request->addons;
-            } else {
-                $addons = [];
-            }
+            $addons = $data['addons'] ?? [];
 
             $travelPlanData = [
-                'quoteUID' => $request->travel_quote_uuid,
+                'quoteUID' => $data['travel_quote_uuid'],
                 'update' => $isUpdate,
-                'url' => strval($request->current_url),
+                'url' => strval($data['current_url']),
                 'ipAddress' => request()->ip(),
                 'userAgent' => request()->header('User-Agent'),
                 'userId' => strval(auth()->id()),
                 'plans' => [
                     [
-                        'planId' => (int) $request->travel_plan_id,
-                        'actualPremium' => (float) $request->actual_premium,
+                        'planId' => (int) $data['travel_plan_id'],
+                        'actualPremium' => (float) $data['actual_premium'],
                         'discountPremium' => (float) $discountedPremium,
                         'addons' => $addons,
                     ],
