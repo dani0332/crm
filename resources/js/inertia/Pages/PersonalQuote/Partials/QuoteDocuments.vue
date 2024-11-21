@@ -27,6 +27,11 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  isSentOrBooked: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 });
 
 const page = usePage();
@@ -397,11 +402,26 @@ const getS3TempUrl = async docURL => {
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
           >
             <div>
+              <x-tooltip placement="bottom" v-if="props.isSentOrBooked">
+                <x-button
+                    size="xs"
+                    color="error"
+                    outlined
+                    disabled
+                >
+                  Delete
+                </x-button>
+                <template #tooltip>
+                  This request is now locked as the update has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy Upload'.
+                </template>
+              </x-tooltip>
+
               <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="onDocDelete(doc_name)"
+                  v-else
+                  size="xs"
+                  color="error"
+                  outlined
+                  @click.prevent="onDocDelete(doc_name)"
               >
                 Delete
               </x-button>
@@ -546,6 +566,7 @@ const getS3TempUrl = async docURL => {
     <x-modal
       v-model="modals.docConfirm"
       title="Delete Document"
+      size="md"
       show-close
       backdrop
     >
