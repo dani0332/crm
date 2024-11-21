@@ -39,6 +39,7 @@ const props = defineProps({
   quoteLink: String,
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
+  isSentOrBooked: Boolean,
 });
 
 const page = usePage();
@@ -603,6 +604,7 @@ onBeforeMount(() => {
       :send-update-log="props.sendUpdateLog"
       :update-btn="props.updateBtn"
       :quote-type="props.quoteType"
+      :is-sent-or-booked="props.isSentOrBooked"
     />
 
     <LazyBookingDetails
