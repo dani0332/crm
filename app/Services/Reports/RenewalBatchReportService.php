@@ -1079,7 +1079,7 @@ class RenewalBatchReportService extends BaseService
                 // Return an associative array with the batch 'name' and 'id'
                 return [
                     'id' => $batch->id,
-                    'name' => $batch->name.'-('. $start_date.' to '. $end_date.')',
+                    'name' => $batch->name.'-('.$start_date.' to '.$end_date.')',
                 ];
             })
             ->toArray();
