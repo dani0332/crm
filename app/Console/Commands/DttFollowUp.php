@@ -206,7 +206,7 @@ class DttFollowUp extends Command
             }
         }
 
-        info($logPrefix.'count-'.count($leads).'-leads-'.json_encode(array_column($leads, 'uuid')));
+        info($logPrefix.'count - '.count($leads).' leads'); //.json_encode(array_column($leads, 'uuid')));
 
         $jobs = [];
         foreach ($leads as $item) {
