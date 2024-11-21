@@ -893,7 +893,7 @@ class SplitPaymentService
     {
         $paymentSplits = $payment->paymentSplits;
         $commissionSplitSumWithoutLastSplit = 0;
-        $commissionVatApplicable = $payment->commission_vat_applicable;
+        $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
         foreach ($paymentSplits as $paymentSplit) {
             $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
             /*
@@ -901,7 +901,8 @@ class SplitPaymentService
              and then subtract that amount from the total commission without vat and use the result as commission for last commission split
             */
             if ($paymentSplit->sr_no == count($paymentSplits)) {
-                $commissionSplitAmount = floatval(sprintf('%.2f', $commissionVatApplicable - $commissionSplitSumWithoutLastSplit));
+                $commissionSplitAmount = (float) sprintf('%.2f',
+                    $commission - $commissionSplitSumWithoutLastSplit);
             } else {
                 $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
             }
@@ -914,10 +915,10 @@ class SplitPaymentService
 
     private function calculateCommissionSplit($payment, $paymentSplit)
     {
-        $commissionVatApplicable = $payment->commission_vat_applicable;
+        $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
         $totalPriceVatApplicable = $payment->paymentSplits()->sum('price_vat_applicable');
 
-        return roundNumber(($paymentSplit->price_vat_applicable / $totalPriceVatApplicable) * $commissionVatApplicable);
+        return roundNumber(($paymentSplit->price_vat_applicable / $totalPriceVatApplicable) * $commission);
     }
 
     // function to calculate the price vat

@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
@@ -238,6 +239,7 @@ class RenewalBatchReportService extends BaseService
             ->select('name', 'start_date', 'end_date', 'id');
 
         $batches = $batches->orderBy('id')
+            ->where('quote_type_id', QuoteTypes::CAR->id())
             ->get()
             ->keyBy('name')
             ->map(function ($batch) {
@@ -319,7 +321,7 @@ class RenewalBatchReportService extends BaseService
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->dateFilter($reportDateEnd, false)
+                ->dateFilter($reportDateEnd, true)
                 ->where('quote_type_id', QuoteTypeId::Car)
                 ->orderByDesc('end_date')
                 ->pluck('name', 'id')
@@ -528,7 +530,7 @@ class RenewalBatchReportService extends BaseService
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
                 ->where('quote_type_id', QuoteTypeId::Car)
-                ->dateFilter($reportDateEnd, false)
+                ->dateFilter($reportDateEnd, true)
                 ->orderByDesc('end_date')
                 ->pluck('name', 'id')
                 ->toArray();
@@ -955,7 +957,7 @@ class RenewalBatchReportService extends BaseService
                                 (car_quote_request.quote_status_id IN (:retentionStatuses) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date >= ":m2ReleaseDate") OR
                                 (car_quote_request.quote_status_id IN (:transactionApproved) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date < ":m2ReleaseDate")
                             ) AND car_quote_request.advisor_id IN (:segmentAdvisors)
-                            THEN 1 ELSE 0 END) AS :as',
+                            THEN 1 ELSE 0 END) AS ":as"',
                         $this->getRetentionRenewedBindings($reportDateEnd, [
                             ':segmentAdvisors' => $segmentAdvisorsIdString,
                             ':as' => "{$renewedAsColumn}_for_{$batchName}",
