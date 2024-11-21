@@ -403,25 +403,22 @@ const getS3TempUrl = async docURL => {
           >
             <div>
               <x-tooltip placement="bottom" v-if="props.isSentOrBooked">
-                <x-button
-                    size="xs"
-                    color="error"
-                    outlined
-                    disabled
-                >
+                <x-button size="xs" color="error" outlined disabled>
                   Delete
                 </x-button>
                 <template #tooltip>
-                  This request is now locked as the update has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy Upload'.
+                  This request is now locked as the update has been booked. If
+                  changes are needed, go to 'Send Update', select 'Add Update',
+                  and choose 'Correction of Policy Upload'.
                 </template>
               </x-tooltip>
 
               <x-button
-                  v-else
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="onDocDelete(doc_name)"
+                v-else
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="onDocDelete(doc_name)"
               >
                 Delete
               </x-button>
