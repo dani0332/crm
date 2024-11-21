@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\QuoteStatusEnum;
 use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -12,7 +11,7 @@ class MACRMService
 {
     private static function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
     {
-        info(self::class." - Sending request to MACRM API for endpoint: {$endpoint} with data: ".json_encode($data));
+        info(self::class." - Sending request to MACRM API for endpoint: {$endpoint}");
         try {
             // Initialize HTTP client with base URL, authentication, and headers
             $http = Http::baseUrl(config('constants.MACRM_API_ENDPOINT'))
@@ -21,7 +20,7 @@ class MACRMService
                     config('constants.MACRM_BASIC_AUTH_PASSWORD')
                 )
                 ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
-                ->beforeSending(fn () => info(self::class." - Calling MACRM API via {$method} request to {$endpoint} with data: ".json_encode($data)))
+                ->beforeSending(fn () => info(self::class." - Calling MACRM API via {$method} request to {$endpoint}"))
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(1, 90000, function (Exception $exception) {
                     // Log exception details
@@ -146,31 +145,22 @@ class MACRMService
         }
     }
 
-    public static function getCourierQuoteStatus($quote, $quoteTypeId)
+    public static function getCourierQuoteStatus($uuid, $quoteTypeId)
     {
-        info(self::class." - Getting Courier Quote Status on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
-        $leadData = getCourierQuote($quote, $quoteTypeId, [QuoteStatusEnum::PolicyIssued]);
+        info(self::class." - Getting Courier Quote Status on MACRM for UUID: {$uuid} and QuoteTypeId: {$quoteTypeId}");
 
-        if ($leadData) {
-            $leadData = Arr::dot($leadData);
-            if (isset($leadData['payment.ref_id'])) {
-                $refId = $leadData['payment.ref_id'];
+        // making it hard code because not every lead has payment done so we can't get ref_id from payment
+        $refId = 'COU-Car-'.$uuid;
 
-                info("Get Courier Quote Status on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
-                ['ok' => $ok, 'object' => $response] = self::sendRequest("/couriers/get-status/{$refId}", [], 'GET');
-                info(self::class.'Response: '.json_encode($response));
-                info(self::class.'Ok'.json_encode($ok));
+        info("Get Courier Quote Status on MACRM for UUID: {$uuid} and QuoteTypeId: {$quoteTypeId}");
+        ['ok' => $ok, 'object' => $response] = self::sendRequest("/couriers/get-status/{$refId}", [], 'GET');
 
-                if ($ok) {
-                    info(self::class." - Get Courier Quote Status on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}.");
-                } else {
-                    info(self::class." - Get Courier Quote Status on MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}.");
-                }
-
-                return $response;
-            }
+        if ($ok) {
+            info(self::class." - Get Courier Quote Status on MACRM for UUID: {$uuid} and QuoteTypeId: {$quoteTypeId}.");
+        } else {
+            info(self::class." - Get Courier Quote Status on MACRM Failed for UUID: {$uuid} and QuoteTypeId: {$quoteTypeId}.");
         }
 
-        return false;
+        return $response;
     }
 }
