@@ -144,7 +144,7 @@ const renewalBatchOptions = computed(() => {
     value: batch.id,
     label: batch.name,
   }));
-})
+});
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
@@ -584,7 +584,7 @@ const formatDate = dateString =>
           placeholder="Search by Renewal Batch"
           :options="renewalBatchOptions"
         />
-       
+
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"

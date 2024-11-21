@@ -153,7 +153,7 @@ const renewalBatchOptions = computed(() => {
     value: batch.id,
     label: batch.name,
   }));
-})
+});
 
 const leadsStatusOptions = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(item => {
@@ -634,7 +634,7 @@ watch(
           class="w-full"
           placeholder="Policy Number"
         />
-       <ComboBox
+        <ComboBox
           v-model="filters.renewal_batches"
           label="Renewal Batch"
           placeholder="Search by Renewal Batch"

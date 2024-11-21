@@ -235,7 +235,6 @@ const renewalBatchOptions = computed(() => {
   }));
 });
 
-
 const quotesSelected = ref([]);
 
 const onDataExport = () => {
@@ -597,9 +596,7 @@ const validateDateRange = () => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-field
-          label="Renewal Batch"
-        >
+        <x-field label="Renewal Batch">
           <ComboBox
             v-model="filters.renewal_batch_id"
             placeholder="Search by Renewal Batch"

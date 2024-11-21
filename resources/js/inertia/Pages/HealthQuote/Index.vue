@@ -226,7 +226,7 @@ const renewalBatchOptions = computed(() => {
     value: batch.id,
     label: batch.name,
   }));
-})
+});
 
 const modifiedAdvisorOptions = ref([]);
 

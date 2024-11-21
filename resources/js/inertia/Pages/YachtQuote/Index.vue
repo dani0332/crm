@@ -583,9 +583,7 @@ const validateDateRange = () => {
             class="w-full"
           />
         </x-field>
-        <x-field
-          label="Renewal Batch"
-        >
+        <x-field label="Renewal Batch">
           <ComboBox
             v-model="filters.renewal_batch_id"
             placeholder="Search by Renewal Batch"
