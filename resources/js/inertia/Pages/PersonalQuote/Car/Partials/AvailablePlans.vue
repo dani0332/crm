@@ -315,12 +315,17 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Discounted Price:</dt>
-              <x-input
-                v-model="planForm.discounted_premium"
-                size="sm"
-                type="number"
-                :disabled="page.props.lockLeadSectionsDetails.plan_selection"
-              />
+              <x-tooltip placement="bottom">
+                <x-input
+                    v-model="planForm.discounted_premium"
+                    size="sm"
+                    type="number"
+                    disabled
+                />
+                <template #tooltip>
+                  Is there a special discount? please specify its type in 'Manage Payments'. Ensure that it has been approved before applying. If you're unclear about discounts, please contact your supervisor.
+                </template>
+              </x-tooltip>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Car value:</dt>
