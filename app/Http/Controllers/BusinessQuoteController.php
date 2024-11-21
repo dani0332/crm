@@ -105,7 +105,6 @@ class BusinessQuoteController extends Controller
         $authorizedDays = intval($paymentAuthorizedDays->value);
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
-
         return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays'));
     }
 
