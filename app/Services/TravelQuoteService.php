@@ -94,6 +94,7 @@ class TravelQuoteService extends BaseService
             'nationality.country_name as destination_id_text',
             'tqr.is_ecommerce',
             'tqr.renewal_batch',
+            'rb.name as renewal_batch_text',
             'tqr.renewal_import_code',
             'tqr.previous_quote_policy_number',
             DB::raw('DATE_FORMAT(tqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
@@ -106,8 +107,8 @@ class TravelQuoteService extends BaseService
             'tqr.parent_duplicate_quote_id',
             'tqr.has_arrived_destination',
             'tqr.has_arrived_uae',
-            'start_date',
-            'end_date',
+            'tqr.start_date',
+            'tqr.end_date',
             'direction_code',
             'coverage_code',
             'tqr.primary_member_id',
@@ -166,6 +167,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
             ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
+            ->leftJoin('renewal_batches as rb', 'tqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('embedded_transactions as et', 'et.code', 'tqr.code')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
@@ -343,7 +345,7 @@ class TravelQuoteService extends BaseService
         }
         if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start)
         && ! isset($request->payment_due_date) && ! isset($request->booking_date)
-    && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number) && ! isset($request->policy_expiry_date) && ! isset($request->policy_expiry_date_end)) {
+    && ! isset($request->renewal_batches) && ! isset($request->previous_quote_policy_number) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number) && ! isset($request->policy_expiry_date) && ! isset($request->policy_expiry_date_end)) {
             $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if ($request->transaction_approved_dates) {
@@ -394,7 +396,7 @@ class TravelQuoteService extends BaseService
             && empty($request->mobile_no)
             && empty($request->payment_due_date)
             && empty($request->booking_date)
-            && empty($request->renewal_batch)
+            && empty($request->renewal_batches)
             && empty($request->previous_quote_policy_number)
             && ! isset($request->insurer_tax_invoice_number)
             && ! isset($request->insurer_commission_tax_invoice_number)
@@ -438,8 +440,8 @@ class TravelQuoteService extends BaseService
                     ->orWhere('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
         }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('tqr.renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && count($request->renewal_batches) > 0) {
+            $this->query->whereIn('tqr.renewal_batch_id', $request->renewal_batches);
         }
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('tqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);

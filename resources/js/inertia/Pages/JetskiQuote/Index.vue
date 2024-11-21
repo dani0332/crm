@@ -5,6 +5,7 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   quoteType: {
     type: String,
     default: 'jetski',
@@ -33,6 +34,7 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
+  renewal_batch_id: [],
   previous_quote_policy_number: '',
   previous_quote_policy_number_text: '',
   is_ecommerce: '',
@@ -122,6 +124,13 @@ const advisorOptionsFilter = computed(() => {
   }));
 });
 
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(renewalBatch => ({
+    value: renewalBatch.id,
+    label: renewalBatch.name,
+  }));
+});
+
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
@@ -187,7 +196,7 @@ const tableHeader = [
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Renewal Batch', value: 'renewal_batch_model' },
 ];
 
 const onDataExport = () => {
@@ -366,12 +375,10 @@ watch(
           />
         </x-field>
         <x-field label="Renewal Batch">
-          <x-input
-            v-model="filters.renewal_batch"
-            type="search"
-            name="renewal_batch"
-            class="w-full"
+          <ComboBox
+            v-model="filters.renewal_batch_id"
             placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
           />
         </x-field>
         <x-field label="Lead Status">
@@ -565,6 +572,12 @@ watch(
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-renewal_batch_model="item">
+        <p v-if="item.renewal_batch_model != null">
+          {{ item.renewal_batch_model.name }}
+        </p>
+        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 
