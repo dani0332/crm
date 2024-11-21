@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -1988,9 +1987,14 @@ class SageApiService
 
     public function scheduleSageProcesses($insurerId = null): void
     {
-        $sageProcessCommandLock = Cache::lock('sage-processes-run-lock', 20);
+        $processLockKey = SageEnum::SAGE_PROCESS_LOCK_KEY;
+        $status[] = SageEnum::SAGE_PROCESS_PENDING_STATUS;
+        if (isSageRetryTimeoutEnabled()) {
+            $status[] = SageEnum::SAGE_PROCESS_TIMEOUT_STATUS;
+        }
+        $sageProcessCommandLock = Cache::lock($processLockKey, 20);
         if ($sageProcessCommandLock->get()) {
-            $sageProcesses = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
+            $sageProcesses = SageProcess::whereIn('status', $status)
                 ->whereNotIn('insurance_provider_id', function ($query) {
                     $query->select('insurance_provider_id')
                         ->from('sage_processes')

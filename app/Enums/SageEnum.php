@@ -11,10 +11,15 @@ use BenSampo\Enum\Enum;
  */
 final class SageEnum extends Enum
 {
+    /* Sage Processes Locks Enums*/
+    const SAGE_PROCESS_LOCK_KEY = 'sage-processes-run-lock';
+    /* Sage Processes Locks Enums*/
+
     /* Sage Processes Status Enums*/
     const SAGE_PROCESS_PENDING_STATUS = 'pending';
     const SAGE_PROCESS_PROCESSING_STATUS = 'processing';
     const SAGE_PROCESS_FAILED_STATUS = 'failed';
+    const SAGE_PROCESS_TIMEOUT_STATUS = 'timeout';
     const SAGE_PROCESS_COMPLETED_STATUS = 'completed';
 
     /* Sage Process Request Type */
@@ -178,6 +183,7 @@ final class SageEnum extends Enum
     const SAGE_STATUS_POSTED = 'Posted';
     const SAGE_STATUS_OPEN = 'Open';
     const SAGE_PROCESSING_CONFLICT_MESSAGE = 'Please wait for 1 minute before booking again.';
+    const SAGE_TIMEOUT_REQUEST_MESSAGE = 'cURL error 28';
 
     // Sage Payload
     const BANK_CODE = 'INSBANK';

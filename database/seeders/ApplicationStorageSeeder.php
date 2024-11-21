@@ -17,6 +17,16 @@ class ApplicationStorageSeeder extends Seeder
     {
 
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
             [
                 'value' => '2024-12-01',

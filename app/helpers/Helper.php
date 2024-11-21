@@ -1577,4 +1577,11 @@ if (! function_exists('getInsuranceProvider')) {
             return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
         }
     }
+
+    if (! function_exists('isSageRetryTimeoutEnabled')) {
+        function isSageRetryTimeoutEnabled()
+        {
+            return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
+        }
+    }
 }
