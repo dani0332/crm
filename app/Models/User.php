@@ -387,25 +387,25 @@ class User extends Authenticatable implements AuditableContract
 
     public function isValueUser()
     {
-        return $this->subTeam?->name === TeamNameEnum::VALUE;
+        return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VALUE);
     }
 
     public function isVolumeUser()
     {
-        return $this->subTeam?->name === TeamNameEnum::VOLUME;
+        return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VOLUME);
     }
 
     public function scopeIsValueUser($q)
     {
         $q->whereHas('subTeam', function ($q) {
-            $q->where('name', TeamNameEnum::VALUE);
+            $q->where('name', 'like', TeamNameEnum::VALUE);
         });
     }
 
     public function scopeIsVolumeUser($q)
     {
         $q->whereHas('subTeam', function ($q) {
-            $q->where('name', TeamNameEnum::VOLUME);
+            $q->where('name', 'like', TeamNameEnum::VOLUME);
         });
     }
 }
