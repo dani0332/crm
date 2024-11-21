@@ -21,7 +21,7 @@ class TransactionReportService extends ManagementReport
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::TRANSACTION;
-        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::TRANSACTION_PAYMENTS;
+        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
             $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
@@ -157,7 +157,7 @@ class TransactionReportService extends ManagementReport
         return [
             'paymentDueDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::TRANSACTION,
-            'reportType' => ManagementReportTypeEnum::TRANSACTION_PAYMENTS,
+            'reportType' => ManagementReportTypeEnum::APPROVED_TRANSACTIONS,
         ];
     }
 }

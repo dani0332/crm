@@ -218,14 +218,23 @@ class EndorsementReportService extends ManagementReport
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
 
-        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+        if ($request['reportType'] == ManagementReportTypeEnum::APPROVED_TRANSACTIONS) {
             $distinctPaymentSplits = DB::table('payment_splits as dps')
                 ->select('dps.code', 'due_date')
                 ->groupBy('dps.code');
             $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
             });
+        } else if ($request['reportType'] == ManagementReportTypeEnum::PAID_TRANSACTIONS) {
+            $distinctPaymentSplits = DB::table('payment_splits as dps')
+                ->select('dps.code', 'dps.verified_at')
+                ->groupBy('dps.code');
+            $this->getDateFilter($distinctPaymentSplits, $request, 'dps.verified_at', 'paymentDate');
+            $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
+                $join->on('p.code', '=', 'ps.code');
+            });
         }
+
         $this->applyFilters($reversalQuery, $request);
 
         $query = $query->unionAll($reversalQuery);

@@ -22,7 +22,7 @@ class InstallmentReportService extends ManagementReport
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::INSTALLMENT;
-        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::TRANSACTION_PAYMENTS;
+        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
 
         if ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
             $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
@@ -150,7 +150,7 @@ class InstallmentReportService extends ManagementReport
         return [
             'paymentDueDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::INSTALLMENT,
-            'reportType' => ManagementReportTypeEnum::TRANSACTION_PAYMENTS,
+            'reportType' => ManagementReportTypeEnum::APPROVED_TRANSACTIONS,
         ];
     }
 
