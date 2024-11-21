@@ -116,8 +116,8 @@ const onUpdatePlan = () => {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
           notification.error({
-          title: errors[key],
-          position: 'top',
+            title: errors[key],
+            position: 'top',
           });
         });
       },
