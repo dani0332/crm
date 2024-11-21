@@ -632,7 +632,7 @@ watch(
       </template>
       <template #item-renewal_batch_model="item">
         <p>
-          {{ item.renewal_batch_model.name ?? '' }}
+          {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
       </template>
     </DataTable>
