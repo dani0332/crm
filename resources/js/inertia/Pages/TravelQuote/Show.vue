@@ -1362,10 +1362,12 @@ const onAddUpdate = () => {
 };
 
 const allowStatusUpdate = computed(() => {
-  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])){
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
     return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
   }
-  return page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
 });
 </script>
 
@@ -2508,7 +2510,8 @@ const allowStatusUpdate = computed(() => {
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
                     :disabled="
-                    allowStatusUpdate ||lockLeadSectionsDetails.lead_status"
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                    "
                     placeholder="Lead Status"
                     class="w-full"
                     filterable
@@ -2520,7 +2523,9 @@ const allowStatusUpdate = computed(() => {
                     type="text"
                     placeholder="Lead Notes"
                     class="w-full"
-                    :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
+                    :disabled="
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                    "
                   />
                 </x-field>
               </div>
