@@ -737,14 +737,18 @@ const onLoadAvailablePlansData = async () => {
 
 const selectedPlanType = ref(null);
 
-const updateSelectedPlan = async (selectedPlanData) => {
+const updateSelectedPlan = async selectedPlanData => {
   let data = {
     plan_id: selectedPlanData.plan.id,
   };
 
   data.planType = selectedPlanData.extraDetails?.planType;
   if (selectedPlanData.extraDetails?.selectedPlansIds.length > 0) {
-    for (let i = 0; i < selectedPlanData.extraDetails?.selectedPlansIds.length; i++) {
+    for (
+      let i = 0;
+      i < selectedPlanData.extraDetails?.selectedPlansIds.length;
+      i++
+    ) {
       if (
         selectedPlanData.extraDetails?.planType == 'normalPlans' &&
         selectedPlanData.extraDetails?.seniorPlansIds.includes(
@@ -752,7 +756,8 @@ const updateSelectedPlan = async (selectedPlanData) => {
         )
       ) {
         data.plan_id = selectedPlanData.plan.id;
-        data.selected_plan_id = selectedPlanData.extraDetails?.selectedPlansIds[i];
+        data.selected_plan_id =
+          selectedPlanData.extraDetails?.selectedPlansIds[i];
       }
 
       if (
@@ -800,11 +805,13 @@ const updateSelectedPlan = async (selectedPlanData) => {
     });
 };
 
-const onLoadAvailablePlansDataAndPlanDetails = async (selectedPlanData) => {
+const onLoadAvailablePlansDataAndPlanDetails = async selectedPlanData => {
   // In case of update made in selected plan, we need to call the update plan api to make the required changes according to selected plan
-  if (selectedPlanData.extraDetails?.selectedPlansIds.includes(
-    parseInt(selectedPlanData.plan.id)
-  )) {
+  if (
+    selectedPlanData.extraDetails?.selectedPlansIds.includes(
+      parseInt(selectedPlanData.plan.id),
+    )
+  ) {
     await updateSelectedPlan(selectedPlanData);
   }
   getPlanDetails(planDetails.value.id);
@@ -2998,7 +3005,10 @@ const onAddUpdate = () => {
                     size="xs"
                     color="error"
                     outlined
-                    @click.prevent="selectedPlanType = 'normalPlans';getPlanDetails(item.id)"
+                    @click.prevent="
+                      selectedPlanType = 'normalPlans';
+                      getPlanDetails(item.id);
+                    "
                   >
                     View
                   </x-button>
@@ -3086,7 +3096,10 @@ const onAddUpdate = () => {
                       size="xs"
                       color="error"
                       outlined
-                      @click.prevent="selectedPlanType = 'seniorPlans';getPlanDetails(item.id)"
+                      @click.prevent="
+                        selectedPlanType = 'seniorPlans';
+                        getPlanDetails(item.id);
+                      "
                     >
                       View
                     </x-button>
