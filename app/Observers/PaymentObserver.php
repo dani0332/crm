@@ -29,9 +29,9 @@ class PaymentObserver
         if ($payment->isDirty('total_price')) {
             $this->updatePriceVat($payment);
         }
-        // If payment status is changed to PAID, update the payment split to update the updated_at field of the payment split which is called the payment split observer  
+        // If payment status is changed to PAID, update the payment split to update the updated_at field of the payment split which is called the payment split observer
         if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->isDirty('payment_status_id') && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-            info("Payment:Observer - Payment status changed to " .PaymentStatusEnum::PAID. " for payment code: ".$payment->code);
+            info('Payment:Observer - Payment status changed to '.PaymentStatusEnum::PAID.' for payment code: '.$payment->code);
             $payment->paymentSplits()->first()->touch();
         }
     }
