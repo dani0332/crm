@@ -402,7 +402,7 @@ const downloadReport = () => {
               <template #tooltip>
                 {{
                   item.label == 'Detailed'
-                    ? "Detailed InstantAlfred's interactions across all channels for each"
+                    ? "Detailed InstantAlfred's interactions across all channels for each lead"
                     : "A summary of InstantAlfred's interactions for each lead"
                 }}
               </template>
