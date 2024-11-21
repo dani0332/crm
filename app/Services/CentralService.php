@@ -418,7 +418,9 @@ class CentralService
 
         // Lock functionality check for Lead status Section
         $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined]);
-        if (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
+        if (auth()->check() && auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+            in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked]) ? $lockFunctionalities['lead_status'] = true : $lockFunctionalities['lead_status'] = false;
+        } elseif (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
             $lockFunctionalities['lead_status'] = true;
         }
 
