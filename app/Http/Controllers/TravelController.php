@@ -555,23 +555,6 @@ class TravelController extends Controller
 
     public function travelPlanUpdateManualProcess(Request $request)
     {
-        $response = app(TravelQuoteService::class)->travelPlanModify($request);
-
-        $message = 'Travel Plan has not been updated';
-
-        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
-            $message = 'Plan has been updated';
-
-            return redirect()->back()->with('message', $message);
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
-            }
-            $message = 'Travel Plan has not been updated '.$responseMessage;
-        }
-
-        return redirect()->back()->with('error', $message);
+        app(TravelQuoteService::class)->travelPlanModify($request);
     }
 }

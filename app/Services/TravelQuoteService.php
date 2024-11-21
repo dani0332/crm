@@ -1128,12 +1128,6 @@ class TravelQuoteService extends BaseService
     public function travelPlanModify($request)
     {
         if (($response = $this->isPlanModifyAllowed($request->all())) === true) {
-            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-travel-quote-plan';
-            $apiToken = config('constants.KEN_API_TOKEN');
-            $apiTimeout = config('constants.KEN_API_TIMEOUT');
-            $apiUserName = config('constants.KEN_API_USER');
-            $apiPassword = config('constants.KEN_API_PWD');
-
             if (isset($request->is_create)) {
                 if ($request->is_create == 1) {
                     $discountedPremium = $request->actual_premium;
@@ -1170,15 +1164,7 @@ class TravelQuoteService extends BaseService
                 ],
             ];
 
-            $apiCreds = [
-                'apiEndPoint' => $apiEndPoint,
-                'apiToken' => $apiToken,
-                'apiTimeout' => $apiTimeout,
-                'apiUserName' => $apiUserName,
-                'apiPassword' => $apiPassword,
-            ];
-
-            $response = $this->httpService->processRequest($travelPlanData, $apiCreds);
+            $response = Ken::request('/save-manual-travel-quote-plan', 'post', $travelPlanData);
         }
 
         return $response;
@@ -1234,7 +1220,7 @@ class TravelQuoteService extends BaseService
 
         info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
 
-        return 'Plan Modification is not allowed';
+        vAbort('Plan Modification is not allowed');
     }
 
     public function updatedAccessAgainstPaymentStatus($record)

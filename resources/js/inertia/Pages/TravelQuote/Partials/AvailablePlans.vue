@@ -103,10 +103,22 @@ const onUpdatePlan = () => {
       preserveScroll: true,
       preserveState: true,
       onSuccess: () => {
+        notification.success({
+          title: 'Plan has been updated',
+          position: 'top',
+        });
         emit('onLoadAvailablePlansData', {
           plan: props.plan,
           quoteType: props.quoteType,
           extraDetails: props.extraDetails,
+        });
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+          title: errors[key],
+          position: 'top',
+          });
         });
       },
     });
