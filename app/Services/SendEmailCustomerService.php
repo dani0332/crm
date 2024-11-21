@@ -1492,7 +1492,7 @@ class SendEmailCustomerService extends BaseService
         $payload = [
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
-            'customerMobile' => (! empty($quote->mobile_no) ? $quote->mobile_no : ''),
+            'customerMobile' => (! empty($quote->mobile_no) ? formatMobileNo($quote->mobile_no) : ''),
             'advisor' => $advisor ?? null,
             'advisorName' => $advisor?->name ?? '',
             'advisorEmail' => $advisor?->email ?? '',
