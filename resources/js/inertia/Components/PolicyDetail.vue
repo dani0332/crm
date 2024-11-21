@@ -369,19 +369,6 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   return false;
 });
 
-const getMinPolicyStartDate = () => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    return date;
-}
-
-const getMaxPolicyStartDate = () => {
-    const date = new Date();
-    date.setMonth(date.getMonth() + 2);
-    date.setHours(0, 0, 0, 0);
-    return date;
-}
-
 const getMinPolicyExpiryDate = () => {
     let policyMinStartDate = new Date(policyDetailsForm.quote_policy_start_date);
     policyMinStartDate.setDate(policyMinStartDate.getDate() + 1);
@@ -523,8 +510,6 @@ onMounted(() => {
                   placeholder="Start Date"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
-                  :min-date="getMinPolicyStartDate()"
-                  :max-date="getMaxPolicyStartDate()"
                 />
               </div>
             </div>
@@ -576,8 +561,6 @@ onMounted(() => {
                   placeholder="Expiry Date"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
-                  :min-date="getMinPolicyExpiryDate()"
-                  :max-date="getMaxPolicyExpiryDate()"
                 />
               </div>
             </div>
