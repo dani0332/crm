@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 
@@ -226,17 +227,6 @@ const memberCategoryText = memberCategoryId =>
       category => category.id === memberCategoryId,
     )?.text;
   });
-
-// const subTeamOptions = computed(() => {
-//     let subteamArray = page.props.teams?.map(team => ({
-//         value: team.name,
-//         label: team.name,
-//     }));
-
-//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
-
-//     return subteamArray;
-// });
 
 const subTeamOptions = [
   { value: 'Best', label: 'Best' },
@@ -643,10 +633,14 @@ const plansTable = reactive({
       text: 'Provider Name',
       value: 'providerName',
       sortable: true,
+      fixed: true,
+      width: 400,
     },
     {
       text: 'Plan Name',
       value: 'name',
+      fixed: true,
+      width: 100,
     },
     {
       text: 'Plan Type',
@@ -660,7 +654,7 @@ const plansTable = reactive({
     {
       text: 'CO-PAY/CO-INSURANCE',
       value: 'copayName',
-      width: 100,
+      width: 230,
     },
     {
       text: 'Price',
@@ -668,16 +662,9 @@ const plansTable = reactive({
       sortable: true,
     },
     {
-      text: 'Basmah',
-      value: 'basmah',
-    },
-    {
-      text: 'Policy Fee (if applicable)',
-      value: 'policyFee',
-    },
-    {
       text: 'Total Indicative Price (with VAT)',
       value: 'total',
+      width: 20,
     },
     {
       text: 'Action',
@@ -710,12 +697,16 @@ const onLoadAvailablePlansData = async () => {
         let plans = plansTable.data.filter(x => x.id == selectedPlan.value?.id);
         selectedPlan.value = { ...plans[0] };
       }
+
       setTimeout(() => {
         onPlanFiltersSubmit();
       }, 800);
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error loading plans',
+        position: 'top',
+      });
     });
 };
 
@@ -773,7 +764,10 @@ const onExportPlans = () => {
       });
     })
     .catch(error => {
-      console.log(error);
+      notification.error({
+        title: 'Error exporting plans',
+        position: 'top',
+      });
     })
     .finally(() => {
       exportLoader.value = false;
@@ -853,6 +847,7 @@ const options = reactive({
   network: [],
   loading: false,
 });
+
 watch(
   () => planFilters?.insurer,
   value => {
@@ -872,7 +867,10 @@ watch(
           }
         })
         .catch(err => {
-          console.log(err);
+          notification.error({
+            title: 'Error!',
+            position: 'top',
+          });
         })
         .finally(() => {
           options.loading = false;
@@ -883,10 +881,43 @@ watch(
 
 const listQuotePlansFiltered = ref([]);
 
+const sortPlans = incommingPlans => {
+  incommingPlans = incommingPlans.sort((a, b) => {
+    // Convert undefined or falsy `actualPremium` values to 0 for comparison, if needed
+    const premiumA = a.actualPremium || 0;
+    const premiumB = b.actualPremium || 0;
+
+    return premiumA - premiumB;
+  });
+
+  const matchingIndex = incommingPlans.findIndex(
+    x => x.id === selectedProviderPlan.value?.id,
+  );
+
+  if (matchingIndex > 0) {
+    [incommingPlans[0], incommingPlans[matchingIndex]] = [
+      incommingPlans[matchingIndex],
+      incommingPlans[0],
+    ];
+  }
+  listQuotePlansFiltered.value = [...incommingPlans];
+};
+
 watchEffect(() => {
   listQuotePlansFiltered.value = plansTable.data
     .slice()
     .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+
+  if (
+    planFilters?.insurer?.length === 0 ||
+    planFilters?.insurer?.length === undefined
+  ) {
+    sortPlans(listQuotePlansFiltered.value);
+  }
+});
+
+const computedListQuotePlans = computed(() => {
+  return listQuotePlansFiltered.value;
 });
 
 const onPlanFiltersSubmit = () => {
@@ -942,6 +973,8 @@ const onPlanFiltersSubmit = () => {
   if (planDataTable.value) {
     planDataTable.value.updatePage(1);
   }
+
+  sortPlans(listQuotePlansFiltered.value);
 };
 
 const onPlanFiltersReset = () => {
@@ -1527,7 +1560,10 @@ const searchByTradeLicense = trigger => {
       }
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error!',
+        position: 'top',
+      });
     });
 };
 
@@ -1562,7 +1598,10 @@ const linkEntity = () => {
       }
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error linking entity',
+        position: 'top',
+      });
     });
 };
 const readOnlyMode = reactive({
@@ -3287,17 +3326,17 @@ const onAddUpdate = () => {
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="plansTable.columns"
-              :items="listQuotePlansFiltered || []"
+              :items="computedListQuotePlans || []"
               border-cell
               hide-rows-per-page
               :rows-per-page="15"
               class="flex-wrap"
-              :sort-by="'actualPremium'"
-              :sort-type="'asc'"
-              :hide-footer="listQuotePlansFiltered.length < 15"
+              :hide-footer="computedListQuotePlans.length < 15"
             >
               <template #item-copayName="item">
-                <span class="copay-max">{{ item.copayName }}</span>
+                <p class="copay-max">
+                  {{ item.copayName }}
+                </p>
               </template>
 
               <template #item-planTypeId="item">

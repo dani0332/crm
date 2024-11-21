@@ -333,6 +333,9 @@ const availablePlansTable = reactive({
   ],
 });
 
+const lazyEmbeddedProducts = ref([]);
+const lazyEmbeddedProductsLoading = ref(false);
+
 /*
 // comment for now, will be used in later after confirmation
 watch(availablePlansTable, (newPlans) =>  {
@@ -431,6 +434,25 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       availablePlansTable.data = res.data;
+
+      loadEmbeddedProducts();
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+const loadEmbeddedProducts = async () => {
+  let url = `/embedded/get-by-quote?quote_id=${page.props.record.id}&quote_type_id=${page.props.quoteTypeId}`;
+  let data = {
+    jsonData: true,
+  };
+  lazyEmbeddedProductsLoading.value = true;
+  axios
+    .get(url, data)
+    .then(res => {
+      lazyEmbeddedProducts.value = res.data;
+      lazyEmbeddedProductsLoading.value = false;
     })
     .catch(err => {
       console.log(err);
@@ -1315,7 +1337,6 @@ onMounted(() => {
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
-  // setLeadStatuses();
 });
 
 //activities
@@ -2295,6 +2316,21 @@ const allowStatusUpdate = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
                   <dd>{{ record.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
@@ -3698,12 +3734,14 @@ const allowStatusUpdate = computed(() => {
     </div>
 
     <EmbeddedProducts
-      :data="embeddedProducts"
+      :data="lazyEmbeddedProducts || []"
       :link="record.uuid"
       :code="record.code"
       :quote="record"
       :modelType="quoteType"
       :expanded="sectionExpanded"
+      :isEpLoading="lazyEmbeddedProductsLoading"
+      :key="lazyEmbeddedProductsLoading"
     />
 
     <PolicyDetail
