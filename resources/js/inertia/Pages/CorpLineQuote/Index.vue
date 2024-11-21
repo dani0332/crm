@@ -733,9 +733,7 @@ watch(() => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-field
-          label="Renewal Batch"
-        >
+        <x-field label="Renewal Batch">
           <ComboBox
             v-model="filters.renewal_batches"
             placeholder="Search by Renewal Batch"
