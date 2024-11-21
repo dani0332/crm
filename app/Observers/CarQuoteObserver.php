@@ -6,11 +6,14 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Facades\Ken;
+use App\Jobs\AddressReminderJob;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
+use App\Models\CustomerAddress;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -86,6 +89,14 @@ class CarQuoteObserver
         ) {
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
+
+            // check if policy is issued and address is not entered then call KEN API
+            // Dispatch the job for sending an address reminder
+            info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : '.$lead->uuid);
+            $address = CustomerAddress::where('quote_uuid', $lead->uuid)->first();
+            if (! $address) {
+                AddressReminderJob::dispatch($lead);
+            }
         }
     }
 }

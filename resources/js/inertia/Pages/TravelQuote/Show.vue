@@ -1360,6 +1360,15 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
 };
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
 </script>
 
 <template>
@@ -2505,9 +2514,7 @@ const onAddUpdate = () => {
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
                     :disabled="
-                      quote.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
-                      lockLeadSectionsDetails.lead_status
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Lead Status"
                     class="w-full"
@@ -2521,9 +2528,7 @@ const onAddUpdate = () => {
                     placeholder="Lead Notes"
                     class="w-full"
                     :disabled="
-                      quote.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
-                      lockLeadSectionsDetails.lead_status
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
                     "
                   />
                 </x-field>
@@ -2560,10 +2565,7 @@ const onAddUpdate = () => {
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                isDisabled
-              "
+              :disabled="allowStatusUpdate || isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Change Status
