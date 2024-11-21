@@ -238,7 +238,7 @@ enum QuoteTypes: string
     {
         return match ($this) {
             self::CAR => [RolesEnum::CarAdvisor],
-            self::HEALTH => [RolesEnum::HealthAdvisor],
+            self::HEALTH => [RolesEnum::HealthAdvisor, RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor],
             self::BIKE => [RolesEnum::BikeAdvisor],
             self::TRAVEL => [RolesEnum::TravelAdvisor],
             self::CYCLE => [RolesEnum::CycleAdvisor],
