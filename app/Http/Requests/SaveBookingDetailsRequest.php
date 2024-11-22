@@ -142,6 +142,17 @@ class SaveBookingDetailsRequest extends FormRequest
             }
 
             $insurerTaxInvoiceNumber = request()->insurer_tax_invoice_number;
+            $insurerCommissionInvoiceNumber = request()->insurer_commission_invoice_number;
+
+            if ($this->sendUpdate->category?->code == SendUpdateLogStatusEnum::CPD) {
+                $payment = Payment::where('insurer_tax_number', request()->reversal_invoice)->first();
+                if (
+                    (($payment->insurer_tax_number.'-REV') == $insurerTaxInvoiceNumber) ||
+                    (($payment->insurer_commmission_invoice_number.'-REV') == $insurerCommissionInvoiceNumber)
+                ) {
+                    $validator->errors()->add('error', 'Reversal Document Number should not be the same as the New Document Number.');
+                }
+            }
 
             $taxInvoiceValidation = Payment::select('id')->where('insurer_tax_number', $insurerTaxInvoiceNumber)
                 ->orWhere('insurer_commmission_invoice_number', $insurerTaxInvoiceNumber)
@@ -156,8 +167,6 @@ class SaveBookingDetailsRequest extends FormRequest
                 info('here');
                 $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists, Please enter a unique value.');
             }
-
-            $insurerCommissionInvoiceNumber = request()->insurer_commission_invoice_number;
 
             $commissionInvoiceValidation = Payment::select('id')->where('insurer_commmission_invoice_number', $insurerCommissionInvoiceNumber)
                 ->orWhere('insurer_tax_number', $insurerCommissionInvoiceNumber)
@@ -174,16 +183,6 @@ class SaveBookingDetailsRequest extends FormRequest
 
             if ($insurerTaxInvoiceNumber == $insurerCommissionInvoiceNumber) {
                 $validator->errors()->add('error', 'Insurer Tax Invoice Number and Insurer Commission Invoice Number should not be the same.');
-            }
-
-            if ($this->sendUpdate->category?->code == SendUpdateLogStatusEnum::CPD) {
-                $payment = Payment::where('insurer_tax_number', request()->reversal_invoice)->first();
-                if (
-                    (($payment->insurer_tax_number.'-REV') == $insurerTaxInvoiceNumber) ||
-                    (($payment->insurer_commmission_invoice_number.'-REV') == $insurerCommissionInvoiceNumber)
-                ) {
-                    $validator->errors()->add('error', 'Reversal Document Number should not be the same as the New Document Number.');
-                }
             }
         });
     }
