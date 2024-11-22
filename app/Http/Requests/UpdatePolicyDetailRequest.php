@@ -172,6 +172,7 @@ class UpdatePolicyDetailRequest extends FormRequest
             'amount_with_vat.required' => 'Total price is required',
             'quote_policy_start_date.after_or_equal' => 'Please select a start date within next two months',
             'quote_policy_start_date.before_or_equal' => 'Please select a start date within next two months',
+            'quote_policy_expiry_date.after' => 'Please select a date that is after the start date and in the current or future year',
         ];
     }
 }
