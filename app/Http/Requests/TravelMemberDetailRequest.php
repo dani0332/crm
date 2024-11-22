@@ -45,7 +45,7 @@ class TravelMemberDetailRequest extends FormRequest
             $quoteType = request()->quote_type;
             $name = request()->name;
             $pattern = "/^\b\w+\b\s+\b\w+\b/";
-            if(ucwords($quoteType) == QuoteTypes::TRAVEL->value && ! preg_match($pattern, $name)){
+            if (ucwords($quoteType) == QuoteTypes::TRAVEL->value && ! preg_match($pattern, $name)) {
                 // regix to ensures that the first_name contains at least two words separated by whitespace
                 $validator->errors()->add('name', 'The member name must contain at least two words.');
             }
