@@ -29,42 +29,52 @@ const tableHeader = reactive([
   {
     text: 'T. Policies',
     value: 'total_policies',
+    tooltip: 'Total count of policies incurred within the selected group by filter',
   },
   {
     text: 'T. Endorsements',
     value: 'total_endorsements',
+    tooltip: 'Total count of endorsements incurred within the selected group by filter',
   },
   {
     text: 'T. Transactions',
     value: 'total_transaction',
+    tooltip: 'Sum of total policies and total endorsements incurred within the selected group by filter',
   },
   {
     text: 'Price (VAT applicable)',
     value: 'price_vat_applicable',
+    tooltip: 'vatable price incurred within the selected group by filter. Any amount appearing in this column will be computed with VAT',
   },
   {
     text: 'T. VAT',
     value: 'total_vat',
+    tooltip: 'VAT of Price (VAT applicable)',
   },
   {
     text: 'Price (VAT not applicable)',
     value: 'price_vat_not_applicable',
+    tooltip: 'Non-vatable price incurred within the selected group by filter. Any amount appearing in this column will not be computed with VAT. For example: BASMAH, rider, etc',
   },
   {
     text: 'Discount',
     value: 'discount',
+    tooltip: 'Total discount incurred within the selected group by filter',
   },
   {
     text: 'Commission (VAT applicable)',
     value: 'commission_vat_applicable',
+    tooltip: 'Vatable commission incurred within the selected group by filter. Any amount appearing in this column will be computed with VAT.',
   },
   {
     text: 'T. Endorsement Amount',
     value: 'endorsements_amount',
+    tooltip: 'Total endorsement incurred within the selected group by filter. This was computed using the following formula: Endorsement[Price(VAT Applicable)] + Endorsement[VAT] + Endorsement[Price(VAT Not Applicable)] - Endorsement[Discount]',
   },
   {
     text: 'T. Price',
     value: 'total_price',
+    tooltip: 'Total price plus total endorsement amount less discount. This was computed using the following formula: Price(VAT Applicable) + VAT + Price(VAT Not Applicable) - Discount + Total Endorsement Amount',
   },
 ]);
 // v-if="props.groupBy == 'advisor'"
@@ -138,6 +148,9 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template v-for="header in tableHeader" :key="header.value" #[`header-${header.value}`]="header">
+      <HeaderWithTooltip :header="header" />
+    </template>
     <template #item-customer_group="{ customer_name }">
       {{ customer_name ?? '' }}
     </template>

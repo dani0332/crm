@@ -340,8 +340,11 @@ watch(
             Report Type <span class="text-red-500">*</span>
           </label>
           <template #tooltip>
-            What specific report type are you trying to generate from your
-            selected report category?
+            <span v-if="filters.reportType == 'Booked Policies'">Booked Policies are based on booking date.</span>
+            <span v-if="filters.reportType == 'Approved Transactions'">Approved Transactions are based on payment due date.</span>
+            <span v-if="filters.reportType == 'Paid Transactions'">Paid Transactions are based on payment date.</span>
+            <span v-if="filters.reportType == 'Expiring Policies'">Expiring Policies (for Ending Policies report) are based on policy expiry date.</span>
+            <span v-if="filters.reportType == 'Active Policies'">Active Policies (for Active Policies report) are based on policy start date.</span>
           </template>
         </x-tooltip>
         <x-select
