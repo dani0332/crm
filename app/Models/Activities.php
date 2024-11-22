@@ -20,6 +20,7 @@ class Activities extends Model implements AuditableContract
         'status' => FilterTypes::EXACT,
         'assignee_id' => FilterTypes::EXACT,
         'due_date' => FilterTypes::DATE_BETWEEN,
+        'activity_type' => FilterTypes::EXACT,
     ];
     protected $appends = ['is_overdue'];
 

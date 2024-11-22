@@ -57,12 +57,13 @@ const urls = computed(() => {
   return `/reports/payment-summary`;
 });
 
-const activitiesUrl = computed(() => {
+const activitiesUrl = (activityType) => {
   const today = new Date();
   const filters = {
     status: '0',
     due_date_time_start: '',
     due_date_time_end: '',
+    activity_type: '',
     page: 1,
     isCustom: false,
   };
@@ -78,11 +79,12 @@ const activitiesUrl = computed(() => {
     'DD-MM-YYYY',
   ).value;
   filters.due_date_time_end = useDateFormat(lastDayOfWeek, 'DD-MM-YYYY').value;
-  return `/activities?due_date_time_start=${filters.due_date_time_start}&due_date_time_end=${filters.due_date_time_end}&page=1&isCustom=false&status=0&redirect=1`;
-});
+  filters.activity_type = activityType;
+  return `/activities?due_date_time_start=${filters.due_date_time_start}&due_date_time_end=${filters.due_date_time_end}&activity_type=${filters.activity_type}&page=1&isCustom=false&status=0&redirect=1`;
+};
 
-const getHTML = (buttonText, data) => {
-  return `<a target="_self" class="text-primary-500 hover:underline flex items-center space-x-1" href="${activitiesUrl.value}"> ${buttonText}
+const getHTML = (buttonText, data, activityType) => {
+  return `<a target="_self" class="text-primary-500 hover:underline flex items-center space-x-1" href="${activitiesUrl(activityType)}"> ${buttonText}
     ${data}</a>`;
 };
 </script>
@@ -218,6 +220,7 @@ const getHTML = (buttonText, data) => {
                             getHTML(
                               'Pending Callbacks: ',
                               pendingActivityCount.pendingCallback,
+                              page.props.activityTypeEnum.CALL_BACK
                             )
                           "
                         />
@@ -242,6 +245,7 @@ const getHTML = (buttonText, data) => {
                             getHTML(
                               'Pending WhatsApp requests: ',
                               pendingActivityCount.pendingWhatsapp,
+                              page.props.activityTypeEnum.WHATS_APP,
                             )
                           "
                         />
