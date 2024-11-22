@@ -103,6 +103,7 @@ class PetQuoteRepository extends BaseRepository
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
             'paymentStatus',
             'payments',
+            'renewalBatchModel',
             'quoteDetail',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {

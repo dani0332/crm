@@ -798,7 +798,11 @@ trait GenericQueriesAllLobs
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
                     $oldPaymentStatusId = $paymentSplit->payment_status_id;
                     $newPaymentStatusId = null;
-                    if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
+
+                    $collectionAmount = formatAmount($paymentSplit->collection_amount, 2);
+                    $paymentAmount = formatAmount($paymentSplit->payment_amount, 2);
+
+                    if ($collectionAmount >= $paymentAmount) {
                         $newPaymentStatusId = PaymentStatusEnum::PAID;
                     } else {
                         $newPaymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
