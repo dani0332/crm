@@ -145,14 +145,15 @@ class SaveBookingDetailsRequest extends FormRequest
 
             $taxInvoiceValidation = Payment::select('id')->where('insurer_tax_number', $insurerTaxInvoiceNumber)
                 ->orWhere('insurer_commmission_invoice_number', $insurerTaxInvoiceNumber)
-                ->limit(1) || SendUpdateLog::select('id')->whereNot('uuid', $this->sendUpdate->uuid)
+                ->first() || SendUpdateLog::select('id')->whereNot('uuid', $this->sendUpdate->uuid)
                 ->where(function ($query) use ($insurerTaxInvoiceNumber) {
                     $query->where('insurer_tax_invoice_number', $insurerTaxInvoiceNumber)
                         ->orWhere('insurer_commission_invoice_number', $insurerTaxInvoiceNumber);
                 })
-                ->limit(1);
+                ->first();
 
             if ($taxInvoiceValidation) {
+                info('here');
                 $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists, Please enter a unique value.');
             }
 
@@ -160,12 +161,12 @@ class SaveBookingDetailsRequest extends FormRequest
 
             $commissionInvoiceValidation = Payment::select('id')->where('insurer_commmission_invoice_number', $insurerCommissionInvoiceNumber)
                 ->orWhere('insurer_tax_number', $insurerCommissionInvoiceNumber)
-                ->limit(1) || SendUpdateLog::select('id')->whereNot('uuid', $this->sendUpdate->uuid)
+                ->first() || SendUpdateLog::select('id')->whereNot('uuid', $this->sendUpdate->uuid)
                 ->where(function ($query) use ($insurerCommissionInvoiceNumber) {
                     $query->where('insurer_commission_invoice_number', $insurerCommissionInvoiceNumber)
                         ->orWhere('insurer_tax_invoice_number', $insurerCommissionInvoiceNumber);
                 })
-                ->limit(1);
+                ->first();
 
             if ($commissionInvoiceValidation) {
                 $validator->errors()->add('error', 'Insurer Commission Invoice Number already exists, Please enter a unique value.');
