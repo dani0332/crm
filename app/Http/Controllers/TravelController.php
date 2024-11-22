@@ -39,6 +39,7 @@ use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
@@ -90,10 +91,12 @@ class TravelController extends Controller
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
+            'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
             'session' => $request->session()->only(['success', 'error', 'message']),
             'permissions' => [
