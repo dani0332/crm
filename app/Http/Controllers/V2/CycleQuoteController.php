@@ -44,6 +44,7 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -68,10 +69,12 @@ class CycleQuoteController extends Controller
         $count = $personalQuotes->count();
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('CycleQuote/Index', [
             'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
+            'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : CycleQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),

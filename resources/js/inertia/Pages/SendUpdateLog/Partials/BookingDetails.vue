@@ -2406,6 +2406,7 @@ watch(
 
     <x-modal
       v-model="modals.sendConfirm"
+      size="md"
       title="Send Update"
       show-close
       backdrop
@@ -2424,7 +2425,7 @@ watch(
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
       />
       <template #actions>
-        <div class="text-right space-x-4">
+        <div class="flex gap-4 justify-end">
           <x-button
             size="sm"
             ghost
@@ -2433,15 +2434,17 @@ watch(
           >
             Cancel
           </x-button>
-          <template v-if="!modals.isConfirmed">
-            <x-tooltip placement="left">
-              <SendUpdateCustReuseBtnTemp />
-              <template #tooltip>
-                Please select the checkbox to proceed
-              </template>
-            </x-tooltip>
-          </template>
-          <SendUpdateCustReuseBtnTemp v-else />
+          <div>
+            <template v-if="!modals.isConfirmed">
+              <x-tooltip placement="right">
+                <SendUpdateCustReuseBtnTemp />
+                <template #tooltip>
+                  Please select the checkbox to proceed
+                </template>
+              </x-tooltip>
+            </template>
+            <SendUpdateCustReuseBtnTemp v-else />
+          </div>
         </div>
       </template>
     </x-modal>

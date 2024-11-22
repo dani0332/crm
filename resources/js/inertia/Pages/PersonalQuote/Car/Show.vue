@@ -558,6 +558,9 @@ const leadStatusOptions = computed(() => {
 });
 
 const leadStatusDisabled = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
   return (
     page.props.record.quote_status_id ==
       page.props.quoteStatusEnum.TransactionApproved ||
@@ -1627,6 +1630,15 @@ const fullAddress = computed(() => {
   // Filter out null or undefined parts and join the rest with comma and space
   return parts.filter(part => part).join(', ');
 });
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
 </script>
 
 <template>
@@ -2306,6 +2318,21 @@ const fullAddress = computed(() => {
                   <dd>{{ record.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
                   <dd>{{ customerProfileForm.company_name }}</dd>
                 </div>
@@ -2626,8 +2653,7 @@ const fullAddress = computed(() => {
                     "
                     :error="leadStatusForm.errors.notes"
                     :disabled="
-                      record.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
+                      allowStatusUpdate ||
                       isCarLostStatus(record.quote_status_id) ||
                       lockLeadSectionsDetails.lead_status
                     "
@@ -2819,7 +2845,7 @@ const fullAddress = computed(() => {
               color="emerald"
               size="sm"
               :disabled="
-                record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                allowStatusUpdate ||
                 (!carLostChangeStatus && !allowQuoteLogAction) ||
                 isDisabled
               "

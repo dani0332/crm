@@ -87,6 +87,7 @@ const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
@@ -109,6 +110,12 @@ const confirmData = reactive({
 });
 
 const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return (
+      page.props.quote.quote_status_id ==
+      page.props.quoteStatusEnum.PolicyBooked
+    );
+  }
   return (
     (props.quote.quote_status_id ==
       page.props.quoteStatusEnum.TransactionApproved ||
@@ -223,17 +230,6 @@ const memberCategoryText = memberCategoryId =>
       category => category.id === memberCategoryId,
     )?.text;
   });
-
-// const subTeamOptions = computed(() => {
-//     let subteamArray = page.props.teams?.map(team => ({
-//         value: team.name,
-//         label: team.name,
-//     }));
-
-//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
-
-//     return subteamArray;
-// });
 
 const subTeamOptions = [
   { value: 'Best', label: 'Best' },
@@ -668,14 +664,6 @@ const plansTable = reactive({
       value: 'actualPremium',
       sortable: true,
     },
-    // {
-    //   text: 'Basmah',
-    //   value: 'basmah',
-    // },
-    // {
-    //   text: 'Policy Fee (if applicable)',
-    //   value: 'policyFee',
-    // },
     {
       text: 'Total Indicative Price (with VAT)',
       value: 'total',
@@ -718,7 +706,10 @@ const onLoadAvailablePlansData = async () => {
       }, 800);
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error loading plans',
+        position: 'top',
+      });
     });
 };
 
@@ -776,7 +767,10 @@ const onExportPlans = () => {
       });
     })
     .catch(error => {
-      console.log(error);
+      notification.error({
+        title: 'Error exporting plans',
+        position: 'top',
+      });
     })
     .finally(() => {
       exportLoader.value = false;
@@ -856,6 +850,7 @@ const options = reactive({
   network: [],
   loading: false,
 });
+
 watch(
   () => planFilters?.insurer,
   value => {
@@ -875,7 +870,10 @@ watch(
           }
         })
         .catch(err => {
-          console.log(err);
+          notification.error({
+            title: 'Error!',
+            position: 'top',
+          });
         })
         .finally(() => {
           options.loading = false;
@@ -886,12 +884,8 @@ watch(
 
 const listQuotePlansFiltered = ref([]);
 
-watchEffect(() => {
-  listQuotePlansFiltered.value = plansTable.data
-    .slice()
-    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
-
-  listQuotePlansFiltered.value = listQuotePlansFiltered.value.sort((a, b) => {
+const sortPlans = incommingPlans => {
+  incommingPlans = incommingPlans.sort((a, b) => {
     // Convert undefined or falsy `actualPremium` values to 0 for comparison, if needed
     const premiumA = a.actualPremium || 0;
     const premiumB = b.actualPremium || 0;
@@ -899,18 +893,29 @@ watchEffect(() => {
     return premiumA - premiumB;
   });
 
-  const matchingIndex = listQuotePlansFiltered.value.findIndex(
+  const matchingIndex = incommingPlans.findIndex(
     x => x.id === selectedProviderPlan.value?.id,
   );
 
   if (matchingIndex > 0) {
-    [
-      listQuotePlansFiltered.value[0],
-      listQuotePlansFiltered.value[matchingIndex],
-    ] = [
-      listQuotePlansFiltered.value[matchingIndex],
-      listQuotePlansFiltered.value[0],
+    [incommingPlans[0], incommingPlans[matchingIndex]] = [
+      incommingPlans[matchingIndex],
+      incommingPlans[0],
     ];
+  }
+  listQuotePlansFiltered.value = [...incommingPlans];
+};
+
+watchEffect(() => {
+  listQuotePlansFiltered.value = plansTable.data
+    .slice()
+    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+
+  if (
+    planFilters?.insurer?.length === 0 ||
+    planFilters?.insurer?.length === undefined
+  ) {
+    sortPlans(listQuotePlansFiltered.value);
   }
 });
 
@@ -972,7 +977,7 @@ const onPlanFiltersSubmit = () => {
     planDataTable.value.updatePage(1);
   }
 
-  // sortPlans();
+  sortPlans(listQuotePlansFiltered.value);
 };
 
 const onPlanFiltersReset = () => {
@@ -1558,7 +1563,10 @@ const searchByTradeLicense = trigger => {
       }
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error!',
+        position: 'top',
+      });
     });
 };
 
@@ -1593,7 +1601,10 @@ const linkEntity = () => {
       }
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error linking entity',
+        position: 'top',
+      });
     });
 };
 const readOnlyMode = reactive({
