@@ -318,6 +318,10 @@ onBeforeMount(() => {
 watch(
   () => policyDetailsForm.quote_policy_start_date,
   quote_policy_start_date => {
+
+    // Validation
+    validateField(policyDetailsForm, quote_policy_start_date, 'quote_policy_start_date', rules.policy_start_date);
+
     let isCarQuote = props.modelType === quoteTypeCodeEnum.Car.toLowerCase();
 
     let isHealthOrBusinessQuote =
@@ -340,6 +344,14 @@ watch(
         .add(12, 'months')
         .subtract(1, 'days');
     }
+  },
+);
+
+watch(
+  () => policyDetailsForm.quote_policy_expiry_date,
+  quote_policy_expiry_date => {
+    // Validation
+    validateField(policyDetailsForm, quote_policy_expiry_date, 'quote_policy_expiry_date', rules.policy_expiry_date);
   },
 );
 
@@ -510,6 +522,7 @@ onMounted(() => {
                   placeholder="Start Date"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
+                  :error="policyDetailsForm.errors.quote_policy_start_date"
                 />
               </div>
             </div>
@@ -561,6 +574,7 @@ onMounted(() => {
                   placeholder="Expiry Date"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
+                  :error="policyDetailsForm.errors.quote_policy_expiry_date"
                 />
               </div>
             </div>

@@ -390,3 +390,15 @@ export const getIp = async () => {
     return null;
   }
 };
+
+//Function to validate single field in form before submit
+export const validateField = (form, fieldValue, errorField, validationRule) => {
+  const validationError = validationRule(fieldValue);
+  if (validationError !== true) {
+    form.errors[errorField] = validationError;
+    return false;
+  } else {
+    form.errors[errorField] = '';
+    return true;
+  }
+};
