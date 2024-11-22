@@ -28,6 +28,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 
 class JetskiQuoteController extends Controller
 {
@@ -40,9 +41,11 @@ class JetskiQuoteController extends Controller
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('JetskiQuote/Index', [
             'quotes' => $quotes,
+            'renewalBatches' => $renewalBatches,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'authorizedDays' => intval($authorizedDays->value),
