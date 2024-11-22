@@ -314,7 +314,7 @@ const emiratesOptions = computed(() => {
 const travelerForm = useForm({
   travel_quote_request_id: page.props.quote.id,
   quote_type: page.props.modelType,
-  first_name: null,
+  name: null,
   dob: '',
   nationality_id: null,
   relation_code: null,
@@ -388,7 +388,15 @@ const submitTraveler = isValid => {
     addTravelMember(isValid);
   }
 };
-
+const showErrors = errors => {
+  Object.keys(errors).forEach(function (key) {
+    notification.error({
+      title: errors[key],
+      position: 'top',
+      timeout: 10000,
+    });
+  });
+};
 const addTravelMember = isValid => {
   if (!isValid) return;
   // '/travelers'
@@ -404,10 +412,13 @@ const addTravelMember = isValid => {
       });
       onLoadAvailablePlansData();
     },
+    onError: errors => {
+      showErrors(errors);
+    },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
-      travelerForm.first_name = '';
+      travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
@@ -423,7 +434,7 @@ const addTravelMember = isValid => {
 
 const onAddTraveler = () => {
   travelerForm.reset();
-  travelerForm.first_name = '';
+  travelerForm.name = '';
   travelerForm.dob = '';
   travelerForm.nationality_id = '';
   travelerForm.relation_code = '';
@@ -440,7 +451,7 @@ const travelerName = ref('');
 const onEditTraveler = traveler => {
   travelerName.value = `Traveler ${traveler.index}`;
   travelerForm.id = traveler.id;
-  travelerForm.first_name = traveler.first_name;
+  travelerForm.name = traveler.name;
   travelerForm.dob = traveler.dob;
   travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
@@ -458,6 +469,9 @@ const editTraveler = isValid => {
     onBefore: () => {
       travelerForm.processing = true;
     },
+    onError: errors => {
+      showErrors(errors);
+    },
     onSuccess: () => {
       notification.success({
         title: 'Member Updated',
@@ -468,7 +482,7 @@ const editTraveler = isValid => {
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
-      travelerForm.first_name = '';
+      travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
@@ -2372,10 +2386,11 @@ const allowStatusUpdate = computed(() => {
       >
         <div class="grid md:grid-cols-2 gap-4">
           <x-input
-            v-model="travelerForm.first_name"
+            v-model="travelerForm.name"
             label="Member Name*"
             placeholder="Member Name"
             :rules="[isRequired]"
+            :hasError="travelerForm.errors.name"
           />
           <ComboBox
             v-model="travelerForm.nationality_id"

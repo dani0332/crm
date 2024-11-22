@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypes;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +14,28 @@ class CustomerMembers extends Model
     use GenericQueriesAllLobs, HasFactory;
 
     protected $guarded = ['id'];
+
+    protected $appends = [
+        'name',
+    ];
+
+    public function getNameAttribute()
+    {
+        return $this->first_name . ' ' . $this->last_name;
+    }
+
+    public function setNameAttribute($value)
+    {
+        $quoteType = request()->quote_type;
+        if(ucwords($quoteType) == QuoteTypes::TRAVEL->value){
+            $nameParts = explode(' ', $value, 2);
+            $this->attributes['first_name'] = $nameParts[0];
+            $this->attributes['last_name'] = $nameParts[1] ?? '';
+        }else{
+            $this->attributes['first_name'] = $value;
+        }
+
+    }
 
     public function nationality()
     {
