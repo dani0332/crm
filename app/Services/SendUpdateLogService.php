@@ -1496,6 +1496,11 @@ class SendUpdateLogService
     {
         return [
             SendUpdateLogStatusEnum::NEW_REQUEST,
+            SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
+            SendUpdateLogStatusEnum::TRANSACTION_DECLINE,
+            SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+            SendUpdateLogStatusEnum::UPDATE_ISSUED,
+            SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             SendUpdateLogStatusEnum::UPDATE_BOOKED,
 
         ];

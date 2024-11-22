@@ -274,7 +274,7 @@ class GenericPermissionSeeder extends Seeder
         ]);
 
         // Add Search across all LOBs permission
-        $searchAcrossLOBsPermissions = [PermissionsEnum::SEARCH_ALL_LEAD_LOB];
+        $searchAcrossLOBsPermissions = [PermissionsEnum::SEARCH_ALL_LEAD_LOB, PermissionsEnum::DATA_EXTRACTION_SEARCH_ALL_LEADS];
 
         foreach ($searchAcrossLOBsPermissions as $searchAcrossLOBsPermission) {
             $permission = Permission::where('name', $searchAcrossLOBsPermission)->first();

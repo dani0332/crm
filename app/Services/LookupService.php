@@ -201,4 +201,11 @@ class LookupService extends BaseService
     {
         return Lookup::where('key', LookupsEnum::COMPANY_TYPE)->get();
     }
+
+    public function getSendUpdateCategories()
+    {
+        $parentTypes = Lookup::where('code', LookupsEnum::SEND_UPDATE_CODE)->pluck('id');
+
+        return Lookup::whereIn('parent_id', $parentTypes)->get();
+    }
 }

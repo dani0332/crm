@@ -8,11 +8,19 @@ const props = defineProps({
     businessInsuranceTypes: Array,
     insuranceProviders: Array,
     advisors: Array,
+    departments: Array,
+    sendUpdateStatuses: Array,
+    sendUpdateTypes: Array,
 });
 
+const page = usePage();
+const notification = useToast();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const isSendUpdateListView = ref(false);
 const filterModal = ref(false);
 const cleanObj = obj => useCleanObj(obj);
+const objToUrl = obj => useObjToUrl(obj);
 const loader = reactive({
     table: false,
     export: false,
@@ -45,9 +53,9 @@ const getDetailPageRoute = (
 
 function statusTitleFormat(str) {
     return str
-        .toLowerCase()              // Convert the entire string to lowercase
-        .replace(/_/g, ' ')          // Replace underscores with spaces
-        .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize the first letter of each word
+        .toLowerCase()
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase());
 }
 
 const showFilters = ref(true);
@@ -119,33 +127,98 @@ const availableFilters = reactive({
     send_update_type: '',
 });
 const dateTypesFilter = ref([
-    { value: 'created_date', label: 'Created Date' },
+    { value: 'created_at', label: 'Created Date' },
     { value: 'payment_due_date', label: 'Payment Due Date' },
     { value: 'payment_date', label: 'Payment Date' },
-    { value: 'transaction_approved_date', label: 'Transaction Approved Date' },
-    { value: 'booking_date', label: 'Booking Date' },
+    { value: 'transaction_approved_at', label: 'Transaction Approved Date' },
+    { value: 'policy_booking_date', label: 'Booking Date' },
     { value: 'policy_start_date', label: 'Policy Start Date' },
-    { value: 'policy_end_date', label: 'Policy End Date' },
+    { value: 'policy_expiry_date', label: 'Policy End Date' },
 ]);
 dateTypesFilter.value.sort((a, b) => a.label.localeCompare(b.label));
+
+const [
+    today,
+    last7Days,
+    last30Days,
+    lastMonthStart,
+    lastMonthEnd,
+    thisMonthStart,
+    thisMonthEnd,
+] = useDateRange();
+
+const presetDates = [
+    { label: 'Today', value: [today, today] },
+    { label: 'Last 7 days', value: [last7Days, today] },
+    { label: 'Last 30 days', value: [last30Days, today] },
+    { label: 'Last month', value: [lastMonthStart, lastMonthEnd] },
+    { label: 'This month', value: [thisMonthStart, thisMonthEnd] },
+];
+
+const autoApplyDateRangeFields = [
+    'insured_name',
+    'member_name',
+    'company_name',
+    'policy_number',
+    'quote_status',
+    'payment_status',
+    'line_of_business',
+    'business_insurance_type',
+    'currently_insured_with',
+    'department',
+    'advisors',
+    'update_status',
+];
+
+function updateDateRange() {
+    availableFilters.date_type = 'created_at';
+    availableFilters.date_range = presetDates[2].value;
+}
+
+autoApplyDateRangeFields.forEach(fields => {
+    watch(() => availableFilters[fields], () => {
+        if (checkAutoDateApplyFilters()) {
+            updateDateRange();
+        }
+    });
+})
+
+function checkAutoDateApplyFilters() {
+    return autoApplyDateRangeFields.some(field => {
+        const value = availableFilters[field];
+        return Array.isArray(value) ? value?.length > 0 : (value !== '' && value !== undefined);
+    });
+}
+
+function filterValidation(filtersCleaned) {
+    if (Object.keys(filtersCleaned).length === 0) {
+        notification.error({
+          title: 'Please select at least one filter before performing the search',
+          position: 'top',
+        });
+      return;
+    }
+
+    if (checkAutoDateApplyFilters()) {
+        if (!availableFilters.date_type || !availableFilters.date_range) {
+            notification.error({
+                title: 'Date range is required for the selected filters',
+                position: 'top',
+            });
+            return false;
+        }
+    }
+    return true;
+}
 
 function onReset() {
     removedSavedParams();
     router.visit(route('search-leads'));
 }
 
-function onSubmit(isValid) {
-    if (isValid) {
-        // if (validateDateRange()) {
-        //     notification.error({
-        //         title:
-        //             'The selected date range exceeds one month. Please select a range within one month.',
-        //         position: 'top',
-        //     });
-        //     return;
-        // }
-
-        const filtersCleaned = cleanObj(availableFilters);
+function onSubmit() {
+    const filtersCleaned = cleanObj(availableFilters);
+    if (filterValidation(filtersCleaned)) {
         filtersCleaned.list = isSendUpdateListView.value ? 'endorsements' : 'leads';
         filtersCount.value = Object.keys(filtersCleaned).length;
         serverOptions.value.page = 1;
@@ -162,44 +235,8 @@ function onSubmit(isValid) {
             onBefore: () => (loader.table = true),
             onFinish: () => (loader.table = false),
         });
-    } else {
-        console.log('Validation failed');
     }
 }
-
-const [
-    today,
-    last7Days,
-    last30Days,
-    lastMonthStart,
-    lastMonthEnd,
-    thisMonthStart,
-    thisMonthEnd,
-] = useDateRange();
-
-const presetDates = [
-    {
-        label: 'Today',
-        value: [today, today],
-    },
-    {
-        label: 'Last 7 days',
-        value: [last7Days, today],
-    },
-    {
-        label: 'Last 30 days',
-        value: [last30Days, today],
-    },
-    {
-        label: 'Last month',
-        value: [lastMonthStart, lastMonthEnd],
-    },
-    {
-        label: 'This month',
-        value: [thisMonthStart, thisMonthEnd],
-    },
-];
-
 
 watch(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -225,9 +262,28 @@ watch(() => {
                 </template>
             </x-tooltip>
             <div class="space-x-3">
-                <x-button size="sm" color="emerald">
+              <template v-if="can(permissionsEnum.DATA_EXTRACTION_SEARCH_ALL_LEADS) || true">
+                <template v-if="!tableData">
+                  <x-tooltip placement="bottom">
+                    <x-button disabled size="sm" color="emerald">
+                      Export to Excel
+                    </x-button>
+                    <template #tooltip>
+                      Perform a search first to display results. Export to Excel will be available once results are shown
+                    </template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <x-button
+                    size="sm"
+                    color="emerald"
+                    :loading="loader.table"
+                    :href="`/search-all-export?${objToUrl(availableFilters)}&list=${isSendUpdateListView ? 'endorsements' : 'leads'}`"
+                  >
                     Export to Excel
-                </x-button>
+                  </x-button>
+                </template>
+              </template>
                 <x-button size="sm" color="primary" @click="listChange()">
                     {{ isSendUpdateListView ? 'Lead' : 'Send Update'}} List
                 </x-button>
@@ -357,6 +413,9 @@ watch(() => {
             <template v-if="isSendUpdateListView" #item-last_name="{ personal_quote }">
                 {{ personal_quote?.last_name }}
             </template>
+          <template #item-company_name="{ quote_request_entity_mapping, customer_type }">
+            {{ customer_type == 'Individual' ? 'N/A' : quote_request_entity_mapping?.entity?.company_name }}
+          </template>
             <template #item-quote_type_id="{ quote_type }">
                {{ quote_type?.code }}
             </template>
@@ -386,11 +445,11 @@ watch(() => {
 
         <Pagination
             :links="{
-            next: leadsOrEndorsementData.next_page_url,
-            prev: leadsOrEndorsementData.prev_page_url,
-            current: leadsOrEndorsementData.current_page,
-            from: leadsOrEndorsementData.from,
-            to: leadsOrEndorsementData.to,
+              next: leadsOrEndorsementData.next_page_url,
+              prev: leadsOrEndorsementData.prev_page_url,
+              current: leadsOrEndorsementData.current_page,
+              from: leadsOrEndorsementData.from,
+              to: leadsOrEndorsementData.to,
           }"
         />
 
@@ -503,6 +562,7 @@ watch(() => {
                         model-type="yyyy-MM-dd"
                         :preset-dates="presetDates"
                     />
+                    <span v-if="! availableFilters.date_type" class="text-xs text-secondary-500">Please select the date type first</span>
                 </x-field>
                 <x-field label="Lead Status">
                     <ComboBox
@@ -522,7 +582,7 @@ watch(() => {
                         placeholder="Search by Payment Status"
                         :options="paymentStatuses.map(item => ({
                             value: item.id,
-                            label: item.text,
+                            label: statusTitleFormat(item.text),
                         }))"
                     />
                 </x-field>
@@ -564,7 +624,10 @@ watch(() => {
                         v-model="availableFilters.department"
                         name="department"
                         placeholder="Search by Department"
-                        :options="[]"
+                        :options="departments.map(item => ({
+                            value: item.id,
+                            label: item.name,
+                        }))"
                     />
                 </x-field>
                 <x-field label="Advisor">
@@ -572,10 +635,13 @@ watch(() => {
                         v-model="availableFilters.advisors"
                         name="advisors"
                         placeholder="Search by Advisor"
-                        :options="[]"
+                        :options="advisors.map(item => ({
+                            value: item.id,
+                            label: item.name,
+                        }))"
                     />
                 </x-field>
-                <x-field label="Insurer Tax Invoice No">
+                <x-field v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)" label="Insurer Tax Invoice No">
                     <x-input
                         v-model="availableFilters.insurer_tax_invoice_number"
                         type="search"
@@ -584,7 +650,7 @@ watch(() => {
                         placeholder="Search by Insurer Tax Invoice No"
                     />
                 </x-field>
-                <x-field label="Insurer Commission Tax Invoice No">
+                <x-field v-if="can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)" label="Insurer Commission Tax Invoice No">
                     <x-input
                         v-model="availableFilters.insurer_commission_tax_invoice_number"
                         type="search"
@@ -594,19 +660,23 @@ watch(() => {
                     />
                 </x-field>
                 <x-field v-if="isSendUpdateListView" label="Update Status">
-                    <x-select
+                    <ComboBox
                         v-model="availableFilters.update_status"
                         placeholder="Search By Update Status"
-                        :options="[]"
-                        class="w-full"
+                        :options="sendUpdateStatuses.map(item => ({
+                            value: item,
+                            label: statusTitleFormat(item),
+                        }))"
                     />
                 </x-field>
                 <x-field v-if="isSendUpdateListView" label="Send Update Type">
-                    <x-select
+                    <ComboBox
                         v-model="availableFilters.send_update_type"
                         placeholder="Search By Send Update Type"
-                        :options="[]"
-                        class="w-full"
+                        :options="sendUpdateTypes.map(item => ({
+                            value: item.id,
+                            label: item.text,
+                        }))"
                     />
                 </x-field>
             </div>

@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -47,6 +50,8 @@ class PersonalQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
+
+    protected $appends = ['customer_type'];
 
     protected static function booted()
     {
@@ -247,6 +252,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
+    public function quotePayments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Payment::class, 'code', 'code');
+    }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -328,5 +338,55 @@ class PersonalQuote extends Model implements AuditableContract
     public function businessTypeOfInsurance(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(BusinessInsuranceType::class);
+    }
+
+    public function sendUpdateLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SendUpdateLog::class);
+    }
+
+    protected function customerType(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->getCustomerType()
+        );
+    }
+
+    protected function getCustomerType(): string
+    {
+        $quoteTypeId = $this->quote_type_id;
+        $personalLOBs = [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski];
+        $nonEcomLOBs = [
+            QuoteTypeId::Car => 'car_quote_request',
+            QuoteTypeId::Home => 'home_quote_request',
+            QuoteTypeId::Health => 'health_quote_request',
+            QuoteTypeId::Life => 'life_quote_request',
+            QuoteTypeId::Travel => 'travel_quote_request',
+            QuoteTypeId::Business => 'business_quote_request',
+        ];
+
+        if (in_array($quoteTypeId, $personalLOBs)) {
+            $exists = QuoteRequestEntityMapping::where('quote_request_id', $this->id)
+                ->where('quote_type_id', $quoteTypeId)
+                ->exists();
+
+            return $exists ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+        }
+
+        if (in_array($quoteTypeId, array_keys($nonEcomLOBs))) {
+            $existsInNonEcomLOBs = DB::table($nonEcomLOBs[$quoteTypeId])
+                ->where('uuid', $this->uuid)
+                ->whereExists(function ($query) {
+                    $query->select(DB::raw(1)) // Select 1 to check for existence
+                        ->from('quote_request_entity_mapping')
+                        ->whereRaw('quote_request_entity_mapping.quote_request_id = '.$this->id)
+                        ->whereRaw('quote_request_entity_mapping.quote_type_id = '.$this->quote_type_id);
+                })
+                ->exists();
+
+            return $existsInNonEcomLOBs ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+        }
+
+        return CustomerTypeEnum::Individual;
     }
 }

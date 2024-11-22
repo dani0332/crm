@@ -15,6 +15,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Facades\Capi;
@@ -39,6 +40,7 @@ use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Models\UserManager;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -913,200 +915,265 @@ class CentralService
         return false;
     }
 
-    public function getSearchLeads($isEndorsementList = false)
+    public function getSearchLeads($isEndorsementList = false, $isExport = false)
     {
-        $filters = ['email'];
-        if ($isEndorsementList) {
-            $baseTable = 'send_update_logs';
-            $query = SendUpdateLog::with([
-                'quoteType',
-                'category',
-                'option',
-                'personalQuote' => function ($query) {
-                    $query->with([
-                        'businessTypeOfInsurance',
-                    ]);
-                },
-            ]);
-        } else {
-            $baseTable = 'personal_quotes';
-            $query = PersonalQuote::with([
-                'quoteType',
-                'quoteStatus',
-                'businessTypeOfInsurance',
-            ]);
-        }
-
-        $query->when((request()->code && ! $isEndorsementList), function ($query) {
-            $query->where('code', request()->code);
-        });
-
-        $query->when(request()->insured_name, function ($query) use ($isEndorsementList) {
+        if (! empty(request()->except('list'))) {
             if ($isEndorsementList) {
-                $query->whereHas('personalQuote', function ($personalQuote) {
-                    $personalQuote->whereHas('customer', function ($customer) {
+                $baseTable = 'send_update_logs';
+                $query = SendUpdateLog::with([
+                    'quoteType',
+                    'category',
+                    'option',
+                    'personalQuote' => function ($query) {
+                        $query->with([
+                            'businessTypeOfInsurance',
+                            'customer',
+                            'quoteRequestEntityMapping' => function ($query) {
+                                $query->with(['entity']);
+                            },
+                            'advisor',
+                            'quotePayments',
+                        ]);
+                    },
+                    'insuranceProvider',
+                ]);
+            } else {
+                $baseTable = 'personal_quotes';
+                $query = PersonalQuote::with([
+                    'quoteType',
+                    'quoteStatus',
+                    'businessTypeOfInsurance',
+                    'sendUpdateLogs',
+                    'quoteRequestEntityMapping' => function ($query) {
+                        $query->with(['entity']);
+                    },
+                    'quotePayments',
+                    'customer',
+                    'advisor',
+                ]);
+            }
+
+            $query->when((request()->code && ! $isEndorsementList), function ($query) {
+                $query->where('code', request()->code);
+            });
+
+            $query->when(request()->insured_name, function ($query) use ($isEndorsementList) {
+                if ($isEndorsementList) {
+                    $query->whereHas('personalQuote', function ($personalQuote) {
+                        $personalQuote->whereHas('customer', function ($customer) {
+                            $customer->where(DB::raw("CONCAT(insured_first_name, ' ', insured_last_name)"), 'like', '%'.request()->insured_name.'%');
+                        });
+                    });
+                } else {
+                    $query->whereHas('customer', function ($customer) {
                         $customer->where(DB::raw("CONCAT(insured_first_name, ' ', insured_last_name)"), 'like', '%'.request()->insured_name.'%');
                     });
-                });
-            } else {
-                $query->whereHas('customer', function ($customer) {
-                    $customer->where(DB::raw("CONCAT(insured_first_name, ' ', insured_last_name)"), 'like', '%'.request()->insured_name.'%');
-                });
-            }
-        });
+                }
+            });
 
         //        $query->when(request()->member_name, function ($query) {
         //        });
 
-        $query->when(request()->company_name, function ($query) use ($isEndorsementList) {
-            if ($isEndorsementList) {
-                $query->whereHas('personalQuote', function ($query) {
-                    $query->where('company_name', 'like', '%'.request()->company_name.'%');
+            $query->when(request()->company_name, function ($query)  {
+                $query->whereHas('quoteRequestEntityMapping', function ($query) {
+                    $query->whereHas('entity', function ($query) {
+                        $query->where('company_name', 'like', '%'.request()->company_name.'%');
+                    });
                 });
-            } else {
-                $query->where('company_name', 'like', '%'.request()->company_name.'%');
-            }
-        });
+            });
 
-        $query->when(request()->policy_number, function ($query) use ($isEndorsementList) {
-            if ($isEndorsementList) {
-                $query->whereHas('personalQuote', function ($query) {
+            $query->when(request()->policy_number, function ($query) use ($isEndorsementList) {
+                if ($isEndorsementList) {
+                    $query->whereHas('personalQuote', function ($query) {
+                        $query->where('policy_number', 'like', '%'.request()->policy_number.'%');
+                    });
+                } else {
                     $query->where('policy_number', 'like', '%'.request()->policy_number.'%');
-                });
-            } else {
-                $query->where('policy_number', 'like', '%'.request()->policy_number.'%');
-            }
-        });
+                }
+            });
 
-        $query->when(request()->mobile_no, function ($query) use ($isEndorsementList) {
-            if ($isEndorsementList) {
-                $query->whereHas('personalQuote', function ($query) {
+            $query->when(request()->mobile_no, function ($query) use ($isEndorsementList) {
+                if ($isEndorsementList) {
+                    $query->whereHas('personalQuote', function ($query) {
+                        $query->where('mobile_no', request()->mobile_no);
+                    });
+                } else {
                     $query->where('mobile_no', request()->mobile_no);
-                });
-            } else {
-                $query->where('mobile_no', request()->mobile_no);
-            }
-        });
+                }
+            });
 
-        $query->when(request()->email, function ($query) use ($isEndorsementList) {
-            if ($isEndorsementList) {
-                $query->whereHas('personalQuote', function ($query) {
+            $query->when(request()->email, function ($query) use ($isEndorsementList) {
+                if ($isEndorsementList) {
+                    $query->whereHas('personalQuote', function ($query) {
+                        $query->where('email', request()->email);
+                    });
+                } else {
                     $query->where('email', request()->email);
+                }
+            });
+
+            $query->when((request()->su_code), function ($query) {
+                $query->whereHas('sendUpdateLogs', function ($query) {
+                    $query->where('code', request()->su_code);
                 });
-            } else {
-                $query->where('email', request()->email);
-            }
-        });
+            });
 
-        $query->when((request()->su_code && $isEndorsementList), function ($query) {
-            $query->where('code', request()->su_code);
-        });
+            $query->when(request()->date_range, function ($query) use ($isEndorsementList) {
+                $query->when(request()->date_type, function ($query) use ($isEndorsementList) {
+                    $paymentsDateFilters = ['payment_due_date', 'payment_date'];
+                    $baseTableDateFilters = ['created_at', 'policy_booking_date', 'policy_start_date', 'policy_expiry_date', 'transaction_approved_at'];
+                    $startDate = date('Y-m-d 00:00:00', strtotime(request()->date_range[0]));
+                    $endDate = date('Y-m-d 23:59:59', strtotime(request()->date_range[1]));
 
-        //        $query->when(request()->date_type, function ($query) {
-        //            $query->where('code', request()->date_type);
-        //        });
+                    //  TODO:: Payment have same morph relation issue - Personal Quote type not available in payments
+                    if (in_array(request()->date_type, $paymentsDateFilters)) {
+                        // TODO:: When payment date filter apply it will check on when payment status got Paid
+                        $query->whereHas('payments', function ($query) use ($startDate, $endDate) {
+                            // TODO:: If Send update might be possible some of endorsements was not booked yet but payment was created.
+                            // TODO:: So, we need to check on send_update_log_id in payments table also for filtration
+                            $query->whereBetween(request()->date_type, [$startDate, $endDate]);
+                        });
+                    } elseif (in_array(request()->date_type, $baseTableDateFilters)) {
+                        if (request()->date_type == 'transaction_approved_at' && $isEndorsementList) {
+                            // TODO:: Need to check in send update when endorsement got Transaction Approved
 
-        //        $query->when(request()->date_range, function ($query) {
-        //            $query->where('date_range', request()->date_range);
-        //        });
+                            //  $query->whereHas('personalQuote', function ($query) use ($startDate, $endDate) {
+                            // $query->whereBetween(request()->date_type, [$startDate, $endDate]);
+                            //  });
+                        } else {
+                            $query->whereBetween(request()->date_type, [$startDate, $endDate]);
+                        }
+                    }
+                });
+            });
 
-        $query->when((request()->quote_status && ! $isEndorsementList), function ($query) {
-            $query->whereIn('quote_status_id', request()->quote_status);
-        });
+            $query->when((request()->quote_status && ! $isEndorsementList), function ($query) {
+                $query->whereIn('quote_status_id', request()->quote_status);
+            });
 
-        //        $query->when(request()->payment_status, function ($query) {
-        //            $query->whereHas('payments', function ($query) {
-        //                $query->whereIn('payment_status_id', request()->payment_status);
-        //            });
-        //        });
+            $query->when(request()->payment_status, function ($query) {
+                $query->whereHas('payments', function ($query) {
+                    $query->whereIn('payment_status_id', request()->payment_status);
+                });
+            });
 
-        $query->when(request()->line_of_business, function ($query) {
-            $query->whereIn('quote_type_id', request()->line_of_business);
-        });
+            $query->when(request()->line_of_business, function ($query) {
+                $query->whereIn('quote_type_id', request()->line_of_business);
+            });
 
-        $query->when(request()->business_insurance_type, function ($query) use ($isEndorsementList) {
-            if ($isEndorsementList) {
-                $query->whereHas('personalQuote', function ($query) {
+            $query->when(request()->business_insurance_type, function ($query) use ($isEndorsementList) {
+                if ($isEndorsementList) {
+                    $query->whereHas('personalQuote', function ($query) {
+                        $query->whereIn('quote_type_id', [QuoteTypeId::Business]);
+                        $query->whereIn('business_type_of_insurance_id', request()->business_insurance_type);
+                    });
+                } else {
+                    $query->whereIn('quote_type_id', [QuoteTypeId::Business]);
                     $query->whereIn('business_type_of_insurance_id', request()->business_insurance_type);
-                });
-            } else {
-                $query->whereIn('business_type_of_insurance_id', request()->business_insurance_type);
+                }
+            });
+
+            $query->when(request()->currently_insured_with, function ($query) {
+                $query->whereIn('insurance_provider_id', request()->currently_insured_with);
+            });
+
+            //            TODO:: Filter condition replicate like Management Report
+            //            $query->when(request()->department, function ($query) use ($isEndorsementList) {
+            //                if ($isEndorsementList) {
+            //                    $query->whereHas('personalQuote', function ($query) {
+            //                        $query->whereIn('business_type_of_insurance_id', request()->department);
+            //                    });
+            //                } else {
+            //                    $query->whereIn('business_type_of_insurance_id', request()->department);
+            //                }
+            //            });
+
+            //        $query->when(request()->advisors, function ($query) use ($isEndorsementList) {
+            //            if ($isEndorsementList) {
+            //                $query->whereHas('personalQuote', function ($query) {
+            //                    $query->whereIn('business_type_of_insurance_id', request()->advisors);
+            //                });
+            //            } else {
+            //                $query->whereIn('business_type_of_insurance_id', request()->advisors);
+            //            }
+            //        });
+            //
+
+            $query->when(request()->insurer_tax_invoice_number, function ($query) use ($isEndorsementList) {
+                if ($isEndorsementList) {
+                    $query->where('insurer_tax_invoice_number', request()->insurer_tax_invoice_number);
+                } else {
+                    $query->whereHas('quotePayments', function ($query) {
+                        $query->where('insurer_tax_number', request()->insurer_tax_invoice_number);
+                    });
+                }
+            });
+
+            $query->when(request()->insurer_commission_tax_invoice_number, function ($query) use ($isEndorsementList) {
+                if ($isEndorsementList) {
+                    $query->where('insurer_commission_invoice_number', request()->insurer_commission_tax_invoice_number);
+                } else {
+                    $query->whereHas('quotePayments', function ($query) {
+                        $query->where('insurer_commmission_invoice_number', request()->insurer_commission_tax_invoice_number);
+                    });
+                }
+            });
+            //
+            //        $query->when(request()->update_status, function ($query) use ($isEndorsementList) {
+            //            if ($isEndorsementList) {
+            //                $query->whereHas('personalQuote', function ($query) {
+            //                    $query->whereIn('business_type_of_insurance_id', request()->department);
+            //                });
+            //            } else {
+            //                $query->whereIn('business_type_of_insurance_id', request()->department);
+            //            }
+            //        });
+            //
+            //        $query->when(request()->send_update_type, function ($query) use ($isEndorsementList) {
+            //            if ($isEndorsementList) {
+            //                $query->whereHas('personalQuote', function ($query) {
+            //                    $query->whereIn('business_type_of_insurance_id', request()->department);
+            //                });
+            //            } else {
+            //                $query->whereIn('business_type_of_insurance_id', request()->department);
+            //            }
+            //        });
+
+            $query->orderBy($baseTable.'.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+            if (empty($requestData->sortBy)) {
+                $query->orderBy($baseTable.'.'.(request()->sortBy ?? 'updated_at'), request()->sortType ?? 'desc');
             }
-        });
 
-        //        $query->when(request()->currently_insured_with, function ($query) use ($isEndorsementList) {
-        //            if ($isEndorsementList) {
-        //                $query->whereHas('personalQuote', function ($query) {
-        //                    $query->whereIn('business_type_of_insurance_id', request()->currently_insured_with);
-        //                });
-        //            } else {
-        //                $query->whereIn('business_type_of_insurance_id', request()->currently_insured_with);
-        //            }
-        //        });
+//                        dd($query->toRawSql());
+//            dd($query->get()->toArray());
 
-        //        $query->when(request()->department, function ($query) use ($isEndorsementList) {
-        //            if ($isEndorsementList) {
-        //                $query->whereHas('personalQuote', function ($query) {
-        //                    $query->whereIn('business_type_of_insurance_id', request()->department);
-        //                });
-        //            } else {
-        //                $query->whereIn('business_type_of_insurance_id', request()->department);
-        //            }
-        //        });
+            if ($isExport) {
+                return $query->get();
+            }
 
-        //        $query->when(request()->advisors, function ($query) use ($isEndorsementList) {
-        //            if ($isEndorsementList) {
-        //                $query->whereHas('personalQuote', function ($query) {
-        //                    $query->whereIn('business_type_of_insurance_id', request()->advisors);
-        //                });
-        //            } else {
-        //                $query->whereIn('business_type_of_insurance_id', request()->advisors);
-        //            }
-        //        });
-        //
-        //        $query->when(request()->insurer_tax_invoice_number, function ($query) use ($isEndorsementList) {
-        //            if ($isEndorsementList) {
-        //                $query->whereHas('personalQuote', function ($query) {
-        //                    $query->whereIn('business_type_of_insurance_id', request()->department);
-        //                });
-        //            } else {
-        //                $query->whereIn('business_type_of_insurance_id', request()->department);
-        //            }
-        //        });
-        //
-        //        $query->when(request()->insurer_commission_tax_invoice_number, function ($query) use ($isEndorsementList) {
-        //            if ($isEndorsementList) {
-        //                $query->whereHas('personalQuote', function ($query) {
-        //                    $query->whereIn('business_type_of_insurance_id', request()->department);
-        //                });
-        //            } else {
-        //                $query->whereIn('business_type_of_insurance_id', request()->department);
-        //            }
-        //        });
-        //
-        //        $query->when(request()->update_status, function ($query) use ($isEndorsementList) {
-        //            if ($isEndorsementList) {
-        //                $query->whereHas('personalQuote', function ($query) {
-        //                    $query->whereIn('business_type_of_insurance_id', request()->department);
-        //                });
-        //            } else {
-        //                $query->whereIn('business_type_of_insurance_id', request()->department);
-        //            }
-        //        });
-        //
-        //        $query->when(request()->send_update_type, function ($query) use ($isEndorsementList) {
-        //            if ($isEndorsementList) {
-        //                $query->whereHas('personalQuote', function ($query) {
-        //                    $query->whereIn('business_type_of_insurance_id', request()->department);
-        //                });
-        //            } else {
-        //                $query->whereIn('business_type_of_insurance_id', request()->department);
-        //            }
-        //        });
+            return $query->simplePaginate(15)->withQueryString();
+        }
 
-        $query->orderBy($baseTable.'.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
-        $query->limit(10);
+        return [];
+    }
 
-        return $query;
+    public function getAdvisorsList()
+    {
+        $usersByTeamProduct = $this->usersByTeamProduct();
+        if (! auth()->user()->hasAnyRole([
+            RolesEnum::SeniorManagement,
+            RolesEnum::Admin,
+            RolesEnum::Engineering,
+        ])) {
+            $usersReportToLoggedInUser = UserManager::where('manager_id', auth()->user()->id)
+                ->whereIn('user_id', $usersByTeamProduct)->pluck('user_id')->toArray();
+        }
+
+        return User::whereIn('id', $usersByTeamProduct)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
     }
 }

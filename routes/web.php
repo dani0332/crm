@@ -670,6 +670,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
 
     Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
+    Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 });
 
 Route::get('/add-batch-number', function () {
