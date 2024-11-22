@@ -81,12 +81,30 @@ const tableHeader = reactive([
 
 watchEffect(() => {
   const headerMap = {
-    advisor: 'Advisor',
-    policy_issuer: 'Policy Issuer',
-    customer_group: 'Customer Group',
-    insurer: 'Insurer',
-    line_of_business: 'Line of Business',
-    department: 'Department',
+    advisor: {
+      'text': 'Advisor',
+      tooltip: 'The advisor assigned to the policy.',
+    },
+    policy_issuer: {
+      'text': 'Policy Issuer',
+      tooltip: 'The user who booked the policy.',
+    },
+    customer_group: {
+      'text': 'Customer Group',
+      tooltip: 'Customer Group',
+    },
+    insurer: {
+      'text': 'Insurer',
+      tooltip: 'Insurance provider',
+    },
+    line_of_business: {
+      'text': 'Line of Business',
+      tooltip: 'Line of business of the lead',
+    },
+    department: {
+      'text': 'Department',
+      tooltip: 'The department of the advisor assigned to this lead',
+    },
   };
 
   const headerText =
@@ -97,14 +115,14 @@ watchEffect(() => {
     tableHeader.splice(index, 1);
   }
 
-  const newItem = { text: headerText, value: props.groupBy };
+  const newItem = { ...headerText, value: props.groupBy };
   headerText && tableHeader[0].text === 'T. Policies'
     ? tableHeader.unshift(newItem)
     : tableHeader.splice(0, 1, newItem);
 
   if (props.groupBy === 'advisor') {
     if (!tableHeader.some(item => item.value === 'department')) {
-      tableHeader.unshift({ text: 'Department', value: 'department' });
+      tableHeader.unshift({ ...headerMap.department, value: 'department' });
     }
   }
 
