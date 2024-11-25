@@ -7,6 +7,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\Lookup;
@@ -16,7 +17,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use App\Enums\QuoteTypes;
 
 class ManagementReport
 {
@@ -64,7 +64,7 @@ class ManagementReport
                     'id' => QuoteTypes::getIdFromValue($item->name),
                     'name' => $item->name,
                 ];
-        });
+            });
 
         $reportCategories = [];
         foreach (ManagementReportCategoriesEnum::asArray() as $value) {
@@ -157,7 +157,7 @@ class ManagementReport
         }
 
         $lobs = $request['lob'];
-        if(empty($lobs)) {
+        if (empty($lobs)) {
             $lobs = $this->getUserProducts($user->id)
                 ->map(fn ($item) => QuoteTypes::getIdFromValue($item->name))
                 ->toArray();
