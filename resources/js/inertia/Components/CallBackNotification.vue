@@ -3,20 +3,23 @@ import Pusher from 'pusher-js';
 const page = usePage();
 const showNotification = ref(false);
 const notificationData = ref({});
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.activity.user',
-);
+
+const channelName = `public.${page.props.appEnv}.activity.user`;
+const eventName = "callback.notification";
+
 const listen = () => {
-  channel.bind('callback.notification', function (e) {
+  const pusherKey = page.props.pusherKey;
+  const options = {
+    cluster: 'ap1',
+    forceTLS: false,
+  };
+  const pusher = getPusherInstance(pusherKey, options);
+
+  subscribeToChannel(pusher, channelName, eventName, (e) => {
     if (e.advisorId === page.props.auth.user.id) {
       showNotification.value = true;
       notificationData.value = {
-        imageUrl: '/image/alfred-theme.png',
+        imageUrl: "/image/alfred-theme.png",
         url: e.url,
         quoteUuid: e.quoteUuid,
         title: e.title,
@@ -26,7 +29,7 @@ const listen = () => {
       hideNotificationTimeOut();
     }
   });
-};
+}
 
 const url = () => {
   window.location.href = notificationData.value.url;
@@ -47,8 +50,8 @@ onMounted(() => {
   listen();
 });
 onUnmounted(() => {
-  channel.unbind('callback.notification');
-  channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
+  unbindEvent(channelName, eventName);
+  unsubscribeChannel(channelName);
 });
 </script>
 <template xmlns="http://www.w3.org/1999/html">

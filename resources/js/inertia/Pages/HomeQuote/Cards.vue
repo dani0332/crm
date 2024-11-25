@@ -46,20 +46,21 @@ watch(
   { deep: true },
 );
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
 const leadsCount = ref(props.totalCount);
 const previousDate = getPreviousDate;
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.total-leads-count',
-);
+
+const channelName = `public.${page.props.appEnv}.total-leads-count`;
+const eventName = "leads.count";
 
 const listen = () => {
-  channel.bind('leads.count', function (e) {
+  const pusherKey = page.props.pusherKey;
+  const options = {
+    cluster: 'ap1',
+    forceTLS: false,
+  };
+  const pusher = getPusherInstance(pusherKey, options);
+
+  subscribeToChannel(pusher, channelName, eventName, (e) => {
     leadsCount.value = e.totalLeadsCount;
   });
 };
@@ -211,8 +212,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  channel.unbind('leads.count');
-  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+  unbindEvent(channelName, eventName);
+  unsubscribeChannel(channelName);
 });
 
 const validateDateRange = () => {

@@ -18,18 +18,18 @@ const statusText = id => {
 
 const userStatus = useStorage('refresh-user-counts', 0);
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.activity.user',
-);
+const channelName = `public.${page.props.appEnv}.activity.user`;
+const eventName = "user.status.changed";
 
 const listen = () => {
-  channel.bind('user.status.changed', function (e) {
+  const pusherKey = page.props.pusherKey;
+  const options = {
+    cluster: 'ap1',
+    forceTLS: false,
+  };
+  const pusher = getPusherInstance(pusherKey, options);
+
+  subscribeToChannel(pusher, channelName, eventName, (e) => {
     currentStatus.value = e.status;
     if (e.status == 1) {
       notification.success({
@@ -58,8 +58,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  channel.unbind('user.status.changed');
-  channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
+  unbindEvent(channelName, eventName);
+  unsubscribeChannel(channelName);
 });
 </script>
 

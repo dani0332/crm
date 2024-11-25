@@ -6,19 +6,20 @@ import CustomNotification from './CustomNotification.vue';
 const showNotification = ref(false);
 const notificationData = ref({});
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
+const channelName = `public.${page.props.appEnv}.activity.user`;
+const eventName = "payment.notification";
 
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.activity.user',
-);
 const listen = () => {
-  channel.bind('payment.notification', function (e) {
+  const pusherKey = page.props.pusherKey;
+  const options = {
+    cluster: 'ap1',
+    forceTLS: false,
+  };
+  const pusher = getPusherInstance(pusherKey, options);
+
+  subscribeToChannel(pusher, channelName, eventName, (e) => {
     if (e.advisorId === page.props.auth.user.id) {
-      notificationData.value = {
+        notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
         title: 'Payment',
         message: e.message,
@@ -30,7 +31,7 @@ const listen = () => {
       showNotification.value = true;
     }
   });
-};
+}
 const hideNotification = () => {
   console.log('Parent function called!');
   showNotification.value = false;
@@ -41,8 +42,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  channel.unbind('payment.notification');
-  channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
+  unbindEvent(channelName, eventName);
+  unsubscribeChannel(channelName);
 });
 </script>
 
