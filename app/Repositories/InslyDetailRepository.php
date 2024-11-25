@@ -342,7 +342,17 @@ class InslyDetailRepository extends BaseRepository
         $dataArr = [];
         $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
-        [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+
+        /* assign email for particular Policy id/number */
+        $email = 'vitara@inbox.ru';
+        $policyId = 66495910;
+        /* assign email for particular Policy id/number */
+        if ($policy['policy_oid'] == $policyId) {
+            $dataArr['email'] = $email;
+            $additionalEmails = [];
+        } else {
+            [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+        }
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
