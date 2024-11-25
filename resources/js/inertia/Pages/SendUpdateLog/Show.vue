@@ -277,7 +277,7 @@ onBeforeMount(() => {
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    SU ref ID
+                    SU REF ID
                   </label>
                   <template #tooltip>
                     A unique reference identifier assigned to each "Send Update"
@@ -288,7 +288,7 @@ onBeforeMount(() => {
               <dd>{{ sendUpdateLog.code }}</dd>
             </div>
             <div class="grid md:grid-cols-2 gap-y-4">
-              <dt>Notes</dt>
+              <dt>NOTES</dt>
               <dd>
                 <x-textarea
                   v-model="sendUpdateForm.notes"
@@ -315,7 +315,7 @@ onBeforeMount(() => {
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
-                      Transaction Type
+                      TRANSACTION TYPE
                     </label>
                     <template #tooltip>
                       Refers to category of the financial transaction associated
@@ -333,7 +333,7 @@ onBeforeMount(() => {
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
-                    Status
+                    STATUS
                   </label>
                   <template #tooltip>
                     The current status of the ""Send Update"" request,
@@ -361,7 +361,7 @@ onBeforeMount(() => {
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
-                      Sub Type
+                      SUB TYPE
                     </label>
                     <template #tooltip>
                       A further classification of the "Send Update" request,
