@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -13,6 +15,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
+use App\Models\ApplicationStorage;
 use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
@@ -878,6 +881,7 @@ class TravelQuoteService extends BaseService
                 $getdecodeContents = json_decode($getContents);
 
                 return $getdecodeContents;
+
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
@@ -1119,5 +1123,147 @@ class TravelQuoteService extends BaseService
             ->first();
 
         return $transactionApprovedAudit;
+    }
+
+    public function travelPlanModify($data)
+    {
+        if (($response = $this->isPlanModifyAllowed($data)) === true) {
+            $isUpdate = false;
+            $discountedPremium = $data['actual_premium'];
+
+            if (isset($data['is_create']) && $data['is_create'] == 1) {
+                $discountedPremium = $data['actual_premium'];
+            } elseif (isset($data['discounted_premium'])) {
+                $discountedPremium = $data['discounted_premium'];
+                $isUpdate = true;
+            }
+
+            $addons = $data['addons'] ?? [];
+
+            $travelPlanData = [
+                'quoteUID' => $data['travel_quote_uuid'],
+                'update' => $isUpdate,
+                'url' => strval($data['current_url']),
+                'ipAddress' => request()->ip(),
+                'userAgent' => request()->header('User-Agent'),
+                'userId' => strval(auth()->id()),
+                'plans' => [
+                    [
+                        'planId' => (int) $data['travel_plan_id'],
+                        'actualPremium' => (float) $data['actual_premium'],
+                        'discountPremium' => (float) $discountedPremium,
+                        'addons' => $addons,
+                    ],
+                ],
+            ];
+
+            $response = Ken::request('/save-manual-travel-quote-plan', 'post', $travelPlanData);
+        }
+
+        return $response;
+    }
+
+    private function isPlanModifyAllowed($data)
+    {
+        if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
+            if (! $enablePlanValidation->value) {
+                info('plan modification validation is disabled from backend');
+
+                return true;
+            }
+        }
+
+        $logPrefix = 'fn: isPlanModifyAllowed ';
+        $quote = TravelQuote::where('uuid', $data['travel_quote_uuid'])->with('paymentStatus')->first();
+        $paymentStatuses = [
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DECLINED,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::OVERDUE,
+            PaymentStatusEnum::CREDIT_APPROVED,
+            PaymentStatusEnum::CANCELLED,
+            PaymentStatusEnum::REFUNDED,
+            PaymentStatusEnum::DISPUTED,
+            PaymentStatusEnum::FAILED,
+            PaymentStatusEnum::DRAFT,
+        ];
+
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            if (auth()->user()->hasRole(RolesEnum::TravelAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+                info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+
+                return true;
+            } elseif (auth()->user()->hasRole(RolesEnum::TravelManager) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+                info($logPrefix.' plan modify allowed to travel manager for uuid '.$quote->uuid);
+
+                return true;
+            }
+        }
+
+        if (auth()->user()->hasAnyRole([RolesEnum::TravelManager, RolesEnum::TravelAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if (in_array($quote->payment_status_id, $paymentStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
+                info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+
+                return true;
+            }
+        }
+
+        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+
+        vAbort('Plan Modification is not allowed');
+    }
+
+    public function updatedAccessAgainstPaymentStatus($record)
+    {
+        $paymentStatuses = [
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DECLINED,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::OVERDUE,
+            PaymentStatusEnum::CREDIT_APPROVED,
+            PaymentStatusEnum::CANCELLED,
+            PaymentStatusEnum::REFUNDED,
+            PaymentStatusEnum::DISPUTED,
+            PaymentStatusEnum::FAILED,
+            PaymentStatusEnum::DRAFT,
+        ];
+
+        $access['travelAdvisorCanEdit'] = false;
+        $access['travelManagerCanEdit'] = false;
+
+        // Travel Advisor Validations
+        if (auth()->user()->hasRole(RolesEnum::TravelAdvisor) && ! empty($record->payment_status_id)) {
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
+                $access['travelAdvisorCanEdit'] = true;
+            }
+        }
+
+        // Travel Manager Validations
+        if (auth()->user()->hasRole(RolesEnum::TravelManager) && ! empty($record->payment_status_id)) {
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
+                $access['travelManagerCanEdit'] = true;
+            }
+        }
+
+        if (auth()->user()->hasAnyRole([RolesEnum::TravelManager, RolesEnum::TravelAdvisor]) && $record->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if ((! empty($record->payment_status_id) && in_array($record->payment_status_id, $paymentStatuses)) || $record->payment_status_id == '' || $record->payment_status_id == null) {
+                $access['travelAdvisorCanEdit'] = true;
+                $access['travelManagerCanEdit'] = true;
+            }
+        }
+
+        return $access;
     }
 }

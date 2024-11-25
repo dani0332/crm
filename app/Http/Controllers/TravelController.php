@@ -20,6 +20,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
+use App\Http\Requests\TravelPlanUpdateManualProcessRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\ApplicationStorage;
@@ -239,6 +240,7 @@ class TravelController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $isAmlClearedForQuote = $record->aml_status === AMLStatusCode::AMLScreeningCleared;
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
+        $access = $this->travelQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -316,6 +318,7 @@ class TravelController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'access' => $access,
         ]);
     }
 
@@ -485,6 +488,8 @@ class TravelController extends Controller
                 $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                 $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
                 $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+                $addons = $listQuotePlan->addons;
+                $vat = $listQuotePlan->vat;
 
                 foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                     $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
@@ -509,6 +514,9 @@ class TravelController extends Controller
             'listQuotePlansMembers' => $listQuotePlansMembers,
             'listQuotePlanBenefitstravelInconvenienceCover' => $listQuotePlanBenefitstravelInconvenienceCover,
             'listQuotePlanBenefitsemergencyMedicalCover' => $listQuotePlanBenefitsemergencyMedicalCover,
+            'addons' => $addons,
+            'id' => $planId,
+            'vat' => $vat,
         ];
 
         return response()->json($data, 200);
@@ -547,5 +555,10 @@ class TravelController extends Controller
     public function renewalsUploadCreate(TravelRenewalsUploadRequest $request)
     {
         return $this->renewalQuoteService->travelRenewalsUploadCreate($request->validated());
+    }
+
+    public function travelPlanUpdateManualProcess(TravelPlanUpdateManualProcessRequest $request)
+    {
+        app(TravelQuoteService::class)->travelPlanModify($request->validated());
     }
 }
