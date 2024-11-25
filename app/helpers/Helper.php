@@ -39,7 +39,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use League\CommonMark\Extension\SmartPunct\Quote;
 
 if (! function_exists('generate_code')) {
     /**

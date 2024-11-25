@@ -226,7 +226,6 @@ class EmbeddedProductRepository extends BaseRepository
 
             }
 
-            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
         });
@@ -264,7 +263,6 @@ class EmbeddedProductRepository extends BaseRepository
 
         return false;
     }
-
     
     public function canSendDocumentEnums(): array
     {
