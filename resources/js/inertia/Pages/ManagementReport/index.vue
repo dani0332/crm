@@ -580,7 +580,7 @@ watch(
           deselect-all
         />
       </x-field>
-      <div v-if="!hideUmtGroup">
+      <div>
         <x-tooltip position="top">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
