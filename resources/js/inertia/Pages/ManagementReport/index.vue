@@ -45,6 +45,7 @@ const filters = reactive({
     new Date(),
   ],
   paymentDueDate: [dateFormat(new Date()), dateFormat(new Date())],
+  paymentDate: [dateFormat(new Date()), dateFormat(new Date())],
   policyExpiredDate: [dateFormat(new Date()), dateFormat(new Date())],
   createdAt: dateFormat(new Date()),
   transactionType: props.defaultFilters.transactionType ?? [],
@@ -62,40 +63,35 @@ const filters = reactive({
 const filterkeys = () => {
   const filterConditions = {
     policyExpiredDate: filters.reportCategory !== 'Ending Policies',
-    policyBookDate: ![
+    policyBookDate: !([
       'Sales Summary',
       'Sales Detail',
       'Transaction',
       'Installment',
       'Endorsement',
-    ].includes(filters.reportCategory),
-    paymentDueDate: ![
+    ].includes(filters.reportCategory) && filters.reportType === 'Booked Policies'),
+    paymentDueDate: !([
       'Sales Summary',
       'Sales Detail',
       'Transaction',
       'Installment',
       'Endorsement',
-    ].includes(filters.reportCategory),
+    ].includes(filters.reportCategory) && filters.reportType === 'Approved Transactions'),
+    paymentDate: !([
+      'Sales Summary',
+      'Sales Detail',
+      'Transaction',
+      'Installment',
+      'Endorsement',
+    ].includes(filters.reportCategory) && filters.reportType === 'Paid Transactions'),
     activePolicies: filters.reportCategory === 'Active Policies',
-    bookedPolicies:
-      ['Sales Summary', 'Sales Detail'].includes(filters.reportCategory) &&
-      filters.reportType === 'Booked Policies',
-    transactionPayments:
-      ['Sales Summary', 'Sales Detail'].includes(filters.reportCategory) &&
-      filters.reportType === 'Transaction Payments',
     lobs: !(filters.reportCategory !== 'Sales Summary'),
   };
 
   if (filterConditions.policyExpiredDate) delete filters.policyExpiredDate;
   if (filterConditions.policyBookDate) delete filters.policyBookDate;
   if (filterConditions.paymentDueDate) delete filters.paymentDueDate;
-  if (filterConditions.activePolicies) {
-    delete filters.policyBookDate;
-    delete filters.paymentDueDate;
-    delete filters.policyExpiredDate;
-  }
-  if (filterConditions.bookedPolicies) delete filters.paymentDueDate;
-  if (filterConditions.transactionPayments) delete filters.policyBookDate;
+  if (filterConditions.paymentDate) delete filters.paymentDate;
   if (filterConditions.lobs) delete filters.lob;
 };
 
@@ -151,7 +147,11 @@ const hideUmtGroup = computed(() => {
 });
 
 const showPaymentDueDate = computed(() => {
-  return filters.reportType == 'Transaction Payments' ? true : false;
+  return filters.reportType == 'Approved Transactions' ? true : false;
+});
+
+const showPaymentDate = computed(() => {
+  return filters.reportType == 'Paid Transactions' ? true : false;
 });
 
 const showBookingDate = computed(() => {
@@ -192,8 +192,8 @@ const reportTypes = ref([
     report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement'],
   },
   {
-    label: 'Transaction Payments',
-    value: 'Transaction Payments',
+    label: 'Approved Transactions',
+    value: 'Approved Transactions',
     report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement'],
   },
   {
@@ -207,9 +207,14 @@ const reportTypes = ref([
     report: ['Active Policies'],
   },
   {
-    label: 'Transaction Payments',
-    value: 'Transaction Payments',
+    label: 'Approved Transactions',
+    value: 'Approved Transactions',
     report: ['Installment'],
+  },
+  {
+    label: 'Paid Transactions',
+    value: 'Paid Transactions',
+    report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement', 'Installment'],
   },
 ]);
 
@@ -344,8 +349,11 @@ watch(
             Report Type <span class="text-red-500">*</span>
           </label>
           <template #tooltip>
-            What specific report type are you trying to generate from your
-            selected report category?
+            <span v-if="filters.reportType == 'Booked Policies'">Booked Policies are based on booking date.</span>
+            <span v-if="filters.reportType == 'Approved Transactions'">Approved Transactions are based on payment due date.</span>
+            <span v-if="filters.reportType == 'Paid Transactions'">Paid Transactions are based on payment date.</span>
+            <span v-if="filters.reportType == 'Expiring Policies'">Expiring Policies (for Ending Policies report) are based on policy expiry date.</span>
+            <span v-if="filters.reportType == 'Active Policies'">Active Policies (for Active Policies report) are based on policy start date.</span>
           </template>
         </x-tooltip>
         <x-select
@@ -367,6 +375,26 @@ watch(
         </x-tooltip>
         <DatePicker
           v-model="filters.policyBookDate"
+          placeholder="Select Start & End Date"
+          range
+          :max-range="31"
+          size="sm"
+          model-type="yyyy-MM-dd"
+          :rules="[isRequired]"
+          :onlySelect="true"
+        />
+      </div>
+      <div v-if="showPaymentDate">
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
+            Paid At <span class="text-red-500">*</span>
+          </label>
+          <template #tooltip> Select the booking date range </template>
+        </x-tooltip>
+        <DatePicker
+          v-model="filters.paymentDate"
           placeholder="Select Start & End Date"
           range
           :max-range="31"
