@@ -847,7 +847,7 @@ class SplitPaymentService
 
             $successMessage = 'Transaction approved';
             $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
-            if ($totalApproved == $quoteModel->payments()->count()) {
+            if (($masterPayment->insuranceProvider->code == InsuranceProvidersEnum::ALNC && $isFromJob && $totalApproved > 0) || ($totalApproved == $quoteModel->payments()->count())) {
                 if ($sendUpdateId) {
                     app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
