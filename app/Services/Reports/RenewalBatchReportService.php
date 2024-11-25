@@ -1063,4 +1063,27 @@ class RenewalBatchReportService extends BaseService
         ];
 
     }
+
+    public function getAllNonMotorBatches()
+    {
+        $renewalBatches = RenewalBatch::select('id', 'name', 'start_date', 'end_date')->whereNull('quote_type_id');
+        $renewalBatches->orderBy('id');
+        $renewalBatches = $renewalBatches->get()
+            ->map(function ($batch) {
+                // Get the date display format from the configuration
+                $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+                // Format the start and end dates of the batch
+                $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
+                $end_date = Carbon::parse($batch->end_date)->format($dateFormat);
+
+                // Return an associative array with the batch 'name' and 'id'
+                return [
+                    'id' => $batch->id,
+                    'name' => $batch->name.'-('.$start_date.' to '.$end_date.')',
+                ];
+            })
+            ->toArray();
+
+        return $renewalBatches;
+    }
 }
