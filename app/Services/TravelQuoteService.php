@@ -1079,7 +1079,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->save();
     }
 
-    public function createDuplicateLead($leadModal)
+    public function createDuplicateLead($leadModal, $quoteStatusId)
     {
         if (! $leadModal) {
             return false; // Add validation to avoid failure if $leadModal is null
@@ -1095,6 +1095,7 @@ class TravelQuoteService extends BaseService
         $duplicateLead->uuid = $leadModal->uuid.'-1';
         $duplicateLead->code = $newLeadCode;
         $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
+        $duplicateLead->quote_status_id = $quoteStatusId;
         $duplicateLead->save();
 
         if ($duplicateLead) {
