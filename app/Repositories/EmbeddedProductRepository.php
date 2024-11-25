@@ -212,11 +212,12 @@ class EmbeddedProductRepository extends BaseRepository
                 ['quote_request_id',  '=', $quoteRequestId],
                 ['is_selected',  '=', true],
             ])->whereIn('product_id', $optionsIds)->get();
+            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
 
             $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($item->short_code);
             if ($isAlfredProtect) {
                 $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0 : false;
-                $item->download_document_button = $isDocPresent;
+                $item->download_document_button = $isDocPresent && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
 
                 if (auth()->user()->hasRole(RolesEnum::Engineering)) {
                     $documentCount = ($isDocPresent == true) ? $transaction[0]->documents()->count() : 0;
@@ -226,7 +227,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
-            $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+            $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
         });
 
@@ -251,17 +252,29 @@ class EmbeddedProductRepository extends BaseRepository
         return false;
     }
 
-    private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
+    private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)
     {
         if (!$transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (
                 $productCategory == EpCategoryEnum::STAND_ALONE ||
-                ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]))) {
+                ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, $this->canSendDocumentEnums()))) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    
+    public function canSendDocumentEnums(): array
+    {
+        return [
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
     }
 
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $resendEmail = false)
@@ -363,7 +376,8 @@ class EmbeddedProductRepository extends BaseRepository
         $advisorData = $this->fetchAdvisorData($quoteObject);
         $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
 
-        if (! $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction)) {
+        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        if (! $canSendDocuments) {
             info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
 
             return 'Documents cannot be sent';
@@ -874,7 +888,7 @@ class EmbeddedProductRepository extends BaseRepository
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
         $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
 
-        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
         if ($canSendDocuments) {
             $this->getPDF($ep->short_code, $quoteObject, $transaction->first(), $data['modelType']);
         }
