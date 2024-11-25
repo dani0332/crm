@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Jobs\EP\SendEPJob;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\SageApiService;
@@ -16,8 +18,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
-use App\Jobs\EP\SendEPJob;
-use App\Enums\QuoteTypeId;
 
 class SendUpdateToCustomerJob implements ShouldQueue
 {
@@ -64,7 +64,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
                     ]);
                     $sendUpdateLog->refresh();
 
-                    if($sendUpdateLog->category->code === SendUpdateLogStatusEnum::EN) {
+                    if ($sendUpdateLog->category->code === SendUpdateLogStatusEnum::EN) {
                         $quoteType = QuoteTypeId::getOptions()[$sendUpdateLog->quote_type_id];
                         $quote = $this->getQuoteObject($quoteType, $sendUpdateLog->quote_uuid);
                         SendEPJob::dispatch($quote->id, $quoteType, null, true);

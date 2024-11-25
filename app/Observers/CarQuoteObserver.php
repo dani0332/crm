@@ -3,21 +3,16 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
-use App\Facades\Ken;
-use App\Jobs\AddressReminderJob;
 use App\Jobs\CourtesyEmailJob;
-use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
-use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
-use App\Models\CustomerAddress;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
-use App\Repositories\EmbeddedProductRepository;
-use App\Enums\quoteTypeCode;
 
 class CarQuoteObserver
 {

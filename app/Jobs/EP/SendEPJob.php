@@ -2,6 +2,8 @@
 
 namespace App\Jobs\EP;
 
+use App\Repositories\EmbeddedProductRepository;
+use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,12 +11,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Repositories\EmbeddedProductRepository;
-use App\Traits\GenericQueriesAllLobs;
 
 class SendEPJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, GenericQueriesAllLobs;
+    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
     public $timeout = 120;
@@ -47,7 +47,7 @@ class SendEPJob implements ShouldQueue
             info("Sent EP completed - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
 
         } catch (Exception $e) {
-            Log::error("Sent EP ERROR - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} - " . $e->getMessage());
+            Log::error("Sent EP ERROR - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} - ".$e->getMessage());
         }
     }
 }

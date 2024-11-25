@@ -87,7 +87,7 @@ class MACRMService
                 return false;
             }
 
-            if(empty($leadData['payment']['captured_at'])) {
+            if (empty($leadData['payment']['captured_at'])) {
                 info("Payment Not captured for courier, for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}. Sync aborted.");
 
                 return false;

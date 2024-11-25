@@ -3,18 +3,18 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\PersonalQuote;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Enums\quoteTypeCode;
-use App\Repositories\EmbeddedProductRepository;
 
 class PersonalQuoteObserver
 {
@@ -83,7 +83,7 @@ class PersonalQuoteObserver
                 'lead-status-update-myalfred-we'
             );
 
-            if($personalQuote->quote_type_id === QuoteTypeId::Bike) {
+            if ($personalQuote->quote_type_id === QuoteTypeId::Bike) {
                 // Ep send documents
                 EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             }

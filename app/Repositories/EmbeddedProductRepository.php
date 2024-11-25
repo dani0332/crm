@@ -12,7 +12,9 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Facades\Marshall;
+use App\Jobs\EP\CancelEPJob;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
@@ -39,8 +41,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
-use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
-use App\Jobs\EP\CancelEPJob;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -233,15 +233,16 @@ class EmbeddedProductRepository extends BaseRepository
 
     private function canCancelPayment($transaction, $quoteTypeId)
     {
-        if($transaction && $transaction->payments->first()) {
+        if ($transaction && $transaction->payments->first()) {
             $payment = $transaction->payments->first();
-            if($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
+            if ($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
 
                 if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
                     return CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->count() == 0;
                 }
 
                 $paymentDate = Carbon::parse($payment->getAttributes()['captured_at']);
+
                 return $paymentDate->diffInDays(Carbon::now()) <= 3;
             }
         }
@@ -251,7 +252,7 @@ class EmbeddedProductRepository extends BaseRepository
 
     private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)
     {
-        if (!$transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+        if (! $transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (
                 $productCategory == EpCategoryEnum::STAND_ALONE ||
                 ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, $this->canSendDocumentEnums()))) {
@@ -261,7 +262,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         return false;
     }
-    
+
     public function canSendDocumentEnums(): array
     {
         return [
@@ -285,8 +286,8 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_request_id', $leadId],
             ['is_selected', 1],
         ])
-        ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
-        ->with(['product.embeddedProduct']);
+            ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+            ->with(['product.embeddedProduct']);
 
         if (! empty($epId)) {
             $ep = $this->where('id', $epId)->first();
@@ -297,7 +298,7 @@ class EmbeddedProductRepository extends BaseRepository
             $epTransaction = $epTransaction->whereIn('product_id', $optionsIds);
         }
 
-        if($resendEmail) {
+        if ($resendEmail) {
             $epTransaction->whereHas('product.embeddedProduct', function ($query) {
                 $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
             });
@@ -315,7 +316,7 @@ class EmbeddedProductRepository extends BaseRepository
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
                     ProcessSyncAlfredProtect::dispatch($quoteObject);
 
-                } else if($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER 
+                } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
                 && ucwords($modelType) == quoteTypeCode::Car) {
 
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
@@ -669,15 +670,15 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCancelEmbeddedProducts($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (!in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             return false;
         }
 
         $epTransaction = EmbeddedTransaction::where([
-                ['quote_type_id', $quoteTypeId],
-                ['quote_request_id', $leadId],
-                ['is_selected', 1],
-            ])
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+        ])
             ->whereHas('payments', function ($query) {
                 $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED);
             })
@@ -685,7 +686,7 @@ class EmbeddedProductRepository extends BaseRepository
             ->get();
 
         if ($epTransaction->isNotEmpty()) {
-            
+
             foreach ($epTransaction as $item) {
                 $product_id = $item->product_id;
                 $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;

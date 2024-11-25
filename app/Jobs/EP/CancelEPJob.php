@@ -2,6 +2,7 @@
 
 namespace App\Jobs\EP;
 
+use App\Repositories\EmbeddedProductRepository;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,7 +10,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Repositories\EmbeddedProductRepository;
 
 class CancelEPJob implements ShouldQueue
 {
@@ -36,9 +36,9 @@ class CancelEPJob implements ShouldQueue
         try {
 
             $uuid = $this->requestData['uuid'];
-            info("Cancel EP Payment requeset: - {$uuid} - " . json_encode($this->requestData) . ' ---- ');
+            info("Cancel EP Payment requeset: - {$uuid} - ".json_encode($this->requestData).' ---- ');
             $response = EmbeddedProductRepository::cancelPayment($this->requestData);
-            info("Auto cancel EP Payment response: - {$uuid} - " . json_encode($response) . ' ---- ');
+            info("Auto cancel EP Payment response: - {$uuid} - ".json_encode($response).' ---- ');
 
         } catch (Exception $e) {
             Log::error('Auto cancel EP Payment - ERROR:'.$e->getMessage());
