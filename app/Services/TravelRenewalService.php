@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\TravelRenewalLeadCreationJob;
 
 class TravelRenewalService extends BaseService
 {
@@ -109,7 +110,7 @@ class TravelRenewalService extends BaseService
 
         $customer = $this->getCustomerByEamil($quote->customer_email);
         info("Processing renewal for old quote. Reference ID: {$quote->uuid}. Initiating renewal process with updated policy details.");
-        $travelQuote = (object) [
+        $travelQuotePayload = (object) [
             'first_name' => trim($quote->first_name),
             'last_name' => trim($quote->last_name),
             'source' => LeadSourceEnum::RENEWAL_UPLOAD,
@@ -126,7 +127,7 @@ class TravelRenewalService extends BaseService
             'nationality_id' => $quote->nationality_id,
             'dob' => $quote->dob,
             'members' => $quote->customerMembers,
-            'destinations' => $quote->TravelDestinations,
+            'destination_ids' => collect($quote->TravelDestinations)->pluck('destination_id')->toArray(),
             'emirates_id_number' => $customer->emirates_id_number ?? null,
             'emirates_id_expiry_date' => $customer->emirates_id_expiry_date ?? null,
             'insured_first_name' => $customer->insured_first_name ?? null,
@@ -137,13 +138,12 @@ class TravelRenewalService extends BaseService
             'coverage_code' => $quote->coverage_code,
             'region_cover_for_id' => $quote->region_cover_for_id,
         ];
-        $this->saveTravelRenewalQuote($travelQuote);
-
-        return $travelQuote;
+        TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1))->onQueue('travel_renewal_leads');
+        info("Travel renewal lead creation job dispatched for Reference ID: {$quote->uuid} | Time:".now());
     }
 
     // Helper function to save the renewal quote
-    protected function saveTravelRenewalQuote($travelQuote)
+    protected function createTravelRenewalLead($travelQuote)
     {
         $quoteData = [
             'destination' => trim($travelQuote->destination),
@@ -168,12 +168,11 @@ class TravelRenewalService extends BaseService
             'region_cover_for_id' => $travelQuote->region_cover_for_id,
         ];
 
-        $newQuote = TravelQuote::create($quoteData);
-        $this->storeMembers($newQuote, $travelQuote->members);
-        info("Travel quote successfully saved. Reference ID: {$newQuote->uuid} | Time:".now());
-        info("Lead allocation process initiated for Reference ID: {$newQuote->uuid} | Time:".now());
-        $this->leadAllocation($newQuote);
-        info("Lead allocation completed for Reference ID: {$newQuote->uuid} - | Time: ".now());
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
+        info("Travel quote successfully saved. Reference ID: {$response->quoteUID} | Time:".now());
+        info("Lead allocation process initiated for Reference ID: {$response->quoteUID} | Time:".now());
+        $this->leadAllocation($response->quoteUID);
+        info("Lead allocation completed for Reference ID: {$response->quoteUID} - | Time: ".now());
     }
     public function getPaymentStatusIdByCode($paymentStatus)
     {
@@ -241,18 +240,20 @@ class TravelRenewalService extends BaseService
         }
     }
 
-    public function leadAllocation($lead)
+    public function leadAllocation($quoteUID)
     {
-        info('Processing Travel record for Quote Allocation with uuid: '.$lead->uuid);
+        info('Processing Travel record for Quote Allocation with uuid: '.$quoteUID);
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+
+        $lead = TravelQuote::where('uuid', $quoteUID)->first();
         // Only apply teamId if the payment status is AUTHORIZED
         $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
 
-        $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid, $currentTeamId);
+        $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $quoteUID, $currentTeamId);
         $response = $allocationStrategy->executeSteps();
         if ($response) {
-            info(self::class.' - Going to dispatch SendOCBTravelRenewalIntroEmailJob ................ Ref-ID: '.$lead->uuid);
-            SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->delay(now()->addSeconds(30));
+            info(self::class.' - Going to dispatch SendOCBTravelRenewalIntroEmailJob ................ Ref-ID: '.$quoteUID);
+            SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
         }
     }
 }
