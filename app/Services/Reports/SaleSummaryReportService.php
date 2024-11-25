@@ -110,7 +110,7 @@ class SaleSummaryReportService extends ManagementReport
             $query->joinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
             });
-        } else if ($request['reportType'] == ManagementReportTypeEnum::PAID_TRANSACTIONS) {
+        } elseif ($request['reportType'] == ManagementReportTypeEnum::PAID_TRANSACTIONS) {
             $PaymentSplits = DB::table('payment_splits as dps')
                 ->selectRaw('dps.code, dps.verified_at')
                 ->groupBy('dps.code');
@@ -318,7 +318,7 @@ class SaleSummaryReportService extends ManagementReport
             $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
             });
-        } else if ($request['reportType'] == ManagementReportTypeEnum::PAID_TRANSACTIONS) {
+        } elseif ($request['reportType'] == ManagementReportTypeEnum::PAID_TRANSACTIONS) {
             $PaymentSplits = DB::table('payment_splits as dps')
                 ->selectRaw('dps.code, dps.verified_at')
                 ->groupBy('dps.code');
@@ -327,7 +327,7 @@ class SaleSummaryReportService extends ManagementReport
                 $join->on('p.code', '=', 'ps.code');
             });
         }
-        
+
         $reversalQuery = $this->applyFilters($reversalQuery, $request, true, true);
         $endorsementsQuery = $query->unionAll($reversalQuery);
 
