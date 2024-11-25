@@ -22,22 +22,27 @@ const tableHeader = reactive([
   {
     text: 'Insurer',
     value: 'insurer',
+    tooltip: 'The name of the insurer',
   },
   {
     text: 'Line of Business',
     value: 'line_of_business',
+    tooltip: 'Line of business',
   },
   {
     text: 'Active Policy Count',
     value: 'active_policy_count',
+    tooltip: 'The active policy count of the insurer its corresponding line of business',
   },
   {
     text: 'Price (VAT applicable)',
     value: 'price_with_vat',
+    tooltip: 'Vatable price. Any amount appearing in this column will be computed with VAT.',
   },
   {
     text: 'Price (VAT not applicable)',
     value: 'price_without_vat',
+    tooltip: 'Non-vatable price. Any amount appearing in this column will not be computed with VAT. For example: BASMAH, rider, etc',
   },
 ]);
 
@@ -65,6 +70,9 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template v-for="header in tableHeader" :key="header.value" #[`header-${header.value}`]="header">
+      <HeaderWithTooltip :header="header" />
+    </template>
     <template #item-insurer="{ insurer }">
       {{ insurer ?? 'N/A' }}
     </template>
