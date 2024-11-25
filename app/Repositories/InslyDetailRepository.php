@@ -26,6 +26,7 @@ use MongoDB\BSON\UTCDateTime;
 class InslyDetailRepository extends BaseRepository
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
+
     public function model()
     {
         return InslyDetail::class;
@@ -104,6 +105,14 @@ class InslyDetailRepository extends BaseRepository
         $validateAll = $data['validateAll'];
 
         $policy = $this->where('policy_oid', $policyID)->first();
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempEmail = 'vitara@inbox.ru';
+        $tempPolicyId = 66495910;
+        if ($tempPolicyId == $data['policy_oid']) {
+            $policy['customer']['email'] = $tempEmail;
+        }
+        /* Temp Code - assign email for particular Policy id/number */
 
         $email = $policy['customer']['email'] ?? null;
 
@@ -343,16 +352,7 @@ class InslyDetailRepository extends BaseRepository
         $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
 
-        /* assign email for particular Policy id/number */
-        $email = 'vitara@inbox.ru';
-        $policyId = 66495910;
-        /* assign email for particular Policy id/number */
-        if ($policy['policy_oid'] == $policyId) {
-            $dataArr['email'] = $email;
-            $additionalEmails = [];
-        } else {
-            [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
-        }
+        [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
