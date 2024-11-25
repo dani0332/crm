@@ -53,7 +53,8 @@ const tableHeader = reactive([
   {
     text: 'Price (VAT applicable)',
     value: 'price_vat_applicable',
-    tooltip: 'Vatable price. Any amount appearing in this column will be computed with VAT',
+    tooltip:
+      'Vatable price. Any amount appearing in this column will be computed with VAT',
   },
   {
     text: 'Total VAT',
@@ -63,7 +64,8 @@ const tableHeader = reactive([
   {
     text: 'Price (VAT not applicable)',
     value: 'price_vat_not_applicable',
-    tooltip: 'Non-vatable price. Any amount appearing in this column will not be computed with VAT. For example: BASMAH, rider, etc',
+    tooltip:
+      'Non-vatable price. Any amount appearing in this column will not be computed with VAT. For example: BASMAH, rider, etc',
   },
   {
     text: 'Discount',
@@ -73,12 +75,14 @@ const tableHeader = reactive([
   {
     text: 'Total Price',
     value: 'total_price',
-    tooltip: 'Total price less the discount. This was computed using the following formula: Price(VAT Applicable) + VAT + Price(VAT Not Applicable) - Discount',
+    tooltip:
+      'Total price less the discount. This was computed using the following formula: Price(VAT Applicable) + VAT + Price(VAT Not Applicable) - Discount',
   },
   {
     text: 'Commission (VAT applicable)',
     value: 'commission_vat_applicable',
-    tooltip: 'Vatable commission. Any amount appearing in this column will be computed with VAT',
+    tooltip:
+      'Vatable commission. Any amount appearing in this column will be computed with VAT',
   },
   {
     text: 'VAT on Commission',
@@ -88,12 +92,14 @@ const tableHeader = reactive([
   {
     text: 'Commission (VAT not applicable)',
     value: 'commission_vat_not_applicable',
-    tooltip: 'Non-vatable commission. Any amount appearing in this column will not be computed with VAT',
+    tooltip:
+      'Non-vatable commission. Any amount appearing in this column will not be computed with VAT',
   },
   {
     text: 'Collected Amount',
     value: 'collected_amount',
-    tooltip: 'Total commission of the lead. Formula as follows: Commission(VAT applicable) + VAT on Commission + Commission(VAT not applicable)',
+    tooltip:
+      'Total commission of the lead. Formula as follows: Commission(VAT applicable) + VAT on Commission + Commission(VAT not applicable)',
   },
   {
     text: 'Payment Date',
@@ -103,7 +109,8 @@ const tableHeader = reactive([
   {
     text: 'Unpaid',
     value: 'pending_balance',
-    tooltip: 'Pending balance of the policy. Formula as follows: Total Price - Discount - Collected Amount',
+    tooltip:
+      'Pending balance of the policy. Formula as follows: Total Price - Discount - Collected Amount',
   },
   {
     text: 'Collects',
@@ -123,7 +130,8 @@ const tableHeader = reactive([
   {
     text: 'Sub-Type',
     value: 'sub_type_line_of_business',
-    tooltip: 'The the business insurance type (i.e. property, holiday homes, etc). This is only applicable for business/corpline',
+    tooltip:
+      'The the business insurance type (i.e. property, holiday homes, etc). This is only applicable for business/corpline',
   },
   {
     text: 'Customer Name',
@@ -143,7 +151,8 @@ const tableHeader = reactive([
   {
     text: 'Invoice Description',
     value: 'invoice_description',
-    tooltip: '" the invoice description found in the booking details of the lead. Format of the description as follows: InsurerCode-LOB-Subtype(if corpline)-PolicyNo',
+    tooltip:
+      '" the invoice description found in the booking details of the lead. Format of the description as follows: InsurerCode-LOB-Subtype(if corpline)-PolicyNo',
   },
   {
     text: 'Payment Method',
@@ -169,7 +178,8 @@ const tableHeader = reactive([
   {
     text: 'Broker Invoice No',
     value: 'broker_invoice_number',
-    tooltip: 'The system generated broker invoice no for non-self billing insurers',
+    tooltip:
+      'The system generated broker invoice no for non-self billing insurers',
   },
   {
     text: 'Booking Date',
@@ -189,17 +199,20 @@ const tableHeader = reactive([
   {
     text: 'Commission Tax Invoice Number',
     value: 'insurer_commmission_invoice_number',
-    tooltip: 'Commission Tax Invoice Number (CN) in Booking Details of the lead',
+    tooltip:
+      'Commission Tax Invoice Number (CN) in Booking Details of the lead',
   },
   {
     text: 'Commission Percentage',
     value: 'commmission_percentage',
-    tooltip: 'Commission percentage of the lead based on the inputted commission (vat applicable)/commission (vat not applicable) against the inputted price (vat applicable)/price (vat not applicable). Computation as follows: Commission(VAT applicable) / Price(VAT applicable) or(VAT not applicable)',
+    tooltip:
+      'Commission percentage of the lead based on the inputted commission (vat applicable)/commission (vat not applicable) against the inputted price (vat applicable)/price (vat not applicable). Computation as follows: Commission(VAT applicable) / Price(VAT applicable) or(VAT not applicable)',
   },
   {
     text: 'Transaction Type',
     value: 'transaction_type',
-    tooltip: 'The type of transaction in a customer level namely: new business, existing customer\'s new business, existing customer\'s renewal and endorsement',
+    tooltip:
+      "The type of transaction in a customer level namely: new business, existing customer's new business, existing customer's renewal and endorsement",
   },
   {
     text: 'Lead Source',
@@ -249,7 +262,11 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
-    <template v-for="header in tableHeader" :key="header.value" #[`header-${header.value}`]="header">
+    <template
+      v-for="header in tableHeader"
+      :key="header.value"
+      #[`header-${header.value}`]="header"
+    >
       <HeaderWithTooltip :header="header" />
     </template>
     <template #item-quote_uuid="{ quote_uuid, routeName, main_lead_code }">

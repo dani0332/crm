@@ -63,27 +63,36 @@ const filters = reactive({
 const filterkeys = () => {
   const filterConditions = {
     policyExpiredDate: filters.reportCategory !== 'Ending Policies',
-    policyBookDate: !([
-      'Sales Summary',
-      'Sales Detail',
-      'Transaction',
-      'Installment',
-      'Endorsement',
-    ].includes(filters.reportCategory) && filters.reportType === 'Booked Policies'),
-    paymentDueDate: !([
-      'Sales Summary',
-      'Sales Detail',
-      'Transaction',
-      'Installment',
-      'Endorsement',
-    ].includes(filters.reportCategory) && filters.reportType === 'Approved Transactions'),
-    paymentDate: !([
-      'Sales Summary',
-      'Sales Detail',
-      'Transaction',
-      'Installment',
-      'Endorsement',
-    ].includes(filters.reportCategory) && filters.reportType === 'Paid Transactions'),
+    policyBookDate: !(
+      [
+        'Sales Summary',
+        'Sales Detail',
+        'Transaction',
+        'Installment',
+        'Endorsement',
+      ].includes(filters.reportCategory) &&
+      filters.reportType === 'Booked Policies'
+    ),
+    paymentDueDate: !(
+      [
+        'Sales Summary',
+        'Sales Detail',
+        'Transaction',
+        'Installment',
+        'Endorsement',
+      ].includes(filters.reportCategory) &&
+      filters.reportType === 'Approved Transactions'
+    ),
+    paymentDate: !(
+      [
+        'Sales Summary',
+        'Sales Detail',
+        'Transaction',
+        'Installment',
+        'Endorsement',
+      ].includes(filters.reportCategory) &&
+      filters.reportType === 'Paid Transactions'
+    ),
     activePolicies: filters.reportCategory === 'Active Policies',
     lobs: !(filters.reportCategory !== 'Sales Summary'),
   };
@@ -214,7 +223,13 @@ const reportTypes = ref([
   {
     label: 'Paid Transactions',
     value: 'Paid Transactions',
-    report: ['Sales Summary', 'Sales Detail', 'Transaction', 'Endorsement', 'Installment'],
+    report: [
+      'Sales Summary',
+      'Sales Detail',
+      'Transaction',
+      'Endorsement',
+      'Installment',
+    ],
   },
 ]);
 
@@ -349,11 +364,23 @@ watch(
             Report Type <span class="text-red-500">*</span>
           </label>
           <template #tooltip>
-            <span v-if="filters.reportType == 'Booked Policies'">Booked Policies are based on booking date.</span>
-            <span v-if="filters.reportType == 'Approved Transactions'">Approved Transactions are based on payment due date.</span>
-            <span v-if="filters.reportType == 'Paid Transactions'">Paid Transactions are based on payment date.</span>
-            <span v-if="filters.reportType == 'Expiring Policies'">Expiring Policies (for Ending Policies report) are based on policy expiry date.</span>
-            <span v-if="filters.reportType == 'Active Policies'">Active Policies (for Active Policies report) are based on policy start date.</span>
+            <span v-if="filters.reportType == 'Booked Policies'"
+              >Booked Policies are based on booking date.</span
+            >
+            <span v-if="filters.reportType == 'Approved Transactions'"
+              >Approved Transactions are based on payment due date.</span
+            >
+            <span v-if="filters.reportType == 'Paid Transactions'"
+              >Paid Transactions are based on payment date.</span
+            >
+            <span v-if="filters.reportType == 'Expiring Policies'"
+              >Expiring Policies (for Ending Policies report) are based on
+              policy expiry date.</span
+            >
+            <span v-if="filters.reportType == 'Active Policies'"
+              >Active Policies (for Active Policies report) are based on policy
+              start date.</span
+            >
           </template>
         </x-tooltip>
         <x-select
@@ -617,9 +644,7 @@ watch(
           >
             Line of Business
           </label>
-          <template #tooltip>
-            Line of Business assigned to the user
-          </template>
+          <template #tooltip> Line of Business assigned to the user </template>
         </x-tooltip>
         <ComboBox
           :single="false"

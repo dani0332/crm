@@ -55,7 +55,8 @@ const tableHeader = reactive([
   {
     text: 'Price (VAT applicable)',
     value: 'price_vat_applicable',
-    tooltip: 'Vatable price. Any amount appearing in this column will be computed with VAT.',
+    tooltip:
+      'Vatable price. Any amount appearing in this column will be computed with VAT.',
   },
   {
     text: 'Total VAT',
@@ -65,7 +66,8 @@ const tableHeader = reactive([
   {
     text: 'Price (VAT not applicable)',
     value: 'price_vat_not_applicable',
-    tooltip: 'Non-vatable price. Any amount appearing in this column will not be computed with VAT. For example: BASMAH, rider, etc',
+    tooltip:
+      'Non-vatable price. Any amount appearing in this column will not be computed with VAT. For example: BASMAH, rider, etc',
   },
   {
     text: 'Discount',
@@ -75,17 +77,20 @@ const tableHeader = reactive([
   {
     text: 'Total Price',
     value: 'total_price',
-    tooltip: 'Total price less the discount. This was computed using the following formula: Price(VAT Applicable) + VAT + Price(VAT Not Applicable) - Discount',
+    tooltip:
+      'Total price less the discount. This was computed using the following formula: Price(VAT Applicable) + VAT + Price(VAT Not Applicable) - Discount',
   },
   {
     text: 'Pending Balance',
     value: 'pending_balance',
-    tooltip: 'Pending balance of the policy. Formula as follows: Total Price - Discount - Collected Amount',
+    tooltip:
+      'Pending balance of the policy. Formula as follows: Total Price - Discount - Collected Amount',
   },
   {
     text: 'Commission (VAT applicable)',
     value: 'commission_vat_applicable',
-    tooltip: 'Vatable commission. Any amount appearing in this column will be computed with VAT.',
+    tooltip:
+      'Vatable commission. Any amount appearing in this column will be computed with VAT.',
   },
   {
     text: 'VAT on Commission',
@@ -95,7 +100,8 @@ const tableHeader = reactive([
   {
     text: 'Commission (VAT not applicable)',
     value: 'commission_vat_not_applicable',
-    tooltip: 'Non-vatable commission. Any amount appearing in this column will not be computed with VAT.',
+    tooltip:
+      'Non-vatable commission. Any amount appearing in this column will not be computed with VAT.',
   },
   {
     text: 'Policy Issuer',
@@ -157,7 +163,11 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
-    <template v-for="header in tableHeader" :key="header.value" #[`header-${header.value}`]="header">
+    <template
+      v-for="header in tableHeader"
+      :key="header.value"
+      #[`header-${header.value}`]="header"
+    >
       <HeaderWithTooltip :header="header" />
     </template>
     <template #item-customer_name="{ customer_name }">
