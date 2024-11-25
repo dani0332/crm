@@ -136,7 +136,7 @@ const advisorOptions = computed(() => {
 });
 
 const renewalBatchOptions = computed(() => {
-  return page.props.renewalBatches.map(batch => ({
+  return page.props?.renewalBatches?.map(batch => ({
     value: batch.id,
     label: batch.name,
   }));
