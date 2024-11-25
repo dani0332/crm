@@ -56,6 +56,7 @@ const filters = reactive({
   utmGroupBy: [],
   export: 0, //false
   page: 1,
+  lob: [],
 });
 
 const filterkeys = () => {
@@ -122,6 +123,12 @@ const leadSource = computed(() => {
 
 const departments = computed(() => {
   return props.filterOptions?.departments?.map(item => {
+    return { value: item.id, label: item.name };
+  });
+});
+
+const lobs = computed(() => {
+  return props.filterOptions?.lobs?.map(item => {
     return { value: item.id, label: item.name };
   });
 });
@@ -573,6 +580,25 @@ watch(
           deselect-all
         />
       </x-field>
+      <div v-if="!hideUmtGroup">
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+          >
+            Line of Business
+          </label>
+          <template #tooltip>
+            Line of Business assigned to the user
+          </template>
+        </x-tooltip>
+        <ComboBox
+          :single="false"
+          v-model="filters.lob"
+          placeholder="Filter by Line of Business"
+          :options="lobs"
+          deselect-all
+        />
+      </div>
     </div>
 
     <div class="flex gap-3 justify-end">

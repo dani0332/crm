@@ -16,6 +16,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Enums\QuoteTypes;
 
 class ManagementReport
 {
@@ -57,6 +58,14 @@ class ManagementReport
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        $lobs = $this->getUserProducts($user->id)
+            ->map(function ($item) {
+                return (object) [
+                    'id' => QuoteTypes::getIdFromValue($item->name),
+                    'name' => $item->name,
+                ];
+        });
+
         $reportCategories = [];
         foreach (ManagementReportCategoriesEnum::asArray() as $value) {
             $reportCategories[] = ['label' => $value, 'value' => $value];
@@ -87,6 +96,7 @@ class ManagementReport
             'reportCategories' => $reportCategories,
             'transactionTypes' => $transactionTypes,
             'departments' => $departments,
+            'lobs' => $lobs,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
@@ -145,6 +155,14 @@ class ManagementReport
         if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies']) && $request['includeCancelledPolicies'] == 'No') {
             $query->where('personal_quotes.quote_status_id', '!=', QuoteStatusEnum::PolicyCancelled);
         }
+
+        $lobs = $request['lob'];
+        if(empty($lobs)) {
+            $lobs = $this->getUserProducts($user->id)
+                ->map(fn ($item) => QuoteTypes::getIdFromValue($item->name))
+                ->toArray();
+        }
+        $query->whereIn('personal_quotes.quote_type_id', $lobs);
     }
 
     private function getDateFilter($query, $request, $fieldName, $filterKey, $secondOptionalFieldName = null)
