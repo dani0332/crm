@@ -40,8 +40,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
-use App\Enums\quoteTypeCode;
-use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\EP\CancelEPJob;
 
 class EmbeddedProductRepository extends BaseRepository
