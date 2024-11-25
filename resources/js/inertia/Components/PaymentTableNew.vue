@@ -1982,6 +1982,7 @@ const paymentMethodsForm = useForm({
   payment_reference: '',
   paymentCode: '',
   status: 'create',
+  approvalModal: ''
 });
 
 const validateViewPayment = isValid => {
@@ -2023,6 +2024,8 @@ const validateViewPayment = isValid => {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
     }
+    console.log("Waris test 5 isApproveConfirmed.value ", isApproveConfirmed.value)
+    paymentMethodsForm.approvalModal = 'child'
     isApproveConfirmed.value = true;
     return true;
   }
@@ -2030,19 +2033,6 @@ const validateViewPayment = isValid => {
   if (isApproveNotChecked.value === true) {
     return true;
   }
-  /*
-  // temporary return,not part of M2
-  if (isApproveConfirmed.value === false && isValid) {
-    if (!amountExceeded) {
-      isApprovePaymentError.value = false;
-    }
-    isApproveConfirmed.value = true;
-    return true;
-  }
-
-  if (isApproveNotChecked.value === true) {
-    return true;
-  }*/
   return false;
 };
 
@@ -2084,7 +2074,9 @@ const validateCapturePayment = isValid => {
     if (isCreditPaymentInvalid.value.includes(true)) {
       return true;
     }
+    paymentMethodsForm.approvalModal = 'master';
     isApproveConfirm.value = true;
+    isApproveConfirmed.value = true;
     return true;
   }
   return false;
@@ -2109,6 +2101,8 @@ const validatePaymentAmount = isValid => {
 };
 
 const addPayment = isValid => {
+  console.clear();
+  console.log("addPayment")
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
@@ -2120,10 +2114,13 @@ const addPayment = isValid => {
     return;
   }
   if (isCreditApprovalView.value === true && isDeclineClicked.value === false) {
+    console.log("Waris test 1")
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
+    console.log("Waris test 2")
     if (validateViewPayment(isValid)) return;
   } else if (paymentMethodsForm.status !== 'view') {
+    console.log("Waris test 3")
     if (validatePaymentOption()) return;
     if (isPaidEditable.value === true) {
       if (validatePaymentAmount()) return;
@@ -2131,6 +2128,7 @@ const addPayment = isValid => {
   }
   if (!isValid) return;
 
+  console.log("Waris test 4: ", paymentMethodsForm.status)
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]
     ? paymentMethodsModels.value[0]
@@ -5463,7 +5461,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                       tabindex="0"
                       class="focus:outline-black"
                     >
-                      Decline
+                      Decline 111
                     </x-button>
                   </div>
                   <div
@@ -5526,7 +5524,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                         Capture
                       </template>
                       <template v-else-if="isVerificationAllowed">
-                        Approve
+                        Approve Internal
                       </template>
                       <template v-else> Approve </template>
                     </x-button>
@@ -5580,7 +5578,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                     class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
                   >
                     <div class="flex items-center space-x-2">
-                      Payment Verification
+                      {{ paymentMethodsForm.approvalModal == 'child' ? 'Payment Verification' : 'Approve Transaction' }}
                     </div>
                     <div class="flex items-center space-x-2">
                       <span
