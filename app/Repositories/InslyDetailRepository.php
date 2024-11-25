@@ -115,8 +115,6 @@ class InslyDetailRepository extends BaseRepository
         }
         /* Temp Code - assign email for particular Policy id/number */
 
-
-
         if (empty($email)) {
             return [
                 'status' => 400,
