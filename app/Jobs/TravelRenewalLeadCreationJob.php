@@ -2,13 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Services\TravelRenewalService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\TravelRenewalService;
 
 class TravelRenewalLeadCreationJob implements ShouldQueue
 {
@@ -18,6 +17,7 @@ class TravelRenewalLeadCreationJob implements ShouldQueue
      * Create a new job instance.
      */
     public $tries = 3;
+
     public $timeout = 60;
     public $backoff = 300;
     private $travelQuote;

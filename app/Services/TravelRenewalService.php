@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeShortCode;
 use App\Enums\TeamNameEnum;
 use App\Factories\AllocationFactory;
 use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
+use App\Jobs\TravelRenewalLeadCreationJob;
 use App\Models\PaymentStatus;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
@@ -18,7 +19,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\TravelRenewalLeadCreationJob;
 
 class TravelRenewalService extends BaseService
 {
