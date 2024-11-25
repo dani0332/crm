@@ -83,6 +83,7 @@ const filterkeys = () => {
     transactionPayments:
       ['Sales Summary', 'Sales Detail'].includes(filters.reportCategory) &&
       filters.reportType === 'Transaction Payments',
+    lobs: !(filters.reportCategory !== 'Sales Summary'),
   };
 
   if (filterConditions.policyExpiredDate) delete filters.policyExpiredDate;
@@ -95,6 +96,7 @@ const filterkeys = () => {
   }
   if (filterConditions.bookedPolicies) delete filters.paymentDueDate;
   if (filterConditions.transactionPayments) delete filters.policyBookDate;
+  if (filterConditions.lobs) delete filters.lob;
 };
 
 const loaders = reactive({
@@ -580,7 +582,7 @@ watch(
           deselect-all
         />
       </x-field>
-      <div>
+      <div v-if="filters.reportCategory != 'Sales Summary'">
         <x-tooltip position="top">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
