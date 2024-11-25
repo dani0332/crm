@@ -4,8 +4,6 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\BikeQuote;
-use App\Repositories\EmbeddedProductRepository;
-use App\Enums\quoteTypeCode;
 
 class BikeQuoteObserver
 {

@@ -100,6 +100,7 @@ class AppServiceProvider extends ServiceProvider
         Customer::observe(CustomerObserver::class);
         Payment::observe(PaymentObserver::class);
         PaymentSplits::observe(PaymentSplitsObserver::class);
+        CustomerAddress::observe(CustomerAddressObserver::class);
         SendUpdateLog::observe(SendUpdateLogObserver::class);
         // DB::listen(function($query) {
         //     info(
