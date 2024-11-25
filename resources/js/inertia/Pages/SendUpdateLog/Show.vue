@@ -288,7 +288,7 @@ onBeforeMount(() => {
               <dd>{{ sendUpdateLog.code }}</dd>
             </div>
             <div class="grid md:grid-cols-2 gap-y-4">
-              <dt>NOTES</dt>
+              <dt class="font-bold">NOTES</dt>
               <dd>
                 <x-textarea
                   v-model="sendUpdateForm.notes"
