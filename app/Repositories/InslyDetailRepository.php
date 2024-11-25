@@ -105,16 +105,17 @@ class InslyDetailRepository extends BaseRepository
         $validateAll = $data['validateAll'];
 
         $policy = $this->where('policy_oid', $policyID)->first();
+        $email = $policy['customer']['email'] ?? null;
 
         /* Temp Code - assign email for particular Policy id/number */
         $tempEmail = 'vitara@inbox.ru';
         $tempPolicyId = 66495910;
         if ($tempPolicyId == $data['policy_oid']) {
-            $policy['customer']['email'] = $tempEmail;
+            $email = $tempPolicyId;
         }
         /* Temp Code - assign email for particular Policy id/number */
 
-        $email = $policy['customer']['email'] ?? null;
+
 
         if (empty($email)) {
             return [
