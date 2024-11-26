@@ -2,14 +2,14 @@
 
 namespace App\Jobs;
 
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Services\TravelRenewalService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\PaymentStatusEnum;
 
 class TravelRenewalLeadCreationJob implements ShouldQueue
 {

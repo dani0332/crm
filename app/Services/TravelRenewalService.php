@@ -145,7 +145,7 @@ class TravelRenewalService extends BaseService
     // Helper function to save the renewal quote
     protected function createTravelRenewalLead($travelQuote)
     {
-       
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
         info("Travel quote successfully saved. Reference ID: {$response->quoteUID} | Time:".now());
         info("Lead allocation process initiated for Reference ID: {$response->quoteUID} | Time:".now());
