@@ -87,6 +87,12 @@ class MACRMService
                 return false;
             }
 
+            if (empty($leadData['payment']['captured_at'])) {
+                info("Payment Not captured for courier, for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}. Sync aborted.");
+
+                return false;
+            }
+
             info("Syncing Courier Quote with MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
 
             // Send the request using the sendRequest method with 'POST' method

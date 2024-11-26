@@ -1797,14 +1797,6 @@ class CRUDController extends Controller
             $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
 
-        if (
-            strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
-            && ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued)
-        ) {
-            // Ep send documents
-            EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);
-        }
-
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         // Update payment allocation status
