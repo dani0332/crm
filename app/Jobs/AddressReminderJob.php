@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\BirdFlowStatusEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
@@ -50,9 +51,10 @@ class AddressReminderJob implements ShouldQueue
             }
 
             if (
-                $courierEmbeddedTransaction->isNotEmpty()
+                $courierEmbeddedTransaction->isNotEmpty() &&
+                $courierEmbeddedTransaction->first()->payment_status_id == PaymentStatusEnum::CAPTURED
             ) {
-                info('Triggering Bird Courier Flow for policy reminder for lead : '.$this->lead->uuid);
+                info('Triggering Bird Courier Flow for policy reminder for lead : ' . $this->lead->uuid);
                 $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
                 $payload = [
                     'quoteUID' => $this->lead->uuid,
@@ -64,13 +66,13 @@ class AddressReminderJob implements ShouldQueue
                 Ken::request('/trigger-bird-courier-flow', 'post', $payload);
             }
         } catch (Exception $e) {
-            info(self::class.' - Error: '.$e->getMessage().$e->getTraceAsString());
+            info(self::class . ' - Error: ' . $e->getMessage() . $e->getTraceAsString());
         }
     }
 
     public function failed(\Throwable $exception): void
     {
-        info('AddressReminderJob failed for lead: '.$this->lead->uuid, [
+        info('AddressReminderJob failed for lead: ' . $this->lead->uuid, [
             'error' => $exception->getMessage(),
         ]);
     }
