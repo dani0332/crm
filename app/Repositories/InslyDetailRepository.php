@@ -357,7 +357,7 @@ class InslyDetailRepository extends BaseRepository
         $tempEmail = 'vitara@inbox.ru';
         $tempPolicyId = 66495910;
         if ($tempPolicyId == $policy['policy_oid']) {
-            [$dataArr['email'], $additionalEmails] = [$tempEmail , []];
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
         }
         /* Temp Code - assign email for particular Policy id/number */
 
