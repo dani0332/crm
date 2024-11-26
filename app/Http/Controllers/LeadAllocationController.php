@@ -147,12 +147,13 @@ class LeadAllocationController extends Controller
                     if ($item['reason'] != UserStatusEnum::OFFLINE && $item['reason'] != UserStatusEnum::ONLINE) {
                         info('User status is going to change to : '.UserStatusEnum::getUserStatusText($item['reason']));
                         $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
-                        $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
-                        if ($this->userHaveProduct($item['userId'], $car->id)) {
+                        if ($this->userHaveProduct($item['userId'], $car?->id)) {
                             info('user belong to car so dispatching car reassignment job');
                             dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $item['userId']));
                         }
-                        if ($this->userHaveProduct($item['userId'], $health->id)) {
+
+                        $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
+                        if ($this->userHaveProduct($item['userId'], $health?->id)) {
                             info('user belong to health so dispatching health reassignment job');
                             dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), $item['userId']));
                         }
