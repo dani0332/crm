@@ -105,16 +105,15 @@ class InslyDetailRepository extends BaseRepository
         $validateAll = $data['validateAll'];
 
         $policy = $this->where('policy_oid', $policyID)->first();
+        $email = $policy['customer']['email'] ?? null;
 
         /* Temp Code - assign email for particular Policy id/number */
         $tempEmail = 'vitara@inbox.ru';
         $tempPolicyId = 66495910;
         if ($tempPolicyId == $data['policy_oid']) {
-            $policy['customer']['email'] = $tempEmail;
+            $email = $tempEmail;
         }
         /* Temp Code - assign email for particular Policy id/number */
-
-        $email = $policy['customer']['email'] ?? null;
 
         if (empty($email)) {
             return [
@@ -353,6 +352,14 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempEmail = 'vitara@inbox.ru';
+        $tempPolicyId = 66495910;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }
+        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
