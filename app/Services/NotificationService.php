@@ -51,4 +51,5 @@ class NotificationService extends BaseService
 
         return response()->json(['message' => 'Payment notification successfully send to advisor!'], 200);
     }
+
 }
