@@ -19,7 +19,7 @@ const props = defineProps({
     type: Object,
   },
 });
-
+const page = usePage();
 const notification = useToast();
 const can = permission => useCan(permission);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
