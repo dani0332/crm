@@ -45,6 +45,33 @@ const isSageLogButtonEnable = computed(() => {
   return can(props.permissionsEnum.VIEW_SAGE_API_LOGS);
 });
 
+const fetchLatestSageError = async () => {
+  let isPolicyBookingFailed =
+    props.record?.quote_status_id ==
+    page.props.quoteStatusEnum.POLICY_BOOKING_FAILED;
+  NProgress.start();
+  const response = await axios.get(
+    route('latest.sage.api.error', [props.record.id]),
+    {
+      params: {
+        modelClass: props.modelClass,
+      },
+    },
+  );
+  NProgress.done();
+  if (response.data?.success) {
+    console.log('fetchLatestSageError : ', response?.data);
+    if (response?.data?.error && isPolicyBookingFailed) {
+      notification.error({
+        title: 'Sage API Error',
+        message: response?.data?.error,
+        position: 'top',
+        timeout: 30000,
+      });
+    }
+  }
+};
+
 const fetchSageAPILogs = async () => {
   NProgress.start();
   sageAPILogs.loader = true;
@@ -100,9 +127,9 @@ const copyToClipboard = item => {
     });
 };
 
-/*onBeforeMount(() => {
-  fetchSageAPILogs();
-});*/
+onBeforeMount(() => {
+  fetchLatestSageError();
+});
 </script>
 
 <template>
