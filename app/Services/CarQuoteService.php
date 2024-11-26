@@ -2271,11 +2271,12 @@ class CarQuoteService extends BaseService
                 });
         }
 
+        $selectedTransaction = $courierEmbeddedTransaction->firstWhere('is_selected', 1);
+
+        // check if selected transaction is present and payment status is CAPTURED or AUTHORISED
         if (
-            $courierEmbeddedTransaction->isNotEmpty() && $courierEmbeddedTransaction
-            ->where('is_selected', 1)
-            ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
-            ->exists()
+            $selectedTransaction &&
+            in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
         ) {
             info('Triggering Bird Courier Flow for address notification for lead : ' . $lead->uuid);
             $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
