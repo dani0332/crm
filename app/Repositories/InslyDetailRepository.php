@@ -353,6 +353,14 @@ class InslyDetailRepository extends BaseRepository
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
 
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempEmail = 'vitara@inbox.ru';
+        $tempPolicyId = 66495910;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail , []];
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
         $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
