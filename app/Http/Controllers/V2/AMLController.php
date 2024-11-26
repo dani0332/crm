@@ -440,7 +440,7 @@ class AMLController extends Controller
                     ], ['entity_id' => $fetchEntity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
                 }
 
-                if(isset( $AMLCheckRequest->company_name)){
+                if (isset($AMLCheckRequest->company_name)) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
                     $updateQuote->save();
                 }
