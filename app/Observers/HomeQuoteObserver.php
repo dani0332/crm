@@ -12,6 +12,8 @@ use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use App\Services\EmailServices\HomeEmailService;
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
 
 class HomeQuoteObserver
 {
@@ -32,7 +34,15 @@ class HomeQuoteObserver
         $dirty = $homeQuote->getDirty();
 
         if (isset($dirty['advisor_id'])) {
-            app(HomeEmailService::class)->sendHomeOCBIntroEmail($homeQuote);
+            $homeOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH)->first();
+            if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
+                app(HomeEmailService::class)->sendHomeOCBIntroEmail($homeQuote);
+                info("HomeQuoteObserver - Home OCB Automated Followups Switch is on - Ref ID: {$homeQuote->uuid} | Time: ".now());
+            }
+            else {
+                info("HomeQuoteObserver - Home OCB Automated Followups Switch is off - Ref ID: {$homeQuote->uuid} | Time: ".now());
+            }
+
         }
         if (
             isset($dirty['quote_status_id']) &&
