@@ -50,9 +50,7 @@ class AddressReminderJob implements ShouldQueue
                     });
             }
 
-            $isCourierTransactionSelected = $courierEmbeddedTransaction?->firstWhere('is_selected', 1);
-
-            if ($isCourierTransactionSelected && $isCourierTransactionSelected->payment_status_id === PaymentStatusEnum::CAPTURED) {
+            if ($courierEmbeddedTransaction?->firstWhere('is_selected', 1)?->payment_status_id === PaymentStatusEnum::CAPTURED) {
                 info('Triggering Bird Courier Flow for policy reminder for lead : ' . $this->lead->uuid);
                 $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
                 $payload = [
