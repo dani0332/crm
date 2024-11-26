@@ -3,14 +3,14 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
-use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
-use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -53,20 +53,16 @@ class CarQuoteObserver
                 });
                 $dirty = [...$dirty, 'transaction_approved_at' => $lead->transaction_approved_at];
             }
-
-            if ($lead->quote_status_id === QuoteStatusEnum::PolicyIssued) {
-                SyncCourierQuoteWithMacrm::dispatch($lead, QuoteTypeId::Car);
-            }
-
-            if (in_array($lead->quote_status_id, [QuoteStatusEnum::PolicyCancelled])) {
-                CancelCourierQuoteOnMACRM::dispatch($lead, QuoteTypeId::Car);
-            }
         }
 
         $this->syncQuote($lead, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
+        }
+
+        if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
+            EmbeddedProductRepository::cancelEmbeddedProducts($lead->id, quoteTypeCode::Car);
         }
 
         if (
@@ -79,6 +75,9 @@ class CarQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+
+            // Ep send documents
+            EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
         }
         if (
             isset($dirty['quote_status_id']) &&

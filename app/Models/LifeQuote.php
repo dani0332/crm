@@ -30,6 +30,7 @@ class LifeQuote extends Model implements AuditableContract
         'renewal_batch' => FilterTypes::EXACT,
         'quote_status_id' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
+        'renewal_batch_id' => FilterTypes::IN,
         'source' => FilterTypes::EXACT,
         'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
@@ -177,5 +178,10 @@ class LifeQuote extends Model implements AuditableContract
     public function quoteDetail()
     {
         return $this->hasOne(LifeQuoteRequestDetail::class);
+    }
+
+    public function renewalBatchModel()
+    {
+        return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 }

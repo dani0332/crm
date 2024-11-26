@@ -440,7 +440,9 @@ class CentralService extends BaseService
 
         // Lock functionality check for Lead status Section
         $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined]);
-        if (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
+        if (auth()->check() && auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+            in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked]) ? $lockFunctionalities['lead_status'] = true : $lockFunctionalities['lead_status'] = false;
+        } elseif (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
             $lockFunctionalities['lead_status'] = true;
         }
 
@@ -899,11 +901,13 @@ class CentralService extends BaseService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
-        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatus) {
+        $sendUpdateStatusArray = is_string($sendUpdateStatus) ? [$sendUpdateStatus] : $sendUpdateStatus;
+
+        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatusArray) {
             $query->where('send_update_log_id', $sendUpdateId)
-                ->where(function ($query) use ($sendUpdateStatus) {
-                    $query->where('current_status', $sendUpdateStatus)
-                        ->orWhere('previous_status', $sendUpdateStatus);
+                ->where(function ($query) use ($sendUpdateStatusArray) {
+                    $query->whereIn('current_status', $sendUpdateStatusArray)
+                        ->orWhereIn('previous_status', $sendUpdateStatusArray);
                 });
         })->count();
 
