@@ -51,7 +51,7 @@ class AddressReminderJob implements ShouldQueue
             }
 
             if ($courierEmbeddedTransaction?->firstWhere('is_selected', 1)?->payment_status_id === PaymentStatusEnum::CAPTURED) {
-                info('Triggering Bird Courier Flow for policy reminder for lead : ' . $this->lead->uuid);
+                info('Triggering Bird Courier Flow for policy reminder for lead : '.$this->lead->uuid);
                 $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
                 $payload = [
                     'quoteUID' => $this->lead->uuid,
@@ -63,13 +63,13 @@ class AddressReminderJob implements ShouldQueue
                 Ken::request('/trigger-bird-courier-flow', 'post', $payload);
             }
         } catch (Exception $e) {
-            info(self::class . ' - Error: ' . $e->getMessage() . $e->getTraceAsString());
+            info(self::class.' - Error: '.$e->getMessage().$e->getTraceAsString());
         }
     }
 
     public function failed(\Throwable $exception): void
     {
-        info('AddressReminderJob failed for lead: ' . $this->lead->uuid, [
+        info('AddressReminderJob failed for lead: '.$this->lead->uuid, [
             'error' => $exception->getMessage(),
         ]);
     }
