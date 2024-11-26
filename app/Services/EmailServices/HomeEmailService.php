@@ -25,11 +25,11 @@ class HomeEmailService extends BaseService
 
         $advisor = User::where('id', $lead->advisor_id)->first();
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::HOME_AUTOMATED_FOLLOWUPS);
-        $homeAutomatedEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_AUTOMATED_FOLLOWUPS)->first();
+        $homeAutomatedEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS)->first();
         if ($homeAutomatedEvent) {
             $response = app(BirdService::class)->triggerWebHookRequest($homeAutomatedEvent->value, $emailData);
-            if (!$lead->flow_executed_at) {
-                $lead->flow_executed_at = now();
+            if (!$lead->automated_flow_executed_at) {
+                $lead->automated_flow_executed_at = now();
                 $lead->save();
             }
             info("sendHomeOCBIntroEmail event triggered for lead  Ref-ID: {$lead->uuid} |Time: " . now());
