@@ -40,6 +40,7 @@ const props = defineProps({
   isEditDisabledForQueuedBooking: Boolean,
   insuranceProviderId: Number,
   isCommVatNotAppEnabled: Boolean,
+  isSentOrBooked: Boolean,
 });
 
 const page = usePage();
@@ -604,6 +605,7 @@ const isLegacyPolicy = computed(() => {
       :send-update-log="props.sendUpdateLog"
       :update-btn="props.updateBtn"
       :quote-type="props.quoteType"
+      :is-sent-or-booked="props.isSentOrBooked"
     />
 
     <LazyBookingDetails

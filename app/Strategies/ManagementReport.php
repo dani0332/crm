@@ -7,6 +7,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\Lookup;
@@ -57,6 +58,14 @@ class ManagementReport
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        $lobs = $this->getUserProducts($user->id)
+            ->map(function ($item) {
+                return (object) [
+                    'id' => QuoteTypes::getIdFromValue($item->name),
+                    'name' => $item->name,
+                ];
+            });
+
         $reportCategories = [];
         foreach (ManagementReportCategoriesEnum::asArray() as $value) {
             $reportCategories[] = ['label' => $value, 'value' => $value];
@@ -87,6 +96,7 @@ class ManagementReport
             'reportCategories' => $reportCategories,
             'transactionTypes' => $transactionTypes,
             'departments' => $departments,
+            'lobs' => $lobs,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
@@ -145,9 +155,17 @@ class ManagementReport
         if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies']) && $request['includeCancelledPolicies'] == 'No') {
             $query->where('personal_quotes.quote_status_id', '!=', QuoteStatusEnum::PolicyCancelled);
         }
+
+        $lobs = $request['lob'];
+        if (empty($lobs)) {
+            $lobs = $this->getUserProducts($user->id)
+                ->map(fn ($item) => QuoteTypes::getIdFromValue($item->name))
+                ->toArray();
+        }
+        $query->whereIn('personal_quotes.quote_type_id', $lobs);
     }
 
-    private function getDateFilter($query, $request, $fieldName, $filterKey, $secondOptionalFieldName = null)
+    protected function getDateFilter($query, $request, $fieldName, $filterKey, $secondOptionalFieldName = null)
     {
         if ($request[$filterKey] != null) {
             if (is_array($request[$filterKey])) {
@@ -192,8 +210,10 @@ class ManagementReport
         if ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
             $field = $endorsementsQuery ? 'send_update_logs.booking_date' : 'personal_quotes.policy_booking_date';
             $this->getDateFilter($query, $request, $field, 'policyBookDate');
-        } elseif ($this->isReportType($request, ManagementReportTypeEnum::TRANSACTION_PAYMENTS)) {
+        } elseif ($this->isReportType($request, ManagementReportTypeEnum::APPROVED_TRANSACTIONS)) {
             $this->getDateFilter($query, $request, 'p.payment_due_date', 'paymentDueDate', 'ps.due_date');
+        } elseif ($this->isReportType($request, ManagementReportTypeEnum::PAID_TRANSACTIONS)) {
+            $this->getDateFilter($query, $request, 'ps.verified_at', 'paymentDate');
         }
     }
 
@@ -212,18 +232,22 @@ class ManagementReport
                 break;
 
             case ManagementReportCategoriesEnum::TRANSACTION:
-                if ($this->isReportType($request, ManagementReportTypeEnum::TRANSACTION_PAYMENTS)) {
+                if ($this->isReportType($request, ManagementReportTypeEnum::APPROVED_TRANSACTIONS)) {
                     $this->getDateFilter($query, $request, 'p.payment_due_date', 'paymentDueDate', 'ps.due_date');
                 } elseif ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
                     $this->getDateFilter($query, $request, 'personal_quotes.policy_booking_date', 'policyBookDate');
+                } elseif ($this->isReportType($request, ManagementReportTypeEnum::PAID_TRANSACTIONS)) {
+                    $this->getDateFilter($query, $request, 'ps.verified_at', 'paymentDate');
                 }
                 break;
 
             case ManagementReportCategoriesEnum::ENDORSEMENT:
-                if ($this->isReportType($request, ManagementReportTypeEnum::TRANSACTION_PAYMENTS)) {
+                if ($this->isReportType($request, ManagementReportTypeEnum::APPROVED_TRANSACTIONS)) {
                     $this->getDateFilter($query, $request, 'send_update_logs.invoice_date', 'paymentDueDate', 'ps.due_date');
                 } elseif ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
                     $this->getDateFilter($query, $request, 'send_update_logs.booking_date', 'policyBookDate');
+                } elseif ($this->isReportType($request, ManagementReportTypeEnum::PAID_TRANSACTIONS)) {
+                    $this->getDateFilter($query, $request, 'ps.verified_at', 'paymentDate');
                 }
                 break;
 
@@ -238,8 +262,10 @@ class ManagementReport
                 break;
 
             case ManagementReportCategoriesEnum::INSTALLMENT:
-                if ($this->isReportType($request, ManagementReportTypeEnum::TRANSACTION_PAYMENTS)) {
+                if ($this->isReportType($request, ManagementReportTypeEnum::APPROVED_TRANSACTIONS)) {
                     $this->getDateFilter($query, $request, 'ps.due_date', 'paymentDueDate');
+                } elseif ($this->isReportType($request, ManagementReportTypeEnum::PAID_TRANSACTIONS)) {
+                    $this->getDateFilter($query, $request, 'ps.verified_at', 'paymentDate');
                 }
                 break;
 
