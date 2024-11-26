@@ -15,8 +15,28 @@ provide('quoteTypeId', props.quoteTypeId);
 provide('lostReasons', props.lostReasons);
 provide('quoteType', props.quoteType);
 
+// Flattens nested lead properties to ensure data is serializable.
+const flattenLeads = (leadsTypes) => {
+  leadsTypes.forEach((leadType) => {
+    const leadsList = leadType.data?.leads_list?.data;
+
+    if (Array.isArray(leadsList)) {
+      leadsList.forEach((lead) => {
+        lead.nationality_text = lead.nationality?.text || '';
+        lead.insurance_tenure_text = lead.insurance_tenure?.text || '';
+
+        delete lead.nationality;
+        delete lead.insurance_tenure;
+      });
+    }
+  });
+
+  return leadsTypes;
+};
+
+
 const quotes = reactive({
-  data: page.props.quotes || [],
+  data: flattenLeads(page.props.quotes || []),
   loader: false,
   searching: false,
   pages: {},

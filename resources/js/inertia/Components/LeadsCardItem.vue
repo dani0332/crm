@@ -199,7 +199,7 @@ const getAge = (ageString) => {
     :class="{ 'h-full': leads.length == 0 }"
   >
     <a
-      v-for="({
+      v-for="{
         id,
         uuid,
         first_name,
@@ -215,7 +215,9 @@ const getAge = (ageString) => {
         previous_policy_expiry_date,
         sum_insured_value,
         dob,
-      }, index) in leads"
+        nationality_text,
+        insurance_tenure_text,
+      } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
       target="_blank"
@@ -237,7 +239,7 @@ const getAge = (ageString) => {
       </div>
        <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />
-        <p class="text-xs">{{ leads[index]?.insurance_tenure?.text }}</p>
+        <p class="text-xs">{{ insurance_tenure_text }}</p>
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="money" size="sm" class="text-primary-400" />
@@ -245,7 +247,7 @@ const getAge = (ageString) => {
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="globe" size="sm" class="text-primary-400" />
-        <p class="text-xs">{{ leads[index]?.nationality?.text }}</p>
+        <p class="text-xs">{{ nationality_text }}</p>
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="person" size="sm" class="text-primary-400" />
