@@ -1963,8 +1963,12 @@ const allowStatusUpdate = computed(() => {
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Insurer API Status</dt>
+                <dt class="font-medium">INSURER API STATUS</dt>
                 <dd>{{ quote.insurer_api_status }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.api_issuance_status }}</dd>
               </div>
             </dl>
           </div>

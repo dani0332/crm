@@ -43,6 +43,7 @@ class TravelQuote extends Model implements AuditableContract
     ];
     protected $appends = [
         'insurer_api_status',
+        'api_issuance_status',
         'insurer_api_email_action',
     ];
 
@@ -66,13 +67,17 @@ class TravelQuote extends Model implements AuditableContract
         });
     }
 
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : NULL;
+    }
     public function getInsurerApiStatusAttribute()
     {
-        return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIStatuses($this->insurer_api_status_id) : '';
+        return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIStatuses($this->insurer_api_status_id) : NULL;
     }
     public function getInsurerApiEmailActionAttribute()
     {
-        return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIEmailActionMessage($this->insurer_api_status_id) : '';
+        return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIEmailActionMessage($this->insurer_api_status_id) : NULL;
     }
 
     public function getAuditables()

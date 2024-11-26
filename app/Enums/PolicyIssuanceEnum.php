@@ -9,7 +9,7 @@ use BenSampo\Enum\Enum;
 final class PolicyIssuanceEnum extends Enum
 {
     //Advisor email to be used to assign advisor to leads which booked automatically using policy issuance automations
-    const API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL = 'api.notification@insurancemarket.ae';
+    const API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL = 'customer.happiness.center.team@insurancemarket.ae';
     const PENDING_STATUS = 'pending';
     const PROCESSING_STATUS = 'processing';
     const TIMEOUT_STATUS = 'timeout';
@@ -18,6 +18,11 @@ final class PolicyIssuanceEnum extends Enum
     const SUCCESS_STATUS = 'success';
 
     /* Insurer API Generic Status */
+
+    const POLICY_ISSUANCE_API_STATUS_YES_ID = 1;
+    const POLICY_ISSUANCE_API_STATUS_YES = 'Yes';
+    const POLICY_ISSUANCE_API_STATUS_NO_ID = 2;
+    const POLICY_ISSUANCE_API_STATUS_NO = 'No';
 
     const AUTO_CAPTURE_FAILED_STATUS_ID = 1;
     const AUTO_CAPTURE_FAILED = 'Auto Capture Failed';
@@ -82,6 +87,16 @@ final class PolicyIssuanceEnum extends Enum
             self::POLICY_DETAIL_API_FAILED_STATUS_ID => self::POLICY_DETAIL_API_ACTION_MESSAGE,
             self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_ACTION_MESSAGE,
             self::BOOKING_DETAILS_API_FAILED_STATUS_ID => self::BOOKING_DETAILS_API_ACTION_MESSAGE,
+        ];
+
+        return $status ? $statuses[$status] : '';
+    }
+
+    public static function getAPIIssuanceStatuses($status = null)
+    {
+        $statuses = [
+            self::POLICY_ISSUANCE_API_STATUS_YES_ID => self::POLICY_ISSUANCE_API_STATUS_YES,
+            self::POLICY_ISSUANCE_API_STATUS_NO_ID => self::POLICY_ISSUANCE_API_STATUS_NO,
         ];
 
         return $status ? $statuses[$status] : '';

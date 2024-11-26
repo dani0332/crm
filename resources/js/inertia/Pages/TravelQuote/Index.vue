@@ -722,7 +722,7 @@ watch(
           placeholder="Insurer Commission Tax Invoice No"
         />
         <ComboBox
-          label="Insurer API Status"
+          label="INSURER API STATUS"
           v-model="filters.insurer_api_status_id"
           placeholder="Select Status"
           :options="insurerApiStatus"
