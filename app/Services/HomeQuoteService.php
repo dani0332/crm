@@ -104,8 +104,8 @@ class HomeQuoteService extends BaseService
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = hqr.id),
+                "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
             as customer_type'),
             'c.insured_first_name',
             'c.insured_last_name',
@@ -375,7 +375,7 @@ class HomeQuoteService extends BaseService
                     if (in_array($item, $skipped)) {
                         continue;
                     }
-                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
@@ -490,7 +490,7 @@ class HomeQuoteService extends BaseService
         $homeQuote->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('quote/home/'.$id)->with('success', 'Home Quote has been updated');
+            return redirect('quote/home/' . $id)->with('success', 'Home Quote has been updated');
         }
     }
 
@@ -720,7 +720,7 @@ class HomeQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds) . ' Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -784,15 +784,16 @@ class HomeQuoteService extends BaseService
 
     public function getQuotePlans($type, $id)
     {
-        $modelName = checkPersonalQuotes(ucfirst($type)) ? 'PersonalQuote' : ucfirst($type).'Quote';
-        $model = '\\App\\Models\\'.$modelName;
+        // use KEN request here instead of this whole method
+        $modelName = checkPersonalQuotes(ucfirst($type)) ? 'PersonalQuote' : ucfirst($type) . 'Quote';
+        $model = '\\App\\Models\\' . $modelName;
         $quoteUuId = $model::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-'.lcfirst($type).'-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-' . lcfirst($type) . '-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -809,7 +810,7 @@ class HomeQuoteService extends BaseService
                         'Content-Type' => 'application/json',
                         'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
+                        'Authorization' => 'Basic ' . $authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
@@ -820,9 +821,7 @@ class HomeQuoteService extends BaseService
 
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
-
-                return $getdecodeContents;
+                return json_decode($getContents);
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
@@ -843,7 +842,6 @@ class HomeQuoteService extends BaseService
 
         foreach ($quotePlans as $listQuotePlan) {
             if ($listQuotePlan->planId == $planId) {
-                // dd($listQuotePlan);
                 $listQuotePlanName = $listQuotePlan->planName;
                 $providerCode = $listQuotePlan->providerCode;
                 $providerName = $listQuotePlan->providerName;
@@ -898,7 +896,7 @@ class HomeQuoteService extends BaseService
 
     public function updateManualPlansBulk($request)
     {
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-home-quote-plan';
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT') . '/save-manual-home-quote-plan';
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
         $apiUserName = config('constants.KEN_API_USER');
@@ -928,16 +926,14 @@ class HomeQuoteService extends BaseService
                 'apiPassword' => $apiPassword,
             ];
 
-            $response = $this->httpService->processRequest($dataArray, $apiCreds);
-
-            return $response;
+            return $this->httpService->processRequest($dataArray, $apiCreds);
         }
     }
 
     public function homePlanModify($request)
     {
         if (($response = $this->isPlanModifyAllowed($request->all())) === true) {
-            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-home-quote-plan';
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT') . '/save-manual-home-quote-plan';
             $apiToken = config('constants.KEN_API_TOKEN');
             $apiTimeout = config('constants.KEN_API_TIMEOUT');
             $apiUserName = config('constants.KEN_API_USER');
@@ -986,7 +982,7 @@ class HomeQuoteService extends BaseService
                 'apiPassword' => $apiPassword,
             ];
 
-            $response = $this->httpService->processRequest($homePlanData, $apiCreds);
+            return $this->httpService->processRequest($homePlanData, $apiCreds);
         }
 
         return $response;
@@ -994,12 +990,14 @@ class HomeQuoteService extends BaseService
 
     public function isPlanModifyAllowed($data)
     {
-        $logPrefix = self::class.' fn: isPlanModifyAllowed ';
+        $logPrefix = self::class . ' fn: isPlanModifyAllowed ';
         $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
+
+        $isAllowed = false;
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             $bikePayment = Payment::where('code', '=', $quote->code)->first();
-            if (! empty($bikePayment->captured_at)) {
+            if (!empty($bikePayment->captured_at)) {
                 $paymentCapturedAt = $bikePayment->captured_at;
                 $today = Carbon::today();
 
@@ -1007,37 +1005,37 @@ class HomeQuoteService extends BaseService
                 $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
 
                 if (Auth::user()->hasRole(RolesEnum::HomeAdvisor) && $today->lte($dateLimitForAdvisor)) {
-                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
-
-                    return true;
+                    info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' and captured days diff is ' . $paymentCapturedAt);
+                    $isAllowed = true;
                 } elseif (Auth::user()->hasRole(RolesEnum::HomeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
-                    info($logPrefix.' plan modify allowed to bike manager for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
-
-                    return true;
+                    info($logPrefix . ' plan modify allowed to bike manager for uuid ' . $quote->uuid . ' and captured days diff is ' . $paymentCapturedAt);
+                    $isAllowed = true;
                 }
             }
         }
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager])) {
-            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
-
-            return true;
+            info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid);
+            $isAllowed = true;
         }
 
         if (
-            $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
-                && Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor,  RolesEnum::HomeManager]))
+            empty($quote->payment_status_id) ||
+            (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT]) &&
+                Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager]))
         ) {
-            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
-
-            return true;
+            info($logPrefix . ' plan modify allowed for uuid ' . $quote->uuid);
+            $isAllowed = true;
         }
 
-        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+        if (!$isAllowed) {
+            info($logPrefix . ' plan modification is not allowed for uuid ' . $quote->uuid);
+            return 'Plan Modification is not allowed';
+        }
 
-        return 'Plan Modification is not allowed';
-        // return true;
+        return true;
     }
+
 
     public function getParsedValue(array $planData, string $key): ?float
     {

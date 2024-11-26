@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class HomeQuoteRequest extends FormRequest
 {
+    const SOMETIMES_BOOLEAN = 'sometimes|boolean';
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,9 +27,9 @@ class HomeQuoteRequest extends FormRequest
             'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns|max:150',
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
-            'has_contents' => 'sometimes|boolean',
-            'has_building' => 'sometimes|boolean',
-            'has_personal_belongings' => 'sometimes|boolean',
+            'has_contents' => self::SOMETIMES_BOOLEAN,
+            'has_building' => self::SOMETIMES_BOOLEAN,
+            'has_personal_belongings' => self::SOMETIMES_BOOLEAN,
             // Conditionally required fields
             'contents_aed' => 'nullable|required_if:has_contents,true',
             'building_aed' => 'nullable|required_if:has_building,true|numeric',

@@ -58,11 +58,8 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        // dd('fetchGetData', request()->all());
-
         // by default add the created_at check
-        $addCreatedDateCheck = true;
-        if (
+        $addCreatedDateCheck = !(
             // check if any of the filters are applied, only then don't add the created_at check
             request()->filled('email') ||
             request()->filled('mobile_no') ||
@@ -73,22 +70,22 @@ class HomeQuoteRepository extends BaseRepository
             request()->filled('previous_quote_policy_number') ||
             request()->filled('payment_due_date') ||
             request()->filled('booking_date')
-        ) {
-            $addCreatedDateCheck = false;
-        }
-        $homeQuery = $this->byQuoteTypeCode(QuoteTypes::HOME)->with([
-            'quoteDetail.lostReason',
-            'quoteStatus',
-            'advisor',
-            'nationality',
-            'homeQuote',
-            'homeQuote.homeQuoteRequestDetail',
-            'homeQuote.homeQuoteRequestDetail.lostReason',
-        ])
+        );
+
+        return $this->byQuoteTypeCode(QuoteTypes::HOME)
+            ->with([
+                'quoteDetail.lostReason',
+                'quoteStatus',
+                'advisor',
+                'nationality',
+                'homeQuote',
+                'homeQuote.homeQuoteRequestDetail',
+                'homeQuote.homeQuoteRequestDetail.lostReason',
+            ])
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->when(request()->filled('advisors'), fn ($q) => $q->whereIn('advisor_id', (array) request('advisors')))
+            ->when(request()->filled('advisors'), fn($q) => $q->whereIn('advisor_id', (array) request('advisors')))
             ->when(request()->has('is_renewal'), function ($query) {
                 if (request('is_renewal') === quoteTypeCode::yesText) {
                     $query->whereNotNull('previous_quote_policy_number');
@@ -99,17 +96,16 @@ class HomeQuoteRepository extends BaseRepository
             ->when($addCreatedDateCheck, function ($query) {
                 $query->whereBetween('created_at', $this->getDateRange());
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filter(!$forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
-                fn ($q) => $q->count(),
-                fn ($query) => $query->when($forExport, fn ($q) => $q->get(), fn ($q) => $q->simplePaginate())
+                fn($q) => $q->count(),
+                fn($query) => $query->when($forExport, fn($q) => $q->get(), fn($q) => $q->simplePaginate())
             );
-
-        return $homeQuery;
     }
+
 
     public function fetchGetFormOptions()
     {
@@ -161,11 +157,11 @@ class HomeQuoteRepository extends BaseRepository
 
         $quoteData = $baseQuoteData;
 
-        info('Home Quote Create :'.json_encode($quoteData));
+        info('Home Quote Create :' . json_encode($quoteData));
 
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 
-        info('Home Quote Create Response :'.json_encode($response));
+        info('Home Quote Create Response :' . json_encode($response));
 
         // if (isset($response->quoteUID)) {
         //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);
@@ -221,12 +217,12 @@ class HomeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable().'.*',
+                $this->getTable() . '.*',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                    WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
+                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
                 as customer_type'),
             ])
             ->firstOrFail();
@@ -280,7 +276,6 @@ class HomeQuoteRepository extends BaseRepository
 
         $planURL = $this->getEcomQuoteLink(QuoteTypes::HOME, $quote->uuid);
         $allowedDuplicateLOB = app(CRUDService::class)->getAllowedDuplicateLOB('home', $quote->code);
-        // dd($subArea, $quote->homeQuote->sub_area_id, $quote);
 
         return [
             'documentTypes' => $documentTypes,
@@ -316,7 +311,7 @@ class HomeQuoteRepository extends BaseRepository
             'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -337,7 +332,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::HOME->value) . '-quote', 'post', $dataArr);
     }
 
     public function fetchUpdate($uuid, $data)

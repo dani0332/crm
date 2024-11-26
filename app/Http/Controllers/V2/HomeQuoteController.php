@@ -57,7 +57,7 @@ class HomeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect('personal-quotes/home/'.$response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     public function show($uuid)
@@ -123,14 +123,17 @@ class HomeQuoteController extends Controller
             ], 200);
         }
 
-        // Handle error response (assuming $response is an object or string)
-        $responseMessage = is_object($response) && isset($response->message)
-            ? $response->message
-            : (is_string($response) ? $response : 'Unknown error');
+        // Determine the response message
+        $responseMessage = 'Unknown error';
+        if (is_object($response) && isset($response->message)) {
+            $responseMessage = $response->message;
+        } elseif (is_string($response)) {
+            $responseMessage = $response;
+        }
 
         // Return error as JSON for API consumption
         return response()->json([
-            'message' => 'Home Plan has not been updated. '.$responseMessage,
+            'message' => 'Home Plan has not been updated. ' . $responseMessage,
         ], 400); // 400 Bad Request or any relevant error code
     }
 
