@@ -10,6 +10,8 @@ use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class BusinessQuoteObserver
 {
@@ -24,6 +26,8 @@ class BusinessQuoteObserver
 
     /**
      * Handle the BusinessQuote "updated" event.
+     * 
+     * - Any changes that adds business logic should be enclosed in try-catch block or executed in queue.
      */
     public function updated(BusinessQuote $businessQuote): void
     {
@@ -48,7 +52,14 @@ class BusinessQuoteObserver
         $this->syncQuote($businessQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->updatePersonalQuote($businessQuote->uuid, QuoteTypeId::Business, $dirty);
+            try {
+                $this->updatePersonalQuote($businessQuote->uuid, QuoteTypeId::Business, $dirty);
+            } catch (Exception $e) {
+                Log::error('BusinessQuoteObserver - update personal quote failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $businessQuote->uuid,
+                ]);
+            }
         }
 
         if (

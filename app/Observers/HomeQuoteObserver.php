@@ -11,6 +11,8 @@ use App\Models\HomeQuote;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class HomeQuoteObserver
 {
@@ -25,6 +27,8 @@ class HomeQuoteObserver
 
     /**
      * Handle the HomeQuote "updated" event.
+     * 
+     * - Any changes that adds business logic should be enclosed in try-catch block or executed in queue.
      */
     public function updated(HomeQuote $homeQuote): void
     {
@@ -49,7 +53,14 @@ class HomeQuoteObserver
         $this->syncQuote($homeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $homeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->updatePersonalQuote($homeQuote->uuid, QuoteTypeId::Home, $dirty);
+            try {
+                $this->updatePersonalQuote($homeQuote->uuid, QuoteTypeId::Home, $dirty);
+            } catch (Exception $e) {
+                Log::error('HomeQuoteObserver - update personal quote failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $homeQuote->uuid,
+                ]);
+            }
         }
 
         if (
