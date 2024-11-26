@@ -93,9 +93,9 @@ class UpdateUserStatus extends Command
                     User::where('id', $userId)->update(['status' => $newStatus]);
                     event(new UserStatusChanged($userId, $newStatus, $session->user->name));
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
-                        $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()->pluck('id');
-                        $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()->pluck('id');
-                        $bikeId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Bike)->first()->pluck('id');
+                        $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()?->id;
+                        $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()?->id;
+                        $bikeId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Bike)->first()?->id;
                         if ($this->userHaveProduct($userId, $carId)) {
                             info('System triggered car reassignment job for user : '.$session->user->name);
                             ReAssignCarLeadsJob::dispatch(new CarAllocationService, $userId);
