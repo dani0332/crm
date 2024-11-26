@@ -115,6 +115,8 @@ class EndorsementReportService extends ManagementReport
                 DB::raw('CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_percentage, p.commmission_percentage) ELSE 0 END as commmission_percentage'),
                 DB::raw("'Endorsement' as transaction_type"),
                 'personal_quotes.source',
+                'send_update_logs.status',
+                'ps.sage_reciept_id',
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -194,6 +196,8 @@ class EndorsementReportService extends ManagementReport
                 DB::raw('-1 * IFNULL(send_update_logs.commission_percentage, IFNULL(p.commmission_percentage, 0)) as commmission_percentage'),
                 DB::raw("'Endorsement' as transaction_type"),
                 'personal_quotes.source',
+                'send_update_logs.status',
+                DB::raw("'N/A' as sage_reciept_id"),
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -214,14 +218,23 @@ class EndorsementReportService extends ManagementReport
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
 
-        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+        if ($request['reportType'] == ManagementReportTypeEnum::APPROVED_TRANSACTIONS) {
             $distinctPaymentSplits = DB::table('payment_splits as dps')
                 ->select('dps.code', 'due_date')
                 ->groupBy('dps.code');
             $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
             });
+        } elseif ($request['reportType'] == ManagementReportTypeEnum::PAID_TRANSACTIONS) {
+            $distinctPaymentSplits = DB::table('payment_splits as dps')
+                ->select('dps.code', 'dps.verified_at')
+                ->groupBy('dps.code');
+            $this->getDateFilter($distinctPaymentSplits, $request, 'dps.verified_at', 'paymentDate');
+            $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
+                $join->on('p.code', '=', 'ps.code');
+            });
         }
+
         $this->applyFilters($reversalQuery, $request);
 
         $query = $query->unionAll($reversalQuery);
@@ -258,6 +271,7 @@ class EndorsementReportService extends ManagementReport
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->status = ucwords(str_replace('_', ' ', strtolower($item->status)));
         });
     }
 
