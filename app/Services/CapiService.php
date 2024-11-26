@@ -8,6 +8,7 @@ class CapiService
 {
     private $client = null;
     private $baseUrl = null;
+
     private const CAPI_EXCEPTION_MESSAGE = 'CAPI Service Exception';
 
     /**
@@ -35,7 +36,7 @@ class CapiService
      */
     public function request($path, $method = 'post', $data = [])
     {
-        $url = $this->baseUrl . $path;
+        $url = $this->baseUrl.$path;
         $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) use ($data, $url) {
             info(self::CAPI_EXCEPTION_MESSAGE, ['data' => $data, 'url' => $url]);
             if (isset($response->json()['msg'])) {
