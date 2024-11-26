@@ -13,6 +13,7 @@ const dateFormat = date => {
 provide('quoteStatusEnum', props.quoteStatusEnum);
 provide('quoteTypeId', props.quoteTypeId);
 provide('lostReasons', props.lostReasons);
+provide('quoteType', props.quoteType);
 
 const quotes = reactive({
   data: page.props.quotes || [],

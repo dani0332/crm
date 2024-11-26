@@ -187,6 +187,9 @@ const formatDate = date => {
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
   return useDateFormat(date, 'DD-MMM-YYYY').value;
 };
+const getAge = (ageString) => {
+  return calculateAge(ageString);
+}
 </script>
 <template>
   <div
@@ -196,7 +199,7 @@ const formatDate = date => {
     :class="{ 'h-full': leads.length == 0 }"
   >
     <a
-      v-for="{
+      v-for="({
         id,
         uuid,
         first_name,
@@ -210,7 +213,9 @@ const formatDate = date => {
         business_type_of_insurance,
         stale_at,
         previous_policy_expiry_date,
-      } in leads"
+        sum_insured_value,
+        dob,
+      }, index) in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
       target="_blank"
@@ -229,6 +234,22 @@ const formatDate = date => {
         <span class="font-semibold text-sm">
           {{ first_name }} {{ last_name }}
         </span>
+      </div>
+       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ leads[index]?.insurance_tenure?.text }}</p>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="money" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ Number(sum_insured_value).toLocaleString() }}</p>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="globe" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ leads[index]?.nationality?.text }}</p>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="person" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ getAge(dob) }}</p>
       </div>
 
       <div
@@ -257,7 +278,7 @@ const formatDate = date => {
         <p class="text-xs">{{ company_name }}</p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div v-if="quoteType != 'Life'" class="flex items-center gap-2">
         <x-tooltip placement="left">
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
@@ -300,7 +321,7 @@ const formatDate = date => {
         </x-tooltip>
         <p class="text-xs">{{ updated_at }}</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div v-if="quoteType != 'Life'" class="flex items-center gap-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="1em"
