@@ -145,29 +145,7 @@ class TravelRenewalService extends BaseService
     // Helper function to save the renewal quote
     protected function createTravelRenewalLead($travelQuote)
     {
-        $quoteData = [
-            'destination' => trim($travelQuote->destination),
-            'first_name' => trim($travelQuote->first_name),
-            'last_name' => trim($travelQuote->last_name),
-            'source' => trim($travelQuote->source),
-            'customer_id' => $travelQuote->customer_id,
-            'payment_status_id' => PaymentStatusEnum::DRAFT,
-            'quote_status_id' => QuoteStatusEnum::NewLead,
-            'code' => trim($travelQuote->code),
-            'uuid' => trim($travelQuote->uuid),
-            'direction_code' => trim($travelQuote->direction_code),
-            'nationality_id' => $travelQuote->nationality_id,
-            'is_ecommerce' => $travelQuote->is_ecommerce,
-            'renewal_batch' => $travelQuote->renewal_batch,
-            'policy_expiry_date' => $travelQuote->policy_expiry_date,
-            'email' => $travelQuote->email,
-            'mobile_no' => $travelQuote->mobile_no,
-            'coverage_code' => $travelQuote->coverage_code,
-            'start_date' => $travelQuote->start_date,
-            'renewal_batch_id' => $travelQuote->renewal_batch_id,
-            'region_cover_for_id' => $travelQuote->region_cover_for_id,
-        ];
-
+       
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
         info("Travel quote successfully saved. Reference ID: {$response->quoteUID} | Time:".now());
         info("Lead allocation process initiated for Reference ID: {$response->quoteUID} | Time:".now());
