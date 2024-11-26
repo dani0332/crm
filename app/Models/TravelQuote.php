@@ -69,15 +69,15 @@ class TravelQuote extends Model implements AuditableContract
 
     public function getApiIssuanceStatusAttribute()
     {
-        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : NULL;
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
     }
     public function getInsurerApiStatusAttribute()
     {
-        return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIStatuses($this->insurer_api_status_id) : NULL;
+        return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIStatuses($this->insurer_api_status_id) : null;
     }
     public function getInsurerApiEmailActionAttribute()
     {
-        return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIEmailActionMessage($this->insurer_api_status_id) : NULL;
+        return $this->insurer_api_status_id ? PolicyIssuanceEnum::getInsurerAPIEmailActionMessage($this->insurer_api_status_id) : null;
     }
 
     public function getAuditables()

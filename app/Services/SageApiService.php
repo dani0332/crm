@@ -2076,10 +2076,9 @@ class SageApiService
         } else {
             info('Policy Book : Quote '.$quote?->code.' : policy issuance automation not found');
         }
-        if($isPolicyBooked || $isPolicyBookingFailed){
+        if ($isPolicyBooked || $isPolicyBookingFailed) {
             $this->updateApiIssuanceStatus($quote, $policyIssuanceAutomation, $quoteTypeId);
         }
-
 
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - end');
     }

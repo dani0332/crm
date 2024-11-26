@@ -23,7 +23,6 @@ final class PolicyIssuanceEnum extends Enum
     const POLICY_ISSUANCE_API_STATUS_YES = 'Yes';
     const POLICY_ISSUANCE_API_STATUS_NO_ID = 2;
     const POLICY_ISSUANCE_API_STATUS_NO = 'No';
-
     const AUTO_CAPTURE_FAILED_STATUS_ID = 1;
     const AUTO_CAPTURE_FAILED = 'Auto Capture Failed';
     const AUTO_CAPTURE_ACTION_MESSAGE = 'Auto Capture Payment';
