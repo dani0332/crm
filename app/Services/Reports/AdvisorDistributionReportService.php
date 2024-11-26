@@ -50,7 +50,7 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         $query->when(
-            $request->assignmentType && $request->assignmentType !== 'all',
+            $request->assignmentType && strtolower($request->assignmentType) !== 'all',
             fn ($q) => $q->where('assignment_type', $request->assignmentType)
         );
 
@@ -181,7 +181,7 @@ class AdvisorDistributionReportService extends BaseService
                 ->leftJoin('buy_lead_request_logs', function ($join) {
                     $join->on('buy_lead_request_logs.uuid', '=', 'car_quote_request.uuid')
                         ->join('buy_lead_requests', 'buy_lead_requests.id', 'buy_lead_request_logs.buy_lead_request_id')
-                        ->where('buy_lead_request_logs.quote_type_id', 'personal_quotes.quote_type_id');
+                        ->whereColumn('buy_lead_request_logs.quote_type_id', 'personal_quotes.quote_type_id');
                 })
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')

@@ -140,7 +140,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw('
                     SUM(
                         CASE
-                            WHEN buy_lead_requests THEN buy_lead_request_logs.cost_per_lead
+                            WHEN buy_lead_requests.id THEN buy_lead_requests.cost_per_lead
                             ELSE tiers.cost_per_lead
                         END
                     ) as total_lead_cost
