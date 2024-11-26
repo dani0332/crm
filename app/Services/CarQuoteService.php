@@ -2271,7 +2271,7 @@ class CarQuoteService extends BaseService
                 });
         }
 
-        $isCourierTransactionSelected = $courierEmbeddedTransaction->firstWhere('is_selected', 1);
+        $isCourierTransactionSelected = $courierEmbeddedTransaction?->firstWhere('is_selected', 1);
 
         // check if isCourierTransactionSelected is present and payment status is CAPTURED or AUTHORISED
         if (
