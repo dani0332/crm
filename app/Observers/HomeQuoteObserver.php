@@ -11,6 +11,7 @@ use App\Models\HomeQuote;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use App\Services\EmailServices\HomeEmailService;
 
 class HomeQuoteObserver
 {
@@ -29,6 +30,10 @@ class HomeQuoteObserver
     public function updated(HomeQuote $homeQuote): void
     {
         $dirty = $homeQuote->getDirty();
+
+        if (isset($dirty['advisor_id'])) {
+            app(HomeEmailService::class)->sendHomeOCBIntroEmail($homeQuote);
+        }
         if (
             isset($dirty['quote_status_id']) &&
             $homeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved

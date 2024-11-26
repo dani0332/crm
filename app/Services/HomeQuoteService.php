@@ -742,4 +742,9 @@ class HomeQuoteService extends BaseService
 
         return 'true';
     }
+
+
+    public function sendHomeOCB(){
+
+    }
 }
