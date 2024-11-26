@@ -90,6 +90,6 @@ class InsuranceProviderRepository extends BaseRepository
     {
         return InslyInsuranceProvider::select('insurance_provider_id')
             ->where('insly_insurer_name', '=', $insurerName)
-            ->first();
+            ->first()->insurance_provider_id ?? null;
     }
 }
