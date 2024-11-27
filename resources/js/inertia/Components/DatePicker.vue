@@ -49,7 +49,7 @@ const props = defineProps({
   error: {
     type: String,
     default: '',
-  }
+  },
 });
 
 const selectedData = computed({

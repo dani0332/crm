@@ -258,8 +258,12 @@ const rules = {
   },
   policy_expiry_date: v => {
     if (v) {
-      const policyExpiryDate = new Date(policyDetailsForm.quote_policy_expiry_date);
-      const policyStartDate = new Date(policyDetailsForm.quote_policy_start_date);
+      const policyExpiryDate = new Date(
+        policyDetailsForm.quote_policy_expiry_date,
+      );
+      const policyStartDate = new Date(
+        policyDetailsForm.quote_policy_start_date,
+      );
 
       policyExpiryDate.setHours(0, 0, 0, 0);
       policyStartDate.setHours(0, 0, 0, 0);
@@ -270,7 +274,10 @@ const rules = {
 
       const allowedMinDate = getMinPolicyExpiryDate();
       const allowedMaxDate = getMaxPolicyExpiryDate();
-      if ((allowedMaxDate !== null ) && (policyExpiryDate < allowedMinDate || policyExpiryDate > allowedMaxDate)) {
+      if (
+        allowedMaxDate !== null &&
+        (policyExpiryDate < allowedMinDate || policyExpiryDate > allowedMaxDate)
+      ) {
         return 'Please select an end date within 13 months from the start date';
       }
 
@@ -318,9 +325,13 @@ onBeforeMount(() => {
 watch(
   () => policyDetailsForm.quote_policy_start_date,
   quote_policy_start_date => {
-
     // Validation
-    validateField(policyDetailsForm, quote_policy_start_date, 'quote_policy_start_date', rules.policy_start_date);
+    validateField(
+      policyDetailsForm,
+      quote_policy_start_date,
+      'quote_policy_start_date',
+      rules.policy_start_date,
+    );
 
     let isCarQuote = props.modelType === quoteTypeCodeEnum.Car.toLowerCase();
 
@@ -351,7 +362,12 @@ watch(
   () => policyDetailsForm.quote_policy_expiry_date,
   quote_policy_expiry_date => {
     // Validation
-    validateField(policyDetailsForm, quote_policy_expiry_date, 'quote_policy_expiry_date', rules.policy_expiry_date);
+    validateField(
+      policyDetailsForm,
+      quote_policy_expiry_date,
+      'quote_policy_expiry_date',
+      rules.policy_expiry_date,
+    );
   },
 );
 
@@ -382,22 +398,24 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
 });
 
 const getMinPolicyExpiryDate = () => {
-    let policyMinStartDate = new Date(policyDetailsForm.quote_policy_start_date);
-    policyMinStartDate.setDate(policyMinStartDate.getDate() + 1);
-    policyMinStartDate.setHours(0, 0, 0, 0);
-    return policyMinStartDate;
-}
+  let policyMinStartDate = new Date(policyDetailsForm.quote_policy_start_date);
+  policyMinStartDate.setDate(policyMinStartDate.getDate() + 1);
+  policyMinStartDate.setHours(0, 0, 0, 0);
+  return policyMinStartDate;
+};
 
 const getMaxPolicyExpiryDate = () => {
-    let isCarQuote = props.modelType === quoteTypeCodeEnum.Car.toLowerCase();
-    if (isCarQuote) {
-        let policyMaxExpiryDate = new Date(policyDetailsForm.quote_policy_start_date);
-        policyMaxExpiryDate.setMonth(policyMaxExpiryDate.getMonth() + 13);
-        policyMaxExpiryDate.setHours(0, 0, 0, 0);
-        return policyMaxExpiryDate;
-    }
-    return null;
-}
+  let isCarQuote = props.modelType === quoteTypeCodeEnum.Car.toLowerCase();
+  if (isCarQuote) {
+    let policyMaxExpiryDate = new Date(
+      policyDetailsForm.quote_policy_start_date,
+    );
+    policyMaxExpiryDate.setMonth(policyMaxExpiryDate.getMonth() + 13);
+    policyMaxExpiryDate.setHours(0, 0, 0, 0);
+    return policyMaxExpiryDate;
+  }
+  return null;
+};
 
 watch(
   () => props.availablePlans,
