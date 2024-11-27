@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\BirdFlowStatusEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
@@ -49,9 +50,7 @@ class AddressReminderJob implements ShouldQueue
                     });
             }
 
-            if (
-                $courierEmbeddedTransaction->isNotEmpty()
-            ) {
+            if ($courierEmbeddedTransaction?->firstWhere('is_selected', 1)?->payment_status_id === PaymentStatusEnum::CAPTURED) {
                 info('Triggering Bird Courier Flow for policy reminder for lead : '.$this->lead->uuid);
                 $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
                 $payload = [
