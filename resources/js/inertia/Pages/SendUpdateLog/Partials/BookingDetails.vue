@@ -1622,7 +1622,14 @@ watch(
                 </span>
               </template>
             </x-tooltip>
-            <x-button v-else class="focus:ring-2 focus:ring-black" size="sm" @click="onReversalEdit"> Edit </x-button>
+            <x-button
+              v-else
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              @click="onReversalEdit"
+            >
+              Edit
+            </x-button>
           </template>
           <template v-else>
             <x-button
@@ -2334,7 +2341,12 @@ watch(
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else class="focus:ring-2 focus:ring-black" size="sm" @click="checkSectionToEdit">
+              <x-button
+                v-else
+                class="focus:ring-2 focus:ring-black"
+                size="sm"
+                @click="checkSectionToEdit"
+              >
                 Edit
               </x-button>
 
