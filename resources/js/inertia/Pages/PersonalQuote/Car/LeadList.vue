@@ -538,8 +538,8 @@ watch(
   { deep: true },
 );
 
-const onExport = url => {
-  exportLoader.value = true;
+const onExport = (url, isLoading = false) => {
+  exportLoader.value = isLoading;
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
     url: `${window.location.origin}${url}`,
@@ -875,7 +875,7 @@ const onExport = url => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="onExport(`/car/leads-export?${objToUrl(filters)}`)"
+            @click="onExport(`/car/leads-export?${objToUrl(filters)}`, true)"
             class="justify-self-start mr-3"
           >
             Export
@@ -939,6 +939,7 @@ const onExport = url => {
                 `/car/leads-details-with-email/${
                   genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
                 }?${objToUrl(filters)}`,
+                true,
               )
             "
             :loading="exportLoader"
@@ -982,7 +983,7 @@ const onExport = url => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="onExport('/pua-leads-export')"
+            @click="onExport('/pua-leads-export', true)"
             class="justify-self-start mr-3"
           >
             Export PUA Updates
