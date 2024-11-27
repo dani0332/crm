@@ -237,25 +237,52 @@ const rules = {
     }
     return !!v || 'This field is required';
   },
-  start_date: v => {
+  policy_start_date: v => {
     if (v) {
       const date = new Date(policyDetailsForm.quote_policy_start_date);
-      let isDate = date instanceof Date;
-      return isDate || 'Date format is incorrect';
-    }
-    return !!v || 'This field is required';
-  },
-  expiry_date: v => {
-    if (v) {
-      const date = new Date(policyDetailsForm.quote_policy_expiry_date);
-      const startDate = new Date(policyDetailsForm.quote_policy_start_date);
-      if (startDate >= date) {
-        return 'Expiry date should be greater than Start Date';
+
+      const allowedMinDate = new Date();
+      const allowedMaxDate = new Date(allowedMinDate);
+      allowedMaxDate.setMonth(allowedMinDate.getMonth() + 2);
+
+      allowedMinDate.setHours(0, 0, 0, 0);
+      allowedMaxDate.setHours(0, 0, 0, 0);
+      date.setHours(0, 0, 0, 0);
+
+      if (date < allowedMinDate || date > allowedMaxDate) {
+        return 'Please select a date within the next two months';
       }
-      let isDate = date instanceof Date;
-      return isDate || 'Date format is incorrect';
+
+      return true;
     }
-    return !!v || 'This field is required';
+  },
+  policy_expiry_date: v => {
+    if (v) {
+      const policyExpiryDate = new Date(
+        policyDetailsForm.quote_policy_expiry_date,
+      );
+      const policyStartDate = new Date(
+        policyDetailsForm.quote_policy_start_date,
+      );
+
+      policyExpiryDate.setHours(0, 0, 0, 0);
+      policyStartDate.setHours(0, 0, 0, 0);
+
+      if (policyStartDate >= policyExpiryDate) {
+        return 'Policy expiry date should be greater than policy start date';
+      }
+
+      const allowedMinDate = getMinPolicyExpiryDate();
+      const allowedMaxDate = getMaxPolicyExpiryDate();
+      if (
+        allowedMaxDate !== null &&
+        (policyExpiryDate < allowedMinDate || policyExpiryDate > allowedMaxDate)
+      ) {
+        return 'Please select an end date within 13 months from the start date';
+      }
+
+      return true;
+    }
   },
 };
 
@@ -298,6 +325,14 @@ onBeforeMount(() => {
 watch(
   () => policyDetailsForm.quote_policy_start_date,
   quote_policy_start_date => {
+    // Validation
+    validateField(
+      policyDetailsForm,
+      quote_policy_start_date,
+      'quote_policy_start_date',
+      rules.policy_start_date,
+    );
+
     let isCarQuote = props.modelType === quoteTypeCodeEnum.Car.toLowerCase();
 
     let isHealthOrBusinessQuote =
@@ -320,6 +355,19 @@ watch(
         .add(12, 'months')
         .subtract(1, 'days');
     }
+  },
+);
+
+watch(
+  () => policyDetailsForm.quote_policy_expiry_date,
+  quote_policy_expiry_date => {
+    // Validation
+    validateField(
+      policyDetailsForm,
+      quote_policy_expiry_date,
+      'quote_policy_expiry_date',
+      rules.policy_expiry_date,
+    );
   },
 );
 
@@ -348,6 +396,26 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   }
   return false;
 });
+
+const getMinPolicyExpiryDate = () => {
+  let policyMinStartDate = new Date(policyDetailsForm.quote_policy_start_date);
+  policyMinStartDate.setDate(policyMinStartDate.getDate() + 1);
+  policyMinStartDate.setHours(0, 0, 0, 0);
+  return policyMinStartDate;
+};
+
+const getMaxPolicyExpiryDate = () => {
+  let isCarQuote = props.modelType === quoteTypeCodeEnum.Car.toLowerCase();
+  if (isCarQuote) {
+    let policyMaxExpiryDate = new Date(
+      policyDetailsForm.quote_policy_start_date,
+    );
+    policyMaxExpiryDate.setMonth(policyMaxExpiryDate.getMonth() + 13);
+    policyMaxExpiryDate.setHours(0, 0, 0, 0);
+    return policyMaxExpiryDate;
+  }
+  return null;
+};
 
 watch(
   () => props.availablePlans,
@@ -468,10 +536,11 @@ onMounted(() => {
                 </x-tooltip>
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_start_date"
-                  :rules="[isRequired]"
+                  :rules="[isRequired, rules.policy_start_date]"
                   placeholder="Start Date"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
+                  :error="policyDetailsForm.errors.quote_policy_start_date"
                 />
               </div>
             </div>
@@ -519,10 +588,11 @@ onMounted(() => {
                 </x-tooltip>
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_expiry_date"
-                  :rules="[isRequired, rules.expiry_date]"
+                  :rules="[isRequired, rules.policy_expiry_date]"
                   placeholder="Expiry Date"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
+                  :error="policyDetailsForm.errors.quote_policy_expiry_date"
                 />
               </div>
             </div>
