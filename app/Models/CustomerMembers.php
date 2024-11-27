@@ -22,15 +22,13 @@ class CustomerMembers extends Model
         return $this->first_name.' '.$this->last_name;
     }
 
-    public function setNameAttribute($value)
+    public function setNameAttribute()
     {
         $quoteType = request()->quote_type;
         if (ucwords($quoteType) == QuoteTypes::TRAVEL->value) {
-            $nameParts = explode(' ', $value, 2);
-            $this->attributes['first_name'] = $nameParts[0];
-            $this->attributes['last_name'] = $nameParts[1] ?? '';
-        } else {
-            $this->attributes['first_name'] = $value;
+            $name = explode(' ', request()->name, 2);
+            $this->attributes['first_name'] = $name[0];
+            $this->attributes['last_name'] = $name[1] ?? '';
         }
 
     }

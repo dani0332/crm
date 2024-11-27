@@ -315,7 +315,9 @@ const emiratesOptions = computed(() => {
 const travelerForm = useForm({
   travel_quote_request_id: page.props.quote.id,
   quote_type: page.props.modelType,
-  name: null,
+  first_name: '',
+  last_name: '',
+  name: '',
   dob: '',
   nationality_id: null,
   relation_code: null,
@@ -400,7 +402,8 @@ const showErrors = errors => {
 };
 const addTravelMember = isValid => {
   if (!isValid) return;
-  // '/travelers'
+
+  travelerForm.name = travelerForm.first_name;
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -419,6 +422,8 @@ const addTravelMember = isValid => {
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
+      travelerForm.first_name = '';
+      travelerForm.last_name = '';
       travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
@@ -435,6 +440,8 @@ const addTravelMember = isValid => {
 
 const onAddTraveler = () => {
   travelerForm.reset();
+  travelerForm.first_name = '';
+  travelerForm.last_name = '';
   travelerForm.name = '';
   travelerForm.dob = '';
   travelerForm.nationality_id = '';
@@ -452,7 +459,9 @@ const travelerName = ref('');
 const onEditTraveler = traveler => {
   travelerName.value = `Traveler ${traveler.index}`;
   travelerForm.id = traveler.id;
-  travelerForm.name = traveler.name;
+  travelerForm.first_name = traveler.first_name;
+  travelerForm.last_name = traveler.last_name;
+  travelerForm.name = traveler.first_name + ' ' + traveler.last_name ?? '';
   travelerForm.dob = traveler.dob;
   travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
@@ -465,6 +474,7 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
+  travelerForm.name = travelerForm.first_name;
   travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
@@ -483,6 +493,8 @@ const editTraveler = isValid => {
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
+      travelerForm.first_name = '';
+      travelerForm.last_name = '';
       travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
@@ -2486,11 +2498,11 @@ const allowStatusUpdate = computed(() => {
       >
         <div class="grid md:grid-cols-2 gap-4">
           <x-input
-            v-model="travelerForm.name"
+            v-model="travelerForm.first_name"
             label="Member Name*"
             placeholder="Member Name"
             :rules="[isRequired]"
-            :hasError="travelerForm.errors.name"
+            :hasError="travelerForm.errors.first_name"
           />
           <ComboBox
             v-model="travelerForm.nationality_id"

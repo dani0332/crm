@@ -26,6 +26,7 @@ class TravelMemberDetailRequest extends FormRequest
     {
         return [
             'travel_quote_request_id' => 'required',
+            'first_name' => 'sometimes|required',
             'name' => 'sometimes|required',
             'nationality_id' => 'nullable',
             'dob' => 'required',
