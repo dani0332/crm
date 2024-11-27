@@ -53,16 +53,26 @@ const channelName = `public.${page.props.appEnv}.total-leads-count`;
 const eventName = "leads.count";
 
 const listen = () => {
-  const pusherKey = page.props.pusherKey;
-  const options = {
-    cluster: 'ap1',
-    forceTLS: false,
-  };
-  const pusher = getPusherInstance(pusherKey, options);
+  const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
-  subscribeToChannel(pusher, channelName, eventName, (e) => {
+  worker.port.addEventListener("message", (e) => {
     leadsCount.value = e.totalLeadsCount;
   });
+
+  worker.onerror = function(error){
+    console.log(error.message);
+    worker.port.close();
+  }
+
+  worker.port.start();
+
+  //Subscribe to channel/event
+  worker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+  });
+
 };
 
 const loader = reactive({
@@ -212,8 +222,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  unbindEvent(channelName, eventName);
-  unsubscribeChannel(channelName);
+  //Unsubscribe to channel/event
+  worker.port.postMessage({
+    action: "unsubscribe",
+    channel: channelName,
+    event: eventName,
+  });
 });
 
 const validateDateRange = () => {

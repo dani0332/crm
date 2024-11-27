@@ -4,7 +4,8 @@
     "scripts": {
         "dev": "doppler run -- yarn && vite",
         "prod": "yarn && vite build",
-        "lint": "prettier . --write"
+        "lint": "prettier . --write",
+        "worker:watch": "WATCH_WORKER=true vite build --config vite-worker.config.js"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.1.4",

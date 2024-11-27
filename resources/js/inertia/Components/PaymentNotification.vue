@@ -1,5 +1,4 @@
 <script setup>
-import Pusher from 'pusher-js';
 const page = usePage();
 import CustomNotification from './CustomNotification.vue';
 
@@ -10,16 +9,11 @@ const channelName = `public.${page.props.appEnv}.activity.user`;
 const eventName = "payment.notification";
 
 const listen = () => {
-  const pusherKey = page.props.pusherKey;
-  const options = {
-    cluster: 'ap1',
-    forceTLS: false,
-  };
-  const pusher = getPusherInstance(pusherKey, options);
+  const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
-  subscribeToChannel(pusher, channelName, eventName, (e) => {
+  worker.port.addEventListener("message", (e) => {
     if (e.advisorId === page.props.auth.user.id) {
-        notificationData.value = {
+      notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
         title: 'Payment',
         message: e.message,
@@ -31,6 +25,21 @@ const listen = () => {
       showNotification.value = true;
     }
   });
+
+  worker.onerror = function(error){
+    console.log(error.message);
+    worker.port.close();
+  }
+
+  worker.port.start();
+
+  //Subscribe to channel/event
+  worker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+  });
+
 }
 const hideNotification = () => {
   console.log('Parent function called!');
@@ -42,8 +51,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  unbindEvent(channelName, eventName);
-  unsubscribeChannel(channelName);
+  //Unsubscribe to channel/event
+  worker.port.postMessage({
+    action: "unsubscribe",
+    channel: channelName,
+    event: eventName,
+  });
 });
 </script>
 

@@ -1,5 +1,4 @@
 <script setup>
-import Pusher from 'pusher-js';
 const page = usePage();
 const status = computed(() => page.props.auth.user.status);
 
@@ -22,14 +21,9 @@ const channelName = `public.${page.props.appEnv}.activity.user`;
 const eventName = "user.status.changed";
 
 const listen = () => {
-  const pusherKey = page.props.pusherKey;
-  const options = {
-    cluster: 'ap1',
-    forceTLS: false,
-  };
-  const pusher = getPusherInstance(pusherKey, options);
+  const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
-  subscribeToChannel(pusher, channelName, eventName, (e) => {
+  worker.port.addEventListener("message", (e) => {
     currentStatus.value = e.status;
     if (e.status == 1) {
       notification.success({
@@ -51,6 +45,21 @@ const listen = () => {
     }
     userStatus.value = e.status;
   });
+
+  worker.onerror = function(error){
+    console.log(error.message);
+    worker.port.close();
+  }
+
+  worker.port.start();
+
+  //Subscribe to channel/event
+  worker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+  });
+
 };
 
 onMounted(() => {
@@ -58,8 +67,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  unbindEvent(channelName, eventName);
-  unsubscribeChannel(channelName);
+  //Unsubscribe to channel/event
+  worker.port.postMessage({
+    action: "unsubscribe",
+    channel: channelName,
+    event: eventName,
+  });
 });
 </script>
 

@@ -58,8 +58,8 @@ export default defineConfig({
     },
     extensions: ['.js', '.vue', '.json'],
   },
-  build: {
-    chunkSizeWarningLimit: 4200,
+  define: {
+    'process.env': process.env, // Make Vite environment variables available
   },
   optimizeDeps: {
     include: ['@vueuse/core', 'md-editor-v3', '@headlessui/vue'],
