@@ -271,7 +271,7 @@ class LifeQuoteController extends Controller
             ["id" => QuoteStatusEnum::FollowedUp, "text" => quoteStatusCode::FOLLOWEDUP, "code" => quoteStatusCode::FOLLOWEDUP, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::FollowedUp, $request)],
             ["id" => QuoteStatusEnum::ApplicationSubmitted, "text" => quoteStatusCode::APPLICATION_SUBMITTED, "code" => quoteStatusCode::APPLICATION_SUBMITTED, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::ApplicationSubmitted, $request)],
             ["id" => QuoteStatusEnum::InNegotiation, "text" => quoteStatusCode::NEGOTIATION, "code" => quoteStatusCode::NEGOTIATION, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::InNegotiation, $request)],
-            ["id" => QuoteStatusEnum::PolicyBooked, "text" => quoteStatusCode::PolicyBooked, "code" => quoteStatusCode::PolicyBooked, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::PolicyBooked, $request)],
+            ["id" => QuoteStatusEnum::PolicyBooked, "text" => quoteStatusCode::POLICY_BOOKED, "code" => quoteStatusCode::POLICY_BOOKED, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::PolicyBooked, $request)],
         ];
 
         return inertia('LifeQuote/Cards', [

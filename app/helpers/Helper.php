@@ -257,6 +257,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
         }
+        if($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('sum_insured_value');
+        }
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
@@ -267,6 +270,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        }
+        if($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->sum('sum_insured_value');
         }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
