@@ -7,6 +7,8 @@ use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\Department;
 use App\Models\LeadSource;
@@ -17,6 +19,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 
 class ManagementReport
 {
@@ -57,14 +60,8 @@ class ManagementReport
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-
-        $lobs = $this->getUserProducts($user->id)
-            ->map(function ($item) {
-                return (object) [
-                    'id' => QuoteTypes::getIdFromValue($item->name),
-                    'name' => $item->name,
-                ];
-            });
+        
+        $lobs = $this->getUserProducts($user->id)->pluck('name');
 
         $reportCategories = [];
         foreach (ManagementReportCategoriesEnum::asArray() as $value) {
@@ -156,13 +153,25 @@ class ManagementReport
             $query->where('personal_quotes.quote_status_id', '!=', QuoteStatusEnum::PolicyCancelled);
         }
 
-        $lobs = $request['lob'];
-        if (empty($lobs)) {
-            $lobs = $this->getUserProducts($user->id)
-                ->map(fn ($item) => QuoteTypes::getIdFromValue($item->name))
-                ->toArray();
+        $lobs = collect($request['lob']);
+        if ($lobs->isEmpty()) {
+            $lobs = $this->getUserProducts($user->id)->pluck('name');
         }
-        $query->whereIn('personal_quotes.quote_type_id', $lobs);
+        $lobsIds = $lobs->map(fn ($item) => (
+                    in_array($item, [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])
+                        ? QuoteTypeId::Business
+                        : QuoteTypes::getIdFromValue($item
+                )))
+                ->toArray();
+        $lobs = $lobs->toArray();
+
+        if(in_array(quoteTypeCode::GroupMedical, $lobs) && !in_array(quoteTypeCode::CORPLINE, $lobs)) {
+            $query->where('personal_quotes.business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+        } else if (!in_array(quoteTypeCode::GroupMedical, $lobs) && in_array(quoteTypeCode::CORPLINE, $lobs)) {
+            $query->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+        }
+
+        $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
     }
 
     protected function getDateFilter($query, $request, $fieldName, $filterKey, $secondOptionalFieldName = null)
