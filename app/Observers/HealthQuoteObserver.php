@@ -19,6 +19,8 @@ use App\Repositories\PaymentRepository;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class HealthQuoteObserver
 {
@@ -33,18 +35,28 @@ class HealthQuoteObserver
 
     /**
      * Handle the HealthQuote "updated" event.
+     *
+     * - Any changes that adds business logic should be enclosed in try-catch block or executed in queue.
      */
     public function updated(HealthQuote $healthQuote): void
     {
         $dirty = $healthQuote->getDirty();
 
         if (isset($dirty['advisor_id'])) {
-            info(self::class." - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
-                'current_advisor_id' => $healthQuote->advisor_id,
-                'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),
-            ]);
-            HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
-            $healthQuote->markLeadAllocationPassed();
+            try {
+                info(self::class." - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
+                    'current_advisor_id' => $healthQuote->advisor_id,
+                    'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),
+                ]);
+                HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
+                $healthQuote->markLeadAllocationPassed();
+            } catch (Exception $e) {
+                Log::error('HealthQuoteObserver - handle health update advisor failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $healthQuote->uuid,
+                ]);
+            }
+
         }
 
         if (
@@ -77,7 +89,14 @@ class HealthQuoteObserver
         $this->syncQuote($healthQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->updatePersonalQuote($healthQuote->uuid, QuoteTypeId::Health, $dirty);
+            try {
+                $this->updatePersonalQuote($healthQuote->uuid, QuoteTypeId::Health, $dirty);
+            } catch (Exception $e) {
+                Log::error('HealthQuoteObserver - update personal quote failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $healthQuote->uuid,
+                ]);
+            }
         }
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::Qualified && $healthQuote->advisor_id) {
