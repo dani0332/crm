@@ -149,7 +149,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->leftJoin('buy_lead_request_logs', function ($join) {
                 $join->on('buy_lead_request_logs.uuid', '=', 'car_quote_request.uuid')
                     ->join('buy_lead_requests', 'buy_lead_requests.id', 'buy_lead_request_logs.buy_lead_request_id')
-                    ->where('buy_lead_request_logs.quote_type_id', QuoteTypes::CAR->id());
+                    ->where('buy_lead_request_logs.quote_type_id', QuoteTypes::CAR->id())
+                    ->whereNull('buy_lead_request_logs.re_assigned_at');
             })
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')
