@@ -166,9 +166,13 @@ class ManagementReport
         $lobs = $lobs->toArray();
 
         if (in_array(quoteTypeCode::GroupMedical, $lobs) && ! in_array(quoteTypeCode::CORPLINE, $lobs)) {
-            $query->where('personal_quotes.business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            $query->where(function ($query) {
+                $query->where('personal_quotes.business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
+                    ->orWhereNull('personal_quotes.business_type_of_insurance_id');
+            });
         } elseif (! in_array(quoteTypeCode::GroupMedical, $lobs) && in_array(quoteTypeCode::CORPLINE, $lobs)) {
-            $query->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            $query->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
+                ->orWhereNull('personal_quotes.business_type_of_insurance_id');
         }
 
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
