@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\InsurerRequestResponse;
-use App\Models\SageApiLog;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
