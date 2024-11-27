@@ -39,6 +39,8 @@ const planForm = useForm({
     props.plan.listQuotePlanBenefitsInclusions || [],
   listQuotePlanBenefitsExclusions:
     props.plan.listQuotePlanBenefitsExclusions || [],
+  listQuotePlanBenefitsPolicyDetails:
+    props.plan.listQuotePlanBenefitsPolicyDetails || [],
 });
 
 console.log('planForm', planForm);
@@ -217,8 +219,8 @@ const onUpdatePlan = () => {
       const errors = error.response?.data?.errors;
 
       if (errors) {
-        Object.values(errors).forEach((messages) => {
-          messages.forEach((message) => {
+        Object.values(errors).forEach(messages => {
+          messages.forEach(message => {
             notification.error({
               title: message,
               position: 'top',
@@ -233,7 +235,6 @@ const onUpdatePlan = () => {
       }
     });
 };
-
 </script>
 
 <template>
@@ -371,7 +372,7 @@ const onUpdatePlan = () => {
         </TabPanel>
 
         <!-- Inclusions Tab -->
-        <TabPanel v-if="props.plan?.listQuotePlanBenefitsInclusions">
+        <TabPanel>
           <div class="p-4">
             <!-- Loop through the main keys (buildings, contents, personalBelongings) -->
             <div
@@ -402,12 +403,7 @@ const onUpdatePlan = () => {
         </TabPanel>
 
         <!-- Additonal Covers Tab -->
-        <TabPanel
-          v-if="
-            props.plan.listQuotePlanBenefitsAditionalCovers &&
-            props.plan.listQuotePlanBenefitsAditionalCovers.length
-          "
-        >
+        <TabPanel>
           <div class="p-4">
             <div class="grid sm:grid-cols-2 gap-4">
               <!-- Loop through the listQuotePlanBenefitsAditionalCovers array -->
@@ -428,12 +424,7 @@ const onUpdatePlan = () => {
         </TabPanel>
 
         <!-- Exclusions Tab -->
-        <TabPanel
-          v-if="
-            props.plan.listQuotePlanBenefitsExclusions &&
-            props.plan.listQuotePlanBenefitsExclusions.length
-          "
-        >
+        <TabPanel>
           <div class="p-4">
             <div class="grid sm:grid-cols-2 gap-4">
               <!-- Loop through the listQuotePlanBenefitsExclusions array -->
@@ -444,7 +435,7 @@ const onUpdatePlan = () => {
                 class="space-y-2"
               >
                 <!-- Display the text field -->
-                <div class="font-medium">{{ exclusion.text }}</div>
+                <div class="font-medium">{{ exclusion.text }} ABC</div>
 
                 <!-- Display the description field with grey text -->
                 <div class="text-gray-500">{{ exclusion.description }}</div>
@@ -454,29 +445,18 @@ const onUpdatePlan = () => {
         </TabPanel>
 
         <!-- Policy Details Tab -->
-        <TabPanel
-          v-if="
-            props.plan.listQuotePlanBenefitsExclusions &&
-            props.plan.listQuotePlanBenefitsExclusions.length
-          "
-        >
-          <div class="p-4">
-            <div class="grid sm:grid-cols-2 gap-4">
-              <!-- Loop through the listQuotePlanBenefitsExclusions array -->
-              <div
-                v-for="(exclusion, index) in props.plan
-                  ?.listQuotePlanBenefitsExclusions"
-                :key="index"
-                class="space-y-2"
-              >
-                <!-- Display the text field -->
-                <div class="font-medium">{{ exclusion.text }}</div>
-
-                <!-- Display the description field with grey text -->
-                <div class="text-gray-500">{{ exclusion.description }}</div>
-              </div>
+        <TabPanel>
+          <dl class="grid md:grid-cols-2 gap-5 p-4">
+            <div
+              v-for="data in props.plan?.listQuotePlanBenefitsPolicyDetails ||
+              []"
+              :key="data"
+            >
+              <a :href="data.link" class="font-medium mb-1" target="_blank">{{
+                data.text
+              }}</a>
             </div>
-          </div>
+          </dl>
         </TabPanel>
       </TabPanels>
     </TabGroup>

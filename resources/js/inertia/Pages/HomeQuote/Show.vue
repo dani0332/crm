@@ -627,11 +627,11 @@ const onTogglePlans = toggle => {
 
 const planDetails = ref(null);
 
-const getPlanDetails = id => {
-  console.log('getPlanDetails', id);
+const getPlanDetails = item => {
+  console.log('getPlanDetails', item);
   try {
     axios
-      .get(`/home/${page.props.quote.uuid}/plan_details/${id}`)
+      .get(`/home/${page.props.quote.uuid}/plan_details/${item.id}`)
       .then(res => {
         planDetails.value = res.data;
         modals.planDetails = true;
@@ -1621,7 +1621,7 @@ const copyLink = () => {
               </template>
               <template #item-name="item">
                 <span class="text-primary-600 uppercase">{{
-                  item.planName
+                  item.name
                 }}</span>
               </template>
               <template #item-actualPremium="item">
@@ -1648,7 +1648,7 @@ const copyLink = () => {
                     size="xs"
                     color="error"
                     outlined
-                    @click.prevent="getPlanDetails(item.planId)"
+                    @click.prevent="getPlanDetails(item)"
                   >
                     View
                   </x-button>
