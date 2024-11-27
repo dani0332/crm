@@ -65,7 +65,7 @@ const fetchLatestSageError = async () => {
         if(response?.data?.error && isPolicyOrEndorsementBookingFailed) {
         notification.error({
             title: 'Sage API Error',
-            message: response.data.error,
+            message: response?.data?.error,
             position: 'top',
             timeout: 30000,
         });
