@@ -927,6 +927,7 @@ class HomeQuoteService extends BaseService
                 'apiUserName' => $apiUserName,
                 'apiPassword' => $apiPassword,
             ];
+            dd($dataArray);
 
             return $this->httpService->processRequest($dataArray, $apiCreds);
         }
