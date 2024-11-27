@@ -153,7 +153,8 @@ const policyDetailsForm = useForm({
   quote_type: props.quoteType,
 });
 
-const onUpdate = () => {
+const onUpdate = isValid => {
+  if (!isValid) return;
   policyDetailsForm.post(route('send-update.save-policy-details'), {
     preserveScroll: true,
     onSuccess: ({ props }) => {
@@ -261,6 +262,21 @@ const onCancel = () => {
     props.quote?.policy_issuance_status_id ||
     null;
 };
+
+const rules = {
+  expiry_date: v => {
+    if (v) {
+      const date = new Date(policyDetailsForm.expiry_date);
+      const startDate = new Date(policyDetailsForm.start_date);
+      if (startDate >= date) {
+        return 'Expiry date should be greater than Start Date';
+      }
+      let isDate = date instanceof Date;
+      return isDate || 'Date format is incorrect';
+    }
+    return !!v || 'This field is required';
+  },
+};
 </script>
 
 <template>
@@ -274,6 +290,7 @@ const onCancel = () => {
 
       <template #body>
         <x-divider class="my-4" />
+        <x-form @submit="onUpdate" :auto-focus="false">
         <div class="text-sm">
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
             <!-- First name -->
@@ -488,6 +505,7 @@ const onCancel = () => {
                 <DatePicker
                   v-model="policyDetailsForm.expiry_date"
                   name="expiry_date"
+                  :rules="[rules.expiry_date]"
                   :disabled="!state.isEdit"
                   placeholder="dd-mm-yyyy"
                   class="w-full"
@@ -589,13 +607,14 @@ const onCancel = () => {
             <x-button
               size="sm"
               color="primary"
-              @click="onUpdate"
+              type="submit"
               :loading="policyDetailsForm.processing"
               :disabled="policyDetailsForm.processing"
               >Update</x-button
             >
           </template>
         </div>
+        </x-form>
       </template>
     </Collapsible>
   </div>
