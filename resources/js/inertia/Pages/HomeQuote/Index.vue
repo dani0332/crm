@@ -3,6 +3,7 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   isManualAllocationAllowed: Boolean,
   totalCount: {
     type: Number,
@@ -79,7 +80,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
 ]);
 
 const filters = reactive({
@@ -94,7 +95,7 @@ const filters = reactive({
   advisors: [],
   is_renewal: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   payment_status: [],
   is_cold: false,
   is_stale: false,
@@ -135,6 +136,13 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
+  }));
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
   }));
 });
 
@@ -570,14 +578,13 @@ const formatDate = dateString =>
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+        <ComboBox
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
         />
+
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -743,6 +750,11 @@ const formatDate = dateString =>
             ? formatDate(previous_policy_expiry_date)
             : ''
         }}
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p>
+          {{ item.renewal_batch_text }}
+        </p>
       </template>
     </DataTable>
 

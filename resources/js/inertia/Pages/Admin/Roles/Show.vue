@@ -73,6 +73,7 @@ const permissions = computed(() => {
   <AuditLogs
     :url="'\\auditable'"
     :type="'App\\Models\\Role'"
+    :quoteType="'Role'"
     :id="$page.props.role.id"
   />
 </template>

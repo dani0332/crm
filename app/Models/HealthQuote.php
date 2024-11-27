@@ -57,6 +57,13 @@ class HealthQuote extends Model implements AuditableContract
             }
         });
     }
+
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');

@@ -19,7 +19,6 @@ use App\Enums\PaymentMethodsEnum;
 use App\Models\InsuranceProvider;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\WatermarkDocumentsJob;
-use Illuminate\Support\Facades\Log;
 use App\Enums\WatermarkDocTypesEnum;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\InsuranceProvidersEnum;
@@ -179,12 +178,12 @@ class PersonalQuoteRepository extends BaseRepository
 
                 return ['status' => true, 'message' => 'File Uploaded'];
             } catch (\Exception $exception) {
-                logger()->error('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
+                info('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
 
                 return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
             }
         } catch (\Exception $exception) {
-            Log::error('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
+            info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
 
             return ['status' => true, 'message' => 'Document upload failed, please try again'];
         }

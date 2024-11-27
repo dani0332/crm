@@ -112,25 +112,38 @@ class ConversionAsAtReportService extends BaseService
         if ($request->lob && $request->createdAtDate) {
             $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
-            if ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
-                $model = app(CarQuote::class);
-            } else {
-                $model = app(PersonalQuote::class);
-            }
+            $model = $request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)
+                                    ? app(CarQuote::class)
+                                    : app(PersonalQuote::class);
+
+            $alias = $model->getTable();
 
             $createdAtDate = $request->createdAtDate;
+            $startDate = Carbon::parse($createdAtDate[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse($createdAtDate[1])->endOfDay()->format($dateFormat);
+            $leadSourcesToExclude = [
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+                LeadSourceEnum::AQEED_REVIVAL,
+            ];
 
-            $startDate = isset($createdAtDate) ?
-                Carbon::parse($createdAtDate[0])->startOfDay()->format($dateFormat) :
-                Carbon::parse(now())->startOfDay()->format($dateFormat);
+            $query = $model::query()
+                ->whereNull("{$alias}.advisor_id")
+                ->whereNotIn("{$alias}.source", $leadSourcesToExclude);
 
-            $endDate = isset($createdAtDate) ?
-                Carbon::parse($createdAtDate[1])->endOfDay()->format($dateFormat) :
-                Carbon::parse(now())->endOfDay()->format($dateFormat);
+            if ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::CORPLINE)) {
+                $query->join('business_quote_request', 'business_quote_request.uuid', "{$alias}.uuid")
+                    ->where('business_quote_request.business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+            } elseif ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::GroupMedical)) {
+                $query->join('business_quote_request', 'business_quote_request.uuid', "{$alias}.uuid")
+                    ->where('business_quote_request.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+            } elseif ($request->lob != QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+                $query->where("{$alias}.quote_type_id", $request->lob);
+            }
 
-            $unassignedLeadsCount = $model::query()
-                ->whereNull('advisor_id')
-                ->whereBetween('created_at', [$startDate, $endDate])
+            $unassignedLeadsCount = $query
+                ->whereBetween("{$alias}.created_at", [$startDate, $endDate])
                 ->count();
         }
 

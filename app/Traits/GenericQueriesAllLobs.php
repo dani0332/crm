@@ -798,7 +798,11 @@ trait GenericQueriesAllLobs
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
                     $oldPaymentStatusId = $paymentSplit->payment_status_id;
                     $newPaymentStatusId = null;
-                    if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
+
+                    $collectionAmount = formatAmount($paymentSplit->collection_amount, 2);
+                    $paymentAmount = formatAmount($paymentSplit->payment_amount, 2);
+
+                    if ($collectionAmount >= $paymentAmount) {
                         $newPaymentStatusId = PaymentStatusEnum::PAID;
                     } else {
                         $newPaymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
@@ -912,9 +916,9 @@ trait GenericQueriesAllLobs
                 $totalPrice = round($payment->total_price, 2);
                 $totalAmount = round($payment->total_amount, 2);
                 $discountValue = round($payment->discount_value, 2);
+                $sumValue = round(($totalAmount + $discountValue), 2);
 
-                // Check if the total price is less than the sum of the total amount and discount value
-                return $totalPrice < ($totalAmount + $discountValue);
+                return $totalPrice < $sumValue;
             }
         }
 

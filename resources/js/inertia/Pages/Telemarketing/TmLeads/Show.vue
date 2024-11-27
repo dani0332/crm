@@ -240,6 +240,7 @@ function onSubmit(isValid) {
   <AuditLogs
     v-if="can(permissionsEnum.Auditable)"
     :type="'App\\Models\\TmLead'"
+    :quoteType="'TmLead'"
     :id="$page.props.tmlead.id"
   />
 </template>

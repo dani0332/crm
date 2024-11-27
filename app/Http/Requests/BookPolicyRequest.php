@@ -34,7 +34,7 @@ class BookPolicyRequest extends FormRequest
             'transaction_payment_status' => 'nullable',
             'broker_invoice_number' => 'nullable',
             'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|numeric|between:0,9999999.99',
-            'commission_vat_applicable' => 'required|numeric|between:0,9999999.99',
+            'commission_vat_applicable' => 'required_without:commission_vat_not_applicable|nullable|numeric|between:0,9999999.99',
             'total_commission' => 'nullable|numeric|between:0,9999999.99',
             'invoice_description' => 'required|max:60',
             'vat_on_commission' => 'nullable|numeric|between:0,9999999.99',
@@ -57,13 +57,17 @@ class BookPolicyRequest extends FormRequest
             }
 
             $isDuplicateOrCIRLead = ! empty($quoteModel->parent_duplicate_quote_id);
-            $payment = Payment::where('code', $quoteModel->code)->mainLeadPayment()->first();
+            $payment = Payment::where('code', $quoteModel->code)->mainLeadPayment()->select(['id', 'code'])->first();
 
             if ($isDuplicateOrCIRLead && empty($payment)) {
                 $payment = Payment::where([
                     'paymentable_id' => $quoteModel->id,
                     'paymentable_type' => $quoteModel->getMorphClass(),
-                ])->mainLeadPayment()->first();
+                ])->mainLeadPayment()->select(['id', 'code'])->first();
+            }
+
+            if (! $payment) {
+                $validator->errors()->add('error', 'Payment record not found');
             }
 
             $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')

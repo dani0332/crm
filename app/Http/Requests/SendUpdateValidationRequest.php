@@ -56,7 +56,8 @@ class SendUpdateValidationRequest extends FormRequest
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
             } elseif ($sendUpdateLog->status == SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS) {
-                if (! $checkTransactionApprovedInSUStatusLogs) {
+                if (! $checkTransactionApprovedInSUStatusLogs && ! in_array($sendUpdateLog?->option->code, [
+                    SendUpdateLogStatusEnum::ATCRNB, SendUpdateLogStatusEnum::ATCRNB_RBB, SendUpdateLogStatusEnum::ATCRN_CRNRBB])) {
                     $validator->errors()->add('error', 'Transaction approval is required');
                 }
             }
@@ -109,7 +110,7 @@ class SendUpdateValidationRequest extends FormRequest
                             SendUpdateLogStatusEnum::PPE,
                         ])) {
                             if (count(array_intersect($uploadedDocuments, $requiredDocuments)) < count($requiredDocuments)) {
-                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer and receipt');
+                                return $validator->errors()->add('error', 'Please upload tax invoice and tax invoice raised by buyer');
                             }
                         }
 
@@ -136,7 +137,7 @@ class SendUpdateValidationRequest extends FormRequest
                     $validator->errors()->add('error', 'Please update the missing booking details');
                 }
 
-                // Check all policy details have been corretly filled
+                // Check all policy details have been correctly filled
                 if (($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $categorySubType == SendUpdateLogStatusEnum::PPE) ||
                     $sendUpdateCategoryCode == SendUpdateLogStatusEnum::CPD) {
                     if (! $sendUpdateLog->is_policy_filled) {
@@ -163,6 +164,9 @@ class SendUpdateValidationRequest extends FormRequest
                         SendUpdateLogStatusEnum::ATIB,
                         SendUpdateLogStatusEnum::ATICB,
                         SendUpdateLogStatusEnum::ACB,
+                        SendUpdateLogStatusEnum::ATCRNB,
+                        SendUpdateLogStatusEnum::ATCRNB_RBB,
+                        SendUpdateLogStatusEnum::ATCRN_CRNRBB,
                     ])) {
                     $validator->errors()->add('error', 'Transaction approval is required');
                 }
