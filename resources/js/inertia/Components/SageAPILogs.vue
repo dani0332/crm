@@ -56,7 +56,7 @@ const fetchLatestSageError = async () => {
 
   NProgress.start();
   const response = await axios.get(
-    route('latest.sage.api.error', [record.id]),
+    route('sage-api-logs-latest-error', [record.id]),
     {
       params: {
         modelClass: modelClass,
@@ -79,7 +79,7 @@ const fetchLatestSageError = async () => {
 const fetchSageAPILogs = async () => {
   NProgress.start();
   sageAPILogs.loader = true;
-  const response = await axios.get(route('sage.api.logs', [props.record.id]), {
+  const response = await axios.get(route('sage-api-logs', [props.record.id]), {
     params: {
       modelClass: props.modelClass,
     },
