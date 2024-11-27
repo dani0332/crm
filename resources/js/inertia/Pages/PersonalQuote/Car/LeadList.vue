@@ -27,6 +27,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
 const cleanObj = obj => useCleanObj(obj);
+const exportLoader = ref(false);
 
 const createLead = reactive({
   modal: false,
@@ -536,12 +537,19 @@ watch(
   },
   { deep: true },
 );
+
 const onExport = url => {
+  exportLoader.value = true;
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
     url: `${window.location.origin}${url}`,
   };
-  logAndExportQuotes(payload);
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 </script>
 
@@ -866,6 +874,7 @@ const onExport = url => {
             v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click="onExport(`/car/leads-export?${objToUrl(filters)}`)"
             class="justify-self-start mr-3"
           >
@@ -932,6 +941,7 @@ const onExport = url => {
                 }?${objToUrl(filters)}`,
               )
             "
+            :loading="exportLoader"
             class="justify-self-start mr-3"
           >
             Extract leads detail with email/mobile_no
@@ -971,6 +981,7 @@ const onExport = url => {
             v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click="onExport('/pua-leads-export')"
             class="justify-self-start mr-3"
           >
