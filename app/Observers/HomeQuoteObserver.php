@@ -27,7 +27,7 @@ class HomeQuoteObserver
 
     /**
      * Handle the HomeQuote "updated" event.
-     * 
+     *
      * - Any changes that adds business logic should be enclosed in try-catch block or executed in queue.
      */
     public function updated(HomeQuote $homeQuote): void

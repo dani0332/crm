@@ -27,7 +27,7 @@ class TravelQuoteObserver
 
     /**
      * Handle the TravelQuote "updated" event.
-     * 
+     *
      * - Any changes that adds business logic should be enclosed in try-catch block or executed in queue.
      */
     public function updated(TravelQuote $travelQuote): void

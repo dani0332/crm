@@ -44,7 +44,7 @@ class HealthQuoteObserver
 
         if (isset($dirty['advisor_id'])) {
             try {
-                info(self::class . " - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
+                info(self::class." - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
                     'current_advisor_id' => $healthQuote->advisor_id,
                     'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),
                 ]);
@@ -56,7 +56,7 @@ class HealthQuoteObserver
                     'uuid' => $healthQuote->uuid,
                 ]);
             }
-            
+
         }
 
         if (

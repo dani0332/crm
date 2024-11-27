@@ -26,7 +26,7 @@ class BusinessQuoteObserver
 
     /**
      * Handle the BusinessQuote "updated" event.
-     * 
+     *
      * - Any changes that adds business logic should be enclosed in try-catch block or executed in queue.
      */
     public function updated(BusinessQuote $businessQuote): void
