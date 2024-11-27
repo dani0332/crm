@@ -52,6 +52,11 @@ class SendUpdateLog extends Model implements AuditableContract
         return $this->hasMany(Payment::class);
     }
 
+    public function sendUpdatePayments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Payment::class, 'send_update_log_id', 'id');
+    }
+
     public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');

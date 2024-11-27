@@ -176,10 +176,6 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
-            $nav = $nav->add('Search', route('search-leads'));
-        }
-
         if (auth()->user()->hasAnyPermission(array_merge(
             [
                 PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
@@ -244,6 +240,10 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', route('activities.index'));
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
+            $nav = $nav->add('Search', route('search-leads'));
         }
 
         /* personal quotes section */

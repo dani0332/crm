@@ -58,6 +58,7 @@ function statusTitleFormat(str) {
         .replace(/\b\w/g, char => char.toUpperCase());
 }
 
+let params = useUrlSearchParams('history');
 const showFilters = ref(true);
 const filtersCount = ref(0);
 const serverOptions = ref({
@@ -238,6 +239,18 @@ function onSubmit() {
     }
 }
 
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      availableFilters[key.substring(0, key.length - 2)] = [...params[key]].map(item => {
+        return isNaN(Number(item)) ? item : Number(item);  // If conversion fails, keep the original string
+      });
+    } else {
+      availableFilters[key] = params[key];
+    }
+  }
+}
+
 watch(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('list') === 'endorsements') {
@@ -246,6 +259,11 @@ watch(() => {
         isSendUpdateListView.value = false;
     }
     updateTableDetails();
+});
+
+onMounted( () => {
+  params = getSavedQueryParams() || params;
+  setQueryStringFilters();
 });
 
 </script>
