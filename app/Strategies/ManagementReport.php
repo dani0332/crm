@@ -2,6 +2,7 @@
 
 namespace App\Strategies;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
@@ -19,7 +20,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 
 class ManagementReport
 {
@@ -60,7 +60,7 @@ class ManagementReport
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-        
+
         $lobs = $this->getUserProducts($user->id)->pluck('name');
 
         $reportCategories = [];
@@ -158,16 +158,16 @@ class ManagementReport
             $lobs = $this->getUserProducts($user->id)->pluck('name');
         }
         $lobsIds = $lobs->map(fn ($item) => (
-                    in_array($item, [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])
-                        ? QuoteTypeId::Business
-                        : QuoteTypes::getIdFromValue($item
+            in_array($item, [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])
+                ? QuoteTypeId::Business
+                : QuoteTypes::getIdFromValue($item
                 )))
-                ->toArray();
+            ->toArray();
         $lobs = $lobs->toArray();
 
-        if(in_array(quoteTypeCode::GroupMedical, $lobs) && !in_array(quoteTypeCode::CORPLINE, $lobs)) {
+        if (in_array(quoteTypeCode::GroupMedical, $lobs) && ! in_array(quoteTypeCode::CORPLINE, $lobs)) {
             $query->where('personal_quotes.business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
-        } else if (!in_array(quoteTypeCode::GroupMedical, $lobs) && in_array(quoteTypeCode::CORPLINE, $lobs)) {
+        } elseif (! in_array(quoteTypeCode::GroupMedical, $lobs) && in_array(quoteTypeCode::CORPLINE, $lobs)) {
             $query->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
         }
 
