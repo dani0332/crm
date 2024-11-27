@@ -46,30 +46,34 @@ const isSageLogButtonEnable = computed(() => {
 });
 
 const fetchLatestSageError = async () => {
-    const { modelClass, record } = props;
-    const { sendUpdateLogStatusEnum, quoteStatusEnum } = page.props;
+  const { modelClass, record } = props;
+  const { sendUpdateLogStatusEnum, quoteStatusEnum } = page.props;
 
-    let isPolicyOrEndorsementBookingFailed = modelClass === 'App\\Models\\SendUpdateLog'
-        ? record?.status === sendUpdateLogStatusEnum.UPDATE_BOOKING_FAILED
-        : record?.quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED;
+  let isPolicyOrEndorsementBookingFailed =
+    modelClass === 'App\\Models\\SendUpdateLog'
+      ? record?.status === sendUpdateLogStatusEnum.UPDATE_BOOKING_FAILED
+      : record?.quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED;
 
-    NProgress.start();
-    const response = await axios.get(route('latest.sage.api.error', [record.id]), {
-        params: {
-            modelClass : modelClass,
-        },
+  NProgress.start();
+  const response = await axios.get(
+    route('latest.sage.api.error', [record.id]),
+    {
+      params: {
+        modelClass: modelClass,
+      },
+    },
+  );
+  NProgress.done();
+  if (response.data?.success)
+    console.log('fetchLatestSageError:', response.data);
+  if (response?.data?.error && isPolicyOrEndorsementBookingFailed) {
+    notification.error({
+      title: 'Sage API Error',
+      message: response?.data?.error,
+      position: 'top',
+      timeout: 30000,
     });
-    NProgress.done();
-    if (response.data?.success)
-        console.log('fetchLatestSageError:', response.data);
-        if(response?.data?.error && isPolicyOrEndorsementBookingFailed) {
-        notification.error({
-            title: 'Sage API Error',
-            message: response?.data?.error,
-            position: 'top',
-            timeout: 30000,
-        });
-    }
+  }
 };
 
 const fetchSageAPILogs = async () => {
