@@ -1281,8 +1281,9 @@ class TravelQuoteService extends BaseService
         return $access;
     }
 
-    // Update above age members to new quote 
-    private function updateAboveAgeMember($oldQuoteId, $newQuoteId){
+    // Update above age members to new quote
+    private function updateAboveAgeMember($oldQuoteId, $newQuoteId)
+    {
         CustomerMembers::where('quote_id', $oldQuoteId)
             ->where('quote_type', 'App\Models\TravelQuote')
             ->whereDate('dob', '<=', now()->subYears(65))
