@@ -92,6 +92,7 @@ class PersonalQuoteRepository extends BaseRepository
 
             info('fn: fetchUploadDocument called');
             $quoteType = '';
+            $insuranceProviderId = null;
 
             $query = DocumentTypeRepository::where('code', $data['document_type_code']);
             if (request()->quote_type_id) {
@@ -105,11 +106,12 @@ class PersonalQuoteRepository extends BaseRepository
 
             if (request()->is_send_update) {
                 $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+                [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
             } else {
                 $quote = $this->getQuoteObject($quoteType ?? '', $id);
             }
 
-            $isWaterMarkQualifyDoc = getWatermarkProperty($quote, $documentType);
+            $isWaterMarkQualifyDoc = getWatermarkProperty($quote, $documentType, $insuranceProviderId);
 
             $originalName = sanitizeFileName($file->getClientOriginalName());
             $docName = preg_replace('/\s+/', '', $originalName);
@@ -138,10 +140,6 @@ class PersonalQuoteRepository extends BaseRepository
             // info('Document array prepared for creation', $document);
 
             try {
-                $insuranceProviderId = null;
-                if (request()->is_send_update) {
-                    [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
-                }
                 DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, $isWaterMarkQualifyDoc, $file, $data, $fileMimeType, $docName) {
 
                     $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();

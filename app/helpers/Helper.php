@@ -1575,11 +1575,16 @@ if (! function_exists('getInsuranceProvider')) {
 }
 
 if (! function_exists('getWatermarkProperty')) {
-    function getWatermarkProperty($quote, $documentType)
+    function getWatermarkProperty($quote, $documentType, $insuranceProviderId=null)
     {
         $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
 
-        $skipWatermark = in_array($quote->insurance_provider_id, $ips);
+        if($insuranceProviderId)
+        {
+            $skipWatermark = in_array($insuranceProviderId, $ips);
+        } else {
+            $skipWatermark = in_array($quote->insurance_provider_id, $ips);
+        }
 
         if (!$skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
             return true;
