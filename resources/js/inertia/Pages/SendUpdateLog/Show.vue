@@ -264,7 +264,9 @@ onBeforeMount(() => {
               {{ sendUpdateLog.category.text }}
             </h3>
             <Link :href="quoteLink">
-              <x-button color="primary" size="sm" class="mr-5">Go back to lead</x-button>
+              <x-button color="primary" size="sm" class="mr-5"
+                >Go back to lead</x-button
+              >
             </Link>
           </div>
         </template>
@@ -282,8 +284,9 @@ onBeforeMount(() => {
                         SU REF ID
                       </label>
                       <template #tooltip>
-                        A unique reference identifier assigned to each "Send Update"
-                        request, allowing for easy tracking and reference.
+                        A unique reference identifier assigned to each "Send
+                        Update" request, allowing for easy tracking and
+                        reference.
                       </template>
                     </x-tooltip>
                   </dt>
@@ -320,9 +323,10 @@ onBeforeMount(() => {
                           TRANSACTION TYPE
                         </label>
                         <template #tooltip>
-                          Refers to category of the financial transaction associated
-                          with the policy. It helps classify the specific type of
-                          transaction being recorded or processed within the system.
+                          Refers to category of the financial transaction
+                          associated with the policy. It helps classify the
+                          specific type of transaction being recorded or
+                          processed within the system.
                         </template>
                       </x-tooltip>
                     </dt>
@@ -339,8 +343,8 @@ onBeforeMount(() => {
                       </label>
                       <template #tooltip>
                         The current status of the ""Send Update"" request,
-                        indicating whether it is pending, transaction approved, or
-                        declined, among other possible states.
+                        indicating whether it is pending, transaction approved,
+                        or declined, among other possible states.
                       </template>
                     </x-tooltip>
                   </dt>
@@ -355,7 +359,8 @@ onBeforeMount(() => {
                         props.sendUpdateStatusEnum.CIR &&
                       sendUpdateLog.category.code !==
                         props.sendUpdateStatusEnum.CPU &&
-                      sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPD
+                      sendUpdateLog.category.code !==
+                        props.sendUpdateStatusEnum.CPD
                     "
                   >
                     <dt>
@@ -384,7 +389,8 @@ onBeforeMount(() => {
                     v-else-if="
                       sendUpdateLog.category.code !==
                         props.sendUpdateStatusEnum.CPU &&
-                      sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPD
+                      sendUpdateLog.category.code !==
+                        props.sendUpdateStatusEnum.CPD
                     "
                   >
                     <!-- <dt class="font-bold text-right mr-10">Reason</dt>
