@@ -1109,6 +1109,12 @@ class TravelQuoteService extends BaseService
                     $split->documents()->update(['quote_documentable_id' => $duplicateLead->id]);
                 });
             });
+
+            // Update the above 65 age member
+            $aboveAgeMemberCount = $this->getAboveAgeMembers($leadModal->id);
+            if ($aboveAgeMemberCount > 0) {
+                $this->updateAboveAgeMember($leadModal->id, $duplicateLead->id);
+            }
         }
 
         return true;
@@ -1273,5 +1279,13 @@ class TravelQuoteService extends BaseService
         }
 
         return $access;
+    }
+
+    // Update above age members to new quote 
+    private function updateAboveAgeMember($oldQuoteId, $newQuoteId){
+        CustomerMembers::where('quote_id', $oldQuoteId)
+            ->where('quote_type', 'App\Models\TravelQuote')
+            ->whereDate('dob', '<=', now()->subYears(65))
+            ->update(['quote_id' => $newQuoteId]);
     }
 }
