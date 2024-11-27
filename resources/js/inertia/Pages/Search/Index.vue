@@ -60,6 +60,7 @@ function statusTitleFormat(str) {
 
 let params = useUrlSearchParams('history');
 const showFilters = ref(true);
+const expandNotes = ref(false);
 const filtersCount = ref(0);
 const serverOptions = ref({
     page: 1,
@@ -96,7 +97,7 @@ function updateTableDetails(){
             { text: 'SU Ref-ID', value: 'code', sortingOrder: 1 },
             { text: 'Type', value: 'category_id', sortingOrder: 10 },
             { text: 'Sub type', value: 'option_id', sortingOrder: 11 },
-            { text: 'Notes', value: 'notes', sortingOrder: 12 },
+            { text: 'Notes', value: 'notes', width:400, sortingOrder: 12 },
             { text: 'Status', value: 'status', sortingOrder: 13 },
         );
     }
@@ -326,6 +327,7 @@ onMounted( () => {
             border-cell
             hide-rows-per-page
             hide-footer
+            fixed-header
         >
             <!-- Datatable Header Tooltips Start -->
             <template #header-code="header">
@@ -459,6 +461,25 @@ onMounted( () => {
             <template v-if="isSendUpdateListView" #item-status="{ status }">
                 {{  statusTitleFormat(status) }}
             </template>
+            <template #item-notes="{ notes }">
+                <template v-if="notes">
+                    <template v-if="notes.length < 40">
+                        {{ notes }}
+                    </template>
+                    <x-accordion v-else show-icon icon="chevronDown">
+                        <x-accordion-item :expanded="expandNotes">
+                            <div class="bg-gray-10 w-80">
+                                {{ notes.slice(0, 40) }}
+                            </div>
+                            <template #content>
+                                <div>
+                                    {{ notes.slice(40, notes.length) }}
+                                </div>
+                            </template>
+                        </x-accordion-item>
+                    </x-accordion>
+                </template>
+            </template>
         </DataTable>
 
         <Pagination
@@ -579,8 +600,8 @@ onMounted( () => {
                         placeholder="Select Date Range"
                         model-type="yyyy-MM-dd"
                         :preset-dates="presetDates"
+                        :helper=" availableFilters.date_type ? '' : 'Please select the date type first'"
                     />
-                    <span v-if="! availableFilters.date_type" class="text-xs text-secondary-500">Please select the date type first</span>
                 </x-field>
                 <x-field label="Lead Status">
                     <ComboBox
