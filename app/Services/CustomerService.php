@@ -8,6 +8,7 @@ use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use App\Models\CustomerMembers;
 
 class CustomerService extends BaseService
 {
@@ -398,5 +399,10 @@ class CustomerService extends BaseService
                 }
             }
         }
+    }
+
+    public function getPrimaryCustomerById($id)
+    {
+        return CustomerMembers::where('id', $id)->first() ? true :  false;
     }
 }

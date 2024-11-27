@@ -258,8 +258,8 @@ class TravelQuoteService extends BaseService
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
 
-            info(self::class.' - saveTravelQuote: Going to dispatch OCB Email for Travel');
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
         }
 
         return $response;

@@ -59,7 +59,6 @@ class SendOCBTravelRenewalIntroEmailJob implements ShouldQueue
     {
         try {
             $lead = TravelQuote::where('uuid', $this->quoteUuid)->first();
-
             if (! $this->verifyPreChecks($lead)) {
                 return;
             }

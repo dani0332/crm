@@ -17,6 +17,7 @@ use App\Services\SIBService;
 use App\Services\TravelAllocationService;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 
 class HandleTravelAdvisorUpdated
 {
@@ -86,8 +87,16 @@ class HandleTravelAdvisorUpdated
                 info(self::class.' - SIC workflow key not found');
             }
         }
+        if($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
 
-        info(self::class.' - Going to dispatch SendTravelOCBIntroEmailJob ................');
-        SendTravelOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+            SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->delay(now()->addSeconds(30));
+            info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$lead->uuid} | Time:  ".now());
+        }
+        else {
+            info(self::class.' - Going to dispatch SendTravelOCBIntroEmailJob ................');
+             SendTravelOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+        }
+
+
     }
 }
