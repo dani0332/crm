@@ -25,7 +25,7 @@ class CustomerAddressObserver
 
                 if ($carQuote) {
                     // Check if the car quote status is 'PolicyIssued'
-                    if ($carQuote->quote_status_id === QuoteStatusEnum::PolicyIssued) {
+                    if (in_array($carQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
                         // Dispatch the job to sync courier quote with MACRM
                         SyncCourierQuoteWithMacrm::dispatch($carQuote, QuoteTypeId::Car);
                     }
