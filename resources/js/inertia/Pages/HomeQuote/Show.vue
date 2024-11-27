@@ -133,8 +133,8 @@ const confirmDeleteData = reactive({
 
 const contactLoader = ref(false),
   activityActionEdit = ref(false),
-  historyLoading = ref(false);
-
+  historyLoading = ref(false),
+  toggleLoader = ref(false);
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
@@ -725,6 +725,7 @@ const selectedProviderPlan = ref({
 console.log('selectedProviderPlan', selectedProviderPlan.value.id);
 
 const handlePlanSelected = plan => {
+  console.log('handlePlanSelected', plan);
   selectedProviderPlan.value.id = plan.id;
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
@@ -1610,6 +1611,14 @@ const copyLink = () => {
                 </p>
                 <div class="flex gap-1">
                   <x-tag
+                    v-if="item.isManualUpdate"
+                    size="xs"
+                    color="primary"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Manual
+                  </x-tag>
+                  <x-tag
                     v-if="item.isDisabled"
                     size="xs"
                     color="error"
@@ -1620,9 +1629,7 @@ const copyLink = () => {
                 </div>
               </template>
               <template #item-name="item">
-                <span class="text-primary-600 uppercase">{{
-                  item.name
-                }}</span>
+                <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
               <template #item-actualPremium="item">
                 <span class="text-primary-600">
@@ -1678,7 +1685,7 @@ const copyLink = () => {
 
                     <!-- new -->
                     <SelectPlan
-                      v-if="selectedProviderPlan.id != item.planId"
+                      v-if="selectedProviderPlan.id != item.id"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="'Home'"
