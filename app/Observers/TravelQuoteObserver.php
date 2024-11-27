@@ -13,6 +13,8 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class TravelQuoteObserver
 {
@@ -27,6 +29,8 @@ class TravelQuoteObserver
 
     /**
      * Handle the TravelQuote "updated" event.
+     *
+     * - Any changes that adds business logic should be enclosed in try-catch block or executed in queue.
      */
     public function updated(TravelQuote $travelQuote): void
     {
@@ -43,9 +47,16 @@ class TravelQuoteObserver
         }
 
         if (isset($dirty['advisor_id']) && $dirty['advisor_id'] !== $user?->id) {
-            $travelQuote->markLeadAllocationPassed();
-            $oldAdvisorId = $changes['advisor_id']['old'];
-            TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
+            try {
+                $travelQuote->markLeadAllocationPassed();
+                $oldAdvisorId = $changes['advisor_id']['old'];
+                TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
+            } catch (Exception $e) {
+                Log::error('TravelQuoteObserver - travel quote advisor updated failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $travelQuote->uuid,
+                ]);
+            }
         }
 
         if (
@@ -61,7 +72,14 @@ class TravelQuoteObserver
         $this->syncQuote($travelQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->updatePersonalQuote($travelQuote->uuid, QuoteTypeId::Travel, $dirty);
+            try {
+                $this->updatePersonalQuote($travelQuote->uuid, QuoteTypeId::Travel, $dirty);
+            } catch (Exception $e) {
+                Log::error('TravelQuoteObserver - update personal quote failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $travelQuote->uuid,
+                ]);
+            }
         }
 
         if (
