@@ -4,6 +4,7 @@ defineProps({
   dropdownSource: Object,
   session: Object,
   isManualAllocationAllowed: Boolean,
+  renewalBatches: Array,
   totalCount: {
     type: Number,
     default: 0,
@@ -109,6 +110,13 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+});
+
 const insuranceTypeOptions = computed(() => {
   return page.props.dropdownSource.business_type_of_insurance_id.map(
     advisor => ({
@@ -172,7 +180,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
 ]);
 
 const setIntialState = () => {
@@ -191,6 +199,7 @@ const setIntialState = () => {
     page: 1,
     previous_quote_policy_number: '',
     renewal_batch: '',
+    renewal_batches: [],
     is_renewal: '',
     payment_status: [],
     is_cold: false,
@@ -724,14 +733,13 @@ watch(() => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
-          label="Renewal Batch"
-          class="w-full"
-          placeholder="Search by Renewal Batch"
-        />
+        <x-field label="Renewal Batch">
+          <ComboBox
+            v-model="filters.renewal_batches"
+            placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
+          />
+        </x-field>
         <x-select
           v-model="filters.is_renewal"
           label="Renewal"
