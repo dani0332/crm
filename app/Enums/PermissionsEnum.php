@@ -381,6 +381,8 @@ final class PermissionsEnum extends Enum
     public const SEND_UPDATE_EDIT_NOTES = 'send-update-edit-notes';
     public const DEPARTMENT_MANAGER = 'department-manager';
     public const ASSIGN_PAID_LEADS = 'assign-paid-leads';
+    public const CALLBACK_NOTIFICATIONS = 'callback-notifications';
+    public const PAYMENT_NOTIFICATIONS = 'payment-notifications';
 
     public static function getAdvisorConversionReportPermissions()
     {

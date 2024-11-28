@@ -30,6 +30,8 @@ const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
 const minimizeSidebar = ref(false);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const bannerInfo = computed(() => {
   let { quote_route, total_count } = page.props.totalQuotesCount;
 
@@ -87,6 +89,17 @@ const getHTML = (buttonText, data, activityType) => {
   return `<a target="_self" class="text-primary-500 hover:underline flex items-center space-x-1" href="${activitiesUrl(activityType)}"> ${buttonText}
     ${data}</a>`;
 };
+
+const isCallbackNotificationsEnabled = computed(() => {
+  let permission = permissionsEnum.CALLBACK_NOTIFICATIONS;
+  return can(permission);
+});
+
+const isPaymentNotificationsEnabled = computed(() => {
+  let permission = permissionsEnum.PAYMENT_NOTIFICATIONS;
+  return can(permission);
+});
+
 </script>
 
 <template>
@@ -267,9 +280,9 @@ const getHTML = (buttonText, data, activityType) => {
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
-              <CallBackNotification />
-              <PaymentNotification />
-              <PaymentExpireNotifications />
+              <CallBackNotification v-if="isCallbackNotificationsEnabled"/>
+              <PaymentNotification v-if="isPaymentNotificationsEnabled"/>
+              <PaymentExpireNotifications v-if="isPaymentNotificationsEnabled"/>
 
               <x-tooltip>
                 <x-button class="w-full" size="sm">
