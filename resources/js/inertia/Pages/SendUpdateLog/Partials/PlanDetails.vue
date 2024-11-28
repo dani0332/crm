@@ -123,7 +123,11 @@ const onUpdate = () => {
 };
 
 const onKeyPress = event => {
-  if (event.key === 'e' || event.key === 'E') {
+  const charCode = event.charCode || event.keyCode;
+  const char = String.fromCharCode(charCode);
+  const regex = /^[0-9.]$/;
+
+  if (!regex.test(char)) {
     event.preventDefault();
   }
 };
@@ -213,7 +217,7 @@ onMounted(() => {
                   "
                   :error="planDetailsForm.errors.price_vat_not_applicable"
                   placeholder="Enter price (VAT not applicable)"
-                  type="number"
+                  maxlength="13"
                   min="0"
                   @change="updatePriceWithVat"
                   @keypress="onKeyPress"
@@ -288,7 +292,7 @@ onMounted(() => {
                   "
                   :error="planDetailsForm.errors.price_vat_applicable"
                   placeholder="Enter price (VAT applicable)"
-                  type="number"
+                  maxlength="13"
                   min="0"
                   @change="updatePriceWithVat"
                   @keypress="onKeyPress"
