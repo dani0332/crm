@@ -37,4 +37,9 @@ class BuyLeadRequestLog extends Model
     {
         return $this->belongsTo(QuoteType::class);
     }
+
+    public function scopeReAssigned($query)
+    {
+        return $query->whereNotNull('re_assigned_at');
+    }
 }

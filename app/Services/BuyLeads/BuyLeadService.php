@@ -24,7 +24,7 @@ class BuyLeadService
     {
         $leadAllocation = LeadAllocation::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->first();
 
-        if(!$leadAllocation || !$leadAllocation->buy_lead_status) {
+        if (! $leadAllocation || ! $leadAllocation->buy_lead_status) {
             return 0;
         }
 
