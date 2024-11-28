@@ -440,10 +440,10 @@ class AMLController extends Controller
                     ], ['entity_id' => $fetchEntity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
                 }
 
-                if (isset($AMLCheckRequest->company_name)) {
-                    $updateQuote->company_name = $AMLCheckRequest->company_name;
-                    $updateQuote->save();
-                }
+                // if (isset($AMLCheckRequest->company_name)) {
+                //     $updateQuote->company_name = $AMLCheckRequest->company_name;
+                //     $updateQuote->save();
+                // }
 
                 if (empty($entityDetailsForApi) && empty($getMemberOrUBODetails->toArray())) {
                     return redirect()->back()->with('success', 'AML Screening Completed');
@@ -657,6 +657,7 @@ class AMLController extends Controller
         }
         session()->forget('amlResponseCheck');
     }
+
     public function updateQuoteComment(Request $request)
     {
         $request->validate([
@@ -676,6 +677,7 @@ class AMLController extends Controller
 
         return response()->json(['message' => 'Comment added successfully', 'data' => $quoteModel]);
     }
+
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
@@ -721,6 +723,7 @@ class AMLController extends Controller
             ];
         });
     }
+
     public function sendHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
