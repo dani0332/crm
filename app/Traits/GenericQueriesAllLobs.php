@@ -800,11 +800,8 @@ trait GenericQueriesAllLobs
                     $newPaymentStatusId = null;
 
                     // Format both amounts to 2 decimal places
-                    $collectionAmount = number_format($paymentSplit->collection_amount, 2, '.', '');
-                    $paymentAmount = number_format($paymentSplit->payment_amount, 2, '.', '');
-                    // Convert to floats for proper comparison
-                    $collectionAmount = (float) $collectionAmount;
-                    $paymentAmount = (float) $paymentAmount;
+                    $collectionAmount = round($paymentSplit->collection_amount, 2);
+                    $paymentAmount = round($paymentSplit->payment_amount, 2);
 
                     if ($collectionAmount >= $paymentAmount) {
                         $newPaymentStatusId = PaymentStatusEnum::PAID;
