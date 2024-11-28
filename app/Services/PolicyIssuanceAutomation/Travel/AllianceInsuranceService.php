@@ -520,7 +520,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
-        } elseif (! $policyIssuance && $quote->insurer_api_status_id) {
+        } elseif (! $policyIssuance) { /*&& $quote->insurer_api_status_id*/
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isPolicyDocumentUploadDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
