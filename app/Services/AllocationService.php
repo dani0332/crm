@@ -364,6 +364,7 @@ class AllocationService
             $shouldProceed = $shouldProceed && ! now()->between($publicHolidayStartDateTime, $publicHolidayEndDateTime);
         }
         info('Reassignment with public holiday check: '.$shouldProceed);
+
         return $shouldProceed;
     }
 }
