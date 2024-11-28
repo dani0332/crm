@@ -4803,6 +4803,23 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                 </div>
                 <div class="flex w-full custombreak">
                   <div class="w-1/6 px-2 text-center"></div>
+                  <template v-if="splitPaymentRecord.payment_method.code == 'CC'">
+                    <div class="w-1/5 px-2">
+                      <span class="text-sm">
+                        AUTHORISED AMOUNT
+                      </span>
+                    </div>
+                    <div class="w-1/5 px-2">
+                      <span class="text-sm">
+                        AUTHORISED AT
+                      </span>
+                    </div>
+                    <div class="w-1/5 px-2">
+                      <span class="text-sm">
+                        {{ splitPaymentRecord.payment_status_id == props.paymentStatusEnum.PARTIALLY_PAID ? 'PARTIALLY CAPTURED AT' : 'CAPTURED AT'  }}
+                      </span>
+                    </div>
+                  </template>
                   <div class="w-1/5 px-2">
                     <x-tooltip>
                       <span class="text-sm">
@@ -4817,15 +4834,39 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                     </x-tooltip>
                   </div>
                 </div>
+      
                 <div class="flex w-full custombreak pb-5">
                   <div class="w-1/6 px-2 text-center"></div>
-                  <div class="w-1/5 px-2">
-                    {{
-                      splitPaymentRecord.cc_payment_id !== null
-                        ? splitPaymentRecord.cc_payment_id
-                        : 'N/A'
-                    }}
-                  </div>
+                  <template v-if="splitPaymentRecord.payment_method.code == 'CC'">
+                    <div class="w-1/5 px-2">
+                      {{
+                        splitPaymentRecord.premium_authorized !== null
+                          ? formatAmount(splitPaymentRecord.premium_authorized)
+                          : 'N/A'
+                      }}
+                    </div>
+                    <div class="w-1/5 px-2">
+                      {{
+                        splitPaymentRecord.authorized_at !== null
+                          ? formatDate(splitPaymentRecord.authorized_at, true)
+                          : 'N/A'
+                      }}
+                    </div>
+                    <div class="w-1/5 px-2">
+                      {{
+                        splitPaymentRecord.captured_at !== null
+                          ? formatDate(splitPaymentRecord.captured_at, true)
+                          : 'N/A'
+                      }}
+                    </div>
+                    <div class="w-1/5 px-2">
+                      {{
+                        splitPaymentRecord.cc_payment_id !== null
+                          ? splitPaymentRecord.cc_payment_id
+                          : 'N/A'
+                      }}
+                    </div>
+                  </template>
                 </div>
                 <div class="flex w-full custombreak">
                   <div class="w-1/6 px-2 text-center"></div>
