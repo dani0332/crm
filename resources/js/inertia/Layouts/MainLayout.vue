@@ -99,7 +99,6 @@ const isReceiveNotificationsEnabled = computed(() => {
   let permission = permissionsEnum.RECEIVE_NOTIFICATIONS;
   return can(permission);
 });
-
 </script>
 
 <template>
@@ -280,9 +279,11 @@ const isReceiveNotificationsEnabled = computed(() => {
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
-              <CallBackNotification v-if="isCallbackNotificationsEnabled"/>
-              <PaymentNotification v-if="isReceiveNotificationsEnabled"/>
-              <PaymentExpireNotifications v-if="isReceiveNotificationsEnabled"/>
+              <CallBackNotification v-if="isCallbackNotificationsEnabled" />
+              <PaymentNotification v-if="isReceiveNotificationsEnabled" />
+              <PaymentExpireNotifications
+                v-if="isReceiveNotificationsEnabled"
+              />
 
               <x-tooltip>
                 <x-button class="w-full" size="sm">
