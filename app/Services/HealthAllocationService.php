@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
@@ -20,7 +19,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
@@ -196,26 +194,6 @@ class HealthAllocationService extends AllocationService
 
     public function shouldProceed(): bool
     {
-        // Fetch reassignment start and end times
-        $startTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
-        $endTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
-
-        // Check if current time is within reassignment window and master switch is ON
-        $shouldProceed = now()->between($startTime, $endTime) && (config('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH') == 1);
-
-        // Fetch public holiday start and end
-        $publicHolidayStart = $this->getAppStorageValueByKey(ApplicationStorageEnums::PUBLIC_HOLIDAY_START_DATE);
-        $publicHolidayEnd = $this->getAppStorageValueByKey(ApplicationStorageEnums::PUBLIC_HOLIDAY_END_DATE);
-
-        if ($publicHolidayStart && $publicHolidayEnd) {
-            // Parse public holiday dates with start and end times for accurate range
-            $publicHolidayStartDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $publicHolidayStart);
-            $publicHolidayEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $publicHolidayEnd);
-
-            // Ensure the current time is not within the public holiday period
-            $shouldProceed = $shouldProceed && ! now()->between($publicHolidayStartDateTime, $publicHolidayEndDateTime);
-        }
-
-        return $shouldProceed;
+        return $this->shouldProceedWithReAllocation('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH');
     }
 }
