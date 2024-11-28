@@ -191,7 +191,7 @@ const fetchMaximumLeads = () => {
       <p class="text-red-500 font-bold">Note:</p>
       <ul class="list-disc px-5">
         <li>
-          Please check on the submit button to initiate you buy leads request
+          Please check on the submit button to initiate your buy leads request
         </li>
         <li>
           The total cost for the requested leads will be displayed once the "Buy
@@ -199,7 +199,7 @@ const fetchMaximumLeads = () => {
         </li>
         <li>
           There is no guarantee that you will receive the requested leads, as
-          the system will assign the leads accordingly once the buy lead request
+          the system will assign the leads accordingly once the Buy lead request
           is submitted by the advisor.
         </li>
       </ul>
