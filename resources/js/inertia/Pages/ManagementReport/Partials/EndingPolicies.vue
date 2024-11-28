@@ -20,82 +20,108 @@ const tableHeader = reactive([
   {
     text: 'Customer Name',
     value: 'customer_name',
+    tooltip: 'The name of customer (insured name)',
   },
   {
     text: 'Policy Number',
     value: 'policy_number',
+    tooltip: 'The policy number of the expiring policy',
   },
   {
     text: 'Insurer',
     value: 'insurer',
+    tooltip: 'The insurer of the expiring policy',
   },
   {
     text: 'Line Of Business',
     value: 'line_of_business',
+    tooltip: 'The line of business of the expiring policy',
   },
   {
     text: 'Policy Start Date',
     value: 'policy_start_date',
+    tooltip: 'Policy inception date',
   },
   {
     text: 'Policy Expiry Date',
     value: 'policy_end_date',
+    tooltip: 'Policy expiry date',
   },
   {
     text: 'Collected Amount',
     value: 'collected_amount',
+    tooltip: 'Amount paid by the user',
   },
   {
     text: 'Price (VAT applicable)',
     value: 'price_vat_applicable',
+    tooltip:
+      'Vatable price. Any amount appearing in this column will be computed with VAT.',
   },
   {
     text: 'Total VAT',
     value: 'total_vat',
+    tooltip: 'VAT of Price (VAT applicable)',
   },
   {
     text: 'Price (VAT not applicable)',
     value: 'price_vat_not_applicable',
+    tooltip:
+      'Non-vatable price. Any amount appearing in this column will not be computed with VAT. For example: BASMAH, rider, etc',
   },
   {
     text: 'Discount',
     value: 'discount',
+    tooltip: 'Discount applied to the transaction',
   },
   {
     text: 'Total Price',
     value: 'total_price',
+    tooltip:
+      'Total price less the discount. This was computed using the following formula: Price(VAT Applicable) + VAT + Price(VAT Not Applicable) - Discount',
   },
   {
     text: 'Pending Balance',
     value: 'pending_balance',
+    tooltip:
+      'Pending balance of the policy. Formula as follows: Total Price - Discount - Collected Amount',
   },
   {
     text: 'Commission (VAT applicable)',
     value: 'commission_vat_applicable',
+    tooltip:
+      'Vatable commission. Any amount appearing in this column will be computed with VAT.',
   },
   {
     text: 'VAT on Commission',
     value: 'commission_vat',
+    tooltip: 'VAT of Commission (VAT applicable)',
   },
   {
     text: 'Commission (VAT not applicable)',
     value: 'commission_vat_not_applicable',
+    tooltip:
+      'Non-vatable commission. Any amount appearing in this column will not be computed with VAT.',
   },
   {
     text: 'Policy Issuer',
     value: 'policy_issuer',
+    tooltip: 'The user who booked the policy.',
   },
   {
     text: 'Advisor',
     value: 'advisor',
+    tooltip: 'The advisor assigned to the policy.',
   },
   {
     text: 'Lead Source',
     value: 'source',
+    tooltip: 'The lead source of the lead.',
   },
   {
     text: 'Notes ',
     value: 'notes',
+    tooltip: 'Any notes added within lead level will reflect here.',
   },
 ]);
 
@@ -137,6 +163,13 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template
+      v-for="header in tableHeader"
+      :key="header.value"
+      #[`header-${header.value}`]="header"
+    >
+      <HeaderWithTooltip :header="header" />
+    </template>
     <template #item-customer_name="{ customer_name }">
       {{ customer_name ?? 'N/A' }}
     </template>

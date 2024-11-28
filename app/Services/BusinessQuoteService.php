@@ -67,6 +67,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.previous_quote_id',
                 'bqr.policy_expiry_date',
                 'bqr.renewal_batch',
+                'rb.name as renewal_batch_text',
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
                 'bqr.previous_quote_policy_premium',
@@ -124,6 +125,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
+            ->leftJoin('renewal_batches as rb', 'bqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
@@ -312,7 +314,7 @@ class BusinessQuoteService extends BaseService
             && isset($request->created_at_start) && $request->created_at_start != ''
             && empty($request->email)
             && empty($request->code)
-            && empty($request->renewal_batch)
+            && empty($request->renewal_batches)
             && empty($request->quote_batch_id)
             && empty($request->payment_due_date)
             && empty($request->booking_date)
@@ -354,8 +356,8 @@ class BusinessQuoteService extends BaseService
                     ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
         }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('bqr.renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
+            $this->query->whereIn('bqr.renewal_batch_id', $request->renewal_batches);
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
@@ -514,7 +516,7 @@ class BusinessQuoteService extends BaseService
             'previous_quote_id' => 'readonly|title',
             'is_renewal' => 'static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'policy_expiry_date' => 'input|date|title|range',
-            'renewal_batch' => 'input|none',
+            'renewal_batches' => 'select|title|multiple',
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_number' => 'input|title',
             'previous_quote_policy_premium' => 'input|title',

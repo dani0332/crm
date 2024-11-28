@@ -678,6 +678,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       newActualPremium +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
+                      (props.plan.icpFee || 0) +
                       totalLoadingPrice)?.toLocaleString()
                   }}
                 </dd>
@@ -687,6 +688,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       Number(selectedCopay.discountPremium) +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
+                      (props.plan.icpFee || 0) +
                       totalLoadingPrice)?.toLocaleString()
                   }}
                 </dd>
@@ -728,6 +730,16 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                 <dd>
                   {{
                     Number(props.plan.policyFee).toFixed(2)?.toLocaleString()
+                  }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ICP Fee</dt>
+                <dd>
+                  {{
+                    props.plan?.icpFee
+                      ? Number(props.plan?.icpFee).toFixed(2)?.toLocaleString()
+                      : '0.00'
                   }}
                 </dd>
               </div>

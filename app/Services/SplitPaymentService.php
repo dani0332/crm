@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -29,7 +30,6 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
-use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\CentralTrait;
@@ -757,7 +757,6 @@ class SplitPaymentService
     // function to process the master payment approve
     public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0, $paymentCode = '')
     {
-        $canCaptureEp = false;
         DB::beginTransaction();
         try {
             if ($sendUpdateId > 0) {
@@ -830,8 +829,6 @@ class SplitPaymentService
                     ]);
                 }
 
-                $canCaptureEp = true;
-
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $sendUpdateId) {
                     if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
@@ -851,18 +848,12 @@ class SplitPaymentService
             }
             DB::commit();
         } catch (Exception $exception) {
-            $canCaptureEp = false;
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
                 info('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' with error: '.$exception->getMessage());
             }
             Log::error('Error in processMasterPaymentApprove for Quote Code: '.$quoteModel->code.': '.$exception->getMessage());
             DB::rollBack();
-        }
-
-        if ($canCaptureEp) {
-            EmbeddedProductRepository::capturePayment($quoteId, $modelType);
-            info('Master payment code: '.$quoteModel->code.' Captured EP and sent documents');
         }
 
         return $successMessage;
@@ -894,23 +885,34 @@ class SplitPaymentService
         $paymentSplits = $payment->paymentSplits;
         $commissionSplitSumWithoutLastSplit = 0;
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
-        foreach ($paymentSplits as $paymentSplit) {
-            $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
-            /*
-             to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
-             and then subtract that amount from the total commission without vat and use the result as commission for last commission split
-            */
-            if ($paymentSplit->sr_no == count($paymentSplits)) {
-                $commissionSplitAmount = (float) sprintf('%.2f',
-                    $commission - $commissionSplitSumWithoutLastSplit);
-            } else {
-                $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+        $maxRetries = 5;
+
+        $response = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $commission, $commissionSplitSumWithoutLastSplit) {
+            foreach ($paymentSplits as $paymentSplit) {
+                $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
+                /* to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
+                 and then subtract that amount from the total commission without vat and use the result as commission for last commission split */
+                if ($paymentSplit->sr_no == count($paymentSplits)) {
+                    $commissionSplitAmount = (float) sprintf('%.2f',
+                        $commission - $commissionSplitSumWithoutLastSplit);
+                } else {
+                    $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+                }
+                $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
+                /* Add Vat on commission to the first Installment of commission */
+                $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
+                $paymentSplit->save();
             }
-            $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
-            /* Add Vat on commission to the first Installment of commission */
-            $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
-            $paymentSplit->save();
+        }, $maxRetries);
+
+        if (isset($response['status']) && in_array($response['status'], [GenericRequestEnum::FAILED, GenericRequestEnum::ERROR])) {
+            info(self::class.' : updateCommissionSchedule - Payment Code: '.$payment->code.' - Failed to update Commission Split Schedule with error: '.$response['message']);
+
+            return ['status' => false, 'message' => $response['message'] ?? 'Failed to update Commission Split Schedule.'];
         }
+        info(self::class.' : updateCommissionSchedule - Payment Code: '.$payment->code.' - Commission Split Schedule updated successfully');
+
+        return ['status' => true, 'message' => 'Commission Split Schedule updated successfully.'];
     }
 
     private function calculateCommissionSplit($payment, $paymentSplit)
