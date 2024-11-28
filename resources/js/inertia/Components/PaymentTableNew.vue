@@ -1975,7 +1975,7 @@ const paymentMethodsForm = useForm({
   payment_reference: '',
   paymentCode: '',
   status: 'create',
-  approvalModal: ''
+  approvalModal: '',
 });
 
 const validateViewPayment = isValid => {
@@ -2017,7 +2017,7 @@ const validateViewPayment = isValid => {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
     }
-    paymentMethodsForm.approvalModal = 'child'
+    paymentMethodsForm.approvalModal = 'child';
     isApproveConfirmed.value = true;
     return true;
   }
@@ -2094,7 +2094,7 @@ const validatePaymentAmount = isValid => {
 
 const addPayment = isValid => {
   console.clear();
-  console.log("addPayment")
+  console.log('addPayment');
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
@@ -3130,12 +3130,12 @@ const openAmlVerificationModal = () => {
 
 const transactionActionText = computed(() => {
   if (paymentMethodsForm.approvalModal === 'child') {
-      return 'PAYMENT VERIFICATION';
-    } else if (isCreditApprovalView.value && isCreditCardView.value) {
-      return 'CAPTURE TRANSACTION';
-    } else {
-      return 'APPROVE TRANSACTION';
-    }
+    return 'PAYMENT VERIFICATION';
+  } else if (isCreditApprovalView.value && isCreditCardView.value) {
+    return 'CAPTURE TRANSACTION';
+  } else {
+    return 'APPROVE TRANSACTION';
+  }
 });
 
 // verifiy if split payment deletion is enabled
@@ -4799,20 +4799,23 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                 </div>
                 <div class="flex w-full custombreak">
                   <div class="w-1/6 px-2 text-center"></div>
-                  <template v-if="splitPaymentRecord.payment_method.code == 'CC'">
+                  <template
+                    v-if="splitPaymentRecord.payment_method.code == 'CC'"
+                  >
                     <div class="w-1/5 px-2">
-                      <span class="text-sm">
-                        AUTHORISED AMOUNT
-                      </span>
+                      <span class="text-sm"> AUTHORISED AMOUNT </span>
+                    </div>
+                    <div class="w-1/5 px-2">
+                      <span class="text-sm"> AUTHORISED AT </span>
                     </div>
                     <div class="w-1/5 px-2">
                       <span class="text-sm">
-                        AUTHORISED AT
-                      </span>
-                    </div>
-                    <div class="w-1/5 px-2">
-                      <span class="text-sm">
-                        {{ splitPaymentRecord.payment_status_id == props.paymentStatusEnum.PARTIALLY_PAID ? 'PARTIALLY CAPTURED AT' : 'CAPTURED AT'  }}
+                        {{
+                          splitPaymentRecord.payment_status_id ==
+                          props.paymentStatusEnum.PARTIALLY_PAID
+                            ? 'PARTIALLY CAPTURED AT'
+                            : 'CAPTURED AT'
+                        }}
                       </span>
                     </div>
                   </template>
@@ -4830,10 +4833,12 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                     </x-tooltip>
                   </div>
                 </div>
-      
+
                 <div class="flex w-full custombreak pb-5">
                   <div class="w-1/6 px-2 text-center"></div>
-                  <template v-if="splitPaymentRecord.payment_method.code == 'CC'">
+                  <template
+                    v-if="splitPaymentRecord.payment_method.code == 'CC'"
+                  >
                     <div class="w-1/5 px-2">
                       {{
                         splitPaymentRecord.premium_authorized !== null
@@ -5584,7 +5589,9 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                   <div
                     class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
                   >
-                    <div class="flex items-center space-x-2"> {{ transactionActionText }}</div>
+                    <div class="flex items-center space-x-2">
+                      {{ transactionActionText }}
+                    </div>
                     <div class="flex items-center space-x-2">
                       <span
                         @click="closeConfirmModal"
