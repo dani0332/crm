@@ -216,52 +216,6 @@
             $(self).parent().find('#is_active').removeClass('danger').removeClass('success').addClass(data.status == 1 ? 'success': 'danger');
         }
 
-        // var channel = pusher.subscribe('public.'+appName + '.activity.user');
-        // channel.bind('user.status.changed', function(data) {
-        //     console.log(data.message);
-        //     if ($('.car_lead_allocation_table').length > 0) {
-        //         $('.car_lead_allocation_table').find("tr")
-        //             .find("td:first")
-        //             .each(function () {
-        //                 if ($(this).text() == data.userId) {
-        //                    //changeAvailiblity(data, this);
-        //                    $.toast({
-        //                         content: data.userName + data.message,
-        //                     });
-        //                 }
-        //             });
-        //     }
-        //     if ($('.lead_allocation_table').length > 0) {
-        //         $('.lead_allocation_table').find("tr")
-        //             .find("td:first")
-        //             .each(function () {
-        //                 if ($(this).text() == data.userId) {
-        //                    //changeAvailiblity(data, this);
-        //                    $.toast({
-        //                         content: data.userName + data.message,
-        //                     });
-        //                 }
-        //             });
-        //     }
-            // if(userId == data.userId){
-            //     $('#online-status-div').hide();
-            //     $('#offline-status-div').hide();
-            //     $('#unavailable-status-div').hide();
-            //     if(data.status == 1) {
-            //         $('#online-status-div').show();
-            //     }
-            //     if(data.status == 2)  {
-            //         $('#offline-status-div').show();
-            //     }
-            //     if(data.status != 1 && data.status != 2 ) {
-            //         $('#unavailable-status-div').show();
-            //     }
-            //     $.toast({
-            //             content: 'Your' + data.message,
-            //         });
-            // }
-        // });
-
         var config = {
             routes: {
                 user_datatable_route: "{{ route('users.index') }}",
