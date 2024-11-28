@@ -2093,8 +2093,6 @@ const validatePaymentAmount = isValid => {
 };
 
 const addPayment = isValid => {
-  console.clear();
-  console.log('addPayment');
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
