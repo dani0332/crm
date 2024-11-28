@@ -42,18 +42,20 @@ class LifeQuoteRepository extends BaseRepository
             'height' => $data['height'],
             'weight' => $data['weight'],
             'bmi' => $data['bmi'],
-            'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
-        $response = Capi::request('/api/v1-save-life-quote', 'post', $lifeData);
+        $response = Capi::request('/api/v2-save-life-quote', 'post', $lifeData);
 
         if (isset($response->quoteUID)) {
             //todo: make sure if this is required to update, or api is handling this as well
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
-            $quote->update(['premium' => $lifeData['premium']]);
+            $quote->update(['height' => $lifeData['height']]);
+            $quote->update(['weight' => $lifeData['weight']]);
+            $quote->update(['bmi' => $lifeData['bmi']]);
+            $quote->update(['age' => $lifeData['age']]);
         }
 
         return $response;
