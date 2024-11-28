@@ -22,6 +22,7 @@ const advisorOptions = ref([]);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const tableHeader = ref([]);
 const canShowFooterColumn = ref([]);
+const canShowLeadCostColumn = ref([]);
 const toast = useToast();
 
 const params = useUrlSearchParams('history');
@@ -187,6 +188,7 @@ const setTableHeader = () => {
     },
   ];
   canShowFooterColumn.value = false;
+  canShowLeadCostColumn.value = false;
 
   if ([quoteTypeCodeEnum.Car].includes(filters.lob)) {
     headers.push(
@@ -242,13 +244,17 @@ const setTableHeader = () => {
         text: 'TIER TR NON-ECOM',
         value: 'tier_tr_lead_count',
       },
-      {
-        text: 'TOTAL LEAD COST',
-        value: 'total_lead_cost',
-      },
     );
 
     canShowFooterColumn.value = true;
+  }
+  if ([quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health].includes(filters.lob)) {
+    headers.push({
+      text: 'Total Lead Cost',
+      value: 'total_lead_cost',
+    });
+
+    canShowLeadCostColumn.value = true;
   }
 
   tableHeader.value = headers;
@@ -820,7 +826,7 @@ const travelCoverageOptions = computed(() => {
           <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_tr_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowFooterColumn">
+          <td class="direction-center" v-if="canShowLeadCostColumn">
             {{ calculateTotalSum(reportData.data, 'total_lead_cost') }}
           </td>
         </tr>
