@@ -600,6 +600,7 @@ const rules = {
             </template>
             <template v-else>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="orange"
                 @click="onCancel"
