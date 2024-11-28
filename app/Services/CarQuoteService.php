@@ -2272,9 +2272,8 @@ class CarQuoteService extends BaseService
         }
 
         if (
-            $courierEmbeddedTransaction->isNotEmpty() &&
-            ($courierEmbeddedTransaction->first()->payment_status_id == PaymentStatusEnum::CAPTURED ||
-                $courierEmbeddedTransaction->first()->payment_status_id == PaymentStatusEnum::AUTHORISED)
+            ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
+            in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
         ) {
             info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
             $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;

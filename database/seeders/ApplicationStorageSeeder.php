@@ -74,6 +74,26 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PUBLIC_HOLIDAY_START_DATE],
+            [
+                'value' => '2024-12-02 10:00:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PUBLIC_HOLIDAY_END_DATE],
+            [
+                'value' => '2024-12-03 23:59:59',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
     }
 
 }
