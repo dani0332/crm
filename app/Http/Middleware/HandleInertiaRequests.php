@@ -103,6 +103,7 @@ class HandleInertiaRequests extends Middleware
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
+            'pusherCluster' => config('constants.VITE_PUSHER_APP_CLUSTER'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'vat' => ApplicationStorageEnums::VAT,
             'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),

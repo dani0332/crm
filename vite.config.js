@@ -58,9 +58,6 @@ export default defineConfig({
     },
     extensions: ['.js', '.vue', '.json'],
   },
-  define: {
-    'process.env': process.env, // Make Vite environment variables available
-  },
   optimizeDeps: {
     include: ['@vueuse/core', 'md-editor-v3', '@headlessui/vue'],
   },

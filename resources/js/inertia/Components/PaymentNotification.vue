@@ -38,6 +38,8 @@ const listen = () => {
     action: 'subscribe',
     channel: channelName,
     event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
   });
 
 }

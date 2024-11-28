@@ -4,7 +4,7 @@ var clients = [];
 var subscriptions = {}; // Store subscriptions (channel -> event -> client)
 var pusher;
 
-function subscribeToChannel(channelName, eventName, port) {
+function subscribeToChannel(channelName, eventName, port, pusherKey, pusherCluster) {
   console.log(`Subscribing to channel: ${channelName}, event: ${eventName}`);
 
   if (!subscriptions[channelName]) {
@@ -21,8 +21,8 @@ function subscribeToChannel(channelName, eventName, port) {
 
   if (!pusher) {
     console.log('Initializing Pusher connection...');
-    pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
-      cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    pusher = new Pusher(pusherKey, {
+      cluster: pusherCluster,
       forceTLS: false,
     });
 
@@ -103,10 +103,10 @@ self.addEventListener("connect", function(event) {
 
   port.addEventListener("message", (e) => {
     console.log('Received message from main thread:', e.data);
-    const { channel, event, action } = e.data;
+    const { channel, event, action, pusherKey, pusherCluster } = e.data;
 
     if (action === 'subscribe') {
-      subscribeToChannel(channel, event, port);
+      subscribeToChannel(channel, event, port, pusherKey, pusherCluster);
     } else if (action === 'unsubscribe') {
       unsubscribeFromChannel(channel, event, port);
     }
