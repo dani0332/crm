@@ -20,7 +20,7 @@ class BuyLeadConfigController extends Controller
 
     public function show()
     {
-        $data['lobs'] = QuoteTypes::withLabels();
+        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
         $data['departments'] = Department::where('is_active', true)->get()
             ->map(function ($department) {
                 return [

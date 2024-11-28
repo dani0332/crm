@@ -33,7 +33,7 @@ class BuyLeadController extends Controller
 
     public function show()
     {
-        $data['lobs'] = QuoteTypes::withLabels();
+        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
         $data['requests'] = $this->buyLeadService->getTodaysRequests();
 
         return inertia('BuyLeads/BuyLeadsRequest', $data);
@@ -51,7 +51,7 @@ class BuyLeadController extends Controller
     public function tracking()
     {
         $quoteType = QuoteTypes::tryFrom(request()->get('quote_type'));
-        $data['lobs'] = QuoteTypes::withLabels();
+        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
         [$startDate, $endDate] = request('date');
 
         $data['list'] = ['data' => []];
