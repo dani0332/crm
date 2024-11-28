@@ -136,7 +136,7 @@ const departments = computed(() => {
 
 const lobs = computed(() => {
   return props.filterOptions?.lobs?.map(item => {
-    return { value: item.id, label: item.name };
+    return { value: item, label: item };
   });
 });
 
