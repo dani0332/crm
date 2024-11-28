@@ -677,10 +677,11 @@ Route::get('/add-batch-number', function () {
     echo 'Done';
 });
 
-Route::get('run-insly-email-fix', function () {
+//Migration Not Required For Now 21 Nov 24
+// Route::get('run-insly-email-fix', function () {
 
-    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-        Artisan::queue('InslyEmailFix:cron');
-    }
+//     if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+//         Artisan::queue('InslyEmailFix:cron');
+//     }
 
-});
+// });
