@@ -871,7 +871,10 @@ const handleCreditApproval = () => {
       paymentMethodsForm.frequency = paymentFrequencyEnum.CUSTOM;
     }
     if (paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM) {
-      if (paymentMethodsForm.status === 'edit' && isAnyPaid(props.payments[0])) {
+      if (
+        paymentMethodsForm.status === 'edit' &&
+        isAnyPaid(props.payments[0])
+      ) {
         return;
       }
       resetTotalPayments();
@@ -921,7 +924,9 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
               page.props.paymentMethodsEnum?.BankTransfer,
             ].includes(item.value),
         );
-      } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS) {
+      } else if (
+        paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
+      ) {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
           item =>
@@ -955,7 +960,9 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
               page.props.paymentMethodsEnum?.InsurerPayment,
             ].includes(item.value),
         );
-      } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS) {
+      } else if (
+        paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
+      ) {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
           item =>
@@ -1161,7 +1168,9 @@ const calculateDueDates = () => {
         dueDateModels.value[i] = nextDueDate;
       }
     }
-  } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL) {
+  } else if (
+    paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL
+  ) {
     if (notPaidDates(1)) {
       dueDateModels.value[1] = paymentMethodsForm.collection_date;
     }
@@ -1319,10 +1328,14 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
   } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.QUARTERLY) {
     resetPaymentMethod = true;
     paymentMethodsForm.payment_no = '4';
-  } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL) {
+  } else if (
+    paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL
+  ) {
     resetPaymentMethod = true;
     paymentMethodsForm.payment_no = '2';
-  } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS) {
+  } else if (
+    paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
+  ) {
     isPaymentNoEnabled.value = true;
     if (noPaymentUpdate) {
       paymentMethodsForm.payment_no = '2';
@@ -2438,7 +2451,7 @@ const applyPermissions = () => {
     if (!hasPermissionToTermFrequencies) {
       frequencyTypes.value = frequencyTypes.value.filter(
         item =>
-        ![
+          ![
             paymentFrequencyEnum.CUSTOM,
             paymentFrequencyEnum.MONTHLY,
             paymentFrequencyEnum.QUARTERLY,
@@ -2471,7 +2484,8 @@ const applyPermissions = () => {
       paymentMethodsForm.status === 'create' &&
       paymentMethodsForm.frequency === ''
     ) {
-      paymentMethodsForm.frequency = paymentMethodsForm.frequency = paymentFrequencyEnum.UPFRONT;
+      paymentMethodsForm.frequency = paymentMethodsForm.frequency =
+        paymentFrequencyEnum.UPFRONT;
     }
 
     isVerificationAllowed.value =
@@ -2756,7 +2770,9 @@ const getCaptureValidation = computed(() => {
         ) {
           return true;
         }
-      } else if (paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS) {
+      } else if (
+        paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
+      ) {
         const paymentMethodCC = paymentRecord.payment_splits.filter(
           item => item.payment_method.code === 'CC',
         );

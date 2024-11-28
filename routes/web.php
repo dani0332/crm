@@ -94,7 +94,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
-if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV') == EnvEnum::UAT || config('constants.APP_ENV') == EnvEnum::DEVELOPMENT) {
+if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
     Route::middleware('throttle:50,10')->group(function () {
         Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
         Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
@@ -677,10 +677,11 @@ Route::get('/add-batch-number', function () {
     echo 'Done';
 });
 
-Route::get('run-insly-email-fix', function () {
+//Migration Not Required For Now 21 Nov 24
+// Route::get('run-insly-email-fix', function () {
 
-    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-        Artisan::queue('InslyEmailFix:cron');
-    }
+//     if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+//         Artisan::queue('InslyEmailFix:cron');
+//     }
 
-});
+// });
