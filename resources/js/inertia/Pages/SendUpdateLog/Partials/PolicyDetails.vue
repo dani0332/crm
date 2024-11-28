@@ -561,6 +561,7 @@ const onCancel = () => {
           <template v-if="!state.isEdit">
             <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 @click="onEdit"
                 :disabled="props.isEditDisabledForQueuedBooking"
@@ -574,10 +575,18 @@ const onCancel = () => {
                 </span>
               </template>
             </x-tooltip>
-            <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+            <x-button
+              v-else
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              @click="onEdit"
+            >
+              Edit
+            </x-button>
           </template>
           <template v-else>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="orange"
               @click="onCancel"
@@ -587,6 +596,7 @@ const onCancel = () => {
               Cancel
             </x-button>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="primary"
               @click="onUpdate"
