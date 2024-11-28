@@ -1,6 +1,5 @@
 FROM php:8.2-fpm
 
-
 # Copy composer.lock and composer.json
 COPY composer.lock composer.json /var/www/
 
@@ -22,7 +21,8 @@ RUN apt-get update && apt-get install -y \
     vim \
     unzip \
     git \
-    curl \ 
+    curl \
+    dos2unix \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -35,15 +35,13 @@ COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr
 
 RUN install-php-extensions gd xdebug mysqli pdo_mysql mongodb mbstring zip exif pcntl
 
-
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# install doppler
+# Install doppler
 RUN curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh | sh
 
 # Add user for laravel application
-# Switch to a non-root user for better security
 RUN groupadd -g 1000 www && useradd -u 1000 -ms /bin/bash -g www www
 
 # Copy existing application directory contents
@@ -55,10 +53,9 @@ RUN mkdir -p /var/log/supervisor \
     && chmod -R 755 /var/log/supervisor
 
 # Ensure entrypoint script has Unix line endings and proper permissions
-# file has Windows-style line endings (CRLF) instead of Unix-style line endings (LF). This can cause issues when running scripts in a Unix-like environment Alternatively, you can use sed to remove the ^M characters:
-RUN sed -i 's/\r//' /var/www/docker-local/entrypoint.sh \
+RUN dos2unix /var/www/docker-local/entrypoint.sh \
     && chmod +x /var/www/docker-local/entrypoint.sh
-    
+
 # Copy Supervisor configuration
 COPY ./docker-local/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
@@ -67,12 +64,12 @@ COPY --chown=www:www . /var/www
 
 RUN chown www:www /var/run/ && chmod 755 /var/run/
 
-
 # Change current user to www
 USER www
 
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
+
 # Set the script as the entrypoint
 ENTRYPOINT ["/var/www/docker-local/entrypoint.sh"]
 CMD ["/usr/bin/supervisord"]
