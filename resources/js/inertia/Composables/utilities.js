@@ -393,6 +393,7 @@ export const getIp = async () => {
 
 // Function to calculate age
 export const calculateAge = (birthDateString) => {
+  if(!birthDateString) return '';
   const birthDate = new Date(birthDateString);
   
   const today = new Date();

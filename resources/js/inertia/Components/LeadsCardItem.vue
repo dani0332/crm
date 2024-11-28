@@ -217,6 +217,7 @@ const getAge = (ageString) => {
         dob,
         nationality_text,
         insurance_tenure_text,
+        age,
       } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
@@ -251,7 +252,7 @@ const getAge = (ageString) => {
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="person" size="sm" class="text-primary-400" />
-        <p class="text-xs">{{ getAge(dob) }}</p>
+        <p class="text-xs">{{ age || getAge(dob) }}</p>
       </div>
 
       <div
