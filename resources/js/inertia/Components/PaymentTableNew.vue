@@ -355,6 +355,7 @@ const closeInnerModal = () => {
 const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+  isApproveConfirm.value = false;
 };
 const closeAmlConfirmModal = () => {
   isAmlApprovalRequired.value = false;
@@ -729,14 +730,6 @@ const handleCancelChanges = () => {
   isDeclineClicked.value = !isDeclineClicked.value;
   isApproveClicked.value = false;
   isDeclinedReasonError.value = false;
-};
-
-const handleNoButtonChange = () => {
-  isApproveClicked.value = !isApproveClicked.value;
-  isApproveConfirm.value = !isApproveConfirm.value;
-  paymentMethodsForm.collection_amount = '';
-  isDeclinedReasonError.value = false;
-  isApprovePaymentError.value = false;
 };
 
 const isProformaPaymentRequest = computed(() => {
@@ -1982,6 +1975,7 @@ const paymentMethodsForm = useForm({
   payment_reference: '',
   paymentCode: '',
   status: 'create',
+  approvalModal: ''
 });
 
 const validateViewPayment = isValid => {
@@ -2023,6 +2017,7 @@ const validateViewPayment = isValid => {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
     }
+    paymentMethodsForm.approvalModal = 'child'
     isApproveConfirmed.value = true;
     return true;
   }
@@ -2030,19 +2025,6 @@ const validateViewPayment = isValid => {
   if (isApproveNotChecked.value === true) {
     return true;
   }
-  /*
-  // temporary return,not part of M2
-  if (isApproveConfirmed.value === false && isValid) {
-    if (!amountExceeded) {
-      isApprovePaymentError.value = false;
-    }
-    isApproveConfirmed.value = true;
-    return true;
-  }
-
-  if (isApproveNotChecked.value === true) {
-    return true;
-  }*/
   return false;
 };
 
@@ -2084,7 +2066,9 @@ const validateCapturePayment = isValid => {
     if (isCreditPaymentInvalid.value.includes(true)) {
       return true;
     }
+    paymentMethodsForm.approvalModal = 'master';
     isApproveConfirm.value = true;
+    isApproveConfirmed.value = true;
     return true;
   }
   return false;
@@ -2109,6 +2093,8 @@ const validatePaymentAmount = isValid => {
 };
 
 const addPayment = isValid => {
+  console.clear();
+  console.log("addPayment")
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
@@ -3141,6 +3127,16 @@ const isAmlVerified = () => {
 const openAmlVerificationModal = () => {
   isAmlApprovalRequired.value = true;
 };
+
+const transactionActionText = computed(() => {
+  if (paymentMethodsForm.approvalModal === 'child') {
+      return 'PAYMENT VERIFICATION';
+    } else if (isCreditApprovalView.value && isCreditCardView.value) {
+      return 'CAPTURE TRANSACTION';
+    } else {
+      return 'APPROVE TRANSACTION';
+    }
+});
 
 // verifiy if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
@@ -5428,40 +5424,8 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
             <x-divider class="mb-4 mt-1" />
 
             <template v-if="isViewEnabled || isCreditApprovalView">
-              <template v-if="isApproveConfirm">
-                <div class="w-full text-right" v-if="isViewEnabled">
-                  Do you wish to proceed with payment confirmation?
-                </div>
-                <div class="w-full text-right" v-if="isCreditApprovalView">
-                  Would you like to continue with the approval?
-                </div>
-                <div class="w-full flex justify-end">
-                  <div class="mr-4">
-                    <x-button
-                      size="sm"
-                      @click="handleNoButtonChange"
-                      tabindex="0"
-                      class="focus:outline-black"
-                    >
-                      No
-                    </x-button>
-                  </div>
-                  <div>
-                    <x-button
-                      class="mr-2 focus:outline-black"
-                      size="sm"
-                      color="#ff5e00"
-                      type="submit"
-                      tabindex="0"
-                      :loading="paymentMethodsForm.processing"
-                    >
-                      Yes
-                    </x-button>
-                  </div>
-                </div>
-              </template>
               <template
-                v-else-if="
+                v-if="
                   isCreditApprovalView ||
                   (paymentMethodsModels[splitPaymentNo] !== 'CA' &&
                     paymentMethodsModels[splitPaymentNo] !== 'CC')
@@ -5620,9 +5584,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                   <div
                     class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
                   >
-                    <div class="flex items-center space-x-2">
-                      Payment Verification
-                    </div>
+                    <div class="flex items-center space-x-2"> {{ transactionActionText }}</div>
                     <div class="flex items-center space-x-2">
                       <span
                         @click="closeConfirmModal"
