@@ -633,7 +633,7 @@ class CarAllocationService extends AllocationService
             $publicHolidayEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $publicHolidayEnd);
 
             // Ensure the current time is not within the public holiday period
-            $shouldProceed = $shouldProceed && !now()->between($publicHolidayStartDateTime, $publicHolidayEndDateTime);
+            $shouldProceed = $shouldProceed && ! now()->between($publicHolidayStartDateTime, $publicHolidayEndDateTime);
         }
 
         return $shouldProceed;
