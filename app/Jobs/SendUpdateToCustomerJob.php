@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Jobs\EP\SendEPJob;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\SageApiService;
@@ -61,6 +63,13 @@ class SendUpdateToCustomerJob implements ShouldQueue
                         'is_email_sent' => true,
                     ]);
                     $sendUpdateLog->refresh();
+
+                    if ($sendUpdateLog->category->code === SendUpdateLogStatusEnum::EN) {
+                        $quoteType = QuoteTypeId::getOptions()[$sendUpdateLog->quote_type_id];
+                        $quote = $this->getQuoteObject($quoteType, $sendUpdateLog->quote_uuid);
+                        SendEPJob::dispatch($quote->id, $quoteType, null, true);
+                    }
+
                 } else {
                     info('job:SendUpdateToCustomerJob - SendUpdateCode: '.$sendUpdateLog->uuid.' - Job failed - SendUpdateCode: '.$sendUpdateLog->code);
                 }

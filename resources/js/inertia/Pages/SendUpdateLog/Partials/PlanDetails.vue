@@ -123,7 +123,11 @@ const onUpdate = () => {
 };
 
 const onKeyPress = event => {
-  if (event.key === 'e' || event.key === 'E') {
+  const charCode = event.charCode || event.keyCode;
+  const char = String.fromCharCode(charCode);
+  const regex = /^[0-9.]$/;
+
+  if (!regex.test(char)) {
     event.preventDefault();
   }
 };
@@ -213,7 +217,7 @@ onMounted(() => {
                   "
                   :error="planDetailsForm.errors.price_vat_not_applicable"
                   placeholder="Enter price (VAT not applicable)"
-                  type="number"
+                  maxlength="13"
                   min="0"
                   @change="updatePriceWithVat"
                   @keypress="onKeyPress"
@@ -288,7 +292,7 @@ onMounted(() => {
                   "
                   :error="planDetailsForm.errors.price_vat_applicable"
                   placeholder="Enter price (VAT applicable)"
-                  type="number"
+                  maxlength="13"
                   min="0"
                   @change="updatePriceWithVat"
                   @keypress="onKeyPress"
@@ -359,6 +363,7 @@ onMounted(() => {
           <template v-if="!state.isEdit">
             <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 @click="onEdit"
                 :disabled="props.isEditDisabledForQueuedBooking"
@@ -372,11 +377,19 @@ onMounted(() => {
                 </span>
               </template>
             </x-tooltip>
-            <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+            <x-button
+              v-else
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              @click="onEdit"
+            >
+              Edit
+            </x-button>
           </template>
 
           <template v-else>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="orange"
               @click="onCancel"
@@ -385,6 +398,7 @@ onMounted(() => {
               >Cancel</x-button
             >
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="primary"
               @click="onUpdate"
