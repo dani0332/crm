@@ -326,28 +326,31 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const onDataExport = () => {
-  let diff = calculateDaysDifference(
-    filters.created_at_start,
-    filters.created_at_end,
-  );
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff = calculateDaysDifference(
+      filters.created_at_start,
+      filters.created_at_end,
+    );
 
-  if (diff > 31) {
-    notification.error({
-      message: 'Maximum of 31 days (created date) are allowed to be exported.',
-      position: 'top',
-    });
-    return;
+    if (diff > 31) {
+      notification.error({
+        message:
+          'Maximum of 31 days (created date) are allowed to be exported.',
+        position: 'top',
+      });
+      return;
+    }
+
+    filters.created_at_start = useDateFormat(
+      filters.created_at_start,
+      'YYYY-MM-DD',
+    ).value;
+
+    filters.created_at_end = useDateFormat(
+      filters.created_at_end,
+      'YYYY-MM-DD',
+    ).value;
   }
-
-  filters.created_at_start = useDateFormat(
-    filters.created_at_start,
-    'YYYY-MM-DD',
-  ).value;
-
-  filters.created_at_end = useDateFormat(
-    filters.created_at_end,
-    'YYYY-MM-DD',
-  ).value;
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
