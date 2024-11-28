@@ -9,11 +9,11 @@ const eventName = 'callback.notification';
 const listen = () => {
   const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
-  worker.port.addEventListener("message", (e) => {
+  worker.port.addEventListener('message', e => {
     if (e.data.advisorId === page.props.auth.user.id) {
       showNotification.value = true;
       notificationData.value = {
-        imageUrl: "/image/alfred-theme.png",
+        imageUrl: '/image/alfred-theme.png',
         url: e.data.url,
         quoteUuid: e.data.quoteUuid,
         title: e.data.title,
@@ -24,10 +24,10 @@ const listen = () => {
     }
   });
 
-  worker.onerror = function(error){
+  worker.onerror = function (error) {
     console.log(error.message);
     worker.port.close();
-  }
+  };
 
   worker.port.start();
 
@@ -39,8 +39,7 @@ const listen = () => {
     pusherKey: page.props.pusherKey,
     pusherCluster: page.props.pusherCluster,
   });
-
-}
+};
 
 const url = () => {
   window.location.href = notificationData.value.url;
@@ -63,7 +62,7 @@ onMounted(() => {
 onUnmounted(() => {
   //Unsubscribe to channel/event
   worker.port.postMessage({
-    action: "unsubscribe",
+    action: 'unsubscribe',
     channel: channelName,
     event: eventName,
   });

@@ -6,14 +6,14 @@ const showNotification = ref(false);
 const notificationData = ref({});
 
 const channelName = `public.${page.props.appEnv}.activity.user`;
-const eventName = "expire.notification";
+const eventName = 'expire.notification';
 
 const listen = () => {
   const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
-  worker.port.addEventListener("message", (e) => {
+  worker.port.addEventListener('message', e => {
     if (e.data.advisorId === page.props.auth.user.id) {
-        notificationData.value = {
+      notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
         title: 'Payment',
         message: e.data.message,
@@ -25,10 +25,10 @@ const listen = () => {
     }
   });
 
-  worker.onerror = function(error){
+  worker.onerror = function (error) {
     console.log(error.message);
     worker.port.close();
-  }
+  };
 
   worker.port.start();
 
@@ -40,7 +40,7 @@ const listen = () => {
     pusherKey: page.props.pusherKey,
     pusherCluster: page.props.pusherCluster,
   });
-}
+};
 
 const hideNotification = () => {
   showNotification.value = false;
@@ -53,7 +53,7 @@ onMounted(() => {
 onUnmounted(() => {
   //Unsubscribe to channel/event
   worker.port.postMessage({
-    action: "unsubscribe",
+    action: 'unsubscribe',
     channel: channelName,
     event: eventName,
   });

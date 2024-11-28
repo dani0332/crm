@@ -4,8 +4,13 @@ var clients = [];
 var subscriptions = {}; // Store subscriptions (channel -> event -> client)
 var pusher;
 
-function subscribeToChannel(channelName, eventName, port, pusherKey, pusherCluster) {
-
+function subscribeToChannel(
+  channelName,
+  eventName,
+  port,
+  pusherKey,
+  pusherCluster,
+) {
   if (!subscriptions[channelName]) {
     subscriptions[channelName] = {};
   }
@@ -27,7 +32,7 @@ function subscribeToChannel(channelName, eventName, port, pusherKey, pusherClust
       console.log('Pusher connected successfully.');
     });
 
-    pusher.connection.bind('error', (err) => {
+    pusher.connection.bind('error', err => {
       console.error('Pusher connection error:', err);
     });
   }
@@ -56,9 +61,9 @@ function unsubscribeFromChannel(channelName, eventName, port) {
   }
 
   // Remove the client's port from the list of subscribers
-  subscriptions[channelName][eventName] = subscriptions[channelName][eventName].filter(
-    (client) => client !== port
-  );
+  subscriptions[channelName][eventName] = subscriptions[channelName][
+    eventName
+  ].filter(client => client !== port);
 
   // If no clients are subscribed to this event, unbind it
   if (subscriptions[channelName][eventName].length === 0) {
@@ -66,7 +71,7 @@ function unsubscribeFromChannel(channelName, eventName, port) {
     if (channel) {
       channel.unbind(eventName);
       // Remove the event from the list of bound events
-      channel._boundEvents = channel._boundEvents.filter((e) => e !== eventName);
+      channel._boundEvents = channel._boundEvents.filter(e => e !== eventName);
     }
     delete subscriptions[channelName][eventName];
   }
@@ -78,13 +83,13 @@ function unsubscribeFromChannel(channelName, eventName, port) {
   }
 }
 
-self.addEventListener("connect", function(event) {
+self.addEventListener('connect', function (event) {
   var port = event.ports[0];
   clients.push(port);
 
   port.postMessage('Hello, new client connected!');
 
-  port.addEventListener("message", (e) => {
+  port.addEventListener('message', e => {
     const { channel, event, action, pusherKey, pusherCluster } = e.data;
 
     if (action === 'subscribe') {

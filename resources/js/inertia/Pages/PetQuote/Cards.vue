@@ -52,19 +52,19 @@ const leadsCount = ref(props.totalCount);
 const previousDate = getPreviousDate;
 
 const channelName = `public.${page.props.appEnv}.total-leads-count`;
-const eventName = "leads.count";
+const eventName = 'leads.count';
 
 const listen = () => {
   const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
-  worker.port.addEventListener("message", (e) => {
+  worker.port.addEventListener('message', e => {
     leadsCount.value = e.data.totalLeadsCount;
   });
 
-  worker.onerror = function(error){
+  worker.onerror = function (error) {
     console.log(error.message);
     worker.port.close();
-  }
+  };
 
   worker.port.start();
 
@@ -76,7 +76,6 @@ const listen = () => {
     pusherKey: page.props.pusherKey,
     pusherCluster: page.props.pusherCluster,
   });
-
 };
 
 const loader = reactive({
@@ -225,7 +224,7 @@ onMounted(() => {
 onUnmounted(() => {
   //Unsubscribe to channel/event
   worker.port.postMessage({
-    action: "unsubscribe",
+    action: 'unsubscribe',
     channel: channelName,
     event: eventName,
   });

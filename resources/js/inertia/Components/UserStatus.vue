@@ -18,12 +18,12 @@ const statusText = id => {
 const userStatus = useStorage('refresh-user-counts', 0);
 
 const channelName = `public.${page.props.appEnv}.activity.user`;
-const eventName = "user.status.changed";
+const eventName = 'user.status.changed';
 
 const listen = () => {
   const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
-  worker.port.addEventListener("message", (e) => {
+  worker.port.addEventListener('message', e => {
     currentStatus.value = e.data.status;
     if (e.data.status == 1) {
       notification.success({
@@ -46,10 +46,10 @@ const listen = () => {
     userStatus.value = e.data.status;
   });
 
-  worker.onerror = function(error){
+  worker.onerror = function (error) {
     console.log(error.message);
     worker.port.close();
-  }
+  };
 
   worker.port.start();
 
@@ -61,7 +61,6 @@ const listen = () => {
     pusherKey: page.props.pusherKey,
     pusherCluster: page.props.pusherCluster,
   });
-
 };
 
 onMounted(() => {
@@ -71,7 +70,7 @@ onMounted(() => {
 onUnmounted(() => {
   //Unsubscribe to channel/event
   worker.port.postMessage({
-    action: "unsubscribe",
+    action: 'unsubscribe',
     channel: channelName,
     event: eventName,
   });

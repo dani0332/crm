@@ -57,7 +57,7 @@ const urls = computed(() => {
   return `/reports/payment-summary`;
 });
 
-const activitiesUrl = (activityType) => {
+const activitiesUrl = activityType => {
   const today = new Date();
   const filters = {
     status: '0',
@@ -220,7 +220,7 @@ const getHTML = (buttonText, data, activityType) => {
                             getHTML(
                               'Pending Callbacks: ',
                               pendingActivityCount.pendingCallback,
-                              page.props.activityTypeEnum.CALL_BACK
+                              page.props.activityTypeEnum.CALL_BACK,
                             )
                           "
                         />
