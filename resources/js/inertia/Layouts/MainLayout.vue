@@ -95,8 +95,8 @@ const isCallbackNotificationsEnabled = computed(() => {
   return can(permission);
 });
 
-const isPaymentNotificationsEnabled = computed(() => {
-  let permission = permissionsEnum.PAYMENT_NOTIFICATIONS;
+const isReceiveNotificationsEnabled = computed(() => {
+  let permission = permissionsEnum.RECEIVE_NOTIFICATIONS;
   return can(permission);
 });
 
@@ -281,8 +281,8 @@ const isPaymentNotificationsEnabled = computed(() => {
               <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
               <CallBackNotification v-if="isCallbackNotificationsEnabled"/>
-              <PaymentNotification v-if="isPaymentNotificationsEnabled"/>
-              <PaymentExpireNotifications v-if="isPaymentNotificationsEnabled"/>
+              <PaymentNotification v-if="isReceiveNotificationsEnabled"/>
+              <PaymentExpireNotifications v-if="isReceiveNotificationsEnabled"/>
 
               <x-tooltip>
                 <x-button class="w-full" size="sm">

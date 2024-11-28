@@ -41,7 +41,7 @@ class NotificationsPermissionSeeder extends Seeder
 
         $paymentRoles = Role::whereIn('name', [RolesEnum::CarAdvisor, RolesEnum::TravelAdvisor, RolesEnum::HealthAdvisor, RolesEnum::PetAdvisor, RolesEnum::BikeAdvisor, RolesEnum::HomeAdvisor, RolesEnum::LifeAdvisor, RolesEnum::CycleAdvisor, RolesEnum::YachtAdvisor, RolesEnum::JetskiAdvisor, RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor])->get();
         $paymentPermission = Permission::firstOrCreate([
-            'name' => PermissionsEnum::PAYMENT_NOTIFICATIONS ?? 'payment-notifications',
+            'name' => PermissionsEnum::RECEIVE_NOTIFICATIONS ?? 'receive-notifications',
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
