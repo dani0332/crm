@@ -417,9 +417,16 @@ const onDataExport = () => {
 };
 
 const exportRmLeads = () => {
+  exportLoader.value = true;
+
   logAndExportQuotes({
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
     url: `${window.location.origin}/rm-leads-export`,
+  }).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
   });
 };
 
@@ -887,6 +894,7 @@ watch(() => {
             v-if="can(permissionsEnum.EXPORT_RM_LEADS)"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click="exportRmLeads()"
             class="justify-self-start mr-3"
           >
