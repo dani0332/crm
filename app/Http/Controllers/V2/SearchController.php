@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Exports\SearchLeadsEndorsementsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportSearchLeadsOrEndorsementsRequest;
@@ -14,6 +15,7 @@ use App\Repositories\PaymentStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\CentralService;
 use App\Services\LookupService;
+use App\Services\SearchService;
 use App\Services\SendUpdateLogService;
 use AWS\CRT\HTTP\Request;
 
@@ -22,8 +24,8 @@ class SearchController extends Controller
     public function index(): \Inertia\Response|\Inertia\ResponseFactory
     {
         $isEndorsementList = (request()->get('list') == 'endorsements');
-        $getLeadsOrEndorsements = app(CentralService::class)->getSearchLeads($isEndorsementList);
-        $getAdvisorsList = app(CentralService::class)->getAdvisorsList();
+        $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList);
+        $getAdvisorsList = app(SearchService::class)->getAdvisorsList();
         $quoteStatuses = app(LookupService::class)->getLeadStatuses([
             QuoteStatusEnum::SentForTransactionApproval,
             QuoteStatusEnum::TransactionApproved,
@@ -47,6 +49,7 @@ class SearchController extends Controller
         $departments = Department::active()->orderBy('name')->get();
         $sendUpdateStatuses = app(SendUpdateLogService::class)->sendUpdateStatuses();
         $sendUpdateTypes = app(LookupService::class)->getSendUpdateCategories();
+        $quoteTypeIdEnum = QuoteTypeId::asArray();
 
         return inertia('Search/Index', [
             'leadsOrEndorsementData' => $getLeadsOrEndorsements,
@@ -59,13 +62,14 @@ class SearchController extends Controller
             'sendUpdateStatuses' => $sendUpdateStatuses,
             'sendUpdateTypes' => $sendUpdateTypes,
             'advisors' => $getAdvisorsList,
+            'quoteTypeIdEnum' => $quoteTypeIdEnum,
         ]);
     }
 
     public function searchExport(ExportSearchLeadsOrEndorsementsRequest $exportSearchLeadsOrEndorsementsRequest): \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $isEndorsementList = $exportSearchLeadsOrEndorsementsRequest->list == 'endorsements';
-        $getLeadsOrEndorsements = app(CentralService::class)->getSearchLeads($isEndorsementList, true);
+        $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList, true);
         $exportFileName = 'InsuranceMarket.ae™ '.($isEndorsementList ? 'Send Update' : 'Lead').' List '.now()->format(config('constants.DATE_DISPLAY_FORMAT')).'.xlsx';
 
         return (new SearchLeadsEndorsementsExport($getLeadsOrEndorsements))->download($exportFileName);

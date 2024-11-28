@@ -110,6 +110,31 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(QuoteType::class);
     }
 
+    public function carQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(CarQuote::class, 'code', 'code');
+    }
+
+    public function homeQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(HomeQuote::class, 'code', 'code');
+    }
+
+    public function healthQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(HealthQuote::class, 'code', 'code');
+    }
+
+    public function lifeQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(LifeQuote::class, 'code', 'code');
+    }
+
+    public function businessQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(BusinessQuote::class, 'code', 'code');
+    }
+
     /**
      * bike quote request relation.
      *
@@ -126,6 +151,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function jetskiQuote()
     {
         return $this->hasOne(JetskiQuote::class);
+    }
+
+    public function travelQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(TravelQuote::class, 'code', 'code');
     }
 
     /**
@@ -374,17 +404,15 @@ class PersonalQuote extends Model implements AuditableContract
         }
 
         if (in_array($quoteTypeId, array_keys($nonEcomLOBs))) {
-            $existsInNonEcomLOBs = DB::table($nonEcomLOBs[$quoteTypeId])
+            $quoteRequest = DB::table($nonEcomLOBs[$quoteTypeId])
                 ->where('uuid', $this->uuid)
-                ->whereExists(function ($query) {
-                    $query->select(DB::raw(1)) // Select 1 to check for existence
-                        ->from('quote_request_entity_mapping')
-                        ->whereRaw('quote_request_entity_mapping.quote_request_id = '.$this->id)
-                        ->whereRaw('quote_request_entity_mapping.quote_type_id = '.$this->quote_type_id);
-                })
+                ->first();
+
+            $existsInQuoteRequestEntityMapping = QuoteRequestEntityMapping::where('quote_request_id', $quoteRequest->id)
+                ->where('quote_type_id', $quoteTypeId)
                 ->exists();
 
-            return $existsInNonEcomLOBs ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+            return $existsInQuoteRequestEntityMapping ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
         }
 
         return CustomerTypeEnum::Individual;

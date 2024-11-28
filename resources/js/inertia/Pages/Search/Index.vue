@@ -10,6 +10,7 @@ const props = defineProps({
   departments: Array,
   sendUpdateStatuses: Array,
   sendUpdateTypes: Array,
+  quoteTypeIdEnum: Array,
 });
 
 const page = usePage();
@@ -51,6 +52,15 @@ const getDetailPageRoute = (
   quote_type_id,
   business_type_of_insurance_id,
 ) => useGetShowPageRoute(uuid, quote_type_id, business_type_of_insurance_id);
+
+const getSendUpdatePageRoute = (uuid, [
+    quote_uuid,
+    quote_type_id,
+    quote_business_type_of_insurance_id
+]) => {
+    const path = new URL(getDetailPageRoute(quote_uuid, quote_type_id, quote_business_type_of_insurance_id)).pathname;
+    return route('send-update.show', { uuid, refURL: path });
+};
 
 function statusTitleFormat(str) {
   return str
@@ -194,6 +204,31 @@ const autoApplyDateRangeFields = [
   'advisors',
   'update_status',
 ];
+
+function destructCompanyName(isSendUpdateView, item) {
+    const companyNameMappingForNonEcom = {
+        [props.quoteTypeIdEnum.Car]: 'car_quote_request',
+        [props.quoteTypeIdEnum.Home]: 'home_quote_request',
+        [props.quoteTypeIdEnum.Health]: 'health_quote_request',
+        [props.quoteTypeIdEnum.Life]: 'life_quote_request',
+        [props.quoteTypeIdEnum.Business]: 'business_quote_request',
+        [props.quoteTypeIdEnum.Travel]: 'travel_quote_request',
+    };
+
+    const quoteRequestKeyForNonEcom = companyNameMappingForNonEcom[item.quote_type_id] ?? null;
+    const isIndividual = item.customer_type === 'Individual' || (item.personal_quote?.customer_type === 'Individual');
+    if (isIndividual) return 'N/A';
+
+    const getCompanyName = (isSendUpdateListView, quoteRequestKey) => {
+        const itemObject = isSendUpdateListView ? item.personal_quote : item;
+
+        return quoteRequestKey ?
+            itemObject?.[quoteRequestKey]?.quote_request_entity_mapping?.entity?.company_name :
+            itemObject?.quote_request_entity_mapping?.entity?.company_name;
+    };
+
+    return getCompanyName(isSendUpdateView, quoteRequestKeyForNonEcom);
+}
 
 function updateDateRange() {
   availableFilters.date_type = 'created_at';
@@ -476,13 +511,14 @@ onMounted(() => {
           code,
           uuid,
           quote_type_id,
+          personal_quote,
           business_type_of_insurance_id,
         }"
       >
         <Link
           :href="
             isSendUpdateListView
-              ? ''
+              ? getSendUpdatePageRoute(uuid, [personal_quote?.uuid, personal_quote?.quote_type_id, personal_quote?.business_type_of_insurance_id])
               : getDetailPageRoute(
                   uuid,
                   quote_type_id,
@@ -507,13 +543,9 @@ onMounted(() => {
         {{ personal_quote?.last_name }}
       </template>
       <template
-        #item-company_name="{ quote_request_entity_mapping, customer_type }"
+        #item-company_name="item"
       >
-        {{
-          customer_type == 'Individual'
-            ? 'N/A'
-            : quote_request_entity_mapping?.entity?.company_name
-        }}
+          {{ destructCompanyName(isSendUpdateListView, item) }}
       </template>
       <template #item-quote_type_id="{ quote_type }">
         {{ quote_type?.code }}
@@ -523,9 +555,14 @@ onMounted(() => {
         #item-business_type_of_insurance_id="{
           business_type_of_insurance,
           quote_type_id,
+          personal_quote,
         }"
       >
-        {{ quote_type_id === 5 ? business_type_of_insurance?.text : 'N/A' }}
+        {{
+          isSendUpdateListView
+              ? personal_quote?.quote_type_id === props.quoteTypeIdEnum.Business ? personal_quote?.business_type_of_insurance?.text : 'N/A'
+              : quote_type_id === props.quoteTypeIdEnum.Business ? business_type_of_insurance?.text : 'N/A'
+        }}
       </template>
       <template
         #item-policy_expiry_date="{ policy_expiry_date, personal_quote }"
@@ -555,45 +592,29 @@ onMounted(() => {
       >
         {{ policy_number == null ? 'N/A' : quote_status?.text }}
       </template>
+        <template v-if="isSendUpdateListView" #item-notes="{ notes }">
+            <div class="flex gap-2 cursor-pointer">
+                <p
+                    class="overflow-hidden h-auto"
+                    :class="expandNotes ? 'overflow-auto' : 'truncate w-72'"
+                >
+            <span v-if="expandNotes" class="whitespace-normal">{{
+                    notes
+                }}</span>
+                    <span v-else class="whitespace-nowrap">{{ notes }}</span>
+                </p>
+                <x-icon
+                    v-if="notes && notes.length > 40"
+                    @click="expandNotes = !expandNotes"
+                    icon="chevronDown"
+                    :class="{ 'rotate-180': expandNotes }"
+                />
+            </div>
+        </template>
       <template v-if="isSendUpdateListView" #item-status="{ status }">
         {{ statusTitleFormat(status) }}
       </template>
-      <template #item-notes="{ notes }">
-        <div class="flex gap-2 cursor-pointer">
-          <p
-            class="overflow-hidden h-auto"
-            :class="expandNotes ? 'overflow-auto' : 'truncate w-72'"
-          >
-            <span v-if="expandNotes" class="whitespace-normal">{{
-              notes
-            }}</span>
-            <span v-else class="whitespace-nowrap">{{ notes }}</span>
-          </p>
-          <x-icon
-            v-if="notes && notes.length > 40"
-            @click="expandNotes = !expandNotes"
-            icon="chevronDown"
-            :class="{ 'rotate-180': expandNotes }"
-          />
-        </div>
-        <!-- <template v-if="notes">
-                    <template v-if="notes.length < 40">
-                        {{ notes }}
-                    </template>
-                    <x-accordion v-else show-icon icon="chevronDown">
-                        <x-accordion-item :expanded="expandNotes">
-                            <div class="bg-gray-10 w-80">
-                                {{ notes.slice(0, 40) }}
-                            </div>
-                            <template #content>
-                                <div>
-                                    {{ notes.slice(40, notes.length) }}
-                                </div>
-                            </template>
-                        </x-accordion-item>
-                    </x-accordion>
-                </template> -->
-      </template>
+
     </DataTable>
 
     <Pagination
@@ -815,7 +836,6 @@ onMounted(() => {
         <x-field
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           label="Insurer Tax Invoice No"
-          class="!text-xs"
         >
           <x-input
             v-model="availableFilters.insurer_tax_invoice_number"
@@ -830,6 +850,7 @@ onMounted(() => {
             can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
           "
           label="Insurer Commission Tax Invoice No"
+          class="!text-xs"
         >
           <x-input
             v-model="availableFilters.insurer_commission_tax_invoice_number"
