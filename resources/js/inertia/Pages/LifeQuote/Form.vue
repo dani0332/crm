@@ -7,7 +7,6 @@ const props = defineProps({
   currency: Object,
   purposeOfInsurance: Object,
   maritalStatus: Object,
-  children: Object,
   typeOfInsurance: Object,
   numberOfYears: Object,
   flash: Object,
@@ -25,13 +24,15 @@ const quoteForm = useForm({
   sum_insured_currency_id: props.quote?.sum_insured_currency_id || '',
   marital_status_id: props.quote?.marital_status_id || '',
   purpose_of_insurance_id: props.quote?.purpose_of_insurance_id || '',
-  children_id: props.quote?.children_id || '',
-  premium: props.quote?.premium || '',
   tenure_of_insurance_id: props.quote?.tenure_of_insurance_id || '',
   number_of_years_id: props.quote?.number_of_years_id || '',
   is_smoker: props.quote?.is_smoker || 0,
   gender: props.quote?.gender || '',
   others_info: props.quote?.others_info || '',
+  height: props.quote?.height || '',
+  weight: props.quote?.weight || '',
+  bmi: props.quote?.bmi || '',
+  age: props.quote?.age || '',
 });
 
 const editMode = computed(() => {
@@ -53,6 +54,31 @@ function onSubmit(isValid) {
     });
   }
 }
+const getBMI = () => {
+  if(!quoteForm.height || !quoteForm.weight) {
+    quoteForm.bmi = '';
+    return;
+  }
+
+  quoteForm.bmi = calculateBMI(quoteForm.height, quoteForm.weight);
+}
+const dobChanged = () => {
+  if(!quoteForm.dob) {
+    quoteForm.age = '';
+    return;
+  }
+  const date = quoteForm.dob.split('T')[0];
+  quoteForm.age = calculateAge(date);
+}
+watch(
+  () => quoteForm.dob,
+  (newValue, oldValue) => {
+    if (newValue) {
+      dobChanged(newValue);
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <template>
@@ -75,6 +101,33 @@ function onSubmit(isValid) {
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+         <x-field label="Type of Insurance">
+          <x-select
+            v-model="quoteForm.tenure_of_insurance_id"
+            :options="
+              typeOfInsurance.map(item => ({
+                value: item.id,
+                label: item.text,
+                disabled: item.code === 'SAVINGS'
+              }))
+            "
+            class="w-full"
+            :error="quoteForm.errors.tenure_of_insurance_id"
+          />
+        </x-field>
+        <x-field label="Purpose of Insurance">
+          <x-select
+            v-model="quoteForm.purpose_of_insurance_id"
+            :options="
+              purposeOfInsurance.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+            :error="quoteForm.errors.purpose_of_insurance_id"
+          />
+        </x-field>
         <x-field label="First Name" required>
           <x-input
             v-model="quoteForm.first_name"
@@ -105,7 +158,7 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.email"
           />
         </x-field>
-        <x-field label="Mobile Number" required>
+        <x-field label="Phone Number" required>
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
@@ -117,6 +170,15 @@ function onSubmit(isValid) {
         </x-field>
         <x-field label="Date of Birth">
           <DatePicker v-model="quoteForm.dob" input-classes="w-full" />
+        </x-field>
+        <x-field label="Age">
+          <x-input
+            v-model="quoteForm.age"
+            type="text"
+            class="w-full"
+            :disabled="true"
+            :error="quoteForm.errors.age"
+          />
         </x-field>
         <x-field label="Nationality">
           <x-select
@@ -131,49 +193,7 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.nationality_id"
           />
         </x-field>
-        <x-field label="Sum Insured Value">
-          <x-input
-            v-model="quoteForm.sum_insured_value"
-            type="number"
-            class="w-full"
-            :error="quoteForm.errors.sum_insured_value"
-          />
-        </x-field>
-        <x-field label="PRICE">
-          <x-input
-            v-model="quoteForm.premium"
-            type="number"
-            class="w-full"
-            :error="quoteForm.errors.premium"
-          />
-        </x-field>
-        <x-field label="Currency">
-          <x-select
-            v-model="quoteForm.sum_insured_currency_id"
-            :options="
-              currency.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.sum_insured_currency_id"
-          />
-        </x-field>
-        <x-field label="Purpose of Insurance">
-          <x-select
-            v-model="quoteForm.purpose_of_insurance_id"
-            :options="
-              purposeOfInsurance.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.purpose_of_insurance_id"
-          />
-        </x-field>
-        <x-field label="Marital Status">
+         <x-field label="Marital Status">
           <x-select
             v-model="quoteForm.marital_status_id"
             :options="
@@ -184,46 +204,6 @@ function onSubmit(isValid) {
             "
             class="w-full"
             :error="quoteForm.errors.marital_status_id"
-          />
-        </x-field>
-
-        <x-field label="Children">
-          <x-select
-            v-model="quoteForm.children_id"
-            :options="
-              children.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.children_id"
-          />
-        </x-field>
-        <x-field label="Type of Insurance">
-          <x-select
-            v-model="quoteForm.tenure_of_insurance_id"
-            :options="
-              typeOfInsurance.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.tenure_of_insurance_id"
-          />
-        </x-field>
-        <x-field label="Tenure of Cover">
-          <x-select
-            v-model="quoteForm.number_of_years_id"
-            :options="
-              numberOfYears.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.number_of_years_id"
           />
         </x-field>
         <x-field label="Gender">
@@ -237,7 +217,97 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.gender"
           />
         </x-field>
-        <x-field label="Smoker">
+        <div class="w-full">
+          <div class="grid sm:grid-cols-3 gap-4">
+            <x-field label="Height" required>
+              <div class="relative w-full">
+                <x-input
+                  v-model="quoteForm.height"
+                  @change="getBMI"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  :rules="[isRequired]"
+                  class="w-full" 
+                  :error="quoteForm.errors.height"
+                  maxLength="20"
+                />
+                <span class="absolute inset-y-0 right-3 flex items-center text-gray-500">Cms</span>
+              </div>
+            </x-field>
+            <x-field label="Weight" required>
+              <div class="relative w-full">
+                <x-input
+                  v-model="quoteForm.weight"
+                  @change="getBMI"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  :rules="[isRequired]"
+                  class="w-full" 
+                  :error="quoteForm.errors.weight"
+                  maxLength="20"
+                />
+                <span class="absolute inset-y-0 right-3 flex items-center text-gray-500">Kgs</span>
+              </div>
+            </x-field>
+            <x-field label="BMI">
+              <div class="relative w-full">
+                <x-input
+                  v-model="quoteForm.bmi"
+                  type="text"
+                  class="w-full" 
+                  :error="quoteForm.errors.bmi"
+                  :disabled="true"
+                />
+              </div>
+            </x-field>
+          </div>
+        </div>
+        <x-field label="Tenure of Cover">
+          <x-select
+            v-model="quoteForm.number_of_years_id"
+            :options="
+              numberOfYears.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+            :error="quoteForm.errors.number_of_years_id"
+          />
+        </x-field>
+        <div class="w-full">
+          <div class="grid sm:grid-cols-12 gap-4">
+            <div class="sm:col-span-4">
+            <x-field label="Currency">
+              <x-select
+                v-model="quoteForm.sum_insured_currency_id"
+                :options="
+                  currency.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                class="w-full"
+                :error="quoteForm.errors.sum_insured_currency_id"
+              />
+            </x-field>
+            </div>
+            <div class="sm:col-span-8">
+            <x-field label="Sum Assured">
+              <x-input
+                v-model="quoteForm.sum_insured_value"
+                type="number"
+                class="w-full"
+                :error="quoteForm.errors.sum_insured_value"
+              />
+            </x-field>
+            </div>
+          </div>
+        </div>
+
+        <x-field label="Have you smoked tobacco/nicotine in the last 12 months?">
           <x-select
             v-model="quoteForm.is_smoker"
             :options="[
@@ -248,8 +318,8 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.is_smoker"
           />
         </x-field>
-        <x-field label="Others Info">
-          <x-input
+        <x-field label="Additional Notes">
+          <x-textarea
             v-model="quoteForm.others_info"
             type="text"
             class="w-full"
@@ -266,7 +336,7 @@ function onSubmit(isValid) {
           type="submit"
           :loading="quoteForm.processing"
         >
-          {{ editMode ? 'Update' : 'Save' }}
+          {{ editMode ? 'Update' : 'Create' }}
         </x-button>
       </div>
     </x-form>

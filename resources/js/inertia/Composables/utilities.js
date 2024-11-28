@@ -390,3 +390,33 @@ export const getIp = async () => {
     return null;
   }
 };
+
+// Function to calculate age
+export const calculateAge = (birthDateString) => {
+  const birthDate = new Date(birthDateString);
+
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  const dayDifference = today.getDate() - birthDate.getDate();
+
+  if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
+    age--;
+  }
+
+  return age;
+};
+
+// Function to calculate BMI
+export const calculateBMI = (heightInCm, weightInKg) => {
+  if (!heightInCm || !weightInKg) {
+    return 0;
+  }
+
+  const heightInMeters = heightInCm / 100;
+  const bmi = weightInKg / (heightInMeters ** 2);
+
+  return parseFloat(bmi.toFixed(2));
+}

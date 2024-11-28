@@ -34,13 +34,15 @@ class LifeQuoteRepository extends BaseRepository
             'sumInsuredCurrencyId' => $data['sum_insured_currency_id'],
             'maritalStatusId' => $data['marital_status_id'],
             'purposeOfInsuranceId' => $data['purpose_of_insurance_id'],
-            'childrenId' => $data['children_id'],
-            'premium' => $data['premium'],
             'tenureOfInsuranceId' => $data['tenure_of_insurance_id'],
             'numberOfYearsId' => $data['number_of_years_id'],
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
             'othersInfo' => $data['others_info'],
+            'height' => $data['height'],
+            'weight' => $data['weight'],
+            'bmi' => $data['bmi'],
+            'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
@@ -62,7 +64,7 @@ class LifeQuoteRepository extends BaseRepository
         $quote = $this->where('uuid', $uuid)->firstOrFail();
 
         $quoteData = Arr::only($data, [
-            'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'sum_insured_value', 'nationality_id', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'premium', 'tenure_of_insurance_id', 'number_of_years_id', 'is_smoker', 'gender', 'others_info',
+            'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'sum_insured_value', 'nationality_id', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'tenure_of_insurance_id', 'number_of_years_id', 'is_smoker', 'gender', 'others_info', 'height', 'weight', 'bmi', 'age',
         ]);
         $quote->update($quoteData);
 
@@ -157,8 +159,7 @@ class LifeQuoteRepository extends BaseRepository
             'currency' => CurrencyTypeRepository::withActive()->get(),
             'purposeOfInsurance' => PurposeOfInsuranceRepository::withActive()->get(),
             'maritalStatus' => MaritalStatusRepository::withActive()->get(),
-            'children' => LifeChildrenRepository::withActive()->get(),
-            'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->get(),
+            'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->orderBy('sort_order')->get(),
             'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
 
         ];

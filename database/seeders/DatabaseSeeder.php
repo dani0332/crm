@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             GenericPermissionSeeder::class,
             SendUpdateAdditionalSubType::class,
             PermissionsSeeder::class,
+            LifeInsuranceTenureSeeder::class,
         ]);
     }
 }
