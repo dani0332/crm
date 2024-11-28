@@ -354,8 +354,7 @@
        }}
                         </td>
                         <th>Risk Override</th>
-                        <td class="override_color">{{$detail->risk_score_override ? $detail->risk_score_override:'N/A' }}</td>
-
+                        <td class="override_color">{{ $detail && $detail->risk_score_override ? $detail->risk_score_override : 'N/A' }}</td>
                     </tr>
                     <tr>
                         <th>Next Assessment</th>
