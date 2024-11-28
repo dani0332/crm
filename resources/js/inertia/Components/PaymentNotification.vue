@@ -12,14 +12,14 @@ const listen = () => {
   const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
   worker.port.addEventListener("message", (e) => {
-    if (e.advisorId === page.props.auth.user.id) {
+    if (e.data.advisorId === page.props.auth.user.id) {
       notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
         title: 'Payment',
-        message: e.message,
-        url: e.url,
-        uuid: e.uuid,
-        quoteType: e.quoteType,
+        message: e.data.message,
+        url: e.data.url,
+        uuid: e.data.uuid,
+        quoteType: e.data.quoteType,
         timeout: 30000,
       };
       showNotification.value = true;

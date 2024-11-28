@@ -16,7 +16,7 @@ const listen = () => {
   const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
   worker.port.addEventListener("message", (e) => {
-    totalCount.value = e.totalLeadsCount;
+    totalCount.value = e.data.totalLeadsCount;
   });
 
   worker.onerror = function(error){

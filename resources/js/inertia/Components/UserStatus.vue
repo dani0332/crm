@@ -24,26 +24,26 @@ const listen = () => {
   const worker = new SharedWorker('/build/workers/pusher.worker.js');
 
   worker.port.addEventListener("message", (e) => {
-    currentStatus.value = e.status;
-    if (e.status == 1) {
+    currentStatus.value = e.data.status;
+    if (e.data.status == 1) {
       notification.success({
-        title: e.userName + e.message,
+        title: e.data.userName + e.data.message,
         position: 'top',
       });
     }
-    if (e.status == 2) {
+    if (e.data.status == 2) {
       notification.info({
-        title: e.userName + e.message,
+        title: e.data.userName + e.data.message,
         position: 'top',
       });
     }
-    if (e.status == 3) {
+    if (e.data.status == 3) {
       notification.error({
-        title: e.userName + e.message,
+        title: e.data.userName + e.data.message,
         position: 'top',
       });
     }
-    userStatus.value = e.status;
+    userStatus.value = e.data.status;
   });
 
   worker.onerror = function(error){
