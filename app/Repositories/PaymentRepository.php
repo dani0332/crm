@@ -665,7 +665,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         if (! empty($payment->credit_approval) && $paidOrAuthorisedSplits) {
             $this->updatePaymentMethodForCreditApproval($payment);
         }
-        
+
         $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
             PaymentStatusEnum::PAID,
             PaymentStatusEnum::CAPTURED,
