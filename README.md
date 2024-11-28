@@ -155,7 +155,7 @@ doppler run -- docker-compose -f docker-compose-local.yml build
 
 This command builds the containers related to your services, here -f flag detonates which dockerfile you want to use as there are some production docker files as well so its better to mention which file to use otherwise it will pick by default file which is docker-compose.yml .
 
-## Run Containers:
+## Run Containers: 
 
 ```dotenv
 doppler run -- docker-compose -f docker-compose-local.yml up
