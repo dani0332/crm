@@ -3,7 +3,7 @@
     "private": true,
     "scripts": {
         "dev": "doppler run -- yarn && vite",
-        "prod": "yarn && vite build",
+        "prod": "yarn && vite build && vite build --config vite-worker.config.js",
         "lint": "prettier . --write",
         "worker:watch": "WATCH_WORKER=true vite build --config vite-worker.config.js"
     },
