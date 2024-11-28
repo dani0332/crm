@@ -187,9 +187,6 @@ const formatDate = date => {
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
   return useDateFormat(date, 'DD-MMM-YYYY').value;
 };
-const getAge = (ageString) => {
-  return calculateAge(ageString);
-}
 </script>
 <template>
   <div
@@ -252,7 +249,7 @@ const getAge = (ageString) => {
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="person" size="sm" class="text-primary-400" />
-        <p class="text-xs">{{ age || getAge(dob) }}</p>
+        <p class="text-xs">{{ age }}</p>
       </div>
 
       <div
