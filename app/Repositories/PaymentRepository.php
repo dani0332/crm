@@ -654,6 +654,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     private function updatePaymentStatusNonUpFront($payment)
     {
+        $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
+        $paidOrAuthorisedSplits = $this->getPaidOrAuthorisedSplits($paymentSplits);
+
+        // Update payment method for credit approval payments when credit approval is present
+        if (! empty($payment->credit_approval) && $paidOrAuthorisedSplits) {
+            $this->updatePaymentMethodForCreditApproval($payment);
+        }
+
         $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
             PaymentStatusEnum::PAID,
             PaymentStatusEnum::CAPTURED,
@@ -684,6 +692,40 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 info('Master payment code: '.$payment->code.' Updating payment status to NEW');
                 $payment->update(['payment_status_id' => PaymentStatusEnum::NEW]);
             }
+        }
+    }
+
+    private function getPaidOrAuthorisedSplits($paymentSplits)
+    {
+        $paidOrAuthorisedStatuses = [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::CAPTURED,
+        ];
+
+        return $paymentSplits->contains(function ($split) use ($paidOrAuthorisedStatuses) {
+            return in_array($split->payment_status_id, $paidOrAuthorisedStatuses);
+        });
+    }
+
+    private function updatePaymentMethodForCreditApproval($payment)
+    {
+        info('Master payment code: '.$payment->code.' with credit approval & paid/authorised child payments');
+        // Define the frequencies that should result in a PARTIAL_PAYMENT status
+        $partialPaymentFrequencies = [
+            PaymentFrequency::CUSTOM,
+            PaymentFrequency::SEMI_ANNUAL,
+            PaymentFrequency::QUARTERLY,
+            PaymentFrequency::MONTHLY,
+        ];
+
+        // Update parent payment based on frequency
+        if (in_array($payment->frequency, $partialPaymentFrequencies)) {
+            info('Master payment code: '.$payment->code.' Updating payment method to Partial Payment');
+            $payment->update(['payment_methods_code' => PaymentMethodsEnum::PartialPayment]);
+        } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+            info('Master payment code: '.$payment->code.' Updating payment method to Multiple Payment');
+            $payment->update(['payment_methods_code' => PaymentMethodsEnum::MultiplePayment]);
         }
     }
 

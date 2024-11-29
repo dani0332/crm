@@ -4,6 +4,7 @@ defineProps({
   dropdownSource: Object,
   permissions: Object,
   advisors: Object,
+  renewalBatches: Array,
   authorizedDays: Number,
 });
 
@@ -55,7 +56,7 @@ const filters = reactive({
   direction_code: '',
   coverage_code: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   payment_due_date: '',
   booking_date: '',
   segment_filter: '',
@@ -119,7 +120,7 @@ const tableHeader = [
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Renewal Batch', value: 'renewal_batch_text' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -145,6 +146,13 @@ const advisorsOptions = computed(() => {
       label: 'UnAssigned',
     },
   ];
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
 });
 
 const leadsStatusOptions = computed(() => {
@@ -626,13 +634,11 @@ watch(
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+        <ComboBox
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
         />
         <DatePicker
           v-model="filters.payment_due_date"
@@ -876,6 +882,11 @@ watch(
                     : ''
           }}
         </div>
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p>
+          {{ item.renewal_batch_text }}
+        </p>
       </template>
     </DataTable>
 
