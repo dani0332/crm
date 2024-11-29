@@ -2,6 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
+use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class RolePermissionSeeder extends Seeder
@@ -14,7 +18,7 @@ class RolePermissionSeeder extends Seeder
         $this->searchModulePermissions();
     }
 
-    private function searchModulePermissions()
+    private function searchModulePermissions(): void
     {
         // Add Search across all LOBs permission
         $searchAcrossLOBsPermissions = [PermissionsEnum::SEARCH_ALL_LEAD_LOB, PermissionsEnum::DATA_EXTRACTION_SEARCH_ALL_LEADS];
