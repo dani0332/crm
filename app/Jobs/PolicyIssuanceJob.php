@@ -39,7 +39,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
-        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
+        info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
         if ($this->isProcessable($this->process)) {
 
@@ -75,7 +75,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
         }
 
-        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
+        info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
     }
 
     public function failed(Throwable $exception)
