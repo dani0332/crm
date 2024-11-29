@@ -2,7 +2,6 @@
 
 namespace App\Rules;
 
-use Closure;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
@@ -14,8 +13,8 @@ class FileNameExists implements Rule
     /**
      * Create a new rule instance.
      *
-     * @param string $table
-     * @param string $column
+     * @param  string  $table
+     * @param  string  $column
      * @return void
      */
     public function __construct($table, $column)
@@ -33,7 +32,7 @@ class FileNameExists implements Rule
      */
     public function passes($attribute, $value)
     {
-        return !DB::table($this->table)->where($this->column, $value->getClientOriginalName())->exists();
+        return ! DB::table($this->table)->where($this->column, $value->getClientOriginalName())->exists();
     }
 
     /**

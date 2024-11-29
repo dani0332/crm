@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Rules\FileNameExists;
-use App\Models\RateCoverageUpload;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UploadRateCoverageRequest extends FormRequest

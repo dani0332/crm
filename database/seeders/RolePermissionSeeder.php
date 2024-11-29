@@ -11,7 +11,8 @@ class RolePermissionSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run(): void {
+    public function run(): void
+    {
         try {
             //permission for upload Health Rates and Coverages
             $uploadHealthRatesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_RATES)->first();

@@ -35,7 +35,6 @@ class RateCoverageUploadController extends Controller
     /**
      * Upload coverages file.
      *
-     * @param UploadRateCoverageRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function coveragesUploadCreate(UploadRateCoverageRequest $request)
@@ -66,7 +65,6 @@ class RateCoverageUploadController extends Controller
     /**
      * Upload rates.
      *
-     * @param UploadRateCoverageRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function rateUploadCreate(UploadRateCoverageRequest $request)
@@ -79,7 +77,7 @@ class RateCoverageUploadController extends Controller
     /**
      * Fetch bad records.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Inertia\Response
      */
     public function badRecords($id)

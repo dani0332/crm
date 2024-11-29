@@ -124,7 +124,7 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
             'is_northern' => $row[0] ?? null,
             'min_age' => $row[1] ?? null,
             'max_age' => $row[2] ?? null,
-            'gender' => $row[3] ?? "",
+            'gender' => $row[3] ?? '',
             'premium' => $row[4] ?? null,
             'eligibility_code' => $row[5] ?? null,
             'plan_code' => $row[6] ?? null,
