@@ -35,7 +35,7 @@ jobs:
       - name: Setup yarn
         run: npm install -g yarn
 
-      - run: yarn && yarn lint --fix && yarn vite build
+      - run: yarn && yarn lint --fix && yarn vite build && vite build --config vite-worker.config.js
 
       - name: Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
