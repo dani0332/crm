@@ -50,6 +50,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\PermissionsEnum;
 
 class AMLController extends Controller
 {
@@ -63,6 +64,7 @@ class AMLController extends Controller
     public function __construct()
     {
         $this->middleware('permission:aml-list', ['only' => ['index']]);
+        $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
     }
 
     /**
@@ -176,7 +178,7 @@ class AMLController extends Controller
             foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
                 $quoteType = QuoteTypes::getName($quoteTypeId)->value;
                 $nameSpace = '\\App\\Models\\';
-                $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+                $model = checkPersonalQuotes(ucwords($quoteType)) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType) . 'Quote';
 
                 $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
                 $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid'])->get();

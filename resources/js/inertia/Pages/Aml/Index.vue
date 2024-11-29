@@ -12,7 +12,8 @@ const loader = reactive({
   table: false,
   export: false,
 });
-
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const { isRequired } = useRules();
 
 const tableHeader = [
@@ -249,6 +250,7 @@ onMounted(() => {
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button
+        v-if="can(permissionsEnum.DATA_EXTRACTION)"
         size="sm"
         color="#48bb78"
         @click.prevent="onDataExport()"
