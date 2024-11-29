@@ -317,6 +317,14 @@ function setQueryStringFilters() {
   }
 }
 
+function exportExcel() {
+    const url = new URL(window.location.href);
+    const exportFilters = url.search;
+    const exportURL = '/search-all-export' + exportFilters;
+
+    window.open(exportURL, '_blank');
+}
+
 watch(() => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('list') === 'endorsements') {
@@ -353,7 +361,7 @@ onMounted(() => {
       </x-tooltip>
       <div class="space-x-3">
         <template
-          v-if="can(permissionsEnum.DATA_EXTRACTION_SEARCH_ALL_LEADS) || true"
+          v-if="can(permissionsEnum.DATA_EXTRACTION_SEARCH_ALL_LEADS)"
         >
           <template v-if="!tableData">
             <x-tooltip placement="bottom">
@@ -371,7 +379,7 @@ onMounted(() => {
               size="sm"
               color="emerald"
               :loading="loader.table"
-              :href="`/search-all-export?${objToUrl(availableFilters)}&list=${isSendUpdateListView ? 'endorsements' : 'leads'}`"
+              @click="exportExcel()"
             >
               Export to Excel
             </x-button>

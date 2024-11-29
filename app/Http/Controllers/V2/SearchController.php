@@ -70,6 +70,7 @@ class SearchController extends Controller
     {
         $isEndorsementList = $exportSearchLeadsOrEndorsementsRequest->list == 'endorsements';
         $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList, true);
+        app(CentralService::class)->generateExportLogs();
         $exportFileName = 'InsuranceMarket.ae™ '.($isEndorsementList ? 'Send Update' : 'Lead').' List '.now()->format(config('constants.DATE_DISPLAY_FORMAT')).'.xlsx';
 
         return (new SearchLeadsEndorsementsExport($getLeadsOrEndorsements))->download($exportFileName);

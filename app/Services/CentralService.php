@@ -35,6 +35,7 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
+use App\Models\QuoteExportLog;
 use App\Models\QuoteStatusLog;
 use App\Models\Role;
 use App\Models\SendUpdateLog;
@@ -48,6 +49,7 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -915,5 +917,20 @@ class CentralService
         }
 
         return false;
+    }
+
+    public function generateExportLogs(): void
+    {
+        try {
+            $exportLogs = QuoteExportLog::create([
+                'user_id' => auth()->id(),
+                'ip_address' => request()->ip(),
+                'url' => request()->fullUrl(),
+                'quote_type_id' => request()->quote_type_id ?? null,
+                'route_name' => request()->route()->uri(),
+            ]);
+        } catch (\Exception $e) {
+            info('fn: generateExportLogs error: '.$e->getMessage());
+        }
     }
 }

@@ -36,7 +36,7 @@ class SearchLeadsEndorsementsExport extends BaseReportsExport implements WithTit
                 ($row?->customer?->first_name.' '.$row?->customer?->last_name) ?? $this->notAvailable,
                 $this->getCompanyName(request()->list, $row),
                 $row?->quoteStatus?->text ?? $this->notAvailable,
-                $this->resolveNumberFormat($row?->quotePayments->first()?->total_price ?? 0) ?? $this->notAvailable,
+                $row?->quotePayments->first()?->total_price ?? $this->notAvailable,
                 $row->policy_number ?? $this->notAvailable,
                 $row?->quotePayments->first()?->insuranceProvider?->text ?? $this->notAvailable,
                 $row?->quoteType?->code ?? $this->notAvailable,
@@ -48,7 +48,7 @@ class SearchLeadsEndorsementsExport extends BaseReportsExport implements WithTit
                 ($row?->personalQuote?->customer?->first_name.' '.$row?->personalQuote?->customer?->last_name) ?? $this->notAvailable,
                 $this->getCompanyName(request()->list, $row),
                 $row->status ?? $this->notAvailable,
-                $this->resolveNumberFormat($row?->sendUpdatePayments?->first()?->total_price ?? 0) ?? $this->notAvailable,
+                $row?->sendUpdatePayments?->first()?->total_price ?? $this->notAvailable,
                 $row?->personalQuote?->policy_number ?? $this->notAvailable,
                 $row?->insuranceProvider?->text ?? $this->notAvailable,
                 $row?->quoteType?->code ?? $this->notAvailable,
@@ -61,7 +61,7 @@ class SearchLeadsEndorsementsExport extends BaseReportsExport implements WithTit
 
     private function getCompanyName($exportType, $row): string
     {
-        $personalLOBs = [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski];
+        $personalLOBs = [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::TradeCredit];
         $nonEcomLOBs = [
             QuoteTypeId::Car => 'carQuoteRequest',
             QuoteTypeId::Home => 'homeQuoteRequest',
@@ -70,7 +70,9 @@ class SearchLeadsEndorsementsExport extends BaseReportsExport implements WithTit
             QuoteTypeId::Business => 'BusinessQuoteRequest',
             QuoteTypeId::Travel => 'TravelQuoteRequest',
             QuoteTypeId::GroupMedical => 'BusinessQuoteRequest',
+            QuoteTypeId::GroupMedicalBusiness => 'BusinessQuoteRequest',
             QuoteTypeId::Corpline => 'BusinessQuoteRequest',
+            QuoteTypeId::CorplineBusiness => 'BusinessQuoteRequest',
         ];
 
         $isPersonalLOB = in_array($row->quote_type_id, $personalLOBs);

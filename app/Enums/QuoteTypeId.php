@@ -26,6 +26,10 @@ final class QuoteTypeId extends Enum
     const Corpline = 101;
     const GroupMedical = 102;
 
+    const TradeCredit = 12;
+    const GroupMedicalBusiness = 13;
+    const CorplineBusiness = 14;
+
     public static function getOptions()
     {
         $oClass = new ReflectionClass(__CLASS__);
