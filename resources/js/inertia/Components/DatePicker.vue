@@ -46,6 +46,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  error: {
+    type: String,
+    default: '',
+  },
 });
 
 const selectedData = computed({
@@ -94,6 +98,7 @@ const iconPosition = computed(() => {
         @update:modelValue="onInput"
         @blur="onBlur"
         @keydown.enter.prevent="onEnter"
+        :error="props.error"
       />
     </template>
   </x-datepicker>
