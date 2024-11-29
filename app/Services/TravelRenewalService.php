@@ -232,10 +232,20 @@ class TravelRenewalService extends BaseService
     public function leadAllocation($quoteUID)
     {
         info('TravelRenewalService Processing Travel record for Quote Allocation with uuid: '.$quoteUID . ' | Time: '.now());
-        $response =  QuoteTypes::TRAVEL->allocate($quoteUID);
-        if ($response) {
-            info(self::class.' -TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob  Ref-ID: '.$quoteUID . ' | Time: '.now());
-            SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
+        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+
+        $lead = TravelQuote::where('uuid', $quoteUID)->first();
+        // Only apply teamId if the payment status is AUTHORIZED
+        $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
+
+        if ($lead) {
+            $response =  QuoteTypes::TRAVEL->allocate($quoteUID,$currentTeamId);
+            if ($response) {
+                info(self::class.' -TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob  Ref-ID: '.$quoteUID.' | Time: '.now());
+                SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
+            }
         }
+
+
     }
 }
