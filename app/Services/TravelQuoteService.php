@@ -1130,12 +1130,12 @@ class TravelQuoteService extends BaseService
     {
         $parentPayment = Payment::where('code', $parentLead->code)->first();
         $childPayment = Payment::where('code', $childLead->code)->first();
-        
+
         $parentLead->premium = $parentPayment->total_price;
         $parentLead->plan_id = $parentPayment->plan_id;
         $parentLead->save();
         info("Updated parent lead code {$parentLead->code} with premium {$parentLead->premium} and plan ID {$parentLead->plan_id}");
-        
+
         $childLead->premium = $childPayment->total_price;
         $childLead->plan_id = $childPayment->plan_id;
         $childLead->save();
