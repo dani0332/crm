@@ -28,6 +28,8 @@ class BuyLeadController extends Controller
             $data['cost'] = $config[0];
         }
 
+        $data['isMaxReached'] = true;
+
         return response()->json($data);
     }
 

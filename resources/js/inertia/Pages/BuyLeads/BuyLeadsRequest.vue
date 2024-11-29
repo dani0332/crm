@@ -91,10 +91,17 @@ const fetchMaximumLeads = () => {
       quote_type: requestForm.quote_type,
     })
     .then(response => {
-      let { maxCapacity, cost } = response.data;
+      let { maxCapacity, cost, isMaxReached } = response.data;
       maximumLeads.value = maxCapacity;
       perLeadCost.value = cost;
       table.value.loading = false;
+      if (isMaxReached) {
+        notification.error({
+          title:
+            'You have reached the maximum leads for the day.Please submit your next request on the following day.',
+          position: 'top',
+        });
+      }
     })
     .catch(error => {
       notification.error({
