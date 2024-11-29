@@ -51,12 +51,12 @@ class LifeQuoteRepository extends BaseRepository
         $response = Capi::request('/api/v2-save-life-quote', 'post', $lifeData);
 
         if (isset($response->quoteUID)) {
-            //todo: make sure if this is required to update, or api is handling this as well
-            // $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
-            // $quote->update(['height' => $lifeData['height']]);
-            // $quote->update(['weight' => $lifeData['weight']]);
-            // $quote->update(['bmi' => $lifeData['bmi']]);
-            // $quote->update(['age' => $lifeData['age']]);
+            //todo: will remove this code once handled on Capi
+            $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
+            $quote->update(['height' => $lifeData['height']]);
+            $quote->update(['weight' => $lifeData['weight']]);
+            $quote->update(['bmi' => $lifeData['bmi']]);
+            $quote->update(['age' => $lifeData['age']]);
         }
 
         return $response;
