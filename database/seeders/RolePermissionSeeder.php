@@ -122,6 +122,7 @@ class RolePermissionSeeder extends Seeder
             throw $th;
         }
         $this->addTravelSicAllocationPermission();
+        $this->addReceiveNotificationsPermission();
     }
 
     public function addTravelSicAllocationPermission()
@@ -160,6 +161,28 @@ class RolePermissionSeeder extends Seeder
             Log::error('Error while assigning permission: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
+        }
+    }
+
+    private function addReceiveNotificationsPermission()
+    {
+        $roles = Role::whereIn('name', [RolesEnum::CarAdvisor, RolesEnum::TravelAdvisor, RolesEnum::HealthAdvisor, RolesEnum::PetAdvisor, RolesEnum::BikeAdvisor, RolesEnum::HomeAdvisor, RolesEnum::LifeAdvisor, RolesEnum::CycleAdvisor, RolesEnum::YachtAdvisor, RolesEnum::JetskiAdvisor, RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor])->get();
+        $receiveNotificationsPermission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RECEIVE_NOTIFICATIONS ?? 'receive-notifications',
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        foreach ($roles as $role) {
+
+            if (! $role->hasPermissionTo($receiveNotificationsPermission)) {
+                $role->givePermissionTo($receiveNotificationsPermission);
+                Log::info("Permission {$receiveNotificationsPermission->name} assigned to role {$role->name}");
+            } else {
+                Log::info("Role {$role->name} already has permission {$receiveNotificationsPermission->name}");
+            }
         }
     }
 }

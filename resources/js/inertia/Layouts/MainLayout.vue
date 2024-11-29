@@ -90,11 +90,6 @@ const getHTML = (buttonText, data, activityType) => {
     ${data}</a>`;
 };
 
-const isCallbackNotificationsEnabled = computed(() => {
-  let permission = permissionsEnum.CALLBACK_NOTIFICATIONS;
-  return can(permission);
-});
-
 const isReceiveNotificationsEnabled = computed(() => {
   let permission = permissionsEnum.RECEIVE_NOTIFICATIONS;
   return can(permission);
@@ -278,7 +273,7 @@ const isReceiveNotificationsEnabled = computed(() => {
 
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
-              <CallBackNotification v-if="isCallbackNotificationsEnabled" />
+              <CallBackNotification v-if="isReceiveNotificationsEnabled" />
               <PaymentNotification v-if="isReceiveNotificationsEnabled" />
               <PaymentExpireNotifications
                 v-if="isReceiveNotificationsEnabled"
