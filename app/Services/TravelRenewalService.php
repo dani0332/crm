@@ -142,8 +142,8 @@ class TravelRenewalService extends BaseService
             'regionCoverForId' => $quote->region_cover_for_id,
             'tripStarted' => false
         ];
-
-        TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1))->onQueue('travel_renewal_leads');
+        // ->onQueue('travel_renewal_leads')
+        TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
         info("TravelRenewalService Travel renewal lead creation job dispatched for Reference ID: {$quote->uuid} | Time:".now());
 
     }  else     {
