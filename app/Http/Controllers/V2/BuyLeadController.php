@@ -20,7 +20,7 @@ class BuyLeadController extends Controller
     public function fetchRate(BuyLeadsRateFetchRequest $request)
     {
         $data['maxCapacity'] = $this->buyLeadService->getBlLeadRemainingLimit($request->getQuoteType());
-        $data['isMaxReached'] = $data['maxCapacity'] === 0;
+        $data['isMaxCapReached'] = $data['maxCapacity'] === 0;
         $data['maxCapacity'] = $data['maxCapacity'] === 'DISABLED' ? 0 : $data['maxCapacity'];
 
         $config = $this->buyLeadService->findConfigCost($request->getQuoteType());
