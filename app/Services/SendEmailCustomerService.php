@@ -841,6 +841,7 @@ class SendEmailCustomerService extends BaseService
                 ]],
                 'templateId' => (int) $emailData->emailTemplateId,
                 'params' => [
+                    'clientFirstName' => $emailData->clientFirstName,
                     'clientFullName' => $emailData->clientFullName,
                     'carQuoteId' => $emailData->code,
                     'currentInsurer' => $emailData->currentInsurer,

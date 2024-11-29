@@ -452,18 +452,17 @@ export const getIp = async () =>
   }
 };
 
-const openUrl = (url) =>
+//Function to validate single field in form before submit
+export const validateField = (form, fieldValue, errorField, validationRule) =>
 {
-  return new Promise((resolve, reject) =>
+  const validationError = validationRule(fieldValue);
+  if (validationError !== true)
   {
-    const newWindow = window.open(url);
-
-    if (!newWindow)
-    {
-      reject(new Error('Failed to open the URL.'));
-    } else
-    {
-      resolve(true); // Resolve immediately after opening the URL
-    }
-  });
+    form.errors[errorField] = validationError;
+    return false;
+  } else
+  {
+    form.errors[errorField] = '';
+    return true;
+  }
 };
