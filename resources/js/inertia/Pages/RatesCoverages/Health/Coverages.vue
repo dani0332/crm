@@ -203,6 +203,9 @@ const showFailedCoverages = (id, badCount) => {
           <li>
             Please ensure each Excel file (.xlsx) contains only one sheet (no multiple sheets within a single file).
           </li>
+          <li>
+            Please use the unformatted (values only) data in the sheet.
+          </li>
         </ul>
       </x-alert>
       <div class="flex justify-end gap-3 my-4">
