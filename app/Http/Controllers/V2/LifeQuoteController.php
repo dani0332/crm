@@ -38,6 +38,7 @@ use App\Repositories\UserRepository;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -188,7 +189,7 @@ class LifeQuoteController extends Controller
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
-        $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
+        $noteDocumentType = (app(LifeQuoteService::class))->getNoteDocumentType();
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, QuoteTypes::LIFE->name);
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 

@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Enums\DatabaseColumnsString;
+use App\Enums\DocumentTypeCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Models\DocumentType;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -654,5 +656,10 @@ class LifeQuoteService extends BaseService
         }
 
         return 'true';
+    }
+
+    public function getNoteDocumentType()
+    {
+        return DocumentType::where('code', DocumentTypeCode::OD)->first();
     }
 }
