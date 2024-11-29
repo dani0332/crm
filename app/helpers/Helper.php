@@ -461,27 +461,6 @@ function generateRouteNames($prefix)
     ];
 }
 
-if (! function_exists('newUi')) {
-    function newUi(): array
-    {
-        return [
-            quoteTypeCode::Health,
-            quoteTypeCode::Car,
-            quoteTypeCode::Travel,
-            quoteTypeCode::Home,
-            quoteTypeCode::Life,
-            quoteTypeCode::Pet,
-            quoteTypeCode::CORPLINE,
-            quoteTypeCode::Business,
-            quoteTypeCode::Cycle,
-            quoteTypeCode::Bike,
-            quoteTypeCode::Yacht,
-            quoteTypeCode::Jetski,
-            quoteTypeCode::Aml,
-        ];
-    }
-}
-
 if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
