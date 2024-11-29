@@ -2,10 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\QuoteTypeId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use League\CommonMark\Extension\SmartPunct\Quote;
 
 class QuoteRequestEntityMapping extends Model
 {

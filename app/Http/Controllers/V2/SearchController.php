@@ -17,7 +17,6 @@ use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\SearchService;
 use App\Services\SendUpdateLogService;
-use AWS\CRT\HTTP\Request;
 
 class SearchController extends Controller
 {
