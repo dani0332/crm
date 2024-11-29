@@ -88,7 +88,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const CTD_NFI = 'CTD_NFI'; // Change travel dates (with no financial impact)
     const DTSI = 'DTSI'; // Decrease the sum insured
     const DOV = 'DOV'; // Deletion of vehicle
-    const ACB = 'ACB'; // Additional commission booking
+    const ACB = 'ACB'; // Additional tax invoice raised by buyer booking
     const ATIB = 'ATIB'; // Additional tax invoice booking
     const ATICB = 'ATICB'; // Additional tax invoice and commission booking
     const CAAFE = 'CAAFE'; // Correction and amendments (with Financial Effect).
