@@ -142,6 +142,7 @@ const renewalBatchOptions = computed(() => {
   }));
 });
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
@@ -149,7 +150,13 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Home'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function onSubmit(isValid) {
@@ -606,6 +613,7 @@ const formatDate = dateString =>
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >
