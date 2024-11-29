@@ -17,18 +17,12 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
-            AddSuperLeadStatusChangePermission::class,
             QuoteStatusSeeder::class,
-            AddReApprovePaymentPermission::class,
-            // SendUpdateAdditionalTaxInvoice::class,
+            LookupSeeder::class,
             SUAdditionalCRNSubTypesSeeder::class,
-            //DocumentTypeSeeder::class,
-            InsurerTaxInvoicePermissionsSeeder::class,
-            SendUpdatePermission::class,
-            GenericPermissionSeeder::class,
-            SendUpdateAdditionalSubType::class,
-            PermissionsSeeder::class,
             CallBackNotificationDataMigrationSeeder::class,
+            //DocumentTypeSeeder::class,
+            // SendUpdateAdditionalSubType::class,
         ]);
     }
 }
