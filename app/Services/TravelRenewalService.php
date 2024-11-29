@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Enums\QuoteTypes;
 
 class TravelRenewalService extends BaseService
 {
@@ -231,14 +232,7 @@ class TravelRenewalService extends BaseService
     public function leadAllocation($quoteUID)
     {
         info('TravelRenewalService Processing Travel record for Quote Allocation with uuid: '.$quoteUID . ' | Time: '.now());
-        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-
-        $lead = TravelQuote::where('uuid', $quoteUID)->first();
-        // Only apply teamId if the payment status is AUTHORIZED
-        $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
-
-        $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $quoteUID, $currentTeamId);
-        $response = $allocationStrategy->executeSteps();
+        $response =  QuoteTypes::TRAVEL->allocate($quoteUID);
         if ($response) {
             info(self::class.' -TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob  Ref-ID: '.$quoteUID . ' | Time: '.now());
             SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
