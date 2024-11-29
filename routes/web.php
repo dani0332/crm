@@ -9,6 +9,7 @@ use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
@@ -94,6 +95,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
+
+/* Auth Routes */
+Route::get('login', [AuthController::class, 'login'])->name('login');
+Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+
 if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
     Route::middleware('throttle:50,10')->group(function () {
         Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');

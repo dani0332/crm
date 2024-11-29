@@ -65,25 +65,6 @@ class Teams extends BaseModel
         return ['user_id', 'pa_id', 'pa_id.quote_status_id'];
     }
 
-    public function processGetDSL($filters)
-    {
-        Session::put('teams_filter', $filters);
-        $responseArray = self::processGetBaseDSL(['lead_id' => Auth::user()->id], false);
-        $response = [];
-
-        if (count($responseArray->toArray()) > 0) {
-            foreach ($responseArray->toArray() as &$rec) {
-                if (isset($rec['user_id'])) {
-                    foreach ($rec['pa_id'] as &$value) {
-                        $response[] = ['status' => $value['quote_status_id']['text'], 'id' => $value['id'], 'pa_id' => $rec['user_id']['id'], 'pa_email' => $rec['user_id']['email'], 'pa_name' => $rec['user_id']['name'], 'code' => $value['code'], 'customer_name' => $value['first_name'].' '.$value['last_name']];
-                    }
-                }
-            }
-        }
-
-        return $response;
-    }
-
     private function validateUser($userId, $quoteId)
     {
         $response = self::where([
