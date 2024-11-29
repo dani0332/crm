@@ -31,13 +31,13 @@ use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\PaymentRepository;
-use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\Life\LifeQuoteNoteService;
 use App\Services\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -190,7 +190,7 @@ class LifeQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
         $noteDocumentType = (app(LifeQuoteService::class))->getNoteDocumentType();
-        $quoteNotes = QuoteNoteRepository::getBy($quote->id, QuoteTypes::LIFE->name);
+        $quoteNotes = app(LifeQuoteNoteService::class)->getNotes($quote);
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         return inertia('LifeQuote/Show', [
