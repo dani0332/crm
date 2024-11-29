@@ -42,8 +42,8 @@ class ExportSearchLeadsOrEndorsementsRequest extends FormRequest
             'advisors' => 'nullable|array',
             'insurer_tax_invoice_number' => 'nullable|string',
             'insurer_commission_tax_invoice_number' => 'nullable|string',
-            'update_status' => 'nullable|string',
-            'send_update_type' => 'nullable|string',
+            'update_status' => 'nullable|array',
+            'send_update_type' => 'nullable|array',
         ];
     }
 
