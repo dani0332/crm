@@ -15,6 +15,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Exports\KycLogs;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -152,6 +153,56 @@ class AMLController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'aml' => $quotes,
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        
+        $quoteTypes = QuoteTypeRepository::allowedQuoteForAml()
+        ->when(!empty($request->quoteType), function ($query) use ($request) {
+            return $query->where('code', $request->quoteType);
+        });
+        
+        $allData = collect();
+
+        foreach ($quoteTypes as $quoteType) {
+            $quoteRequestTable = (in_array(ucwords($quoteType->code), newUi()) && checkPersonalQuotes(ucwords($quoteType->code))) ? 'personal_quotes' : strtolower($quoteType->code) . '_quote_request';
+            $query = AML::select([
+            'kyc_logs.quote_request_id',
+            'kyc_logs.quote_type_id',
+            'kyc_logs.input',
+            'kyc_logs.search_type',
+            'kyc_logs.match_found',
+            'kyc_logs.results_found',
+            'kyc_logs.created_at',
+            'kyc_logs.decision',
+            $quoteRequestTable.'.uuid',
+            ])
+            ->join($quoteRequestTable, 'kyc_logs.quote_request_id', '=', $quoteRequestTable.'.id')
+            ->whereBetween('kyc_logs.created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate))
+            ->where('kyc_logs.quote_type_id', $quoteType->id)
+            ->orderBy('kyc_logs.created_at', 'desc')
+            ->orderBy('kyc_logs.quote_request_id', 'desc');
+
+            if (
+                isset($request->searchType) && !empty($request->searchType) &&
+                isset($request->searchField) && !empty($request->searchField)
+            ) {
+                if ($request->searchType == 'cdbId') {
+                    $query->where($quoteRequestTable . '.code', $request->searchField);
+                }
+
+                if ($request->searchType == 'customerEmail') {
+                    $query->where($quoteRequestTable . '.email', $request->searchField);
+                }
+            }
+
+            $data = $query->get();
+            $allData = $allData->merge($data);
+        }
+
+        $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString() . ' - ' . Carbon::parse($request->amlCreatedEndDate)->toDateString();
+        return (new KycLogs($allData))->download("AML Logs {$reportDateRange}");
     }
 
     /**
