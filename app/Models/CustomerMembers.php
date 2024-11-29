@@ -22,17 +22,6 @@ class CustomerMembers extends Model
         return $this->first_name.' '.$this->last_name;
     }
 
-    public function setNameAttribute()
-    {
-        $quoteType = request()->quote_type;
-        if (ucwords($quoteType) == QuoteTypes::TRAVEL->value) {
-            $name = explode(' ', request()->name, 2);
-            $this->attributes['first_name'] = $name[0];
-            $this->attributes['last_name'] = $name[1] ?? '';
-        }
-
-    }
-
     public function nationality()
     {
         return $this->belongsTo(Nationality::class, 'nationality_id');

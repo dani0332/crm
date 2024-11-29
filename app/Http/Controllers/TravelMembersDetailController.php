@@ -25,12 +25,8 @@ class TravelMembersDetailController extends Controller
         $quoteMemberDetails = $request->validated();
         $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->travel_quote_request_id);
         if ($quoteObject) {
-            // writing this logic here because we need to set the first_name and last_name and updateOrCreate dont trigger/set custom attributes, similar logic is in model as well.
-            if (ucwords(request()->quote_type) == QuoteTypes::TRAVEL->value) {
-                $name = explode(' ', $quoteMemberDetails['name'], 2);
-                $quoteMemberDetails['first_name'] = $name[0];
-                $quoteMemberDetails['last_name'] = $name[1];
-            }
+            $quoteMemberDetails = $this->fillFirstAndLastName($quoteMemberDetails, request()->quote_type);
+
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
 
             if ($request->customer_type == CustomerTypeEnum::Individual) {
@@ -108,6 +104,8 @@ class TravelMembersDetailController extends Controller
         if ($quoteObject) {
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
 
+            $quoteMemberDetails = $this->fillFirstAndLastName($quoteMemberDetails, request()->quote_type);
+
             if ($request->customer_type == CustomerTypeEnum::Individual) {
                 if (! in_array('travel_quote_request_id', $request->validated())) {
                     $quoteMemberDetails = array_merge([
@@ -167,5 +165,18 @@ class TravelMembersDetailController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    /*
+     * // break first name and fill first name and last name
+     * */
+    private function fillFirstAndLastName($quoteMemberDetails, $quoteType)
+    {
+        if (ucwords($quoteType) == QuoteTypes::TRAVEL->value) {
+            $name = explode(' ', $quoteMemberDetails['name'], 2);
+            $quoteMemberDetails['first_name'] = $name[0];
+            $quoteMemberDetails['last_name'] = $name[1];
+        }
+        return $quoteMemberDetails;
     }
 }
