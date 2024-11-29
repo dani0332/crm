@@ -616,11 +616,7 @@ class CarAllocationService extends AllocationService
 
     public function shouldProceed(): bool
     {
-        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
-        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
-        $shouldProceed = now()->between($start_time, $end_time) && ((int) config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 1);
-
-        return $shouldProceed;
+        return $this->shouldProceedWithReAllocation('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
     }
 
     public function isLeadReassigned($lead)

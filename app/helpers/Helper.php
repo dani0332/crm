@@ -173,7 +173,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 
     $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
     $nameSpace = 'App\\Models\\';
-    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+    $modelType = (checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
     if (! class_exists($modelType)) {
         return false;
@@ -461,27 +461,6 @@ function generateRouteNames($prefix)
     ];
 }
 
-if (! function_exists('newUi')) {
-    function newUi(): array
-    {
-        return [
-            quoteTypeCode::Health,
-            quoteTypeCode::Car,
-            quoteTypeCode::Travel,
-            quoteTypeCode::Home,
-            quoteTypeCode::Life,
-            quoteTypeCode::Pet,
-            quoteTypeCode::CORPLINE,
-            quoteTypeCode::Business,
-            quoteTypeCode::Cycle,
-            quoteTypeCode::Bike,
-            quoteTypeCode::Yacht,
-            quoteTypeCode::Jetski,
-            quoteTypeCode::Aml,
-        ];
-    }
-}
-
 if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
@@ -499,7 +478,7 @@ if (! function_exists('createCdnUrl')) {
 if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
-        return ['im.automation4@gmail.com', 'muhammad.abdullah@insurancemarket.ae'];
+        return ['qa_automation@myalfred.com'];
     }
 }
 
@@ -1312,7 +1291,7 @@ if (! function_exists('getLookupsEnum')) {
 }
 
 if (! function_exists('getCourierQuote')) {
-    function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [QuoteStatusEnum::PolicyIssued])
+    function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [])
     {
         try {
             $quoteModel = get_class($quote);
@@ -1349,7 +1328,9 @@ if (! function_exists('getCourierQuote')) {
                             default => "{$table}.emirate_of_registration_id"
                         });
                 })
-                ->whereIn("{$table}.quote_status_id", $quoteStatuses)
+                ->when(! empty($quoteStatuses) && is_array($quoteStatuses), function ($q) use ($table, $quoteStatuses) {
+                    $q->whereIn("{$table}.quote_status_id", $quoteStatuses);
+                })
                 ->leftJoin('customer_addresses', function (JoinClause $join) use ($table, $quoteTypeId) {
                     $join->on('customer_addresses.quote_uuid', '=', "{$table}.uuid")
                         ->where('customer_addresses.quote_type_id', $quoteTypeId);
@@ -1529,10 +1510,32 @@ if (! function_exists('isNonSelfBillingEnabledForInsuranceProvider')) {
 }
 
 if (! function_exists('getInsuranceProvider')) {
-    function getInsuranceProvider($payment, $quoteType)
+    function getInsuranceProvider($payment, $quoteType, $quote = null)
     {
         $insuranceProvider = null;
         $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+
+        //        Reminder:: Add Commercial vehicle logic for fetch correct provider
+        if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+
+            $quoteDetails = $payment->paymentable; // For Main Lead
+
+            if (empty($quoteDetails) && isset($quote->personal_quote_id) && $quote?->personal_quote_id) { // For Endorsements
+                $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
+                $quoteDetails = CarQuote::where('uuid', $personalQuote?->uuid)->first();
+            }
+
+            if (! empty($quoteDetails)) {
+                $quoteDetails->fill(['full_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name]);
+                $isCommercialVehicle = app(\App\Services\LeadAllocationService::class)->isCommercialVehicles($quoteDetails);
+                $vehicleType = \App\Models\VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
+
+                if ($isCommercialVehicle || ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD && $vehicleType == strtoupper(QuoteTypes::BIKE->value))) {
+                    return $payment?->insuranceProvider;
+                }
+            }
+        }
+
         if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
             $planRelationName = strtolower($quoteType).'Plan';
             $payment->load($planRelationName);

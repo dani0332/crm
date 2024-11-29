@@ -15,10 +15,9 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
-use Config;
-use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class HomeQuoteService extends BaseService
@@ -41,8 +40,8 @@ class HomeQuoteService extends BaseService
             'hqr.uuid',
             'hqr.first_name',
             'hqr.last_name',
-            'hqr.email',
-            'hqr.mobile_no',
+            // 'hqr.email',
+            // 'hqr.mobile_no',
             'hqr.address',
             'hqr.has_contents',
             'hqr.contents_aed',
@@ -89,6 +88,7 @@ class HomeQuoteService extends BaseService
             'hqr.previous_quote_id',
             'hqr.policy_expiry_date',
             'hqr.renewal_batch',
+            'rb.name as renewal_batch_text',
             'hqr.previous_quote_policy_number',
             'hqr.previous_quote_policy_premium',
             'hqr.customer_id',
@@ -104,6 +104,7 @@ class HomeQuoteService extends BaseService
             'c.insured_last_name',
             'c.emirates_id_number',
             'c.emirates_id_expiry_date',
+            'c.receive_marketing_updates',
             'qrem.entity_id',
             'ent.code as entity_code',
             'ent.trade_license_no',
@@ -137,6 +138,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+            ->leftJoin('renewal_batches as rb', 'hqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
@@ -147,7 +149,7 @@ class HomeQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('hqr.uuid', $id)->first();
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
     public function getSelectedLostReason($id)
@@ -170,8 +172,8 @@ class HomeQuoteService extends BaseService
 
     public function saveHomeQuote(Request $request)
     {
-        $sourceName = Config::get('constants.SOURCE_NAME');
-        $appUrl = Config::get('constants.APP_URL');
+        $sourceName = config('constants.SOURCE_NAME');
+        $appUrl = config('constants.APP_URL');
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -290,8 +292,8 @@ class HomeQuoteService extends BaseService
                     ->orWhere('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
         }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('hqr.renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && count($request->renewal_batches) > 0) {
+            $this->query->whereIn('hqr.renewal_batch_id', $request->renewal_batches);
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
@@ -516,7 +518,7 @@ class HomeQuoteService extends BaseService
             'previous_quote_id' => 'readonly|title',
             'is_renewal' => '|static|Yes,No',
             'policy_expiry_date' => 'input|date|title|range',
-            'renewal_batch' => 'input|none',
+            'renewal_batch' => 'select|title|multiple',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_premium' => 'input|number|title',
@@ -743,7 +745,7 @@ class HomeQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }

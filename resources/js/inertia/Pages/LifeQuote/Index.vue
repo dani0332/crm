@@ -2,6 +2,7 @@
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
+  renewalBatches: Array,
   advisors: Array,
   authorizedDays: Number,
 });
@@ -54,6 +55,7 @@ const filters = reactive({
   created_at_end: '',
   quote_status_id: [],
   advisor_id: [],
+  renewal_batch_id: [],
   is_ecommerce: '',
   payment_status_id: '',
   previous_quote_policy_number_text: '',
@@ -111,7 +113,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Renewal Batch',
-    value: 'renewal_batch',
+    value: 'renewal_batch_model',
     is_active: true,
   },
 ]);
@@ -124,6 +126,14 @@ const advisorOptions = computed(() => {
       : advisor.name,
   }));
 });
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+});
+
 function filterQuotes(isValid) {
   if (!isValid) {
     return;
@@ -227,6 +237,7 @@ const canExport = ref(false);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const exportLoader = ref(false);
 const onExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'life');
@@ -234,7 +245,13 @@ const onExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Life'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 watch(
@@ -526,6 +543,14 @@ watch(
             { value: '', label: 'All' },
           ]"
         />
+
+        <x-field label="Renewal Batch">
+          <ComboBox
+            v-model="filters.renewal_batch_id"
+            placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
+          />
+        </x-field>
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -587,6 +612,7 @@ watch(
             color="emerald"
             class="justify-self-start"
             @click.prevent="onExport"
+            :loading="exportLoader"
           >
             Export
           </x-button>
@@ -706,6 +732,11 @@ watch(
           </x-tag>
         </div>
       </template> -->
+      <template #item-renewal_batch_model="item">
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
+      </template>
     </DataTable>
 
     <Pagination

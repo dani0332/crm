@@ -27,6 +27,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
 const cleanObj = obj => useCleanObj(obj);
+const exportLoader = ref(false);
 
 const createLead = reactive({
   modal: false,
@@ -536,12 +537,19 @@ watch(
   },
   { deep: true },
 );
-const onExport = url => {
+
+const onExport = (url, isLoading = false) => {
+  exportLoader.value = isLoading;
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
     url: `${window.location.origin}${url}`,
   };
-  logAndExportQuotes(payload);
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 </script>
 
@@ -614,7 +622,10 @@ const onExport = url => {
             filters.renewal_batch ||
             filters.quote_batch_id ||
             filters.payment_due_date ||
-            filters.booking_date
+            filters.booking_date ||
+            filters.insurer_tax_invoice_number ||
+            filters.insurer_commission_tax_invoice_number ||
+            filters.mobile_no
               ? []
               : [isRequired]
           "
@@ -629,7 +640,10 @@ const onExport = url => {
             filters.renewal_batch ||
             filters.quote_batch_id ||
             filters.payment_due_date ||
-            filters.booking_date
+            filters.booking_date ||
+            filters.insurer_tax_invoice_number ||
+            filters.insurer_commission_tax_invoice_number ||
+            filters.mobile_no
               ? []
               : [isRequired]
           "
@@ -860,7 +874,8 @@ const onExport = url => {
             v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
-            @click="onExport(`/car/leads-export?${objToUrl(filters)}`)"
+            :loading="exportLoader"
+            @click="onExport(`/car/leads-export?${objToUrl(filters)}`, true)"
             class="justify-self-start mr-3"
           >
             Export
@@ -924,8 +939,10 @@ const onExport = url => {
                 `/car/leads-details-with-email/${
                   genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
                 }?${objToUrl(filters)}`,
+                true,
               )
             "
+            :loading="exportLoader"
             class="justify-self-start mr-3"
           >
             Extract leads detail with email/mobile_no
@@ -965,7 +982,8 @@ const onExport = url => {
             v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
             size="sm"
             color="emerald"
-            @click="onExport('/pua-leads-export')"
+            :loading="exportLoader"
+            @click="onExport('/pua-leads-export', true)"
             class="justify-self-start mr-3"
           >
             Export PUA Updates

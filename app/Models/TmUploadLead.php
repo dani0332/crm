@@ -32,4 +32,10 @@ class TmUploadLead extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class, 'created_by_id', 'id');
     }
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
 }

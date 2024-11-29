@@ -14,6 +14,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const canAny = permissions => useCanAny(permissions);
 const notification = useNotifications('toast');
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
@@ -55,13 +56,6 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 
-const allowStatusUpdate = computed(() => {
-  return (
-    (props.quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
-      props.quote.quote_status_id == quoteStatusEnum.Lost) ??
-    false
-  );
-});
 watch(
   () => props.quote.quote_status_id,
   (newValue, oldValue) => {
@@ -79,6 +73,15 @@ onMounted(() => {
 
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionsEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
 </script>
 
 <template>

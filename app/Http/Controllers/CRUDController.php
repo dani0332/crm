@@ -39,11 +39,11 @@ use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
-use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -76,6 +76,7 @@ use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
@@ -86,10 +87,11 @@ use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
 use App\Services\LookupService;
+use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
-use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
@@ -102,7 +104,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -119,7 +120,6 @@ class CRUDController extends Controller
     protected $lifeQuoteService;
     protected $homeQuoteService;
     protected $businessQuoteService;
-    protected $petQuoteService;
     protected $userService;
     protected $activityService;
     protected $emailStatusService;
@@ -145,7 +145,6 @@ class CRUDController extends Controller
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
-        PetQuoteService $petQuoteService,
         UserService $userService,
         Request $request,
         ActivitiesService $activityService,
@@ -158,7 +157,7 @@ class CRUDController extends Controller
         SendEmailCustomerService $sendEmailCustomerService,
         QuoteDocumentService $quoteDocumentService,
         EmailDataService $emailDataService,
-        AllocationService $allocationService,
+        AllocationService $allocationService
     ) {
         $this->genericModel = new GenericModel;
         $this->healthQuoteService = $healthService;
@@ -170,7 +169,6 @@ class CRUDController extends Controller
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
-        $this->petQuoteService = $petQuoteService;
         $this->activityService = $activityService;
         $this->userService = $userService;
         $this->emailStatusService = $emailStatusService;
@@ -236,7 +234,6 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
             $isNewBusinessUser = true;
-            // $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         // Getting the data for grid based on the model type
@@ -249,6 +246,7 @@ class CRUDController extends Controller
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $isLeadPool = Auth::user()->isLeadPool();
         $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
         $dropdownSource = $customTitles = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -269,7 +267,7 @@ class CRUDController extends Controller
         $count = 0;
         $hasOtherFilters = count(array_diff_key($request->all(), ['page' => ''])) > 0;
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
@@ -287,6 +285,7 @@ class CRUDController extends Controller
 
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
+                'renewalBatches' => $renewalBatches,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
                 'teams' => $teams,
@@ -302,7 +301,7 @@ class CRUDController extends Controller
         }
 
         // inertia rendering for home quote
-        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
@@ -312,6 +311,7 @@ class CRUDController extends Controller
 
             return inertia('HomeQuote/Index', [
                 'quotes' => $gridData,
+                'renewalBatches' => $renewalBatches,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
@@ -320,7 +320,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $userMaxCap = 0;
@@ -389,7 +389,6 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
             $isNewBusinessUser = true;
-            // $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         $customTitles = $dropdownSource = [];
@@ -404,7 +403,7 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
             return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
@@ -412,7 +411,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -422,7 +421,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
             return inertia('HomeQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
@@ -471,7 +470,7 @@ class CRUDController extends Controller
             }
         }
         // new ui enabled
-        if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
+        if ($modelType == quoteTypeCode::Home) {
             $validateArray = [];
             if ($request->has('ilivein_accommodation_type_id')) {
                 $this->validate($request, [
@@ -490,7 +489,7 @@ class CRUDController extends Controller
             }
         } elseif ($modelType == quoteTypeCode::Home) {
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['create']);
-        } elseif ($modelType == quoteTypeCode::Car && in_array($modelType, newUi())) {
+        } elseif ($modelType == quoteTypeCode::Car) {
             $validateArray = $this->carQuoteService->getValidationArray($request);
         }
 
@@ -512,7 +511,16 @@ class CRUDController extends Controller
         }
 
         $this->validate($request, $validateArray);
+        app(CustomerAddressService::class)->validateAddress($request);
         $record = $this->crudService->saveModelByType($modelType, $request);
+
+        if ($record) {
+            $customerId = $this->customerService->getCustomerIdByEmail($request->email);
+
+            if ($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) {
+                app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $record->quoteUID);
+            }
+        }
 
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
@@ -592,7 +600,6 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
             $isNewBusinessUser = true;
-            // $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
@@ -906,7 +913,7 @@ class CRUDController extends Controller
             ]));
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
@@ -1023,7 +1030,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
+        if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Health);
             $coPayment = $this->healthQuoteService->getCoPayment($id);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
@@ -1243,7 +1250,7 @@ class CRUDController extends Controller
             }
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
             return inertia('HealthQuote/Form', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -1253,7 +1260,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
             return inertia('HomeQuote/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -1263,9 +1270,13 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
+            $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($record->uuid, QuoteTypeId::Car);
+            $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
+                ? $courierQuoteResponse['data']['status']
+                : 'Pending';
 
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
@@ -1274,6 +1285,7 @@ class CRUDController extends Controller
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
                 'customerAddressData' => $customerAddressData,
+                'courierQuoteStatus' => $courierQuoteStatus,
             ]);
         }
 
@@ -1295,7 +1307,7 @@ class CRUDController extends Controller
             $modelSkipPropertiesList = (json_decode($request->get('modelSkipProperties'), true)) ? json_decode($request->get('modelSkipProperties'), true) : $request->get('modelSkipProperties');
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
-            if ($modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+            if ($modelType == quoteTypeCode::Car) {
                 $validateArray = $this->carQuoteService->getValidationArray($request);
             } else {
                 $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
@@ -1315,27 +1327,19 @@ class CRUDController extends Controller
 
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         $this->validate($request, $validateArray);
+        app(CustomerAddressService::class)->validateAddress($request);
         $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+
         // check if request addressObj is not empty then insert/update the address of user in customer address table
-        if (! empty($request->addressObj)) {
-            $addressObj = $request->addressObj;
-            $customerId = $this->customerService->getCustomerIdByEmail($request->email);
-            $quoteUuid = $id;
-            $dataObject = [
-                'customer_id' => $customerId,
-                'address_type' => $addressObj['address_type'],
-                'quote_type_id' => QuoteTypes::CAR->id(),
-                'quote_uuid' => $quoteUuid,
-                'office_number' => $addressObj['villa_apartment_office_no'],
-                'floor_number' => $addressObj['floor_no'],
-                'building_name' => $addressObj['villa_building_name'],
-                'street' => $addressObj['street_name'],
-                'area' => $addressObj['area'],
-                'city' => $addressObj['city'],
-                'landmark' => $addressObj['landmark'],
-                'is_default' => $addressObj['address_type'] == 'Home' ? 1 : 0,
-            ];
-            $this->saveCustomerAddress($dataObject);
+        $customerId = $this->customerService->getCustomerIdByEmail($request->email);
+
+        if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj')))) && $modelType == quoteTypeCode::Car) {
+            $lead = CarQuote::where('uuid', $id)->first();
+            if ($lead) {
+                $this->carQuoteService->sendAddressNotificationToCustomer($lead, $request->input('addressObj'));
+                app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $id);
+                SyncCourierQuoteWithMacrm::dispatch($lead, QuoteTypeId::Car);
+            }
         }
         if (! is_null($response) && ! $response) {
             return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id.'/edit')->with('error', json_decode($request->modelType, true).' has not been updated');
@@ -1789,14 +1793,6 @@ class CRUDController extends Controller
             $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
 
-        if (
-            strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
-            && ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued)
-        ) {
-            // Ep send documents
-            EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);
-        }
-
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         // Update payment allocation status
@@ -1828,8 +1824,8 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->status) {
             // $results = getDataAgainstEveryStatus($request->modelType, $request);
             $results = getDataAgainstStatus($request->modelType, $request->status, $request);
-            // and newUi is true
-            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht]) && in_array($request->modelType, newUi())) {
+
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht])) {
                 return $results;
             }
 
@@ -1882,7 +1878,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
             $results = getDataAgainstSearchTerm($request->modelType, $request);
 
-            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life]) && in_array($request->modelType, newUi())) {
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life])) {
                 return $results;
             }
 
@@ -2256,41 +2252,5 @@ class CRUDController extends Controller
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
-    }
-
-    public function saveCustomerAddress(array $dataObject)
-    {
-        Log::info('Attempting to save CustomerAddress: ', ['customer_id' => $dataObject['customer_id'], 'quote_uuid' => $dataObject['quote_uuid']]);
-
-        try {
-            $customerAddress = CustomerAddress::updateOrCreate(
-                [
-                    'customer_id' => $dataObject['customer_id'],
-                    'quote_uuid' => $dataObject['quote_uuid'],
-                ],
-                [
-                    'type' => $dataObject['address_type'],
-                    'quote_type_id' => $dataObject['quote_type_id'],
-                    'office_number' => $dataObject['office_number'],
-                    'floor_number' => $dataObject['floor_number'],
-                    'building_name' => $dataObject['building_name'],
-                    'street' => $dataObject['street'],
-                    'area' => $dataObject['area'],
-                    'city' => $dataObject['city'],
-                    'landmark' => $dataObject['landmark'],
-                    'is_default' => $dataObject['is_default'],
-                ]
-            );
-            Log::info('CustomerAddress saved successfully', ['customer_address_id' => $customerAddress->id]);
-        } catch (\Exception $e) {
-            Log::error('Error saving CustomerAddress: ', ['customer_id' => $dataObject['customer_id'], 'quote_uuid' => $dataObject['quote_uuid'], 'error' => $e->getMessage()]);
-        }
-    }
-
-    public function triggerSendPaymentEmail()
-    {
-        Artisan::call('SendPaymentEmail:cron');
-
-        return response()->json(['message' => 'SendPaymentEmail:cron job triggered successfully.']);
     }
 }

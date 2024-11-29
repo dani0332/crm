@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -18,6 +20,8 @@ use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\CustomerAdditionalContact;
+use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
@@ -33,7 +37,8 @@ use PDF;
 
 class CarQuoteService extends BaseService
 {
-    protected $query;
+    private $query;
+    private $exportQuery;
     protected $httpService;
     protected $childUserIds = [];
     protected $leadAllocationService;
@@ -58,8 +63,8 @@ class CarQuoteService extends BaseService
                 'cqr.first_name',
                 'cqr.last_name',
                 DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
-                'cqr.email',
-                'cqr.mobile_no',
+                // 'cqr.email',
+                // 'cqr.mobile_no',
                 DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
                 'cqr.car_value',
                 'cqr.additional_notes',
@@ -182,6 +187,7 @@ class CarQuoteService extends BaseService
                 'c.insured_last_name',
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
+                'c.receive_marketing_updates',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -480,7 +486,7 @@ class CarQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('cqr.uuid', $id)->first();
+        return $this->query->addSelect(['cqr.email', 'cqr.mobile_no'])->where('cqr.uuid', $id)->first();
     }
 
     public function updateChildRecord($id)
@@ -926,7 +932,6 @@ class CarQuoteService extends BaseService
             $dateFrom = $this->parseDate($request['policy_expiry_date'], true);
             $dateTo = $this->parseDate($request['policy_expiry_date_end'], false);
             $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
@@ -1636,7 +1641,7 @@ class CarQuoteService extends BaseService
 
     public function validateRequest($request)
     {
-        $isLeadPool = Auth::user()->isLeadPool();
+        $canReAssignAdvisor = Auth::user()->isLeadPool() || auth()->user()->can(PermissionsEnum::ASSIGN_PAID_LEADS);
         $userId = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
         if ($leadsIds == '' || $leadsIds == null) {
@@ -1648,7 +1653,7 @@ class CarQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! ($isLeadPool)) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! $canReAssignAdvisor) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }
@@ -2091,11 +2096,23 @@ class CarQuoteService extends BaseService
             $this->exportQuery->where('cqr.advisor_id', Auth::user()->id);
         }
     }
+
     public function exportnonPUAAuthorized()
     {
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
         $nonPUAAuthLead = DB::table('car_quote_request as q')
+            ->select(
+                'q.code as RefID',
+                'q.premium_authorized as premiumauthorized',
+                'q.payment_status_date as paymentauthdate',
+                DB::raw('qs.text as `leadstatus`'),
+                DB::raw("'AUTHORIZED' as `paymentstatus`"),
+                'q.source as source',
+                'cmk.text as make',
+                'cmd.text as model',
+                'u.email as assignedadvisoremail'
+            )
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
@@ -2120,9 +2137,14 @@ class CarQuoteService extends BaseService
                     ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
                     ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
             })
-            ->orderBy('q.paid_at', 'desc');
+            ->orderBy('q.paid_at', 'desc')
+            ->get();
 
         $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
+            ->select(
+                't.name as Team',
+                DB::raw('COUNT(*) as Total')
+            )
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
@@ -2138,10 +2160,10 @@ class CarQuoteService extends BaseService
                     ->whereNotNull('cqp.pua_premium')
                     ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
             })
-            ->groupBy('t.name');
+            ->groupBy('t.name')
+            ->get();
 
         return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
-
     }
 
     public function exportPUAAuthorized()
@@ -2149,6 +2171,17 @@ class CarQuoteService extends BaseService
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
         $puaAuthUpdate = DB::table('car_quote_plan_details as cqp')
+            ->select(
+                'q.code as RefID',
+                'q.premium_authorized as premiumauthorized',
+                'q.payment_status_date as paymentauthdate',
+                DB::raw('qs.text as `leadstatus`'),
+                DB::raw("'AUTHORIZED' as `paymentstatus`"),
+                'q.source as source',
+                'cmk.text as make',
+                'cmd.text as model',
+                'u.email as assignedadvisoremail'
+            )
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
@@ -2165,9 +2198,14 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
             ->where('t.parent_team_id', '=', $carTeam->id)
-            ->orderBy('q.paid_at', 'desc');
+            ->orderBy('q.paid_at', 'desc')
+            ->get();
 
         $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')
+            ->select(
+                't.name as Team',
+                DB::raw('COUNT(*) as Total')
+            )
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
@@ -2179,10 +2217,12 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
             ->where('t.parent_team_id', '=', $carTeam->id)
-            ->groupBy('t.name');
+            ->groupBy('t.name')
+            ->get();
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
+
     public function exportPUAUpdates()
     {
         $startDate = Carbon::now()->subDay()->startOfDay();
@@ -2198,12 +2238,64 @@ class CarQuoteService extends BaseService
             ->join('vehicle_type as vt', 'cqr.vehicle_type_id', '=', 'vt.id')
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
-            ->leftJoin('quote_tags as qt', 'cqr.uuid', '=', 'qt.quote_uuid')
             ->whereNotNull('cqp.pua_premium')
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
-            ->whereNotNull('cqr.paid_at')
-            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
-            ->whereColumn('cqp.plan_id', 'cqr.plan_id')
-            ->whereIn('qt.name', ['SPUA', 'APUA', 'NPUA']);
+            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
+            ->whereColumn('cqp.plan_id', 'cqr.plan_id');
+    }
+
+    public function sendAddressNotificationToCustomer($lead, $address)
+    {
+        info('Checking for sending courier notification : '.$lead->uuid);
+
+        // Use a different variable name for the result of the query
+        $existingAddress = CustomerAddress::where([
+            'quote_uuid' => $lead->uuid,
+            'customer_id' => $lead->customer_id,
+        ])->first();
+
+        if (! $existingAddress) {
+            info('Sending address notification to customer for lead : '.$lead->uuid);
+            // only trigger bird flow if address is not already added
+            $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);
+        }
+    }
+
+    public function triggerBirdFlow($lead, $address, $actionType)
+    {
+        if ($lead->embeddedTransactions()->exists()) {
+            info('Checking for courier transaction for lead : '.$lead->uuid);
+            $courierEmbeddedTransaction = $lead->embeddedTransactions
+                ->filter(function ($transaction) {
+                    return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
+                });
+        }
+
+        if (
+            ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
+            in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
+        ) {
+            info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
+            $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
+            $address = app(CustomerAddressService::class)->fetchFormattedAddress($address);
+            $customerAdditionalContact = CustomerAdditionalContact::select('value')
+                ->firstWhere([
+                    ['customer_id', $lead->customer_id],
+                    ['key', 'alternate_mobile_no'],
+                ]);
+            $payload = [
+                'quoteUID' => $lead->uuid,
+                'quoteTypeId' => (int) QuoteTypes::CAR->id(),
+                'actionType' => $actionType,
+                'refId' => $embeddedTransactionRefId,
+                'address' => $address,
+                'alternateNumber' => $customerAdditionalContact->value ?? '',
+            ];
+            info('Payload for Bird Courier Flow : '.json_encode($payload));
+
+            Ken::request('/trigger-bird-courier-flow', 'post', $payload);
+        } else {
+            info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
+        }
     }
 }
