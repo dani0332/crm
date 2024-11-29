@@ -39,7 +39,6 @@ class LifeQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
-    protected $appends = ['age'];
 
     protected static function booted()
     {
@@ -179,26 +178,5 @@ class LifeQuote extends Model implements AuditableContract
     public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
-    }
-
-    public function getAgeAttribute()
-    {
-        if (!$this->dob || !$this->created_at) {
-            return '';
-        }
-
-        $dob = Carbon::parse($this->dob);
-        $createdAt = Carbon::parse($this->created_at);
-
-        $age = $createdAt->year - $dob->year;
-
-        if (
-            $createdAt->month < $dob->month || 
-            ($createdAt->month === $dob->month && $createdAt->day < $dob->day)
-        ) {
-            $age--;
-        }
-
-        return $age;
     }
 }

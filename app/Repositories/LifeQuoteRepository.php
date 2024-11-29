@@ -42,6 +42,7 @@ class LifeQuoteRepository extends BaseRepository
             'height' => $data['height'],
             'weight' => $data['weight'],
             'bmi' => $data['bmi'],
+            'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
@@ -51,11 +52,11 @@ class LifeQuoteRepository extends BaseRepository
 
         if (isset($response->quoteUID)) {
             //todo: make sure if this is required to update, or api is handling this as well
-            $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
-            $quote->update(['height' => $lifeData['height']]);
-            $quote->update(['weight' => $lifeData['weight']]);
-            $quote->update(['bmi' => $lifeData['bmi']]);
-            $quote->update(['age' => $lifeData['age']]);
+            // $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
+            // $quote->update(['height' => $lifeData['height']]);
+            // $quote->update(['weight' => $lifeData['weight']]);
+            // $quote->update(['bmi' => $lifeData['bmi']]);
+            // $quote->update(['age' => $lifeData['age']]);
         }
 
         return $response;

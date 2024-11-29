@@ -101,7 +101,7 @@ watch(
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-         <x-field label="Type of Insurance">
+         <x-field label="Type of Insurance" required>
           <x-select
             v-model="quoteForm.tenure_of_insurance_id"
             :options="
@@ -111,11 +111,12 @@ watch(
                 disabled: item.code === 'SAVINGS'
               }))
             "
+            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.tenure_of_insurance_id"
           />
         </x-field>
-        <x-field label="Purpose of Insurance">
+        <x-field label="Purpose of Insurance" required>
           <x-select
             v-model="quoteForm.purpose_of_insurance_id"
             :options="
@@ -124,6 +125,7 @@ watch(
                 label: item.text,
               }))
             "
+            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.purpose_of_insurance_id"
           />
@@ -168,8 +170,8 @@ watch(
             :error="quoteForm.errors.mobile_no"
           />
         </x-field>
-        <x-field label="Date of Birth">
-          <DatePicker v-model="quoteForm.dob" input-classes="w-full" />
+        <x-field label="Date of Birth" required>
+          <DatePicker v-model="quoteForm.dob" :rules="[isRequired]" input-classes="w-full" />
         </x-field>
         <x-field label="Age">
           <x-input
@@ -180,7 +182,7 @@ watch(
             :error="quoteForm.errors.age"
           />
         </x-field>
-        <x-field label="Nationality">
+        <x-field label="Nationality" required>
           <x-select
             v-model="quoteForm.nationality_id"
             :options="
@@ -189,11 +191,12 @@ watch(
                 label: item.text,
               }))
             "
+            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.nationality_id"
           />
         </x-field>
-         <x-field label="Marital Status">
+         <x-field label="Marital Status" required>
           <x-select
             v-model="quoteForm.marital_status_id"
             :options="
@@ -202,17 +205,19 @@ watch(
                 label: item.text,
               }))
             "
+            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.marital_status_id"
           />
         </x-field>
-        <x-field label="Gender">
+        <x-field label="Gender" required>
           <x-select
             v-model="quoteForm.gender"
             :options="[
               { value: 'Male', label: 'Male' },
               { value: 'Female', label: 'Female' },
             ]"
+            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.gender"
           />
@@ -264,7 +269,7 @@ watch(
             </x-field>
           </div>
         </div>
-        <x-field label="Tenure of Cover">
+        <x-field label="Tenure of Cover" required>
           <x-select
             v-model="quoteForm.number_of_years_id"
             :options="
@@ -273,6 +278,7 @@ watch(
                 label: item.text,
               }))
             "
+            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.number_of_years_id"
           />
@@ -280,7 +286,7 @@ watch(
         <div class="w-full">
           <div class="grid sm:grid-cols-12 gap-4">
             <div class="sm:col-span-4">
-            <x-field label="Currency">
+            <x-field label="Currency" required>
               <x-select
                 v-model="quoteForm.sum_insured_currency_id"
                 :options="
@@ -289,17 +295,19 @@ watch(
                     label: item.text,
                   }))
                 "
+                :rules="[isRequired]"
                 class="w-full"
                 :error="quoteForm.errors.sum_insured_currency_id"
               />
             </x-field>
             </div>
             <div class="sm:col-span-8">
-            <x-field label="Sum Assured">
+            <x-field label="Sum Assured" required>
               <x-input
                 v-model="quoteForm.sum_insured_value"
                 type="number"
                 class="w-full"
+                :rules="[isRequired]"
                 :error="quoteForm.errors.sum_insured_value"
               />
             </x-field>
@@ -307,7 +315,7 @@ watch(
           </div>
         </div>
 
-        <x-field label="Have you smoked tobacco/nicotine in the last 12 months?">
+        <x-field label="Have you smoked tobacco/nicotine in the last 12 months?" required>
           <x-select
             v-model="quoteForm.is_smoker"
             :options="[
