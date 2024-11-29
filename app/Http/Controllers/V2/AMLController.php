@@ -157,16 +157,20 @@ class AMLController extends Controller
 
     public function export(Request $request)
     {
+
+        $quoteTypes = array_filter(QuoteTypeId::getOptions(), function ($value, $key) {
+            return !in_array($key, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical]);
+        }, ARRAY_FILTER_USE_BOTH);
         
-        $quoteTypes = QuoteTypeRepository::allowedQuoteForAml()
-        ->when(!empty($request->quoteType), function ($query) use ($request) {
-            return $query->where('code', $request->quoteType);
-        });
+        if(!empty($request->quoteType)) {
+            $quoteTypes = array_filter($quoteTypes, function ($value, $key) use ($request) {
+                return $value == $request->quoteType;
+            }, ARRAY_FILTER_USE_BOTH);
+        }
         
         $allData = collect();
-
-        foreach ($quoteTypes as $quoteType) {
-            $quoteRequestTable = (in_array(ucwords($quoteType->code), newUi()) && checkPersonalQuotes(ucwords($quoteType->code))) ? 'personal_quotes' : strtolower($quoteType->code) . '_quote_request';
+        foreach ($quoteTypes as $quoteTypeId => $quoteTypeCode) {
+            $quoteRequestTable = (in_array(ucwords($quoteTypeCode), newUi()) && checkPersonalQuotes(ucwords($quoteTypeCode))) ? 'personal_quotes' : strtolower($quoteTypeCode) . '_quote_request';
             $query = AML::select([
             'kyc_logs.quote_request_id',
             'kyc_logs.quote_type_id',
@@ -180,7 +184,7 @@ class AMLController extends Controller
             ])
             ->join($quoteRequestTable, 'kyc_logs.quote_request_id', '=', $quoteRequestTable.'.id')
             ->whereBetween('kyc_logs.created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate))
-            ->where('kyc_logs.quote_type_id', $quoteType->id)
+            ->where('kyc_logs.quote_type_id', $quoteTypeId)
             ->orderBy('kyc_logs.created_at', 'desc')
             ->orderBy('kyc_logs.quote_request_id', 'desc');
 
