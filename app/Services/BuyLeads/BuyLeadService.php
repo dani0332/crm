@@ -25,7 +25,7 @@ class BuyLeadService
         $leadAllocation = LeadAllocation::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->first();
 
         if (! $leadAllocation || ! $leadAllocation->buy_lead_status) {
-            return 0;
+            return 'DISABLED';
         }
 
         $buyLeadMaxCap = $leadAllocation?->buy_lead_max_capacity ?? 0;
@@ -44,7 +44,7 @@ class BuyLeadService
 
         $remainingLimit = $this->getBlLeadRemainingLimit($quoteType);
 
-        if ($remainingLimit <= 0) {
+        if ($remainingLimit === 'DISABLED' || $remainingLimit <= 0) {
             $message = 'You have reached your maximum buy leads allocation for today';
         } elseif ($request->count > $remainingLimit) {
             $leadStr = Str::plural('Lead', $remainingLimit);
