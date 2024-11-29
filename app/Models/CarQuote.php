@@ -11,7 +11,6 @@ use Auth;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use LookUpModel;
 use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
@@ -396,89 +395,6 @@ class CarQuote extends BaseModel
             'invoicing' => ['id', 'code', 'dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', 'kyc_status_id', 'quote_status_id', 'created_at', 'car_make_id', 'car_model_id', 'car_value', 'emirate_of_registration_id', 'claim_history_id',  'nationality_id', 'uae_license_held_for_id', 'pa_id', 'aml_status', 'payment_id', 'currently_insured_with', 'car_type_insurance_id', 'plan_id'],
         ],
     ];
-
-    public function processGetDSL($filters, $request)
-    {
-        if ($request->form_id) {
-            return parent::processGetBaseDSL($filters, false);
-        } else {
-            $restrictFilter = [];
-
-            if (Auth::user()->hasRole('advisor')) {
-                if (empty($filters)) {
-                    $restrictFilter['advisor_id'] = Auth::user()->id;
-                } else {
-                    $restrictFilter['advisor_id'] = Auth::user()->id;
-                    $restrictFilter = array_merge($restrictFilter, $filters);
-                }
-
-                // $restrictFilter["insurance_coverage.car_quote_id"] = 12222;
-            }
-
-            if (Auth::user()->hasRole('oe')) {
-                if (empty($filters)) {
-                    $restrictFilter['oe_id'] = Auth::user()->id;
-                } else {
-                    $restrictFilter['oe_id'] = Auth::user()->id;
-                    $restrictFilter = array_merge($restrictFilter, $filters);
-                }
-            }
-
-            if (Auth::user()->hasRole('pa')) {
-                if (! array_key_exists('pa_id', $filters)) {
-                    return [];
-                } else {
-                    $valuesIn = [];
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_accepted']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'kyc_cleared']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'missing_documents_requested']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_resubmitted']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']));
-
-                    $pa_id = $filters['pa_id'] == 0 ? null : Auth::user()->id;
-                    $restrictFilter['pa_id'] = $pa_id;
-                    $restrictFilter['advisor_id'] = ['op' => '<>', 'val' => ''];
-
-                    $restrictFilter['quote_status_id'] = ['op' => 'in', 'val' => $valuesIn];
-                }
-            }
-
-            if (Auth::user()->hasRole('payment')) {
-                if (! array_key_exists('pa_id', $filters)) {
-                    return [];
-                } else {
-                    $valuesIn = [];
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'AMLScreeningCleared']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_declined']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']));
-
-                    $pa_id = $filters['pa_id'] == 0 ? null : Auth::user()->id;
-                    $restrictFilter['payment_id'] = $pa_id;
-                    $restrictFilter['advisor_id'] = ['op' => '<>', 'val' => ''];
-                    $restrictFilter['quote_status_id'] = ['op' => 'in', 'val' => $valuesIn];
-                }
-            } //invoicing
-
-            if (Auth::user()->hasRole('invoicing')) {
-                if (! array_key_exists('pa_id', $filters)) {
-                    return [];
-                } else {
-                    $valuesIn = [];
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'policy_issued']));
-                    $pa_id = $filters['pa_id'] == 0 ? null : Auth::user()->id;
-                    $restrictFilter['invoicing'] = $pa_id;
-                    $restrictFilter['advisor_id'] = ['op' => '<>', 'val' => ''];
-                    $restrictFilter['quote_status_id'] = ['op' => 'in', 'val' => $valuesIn];
-                }
-            }
-
-            if (empty($restrictFilter)) {
-                return [];
-            }
-
-            return parent::processGetBaseDSL($restrictFilter, false);
-        }
-    }
 
     public function saveForm($request, $update = false)
     {

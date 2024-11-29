@@ -36,8 +36,6 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
-use App\Models\SanctionListDownloads;
-use App\Models\UAEAMLListUploads;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
@@ -49,7 +47,6 @@ use App\Services\QuoteStatusService;
 use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -443,7 +440,7 @@ class AMLController extends Controller
                     ], ['entity_id' => $fetchEntity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
                 }
 
-                if (isset($AMLCheckRequest->company_name)) {
+                if (isset($AMLCheckRequest->company_name) && $quoteTypeId == QuoteTypeId::Business) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
                     $updateQuote->save();
                 }
@@ -460,67 +457,6 @@ class AMLController extends Controller
         }
 
         return redirect()->back()->with('error', 'Something went wrong');
-    }
-
-    public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, DataTables $datatables)
-    {
-        $url = env('AZURE_RYU_STORAGE_URL').env('AZURE_AML_HISTORY');
-
-        $sanctionListDownloads = $sanctionListDownloads->newQuery();
-
-        if ($request->file_name != '') {
-            $sanctionListDownloads = $sanctionListDownloads->where('file_name', 'like', '%'.$request->file_name.'%');
-        }
-        if ($request->is_processed == '0' || $request->is_processed == '1') {
-            $value = $request->is_processed == '1';
-            $sanctionListDownloads = $sanctionListDownloads->where('is_processed', $value);
-        }
-        $orderBy = $request->sortBy == '' ? 'created_at' : $request->sortBy;
-        $sortType = $request->sortType == '' ? 'DESC' : $request->sortType;
-
-        $sanctionListDownloads = $sanctionListDownloads->orderBy($orderBy, $sortType)->paginate(10);
-
-        return inertia('Aml/History', [
-            'sanctionListDownloads' => $sanctionListDownloads,
-            'url' => $url,
-        ]);
-
-        // return view('aml.history', compact('url'));
-    }
-
-    public function uaeSanctionListUpload(Request $request)
-    {
-        $this->validate($request, [
-            'file_name' => 'required|mimetypes:application/vnd.ms-excel,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
-        ]);
-
-        $getUAEUploadRecord = UAEAMLListUploads::where('id', '=', 1)->get()->first();
-
-        if ($getUAEUploadRecord == null) {
-            $newUAEUploadRecord = new UAEAMLListUploads([
-                'id' => 1,
-                'file_name' => '16-11-2021_UAESanctionlist.xls',
-                'is_updated' => false,
-            ]);
-            $newUAEUploadRecord->save();
-        }
-
-        $fileNameOriginal = $request->file_name->getClientOriginalName();
-        $fileNameAzure = date('d-m-Y').'_'.$fileNameOriginal;
-        $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRyu');
-
-        $newUpload = UAEAMLListUploads::where('id', '=', 1)->get()->first();
-        $newUpload->file_name = $fileNameAzure;
-        $newUpload->is_updated = true;
-        $newUpload->save();
-
-        return redirect('/kyc/aml/upload/uae')->with('success', 'UAE Sanction list uploaded successfully');
-    }
-
-    public function uploadUaeSanctionList()
-    {
-        return inertia('Aml/UploadUae');
-        // return view('aml.upload');
     }
 
     public function fetchEntity(Request $request)
@@ -662,6 +598,7 @@ class AMLController extends Controller
         }
         session()->forget('amlResponseCheck');
     }
+
     public function updateQuoteComment(Request $request)
     {
         $request->validate([
@@ -681,6 +618,7 @@ class AMLController extends Controller
 
         return response()->json(['message' => 'Comment added successfully', 'data' => $quoteModel]);
     }
+
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
@@ -726,6 +664,7 @@ class AMLController extends Controller
             ];
         });
     }
+
     public function sendHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
