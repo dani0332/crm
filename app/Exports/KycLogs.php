@@ -20,9 +20,6 @@ class KycLogs
     {
         return [
             'Ref-ID',
-            'quote_type_id',
-            'quote_request_id',
-            'Ref-ID',
             'Input',
             'Search type',
             'Match Found',
@@ -35,9 +32,6 @@ class KycLogs
     public function map($item): array
     {
         return [
-            $item->uuid ?? '',
-            $item->quote_type_id ?? '',
-            $item->quote_request_id ?? '',
             $item->uuid ?? '',
             $item->input,
             $item->search_type,

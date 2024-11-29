@@ -157,56 +157,41 @@ class AMLController extends Controller
 
     public function export(Request $request)
     {
+        $query = AML::select([
+            'quote_request_id',
+            'quote_type_id',
+            'input',
+            'search_type',
+            'match_found',
+            'results_found',
+            'created_at',
+            'decision',
+        ])
+            ->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
 
-        $quoteTypes = array_filter(QuoteTypeId::getOptions(), function ($value, $key) {
-            return !in_array($key, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical]);
-        }, ARRAY_FILTER_USE_BOTH);
-        
-        if(!empty($request->quoteType)) {
-            $quoteTypes = array_filter($quoteTypes, function ($value, $key) use ($request) {
-                return $value == $request->quoteType;
-            }, ARRAY_FILTER_USE_BOTH);
-        }
-        
-        $allData = collect();
-        foreach ($quoteTypes as $quoteTypeId => $quoteTypeCode) {
-            $quoteRequestTable = (in_array(ucwords($quoteTypeCode), newUi()) && checkPersonalQuotes(ucwords($quoteTypeCode))) ? 'personal_quotes' : strtolower($quoteTypeCode) . '_quote_request';
-            $query = AML::select([
-            'kyc_logs.quote_request_id',
-            'kyc_logs.quote_type_id',
-            'kyc_logs.input',
-            'kyc_logs.search_type',
-            'kyc_logs.match_found',
-            'kyc_logs.results_found',
-            'kyc_logs.created_at',
-            'kyc_logs.decision',
-            $quoteRequestTable.'.uuid',
-            ])
-            ->join($quoteRequestTable, 'kyc_logs.quote_request_id', '=', $quoteRequestTable.'.id')
-            ->whereBetween('kyc_logs.created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate))
-            ->where('kyc_logs.quote_type_id', $quoteTypeId)
-            ->orderBy('kyc_logs.created_at', 'desc')
-            ->orderBy('kyc_logs.quote_request_id', 'desc');
+        $data = collect();
 
-            if (
-                isset($request->searchType) && !empty($request->searchType) &&
-                isset($request->searchField) && !empty($request->searchField)
-            ) {
-                if ($request->searchType == 'cdbId') {
-                    $query->where($quoteRequestTable . '.code', $request->searchField);
-                }
+        $query->chunk(1000, function ($chunk) use (&$data) {
+            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
+            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
+                $quoteType = QuoteTypes::getName($quoteTypeId)->value;
+                $nameSpace = '\\App\\Models\\';
+                $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType) . 'Quote';
 
-                if ($request->searchType == 'customerEmail') {
-                    $query->where($quoteRequestTable . '.email', $request->searchField);
+                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
+                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid'])->get();
+                foreach ($quoteRequestData as $quoteRequest) {
+                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
+                    foreach ($amlData as $index => $value) {
+                        $chunk[$index]['uuid'] = $quoteRequest->uuid;
+                    }
                 }
             }
-
-            $data = $query->get();
-            $allData = $allData->merge($data);
-        }
+            $data = $data->merge($chunk);
+        });
 
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString() . ' - ' . Carbon::parse($request->amlCreatedEndDate)->toDateString();
-        return (new KycLogs($allData))->download("AML Logs {$reportDateRange}");
+        return (new KycLogs($data))->download("AML Logs {$reportDateRange}");
     }
 
     /**
