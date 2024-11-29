@@ -41,3 +41,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: yarn prod
+          skip_fetch: true
+          skip_checkout: true
