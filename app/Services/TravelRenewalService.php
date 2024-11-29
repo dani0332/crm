@@ -32,22 +32,23 @@ class TravelRenewalService extends BaseService
             QuoteStatusEnum::PolicyBooked,
         ])
             ->whereIn('payment_status_id', [
-                PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PAID,
-                PaymentStatusEnum::PARTIAL_CAPTURED,
-                PaymentStatusEnum::CREDIT_APPROVED,
+            PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIAL_CAPTURED,
+            PaymentStatusEnum::CREDIT_APPROVED,
             ])
-            ->where('direction_code',TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
-            ->whereDate('start_date',Carbon::now()->subDays(320))
+            ->where('direction_code', TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
+            ->whereDate('start_date', Carbon::now()->subDays(320))
+            ->take(10)
             ->chunkById(100, function ($quotes) {
-                $quoteCount = $quotes->count();
-                info("total quotes in chunk: {$quoteCount} | Time: ".now());
-                if ($quoteCount > 0) {
-                    info("TravelRenewalService processing travel renewals quotes in chunk: {$quoteCount} | Time: ".now());
-                    $this->processTravelRenewalQuotes($quotes);
-                } else {
-                    info('TravelRenewalService No quotes in chunk. | Time: '.now());
-                }
+            $quoteCount = $quotes->count();
+            info("total quotes in chunk: {$quoteCount} | Time: ".now());
+            if ($quoteCount > 0) {
+                info("TravelRenewalService processing travel renewals quotes in chunk: {$quoteCount} | Time: ".now());
+                $this->processTravelRenewalQuotes($quotes);
+            } else {
+                info('TravelRenewalService No quotes in chunk. | Time: '.now());
+            }
             });
         info('TravelRenewalService Travel Renewal Leads processing completed | Time: '.now());
     }
