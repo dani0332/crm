@@ -90,6 +90,7 @@ onMounted(() => {
           :rules="[isRequired]"
           range
           :max-range="30"
+          placeholder="Select Request Submitted Date"
         />
       </x-field>
     </div>

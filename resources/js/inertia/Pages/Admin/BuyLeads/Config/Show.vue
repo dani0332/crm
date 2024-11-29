@@ -109,6 +109,7 @@ watch(
         ></x-select>
       </x-field>
     </div>
+    <p class="font-medium">Lead Pricing</p>
     <div class="grid sm:grid-cols-2 gap-4">
       <div class="grid sm:grid-cols-1 gap-4">
         <div class="grid grid-cols-3 items-center">

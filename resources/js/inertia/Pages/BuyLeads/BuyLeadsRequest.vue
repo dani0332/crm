@@ -104,6 +104,14 @@ const fetchMaximumLeads = () => {
       table.value.loading = false;
     });
 };
+
+const validateMaximumLeads = () => {
+  if (requestForm.count > maximumLeads.value) {
+    return 'You have exceeded the maximum leads';
+  } else {
+    return true;
+  }
+};
 </script>
 <template>
   <Head title="Buy Lead" />
@@ -135,25 +143,7 @@ const fetchMaximumLeads = () => {
             type="number"
             :max="maximumLeads"
             :min="0"
-            @keypress="
-              $event => {
-                // Prevent input if already 1 digit
-                if ($event.target.value.length >= 1) {
-                  $event.preventDefault();
-                  return;
-                }
-
-                // Get the key pressed
-                const key = String.fromCharCode($event.keyCode);
-                const value = parseInt(key);
-
-                // Check if value is within range
-                if (value < 0 || value > maximumLeads) {
-                  $event.preventDefault();
-                }
-              }
-            "
-            :rules="[isRequired]"
+            :rules="[isRequired, validateMaximumLeads]"
           >
             <template #suffix>
               <div
