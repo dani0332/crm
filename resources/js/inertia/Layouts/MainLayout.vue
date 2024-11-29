@@ -278,7 +278,6 @@ const isReceiveNotificationsEnabled = computed(() => {
 
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
-              <!-- <UserStatus /> -->
               <CallBackNotification v-if="isCallbackNotificationsEnabled" />
               <PaymentNotification v-if="isReceiveNotificationsEnabled" />
               <PaymentExpireNotifications

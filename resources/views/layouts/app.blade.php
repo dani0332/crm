@@ -154,9 +154,7 @@
     <script src="{{ asset('old/Toaster.js') }}"></script>
 
     @php
-    $pusherAppKey = config('constants.VITE_PUSHER_APP_KEY');
     $userId = Auth::user()->id;
-    $appName = config('constants.APP_ENV');
     @endphp
     <!-- iCheck -->
     <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
@@ -187,12 +185,6 @@
             }
             return statusText;
         }
-        // var pusherAppKey = @json($pusherAppKey);
-        // var userId = @json($userId);
-        // var appName = @json($appName);
-        // var pusher = new Pusher(pusherAppKey, {
-        //     cluster: 'ap1'
-        // });
 
         function changeAvailiblity(data, self)
         {

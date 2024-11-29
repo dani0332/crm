@@ -58,6 +58,9 @@ export default defineConfig({
     },
     extensions: ['.js', '.vue', '.json'],
   },
+  build: {
+    chunkSizeWarningLimit: 4200,
+  },
   optimizeDeps: {
     include: ['@vueuse/core', 'md-editor-v3', '@headlessui/vue'],
   },
