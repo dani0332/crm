@@ -27,9 +27,4 @@ class KycStatus extends BaseModel
             'invoicing' => ['id', 'code', 'text'],
         ],
     ];
-
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters);
-    }
 }
