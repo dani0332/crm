@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\LeadSourceEnum;
@@ -922,12 +923,13 @@ class CentralService
     {
         try {
             $exportLogs = QuoteExportLog::create([
+                'type' => ExportLogsTypeEnum::SEARCH_MODULE,
+                'quote_type_id' => request()->quote_type_id ?? null,
                 'user_id' => auth()->id(),
                 'ip_address' => request()->ip(),
                 'url' => request()->fullUrl(),
-                'quote_type_id' => request()->quote_type_id ?? null,
-                'route_name' => request()->route()->uri(),
             ]);
+            info('fn: generateExportLogs export log created');
         } catch (\Exception $e) {
             info('fn: generateExportLogs error: '.$e->getMessage());
         }
