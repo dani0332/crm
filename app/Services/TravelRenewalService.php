@@ -85,12 +85,12 @@ class TravelRenewalService extends BaseService
         info('TravelRenewalService Calculating policy expiry date'.$policyExpiryDate . ' | Time: '.now());
 
         return TravelQuote::where('previous_quote_id', $quote->id)
-            ->whereDate('policy_expiry_date', Carbon::parse($policyExpiryDate)->format('Y-m-d'))
-            ->whereDate('start_date', $policyStartDate)
-            ->where('coverage_code', $quote->coverage_code)
-            ->where('direction_code', $quote->direction_code)
-            ->where('nationality_id', $quote->nationality_id)
-            ->where('region_cover_for_id', $quote->region_cover_for_id)
+            // ->whereDate('policy_expiry_date', Carbon::parse($policyExpiryDate)->format('Y-m-d'))
+            // ->whereDate('start_date', $policyStartDate)
+            // ->where('coverage_code', $quote->coverage_code)
+            // ->where('direction_code', $quote->direction_code)
+            // ->where('nationality_id', $quote->nationality_id)
+            // ->where('region_cover_for_id', $quote->region_cover_for_id)
             ->exists();
     }
     public function storeTravelRenewalQuote($quote)
