@@ -56,10 +56,10 @@ class SearchService extends BaseService
                 $this->getQuoteRelationWithEntityMapping($query);
                 $this->searchQueryMainLeadFilters($query, request());
                 // Reminder:: If User hasn't Admin Role then display only respective leads
-//                // TODO:: Temp commented this condition for self testing purpose
-//                if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-//                    $query->where('advisor_id', auth()->id);
-//                }
+                //                // TODO:: Temp commented this condition for self testing purpose
+                //                if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+                //                    $query->where('advisor_id', auth()->id);
+                //                }
             }
 
             $query->orderBy($baseTable.'.'.(request()->sortBy ?? 'updated_at'), request()->sortType ?? 'desc');
