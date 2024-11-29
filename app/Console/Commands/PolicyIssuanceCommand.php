@@ -48,7 +48,7 @@ class PolicyIssuanceCommand extends Command
                 $isPolicyIssuanceAutomationEnabled = (new PolicyIssuanceService)->isPolicyIssuanceAutomationEnabled($quoteType, $insuranceProvider?->code);
                 if ($isPolicyIssuanceAutomationEnabled) {
                     info('cmd:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' for Insurance Provider ID: '.$policyIssuanceProcess->insurance_provider_id);
-                    PolicyIssuanceJob::dispatch($policyIssuanceProcess)->onQueue('policy-issuance-automation');
+                    PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation');
                 } else {
                     info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - '.$insuranceProvider?->text.' '.$quoteType.' Automation is disabled');
                 }

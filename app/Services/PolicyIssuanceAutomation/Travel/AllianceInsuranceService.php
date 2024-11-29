@@ -355,6 +355,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $policyDocumentCode = $this->getTravelDocumentMapping($policyDocument->name);
             if ($policyDocumentCode) {
                 $this->uploadAndAttachToQuoteDocuments($quote, $policyDocument->url, $policyDocumentCode['code'], $policyDocument->name);
+            } else {
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy Document Mapping not found for : '.$policyDocument->name);
             }
         }
 
@@ -593,6 +595,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     private function getMimeTypeAndFileName($documentUrl): array
     {
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' start');
         $httpHeaders = Http::head($documentUrl);
 
         $mimeType = $httpHeaders->header('Content-Type');
@@ -603,15 +606,22 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $docName = urldecode($matches[1]);
         }
 
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' ended');
+
         return [$mimeType, $docName];
 
     }
 
     private function getTravelDocumentMapping($docName): ?array
     {
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document Name : '.$docName.' started');
         if ($docName === 'Policy Tax Invoice') {
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document Name : '.$docName.' - ', ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_TAX_INVOICE]);
+
             return ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_TAX_INVOICE];
         } elseif (str_contains($docName, 'Certificate of Insurance')) {
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document Name : '.$docName.' - ', ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE]);
+
             return ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE];
         }
 

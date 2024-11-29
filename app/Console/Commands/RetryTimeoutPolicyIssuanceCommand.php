@@ -51,7 +51,7 @@ class RetryTimeoutPolicyIssuanceCommand extends Command
                 if ($isPolicyIssuanceAutomationEnabled && $isPolicyIssuanceAutomationRetryEnabledForTimeout) {
 
                     info('cmd:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' for Insurance Provider ID: '.$policyIssuanceProcess->insurance_provider_id);
-                    PolicyIssuanceJob::dispatch($policyIssuanceProcess)->onQueue('policy-issuance-automation');
+                    PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation1');
                 } else {
                     info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - '.$insuranceProvider?->text.' '.$quoteType.'  Policy Issuance Automation and Retry is disabled');
                 }

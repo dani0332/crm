@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
+use App\Repositories\PolicyIssuanceRepository;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -29,9 +30,9 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($process)
+    public function __construct($processId)
     {
-        $this->process = $process;
+        $this->process = PolicyIssuanceRepository::find($processId);
     }
 
     /**
