@@ -2,12 +2,10 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
-use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
@@ -175,24 +173,18 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/total-premium', [ReportsController::class, 'totalPremiumLeadsSaleReport'])->name('total-premium-leads-sales-report');
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
-        if (in_array(quoteTypeCode::Pet, newUi())) {
-            Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
-            Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
-        }
-        if (in_array(quoteTypeCode::Bike, newUi())) {
-            Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
-        }
-        if (in_array(quoteTypeCode::Cycle, newUi())) {
-            Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
-            Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
-        }
-        if (in_array(quoteTypeCode::Yacht, newUi())) {
-            Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
-            Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
-        }
-        if (in_array(quoteTypeCode::Jetski, newUi())) {
-            Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
-        }
+        Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
+        Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
+
+        Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
+
+        Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
+        Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
+
+        Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
+        Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
+
+        Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
         Route::group(['prefix' => 'quotes/'], function () {
             Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
@@ -202,10 +194,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
         });
 
-        if (in_array(quoteTypeCode::Life, newUi())) {
-            Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
-            Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
-        }
+        Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
+        Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
@@ -439,14 +429,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
-        if (in_array(quoteTypeCode::Business, newUi())) {
-            Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
-            Route::resource('business', BusinessQuoteController::class);
-        }
+
+        Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
+        Route::resource('business', BusinessQuoteController::class);
+
         Route::resource('travel', CRUDController::class);
-        if (! in_array(quoteTypeCode::Pet, newUi())) {
-            Route::resource('pet', CRUDController::class);
-        }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
@@ -486,19 +473,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('{quoteType}/risk-rating-details/{quoteId}', [CRUDController::class, 'riskRatingDetails'])->name('risk-rating-details');
         Route::post('{quoteType}/{quoteUuId}/send-ocb', [CentralController::class, 'sendOCBEmail'])->name('sendOCBEmail');
 
-        if (! in_array(quoteTypeCode::Life, newUi())) {
-            Route::resource('life', CRUDController::class);
-        }
-
-        if (in_array(quoteTypeCode::Travel, newUi()) || in_array(quoteTypeCode::Life, newUi())) {
-            Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('travel.cards');
-            Route::get('travel-expired-upload', [TravelController::class, 'uploadRenewals'])->name('travel.expired.upload');
-            Route::post('travel-upload-create', [TravelController::class, 'renewalsUploadCreate'])->name('travel.upload-create');
-            Route::resource('travel', TravelController::class);
-            Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
-        } else {
-            Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
-        }
+        Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('travel.cards');
+        Route::get('travel-expired-upload', [TravelController::class, 'uploadRenewals'])->name('travel.expired.upload');
+        Route::post('travel-upload-create', [TravelController::class, 'renewalsUploadCreate'])->name('travel.upload-create');
+        Route::resource('travel', TravelController::class);
+        Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
 
@@ -589,12 +568,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {
-        if (in_array('Business', newUi())) {
-            Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
-            Route::resource('amt', V2AmtController::class);
-        } else {
-            Route::resource('amt', AMTController::class);
-        }
+        Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
+        Route::resource('amt', V2AmtController::class);
     });
 
     Route::group(['prefix' => 'discount'], function () {

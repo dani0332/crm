@@ -267,7 +267,7 @@ class CRUDController extends Controller
         $count = 0;
         $hasOtherFilters = count(array_diff_key($request->all(), ['page' => ''])) > 0;
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
@@ -301,7 +301,7 @@ class CRUDController extends Controller
         }
 
         // inertia rendering for home quote
-        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
@@ -320,7 +320,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $userMaxCap = 0;
@@ -403,7 +403,7 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
             return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
@@ -411,7 +411,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -421,7 +421,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
             return inertia('HomeQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
@@ -470,7 +470,7 @@ class CRUDController extends Controller
             }
         }
         // new ui enabled
-        if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
+        if ($modelType == quoteTypeCode::Home) {
             $validateArray = [];
             if ($request->has('ilivein_accommodation_type_id')) {
                 $this->validate($request, [
@@ -489,7 +489,7 @@ class CRUDController extends Controller
             }
         } elseif ($modelType == quoteTypeCode::Home) {
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['create']);
-        } elseif ($modelType == quoteTypeCode::Car && in_array($modelType, newUi())) {
+        } elseif ($modelType == quoteTypeCode::Car) {
             $validateArray = $this->carQuoteService->getValidationArray($request);
         }
 
@@ -913,7 +913,7 @@ class CRUDController extends Controller
             ]));
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
@@ -1030,7 +1030,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
+        if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Health);
             $coPayment = $this->healthQuoteService->getCoPayment($id);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
@@ -1250,7 +1250,7 @@ class CRUDController extends Controller
             }
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
             return inertia('HealthQuote/Form', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -1260,7 +1260,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
             return inertia('HomeQuote/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -1270,7 +1270,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+        if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($record->uuid, QuoteTypeId::Car);
@@ -1307,7 +1307,7 @@ class CRUDController extends Controller
             $modelSkipPropertiesList = (json_decode($request->get('modelSkipProperties'), true)) ? json_decode($request->get('modelSkipProperties'), true) : $request->get('modelSkipProperties');
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
-            if ($modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+            if ($modelType == quoteTypeCode::Car) {
                 $validateArray = $this->carQuoteService->getValidationArray($request);
             } else {
                 $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
@@ -1824,8 +1824,8 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->status) {
             // $results = getDataAgainstEveryStatus($request->modelType, $request);
             $results = getDataAgainstStatus($request->modelType, $request->status, $request);
-            // and newUi is true
-            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht]) && in_array($request->modelType, newUi())) {
+
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht])) {
                 return $results;
             }
 
@@ -1878,7 +1878,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
             $results = getDataAgainstSearchTerm($request->modelType, $request);
 
-            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life]) && in_array($request->modelType, newUi())) {
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life])) {
                 return $results;
             }
 
