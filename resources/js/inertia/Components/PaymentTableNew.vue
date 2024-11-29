@@ -2283,7 +2283,8 @@ const addPayment = isValid => {
   data.payment.payment_splits = splitPayments;
 
   let declinedCustomReason = paymentMethodsForm.declined_custom_reason;
-  if (isCreditApprovalView.value === true) {
+
+  if (isCreditApprovalView.value === true && !isApproveNotChecked.value) {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -2319,7 +2320,7 @@ const addPayment = isValid => {
     return;
   }
 
-  if (paymentMethodsForm.status === 'view') {
+  if (paymentMethodsForm.status === 'view' && !isApproveNotChecked.value) {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
