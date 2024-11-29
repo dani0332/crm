@@ -9,7 +9,7 @@ class KycLogs
 {
     use ExcelExportable;
 
-    public function __construct(public Collection $data){}
+    public function __construct(public Collection $data) {}
 
     public function collection()
     {
@@ -38,7 +38,7 @@ class KycLogs
             $item->match_found,
             $item->results_found,
             date(config('constants.datetime_format'), strtotime($item->created_at)),
-            $item->decision
+            $item->decision,
         ];
     }
 }

@@ -176,7 +176,7 @@ class AMLController extends Controller
             foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
                 $quoteType = QuoteTypes::getName($quoteTypeId)->value;
                 $nameSpace = '\\App\\Models\\';
-                $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType) . 'Quote';
+                $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
                 $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
                 $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid'])->get();
@@ -190,7 +190,8 @@ class AMLController extends Controller
             $data = $data->merge($chunk);
         });
 
-        $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString() . ' - ' . Carbon::parse($request->amlCreatedEndDate)->toDateString();
+        $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
+
         return (new KycLogs($data))->download("AML Logs {$reportDateRange}");
     }
 
