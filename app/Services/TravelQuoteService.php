@@ -1133,11 +1133,13 @@ class TravelQuoteService extends BaseService
 
         $parentLead->premium = $parentPayment->total_price;
         $parentLead->plan_id = $parentPayment->plan_id;
+        $parentLead->insurance_provider_id = $parentPayment->insurance_provider_id;
         $parentLead->save();
         info("Updated parent lead code {$parentLead->code} with premium {$parentLead->premium} and plan ID {$parentLead->plan_id}");
 
         $childLead->premium = $childPayment->total_price;
         $childLead->plan_id = $childPayment->plan_id;
+        $childLead->insurance_provider_id = $childLead->insurance_provider_id;
         $childLead->save();
         info("Updated child lead code {$childLead->code} with premium {$childLead->premium} and plan ID {$childLead->plan_id}");
     }
