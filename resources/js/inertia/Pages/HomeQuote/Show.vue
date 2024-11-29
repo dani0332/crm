@@ -868,6 +868,67 @@ const copyLink = () => {
         </x-button>
       </template>
     </x-modal>
+
+
+    <!-- Home Ecom Details -->
+    <div class="p-4 rounded shadow mb-6 bg-white">
+        <div class="flex justify-between items-center flex-wrap gap-2">
+          <h2 class="text-lg font-semibold text-primary-800">E-COM Detail</h2>
+        </div>
+        <x-divider class="my-4" />
+        <div class="text-sm">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PRICE</dt>
+              <dd>{{ quote?.premium ?? '' }}</dd>
+            </div>
+
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PAID AT</dt>
+              <dd>{{ quote?.paid_at ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">AML STATUS</dt>
+              <dd>{{ amlStatusName ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PAYMENT STATUS</dt>
+              <dd>{{ quote?.payment_status?.text }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PROVIDER NAME</dt>
+              <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PAYMENT METHOD</dt>
+              <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PLAN NAME</dt>
+              <dd>{{ quote?.car_plan?.text }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">ECOMMERCE</dt>
+              <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">QUOTE LINK</dt>
+              <dd>{{ quote?.quote_link ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">ORDER REFERENCE</dt>
+              <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PAYMENT REFERENCE</dt>
+              <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    <!-- Home Ecom Details -->
+
+
     <div class="p-4 rounded shadow mt-6 mmmbmb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
