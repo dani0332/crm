@@ -7,6 +7,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\LookupsEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -50,7 +51,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\PermissionsEnum;
 
 class AMLController extends Controller
 {
@@ -178,7 +178,7 @@ class AMLController extends Controller
             foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
                 $quoteType = QuoteTypes::getName($quoteTypeId)->value;
                 $nameSpace = '\\App\\Models\\';
-                $model = checkPersonalQuotes(ucwords($quoteType)) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType) . 'Quote';
+                $model = checkPersonalQuotes(ucwords($quoteType)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
                 $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
                 $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid'])->get();
