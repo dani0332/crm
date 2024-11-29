@@ -55,23 +55,11 @@ class SearchService extends BaseService
                 ]);
                 $this->getQuoteRelationWithEntityMapping($query);
                 $this->searchQueryMainLeadFilters($query, request());
-                // Reminder:: If User has Advisor Role then Only show respective leads
-                $query->when(auth()->user()->hasAnyRole([
-                    RolesEnum::CarAdvisor,
-                    RolesEnum::HealthAdvisor,
-                    RolesEnum::HomeAdvisor,
-                    RolesEnum::LifeAdvisor,
-                    RolesEnum::BusinessAdvisor,
-                    RolesEnum::BikeAdvisor,
-                    RolesEnum::YachtAdvisor,
-                    RolesEnum::TravelAdvisor,
-                    RolesEnum::PetAdvisor,
-                    RolesEnum::CycleAdvisor,
-                    RolesEnum::JetskiAdvisor,
-                ]), function ($query) {
-                    // TODO:: Need to confirm, is quote_type_id check will also included?
-                    $query->where('advisor_id', auth()->user()->id);
-                });
+                // Reminder:: If User hasn't Admin Role then display only respective leads
+//                // TODO:: Temp commented this condition for self testing purpose
+//                if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+//                    $query->where('advisor_id', auth()->id);
+//                }
             }
 
             $query->orderBy($baseTable.'.'.(request()->sortBy ?? 'updated_at'), request()->sortType ?? 'desc');
