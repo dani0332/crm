@@ -50,11 +50,6 @@ class CarQuotePayment extends BaseModel
         return ['mode_id', 'car_quote_id.quote_status_id', 'car_quote_id.payment_status_id'];
     }
 
-    public function processGetDSL($filters, $request)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
-
     public function saveForm($request, $update = false)
     {
         try {
