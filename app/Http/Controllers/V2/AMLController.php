@@ -186,7 +186,7 @@ class AMLController extends Controller
                 foreach ($quoteRequestData as $quoteRequest) {
                     $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
                     foreach ($amlData as $index => $value) {
-                        $chunk[$index]['uuid'] = $quoteType->shortCode() . $quoteRequest->uuid;
+                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
                         $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
                     }
                 }
