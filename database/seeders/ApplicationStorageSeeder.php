@@ -76,7 +76,36 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TRAVEL_RENEWALS_SWITCH],
             [
-                'value' => 0,
+                    'value' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/5fd51eb0-a17a-43d4-b9a8-11910469e7ac/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PUBLIC_HOLIDAY_START_DATE],
+            [
+                'value' => '2024-12-02 10:00:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PUBLIC_HOLIDAY_END_DATE],
+            [
+                'value' => '2024-12-03 23:59:59',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

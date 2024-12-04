@@ -18,4 +18,5 @@ final class WorkflowTypeEnum extends Enum
     public const UNSUBSCRIBE_REQUESTED_NOTIFICATIION = 'unsubscribe_requested_notification';
     public const HEALTH_APPLICATION_SUBMITTED = 'health_application_submitted';
     public const TRAVEL_RENEWALS_OCB = 'travel_renewals_ocb';
+    public const WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS = 'whatsapp_notification_to_customer_no_plans';
 }

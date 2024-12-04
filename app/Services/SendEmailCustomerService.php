@@ -841,6 +841,7 @@ class SendEmailCustomerService extends BaseService
                 ]],
                 'templateId' => (int) $emailData->emailTemplateId,
                 'params' => [
+                    'clientFirstName' => $emailData->clientFirstName,
                     'clientFullName' => $emailData->clientFullName,
                     'carQuoteId' => $emailData->code,
                     'currentInsurer' => $emailData->currentInsurer,
@@ -1483,5 +1484,35 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->email);
 
         return $responseCode;
+    }
+
+    public function sendWhatsappNotificationToCustomer($quote, $advisorId = null)
+    {
+
+        $advisor = User::where('id', $advisorId)->first();
+        $payload = [
+            'customerEmail' => $quote->email,
+            'customerName' => $quote->first_name.' '.$quote->last_name,
+            'customerMobile' => (! empty($quote->mobile_no) ? formatMobileNo($quote->mobile_no) : ''),
+            'advisor' => $advisor ?? null,
+            'advisorName' => $advisor?->name ?? '',
+            'advisorEmail' => $advisor?->email ?? '',
+            'advisorLandLine' => (! empty($advisor?->landline_no) ? $advisor->landline_no : ''),
+            'advisorMobilePhone' => (! empty($advisor?->mobile_no) ? $advisor->mobile_no : ''),
+            'advisorWhatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'advisorMobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'quoteUID' => $quote->uuid,
+            'refID' => $quote->code,
+            'CarMake' => $quote->carMake->text ?? null,
+            'CarModel' => $quote->carModel->text ?? null,
+            'workflowType' => workflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
+        ];
+        $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
+        if (! empty($customerWANotificationWorkflow)) {
+            app(BirdService::class)->triggerWebHookRequest($customerWANotificationWorkflow, (object) $payload);
+            info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$customerWANotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+        } else {
+            info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:'.$quote->uuid.' | Time:'.now());
+        }
     }
 }
