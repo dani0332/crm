@@ -40,7 +40,6 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessDataCleanUpCommand::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
-        RetryTimeoutPolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
     ];
 
@@ -127,7 +126,6 @@ class Kernel extends ConsoleKernel
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
-        $schedule->command('policy-issuance-automation:retry')->timezone('Asia/Dubai')->everyThreeHours()->onOneServer()->withoutOverlapping(4);
         $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();
 
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();

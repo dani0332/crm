@@ -48,4 +48,18 @@ class PolicyIssuanceService
 
     }
 
+    public function getInsurerAutomationStatus($policyIssuanceProcesses)
+    {
+
+        $insurerAutomationStatus = [];
+        foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
+            $quoteType = $policyIssuanceProcess?->quote_type;
+            $insuranceProvider = $policyIssuanceProcess?->insuranceProvider;
+            $insurerAutomationStatus[$insuranceProvider->code.'_'.$quoteType] = $this->isPolicyIssuanceAutomationEnabled($quoteType, $insuranceProvider?->code);
+            $insurerAutomationStatus[$insuranceProvider->code.'_'.$quoteType.'_retry'] = $this->isPolicyIssuanceAutomationRetryEnabledForTimeout($quoteType, $insuranceProvider?->code);
+        }
+
+        return $insurerAutomationStatus;
+    }
+
 }

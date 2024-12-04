@@ -29,9 +29,9 @@ class PolicyIssuanceRepository extends BaseRepository
         }
     }
 
-    public function fetchPolicyIssuanceByStatus($status)
+    public function fetchPolicyIssuanceByStatus($statuses)
     {
-        return $this->where('status', $status)->orderBy('created_at')->get();
+        return $this->whereIn('status', $statuses)->orderBy('created_at')->get();
     }
 
 }
