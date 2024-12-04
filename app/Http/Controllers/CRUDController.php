@@ -1997,8 +1997,7 @@ class CRUDController extends Controller
             $payment->save();
         }
 
-        // update status policy issued of req fulfilled
-        $this->updatePriceAndDiscount($quoteModel);
+        app(CentralService::class)->synchronizePaymentInformation($quoteModel);
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
         info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');

@@ -296,7 +296,10 @@ class CentralService
 
             $quote->update($data->toArray());
 
-            $this->updateQuotePayment($quote, $data->price_with_vat, $data->insurance_provider_id);
+            // Will remove this once move to stage 
+            // $this->updateQuotePayment($quote, $data->price_with_vat, $data->insurance_provider_id);
+
+            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id);
 
             return true;
         });
@@ -915,5 +918,22 @@ class CentralService
         }
 
         return false;
+    }
+    
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null){
+        info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
+        if (! $sendUpdatePayment) {
+            $payment = $quoteObject->payments()->mainLeadPayment()->first();
+        } else {
+            $payment = $sendUpdatePayment;
+        }
+        if ($payment){ 
+            if ($insuranceProviderId) {
+                $payment->insurance_provider_id = $insuranceProviderId;
+            }
+            app(PaymentService::class)->processMasterPayment($payment, $quoteObject);
+            app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment);
+            return $this->isLackingPayment($payment);
+        }
     }
 }

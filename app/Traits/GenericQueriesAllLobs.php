@@ -446,58 +446,6 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * Updates the total payment price for all payment frequencies and the total amount for upfront payments.
-     * Invoked when update in the policy details section
-     * It also checks for discrepancies between the total amount of child payments and the total price of the parent payment.
-     */
-    public function updatePriceAndDiscount($quoteModel, $sendUpdatePayment = null): bool
-    {
-        info('Quote Code: '.$quoteModel->code.' fn: updatePriceAndDiscount called');
-
-        // it will check for send update payments.
-        if (! $sendUpdatePayment) {
-            $payment = $quoteModel->payments()->mainLeadPayment()->first();
-        } else {
-            $payment = $sendUpdatePayment;
-        }
-        $priceWithVat = $quoteModel->price_with_vat;
-
-        if ($payment) {
-
-            $difference = $this->handleSmallAmountDifference($payment, $priceWithVat);
-
-            $this->setPaymentStatusAsPerPrice($quoteModel, $payment, $difference);
-
-            // total price is actual price without discount
-            $payment->total_price = $quoteModel->price_with_vat;
-            $payment->save();
-            $this->updateTotalAmount($payment);
-            $this->updateChildPaymentStatus($payment);
-        }
-
-        return $this->isLackingPayment($payment);
-    }
-
-    /**
-     * Updates the total payment price when payment frequency is upfront and payment is paid
-     * Invoked when update in the policy details section
-     *
-     * @return void
-     */
-    private function updateTotalAmount($payment)
-    {
-        info('Quote Code: '.$payment->code.' Updating TA frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
-        if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-            $totalPrice = $payment->total_price;
-            $discountValue = $payment->discount_value;
-            $totalAmount = $totalPrice - $discountValue;
-            info('Quote Code: '.$payment->code.' updateTotalAmount - totalPrice: '.$totalPrice.', discountValue: '.$discountValue.', totalAmount: '.$totalAmount);
-            $payment->total_amount = $totalAmount;
-            $payment->save();
-        }
-    }
-
-    /**
      * Evaluates if all necessary policy details are filled for a given quote.
      * such as policy number, policy issuance date, policy start date, policy expiry date, and price with VAT are present.
      * Triggering from bookPolicyPayload
@@ -629,72 +577,6 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * This method will set payment status in payment table
-     * This method trigger when policy details section update
-     */
-    public function setPaymentStatusAsPerPrice($quoteModel, mixed $payment, mixed $difference): void
-    {
-        if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
-            $priceWithVat = round($quoteModel->price_with_vat, 2);
-            $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
-            // If status is partially paid & total price is less than price with vat then set status to partially paid
-            if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
-                $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
-            } elseif ($priceWithVat <= $captureAndDiscount) {
-                $payment->payment_status_id = PaymentStatusEnum::PAID;
-            }
-        }
-    }
-
-    /**
-     * This method calculates the difference between the price with VAT and the total payment amount, which includes the captured amount and any discount value.
-     * If the difference is less than $1 but more than $0, it adjusts the payment's discount value to account for this difference
-     * This method trigger when policy details section update
-     *
-     * @return float
-     */
-    public function handleSmallAmountDifference(mixed $payment, mixed $priceWithVat): mixed
-    {
-        $infoMessage = 'Quote Code: '.$payment->code;
-        $capturedAmount = $payment->captured_amount;
-        $discountValue = $payment->discount_value;
-
-        $totalPaymentAmount = $capturedAmount + $discountValue;
-        $initialDifference = $priceWithVat - $totalPaymentAmount;
-
-        $difference = (float) number_format($initialDifference, 2);
-
-        $infoMessage .= 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
-        $infoMessage .= 'ID: '.$difference.' ';
-        if ($payment->system_adjusted_discount != null) {
-            $difference += $payment->system_adjusted_discount;
-            $infoMessage .= 'SAD: '.$payment->system_adjusted_discount.' DASA '.$difference;
-        }
-        // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
-        if ($difference <= 0.99 && $difference > 0) {
-            $payment->system_adjusted_discount = $difference;
-            // If condition to check if discount value is not null & add difference to it else set difference as discount value
-            if ($payment->discount_value != null) {
-                $payment->discount_value += $initialDifference;
-            } else {
-                $payment->discount_value = $difference;
-                $payment->discount_type = DiscountTypeEnum::SYSTEM_ADJUSTED_DISCOUNT;
-            }
-        } // Case 2 if difference is greater than 0.99 and system adjusted discount is greater than 0 then subtract system adjusted discount from discount value
-        elseif (($difference > 0.99 || $difference == 0) && $payment->system_adjusted_discount > 0) {
-            $payment->discount_value -= $payment->system_adjusted_discount;
-            $payment->system_adjusted_discount = 0;
-            if ($payment->discount_type == DiscountTypeEnum::SYSTEM_ADJUSTED_DISCOUNT) {
-                $payment->discount_type = null;
-            }
-        }
-
-        info($infoMessage);
-
-        return $difference;
-    }
-
-    /**
      * Determines if all below mentiooned fields are filled or not
      * Based on this we will show book policy button inj booking details section
      * Triggering from bookPolicyPayload
@@ -773,49 +655,6 @@ trait GenericQueriesAllLobs
         }
 
         return false;
-    }
-
-    /**
-     * For each payment split, if the parent payment's frequency is UPFRONT and its status is PAID,
-     * the method updates the payment split's payment amount to match the parent payment's total amount and logs this update.
-     * If the collection amount is greater than or equal to the payment amount, the payment split's status is set to PAID, otherwise, it is set to PARTIALLY_PAID
-     * This method trigger when policy details section update
-     */
-    private function updateChildPaymentStatus($payment)
-    {
-        info('Quote Code: '.$payment->code.' fn: Updating child payment status');
-        $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
-        if (! $paymentSplits->isEmpty()) {
-            foreach ($paymentSplits as $paymentSplit) {
-                info('Quote Code: '.$payment->code.' Updating TA for Split Payment frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
-                if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-                    info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
-                    if ($paymentSplit->payment_amount != $payment->total_amount) {
-                        $paymentSplit->payment_amount = $payment->total_amount;
-                        $paymentSplit->save();
-                    }
-                }
-                if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
-                    $oldPaymentStatusId = $paymentSplit->payment_status_id;
-                    $newPaymentStatusId = null;
-
-                    // Format both amounts to 2 decimal places
-                    $collectionAmount = round($paymentSplit->collection_amount, 2);
-                    $paymentAmount = round($paymentSplit->payment_amount, 2);
-
-                    if ($collectionAmount >= $paymentAmount) {
-                        $newPaymentStatusId = PaymentStatusEnum::PAID;
-                    } else {
-                        $newPaymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
-                    }
-                    if ($oldPaymentStatusId != $newPaymentStatusId) {
-                        $paymentSplit->payment_status_id = $newPaymentStatusId;
-                        $paymentSplit->save();
-                        info('Payment split status updated for: '.$paymentSplit->code.' from '.$oldPaymentStatusId.' to '.$newPaymentStatusId);
-                    }
-                }
-            }
-        }
     }
 
     /**

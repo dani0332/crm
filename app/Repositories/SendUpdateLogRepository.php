@@ -342,7 +342,7 @@ class SendUpdateLogRepository extends BaseRepository
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
-                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $payment);
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
