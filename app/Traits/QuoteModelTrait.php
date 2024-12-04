@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -205,6 +206,9 @@ trait QuoteModelTrait
 
     public function isBuyLeadApplicable(): bool
     {
-        return request('isRequestedForAnAdvisor', false);
+        return request('isRequestedForAnAdvisor', false) ||
+            $this->sic_advisor_requested == 1 ||
+            $this->assignment_type === AssignmentTypeEnum::BOUGHT_LEAD ||
+            $this->assignment_type === AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
     }
 }
