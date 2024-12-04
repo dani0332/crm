@@ -375,7 +375,7 @@ const fixedValue = numberString => {
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-
+const exportLoader = ref(false);
 const onDataExport = () => {
   if (filters.created_at_start && filters.created_at_end) {
     filters.created_at_start = useDateFormat(
@@ -407,13 +407,26 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 const exportRmLeads = () => {
+  exportLoader.value = true;
+
   logAndExportQuotes({
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
     url: `${window.location.origin}/rm-leads-export`,
+  }).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
   });
 };
 
@@ -856,6 +869,7 @@ watch(() => {
             v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start mr-3"
           >
@@ -880,6 +894,7 @@ watch(() => {
             v-if="can(permissionsEnum.EXPORT_RM_LEADS)"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click="exportRmLeads()"
             class="justify-self-start mr-3"
           >
