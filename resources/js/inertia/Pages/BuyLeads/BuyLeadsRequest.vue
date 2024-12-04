@@ -136,7 +136,7 @@ const maxLeadsOptions = computed(() => {
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid sm:grid-cols-3 gap-4">
+    <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="Line Of Business" required>
         <x-select
           placeholder="Select Line Of Business"
@@ -239,8 +239,8 @@ const maxLeadsOptions = computed(() => {
     size="lg"
   >
     <div class="text-red-500">
-      You have reached the maximum leads for the day.Please submit
-      your next request on the following day.
+      Max cap for Buy Lead requests reached. Please submit your next request on
+      the following day.
     </div>
   </x-modal>
   <DataTable
