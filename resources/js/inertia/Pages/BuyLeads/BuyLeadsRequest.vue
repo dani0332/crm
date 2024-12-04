@@ -12,6 +12,7 @@ const { isRequired } = useRules();
 const maximumLeads = ref(0);
 const perLeadCost = ref(1);
 const formatted = date => useDateFormat(date, 'YYYY-MM-DD HH:mm:ss').value;
+const maxLeadsModal = ref(false);
 
 const calculateMaximumCost = computed(() => {
   return requestForm.count * perLeadCost.value;
@@ -96,11 +97,12 @@ const fetchMaximumLeads = () => {
       perLeadCost.value = cost;
       table.value.loading = false;
       if (isMaxCapReached) {
-        notification.error({
-          title:
-            'You have reached the maximum leads for the day.Please submit your next request on the following day.',
-          position: 'top',
-        });
+        maxLeadsModal.value = true;
+        // notification.error({
+        //   title:
+        //     'You have reached the maximum leads for the day.Please submit your next request on the following day.',
+        //   position: 'top',
+        // });
       }
     })
     .catch(error => {
@@ -119,6 +121,13 @@ const validateMaximumLeads = () => {
     return true;
   }
 };
+
+const maxLeadsOptions = computed(() => {
+  return Array.from({ length: maximumLeads.value }, (_, i) => i + 1).map(i => ({
+    label: i,
+    value: i,
+  }));
+});
 </script>
 <template>
   <Head title="Buy Lead" />
@@ -140,12 +149,20 @@ const validateMaximumLeads = () => {
       </x-field>
       <x-tooltip placement="top-left">
         <x-field label="Buy Leads" required>
-          <x-input
+          <x-select
             :disabled="
               requestForm.quote_type == null ||
               maximumLeads == 0 ||
               table.loading
             "
+            v-model="requestForm.count"
+            placeholder="Select The Number Of Leads"
+            :rules="[isRequired, validateMaximumLeads]"
+            :options="maxLeadsOptions"
+          >
+          </x-select>
+
+          <!-- <x-input
             v-model="requestForm.count"
             type="number"
             :max="maximumLeads"
@@ -163,7 +180,7 @@ const validateMaximumLeads = () => {
                 />
               </div>
             </template>
-          </x-input>
+          </x-input> -->
         </x-field>
         <template #tooltip>
           <div>
@@ -214,6 +231,18 @@ const validateMaximumLeads = () => {
       </x-button>
     </div>
   </x-form>
+  <x-modal
+    v-model="maxLeadsModal"
+    title="Buy Leads"
+    show-close
+    backdrop
+    size="lg"
+  >
+    <div class="text-red-500">
+      You have reached the maximum leads for the day.Please submit
+      your next request on the following day.
+    </div>
+  </x-modal>
   <DataTable
     table-class-name="mt-4"
     :loading="table.loader"
