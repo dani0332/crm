@@ -136,7 +136,7 @@ const maxLeadsOptions = computed(() => {
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid sm:grid-cols-2 gap-4">
+    <div class="grid sm:grid-cols-3 gap-3">
       <x-field label="Line Of Business" required>
         <x-select
           placeholder="Select Line Of Business"
@@ -147,50 +147,37 @@ const maxLeadsOptions = computed(() => {
           @update:modelValue="requestForm.count = null"
         ></x-select>
       </x-field>
-      <x-tooltip placement="top-left">
-        <x-field label="Buy Leads" required>
-          <x-select
-            :disabled="
-              requestForm.quote_type == null ||
-              maximumLeads == 0 ||
-              table.loading
-            "
-            v-model="requestForm.count"
-            placeholder="Select The Number Of Leads"
-            :rules="[isRequired, validateMaximumLeads]"
-            :options="maxLeadsOptions"
-          >
-          </x-select>
-
-          <!-- <x-input
-            v-model="requestForm.count"
-            type="number"
-            :max="maximumLeads"
-            :min="0"
-            :rules="[isRequired, validateMaximumLeads]"
-          >
-            <template #suffix>
-              <div
-                class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
-              >
-                <x-spinner
-                  v-if="table.loading"
-                  size="sm"
-                  class="text-primary"
-                />
-              </div>
-            </template>
-          </x-input> -->
-        </x-field>
-        <template #tooltip>
-          <div>
-            You may request up to {{ maximumLeads }} lead(s) per day for the
-            selected Line Of Business.
-          </div>
-        </template>
-      </x-tooltip>
-      <x-field label="The total cost for the leads is:">
-        <x-input disabled v-model="calculateMaximumCost">
+      <div class="flex items-center gap-4">
+        <x-tooltip placement="top-left">
+          <x-field label="Buy Leads" required>
+            <x-select
+              :disabled="
+                requestForm.quote_type == null ||
+                maximumLeads == 0 ||
+                table.loading
+              "
+              v-model="requestForm.count"
+              placeholder="Select the number of leads to buy"
+              :rules="[isRequired, validateMaximumLeads]"
+              :options="maxLeadsOptions"
+            >
+            </x-select>
+          </x-field>
+          <template #tooltip>
+            <div>
+              You may request up to {{ maximumLeads }} lead(s) per day for the
+              selected Line Of Business.
+            </div>
+          </template>
+        </x-tooltip>
+        <p class="text-vtd-secondary-400">Up to {{ maximumLeads }} Leads Max</p>
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-3 gap-3">
+      <div class="grid sm:grid-cols-2 items-center">
+        <p>The total cost for the requested is:</p>
+        <!-- <x-field label="The total cost of the leads is:"> -->
+        <x-input disabled v-model="calculateMaximumCost" class="!mb-0">
           <template #suffix>
             <div
               class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
@@ -199,7 +186,8 @@ const maxLeadsOptions = computed(() => {
             </div>
           </template>
         </x-input>
-      </x-field>
+        <!-- </x-field> -->
+      </div>
     </div>
     <div>
       <p class="text-red-500 font-bold">Note:</p>
