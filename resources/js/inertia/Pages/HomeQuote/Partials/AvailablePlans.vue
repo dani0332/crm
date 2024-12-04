@@ -26,13 +26,12 @@ const planForm = useForm({
   discounted_premium: props.plan.discountPremium || 0,
   premium_vat: props.vat ? props.vat : 0,
   excess: props.plan.excess || 0,
-  is_disabled: props.plan.isDisabled || false,
+  is_disabled: props.plan.is_disabled || false,
   insurer_quote_no:
-    props.plan.insurerQuoteNo != null && props.plan.insurerQuoteNo != ''
-      ? props.plan.insurerQuoteNo
+    props.plan.insurer_quote_no != null && props.plan.insurer_quote_no != ''
+      ? props.plan.insurer_quote_no
       : '',
-  is_manual_update: props.plan.isManualUpdate || false,
-  ancillary_excess: props.plan.ancillaryExcess || 0,
+  is_manual_update: props.plan.is_manual_update || false,
   current_url: usePage().url || '',
   listQuotePlanBenefitsInclusions:
     props.plan.listQuotePlanBenefitsInclusions || [],
@@ -340,15 +339,6 @@ const onUpdatePlan = () => {
                 :disabled="!planForm.is_manual_update"
                 size="sm"
                 type="number"
-              />
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="mt-2">Discounted Price:</dt>
-              <x-select
-                v-model="planForm.discounted_premium"
-                placeholder="Select Option"
-                :options="homeDiscountOptions"
-                class="w-full"
               />
             </div>
             <!-- <div class="grid sm:grid-cols-2">

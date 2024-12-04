@@ -576,8 +576,8 @@ const onLoadAvailablePlansData = async () => {
       console.log('Available plans:', homePlans);
 
       // If you need to update the table and store the ids
-      availablePlansTable.data = homePlans;
-      homePlansIds.ids = homePlans.map(plan => plan.id);
+      availablePlansTable.data = homePlans.quotes.plans;
+      homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.planId);
       console.log('homePlansIds :', homePlansIds);
     } else {
       console.error('Error: Unexpected status code', status);
@@ -634,6 +634,7 @@ const getPlanDetails = item => {
     axios
       .get(`/home/${page.props.quote.uuid}/plan_details/${item.planId}`)
       .then(res => {
+        console.log('Plan Details:', res.data);
         planDetails.value = res.data;
         modals.planDetails = true;
       })

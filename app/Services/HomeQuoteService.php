@@ -12,6 +12,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
+use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -764,32 +765,10 @@ class HomeQuoteService extends BaseService
         return 'true';
     }
 
-    public function getHomePlans($type, $id)
+    public function getQuotePlans($id, $extraData = [])
     {
-        $quotePlans = $this->getQuotePlans($type, $id);
-        $listQuotePlans = [];
-        if (isset($quotePlans->message) && $quotePlans->message != '') {
-            $listQuotePlans = $quotePlans->message;
-        } else {
-            if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
-                $listQuotePlans = $quotePlans->quotes->plans;
-            } elseif (! isset($quotePlans->quotes->plans)) {
-                $listQuotePlans = 'Plans not available!';
-            } else {
-                $listQuotePlans = $quotePlans;
-            }
-        }
-
-        return $listQuotePlans;
-    }
-
-    public function getQuotePlans($type, $id)
-    {
-        // use KEN request here instead of this whole method
-        $modelName = checkPersonalQuotes(ucfirst($type)) ? 'PersonalQuote' : ucfirst($type) . 'Quote';
-        $model = '\\App\\Models\\' . $modelName;
-        $quoteUuId = $model::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-' . lcfirst($type) . '-quote-plans';
+        $quoteUuId = HomeQuote::where('uuid', '=', $id)->value('uuid');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-home-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
@@ -799,6 +778,7 @@ class HomeQuoteService extends BaseService
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
             'lang' => 'en',
+            ...$extraData,
         ];
 
         $client = new \GuzzleHttp\Client;
@@ -822,80 +802,80 @@ class HomeQuoteService extends BaseService
 
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
 
-                return json_decode($getContents);
+                return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } elseif (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } elseif (isset($response->msg)) {
+                $responseBodyAsString = $response->msg;
+            } else {
+                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+            }
+
+            return $responseBodyAsString;
         }
     }
 
     public function planDetails($quoteId, $id)
     {
-        $quotePlans = $this->getHomePlans('home', $quoteId);
+        $quotePlans = $this->getQuotePlans($quoteId);
 
-        if (gettype($quotePlans) == 'string') {
-            return response()->json([
-                'message' => $quotePlans,
-            ], 404);
+        // Check for error message
+        if (is_string($quotePlans)) {
+            return response()->json(['message' => $quotePlans], 404);
         }
 
-        foreach ($quotePlans as $listQuotePlan) {
-            if ($listQuotePlan->planId == $id) {
-                // dd($listQuotePlan);
-                $listQuotePlanName = $listQuotePlan->planName;
-                $providerCode = $listQuotePlan->providerCode;
-                $providerName = $listQuotePlan->providerName;
-                $actualPremium = $listQuotePlan->actualPremium;
-                $discountPremium = $listQuotePlan->discountPremium;
-                $listQuotePlanBenefitsInclusions = [
-                    'buildings' => $listQuotePlan->benefits->building ?? '',
-                    'contents' => $listQuotePlan->benefits->content ?? '',
-                    'personalBelongings' => $listQuotePlan->benefits->personalBelonging ?? '',
-                ];
-                $listQuotePlanBenefitsAditionalCovers = $listQuotePlan->benefits->standardBenefit;
-                $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
-                $isDisabled = $listQuotePlan->isDisabled;
-                $isManualUpdate = $listQuotePlan->isManualPlan;
-                $vat = $listQuotePlan->vat;
-                $insurerQuoteNo = $listQuotePlan->insurerQuoteNo;
-                $isRatingAvailable = $listQuotePlan->isRatingAvailable;
-                $excess = $listQuotePlan->excess;
-                $id = $listQuotePlan->planId;
-                $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-
-                foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
-                    $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
-                }
-            }
+        // Extract plans
+        $plans = $quotePlans->quotes->plans ?? [];
+        if (empty($plans)) {
+            return response()->json(['message' => 'No plans found.'], 404);
         }
 
+        // Find the specific plan by $id
+        $selectedPlan = collect($plans)->firstWhere('planId', $id);
+
+        if (!$selectedPlan) {
+            return response()->json(['message' => 'Plan not found.'], 404);
+        }
+
+        // Prepare response data
         $data = [
-            'listQuotePlanName' => $listQuotePlanName ?? '',
-            'providerCode' => $providerCode,
-            'providerName' => $providerName,
-            'actualPremium' => $actualPremium,
-            'discountPremium' => $discountPremium,
-            'listQuotePlanBenefitsInclusions' => $listQuotePlanBenefitsInclusions,
-            'listQuotePlanBenefitsExclusions' => $listQuotePlanBenefitsExclusions,
-            'is_disabled' => $isDisabled,
-            'is_manual_update' => $isManualUpdate,
-            'insurer_quote_no' => $insurerQuoteNo,
-            'vat' => $vat,
-            'isRatingAvailable' => $isRatingAvailable,
-            'listQuotePlanBenefitsAditionalCovers' => $listQuotePlanBenefitsAditionalCovers,
-            'excess' => $excess,
-            'id' => $id,
+            'listQuotePlanName' => $selectedPlan->planName ?? '',
+            'providerCode' => $selectedPlan->providerCode ?? '',
+            'providerName' => $selectedPlan->providerName ?? '',
+            'actualPremium' => $selectedPlan->actualPremium ?? '',
+            'discountPremium' => $selectedPlan->discountPremium ?? '',
+            'listQuotePlanBenefitsInclusions' => [
+                'buildings' => $selectedPlan->benefits->building ?? '',
+                'contents' => $selectedPlan->benefits->content ?? '',
+                'personalBelongings' => $selectedPlan->benefits->personalBelonging ?? '',
+            ],
+            'listQuotePlanBenefitsExclusions' => $selectedPlan->benefits->exclusion ?? [],
+            'listQuotePlanBenefitsAditionalCovers' => $selectedPlan->benefits->standardBenefit ?? [],
+            'is_disabled' => $selectedPlan->isDisabled ?? false,
+            'is_manual_update' => $selectedPlan->isManualPlan ?? false,
+            'vat' => $selectedPlan->vat ?? '',
+            'insurer_quote_no' => $selectedPlan->insurerQuoteNo ?? '',
+            'isRatingAvailable' => $selectedPlan->isRatingAvailable ?? false,
+            'excess' => $selectedPlan->excess ?? '',
+            'id' => $selectedPlan->planId ?? '',
+            'listQuotePlanBenefitsPolicyDetails' => $selectedPlan->policyWordings ?? [],
+            'listQuotePlanBenefitsPolicyDetailLink' => collect($selectedPlan->policyWordings)->first()?->link ?? '',
             'permissionsEnum' => PermissionsEnum::class,
-            'listQuotePlanBenefitsPolicyDetails' => $listQuotePlanBenefitsPolicyDetails,
-            'listQuotePlanBenefitsPolicyDetailLink' => $listQuotePlanBenefitsPolicyDetailLink ?? '',
-            // 'modelName' => self::TYPE,
         ];
 
         return response()->json($data, 200);
     }
+
 
     public function updateManualPlansBulk($request)
     {
@@ -928,7 +908,6 @@ class HomeQuoteService extends BaseService
                 'apiUserName' => $apiUserName,
                 'apiPassword' => $apiPassword,
             ];
-            dd($dataArray);
 
             return $this->httpService->processRequest($dataArray, $apiCreds);
         }
@@ -1058,26 +1037,28 @@ class HomeQuoteService extends BaseService
 
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
+
         $planIds = $data['plan_ids'];
 
-        if ($quotePlans == null) {
-            $quotePlans = app(HomeQuoteService::class)->getHomePlans(quoteTypeCode::Home, $data['quote_uuid']);
-        }
-
-        if (! isset($quotePlans)) {
+        $selectedPlanIds = isset($data['selectedPlanIds']) ? $data['selectedPlanIds'] : [];
+        $hasAdultAndSeniorMember = isset($data['hasAdultAndSeniorMember']) ? $data['hasAdultAndSeniorMember'] : false;
+        $quotePlans = app(HomeQuoteService::class)->getQuotePlans($data['quote_uuid']);
+        if (! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
         }
 
-        $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('insuranceProviderId')->toArray();
+        $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
 
-        $quote->load(['bikeQuote.bikeMake', 'bikeQuote.bikeModel', 'advisor' => function ($q) {
-            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
-
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote'));
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+            ->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Home Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
