@@ -31,7 +31,7 @@ class TravelRenewalService extends BaseService
                 PaymentStatusEnum::CREDIT_APPROVED,
             ])
             ->where('direction_code', TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
-            ->whereDate('start_date', Carbon::now()->subDays(320))
+            ->whereDate('start_date', Carbon::now()->subDays(20))
             ->take(10)
             ->chunkById(100, function ($quotes) {
                 $quoteCount = $quotes->count();
