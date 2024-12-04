@@ -85,7 +85,7 @@ use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
-use App\Services\LifeQuoteService;
+use App\Services\Life\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;

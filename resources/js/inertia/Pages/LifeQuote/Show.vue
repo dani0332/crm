@@ -43,6 +43,10 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  quoteNotes: Object,
+  noteDocumentType: Array,
+  modelType: String,
+  cdnPath: String,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -543,6 +547,13 @@ const onAddUpdate = () => {
             View Legacy policy
           </x-button>
         </Link>
+         <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
         <x-button
           class="ml-2"
           size="sm"
