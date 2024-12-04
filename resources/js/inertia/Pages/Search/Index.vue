@@ -53,13 +53,18 @@ const getDetailPageRoute = (
   business_type_of_insurance_id,
 ) => useGetShowPageRoute(uuid, quote_type_id, business_type_of_insurance_id);
 
-const getSendUpdatePageRoute = (uuid, [
-    quote_uuid,
-    quote_type_id,
-    quote_business_type_of_insurance_id
-]) => {
-    const path = new URL(getDetailPageRoute(quote_uuid, quote_type_id, quote_business_type_of_insurance_id)).pathname;
-    return route('send-update.show', { uuid, refURL: path });
+const getSendUpdatePageRoute = (
+  uuid,
+  [quote_uuid, quote_type_id, quote_business_type_of_insurance_id],
+) => {
+  const path = new URL(
+    getDetailPageRoute(
+      quote_uuid,
+      quote_type_id,
+      quote_business_type_of_insurance_id,
+    ),
+  ).pathname;
+  return route('send-update.show', { uuid, refURL: path });
 };
 
 function statusTitleFormat(str) {
@@ -206,28 +211,32 @@ const autoApplyDateRangeFields = [
 ];
 
 function destructCompanyName(isSendUpdateView, item) {
-    const companyNameMappingForNonEcom = {
-        [props.quoteTypeIdEnum.Car]: 'car_quote_request',
-        [props.quoteTypeIdEnum.Home]: 'home_quote_request',
-        [props.quoteTypeIdEnum.Health]: 'health_quote_request',
-        [props.quoteTypeIdEnum.Life]: 'life_quote_request',
-        [props.quoteTypeIdEnum.Business]: 'business_quote_request',
-        [props.quoteTypeIdEnum.Travel]: 'travel_quote_request',
-    };
+  const companyNameMappingForNonEcom = {
+    [props.quoteTypeIdEnum.Car]: 'car_quote_request',
+    [props.quoteTypeIdEnum.Home]: 'home_quote_request',
+    [props.quoteTypeIdEnum.Health]: 'health_quote_request',
+    [props.quoteTypeIdEnum.Life]: 'life_quote_request',
+    [props.quoteTypeIdEnum.Business]: 'business_quote_request',
+    [props.quoteTypeIdEnum.Travel]: 'travel_quote_request',
+  };
 
-    const quoteRequestKeyForNonEcom = companyNameMappingForNonEcom[item.quote_type_id] ?? null;
-    const isIndividual = item.customer_type === 'Individual' || (item.personal_quote?.customer_type === 'Individual');
-    if (isIndividual) return 'N/A';
+  const quoteRequestKeyForNonEcom =
+    companyNameMappingForNonEcom[item.quote_type_id] ?? null;
+  const isIndividual =
+    item.customer_type === 'Individual' ||
+    item.personal_quote?.customer_type === 'Individual';
+  if (isIndividual) return 'N/A';
 
-    const getCompanyName = (isSendUpdateListView, quoteRequestKey) => {
-        const itemObject = isSendUpdateListView ? item.personal_quote : item;
+  const getCompanyName = (isSendUpdateListView, quoteRequestKey) => {
+    const itemObject = isSendUpdateListView ? item.personal_quote : item;
 
-        return quoteRequestKey ?
-            itemObject?.[quoteRequestKey]?.quote_request_entity_mapping?.entity?.company_name :
-            itemObject?.quote_request_entity_mapping?.entity?.company_name;
-    };
+    return quoteRequestKey
+      ? itemObject?.[quoteRequestKey]?.quote_request_entity_mapping?.entity
+          ?.company_name
+      : itemObject?.quote_request_entity_mapping?.entity?.company_name;
+  };
 
-    return getCompanyName(isSendUpdateView, quoteRequestKeyForNonEcom);
+  return getCompanyName(isSendUpdateView, quoteRequestKeyForNonEcom);
 }
 
 function updateDateRange() {
@@ -318,11 +327,11 @@ function setQueryStringFilters() {
 }
 
 function exportExcel() {
-    const url = new URL(window.location.href);
-    const exportFilters = url.search;
-    const exportURL = '/search-all-export' + exportFilters;
+  const url = new URL(window.location.href);
+  const exportFilters = url.search;
+  const exportURL = '/search-all-export' + exportFilters;
 
-    window.open(exportURL, '_blank');
+  window.open(exportURL, '_blank');
 }
 
 watch(() => {
@@ -360,9 +369,7 @@ onMounted(() => {
         </template>
       </x-tooltip>
       <div class="space-x-3">
-        <template
-          v-if="can(permissionsEnum.DATA_EXTRACTION_SEARCH_ALL_LEADS)"
-        >
+        <template v-if="can(permissionsEnum.DATA_EXTRACTION_SEARCH_ALL_LEADS)">
           <template v-if="!tableData">
             <x-tooltip placement="bottom">
               <x-button disabled size="sm" color="emerald">
@@ -526,7 +533,11 @@ onMounted(() => {
         <Link
           :href="
             isSendUpdateListView
-              ? getSendUpdatePageRoute(uuid, [personal_quote?.uuid, personal_quote?.quote_type_id, personal_quote?.business_type_of_insurance_id])
+              ? getSendUpdatePageRoute(uuid, [
+                  personal_quote?.uuid,
+                  personal_quote?.quote_type_id,
+                  personal_quote?.business_type_of_insurance_id,
+                ])
               : getDetailPageRoute(
                   uuid,
                   quote_type_id,
@@ -550,10 +561,8 @@ onMounted(() => {
       >
         {{ personal_quote?.last_name }}
       </template>
-      <template
-        #item-company_name="item"
-      >
-          {{ destructCompanyName(isSendUpdateListView, item) }}
+      <template #item-company_name="item">
+        {{ destructCompanyName(isSendUpdateListView, item) }}
       </template>
       <template #item-quote_type_id="{ quote_type }">
         {{ quote_type?.code }}
@@ -568,8 +577,12 @@ onMounted(() => {
       >
         {{
           isSendUpdateListView
-              ? personal_quote?.quote_type_id === props.quoteTypeIdEnum.Business ? personal_quote?.business_type_of_insurance?.text : 'N/A'
-              : quote_type_id === props.quoteTypeIdEnum.Business ? business_type_of_insurance?.text : 'N/A'
+            ? personal_quote?.quote_type_id === props.quoteTypeIdEnum.Business
+              ? personal_quote?.business_type_of_insurance?.text
+              : 'N/A'
+            : quote_type_id === props.quoteTypeIdEnum.Business
+              ? business_type_of_insurance?.text
+              : 'N/A'
         }}
       </template>
       <template
@@ -600,29 +613,28 @@ onMounted(() => {
       >
         {{ policy_number == null ? 'N/A' : quote_status?.text }}
       </template>
-        <template v-if="isSendUpdateListView" #item-notes="{ notes }">
-            <div class="flex gap-2 cursor-pointer">
-                <p
-                    class="overflow-hidden h-auto"
-                    :class="expandNotes ? 'overflow-auto' : 'truncate w-72'"
-                >
+      <template v-if="isSendUpdateListView" #item-notes="{ notes }">
+        <div class="flex gap-2 cursor-pointer">
+          <p
+            class="overflow-hidden h-auto"
+            :class="expandNotes ? 'overflow-auto' : 'truncate w-72'"
+          >
             <span v-if="expandNotes" class="whitespace-normal">{{
-                    notes
-                }}</span>
-                    <span v-else class="whitespace-nowrap">{{ notes }}</span>
-                </p>
-                <x-icon
-                    v-if="notes && notes.length > 40"
-                    @click="expandNotes = !expandNotes"
-                    icon="chevronDown"
-                    :class="{ 'rotate-180': expandNotes }"
-                />
-            </div>
-        </template>
+              notes
+            }}</span>
+            <span v-else class="whitespace-nowrap">{{ notes }}</span>
+          </p>
+          <x-icon
+            v-if="notes && notes.length > 40"
+            @click="expandNotes = !expandNotes"
+            icon="chevronDown"
+            :class="{ 'rotate-180': expandNotes }"
+          />
+        </div>
+      </template>
       <template v-if="isSendUpdateListView" #item-status="{ status }">
         {{ statusTitleFormat(status) }}
       </template>
-
     </DataTable>
 
     <Pagination
