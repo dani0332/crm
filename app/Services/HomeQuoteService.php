@@ -843,9 +843,9 @@ class HomeQuoteService extends BaseService
         }
 
         foreach ($quotePlans as $listQuotePlan) {
-            if ($listQuotePlan->id == $id) {
+            if ($listQuotePlan->planId == $id) {
                 // dd($listQuotePlan);
-                $listQuotePlanName = $listQuotePlan->name;
+                $listQuotePlanName = $listQuotePlan->planName;
                 $providerCode = $listQuotePlan->providerCode;
                 $providerName = $listQuotePlan->providerName;
                 $actualPremium = $listQuotePlan->actualPremium;
@@ -863,7 +863,7 @@ class HomeQuoteService extends BaseService
                 $insurerQuoteNo = $listQuotePlan->insurerQuoteNo;
                 $isRatingAvailable = $listQuotePlan->isRatingAvailable;
                 $excess = $listQuotePlan->excess;
-                $id = $listQuotePlan->id;
+                $id = $listQuotePlan->planId;
                 $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
 
                 foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
@@ -1061,10 +1061,10 @@ class HomeQuoteService extends BaseService
         $planIds = $data['plan_ids'];
 
         if ($quotePlans == null) {
-            $quotePlans = app(HomeQuoteService::class)->getHomePlans(quoteTypeCode::Bike, $data['quote_uuid']);
+            $quotePlans = app(HomeQuoteService::class)->getHomePlans(quoteTypeCode::Home, $data['quote_uuid']);
         }
 
-        if (! isset($quotePlans->quotes->plans)) {
+        if (! isset($quotePlans)) {
             return ['error' => 'Quote plans not available'];
         }
 

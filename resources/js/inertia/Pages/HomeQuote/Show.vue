@@ -553,6 +553,7 @@ const homePlansIds = reactive({
   ids: [],
 });
 const selectedPlans = ref([]);
+const exportLoader = ref(false);
 const selectedPlanIds = computed(() => {
   return page.props.payments.length > 0
     ? page.props.payments.map(plan => plan.plan_id)
@@ -591,8 +592,8 @@ const onTogglePlans = toggle => {
 
   const planIds = useArrayUnique(
     selectedPlans.value.map(p => {
-      console.log('p.id', p.id);
-      return p.id;
+      console.log('p.planId', p.planId);
+      return p.planId;
     }),
   ).value;
 
@@ -631,7 +632,7 @@ const getPlanDetails = item => {
   console.log('getPlanDetails', item);
   try {
     axios
-      .get(`/home/${page.props.quote.uuid}/plan_details/${item.id}`)
+      .get(`/home/${page.props.quote.uuid}/plan_details/${item.planId}`)
       .then(res => {
         planDetails.value = res.data;
         modals.planDetails = true;
@@ -672,14 +673,15 @@ const onExportPlans = () => {
 //     });
 //     return;
 //   }
-  exportLoader.value = true;
-  const planIds = selectedPlans.value.map(p => {
-    return p.id;
-  });
+exportLoader.value = true;
+const planIds = selectedPlans.value.map(p => {
+    return p.planId;
+});
+console.log('selectedPlans', planIds);
 
   axios
     .post(
-      '/api/v1/quotes/bike/export-plans-pdf',
+      '/api/v1/quotes/home/export-plans-pdf',
       {
         plan_ids: planIds,
         quote_uuid: page.props.quote.uuid,
@@ -1683,7 +1685,7 @@ const copyLink = () => {
                 </div>
               </template>
               <template #item-name="item">
-                <span class="text-primary-600 uppercase">{{ item.name }}</span>
+                <span class="text-primary-600 uppercase">{{ item.planName }}</span>
               </template>
               <template #item-actualPremium="item">
                 <span class="text-primary-600">
@@ -1739,7 +1741,7 @@ const copyLink = () => {
 
                     <!-- new -->
                     <SelectPlan
-                      v-if="selectedProviderPlan.id != item.id"
+                      v-if="selectedProviderPlan.id != item.planId"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="'Home'"

@@ -25,7 +25,6 @@ const planForm = useForm({
   actual_premium: props.plan.actualPremium || 0,
   discounted_premium: props.plan.discountPremium || 0,
   premium_vat: props.vat ? props.vat : 0,
-  bike_value: props.plan.bikeValue || 0,
   excess: props.plan.excess || 0,
   is_disabled: props.plan.isDisabled || false,
   insurer_quote_no:
