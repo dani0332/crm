@@ -98,11 +98,6 @@ const fetchMaximumLeads = () => {
       table.value.loading = false;
       if (isMaxCapReached) {
         maxLeadsModal.value = true;
-        // notification.error({
-        //   title:
-        //     'You have reached the maximum leads for the day.Please submit your next request on the following day.',
-        //   position: 'top',
-        // });
       }
     })
     .catch(error => {
@@ -160,6 +155,7 @@ const maxLeadsOptions = computed(() => {
               placeholder="Select the number of leads to buy"
               :rules="[isRequired, validateMaximumLeads]"
               :options="maxLeadsOptions"
+              :loading="table.loading"
             >
             </x-select>
           </x-field>
@@ -170,13 +166,17 @@ const maxLeadsOptions = computed(() => {
             </div>
           </template>
         </x-tooltip>
-        <p class="text-vtd-secondary-400">Up to {{ maximumLeads }} Leads Max</p>
+        <p
+          class="text-vtd-secondary-400"
+          v-if="requestForm.quote_type && !table.loading"
+        >
+          Up to {{ maximumLeads }} Leads Max
+        </p>
       </div>
     </div>
     <div class="grid sm:grid-cols-3 gap-3">
       <div class="grid sm:grid-cols-2 items-center">
         <p>The total cost for the requested is:</p>
-        <!-- <x-field label="The total cost of the leads is:"> -->
         <x-input disabled v-model="calculateMaximumCost" class="!mb-0">
           <template #suffix>
             <div
@@ -186,7 +186,6 @@ const maxLeadsOptions = computed(() => {
             </div>
           </template>
         </x-input>
-        <!-- </x-field> -->
       </div>
     </div>
     <div>
@@ -227,8 +226,8 @@ const maxLeadsOptions = computed(() => {
     size="lg"
   >
     <div class="text-red-500">
-      Max cap for Buy Lead requests reached. Please submit your next request on
-      the following day.
+      Max cap for Buy Lead requests reached. Please submit your next request on
+      the following day.
     </div>
   </x-modal>
   <DataTable
