@@ -12,7 +12,7 @@ use App\Enums\RolesEnum;
 use App\Http\Requests\StoreLifeRequest;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
-use App\Services\LifeQuoteService;
+use App\Services\Life\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Http\Request;

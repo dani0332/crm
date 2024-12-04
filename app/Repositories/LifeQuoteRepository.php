@@ -150,38 +150,9 @@ class LifeQuoteRepository extends BaseRepository
         return $quote;
     }
 
-    /**
-     * get all dropdown options required for form.
-     *
-     * @return array
-     */
-    public function fetchGetFormOptions()
-    {
-        return [
-            'nationalities' => NationalityRepository::withActive()->get(),
-            'currency' => CurrencyTypeRepository::withActive()->get(),
-            'purposeOfInsurance' => PurposeOfInsuranceRepository::withActive()->get(),
-            'maritalStatus' => MaritalStatusRepository::withActive()->get(),
-            'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->orderBy('sort_order')->get(),
-            'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
-
-        ];
-    }
-
     public function fetchGetDuplicateEntityByCode($code)
     {
         return $this->where('parent_duplicate_quote_id', $code)->first();
-    }
-
-    public function fetchExportData()
-    {
-        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
-            ->filter(false)
-            ->withFakeLeadCriteria();
-        $this->adjustQueryByDateFilters($query, 'life_quote_request');
-
-        return $query->orderBy('life_quote_request.created_at', 'desc')
-            ->get();
     }
 
     public function fetchCreateDuplicate(array $dataArr): object

@@ -1,14 +1,24 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Life;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Facades\Capi;
+use App\Models\CurrencyType;
+use App\Models\LifeInsuranceTenure;
+use App\Models\LifeNumberOfYears;
+use App\Models\LifePurposeOfInsurance;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
+use App\Models\MartialStatus;
+use App\Models\Nationality;
 use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -17,13 +27,16 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Services\BaseService;
+use App\Services\CapiRequestService;
+use App\Services\LeadAllocationService;
+use App\Traits\CentralTrait;
 
 class LifeQuoteService extends BaseService
 {
     protected $query;
 
-    use AddPremiumAllLobs;
-    use RolePermissionConditions;
+    use AddPremiumAllLobs, RolePermissionConditions, CentralTrait;
 
     protected $leadAllocationService;
 
@@ -372,31 +385,32 @@ class LifeQuoteService extends BaseService
         }
     }
 
-    public function updateLifeQuote(Request $request, $id)
-    {
-        $lifeQuote = LifeQuote::where('uuid', $id)->first();
-        $lifeQuote->first_name = $request->first_name;
-        $lifeQuote->last_name = $request->last_name;
-        $lifeQuote->dob = $request->dob;
-        $lifeQuote->gender = $request->gender;
-        $lifeQuote->sum_insured_value = $request->sum_insured_value;
-        $lifeQuote->sum_insured_currency_id = $request->sum_insured_currency_id;
-        $lifeQuote->marital_status_id = $request->marital_status_id;
-        $lifeQuote->nationality_id = $request->nationality_id;
-        $lifeQuote->purpose_of_insurance_id = $request->purpose_of_insurance_id;
-        $lifeQuote->children_id = $request->children_id;
-        $lifeQuote->premium = $request->premium;
-        $lifeQuote->tenure_of_insurance_id = $request->tenure_of_insurance_id;
-        $lifeQuote->number_of_years_id = $request->number_of_years_id;
-        $lifeQuote->others_info = $request->others_info;
-        $lifeQuote->policy_start_date = $request->policy_start_date;
-        $lifeQuote->is_smoker = $request->is_smoker == 1 ? 1 : 0;
-        $lifeQuote->save();
+    // NEED TO REMOVE AFTER CONFIRMATION
+    // public function updateLifeQuote(Request $request, $id)
+    // {
+    //     $lifeQuote = LifeQuote::where('uuid', $id)->first();
+    //     $lifeQuote->first_name = $request->first_name;
+    //     $lifeQuote->last_name = $request->last_name;
+    //     $lifeQuote->dob = $request->dob;
+    //     $lifeQuote->gender = $request->gender;
+    //     $lifeQuote->sum_insured_value = $request->sum_insured_value;
+    //     $lifeQuote->sum_insured_currency_id = $request->sum_insured_currency_id;
+    //     $lifeQuote->marital_status_id = $request->marital_status_id;
+    //     $lifeQuote->nationality_id = $request->nationality_id;
+    //     $lifeQuote->purpose_of_insurance_id = $request->purpose_of_insurance_id;
+    //     $lifeQuote->children_id = $request->children_id;
+    //     $lifeQuote->premium = $request->premium;
+    //     $lifeQuote->tenure_of_insurance_id = $request->tenure_of_insurance_id;
+    //     $lifeQuote->number_of_years_id = $request->number_of_years_id;
+    //     $lifeQuote->others_info = $request->others_info;
+    //     $lifeQuote->policy_start_date = $request->policy_start_date;
+    //     $lifeQuote->is_smoker = $request->is_smoker == 1 ? 1 : 0;
+    //     $lifeQuote->save();
 
-        if (isset($request->return_to_view)) {
-            return redirect('quotes/life')->with('success', 'Life Quote has been updated');
-        }
-    }
+    //     if (isset($request->return_to_view)) {
+    //         return redirect('quotes/life')->with('success', 'Life Quote has been updated');
+    //     }
+    // }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
@@ -654,5 +668,152 @@ class LifeQuoteService extends BaseService
         }
 
         return 'true';
+    }
+
+    public function storeLifeQuote($data)
+    {
+        $lifeData = [
+            'firstName' => $data['first_name'],
+            'lastName' => $data['last_name'],
+            'email' => $data['email'],
+            'mobileNo' => $data['mobile_no'],
+            'dob' => $data['dob'],
+            'sumInsuredValue' => $data['sum_insured_value'],
+            'nationalityId' => $data['nationality_id'],
+            'sumInsuredCurrencyId' => $data['sum_insured_currency_id'],
+            'maritalStatusId' => $data['marital_status_id'],
+            'purposeOfInsuranceId' => $data['purpose_of_insurance_id'],
+            'tenureOfInsuranceId' => $data['tenure_of_insurance_id'],
+            'numberOfYearsId' => $data['number_of_years_id'],
+            'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
+            'gender' => $data['gender'],
+            'othersInfo' => $data['others_info'],
+            'height' => $data['height'],
+            'weight' => $data['weight'],
+            'bmi' => $data['bmi'],
+            'age' => $data['age'],
+            'source' => config('constants.SOURCE_NAME'),
+            'referenceUrl' => config('constants.APP_URL'),
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+        ];
+
+        $response = Capi::request('/api/v2-save-life-quote', 'post', $lifeData);
+
+        if (isset($response->quoteUID)) {
+            //todo: will remove this code once handled on Capi
+            LifeQuote::where('uuid', $response->quoteUID)
+                    ->update(['height' => $lifeData['height'], 
+                            'weight' => $lifeData['weight'], 
+                            'bmi' => $lifeData['bmi'], 
+                            'age' => $lifeData['age']
+                        ]);
+        }
+
+        return $response;
+    }
+
+    public function updateLifeQuote($uuid, $validatedData)
+    {
+        LifeQuote::where('uuid', $uuid)->update($validatedData);
+    }
+
+    public function getLifeQuoteData()
+    {
+        $query = LifeQuote::with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
+            'renewalBatchModel', 'lifeQuoteRequestDetail', 'paymentStatus',
+            'payments'])
+            ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            })
+            ->when(! empty(request()->advisor_assigned_date), function ($query) {
+                $dateArray = request()->advisor_assigned_date;
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('lifeQuoteRequestDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                });
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('life_quote_request.created_at', 'desc');
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
+
+        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+
+        return $query->simplePaginate()->withQueryString();
+    }
+
+    public function quoteExport()
+    {
+        return LifeQuote::with(['advisor', 'quoteStatus', 'nationality'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
+    public function quoteExportData()
+    {
+        $query = LifeQuote::with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+            ->filter(false)
+            ->withFakeLeadCriteria();
+        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+
+        return $query->orderBy('life_quote_request.created_at', 'desc')
+            ->get();
+    }
+
+    public function getFormOptions()
+    {
+        return [
+            'nationalities' => Nationality::withActive()->get(),
+            'currency' => CurrencyType::withActive()->get(),
+            'purposeOfInsurance' => LifePurposeOfInsurance::withActive()->get(),
+            'maritalStatus' => MartialStatus::withActive()->get(),
+            'typeOfInsurance' => LifeInsuranceTenure::withActive()->orderBy('sort_order')->get(),
+            'numberOfYears' => LifeNumberOfYears::withActive()->get(),
+
+        ];
+    }
+
+    public function getQuoteByColumn($column, $value)
+    {
+        $quote = LifeQuote::where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
+            'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
+            'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
+            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob',
+            'quoteRequestEntityMapping' => function ($entityMapping) {
+                $entityMapping->with('entity');
+            },
+        ])
+            ->with([
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+            ])
+            ->with([
+                'payments.paymentSplits' => function ($q) {
+                    $q->orderBy('sr_no', 'asc');
+                },
+            ])
+            ->select([
+                'life_quote_request.*',
+                'policy_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
+                \DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Life.' AND quote_request_id = life_quote_request.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
+            ])->firstOrFail();
+
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+
+        return $quote;
     }
 }

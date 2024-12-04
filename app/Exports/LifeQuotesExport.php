@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Repositories\LifeQuoteRepository;
+use App\Services\Life\LifeQuoteService;
 use App\Traits\ExcelExportable;
 
 class LifeQuotesExport
@@ -11,7 +11,7 @@ class LifeQuotesExport
 
     public function collection()
     {
-        return LifeQuoteRepository::exportData();
+        return app(LifeQuoteService::class)->quoteExport();
     }
 
     public function headings(): array

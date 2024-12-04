@@ -19,12 +19,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
+use App\Models\LifeQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
@@ -35,6 +35,7 @@ use App\Repositories\UserRepository;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\Life\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -47,6 +48,13 @@ class LifeQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
 
+    private $lifeQuoteService;
+
+    public function __construct(LifeQuoteService $lifeQuoteService)
+    {
+        $this->lifeQuoteService = $lifeQuoteService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -54,7 +62,7 @@ class LifeQuoteController extends Controller
      */
     public function index()
     {
-        $lifeQuotes = LifeQuoteRepository::getData();
+        $lifeQuotes = $this->lifeQuoteService->getLifeQuoteData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
@@ -76,7 +84,7 @@ class LifeQuoteController extends Controller
      */
     public function create()
     {
-        $data = LifeQuoteRepository::getFormOptions();
+        $data = $this->lifeQuoteService->getFormOptions();
 
         return inertia('LifeQuote/Form', $data);
     }
@@ -88,7 +96,7 @@ class LifeQuoteController extends Controller
      */
     public function store(LifeQuoteRequest $request)
     {
-        $response = LifeQuoteRepository::create($request->validated());
+        $response = $this->lifeQuoteService->storeLifeQuote($request->validated());
 
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
@@ -106,12 +114,12 @@ class LifeQuoteController extends Controller
     public function show($uuid)
     {
         /* Start - Temporarily adding for correcting historic data  */
-        $quote = LifeQuoteRepository::where('uuid', $uuid)->first();
+        $quote = LifeQuote::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
         /* End - Temporarily adding for correcting historic data  */
 
-        $quote = LifeQuoteRepository::getBy('uuid', $uuid);
+        $quote = $this->lifeQuoteService->getQuoteByColumn('uuid', $uuid);
         $payments = $quote?->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
         $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
@@ -243,8 +251,8 @@ class LifeQuoteController extends Controller
      */
     public function edit($uuid)
     {
-        $data = LifeQuoteRepository::getFormOptions();
-        $quote = LifeQuoteRepository::getBy('uuid', $uuid);
+        $data = $this->lifeQuoteService->getFormOptions();
+        $quote = $this->lifeQuoteService->getQuoteByColumn('uuid', $uuid);
 
         return inertia('LifeQuote/Form', array_merge($data, [
             'quote' => $quote,
@@ -259,7 +267,7 @@ class LifeQuoteController extends Controller
      */
     public function update(LifeQuoteRequest $request, $uuid)
     {
-        LifeQuoteRepository::update($uuid, $request->validated());
+        $this->lifeQuoteService->updateLifeQuote($uuid, $request->validated());
 
         return redirect(route('life-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
     }
