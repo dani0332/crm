@@ -44,11 +44,6 @@ class InsuranceProvider extends BaseModel implements AuditableContract
         return $query->where('is_active', 1);
     }
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
-
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = env('DATETIME_FORMAT');

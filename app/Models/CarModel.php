@@ -36,11 +36,6 @@ class CarModel extends BaseModel
         return [];
     }
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
-
     /**
      * @return void
      */
