@@ -297,7 +297,7 @@ class TravelEmailService extends BaseService
 
     public function sendSICNotificationToAdvisor(TravelQuote $lead, User $user)
     {
-        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
+        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user, QuoteTypes::TRAVEL->value);
     }
 
     public function sendTravelAllianceFailedAllocationEmail($lead)
