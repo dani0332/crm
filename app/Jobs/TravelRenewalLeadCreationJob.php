@@ -2,8 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Services\TravelRenewalService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

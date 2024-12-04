@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
+use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendFTCEmailJob;
 use App\Models\TravelQuote;
@@ -17,7 +18,6 @@ use App\Services\SIBService;
 use App\Services\TravelAllocationService;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 
 class HandleTravelAdvisorUpdated
 {
@@ -87,16 +87,14 @@ class HandleTravelAdvisorUpdated
                 info(self::class.' - SIC workflow key not found');
             }
         }
-        if($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
 
             SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->delay(now()->addSeconds(30));
             info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$lead->uuid} | Time:  ".now());
-        }
-        else {
+        } else {
             info(self::class.' - Going to dispatch SendTravelOCBIntroEmailJob ................');
-             SendTravelOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+            SendTravelOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
         }
-
 
     }
 }
