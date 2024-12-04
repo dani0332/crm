@@ -38,11 +38,6 @@ class InsuranceCompany extends BaseModel implements AuditableContract
         return [];
     }
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
-
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = env('DATETIME_FORMAT');
