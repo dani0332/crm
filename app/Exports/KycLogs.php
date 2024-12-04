@@ -20,11 +20,13 @@ class KycLogs
     {
         return [
             'Ref-ID',
+            'AML ID',
             'Input',
             'Search type',
             'Match Found',
             'Result Found',
             'Created At',
+            'AML CRM Status',
             'Final Status',
         ];
     }
@@ -33,11 +35,13 @@ class KycLogs
     {
         return [
             $item->uuid ?? '',
+            $item->id,
             $item->input,
             $item->search_type,
             $item->match_found,
             $item->results_found,
             date(config('constants.datetime_format'), strtotime($item->created_at)),
+            $item->aml_status,
             $item->decision,
         ];
     }

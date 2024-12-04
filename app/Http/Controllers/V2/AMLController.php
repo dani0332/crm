@@ -160,6 +160,7 @@ class AMLController extends Controller
     public function export(Request $request)
     {
         $query = AML::select([
+            'id',
             'quote_request_id',
             'quote_type_id',
             'input',
@@ -181,11 +182,12 @@ class AMLController extends Controller
                 $model = checkPersonalQuotes(ucwords($quoteType)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
                 $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
-                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid'])->get();
+                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
                 foreach ($quoteRequestData as $quoteRequest) {
                     $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
                     foreach ($amlData as $index => $value) {
                         $chunk[$index]['uuid'] = $quoteRequest->uuid;
+                        $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
                     }
                 }
             }
