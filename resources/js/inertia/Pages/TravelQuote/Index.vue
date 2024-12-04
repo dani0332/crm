@@ -1,4 +1,6 @@
 <script setup>
+import { ref } from 'vue';
+
 defineProps({
   quotes: Object,
   dropdownSource: Object,
@@ -276,7 +278,7 @@ function setQueryFilters() {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
-
+const exportLoader = ref(false);
 const onDataExport = () => {
   filters.created_at_start = useDateFormat(
     filters.created_at_start,
@@ -294,7 +296,13 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Travel'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
@@ -719,6 +727,7 @@ watch(
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >
@@ -884,10 +893,9 @@ watch(
         </div>
       </template>
       <template #item-renewal_batch_text="item">
-        <p v-if="item.renewal_batch_text != null">
+        <p>
           {{ item.renewal_batch_text }}
         </p>
-        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 

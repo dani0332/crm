@@ -237,6 +237,7 @@ const canExport = ref(false);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const exportLoader = ref(false);
 const onExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'life');
@@ -244,7 +245,13 @@ const onExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Life'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 watch(
@@ -605,6 +612,7 @@ watch(
             color="emerald"
             class="justify-self-start"
             @click.prevent="onExport"
+            :loading="exportLoader"
           >
             Export
           </x-button>
@@ -725,10 +733,9 @@ watch(
         </div>
       </template> -->
       <template #item-renewal_batch_model="item">
-        <p v-if="item.renewal_batch_model != null">
-          {{ item.renewal_batch_model.name }}
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
-        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 

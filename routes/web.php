@@ -2,13 +2,12 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
-use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
@@ -94,7 +93,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
-if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV') == EnvEnum::UAT || config('constants.APP_ENV') == EnvEnum::DEVELOPMENT) {
+
+/* Auth Routes */
+Route::get('login', [AuthController::class, 'login'])->name('login');
+Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+
+if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
     Route::middleware('throttle:50,10')->group(function () {
         Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
         Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
@@ -170,24 +174,18 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/total-premium', [ReportsController::class, 'totalPremiumLeadsSaleReport'])->name('total-premium-leads-sales-report');
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
-        if (in_array(quoteTypeCode::Pet, newUi())) {
-            Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
-            Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
-        }
-        if (in_array(quoteTypeCode::Bike, newUi())) {
-            Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
-        }
-        if (in_array(quoteTypeCode::Cycle, newUi())) {
-            Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
-            Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
-        }
-        if (in_array(quoteTypeCode::Yacht, newUi())) {
-            Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
-            Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
-        }
-        if (in_array(quoteTypeCode::Jetski, newUi())) {
-            Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
-        }
+        Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
+        Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
+
+        Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
+
+        Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
+        Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
+
+        Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
+        Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
+
+        Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
         Route::group(['prefix' => 'quotes/'], function () {
             Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
@@ -197,10 +195,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
         });
 
-        if (in_array(quoteTypeCode::Life, newUi())) {
-            Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
-            Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
-        }
+        Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
+        Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
@@ -434,14 +430,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
-        if (in_array(quoteTypeCode::Business, newUi())) {
-            Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
-            Route::resource('business', BusinessQuoteController::class);
-        }
+
+        Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
+        Route::resource('business', BusinessQuoteController::class);
+
         Route::resource('travel', CRUDController::class);
-        if (! in_array(quoteTypeCode::Pet, newUi())) {
-            Route::resource('pet', CRUDController::class);
-        }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
@@ -481,19 +474,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('{quoteType}/risk-rating-details/{quoteId}', [CRUDController::class, 'riskRatingDetails'])->name('risk-rating-details');
         Route::post('{quoteType}/{quoteUuId}/send-ocb', [CentralController::class, 'sendOCBEmail'])->name('sendOCBEmail');
 
-        if (! in_array(quoteTypeCode::Life, newUi())) {
-            Route::resource('life', CRUDController::class);
-        }
-
-        if (in_array(quoteTypeCode::Travel, newUi()) || in_array(quoteTypeCode::Life, newUi())) {
-            Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('travel.cards');
-            Route::get('travel-expired-upload', [TravelController::class, 'uploadRenewals'])->name('travel.expired.upload');
-            Route::post('travel-upload-create', [TravelController::class, 'renewalsUploadCreate'])->name('travel.upload-create');
-            Route::resource('travel', TravelController::class);
-            Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
-        } else {
-            Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
-        }
+        Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('travel.cards');
+        Route::get('travel-expired-upload', [TravelController::class, 'uploadRenewals'])->name('travel.expired.upload');
+        Route::post('travel-upload-create', [TravelController::class, 'renewalsUploadCreate'])->name('travel.upload-create');
+        Route::resource('travel', TravelController::class);
+        Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
 
@@ -584,12 +569,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {
-        if (in_array('Business', newUi())) {
-            Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
-            Route::resource('amt', V2AmtController::class);
-        } else {
-            Route::resource('amt', AMTController::class);
-        }
+        Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
+        Route::resource('amt', V2AmtController::class);
     });
 
     Route::group(['prefix' => 'discount'], function () {
@@ -616,7 +597,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
-    Route::get('sage-api-logs/{sectionId}', [AuditableController::class, 'sageApiLogs'])->name('sage.api.logs')->middleware('permission:'.PermissionsEnum::VIEW_SAGE_API_LOGS);
+    Route::get('sage-api-logs/{sectionId}', [SageApi::class, 'sageApiLogs'])->name('sage-api-logs')->middleware('permission:'.PermissionsEnum::VIEW_SAGE_API_LOGS);
+    Route::get('sage-api-logs/{sectionId}/latest-error', [SageApi::class, 'getLastSageError'])->name('sage-api-logs-latest-error');
 
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
@@ -647,6 +629,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/car-plan-manual-update-process', [CarQuoteController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
+    Route::post('/travel-plan-manual-update-process', [TravelController::class, 'travelPlanUpdateManualProcess']);
 
     // new route for health plan update process being used now
 
@@ -676,10 +659,11 @@ Route::get('/add-batch-number', function () {
     echo 'Done';
 });
 
-Route::get('run-insly-email-fix', function () {
+//Migration Not Required For Now 21 Nov 24
+// Route::get('run-insly-email-fix', function () {
 
-    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-        Artisan::queue('InslyEmailFix:cron');
-    }
+//     if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+//         Artisan::queue('InslyEmailFix:cron');
+//     }
 
-});
+// });

@@ -201,6 +201,7 @@ const handleSelectedFilters = selectedFilters => {
   onSubmit(true);
 };
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'yacht');
@@ -208,7 +209,14 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Yacht'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 const advisorOptionsFilter = computed(() => {
@@ -668,6 +676,7 @@ const validateDateRange = () => {
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >
@@ -778,10 +787,9 @@ const validateDateRange = () => {
         </div>
       </template>
       <template #item-renewal_batch_model="item">
-        <p v-if="item.renewal_batch_model != null">
-          {{ item.renewal_batch_model.name }}
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
-        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 

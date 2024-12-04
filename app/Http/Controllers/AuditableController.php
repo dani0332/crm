@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\InsurerRequestResponse;
-use App\Models\SageApiLog;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
@@ -104,10 +103,4 @@ class AuditableController extends Controller
         return ($request->jsonData) ? response()->json($audits) : $audits;
     }
 
-    public function sageApiLogs(Request $request, $sectionId)
-    {
-        $sageApiLogs = SageApiLog::with('user')->where(['section_type' => $request->modelClass, 'section_id' => $sectionId])->get();
-
-        return response()->json(['success' => true, 'sageApiLogs' => $sageApiLogs]);
-    }
 }

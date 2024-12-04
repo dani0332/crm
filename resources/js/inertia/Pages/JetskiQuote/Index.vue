@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
@@ -199,6 +200,7 @@ const tableHeader = [
   { text: 'Renewal Batch', value: 'renewal_batch_model' },
 ];
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'jetski');
@@ -206,7 +208,14 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Jetski'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 watch(
@@ -476,6 +485,7 @@ watch(
             color="emerald"
             @click.prevent="onDataExport"
             class="justify-self-start"
+            :loading="exportLoader"
           >
             Export
           </x-button>
@@ -574,10 +584,9 @@ watch(
         </div>
       </template>
       <template #item-renewal_batch_model="item">
-        <p v-if="item.renewal_batch_model != null">
-          {{ item.renewal_batch_model.name }}
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
-        <p v-else>{{ item.renewal_batch }}</p>
       </template>
     </DataTable>
 

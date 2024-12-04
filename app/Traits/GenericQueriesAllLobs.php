@@ -34,7 +34,7 @@ trait GenericQueriesAllLobs
     public function getQuoteCode($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
-        $modelType = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        $modelType = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
         if (! class_exists($modelType)) {
             return false;
@@ -51,7 +51,7 @@ trait GenericQueriesAllLobs
     public function getModelObject($quoteType)
     {
         $nameSpace = '\\App\\Models\\';
-        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
         if (! class_exists($model)) {
             if (in_array(ucwords($quoteType), [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])) {
                 $model = $nameSpace.'BusinessQuote';
@@ -77,7 +77,7 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
         if (! class_exists($model)) {
             return false;
@@ -95,7 +95,7 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
         if (! class_exists($model)) {
             return false;
@@ -798,7 +798,11 @@ trait GenericQueriesAllLobs
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
                     $oldPaymentStatusId = $paymentSplit->payment_status_id;
                     $newPaymentStatusId = null;
-                    if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
+
+                    $collectionAmount = formatAmount($paymentSplit->collection_amount, 2);
+                    $paymentAmount = formatAmount($paymentSplit->payment_amount, 2);
+
+                    if ($collectionAmount >= $paymentAmount) {
                         $newPaymentStatusId = PaymentStatusEnum::PAID;
                     } else {
                         $newPaymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
