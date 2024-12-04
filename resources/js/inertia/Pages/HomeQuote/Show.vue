@@ -665,13 +665,13 @@ const onCopyText = text => {
 };
 
 const onExportPlans = () => {
-  if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
-    notification.error({
-      title: 'Please select 2 to 5 plans to download PDF.',
-      position: 'top',
-    });
-    return;
-  }
+//   if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+//     notification.error({
+//       title: 'Please select 2 to 5 plans to download PDF.',
+//       position: 'top',
+//     });
+//     return;
+//   }
   exportLoader.value = true;
   const planIds = selectedPlans.value.map(p => {
     return p.id;
@@ -679,17 +679,10 @@ const onExportPlans = () => {
 
   axios
     .post(
-      '/api/v1/quotes/travel/export-plans-pdf',
+      '/api/v1/quotes/bike/export-plans-pdf',
       {
         plan_ids: planIds,
         quote_uuid: page.props.quote.uuid,
-        modelType: 'travel',
-        quoteType: 'travel',
-        hasAdultAndSeniorMember:
-          availableSeniorPlansTable?.data?.length > 0 &&
-          availablePlansTable?.data?.length > 0
-            ? true
-            : false,
       },
       {
         responseType: 'json',
