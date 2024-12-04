@@ -744,7 +744,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $this->updatePaymentStatusForNoPaidPayments($payment);
         }
     }
-    
+
     private function getTotalPaidPayments($paymentSplits)
     {
         $paymentStatuses = [
