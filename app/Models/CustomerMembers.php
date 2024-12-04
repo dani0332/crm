@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\QuoteTypes;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

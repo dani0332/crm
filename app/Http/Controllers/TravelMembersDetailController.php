@@ -177,6 +177,7 @@ class TravelMembersDetailController extends Controller
             $quoteMemberDetails['first_name'] = $name[0];
             $quoteMemberDetails['last_name'] = $name[1];
         }
+
         return $quoteMemberDetails;
     }
 }
