@@ -1121,6 +1121,13 @@ class TravelQuoteService extends BaseService
             info("Updating plan and premium for parent lead code {$leadModal->code} and child lead code {$duplicateLead->code}");
             // update plan & premium for parent & child lead
             $this->updatePlanAndPremium($leadModal, $duplicateLead);
+
+            $leadModal->TravelDestinations()->get()->each(function ($destination) use ($duplicateLead) {
+                $duplicateDestination = $destination->replicate();
+                $duplicateDestination->quote_id = $duplicateLead->id;
+                $duplicateDestination->uuid = $duplicateLead->uuid;
+                $duplicateDestination->save();
+            });
         }
 
         return true;
