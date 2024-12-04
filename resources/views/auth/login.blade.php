@@ -19,12 +19,9 @@
             <p class="p-4 text-center">
                 You can only sign in with your <a href="https://insurancemarket.ae" class="text-[#4183bd]" target="_blank">insurancemarket.ae</a> account
             </p>
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
-                <a href="{{ url('auth/google') }}" class="bg-[#4183bd] hover:bg-opacity-90 block p-2 rounded text-center text-white">
-                    <strong>Google Login</strong>
-                </a>
-            </form>
+            <a href="{{ url('auth/google') }}" class="bg-[#4183bd] hover:bg-opacity-90 block p-2 rounded text-center text-white">
+                <strong>Google Login</strong>
+            </a>
             @if (session('status'))
             <div class="mt-4 font-medium text-sm text-red-600 text-center">
                 {{ session('status') }}

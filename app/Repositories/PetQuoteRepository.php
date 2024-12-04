@@ -26,7 +26,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function model()
     {
-        return (in_array(quoteTypeCode::Pet, newUi())) ? PersonalQuote::class : PetQuote::class;
+        return PersonalQuote::class;
     }
 
     public function fetchCreate($request)
