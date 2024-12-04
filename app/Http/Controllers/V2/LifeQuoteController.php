@@ -266,18 +266,17 @@ class LifeQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
-        $leadStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())
-            ->whereIn('text', [quoteStatusCode::NEWLEAD, quoteStatusCode::QUOTED, quoteStatusCode::FOLLOWEDUP, quoteStatusCode::NEGOTIATION])
-            ->get()->toArray();
-
-        $leadStatuses = array_map(function ($item) use ($request) {
-            $item['data'] = getDataAgainstStatus(QuoteTypes::LIFE->value, $item['id'], $request);
-
-            return $item;
-        }, $leadStatuses);
+        $quotes = [
+            ["id" => QuoteStatusEnum::Quoted, "text" => quoteStatusCode::QUOTED, "code" => quoteStatusCode::QUOTED, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::Quoted, $request)],
+            ["id" => QuoteStatusEnum::FollowedUp, "text" => quoteStatusCode::FOLLOWEDUP, "code" => quoteStatusCode::FOLLOWEDUP, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::FollowedUp, $request)],
+            ["id" => QuoteStatusEnum::ApplicationSubmitted, "text" => quoteStatusCode::APPLICATION_SUBMITTED, "code" => quoteStatusCode::APPLICATION_SUBMITTED, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::ApplicationSubmitted, $request)],
+            ["id" => QuoteStatusEnum::InNegotiation, "text" => quoteStatusCode::NEGOTIATION, "code" => quoteStatusCode::NEGOTIATION, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::InNegotiation, $request)],
+            ["id" => QuoteStatusEnum::PolicyBooked, "text" => quoteStatusCode::POLICY_BOOKED, "code" => quoteStatusCode::POLICY_BOOKED, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::PolicyBooked, $request)],
+        ];
 
         return inertia('LifeQuote/Cards', [
-            'quotes' => array_values($leadStatuses),
+            'quotes' => array_values($quotes),
+            'quoteTypeId' => QuoteTypes::LIFE->id(),
             'quoteType' => QuoteTypes::LIFE->value,
 
         ]);
