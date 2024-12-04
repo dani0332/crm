@@ -2,46 +2,44 @@
 
 namespace App\Services\EmailServices;
 
-use App\Services\BaseService;
-use App\Models\User;
-use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\WorkflowTypeEnum;
-use App\Services\BirdService;
 use App\Enums\QuoteTypes;
-use App\Models\HomeQuote;
+use App\Enums\WorkflowTypeEnum;
+use App\Models\ApplicationStorage;
+use App\Models\User;
+use App\Services\BaseService;
+use App\Services\BirdService;
 
 class HomeEmailService extends BaseService
 {
-
     public function sendHomeOCBIntroEmail($lead)
     {
         if (! $lead) {
-            info("sendHomeOCBIntroEmail - Lead not found for  | Time: " . now());
+            info('sendHomeOCBIntroEmail - Lead not found for  | Time: '.now());
+
             return false;
         }
 
-        info("sending sendHomeOCBIntroEmail - Ref ID: {$lead->uuid}| Time: " . now());
+        info("sending sendHomeOCBIntroEmail - Ref ID: {$lead->uuid}| Time: ".now());
 
         $advisor = User::where('id', $lead->advisor_id)->first();
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::HOME_AUTOMATED_FOLLOWUPS);
         $homeAutomatedEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS)->first();
         if ($homeAutomatedEvent) {
             $response = app(BirdService::class)->triggerWebHookRequest($homeAutomatedEvent->value, $emailData);
-            if (!$lead->automated_flow_executed_at) {
+            if (! $lead->automated_flow_executed_at) {
                 $lead->automated_flow_executed_at = now();
                 $lead->save();
             }
-            info("sendHomeOCBIntroEmail event triggered for lead  Ref-ID: {$lead->uuid} |Time: " . now());
+            info("sendHomeOCBIntroEmail event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
         } else {
-            info("sendHomeOCBIntroEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: " . now());
+            info("sendHomeOCBIntroEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
         }
-
 
         return $response ?? null;
     }
 
-    public function  buildEmailData($lead, $advisor, $workflowType)
+    public function buildEmailData($lead, $advisor, $workflowType)
     {
         return (object) [
             'quoteUID' => $lead->uuid,

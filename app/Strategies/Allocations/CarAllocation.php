@@ -3,11 +3,9 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
-use App\Services\SendEmailCustomerService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
 

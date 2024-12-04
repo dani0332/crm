@@ -2,18 +2,18 @@
 
 namespace App\Observers;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\EmailServices\HomeEmailService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
-use App\Services\EmailServices\HomeEmailService;
-use App\Enums\ApplicationStorageEnums;
-use App\Models\ApplicationStorage;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -42,8 +42,7 @@ class HomeQuoteObserver
             if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
                 app(HomeEmailService::class)->sendHomeOCBIntroEmail($homeQuote);
                 info("HomeQuoteObserver - Home OCB Automated Followups Switch is on - Ref ID: {$homeQuote->uuid} | Time: ".now());
-            }
-            else {
+            } else {
                 info("HomeQuoteObserver - Home OCB Automated Followups Switch is off - Ref ID: {$homeQuote->uuid} | Time: ".now());
             }
 
