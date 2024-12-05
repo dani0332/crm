@@ -15,6 +15,7 @@ class CallBackNotificationDataMigrationSeeder extends Seeder
     public function run()
     {
         Activities::where('source', LeadSourceEnum::INSTANT_ALFRED)
+            ->whereNull('reminders_sent')
             ->chunk(500, function ($activities) {
                 foreach ($activities as $activity) {
                     $logsCount = ActivityNotificationLogs::where('activity_id', $activity->id)->count();
