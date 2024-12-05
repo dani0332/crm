@@ -326,7 +326,7 @@ class CarEmailService extends BaseService
 
     public function sendSICNotificationToAdvisor($lead, $user)
     {
-        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
+        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user, QuoteTypes::CAR->value);
     }
 
     public function sendNBMotorWorkFlow($lead)
