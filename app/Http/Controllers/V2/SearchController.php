@@ -26,15 +26,7 @@ class SearchController extends Controller
         $sendUpdateTypes = $sendUpdateStatuses = [];
         $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList);
         $getAdvisorsList = app(SearchService::class)->getAdvisorsList();
-        $quoteStatuses = app(LookupService::class)->getLeadStatuses([
-            QuoteStatusEnum::SentForTransactionApproval,
-            QuoteStatusEnum::TransactionApproved,
-            QuoteStatusEnum::PolicyDocumentsPending,
-            QuoteStatusEnum::PolicySentToCustomer,
-            QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled,
-        ]);
+        $quoteStatuses = app(LookupService::class)->getLeadStatuses([QuoteStatusEnum::SentForTransactionApproval], [QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued]);
         $paymentStatuses = PaymentStatusRepository::getList([
             PaymentStatusEnum::CAPTURED,
             PaymentStatusEnum::STARTED,

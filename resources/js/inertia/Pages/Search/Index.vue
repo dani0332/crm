@@ -366,7 +366,7 @@ onMounted(() => {
       </x-tooltip>
       <div class="space-x-3">
         <template v-if="can(permissionsEnum.DATA_EXTRACTION_SEARCH_ALL_LEADS)">
-          <template v-if="!tableData">
+          <template v-if="!tableData.length > 0">
             <x-tooltip placement="bottom">
               <x-button disabled size="sm" color="emerald">
                 Export to Excel

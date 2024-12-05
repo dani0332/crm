@@ -69,13 +69,21 @@ class LookupService extends BaseService
         return InsuranceProvider::select('id', 'text')->orderBy('text', 'asc')->get();
     }
 
-    public function getLeadStatuses($extraExcludeStatuses = [])
+    public function getLeadStatuses($extraExcludeStatuses = [], $removeFromExclude = [])
     {
-        $excludeStatus = array_merge([
-            QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-            QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyInvoiced,
+        $generalExcludeStatus = [
+            QuoteStatusEnum::Draft,
+            QuoteStatusEnum::Cancelled,
+            QuoteStatusEnum::AMLScreeningCleared,
+            QuoteStatusEnum::AMLScreeningFailed,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicyInvoiced,
             QuoteStatusEnum::Issued,
-        ], $extraExcludeStatuses);
+        ];
+
+        $excludeStatuses = array_merge($generalExcludeStatus, $extraExcludeStatuses);
+        $excludeStatus = $removeFromExclude ? array_diff($excludeStatuses, $removeFromExclude) : $excludeStatuses;
 
         return QuoteStatus::select('id', 'text')
             ->whereNotIn('id', $excludeStatus)
