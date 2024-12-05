@@ -1986,28 +1986,29 @@ class HealthQuoteService extends BaseService
     }
 
     private function getTransactionApprovedDates($request)
-{
-    $dateFormat = config('constants.DB_DATE_FORMAT_MATCH'); // Default format
-    if (isset($request->transaction_approved_dates)) {
-        $dates = $request->transaction_approved_dates;
+    {
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH'); // Default format
+        if (isset($request->transaction_approved_dates)) {
+            $dates = $request->transaction_approved_dates;
 
-        // If the dates are a string, split it into an array
-        if (is_string($dates)) {
-            $dates = explode(',', $dates);
+            // If the dates are a string, split it into an array
+            if (is_string($dates)) {
+                $dates = explode(',', $dates);
+            }
+
+            // Parse start and end dates if the array is valid
+            if (is_array($dates) && count($dates) === 2) {
+                $startDate = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
+                $endDate = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
+
+                return [$startDate, $endDate];
+            }
         }
 
-        // Parse start and end dates if the array is valid
-        if (is_array($dates) && count($dates) === 2) {
-            $startDate = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
-            $endDate = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
-            return [$startDate, $endDate];
-        }
+        // Default to the current month's start and end of the previous day
+        $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d 00:00:00');
+        $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
+
+        return [$startOfMonth, $endOfPreviousDay];
     }
-
-    // Default to the current month's start and end of the previous day
-    $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d 00:00:00');
-    $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
-
-    return [$startOfMonth, $endOfPreviousDay];
-}
 }
