@@ -141,14 +141,15 @@ class CarQuoteRepository extends BaseRepository
         return $quote;
     }
 
-    public function fetchPauseAndResumeFollowUpCounters($data){
+    public function fetchPauseAndResumeFollowUpCounters($data)
+    {
         $quote = $this->where('uuid', $data['quote_uuid'])->first();
         $field = $data['action'] === 'pause' ? 'followup_pause_count' : 'followup_resume_count';
 
-        if (!$quote || !$quote->carQuoteRequestDetail) {
+        if (! $quote || ! $quote->carQuoteRequestDetail) {
             return response()->json(['success' => false, 'message' => 'Quote or related details not found'], 404);
         }
-        
+
         $quote->carQuoteRequestDetail->updateOrCreate(
             ['car_quote_request_id' => $quote->id],
             [

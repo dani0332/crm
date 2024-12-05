@@ -92,7 +92,8 @@ class CarQuoteController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function UpdatePauseAndResumeCounters(Request $request){
+    public function UpdatePauseAndResumeCounters(Request $request)
+    {
 
         $validatedData = $request->validate([
             'quote_uuid' => 'required|string',
