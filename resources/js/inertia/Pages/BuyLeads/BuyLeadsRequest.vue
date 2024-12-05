@@ -175,7 +175,7 @@ const maxLeadsOptions = computed(() => {
     </div>
     <div class="grid sm:grid-cols-3 gap-3">
       <div class="grid sm:grid-cols-2 items-center">
-        <p>The total cost for the requested is:</p>
+        <p>The total cost for the requested leads is:</p>
         <!-- <x-field label="The total cost of the leads is:"> -->
         <x-input disabled v-model="calculateMaximumCost" class="!mb-0">
           <template #suffix>
