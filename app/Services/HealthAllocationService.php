@@ -182,6 +182,7 @@ class HealthAllocationService extends AllocationService
             info(self::class."::getBLAdvisorByStatus - found Advisor : {$advisor->user_id} for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
             $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::HEALTH, $advisor->user_id, $lead->isValueLead());
             if ($this->buyLeadRequest) {
+                $this->buyLeadRequest->startProcessing();
                 $this->isBuyLeadAdvisor = true;
             } else {
                 info(self::class."::getBLAdvisorByStatus - Advisor found but Buy Lead Request not found for Advisor : {$advisor->user_id} for UUID: {$lead->uuid}");

@@ -352,8 +352,10 @@ class CarAllocationService extends AllocationService
         info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $tier->isValue());
 
-        $advisors = $this->getAdvisorBaseQuery($status, $tierUserIds, $advisorId, $teamId)
-            ->whereIn('user_id', $buyLeadRequestedUserIds)
+        $userIds = [...$tierUserIds, ...$buyLeadRequestedUserIds];
+        $userIds = array_values(array_unique($userIds));
+
+        $advisors = $this->getAdvisorBaseQuery($status, $userIds, $advisorId, $teamId)
             ->where('buy_lead_status', true)
             ->where(function ($query) {
                 $query->whereRaw('buy_lead_allocation_count < buy_lead_max_capacity')->orWhere('buy_lead_max_capacity', '=', -1);
@@ -362,6 +364,8 @@ class CarAllocationService extends AllocationService
             ->get();
 
         $this->isBuyLeadAdvisor = $advisors->count() > 0;
+
+        info('Buy Lead Advisors found for uuid: ' . $lead->uuid);
 
         return $advisors;
     }
@@ -503,6 +507,9 @@ class CarAllocationService extends AllocationService
             foreach ($finalEligibleUserIds as $advisorId) {
                 $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $advisorId, $tier->isValue());
                 if ($this->buyLeadRequest) {
+                    info("Buy Lead Request {$this->buyLeadRequest->id} found for advisor ID: {$advisorId} and tier ID: {$tier->id} for uuid : {$lead->uuid}");
+                    $this->buyLeadRequest->startProcessing();
+
                     return $advisorId;
                 }
             }

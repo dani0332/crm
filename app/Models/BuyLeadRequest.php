@@ -15,6 +15,7 @@ class BuyLeadRequest extends Model
         'cost_per_lead',
         'request_type',
         'expires_at',
+        'status',
     ];
     protected $casts = [
         'requested_count' => 'integer',
@@ -40,7 +41,7 @@ class BuyLeadRequest extends Model
 
     public function scopeActive($q)
     {
-        $q->where('expires_at', '>=', now());
+        $q->where('expires_at', '>=', now())->whereStatus('active');
     }
 
     public function scopeUnfulfilled($q)
@@ -91,5 +92,23 @@ class BuyLeadRequest extends Model
             'quote_id' => $lead->id,
             'uuid' => $lead->uuid,
         ]);
+
+        $this->completeProcessing();
+    }
+
+    public function startProcessing()
+    {
+        $this->update(['status' => 'processing']);
+    }
+
+    public function completeProcessing()
+    {
+        $this->refresh();
+
+        if ($this->requested_count === $this->allocated_count) {
+            $this->update(['status' => 'completed']);
+        } else {
+            $this->update(['status' => 'active']);
+        }
     }
 }
