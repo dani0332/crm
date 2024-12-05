@@ -218,13 +218,25 @@ trait TeamHierarchyTrait
     public function usersByTeamProduct()
     {
         $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->first();
-        $productTeams = Team::where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $product->id)->where('is_active', 1)->get();
+        if (! $product) {
+            return [];
+        }
 
-        $teamUserIds = UserTeams::whereIn('team_id', $productTeams->pluck('id'))->pluck('user_id')->toArray();
-        $productUserIds = UserProducts::select('user_id')->where('product_id', $product->id)->whereNotIn('user_id', $teamUserIds)->pluck('user_id')->toArray();
+        $productTeams = Team::where('type', TeamTypeEnum::TEAM)
+            ->where('parent_team_id', $product->id)
+            ->where('is_active', 1)
+            ->pluck('id')
+            ->toArray();
 
-        return array_values(array_unique(
-            array_merge($teamUserIds, $productUserIds)
-        ));
+        $teamUserIds = UserTeams::whereIn('team_id', $productTeams)
+            ->pluck('user_id')
+            ->toArray();
+
+        $productUserIds = UserProducts::where('product_id', $product->id)
+            ->whereNotIn('user_id', $teamUserIds)
+            ->pluck('user_id')
+            ->toArray();
+
+        return array_unique(array_merge($teamUserIds, $productUserIds));
     }
 }

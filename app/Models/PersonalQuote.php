@@ -52,8 +52,6 @@ class PersonalQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
 
-    protected $appends = ['customer_type'];
-
     protected static function booted()
     {
         static::updating(function ($model) {
@@ -375,50 +373,6 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasMany(SendUpdateLog::class);
     }
-
-    protected function customerType(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->getCustomerType()
-        );
-    }
-
-    protected function getCustomerType(): string
-    {
-        $quoteTypeId = $this->quote_type_id;
-        $personalLOBs = [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski];
-        $nonEcomLOBs = [
-            QuoteTypeId::Car => 'car_quote_request',
-            QuoteTypeId::Home => 'home_quote_request',
-            QuoteTypeId::Health => 'health_quote_request',
-            QuoteTypeId::Life => 'life_quote_request',
-            QuoteTypeId::Travel => 'travel_quote_request',
-            QuoteTypeId::Business => 'business_quote_request',
-        ];
-
-        if (in_array($quoteTypeId, $personalLOBs)) {
-            $exists = QuoteRequestEntityMapping::where('quote_request_id', $this->id)
-                ->where('quote_type_id', $quoteTypeId)
-                ->exists();
-
-            return $exists ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
-        }
-
-        if (in_array($quoteTypeId, array_keys($nonEcomLOBs))) {
-            $quoteRequest = DB::table($nonEcomLOBs[$quoteTypeId])
-                ->where('uuid', $this->uuid)
-                ->first();
-
-            $existsInQuoteRequestEntityMapping = QuoteRequestEntityMapping::where('quote_request_id', $quoteRequest->id)
-                ->where('quote_type_id', $quoteTypeId)
-                ->exists();
-
-            return $existsInQuoteRequestEntityMapping ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
-        }
-
-        return CustomerTypeEnum::Individual;
-    }
-
     public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');

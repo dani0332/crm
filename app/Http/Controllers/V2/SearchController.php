@@ -23,6 +23,7 @@ class SearchController extends Controller
     public function index(): \Inertia\Response|\Inertia\ResponseFactory
     {
         $isEndorsementList = (request()->get('list') == 'endorsements');
+        $sendUpdateTypes = $sendUpdateStatuses = [];
         $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList);
         $getAdvisorsList = app(SearchService::class)->getAdvisorsList();
         $quoteStatuses = app(LookupService::class)->getLeadStatuses([
@@ -46,9 +47,12 @@ class SearchController extends Controller
         $businessInsuranceTypes = BusinessInsuranceType::withActive()->orderBy('text')->get();
         $insuranceProviders = InsuranceProviderRepository::getList('text');
         $departments = Department::active()->orderBy('name')->get();
-        $sendUpdateStatuses = app(SendUpdateLogService::class)->sendUpdateStatuses();
-        $sendUpdateTypes = app(LookupService::class)->getSendUpdateCategories();
         $quoteTypeIdEnum = QuoteTypeId::asArray();
+
+        if ($isEndorsementList) {
+            $sendUpdateTypes = app(LookupService::class)->getSendUpdateCategories();
+            $sendUpdateStatuses = app(SendUpdateLogService::class)->sendUpdateStatuses();
+        }
 
         return inertia('Search/Index', [
             'leadsOrEndorsementData' => $getLeadsOrEndorsements,
