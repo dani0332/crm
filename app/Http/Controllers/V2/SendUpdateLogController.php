@@ -31,6 +31,7 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -113,6 +114,8 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        $isSentOrBooked = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            SendUpdateLogStatusEnum::UPDATE_BOOKED]) || in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED]);
 
         // we don't need to push this on production, need to remove this before production.
         if (! SendUpdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
@@ -151,6 +154,8 @@ class SendUpdateLogController extends Controller
             $quoteServiceFile = app(getServiceObject($quoteType));
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
+
+        $isCommVatNotAppEnabled = $this->sendUpdateLogService->commissionVatNotApplicableEnabled($quoteType, $realQuote?->business_type_of_insurance_id ?? null);
 
         $parentText = $sendUpdateLog?->option?->code == SendUpdateLogStatusEnum::ATICB ? $realQuote?->transaction_type_text : $sendUpdateLog->category->parent->text;
 
@@ -236,6 +241,8 @@ class SendUpdateLogController extends Controller
             'vatValue' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0,
             'isPaidEditable' => $this->isSplitPaymentFullyPaid($sendUpdatePayments->first()),
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
+            'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
+            'isSentOrBooked' => $isSentOrBooked,
         ]);
     }
 

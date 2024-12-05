@@ -62,6 +62,7 @@ defineProps({
   travelDestinations: Object,
   isAmlClearedForQuote: Boolean,
   amlStatusName: String,
+  access: Object,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -734,6 +735,89 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
+const selectedPlanType = ref(null);
+
+const updateSelectedPlan = async selectedPlanData => {
+  let data = {
+    plan_id: selectedPlanData.plan.id,
+  };
+
+  data.planType = selectedPlanData.extraDetails?.planType;
+  if (selectedPlanData.extraDetails?.selectedPlansIds.length > 0) {
+    for (
+      let i = 0;
+      i < selectedPlanData.extraDetails?.selectedPlansIds.length;
+      i++
+    ) {
+      if (
+        selectedPlanData.extraDetails?.planType == 'normalPlans' &&
+        selectedPlanData.extraDetails?.seniorPlansIds.includes(
+          selectedPlanData.extraDetails?.selectedPlansIds[i],
+        )
+      ) {
+        data.plan_id = selectedPlanData.plan.id;
+        data.selected_plan_id =
+          selectedPlanData.extraDetails?.selectedPlansIds[i];
+      }
+
+      if (
+        selectedPlanData.extraDetails?.planType == 'seniorPlans' &&
+        selectedPlanData.extraDetails?.normalPlansIds.includes(
+          selectedPlanData.extraDetails?.selectedPlansIds[i],
+        )
+      ) {
+        data.selected_plan_id = selectedPlanData.plan.id;
+        data.plan_id = selectedPlanData.extraDetails?.selectedPlansIds[i];
+      }
+    }
+  } else {
+    data.plan_id = selectedPlanData.plan.id;
+  }
+
+  axios
+    .post(
+      `/personal-quotes/${selectedPlanData.quoteType}/${page.props.quote.uuid}/update-selected-plan`,
+      data,
+    )
+    .then(res => {
+      let premium = 0;
+      if (res.data.plan.planProcessValue[0]) {
+        premium = res.data.plan.planProcessValue[0].totalPremium;
+      }
+      let selectedPlan = {
+        id: selectedPlanData.plan.id,
+        providerName: selectedPlanData.plan.providerName,
+        planName: selectedPlanData.plan.name,
+      };
+
+      if (res.data.plan.planProcessValue[0]) {
+        selectedPlan.premium = premium.toFixed(2);
+      }
+      handlePlanSelected(selectedPlan);
+    })
+    .catch(err => {
+      console.log(err);
+      isLoading.value = false;
+      notification.error({
+        title: err?.response?.data?.message ?? 'something went wrong',
+        position: 'top',
+      });
+    });
+};
+
+const onLoadAvailablePlansDataAndPlanDetails = async selectedPlanData => {
+  // In case of update made in selected plan, we need to call the update plan api to make the required changes according to selected plan
+  if (
+    selectedPlanData.extraDetails?.selectedPlansIds.includes(
+      parseInt(selectedPlanData.plan.id),
+    )
+  ) {
+    await updateSelectedPlan(selectedPlanData);
+  }
+  getPlanDetails(planDetails.value.id);
+  await onLoadAvailablePlansData();
+};
+
 const emailStatusesTable = reactive({
   isLoading: false,
   columns: [
@@ -801,12 +885,12 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
-      value: 'discountPremium',
+      text: 'Total Price',
+      value: 'premiumWithVat',
     },
     {
       text: 'Action',
@@ -831,12 +915,12 @@ const availableSeniorPlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
-      value: 'discountPremium',
+      text: 'Total Price',
+      value: 'premiumWithVat',
     },
     {
       text: 'Action',
@@ -1060,6 +1144,18 @@ const onCopyText = text => {
       title: 'Link copied to clipboard',
       position: 'top',
     });
+};
+
+const getAddonVat = item => {
+  let addonVat = 0;
+  item.addons.forEach(addon => {
+    addon.addonOptions.forEach(option => {
+      if (option.isSelected && option.price != 0) {
+        addonVat += parseInt(option.price) + option.vat;
+      }
+    });
+  });
+  return addonVat;
 };
 
 const isProfileUpdateAllow = computed(() => {
@@ -1360,6 +1456,15 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
 };
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
 </script>
 
 <template>
@@ -1685,31 +1790,15 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      TRAVELING WHERE
-                    </label>
-                    <template #tooltip> Traveling Where</template>
-                  </x-tooltip>
+                  <label class="font-medium text-gray-800 text-sm">
+                    DEPARTING FROM
+                  </label>
                 </dt>
                 <dt class="font-medium uppercase">
                   {{
-                    quote.direction_code != null
-                      ? quote.direction_code
-                      : quote?.currently_located_in_id_text ==
-                            enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                          quote?.region_cover_for_id !=
-                            enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                        ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                        : quote?.destination_id_text ==
-                              enums.travelQuoteEnum
-                                .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                            quote?.region_cover_for_id ==
-                              enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                          ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                          : ''
+                    quote.departure_country_text != null
+                      ? quote.departure_country_text
+                      : ''
                   }}
                 </dt>
               </div>
@@ -2517,9 +2606,7 @@ const onAddUpdate = () => {
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
                     :disabled="
-                      quote.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
-                      lockLeadSectionsDetails.lead_status
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Lead Status"
                     class="w-full"
@@ -2533,9 +2620,7 @@ const onAddUpdate = () => {
                     placeholder="Lead Notes"
                     class="w-full"
                     :disabled="
-                      quote.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
-                      lockLeadSectionsDetails.lead_status
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
                     "
                   />
                 </x-field>
@@ -2572,10 +2657,7 @@ const onAddUpdate = () => {
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                isDisabled
-              "
+              :disabled="allowStatusUpdate || isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Change Status
@@ -2909,10 +2991,15 @@ const onAddUpdate = () => {
               <template #item-name="item">
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
-              <template #item-discountPremium="item">
-                <span class="text-primary-600">
-                  {{ item.discountPremium + item.vat }}
-                </span>
+              <template #item-actualPremium="item">
+                {{ parseFloat(item.actualPremium).toFixed(2) }}
+              </template>
+              <template #item-premiumWithVat="item">
+                {{
+                  parseFloat(
+                    item.discountPremium + item.vat + getAddonVat(item),
+                  ).toFixed(2)
+                }}
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
@@ -2920,7 +3007,10 @@ const onAddUpdate = () => {
                     size="xs"
                     color="error"
                     outlined
-                    @click.prevent="getPlanDetails(item.id)"
+                    @click.prevent="
+                      selectedPlanType = 'normalPlans';
+                      getPlanDetails(item.id);
+                    "
                   >
                     View
                   </x-button>
@@ -2992,10 +3082,15 @@ const onAddUpdate = () => {
                     item.name
                   }}</span>
                 </template>
-                <template #item-discountPremium="item">
-                  <span class="text-primary-600">
-                    {{ item.discountPremium + item.vat }}
-                  </span>
+                <template #item-actualPremium="item">
+                  {{ parseFloat(item.actualPremium).toFixed(2) }}
+                </template>
+                <template #item-premiumWithVat="item">
+                  {{
+                    parseFloat(
+                      item.discountPremium + item.vat + getAddonVat(item),
+                    ).toFixed(2)
+                  }}
                 </template>
                 <template #item-action="item">
                   <div class="flex gap-2">
@@ -3003,7 +3098,10 @@ const onAddUpdate = () => {
                       size="xs"
                       color="error"
                       outlined
-                      @click.prevent="getPlanDetails(item.id)"
+                      @click.prevent="
+                        selectedPlanType = 'seniorPlans';
+                        getPlanDetails(item.id);
+                      "
                     >
                       View
                     </x-button>
@@ -3045,7 +3143,19 @@ const onAddUpdate = () => {
             show-close
             backdrop
           >
-            <LazyAvailablePlan :plan="planDetails" />
+            <LazyAvailablePlan
+              :plan="planDetails"
+              :quote="quote"
+              :quoteType="modelType"
+              :extraDetails="{
+                normalPlansIds: normalPlansIds.ids,
+                seniorPlansIds: seniorPlansIds.ids,
+                selectedPlansIds: selectedPlanIds,
+                planType: selectedPlanType,
+              }"
+              :access="access"
+              @onLoadAvailablePlansData="onLoadAvailablePlansDataAndPlanDetails"
+            />
           </x-modal>
         </template>
       </Collapsible>
@@ -3394,6 +3504,13 @@ const onAddUpdate = () => {
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :quoteType="$page.props.modelType"
+      :expanded="sectionExpanded"
+    />
+
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
 

@@ -4,7 +4,7 @@
 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
-IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
+IMCRM is developed on Laravel using PHP 8.2 or above, and MySQL.
 
 URLs:
 
@@ -28,7 +28,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 ## Setting up Laravel
 
 - Clone the repo in a new folder and use the develop branch for initial setup.
-- Make sure you're using PHP 8.1 or above, Maria DB server 10.x or above on your local machine.
+- Make sure you're using PHP 8.2 or above, MySQL server on your local machine.
 - Install and configure Doppler CLI, we use [Doppler](https://doppler.com/) to handle the `ENV` variables and do not use .env file. Ask the team mate to setup your doppler profile in your name with credentials.
 - Ask for a dump of stage DB which you will need to import.
 - Run `composer install` to install the laravel required files..
@@ -88,7 +88,7 @@ This repo is integrated with [dhalsim](https://github.com/InsuranceMarket-ae/dha
 
 This guide outlines the steps to run the project locally on Docker. Docker provides a consistent environment for development and deployment, ensuring that the project runs smoothly across different systems.
 
-### Prerequisites
+## Prerequisites
 
 Before proceeding, ensure that you have the following prerequisites installed on your system:
 

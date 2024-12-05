@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
@@ -20,7 +19,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
@@ -85,7 +83,7 @@ class HealthAllocationService extends AllocationService
 
         if ($healthTeam) {
             info("Filtered team for {$lead->uuid} is: {$healthTeam->name}");
-            $lead->health_team_type = $healthTeam->name;
+            $lead->health_team_type = ($healthTeam->name === HealthTeamType::PCP && $lead->members->count() > 2) ? HealthTeamType::RM_NB : $healthTeam->name;
         } else {
             info("No team found for {$lead->uuid}");
             $lead->is_error_email_sent = true;
@@ -177,7 +175,7 @@ class HealthAllocationService extends AllocationService
         Haystack::build()
             ->addJob(new GetQuotePlansJob($lead))
             ->then(function () use ($lead, $isReassignment, $previousUserId) {
-                if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
+                if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::PCP])) {
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousUserId, $isReassignment)->delay(now()->addSeconds(15));
                 }
             })->dispatch();
@@ -196,10 +194,6 @@ class HealthAllocationService extends AllocationService
 
     public function shouldProceed(): bool
     {
-        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
-        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
-        $shouldProceed = now()->between($start_time, $end_time) && ((int) config('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH') == 1);
-
-        return $shouldProceed;
+        return $this->shouldProceedWithReAllocation('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH');
     }
 }

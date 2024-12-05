@@ -380,6 +380,8 @@ final class PermissionsEnum extends Enum
     public const SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER = 'search-insurer-commission-tax-invoice-number';
     public const SEND_UPDATE_EDIT_NOTES = 'send-update-edit-notes';
     public const DEPARTMENT_MANAGER = 'department-manager';
+    public const ASSIGN_PAID_LEADS = 'assign-paid-leads';
+    public const RECEIVE_NOTIFICATIONS = 'receive-notifications';
 
     public static function getAdvisorConversionReportPermissions()
     {

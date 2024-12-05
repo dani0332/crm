@@ -171,7 +171,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $masterPayment = (object) $request->payment;
-
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
                 info('Payment does not exist for Payment Code: '.$request->paymentCode);
@@ -187,14 +186,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'updated_by' => $request->user()->id,
                 ];
 
-                // Check if payment frequency is upfron and Old or new Payment method is Proforma Payment Request, only than update parent payment method
-                $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
-                $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
-                $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
-                if ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod)) {
+                if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)) {
                     $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
                 }
-
             } else {
 
                 $paymentInformation = [
@@ -237,6 +231,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
         }, $maxRetries);
+    }
+
+    /**
+     * Determine if the parent payment method should be updated.
+     */
+    private function shouldUpdateParentPaymentMethod($payment, $masterPayment): bool
+    {
+        $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
+        $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
+        $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+        $isCreditApprovalRemoved = $payment->credit_approval !== $masterPayment->credit_approval;
+
+        return $isCreditApprovalRemoved || ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod));
     }
 
     //Add split payments
@@ -651,6 +658,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     private function updatePaymentStatusNonUpFront($payment)
     {
+        $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
+        $paidOrAuthorisedSplits = $this->getPaidOrAuthorisedSplits($paymentSplits);
+
+        // Update payment method for credit approval payments when credit approval is present
+        if (! empty($payment->credit_approval) && $paidOrAuthorisedSplits) {
+            $this->updatePaymentMethodForCreditApproval($payment);
+        }
+
         $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
             PaymentStatusEnum::PAID,
             PaymentStatusEnum::CAPTURED,
@@ -681,6 +696,40 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 info('Master payment code: '.$payment->code.' Updating payment status to NEW');
                 $payment->update(['payment_status_id' => PaymentStatusEnum::NEW]);
             }
+        }
+    }
+
+    private function getPaidOrAuthorisedSplits($paymentSplits)
+    {
+        $paidOrAuthorisedStatuses = [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::CAPTURED,
+        ];
+
+        return $paymentSplits->contains(function ($split) use ($paidOrAuthorisedStatuses) {
+            return in_array($split->payment_status_id, $paidOrAuthorisedStatuses);
+        });
+    }
+
+    private function updatePaymentMethodForCreditApproval($payment)
+    {
+        info('Master payment code: '.$payment->code.' with credit approval & paid/authorised child payments');
+        // Define the frequencies that should result in a PARTIAL_PAYMENT status
+        $partialPaymentFrequencies = [
+            PaymentFrequency::CUSTOM,
+            PaymentFrequency::SEMI_ANNUAL,
+            PaymentFrequency::QUARTERLY,
+            PaymentFrequency::MONTHLY,
+        ];
+
+        // Update parent payment based on frequency
+        if (in_array($payment->frequency, $partialPaymentFrequencies)) {
+            info('Master payment code: '.$payment->code.' Updating payment method to Partial Payment');
+            $payment->update(['payment_methods_code' => PaymentMethodsEnum::PartialPayment]);
+        } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+            info('Master payment code: '.$payment->code.' Updating payment method to Multiple Payment');
+            $payment->update(['payment_methods_code' => PaymentMethodsEnum::MultiplePayment]);
         }
     }
 

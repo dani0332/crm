@@ -31,7 +31,7 @@ describe('CorpLine qoutes', () => {
         commonPage.verifyURL('/quotes/business/create')
         commonPage.getFirstNameField('Muhammad')
         commonPage.getLastNameField('Abdullah')
-        commonPage.getEmail('im.automation4@gmail.com')
+        commonPage.getEmail('qa_automation@myalfred.com')
         commonPage.getMobileNumber('0501234567')
         corpLinePage.getCompanyNameField('Test Company')
         corpLinePage.getPolicyNumberField('Test')

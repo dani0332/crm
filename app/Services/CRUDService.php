@@ -55,7 +55,6 @@ class CRUDService extends BaseService
     protected $lifeQuoteService;
     protected $homeQuoteService;
     protected $businessQuoteService;
-    protected $petQuoteService;
     protected $quoteTypes;
     protected $insuranceproviderService;
     protected $carplancoverageService;
@@ -76,7 +75,6 @@ class CRUDService extends BaseService
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
-        PetQuoteService $petQuoteService,
         InsuranceProviderService $insuranceproviderService,
         CarPlanService $carplanService,
         CarPlanCoverageService $carplancoverageService,
@@ -95,7 +93,6 @@ class CRUDService extends BaseService
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
-        $this->petQuoteService = $petQuoteService;
         $this->insuranceproviderService = $insuranceproviderService;
         $this->carplanService = $carplanService;
         $this->carplancoverageService = $carplancoverageService;
@@ -1148,14 +1145,19 @@ class CRUDService extends BaseService
 
     public function hasAtleastOneStatusPolicyIssued($record): bool
     {
-        if (isset($record->quote_status_id) && in_array($record->quote_status_id, [
-            QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::PolicySentToCustomer,
-            QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued,
-        ]) || $record?->insly_migrated || $record?->insly_id) {
+        if (
+            isset($record->quote_status_id) && in_array($record->quote_status_id, [
+                QuoteStatusEnum::PolicyIssued,
+                QuoteStatusEnum::PolicySentToCustomer,
+                QuoteStatusEnum::PolicyBooked,
+                QuoteStatusEnum::CancellationPending,
+                QuoteStatusEnum::PolicyCancelled,
+                QuoteStatusEnum::PolicyCancelledReissued,
+            ]) ||
+            $record?->insly_migrated || $record?->insly_id ||
+            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id) ||
+            $record?->source == LeadSourceEnum::RENEWAL_UPLOAD
+        ) {
             return true;
         }
 
