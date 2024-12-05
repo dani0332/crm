@@ -106,7 +106,6 @@ const resetCustomErrors = () => {
 };
 
 const onDataExport = flag => {
-
   isDateMandatory.value = true;
   isQuoteTypeEmpty.value = false;
   resetCustomErrors();
@@ -122,24 +121,29 @@ const onDataExport = flag => {
     hasErrors = true;
   }
 
-  if (dayjs(filtersForm.amlCreatedEndDate).diff(dayjs(filtersForm.amlCreatedStartDate), 'day') > 30) {
-    customErrors.amlCreatedStartDate = 'Allowed no. of days between start & end dates are 30 days.';
+  if (
+    dayjs(filtersForm.amlCreatedEndDate).diff(
+      dayjs(filtersForm.amlCreatedStartDate),
+      'day',
+    ) > 30
+  ) {
+    customErrors.amlCreatedStartDate =
+      'Allowed no. of days between start & end dates are 30 days.';
     hasErrors = true;
   }
-  
+
   if (hasErrors) {
     return;
   }
 
-  const exportData = {
-  };
+  const exportData = {};
   Object.keys(availableFilters).forEach(key => {
     exportData[key] = filtersForm[key];
   });
 
   //remove empty fields
   removeEmptyFields(exportData);
-  
+
   const url = `/kyc/export`;
   window.open(url + '?' + useObjToUrl(exportData));
 };
@@ -204,7 +208,10 @@ onMounted(() => {
           v-model="filtersForm.quoteType"
           label="Quote Type"
           placeholder="Search by Quote Type"
-          :options="[{ value: '', label: 'Select Quote Type' }, ...quoteTypeOptions.value]"
+          :options="[
+            { value: '', label: 'Select Quote Type' },
+            ...quoteTypeOptions.value,
+          ]"
           :single="true"
           :hasError="isQuoteTypeEmpty"
         />
@@ -250,16 +257,28 @@ onMounted(() => {
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button
-        v-if="can(permissionsEnum.DATA_EXTRACTION)"
-        size="sm"
-        color="#48bb78"
-        @click.prevent="onDataExport()"
-        :disabled="loader.table"
-      >
-        Export to Excel
-      </x-button>
-        <x-button size="sm" color="#ff5e00" type="submit" :disabled="loader.table" @click="resetBeforeSubmit()">Search</x-button>
-        <x-button size="sm" color="primary" :disabled="loader.table" @click.prevent="onReset">
+          v-if="can(permissionsEnum.DATA_EXTRACTION)"
+          size="sm"
+          color="#48bb78"
+          @click.prevent="onDataExport()"
+          :disabled="loader.table"
+        >
+          Export to Excel
+        </x-button>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          type="submit"
+          :disabled="loader.table"
+          @click="resetBeforeSubmit()"
+          >Search</x-button
+        >
+        <x-button
+          size="sm"
+          color="primary"
+          :disabled="loader.table"
+          @click.prevent="onReset"
+        >
           Reset
         </x-button>
       </div>
