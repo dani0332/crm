@@ -47,7 +47,7 @@ class BuyLeadService
             return 'You are not allowed to request buy leads for this quote type';
         }
 
-        if($this->isRequestAlreadySubmitted($quoteType)) {
+        if ($this->isRequestAlreadySubmitted($quoteType)) {
             return 'You can initiate a new Buy Lead request once the existing requested leads are assigned.';
         }
 

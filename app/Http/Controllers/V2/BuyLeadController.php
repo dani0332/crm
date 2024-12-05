@@ -21,7 +21,7 @@ class BuyLeadController extends Controller
     {
         $data['maxCapacity'] = $this->buyLeadService->getBlLeadRemainingLimit($request->getQuoteType());
         $data['isMaxCapReached'] = $data['maxCapacity'] === 0;
-        $data['requestAlreadySubmitted'] = !$data['isMaxCapReached'] && $this->buyLeadService->isRequestAlreadySubmitted($request->getQuoteType());
+        $data['requestAlreadySubmitted'] = ! $data['isMaxCapReached'] && $this->buyLeadService->isRequestAlreadySubmitted($request->getQuoteType());
         $data['maxCapacity'] = $data['maxCapacity'] === 'DISABLED' ? 0 : $data['maxCapacity'];
 
         $config = $this->buyLeadService->findConfigCost($request->getQuoteType());

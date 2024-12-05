@@ -163,10 +163,12 @@ class HealthQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             DB::raw('(CASE
-            WHEN hqr.assignment_type = 1 THEN "System Assigned"
-            WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
-            WHEN hqr.assignment_type = 3 THEN "Manual Assigned"
-            WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                WHEN hqr.assignment_type = 1 THEN "System Assigned"
+                WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
+                WHEN hqr.assignment_type = 3 THEN "Manual Assigned"
+                WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned"
+                WHEN hqr.assignment_type = 5 THEN "Bought Lead"
+                WHEN hqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
             'ihp.code as plan_provider_code',
             'ihp.code as plan_provider_code',
             'hqr.health_plan_co_payment_id',
@@ -495,7 +497,7 @@ class HealthQuoteService extends BaseService
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
-        if (isset($request->assignment_type) && ! empty($request->assignment_type)) {
+        if (isset($request->assignment_type) && ! empty($request->assignment_type) && $request->assignment_type !== 'all') {
             $this->query->where('hqr.assignment_type', $request->assignment_type);
         }
         if (isset($request->first_name) && $request->first_name != '') {
