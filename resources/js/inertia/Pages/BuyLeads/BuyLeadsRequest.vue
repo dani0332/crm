@@ -13,6 +13,8 @@ const maximumLeads = ref(0);
 const perLeadCost = ref(1);
 const formatted = date => useDateFormat(date, 'YYYY-MM-DD HH:mm:ss').value;
 const maxLeadsModal = ref(false);
+const isRequestAlreadySubmittedModal = ref(false);
+const isRequestAlreadySubmitted = ref(false);
 
 const calculateMaximumCost = computed(() => {
   return requestForm.count * perLeadCost.value;
@@ -28,6 +30,7 @@ const requestForm = useForm({
 const tableHeader = reactive([
   { text: 'Line Of Business', value: 'quote_type.code' },
   { text: 'Bought Leads', value: 'requested_count' },
+  { text: 'Allocated Leads', value: 'allocated_count' },
   { text: 'Total Cost', value: 'total_cost' },
   { text: 'Requested Date', value: 'created_at' },
 ]);
@@ -92,7 +95,10 @@ const fetchMaximumLeads = () => {
       quote_type: requestForm.quote_type,
     })
     .then(response => {
-      let { maxCapacity, cost, isMaxCapReached } = response.data;
+      let { maxCapacity, cost, isMaxCapReached, requestAlreadySubmitted } =
+        response.data;
+      isRequestAlreadySubmittedModal.value = requestAlreadySubmitted;
+      isRequestAlreadySubmitted.value = requestAlreadySubmitted;
       maximumLeads.value = maxCapacity;
       perLeadCost.value = cost;
       table.value.loading = false;
@@ -149,6 +155,7 @@ const maxLeadsOptions = computed(() => {
               :disabled="
                 requestForm.quote_type == null ||
                 maximumLeads == 0 ||
+                isRequestAlreadySubmitted ||
                 table.loading
               "
               v-model="requestForm.count"
@@ -177,7 +184,6 @@ const maxLeadsOptions = computed(() => {
     <div class="grid sm:grid-cols-2 gap-3">
       <div class="grid sm:grid-cols-2 items-center">
         <p>The total cost for the requested leads is:</p>
-        <!-- <x-field label="The total cost of the leads is:"> -->
         <x-input disabled v-model="calculateMaximumCost" class="!mb-0">
           <template #suffix>
             <div
@@ -213,7 +219,7 @@ const maxLeadsOptions = computed(() => {
         color="primary"
         type="submit"
         :loading="table.loading"
-        :disabled="maximumLeads == 0"
+        :disabled="isRequestAlreadySubmitted || maximumLeads == 0"
       >
         Submit
       </x-button>
@@ -229,6 +235,18 @@ const maxLeadsOptions = computed(() => {
     <div class="text-red-500">
       Max cap for Buy Lead requests reached. Please submit your next request on
       the following day.
+    </div>
+  </x-modal>
+  <x-modal
+    v-model="isRequestAlreadySubmittedModal"
+    title="Buy Leads"
+    show-close
+    backdrop
+    size="lg"
+  >
+    <div class="text-red-500">
+      You can initiate a new Buy Lead request once the existing requested leads
+      are assigned.
     </div>
   </x-modal>
   <DataTable

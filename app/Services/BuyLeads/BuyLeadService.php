@@ -17,7 +17,7 @@ class BuyLeadService
 {
     private function currentRequestsCount(QuoteTypes $quoteType): int
     {
-        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->active()->sum('requested_count');
+        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->sum('requested_count');
     }
 
     public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
@@ -33,6 +33,11 @@ class BuyLeadService
         return $buyLeadMaxCap - $this->currentRequestsCount($quoteType);
     }
 
+    public function isRequestAlreadySubmitted(QuoteTypes $quoteType): bool
+    {
+        return BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->unfulfilled()->exists();
+    }
+
     private function verifyPreChecks(RequestBuyLeadsRequest $request): ?string
     {
         $quoteType = $request->getQuoteType();
@@ -40,6 +45,10 @@ class BuyLeadService
 
         if (! auth()->user()->hasAnyRole($quoteType->advisorRoles())) {
             return 'You are not allowed to request buy leads for this quote type';
+        }
+
+        if($this->isRequestAlreadySubmitted($quoteType)) {
+            return 'You can initiate a new Buy Lead request once the existing requested leads are assigned.';
         }
 
         $remainingLimit = $this->getBlLeadRemainingLimit($quoteType);
@@ -118,7 +127,7 @@ class BuyLeadService
 
     public function getTodaysRequests()
     {
-        return BuyLeadRequest::select('id', 'quote_type_id', 'requested_count', 'cost_per_lead', 'created_at')
+        return BuyLeadRequest::select('id', 'quote_type_id', 'requested_count', 'allocated_count', 'cost_per_lead', 'created_at')
             ->selectRaw('CONCAT(ROUND(requested_count * cost_per_lead, 0), " AED") as total_cost')
             ->with('quoteType:id,code')
             ->where('user_id', Auth::id())

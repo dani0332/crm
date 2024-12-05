@@ -39,9 +39,14 @@ class BuyLeadRequest extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function scopeNotExpired($q)
+    {
+        $q->where('expires_at', '>=', now());
+    }
+
     public function scopeActive($q)
     {
-        $q->where('expires_at', '>=', now())->whereStatus('active');
+        $q->notExpired()->whereStatus('active');
     }
 
     public function scopeUnfulfilled($q)
