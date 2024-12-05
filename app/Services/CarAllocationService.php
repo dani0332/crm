@@ -352,8 +352,10 @@ class CarAllocationService extends AllocationService
         info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $tier->isValue());
 
-        $userIds = [...$tierUserIds, ...$buyLeadRequestedUserIds];
-        $userIds = array_values(array_unique($userIds));
+        $userIds = array_values(array_intersect(
+            $buyLeadRequestedUserIds,
+            $tierUserIds->toArray()
+        ));
 
         $advisors = $this->getAdvisorBaseQuery($status, $userIds, $advisorId, $teamId)
             ->where('buy_lead_status', true)
