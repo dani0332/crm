@@ -80,9 +80,9 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Line Of Business" required>
+      <x-field label="Line of Business" required>
         <x-select
-          placeholder="Select Line Of Business"
+          placeholder="Select LOB"
           :options="props.lobs || []"
           filterable
           v-model="filters.quote_type"
