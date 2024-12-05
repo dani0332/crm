@@ -134,7 +134,7 @@ const maxLeadsOptions = computed(() => {
     <div class="grid sm:grid-cols-2 gap-3">
       <x-field label="Line Of Business" required>
         <x-select
-          placeholder="Select Line Of Business"
+          placeholder="Select LOB"
           :options="lobs"
           filterable
           v-model="requestForm.quote_type"
@@ -162,7 +162,7 @@ const maxLeadsOptions = computed(() => {
           <template #tooltip>
             <div>
               You may request up to {{ maximumLeads }} leads per day for the
-              selected Line Of Business.
+              selected Line of Business.
             </div>
           </template>
         </x-tooltip>

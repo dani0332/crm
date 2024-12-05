@@ -5,6 +5,7 @@ const props = defineProps({
 });
 
 const { isRequired } = useRules();
+const notification = useToast();
 const params = useUrlSearchParams('history');
 
 const tableHeader = reactive([
@@ -47,6 +48,12 @@ const onExport = () => {
     window.location.href = route('buy-leads.request.tracking', {
       ...filters,
       export: true,
+    });
+  } else {
+    notification.error({
+      title:
+        'Select the Line of Business and Requested Date to download the PDF report.',
+      position: 'top',
     });
   }
 };
@@ -112,7 +119,6 @@ onMounted(() => {
         color="secondary"
         @click.prevent="onExport()"
         :loading="table.loading"
-        :disabled="!(filters.quote_type && filters.date)"
       >
         Download PDF
       </x-button>
