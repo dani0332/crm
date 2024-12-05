@@ -135,6 +135,7 @@ class ActivitiesService extends BaseService
         $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->source = LeadSourceEnum::IMCRM;
         $activity->user_id = auth()->user()->id;
+        $activity->reminders_sent = 0;
         $activity->save();
 
         return $activity;
