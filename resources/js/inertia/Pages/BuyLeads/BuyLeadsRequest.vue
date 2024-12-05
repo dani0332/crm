@@ -201,7 +201,7 @@ const maxLeadsOptions = computed(() => {
         </li>
         <li>
           There is no guarantee that you will receive the requested leads, as
-          the system will assign the leads accordingly once the Buy lead request
+          the system will assign the leads accordingly once the Buy Lead request
           is submitted by the advisor.
         </li>
       </ul>
