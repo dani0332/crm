@@ -96,7 +96,7 @@ const fetchMaximumLeads = () => {
       maximumLeads.value = maxCapacity;
       perLeadCost.value = cost;
       table.value.loading = false;
-      if (isMaxCapReached) {
+      if (isMaxCapReached || maxCapacity == 0) {
         maxLeadsModal.value = true;
       }
     })
@@ -131,7 +131,7 @@ const maxLeadsOptions = computed(() => {
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid sm:grid-cols-3 gap-3">
+    <div class="grid sm:grid-cols-2 gap-3">
       <x-field label="Line Of Business" required>
         <x-select
           placeholder="Select Line Of Business"
@@ -161,7 +161,7 @@ const maxLeadsOptions = computed(() => {
           </x-field>
           <template #tooltip>
             <div>
-              You may request up to {{ maximumLeads }} lead(s) per day for the
+              You may request up to {{ maximumLeads }} leads per day for the
               selected Line Of Business.
             </div>
           </template>
@@ -174,7 +174,7 @@ const maxLeadsOptions = computed(() => {
         </p>
       </div>
     </div>
-    <div class="grid sm:grid-cols-3 gap-3">
+    <div class="grid sm:grid-cols-2 gap-3">
       <div class="grid sm:grid-cols-2 items-center">
         <p>The total cost for the requested leads is:</p>
         <!-- <x-field label="The total cost of the leads is:"> -->
@@ -193,7 +193,7 @@ const maxLeadsOptions = computed(() => {
       <p class="text-red-500 font-bold">Note:</p>
       <ul class="list-disc px-5">
         <li>
-          Please check on the submit button to initiate your buy leads request.
+          Please click on the Submit button to initiate your Buy Leads request.
         </li>
         <li>
           The total cost for the requested leads will be displayed once the "Buy
