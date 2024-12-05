@@ -23,7 +23,6 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
-use App\Models\QuoteTag;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -2300,10 +2299,11 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function pauseAndResumeFollowUpCounters($data) {
-        
+    public function pauseAndResumeFollowUpCounters($data)
+    {
+
         $quote = CarQuote::where('uuid', $data['quote_uuid'])->first();
-        
+
         if (! $quote || ! $quote->carQuoteRequestDetail) {
             return response()->json(['success' => false, 'message' => 'Quote or related details not found'], 200);
         }

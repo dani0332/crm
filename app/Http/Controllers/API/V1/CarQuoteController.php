@@ -99,6 +99,7 @@ class CarQuoteController extends Controller
             'quote_uuid' => 'required|string',
             'action' => 'required|string|in:pause,resume',
         ]);
+
         return app(CarQuoteService::class)->pauseAndResumeFollowUpCounters($validatedData);
     }
 }
