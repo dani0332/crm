@@ -30,6 +30,8 @@ const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
 const minimizeSidebar = ref(false);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const bannerInfo = computed(() => {
   let { quote_route, total_count } = page.props.totalQuotesCount;
 
@@ -57,12 +59,13 @@ const urls = computed(() => {
   return `/reports/payment-summary`;
 });
 
-const activitiesUrl = computed(() => {
+const activitiesUrl = activityType => {
   const today = new Date();
   const filters = {
     status: '0',
     due_date_time_start: '',
     due_date_time_end: '',
+    activity_type: '',
     page: 1,
     isCustom: false,
   };
@@ -78,13 +81,19 @@ const activitiesUrl = computed(() => {
     'DD-MM-YYYY',
   ).value;
   filters.due_date_time_end = useDateFormat(lastDayOfWeek, 'DD-MM-YYYY').value;
-  return `/activities?due_date_time_start=${filters.due_date_time_start}&due_date_time_end=${filters.due_date_time_end}&page=1&isCustom=false&status=0&redirect=1`;
-});
+  filters.activity_type = activityType;
+  return `/activities?due_date_time_start=${filters.due_date_time_start}&due_date_time_end=${filters.due_date_time_end}&activity_type=${filters.activity_type}&page=1&isCustom=false&status=0&redirect=1`;
+};
 
-const getHTML = (buttonText, data) => {
-  return `<a target="_self" class="text-primary-500 hover:underline flex items-center space-x-1" href="${activitiesUrl.value}"> ${buttonText}
+const getHTML = (buttonText, data, activityType) => {
+  return `<a target="_self" class="text-primary-500 hover:underline flex items-center space-x-1" href="${activitiesUrl(activityType)}"> ${buttonText}
     ${data}</a>`;
 };
+
+const isReceiveNotificationsEnabled = computed(() => {
+  let permission = permissionsEnum.RECEIVE_NOTIFICATIONS;
+  return can(permission);
+});
 </script>
 
 <template>
@@ -218,6 +227,7 @@ const getHTML = (buttonText, data) => {
                             getHTML(
                               'Pending Callbacks: ',
                               pendingActivityCount.pendingCallback,
+                              page.props.activityTypeEnum.CALL_BACK,
                             )
                           "
                         />
@@ -242,6 +252,7 @@ const getHTML = (buttonText, data) => {
                             getHTML(
                               'Pending WhatsApp requests: ',
                               pendingActivityCount.pendingWhatsapp,
+                              page.props.activityTypeEnum.WHATS_APP,
                             )
                           "
                         />
@@ -262,10 +273,11 @@ const getHTML = (buttonText, data) => {
 
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
-              <!-- <UserStatus /> -->
-              <CallBackNotification />
-              <PaymentNotification />
-              <PaymentExpireNotifications />
+              <CallBackNotification v-if="isReceiveNotificationsEnabled" />
+              <PaymentNotification v-if="isReceiveNotificationsEnabled" />
+              <PaymentExpireNotifications
+                v-if="isReceiveNotificationsEnabled"
+              />
 
               <x-tooltip>
                 <x-button class="w-full" size="sm">

@@ -18,15 +18,6 @@ class BaseModel extends Model implements AuditableContract
     public $isGetList = false;
     public $APIController = null;
 
-    public function processGetBaseDSL($filters = [], $table = true)
-    {
-        if ($table) {
-            return self::table($filters);
-        } else {
-            return self::relation($filters);
-        }
-    }
-
     public static function boot()
     {
         parent::boot();
