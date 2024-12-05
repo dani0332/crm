@@ -113,7 +113,7 @@ class AllocationService
         info('Previous assignment type is : '.$previousAssignmentType);
 
         if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD])) {
-            BuyLeadRequestLog::reAssign($quoteTypeId, $lead, $newAdvisorId);
+            BuyLeadRequestLog::reAssign($quoteTypeId, $lead, $newAdvisorId, $previousAdvisorId);
         }
 
         //Constants for system assigned types

@@ -32,8 +32,8 @@ use Illuminate\Support\Facades\DB;
 class AdvisorDistributionReportService extends BaseService
 {
     use GetUserTreeTrait;
-    use TeamHierarchyTrait;
     use Reportable;
+    use TeamHierarchyTrait;
 
     public function getReportData($request)
     {
@@ -69,14 +69,14 @@ class AdvisorDistributionReportService extends BaseService
 
         return $assignedData->map(function ($item) use ($blReAssignedData) {
             $reAssignedData = $blReAssignedData->where('advisor_id', $item['advisor_id'])->first();
-            if($reAssignedData) {
+            if ($reAssignedData) {
                 $item['buy_lead_cost'] += $reAssignedData['buy_lead_cost'];
                 $item['total_lead_cost'] = $item['tier_lead_cost'] - $item['buy_lead_cost'];
             }
 
             return $item;
         })->merge(
-            $blReAssignedData->reject(fn($item) => $assignedData->pluck('advisor_id')->contains($item['advisor_id']))
+            $blReAssignedData->reject(fn ($item) => $assignedData->pluck('advisor_id')->contains($item['advisor_id']))
         );
     }
 
@@ -141,13 +141,13 @@ class AdvisorDistributionReportService extends BaseService
             'tiers.name as tier_name',
             'buy_lead_requests.cost_per_lead as buy_lead_cost_per_lead',
         )
-        ->reAssigned()
-        ->whereIn('buy_lead_request_logs.uuid', $uuids)
-        ->join('buy_lead_requests', 'buy_lead_requests.id', 'buy_lead_request_logs.buy_lead_request_id')
-        ->join('users', 'users.id', 'buy_lead_requests.user_id')
-        ->join('car_quote_request', 'car_quote_request.uuid', 'buy_lead_request_logs.uuid')
-        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->get();
+            ->reAssigned()
+            ->whereIn('buy_lead_request_logs.uuid', $uuids)
+            ->join('buy_lead_requests', 'buy_lead_requests.id', 'buy_lead_request_logs.buy_lead_request_id')
+            ->join('users', 'users.id', 'buy_lead_requests.user_id')
+            ->join('car_quote_request', 'car_quote_request.uuid', 'buy_lead_request_logs.uuid')
+            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->get();
     }
 
     private function getCarQuoteQuery()
