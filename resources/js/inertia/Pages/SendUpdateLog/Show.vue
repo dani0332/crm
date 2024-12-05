@@ -256,11 +256,11 @@ onBeforeMount(() => {
       <Collapsible expanded>
         <template #header>
           <div class="flex gap-2 w-100 flex-grow justify-between">
-            <h3 class="text-lg font-semibold text-primary-800 capitalize">
+            <h3 class="text-xs sm:text-lg font-semibold text-primary-800 capitalize">
               {{ sendUpdateLog.category.text }}
             </h3>
             <Link :href="quoteLink">
-              <x-button color="primary" size="sm" class="mr-5"
+              <x-button color="primary" size="sm" class="mr-5 text-xs"
                 >Go back to lead</x-button
               >
             </Link>
@@ -271,7 +271,7 @@ onBeforeMount(() => {
             <x-divider class="my-4" />
             <div class="text-sm">
               <dl class="grid md:grid-cols-2">
-                <div class="grid sm:grid-cols-2">
+                <div class="grid sm:grid-cols-2 mb-2">
                   <dt>
                     <x-tooltip placement="left">
                       <label
@@ -288,7 +288,7 @@ onBeforeMount(() => {
                   </dt>
                   <dd>{{ sendUpdateLog.code }}</dd>
                 </div>
-                <div class="grid md:grid-cols-2 gap-y-4 ml-10">
+                <div class="grid md:grid-cols-2">
                   <dt class="font-bold">NOTES</dt>
                   <dd>
                     <x-textarea
@@ -304,7 +304,7 @@ onBeforeMount(() => {
                     </p>
                   </dd>
                 </div>
-                <div class="grid sm:grid-cols-2 h-10">
+                <div class="grid sm:grid-cols-2 mb-2 h-10">
                   <template
                     v-if="
                       props.sendUpdateLog.category.code !==
@@ -331,7 +331,7 @@ onBeforeMount(() => {
                     <dd>{{ transactionType || '' }}</dd>
                   </template>
                 </div>
-                <div class="grid md:grid-cols-2 gap-y-4 ml-10">
+                <div class="grid md:grid-cols-2 mb-2">
                   <dt>
                     <x-tooltip placement="left">
                       <label
@@ -348,7 +348,7 @@ onBeforeMount(() => {
                   </dt>
                   <dd>{{ sendUpdateLog.display_status }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
+                <div class="grid sm:grid-cols-2 mb-2">
                   <template
                     v-if="
                       sendUpdateLog.category.code !==
@@ -403,7 +403,7 @@ onBeforeMount(() => {
                   </template>
                 </div>
                 <div
-                  class="grid sm:grid-cols-2 ml-10"
+                  class="grid sm:grid-cols-2 mb-2 ml-10"
                   v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car"
                 >
                   <template
