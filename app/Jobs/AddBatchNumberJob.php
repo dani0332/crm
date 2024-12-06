@@ -33,7 +33,7 @@ class AddBatchNumberJob implements ShouldQueue
     public function handle()
     {
         try {
-            info('today date for batch job is : '.json_encode(now()->toDateString()));
+            info('Add Batch Command Started, Inside Job');
             $lastBatch = QuoteBatches::orderBy('id', 'desc')->first();
             info('last batch : '.json_encode($lastBatch));
             if ($lastBatch == null) {
