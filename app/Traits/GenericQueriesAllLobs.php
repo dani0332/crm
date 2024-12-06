@@ -803,7 +803,6 @@ trait GenericQueriesAllLobs
                     $collectionAmount = round($paymentSplit->collection_amount, 2);
                     $paymentAmount = round($paymentSplit->payment_amount, 2);
 
-
                     if ($collectionAmount >= $paymentAmount) {
                         $newPaymentStatusId = PaymentStatusEnum::PAID;
                     } else {
