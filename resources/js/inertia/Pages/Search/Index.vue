@@ -89,7 +89,7 @@ let tableData = props.leadsOrEndorsementData.data;
 
 function getTableHeader() {
   return [
-    { text: 'Ref-ID', value: 'code', sortingOrder: 1, fixed: true },
+    { text: 'Ref-ID', value: 'code', sortingOrder: 1 },
     { text: 'First Name', value: 'first_name', sortingOrder: 2 },
     { text: 'Last Name', value: 'last_name', sortingOrder: 3 },
     { text: 'Company Name', value: 'company_name', sortingOrder: 4 },
@@ -132,10 +132,10 @@ function updateTableDetails() {
       item => !excludedSortingOrders.includes(item.sortingOrder),
     );
     tableHeader.value.push(
-      { text: 'SU Ref-ID', value: 'code', sortingOrder: 1, fixed: true },
-      { text: 'Type', value: 'category_id', sortingOrder: 10 },
-      { text: 'Sub type', value: 'option_id', sortingOrder: 11 },
-      { text: 'Notes', value: 'notes', width: 400, sortingOrder: 12 },
+      { text: 'SU Ref-ID', value: 'code', width:100, sortingOrder: 1 },
+      { text: 'Type', value: 'category_id', width:200, sortingOrder: 10 },
+      { text: 'Sub type', value: 'option_id', width:200, sortingOrder: 11 },
+      { text: 'Notes', value: 'notes', width: 300, sortingOrder: 12 },
       { text: 'Status', value: 'status', sortingOrder: 13 },
     );
   }
@@ -372,7 +372,7 @@ onMounted(() => {
         <template v-if="can(permissionsEnum.DATA_EXTRACTION_SEARCH_ALL_LEADS)">
           <template v-if="!tableData?.length > 0">
             <x-tooltip placement="bottom">
-              <x-button disabled size="sm" color="emerald">
+              <x-button disabled size="sm" color="emerald" :loading="loader.table">
                 Export to Excel
               </x-button>
               <template #tooltip>
@@ -392,10 +392,10 @@ onMounted(() => {
             </x-button>
           </template>
         </template>
-        <x-button size="sm" color="primary" @click="listChange()">
+        <x-button size="sm" color="primary" @click="listChange()" :loading="loader.table">
           {{ isSendUpdateListView ? 'Lead' : 'Send Update' }} List
         </x-button>
-        <x-button size="sm" color="orange" @click.prevent="filterModal = true">
+        <x-button size="sm" color="orange" @click.prevent="filterModal = true" :loading="loader.table">
           <x-icon
             icon="magnifyingGlass"
             size="sm"
@@ -408,8 +408,10 @@ onMounted(() => {
 
     <x-divider class="my-4" />
 
+<!--    compact table-fixed -->
+
     <DataTable
-      table-class-name="tablefixed"
+      table-class-name="table-fixed"
       :headers="tableHeader"
       :loading="loader.table"
       :items="tableData || []"
@@ -616,11 +618,9 @@ onMounted(() => {
         <div class="flex gap-2 cursor-pointer">
           <p
             class="overflow-hidden h-auto"
-            :class="expandNotes ? 'overflow-auto' : 'truncate w-72'"
+            :class="expandNotes ? 'overflow-auto' : 'truncate w-60'"
           >
-            <span v-if="expandNotes" class="whitespace-normal">{{
-              notes
-            }}</span>
+            <span v-if="expandNotes" class="whitespace-normal">{{ notes }}</span>
             <span v-else class="whitespace-nowrap">{{ notes }}</span>
           </p>
           <x-icon
