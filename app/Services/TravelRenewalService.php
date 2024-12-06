@@ -19,7 +19,7 @@ class TravelRenewalService extends BaseService
 {
     public function getTravelRenewalLeads()
     {
-        info('TravelRenewalService Travel Renewal Leads processing started with Start Date: '.Carbon::now()->subDays(320).' | Time: '.now());
+        info('TravelRenewalService Travel Renewal Leads processing started with Start Date: '.Carbon::now()->subDays(1).' | Time: '.now());
         TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
             QuoteStatusEnum::PolicyBooked,
@@ -31,8 +31,8 @@ class TravelRenewalService extends BaseService
                 PaymentStatusEnum::CREDIT_APPROVED,
             ])
             ->where('direction_code', TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
-            ->whereDate('start_date', Carbon::now()->subDays(20))
-            ->take(10)
+            ->whereDate('start_date', Carbon::now()->subDays(1))
+            ->take(20)
             ->chunkById(100, function ($quotes) {
                 $quoteCount = $quotes->count();
                 info("total quotes in chunk: {$quoteCount} | Time: ".now());
@@ -195,7 +195,7 @@ class TravelRenewalService extends BaseService
         // Calculate the number of weeks between the current date and the expiry date
         $weeksUntilExpiry = $currentDate->diffInWeeks($expiryDate);
 
-        return strtoupper('W-'.$weeksUntilExpiry);
+        return strtoupper('W-'.(int)$weeksUntilExpiry);
     }
 
     public function getRenewalBatch($batchName, $newPolicyExpiryDate)
