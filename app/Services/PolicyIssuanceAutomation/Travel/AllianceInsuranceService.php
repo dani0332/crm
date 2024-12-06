@@ -478,12 +478,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function isPolicyIssuanceAutomationEnabled()
     {
-        return isAllianceTravelAutomationEnabled();
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE);
     }
 
     public function isPolicyIssuanceAutomationRetryEnabledForTimeout()
     {
-        return isAllianceTravelPolicyIssuanceRetryEnabledForTimeout();
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE);
     }
 
     public function getStepsLockingStatus($quote): array
