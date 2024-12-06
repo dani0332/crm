@@ -195,7 +195,7 @@ class TravelRenewalService extends BaseService
         // Calculate the number of weeks between the current date and the expiry date
         $weeksUntilExpiry = $currentDate->diffInWeeks($expiryDate);
 
-        return strtoupper('W-'.(int)$weeksUntilExpiry);
+        return strtoupper('W-'.(int) $weeksUntilExpiry);
     }
 
     public function getRenewalBatch($batchName, $newPolicyExpiryDate)
