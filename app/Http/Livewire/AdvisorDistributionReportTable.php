@@ -5,7 +5,6 @@ namespace App\Http\Livewire;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;

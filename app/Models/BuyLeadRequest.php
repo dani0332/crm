@@ -96,6 +96,7 @@ class BuyLeadRequest extends Model
         if ($this->allocated_count >= $this->requested_count) {
             info("BuyLeadRequest: All leads have been allocated for this request: {$this->id} for uuid: {$lead->uuid}");
             $this->completeProcessing();
+
             return;
         }
 
