@@ -3507,6 +3507,7 @@ const allowStatusUpdate = computed(() => {
         :source="page.props.record.source"
         :followUpId="followUpId"
         :kyoEndPoint="kyoEndPoint"
+        :quoteUuid="page.props.record.uuid"
       />
 
       <x-modal
