@@ -267,6 +267,10 @@ class CarAllocationService extends AllocationService
 
     public function getEligibleUserForAllocation(Tier $tier, $advisorId, $isReassignmentJob, $leadSource, $teamId, CarQuote $lead)
     {
+        // reset these here because of dependency injection so new values each time
+        $this->isBuyLeadAdvisor = false;
+        $this->buyLeadRequest = null;
+
         $tierUserIds = $this->getTierUserIds($tier->id, $advisorId);
         info('Users against tierID '.$tier->id.' are: '.json_encode($tierUserIds->toArray()));
 
@@ -594,6 +598,10 @@ class CarAllocationService extends AllocationService
         };
 
         info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
+
+        // Reset Buy Lead Advisor flag and Buy Lead Request object.
+        $this->isBuyLeadAdvisor = false;
+        $this->buyLeadRequest = null;
     }
 
     private function assignLeadToUserAndGetQuote(CarQuote $lead, $userId, $tier, $assignmentType): mixed

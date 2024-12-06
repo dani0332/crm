@@ -130,6 +130,10 @@ class HealthAllocationService extends AllocationService
 
     public function fetchAvailableAdvisor($leadTeam, $isReassignmentJob, HealthQuote $lead)
     {
+        // Reset Buy Lead Advisor flag and Buy Lead Request object.
+        $this->isBuyLeadAdvisor = false;
+        $this->buyLeadRequest = null;
+
         $advisor = null;
 
         if ($lead->isBuyLeadApplicable() && ($lead->isValueLead() || $lead->isVolumeLead())) {
@@ -259,6 +263,10 @@ class HealthAllocationService extends AllocationService
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousUserId, $isReassignment)->delay(now()->addSeconds(15));
                 }
             })->dispatch();
+
+        // Reset Buy Lead Advisor flag and Buy Lead Request object.
+        $this->isBuyLeadAdvisor = false;
+        $this->buyLeadRequest = null;
     }
 
     public function updateQuoteDetail($leadId)
