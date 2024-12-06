@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -32,7 +33,8 @@ class UpdateStaleLeads extends Command
      * @var string
      */
     protected $description = 'Update status Stale on leads which quote status are not updated from last 30 days. It should not apply on leads which having status
-        Transaction Approved, Policy Documents Pending, Policy Issued, Policy sent to Customer, Policy Booked, Lost, Fake, Duplicate, Cancellation Pending, Policy Cancelled.';
+        Transaction Approved, Policy Documents Pending, Policy Issued, Policy sent to Customer, Policy Booked, Lost, Fake, Duplicate, Cancellation Pending, Policy Cancelled
+        and source is inlsy.';
 
     /**
      * Execute the console command.
@@ -88,6 +90,7 @@ class UpdateStaleLeads extends Command
 
             info('------------------- Update Stale Leads Command - Updating - '.now().' : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
+                ->whereNot('source', LeadSourceEnum::INSLY)
                 ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))->endOfDay())
                 ->where('quote_status_date', '>=', Carbon::parse('2023-05-23')->startOfDay())
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             QuoteStatusSeeder::class,
             LookupSeeder::class,
             SUAdditionalCRNSubTypesSeeder::class,
+            CallBackNotificationDataMigrationSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
         ]);

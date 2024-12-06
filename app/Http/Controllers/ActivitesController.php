@@ -165,7 +165,7 @@ class ActivitesController extends Controller
      */
     public function destroy(Request $request, $id)
     {
-        ActivityNotificationLogs::where('activity_id', $id)->delete();
+        // ActivityNotificationLogs::where('activity_id', $id)->delete();
         Activities::where('id', $id)->delete();
         if (isset($request->isLeadView) && $request->isLeadView == 1) {
             return redirect('/quotes/'.$request->quoteType.'/'.$request->quote_uuid)->with('success', 'Activity deleted successfully');
