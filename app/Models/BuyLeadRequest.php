@@ -91,6 +91,14 @@ class BuyLeadRequest extends Model
 
     public function buyLead($lead, QuoteTypes $quoteType)
     {
+        $this->refresh();
+
+        if ($this->allocated_count >= $this->requested_count) {
+            info("BuyLeadRequest: All leads have been allocated for this request: {$this->id} for uuid: {$lead->uuid}");
+            $this->completeProcessing();
+            return;
+        }
+
         $this->increment('allocated_count');
         $this->logs()->create([
             'quote_type_id' => $quoteType->id(),
