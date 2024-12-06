@@ -520,10 +520,16 @@ const onAddDocumentSubmit = event => {
               "
             >
               <span v-if="item.short_code == embeddedProductEnum.TRAVEL">
-                {{ getFirstPriceWithTransaction(item.prices)?.transactions[0]?.travel_annual_payments?.captured_at }}
+                {{
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.travel_annual_payments?.captured_at
+                }}
               </span>
               <span v-else>
-                {{ getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payments[0]?.captured_at }}
+                {{
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payments[0]?.captured_at
+                }}
               </span>
             </span>
             <span v-else> - </span>
