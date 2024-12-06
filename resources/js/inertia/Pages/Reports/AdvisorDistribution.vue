@@ -748,6 +748,10 @@ const travelCoverageOptions = computed(() => {
         />
 
         <ComboBox
+          v-if="
+            filters.lob === quoteTypeCodeEnum.Car ||
+            filters.lob === quoteTypeCodeEnum.Health
+          "
           v-model="filters.assignmentType"
           label="Assignment Type"
           placeholder="Select any option"

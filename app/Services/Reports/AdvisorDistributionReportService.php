@@ -91,28 +91,28 @@ class AdvisorDistributionReportService extends BaseService
             ->groupBy('users.email')
             ->orderBy('users.name');
 
-        // if (
-        //     ! auth()->user()->hasAnyRole([
-        //         RolesEnum::LeadPool,
-        //         RolesEnum::SeniorManagement,
-        //         RolesEnum::Admin,
-        //         RolesEnum::Engineering,
-        //     ])
-        // ) {
-        //     if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-        //         $query = $query->where('users.id', auth()->user()->id);
-        //     } else {
-        //         $userIds = $this->walkTree(auth()->user()->id);
-        //         $userIds = UserManager::where('manager_id', auth()->user()->id)
-        //             ->get()
-        //             ->filter(function ($user) use ($userIds) {
-        //                 return in_array($user->user_id, $userIds);
-        //             })
-        //             ->pluck('user_id')
-        //             ->toArray();
-        //         $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
-        //     }
-        // }
+        if (
+            ! auth()->user()->hasAnyRole([
+                RolesEnum::LeadPool,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
+            if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+                $query = $query->where('users.id', auth()->user()->id);
+            } else {
+                $userIds = $this->walkTree(auth()->user()->id);
+                $userIds = UserManager::where('manager_id', auth()->user()->id)
+                    ->get()
+                    ->filter(function ($user) use ($userIds) {
+                        return in_array($user->user_id, $userIds);
+                    })
+                    ->pluck('user_id')
+                    ->toArray();
+                $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+            }
+        }
 
         return $query;
     }
