@@ -22,7 +22,6 @@ const advisorOptions = ref([]);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const tableHeader = ref([]);
 const canShowFooterColumn = ref([]);
-const canShowLeadCostColumn = ref([]);
 const toast = useToast();
 
 const params = useUrlSearchParams('history');
@@ -188,7 +187,6 @@ const setTableHeader = () => {
     },
   ];
   canShowFooterColumn.value = false;
-  canShowLeadCostColumn.value = false;
 
   if ([quoteTypeCodeEnum.Car].includes(filters.lob)) {
     headers.push(
@@ -245,24 +243,12 @@ const setTableHeader = () => {
         value: 'tier_tr_lead_count',
       },
       {
-        text: 'Tier Lead Cost',
-        value: 'tier_lead_cost',
-      },
-      {
-        text: 'BL Cost',
-        value: 'buy_lead_cost',
+        text: 'TOTAL LEAD COST',
+        value: 'total_lead_cost',
       },
     );
 
     canShowFooterColumn.value = true;
-  }
-  if ([quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health].includes(filters.lob)) {
-    headers.push({
-      text: 'Total Lead Cost',
-      value: 'total_lead_cost',
-    });
-
-    canShowLeadCostColumn.value = true;
   }
 
   tableHeader.value = headers;
@@ -781,7 +767,7 @@ const travelCoverageOptions = computed(() => {
       table-class-name="compact text-wrap"
       :loading="loaders.table"
       :headers="tableHeader"
-      :items="reportData || []"
+      :items="reportData.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -790,61 +776,67 @@ const travelCoverageOptions = computed(() => {
         <span class="font-bold"> {{ item.advisor_name }} </span>
       </template>
       <template #body-append>
-        <tr v-if="reportData?.length > 0" class="total-row">
+        <tr v-if="reportData?.data?.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'total_leads') }}
+            {{ calculateTotalSum(reportData.data, 'total_leads') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_0_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_0_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_1_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_1_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_2_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_2_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_3_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_3_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_4_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_4_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_5_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_5_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_l_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_l_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_h_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_h_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_r_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_r_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_6_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_6_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_6_lead_count_e') }}
+            {{ calculateTotalSum(reportData.data, 'tier_6_lead_count_e') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_tr_lead_count_e') }}
+            {{ calculateTotalSum(reportData.data, 'tier_tr_lead_count_e') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_tr_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'tier_tr_lead_count') }}
           </td>
           <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'tier_lead_cost') }}
-          </td>
-          <td class="direction-center" v-if="canShowFooterColumn">
-            {{ calculateTotalSum(reportData, 'buy_lead_cost') }}
-          </td>
-          <td class="direction-center" v-if="canShowLeadCostColumn">
-            {{ calculateTotalSum(reportData, 'total_lead_cost') }}
+            {{ calculateTotalSum(reportData.data, 'total_lead_cost') }}
           </td>
         </tr>
       </template>
     </DataTable>
+
+    <Pagination
+      :links="{
+        next: reportData.next_page_url,
+        prev: reportData.prev_page_url,
+        current: reportData.current_page,
+        from: reportData.from,
+        to: reportData.to,
+        total: reportData.total,
+        last: reportData.last_page,
+      }"
+    />
   </div>
 </template>

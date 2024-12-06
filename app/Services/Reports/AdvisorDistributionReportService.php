@@ -10,10 +10,8 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
-use App\Models\BuyLeadRequestLog;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PersonalQuote;
@@ -32,7 +30,6 @@ use Illuminate\Support\Facades\DB;
 class AdvisorDistributionReportService extends BaseService
 {
     use GetUserTreeTrait;
-    use Reportable;
     use TeamHierarchyTrait;
 
     public function getReportData($request)
@@ -49,12 +46,6 @@ class AdvisorDistributionReportService extends BaseService
         } else {
             $query = $this->getPersonsalQuoteQuery($lob);
             $query = $this->applyFilters($query, $request->all());
-            $query->when(
-                $request->assignmentType && strtolower($request->assignmentType) !== 'all',
-                fn ($q) => $q->where('assignment_type', $request->assignmentType)
-            );
-
-            return $query->get();
         }
 
         $query->when(
@@ -62,142 +53,66 @@ class AdvisorDistributionReportService extends BaseService
             fn ($q) => $q->where('assignment_type', $request->assignmentType)
         );
 
-        $uuids = $query->pluck('uuid')->toArray();
-
-        $assignedData = $this->mapDistributionData($query->get());
-        $blReAssignedData = $this->mapDistributionData($this->getReAssignedBuyLeadData($uuids));
-
-        return $assignedData->map(function ($item) use ($blReAssignedData) {
-            $reAssignedData = $blReAssignedData->where('advisor_id', $item['advisor_id'])->first();
-            if ($reAssignedData) {
-                $item['buy_lead_cost'] += $reAssignedData['buy_lead_cost'];
-                $item['total_lead_cost'] = $item['tier_lead_cost'] - $item['buy_lead_cost'];
-            }
-
-            return $item;
-        })->merge(
-            $blReAssignedData->reject(fn ($item) => $assignedData->pluck('advisor_id')->contains($item['advisor_id']))
-        );
-    }
-
-    private function mapDistributionData($data)
-    {
-        return $data
-            ->groupBy('advisor_id')
-            ->map(function ($groupedLeads) {
-                $advisorName = $groupedLeads->first()['advisor_name'];
-                $advisorId = $groupedLeads->first()['advisor_id'];
-
-                $totalLeads = $groupedLeads->count();
-
-                $tierKeyMap = [
-                    'Tier 0' => 'tier_0_lead_count',
-                    'Tier 1' => 'tier_1_lead_count',
-                    'Tier 2' => 'tier_2_lead_count',
-                    'Tier 3' => 'tier_3_lead_count',
-                    'Tier 4' => 'tier_4_lead_count',
-                    'Tier 5' => 'tier_5_lead_count',
-                    'Tier 6 (non ecom)' => 'tier_6_lead_count',
-                    'Tier 6 (Ecom)' => 'tier_6_lead_count_e',
-                    'Tier L' => 'tier_l_lead_count',
-                    'Tier H' => 'tier_h_lead_count',
-                    'Tier R' => 'tier_r_lead_count',
-                    'Tier TR (Ecom)' => 'tier_tr_lead_count_e',
-                    'Tier TR (Non ecom)' => 'tier_tr_lead_count',
-                ];
-
-                $tierLeadCounts = $groupedLeads->groupBy('tier_name')->mapWithKeys(function ($leads, $tierName) use ($tierKeyMap) {
-                    $key = $tierKeyMap[$tierName] ?? null;
-
-                    return $key ? [$key => $leads->count()] : [];
-                });
-
-                $tierKeys = array_values($tierKeyMap);
-                $tierLeadCounts = collect($tierKeys)->mapWithKeys(function ($key) use ($tierLeadCounts) {
-                    return [$key => $tierLeadCounts->get($key, 0)];
-                });
-
-                $tierLeadCost = $groupedLeads->sum('tier_cost_per_lead');
-                $buyLeadCost = $groupedLeads->sum('buy_lead_cost_per_lead');
-
-                return array_merge(
-                    ['advisor_id' => $advisorId],
-                    ['advisor_name' => $advisorName],
-                    ['total_leads' => $totalLeads],
-                    $tierLeadCounts->toArray(),
-                    ['tier_lead_cost' => $tierLeadCost],
-                    ['buy_lead_cost' => $buyLeadCost],
-                    ['total_lead_cost' => $tierLeadCost - $buyLeadCost],
-                );
-            })
-            ->values();
-    }
-
-    private function getReAssignedBuyLeadData(array $uuids)
-    {
-        return BuyLeadRequestLog::select(
-            'users.name as advisor_name',
-            'users.id as advisor_id',
-            'tiers.name as tier_name',
-            'buy_lead_requests.cost_per_lead as buy_lead_cost_per_lead',
-        )
-            ->reAssigned()
-            ->whereIn('buy_lead_request_logs.uuid', $uuids)
-            ->join('buy_lead_requests', 'buy_lead_requests.id', 'buy_lead_request_logs.buy_lead_request_id')
-            ->join('users', 'users.id', 'buy_lead_requests.user_id')
-            ->join('car_quote_request', 'car_quote_request.uuid', 'buy_lead_request_logs.uuid')
-            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->get();
+        return $query->paginate(15)->withQueryString();
     }
 
     private function getCarQuoteQuery()
     {
         $query = CarQuote::query()
             ->select(
-                'car_quote_request.uuid as uuid',
+                DB::raw('count(DISTINCT car_quote_request.id) as total_leads'),
                 'users.name as advisor_name',
-                'users.id as advisor_id',
-                'tiers.name as tier_name',
-                'tiers.cost_per_lead as tier_cost_per_lead',
-                'buy_lead_requests.cost_per_lead as buy_lead_cost_per_lead',
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 0' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_0_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 1' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_1_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 2' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_2_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 3' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_3_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 4' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_4_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 5' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_5_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 6 (non ecom)' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_6_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 6 (Ecom)' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_6_lead_count_e"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier L' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_l_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier H' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_h_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_r_lead_count"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier TR (Ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_tr_lead_count_e"),
+                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier TR (Non ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_tr_lead_count"),
+                DB::raw('CAST(SUM(tiers.cost_per_lead) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as total_lead_cost'),
             )
             ->filterBySegment()
-            ->leftJoin('buy_lead_request_logs', function ($join) {
-                $join->on('buy_lead_request_logs.uuid', '=', 'car_quote_request.uuid')
-                    ->join('buy_lead_requests', 'buy_lead_requests.id', 'buy_lead_request_logs.buy_lead_request_id')
-                    ->where('buy_lead_request_logs.quote_type_id', QuoteTypes::CAR->id())
-                    ->whereNull('buy_lead_request_logs.re_assigned_at');
-            })
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
+            ->groupBy('users.email')
             ->orderBy('users.name');
 
-        if (
-            ! auth()->user()->hasAnyRole([
-                RolesEnum::LeadPool,
-                RolesEnum::SeniorManagement,
-                RolesEnum::Admin,
-                RolesEnum::Engineering,
-            ])
-        ) {
-            if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-                $query = $query->where('users.id', auth()->user()->id);
-            } else {
-                $userIds = $this->walkTree(auth()->user()->id);
-                $userIds = UserManager::where('manager_id', auth()->user()->id)
-                    ->get()
-                    ->filter(function ($user) use ($userIds) {
-                        return in_array($user->user_id, $userIds);
-                    })
-                    ->pluck('user_id')
-                    ->toArray();
-                $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
-            }
-        }
+        // if (
+        //     ! auth()->user()->hasAnyRole([
+        //         RolesEnum::LeadPool,
+        //         RolesEnum::SeniorManagement,
+        //         RolesEnum::Admin,
+        //         RolesEnum::Engineering,
+        //     ])
+        // ) {
+        //     if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+        //         $query = $query->where('users.id', auth()->user()->id);
+        //     } else {
+        //         $userIds = $this->walkTree(auth()->user()->id);
+        //         $userIds = UserManager::where('manager_id', auth()->user()->id)
+        //             ->get()
+        //             ->filter(function ($user) use ($userIds) {
+        //                 return in_array($user->user_id, $userIds);
+        //             })
+        //             ->pluck('user_id')
+        //             ->toArray();
+        //         $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+        //     }
+        // }
 
         return $query;
     }
@@ -210,17 +125,10 @@ class AdvisorDistributionReportService extends BaseService
         $selectColumns = [
             DB::raw('count(DISTINCT personal_quotes.id) as total_leads'),
             'users.name as advisor_name',
-            DB::raw('sum(buy_lead_requests.cost_per_lead) * count(DISTINCT personal_quotes.id) as total_lead_cost'),
         ];
         $query = PersonalQuote::query()
             ->select($selectColumns)
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
-            ->leftJoin('buy_lead_request_logs', function ($join) {
-                $join->on('buy_lead_request_logs.uuid', '=', 'personal_quotes.uuid')
-                    ->join('buy_lead_requests', 'buy_lead_requests.id', 'buy_lead_request_logs.buy_lead_request_id')
-                    ->whereColumn('buy_lead_request_logs.quote_type_id', 'personal_quotes.quote_type_id')
-                    ->whereNull('buy_lead_request_logs.re_assigned_at');
-            })
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
@@ -228,6 +136,33 @@ class AdvisorDistributionReportService extends BaseService
             ->where('users.is_active', true)
             ->groupBy('users.email')
             ->orderBy('users.name');
+
+        if (in_array($lob, [quoteTypeCode::Car])) {
+            $query = $query->select(
+                array_merge(
+                    $selectColumns,
+                    [
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 0' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_0_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 1' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_1_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 2' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_2_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 3' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_3_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 4' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_4_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 5' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_5_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 6 (non ecom)' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_6_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 6 (Ecom)' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_6_lead_count_e"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier L' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_l_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier H' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_h_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_r_lead_count"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier TR (Ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_tr_lead_count_e"),
+                        DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier TR (Non ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_tr_lead_count"),
+                        DB::raw('CAST(SUM(tiers.cost_per_lead) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as total_lead_cost'),
+                    ]
+                )
+            )
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', 'user_team.team_id')
+                ->join('tiers', 'tiers.id', 'personal_quotes.tier_id');
+        }
 
         if (
             ! auth()->user()->hasAnyRole([
@@ -473,8 +408,16 @@ class AdvisorDistributionReportService extends BaseService
     private function applyFiltersForCar($query, $filters)
     {
         $filters = (object) $filters;
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
-        [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters);
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = ! isset($filters->page);
+
+        $startDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+
+        $endDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
 
@@ -510,7 +453,7 @@ class AdvisorDistributionReportService extends BaseService
 
         if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
             $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
-            $query->where('car_quote_request.is_commercial', $filters->isCommercial);
+            $query->where('car_model.is_commercial', '=', $filters->isCommercial);
         }
 
         if (isset($filters->leadSources) && count($filters->leadSources) > 0) {

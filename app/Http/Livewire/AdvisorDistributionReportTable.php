@@ -137,21 +137,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_r_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier TR (Ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_tr_lead_count_e"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier TR (Non ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_tr_lead_count"),
-                DB::raw('
-                    SUM(
-                        CASE
-                            WHEN buy_lead_requests.id THEN buy_lead_requests.cost_per_lead
-                            ELSE tiers.cost_per_lead
-                        END
-                    ) as total_lead_cost
-                ')
+                DB::raw('CAST(SUM(tiers.cost_per_lead) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as total_lead_cost'),
             )
-            ->leftJoin('buy_lead_request_logs', function ($join) {
-                $join->on('buy_lead_request_logs.uuid', '=', 'car_quote_request.uuid')
-                    ->join('buy_lead_requests', 'buy_lead_requests.id', 'buy_lead_request_logs.buy_lead_request_id')
-                    ->where('buy_lead_request_logs.quote_type_id', QuoteTypes::CAR->id())
-                    ->whereNull('buy_lead_request_logs.re_assigned_at');
-            })
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
