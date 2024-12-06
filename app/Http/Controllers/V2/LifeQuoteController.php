@@ -4,10 +4,14 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\ApplicationStorage;
+use App\Repositories\CurrencyTypeRepository;
+use App\Repositories\LifeInsuranceTenureRepository;
+use App\Repositories\LifeNumberOfYearsRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
@@ -34,6 +38,9 @@ class LifeQuoteController extends Controller
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $typesOfInsurance = LifeInsuranceTenureRepository::withActive()->get();
+        $numberOfYears = LifeNumberOfYearsRepository::withActive()->get();
+        $currency = CurrencyTypeRepository::withActive()->get();
 
         return inertia('LifeQuote/Index', [
             'quotes' => $lifeQuotes,
@@ -41,6 +48,9 @@ class LifeQuoteController extends Controller
             'advisors' => $advisors,
             'renewalBatches' => $renewalBatches,
             'authorizedDays' => intval($authorizedDays->value),
+            'typesOfInsurance' => $typesOfInsurance,
+            'numberOfYears' => $numberOfYears,
+            'currency' => $currency,
         ]);
     }
 
@@ -132,11 +142,23 @@ class LifeQuoteController extends Controller
             ["id" => QuoteStatusEnum::PolicyBooked, "text" => quoteStatusCode::POLICY_BOOKED, "code" => quoteStatusCode::POLICY_BOOKED, "data" => getDataAgainstStatus(QuoteTypes::LIFE->value, QuoteStatusEnum::PolicyBooked, $request)],
         ];
 
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
+        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $typesOfInsurance = LifeInsuranceTenureRepository::withActive()->get();
+        $numberOfYears = LifeNumberOfYearsRepository::withActive()->get();
+        $currency = CurrencyTypeRepository::withActive()->get();
+
         return inertia('LifeQuote/Cards', [
             'quotes' => array_values($quotes),
             'quoteTypeId' => QuoteTypes::LIFE->id(),
             'quoteType' => QuoteTypes::LIFE->value,
-
+            'quoteStatuses' => $quoteStatuses,
+            'advisors' => $advisors,
+            'renewalBatches' => $renewalBatches,
+            'typesOfInsurance' => $typesOfInsurance,
+            'numberOfYears' => $numberOfYears,
+            'currency' => $currency,
         ]);
     }
 }

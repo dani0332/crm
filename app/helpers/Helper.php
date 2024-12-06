@@ -967,6 +967,29 @@ if (! function_exists('getCardViewRequestFilters')) {
                 $partialQuery->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             }
         }
+
+        if (isset($request->tenure_of_insurance_id) && ! empty($request->tenure_of_insurance_id)) {
+            $partialQuery->where('tenure_of_insurance_id', request()->tenure_of_insurance_id);
+        }
+
+        if (isset($request->number_of_years_id) && ! empty($request->number_of_years_id)) {
+            $partialQuery->where('number_of_years_id', request()->number_of_years_id);
+        }
+
+        if ((isset($request->sum_insured_range) && ! empty($request->sum_insured_range)) && (isset($request->sum_insured_currency_id) && ! empty($request->sum_insured_currency_id))) {
+            $partialQuery->where('sum_insured_currency_id', request()->sum_insured_currency_id);
+            switch (request()->sum_insured_range) {
+                case 'lt500k':
+                    $partialQuery->where('sum_insured_value', '<', 500000);
+                    break;
+                case '500k-1m':
+                    $partialQuery->whereBetween('sum_insured_value', [500000, 999999]);
+                    break;
+                case 'gte1m':
+                    $partialQuery->where('sum_insured_value', '>=', 1000000);
+                    break;
+                }
+        }
     }
 }
 

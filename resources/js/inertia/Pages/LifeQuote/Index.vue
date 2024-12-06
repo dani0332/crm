@@ -5,6 +5,9 @@ defineProps({
   renewalBatches: Array,
   advisors: Array,
   authorizedDays: Number,
+  typesOfInsurance: Array,
+  numberOfYears: Array,
+  currency: Array,
 });
 
 const page = usePage();
@@ -12,6 +15,8 @@ const page = usePage();
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -68,6 +73,9 @@ const filters = reactive({
   advisor_assigned_date: null,
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  tenure_of_insurance_id: '',
+  sum_insured_currency_id: '',
+  sum_insured_range: '',
 });
 
 const loader = reactive({
@@ -75,7 +83,7 @@ const loader = reactive({
   export: false,
 });
 
-const tableHeader = reactive([
+const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
@@ -121,6 +129,18 @@ const tableHeader = reactive([
   { text: 'Sum Assured', value: 'sum_insured_value', is_active: true },
 ]);
 
+const filteredTableHeader = computed(() => {
+  let headers = [];
+  if (!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])) {
+    headers = tableHeader.value;
+  } else {
+    headers = tableHeader.value.filter(
+      column => column.value !== 'source' && column.value !== 'assignment_type',
+    );
+  }
+  return headers.filter(x => x.is_active);
+});
+
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
@@ -149,6 +169,11 @@ function filterQuotes(isValid) {
     });
     return;
   }
+  console.log(!filters['sum_insured_range'], !filters['sum_insured_currency_id'])
+  if(!filters['sum_insured_range'] || !filters['sum_insured_currency_id']) {
+    delete filters['sum_insured_range'];
+    delete filters['sum_insured_currency_id'];
+  }
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
@@ -156,6 +181,10 @@ function filterQuotes(isValid) {
   }
 
   serverOptions.value.page = 1;
+
+  const filtersCleaned = cleanObj(filters);
+  filtersCount.value = Object.keys(filtersCleaned).length;
+
   router.visit(route('life-quotes-list'), {
     method: 'get',
     data: {
@@ -173,6 +202,26 @@ function filterQuotes(isValid) {
     },
   });
 }
+
+const handleSelectedFilters = selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+  }
+
+  if (selectedFilters.quote_status) {
+    filters.quote_status = selectedFilters.quote_status;
+  }
+
+  if (selectedFilters.payment_status) {
+    filters.payment_status = selectedFilters.payment_status;
+  }
+
+  filters.is_cold = selectedFilters.cold;
+  filters.is_stale = selectedFilters.stale;
+
+  filterQuotes(true);
+};
 
 function resetFilters() {
   router.visit(route('life-quotes-list'), {
@@ -338,6 +387,7 @@ onMounted(() => {
   }
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  filtersCount.value = Object.keys(filtersCleaned).length;
 });
 
 const resetDateFilters = filterName => {
@@ -407,6 +457,17 @@ watch(
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3 flex">
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="life-list"
+        />
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
         <Link href="/quotes/life/cards">
           <x-button
             size="sm"
@@ -430,7 +491,7 @@ watch(
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="filterQuotes" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip placement="bottom">
@@ -605,6 +666,57 @@ watch(
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <x-select
+          v-model="filters.tenure_of_insurance_id"
+          placeholder="Type of Insurance"
+          label="Type of Insurance"
+          :options="
+              typesOfInsurance.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+        />
+        <x-select
+          v-model="filters.number_of_years_id"
+          placeholder="Tenure of Cover"
+          label="Tenure of Cover"
+          :options="
+              numberOfYears.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+        />
+
+        <div>
+          <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-1">
+            <x-select
+              v-model="filters.sum_insured_currency_id"
+              placeholder="Currency"
+              label="Sum Assured"
+              :options="
+                  currency.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+            />
+            <x-select
+            v-model="filters.sum_insured_range"
+            placeholder="Value Range"
+            :options="[
+                { value: 'lt500k', label: '<500K' },
+                { value: '500k-1m', label: '500K- <1M' },
+                { value: 'gte1m', label: '>/= 1M' },
+              ]
+              "
+            class="border-l-0 rounded-tl-none rounded-bl-none"
+            label="&nbsp;"
+          />
+          </div>
+        </div>
+        
       </div>
 
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -679,7 +791,7 @@ watch(
       v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
-      :headers="tableHeader"
+      :headers="filteredTableHeader"
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page
