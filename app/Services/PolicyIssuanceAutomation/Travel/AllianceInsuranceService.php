@@ -21,6 +21,7 @@ use App\Models\PolicyIssuanceLog;
 use App\Repositories\PaymentRepository;
 use App\Repositories\PolicyIssuanceRepository;
 use App\Services\ApplicationStorageService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use Carbon\Carbon;
@@ -56,7 +57,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         if ($this->isPolicyIssuanceAutomationEnabled()) {
 
-            $this->policyIssuance = PolicyIssuanceRepository::schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
+            $this->policyIssuance = (new PolicyIssuanceService)->schedulePolicyIssuance($quote, $insurer, self::TYPE, $this->className);
 
         } else {
             info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Alliance Travel Automation is disabled');

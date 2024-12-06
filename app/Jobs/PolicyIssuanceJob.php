@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
-use App\Repositories\PolicyIssuanceRepository;
+use App\Models\PolicyIssuance;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -24,6 +24,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     // 28 is the cURL error code for timeout
     private $className = 'policyIssuanceJob';
+    private mixed $processId;
     private mixed $process;
     public $uniqueFor = 60 * 15; // 15 minutes
 
@@ -32,7 +33,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
      */
     public function __construct($processId)
     {
-        $this->process = PolicyIssuanceRepository::find($processId);
+        $this->processId = $processId;
     }
 
     /**
@@ -40,6 +41,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
+        $this->process = PolicyIssuance::find($this->processId);
+
         info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
         if ($this->isProcessable($this->process)) {
