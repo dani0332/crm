@@ -1502,6 +1502,8 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
             SendUpdateLogStatusEnum::UPDATE_ISSUED,
             SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
             SendUpdateLogStatusEnum::UPDATE_BOOKED,
 
         ];

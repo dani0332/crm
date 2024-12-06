@@ -57,7 +57,7 @@ class SearchService extends BaseService
                 $this->searchQueryMainLeadFilters($query, request());
                 // Reminder:: If User hasn't Admin Role then display only respective leads
                 if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-                    $query->where('advisor_id', auth()->id);
+                    $query->where('advisor_id', auth()->id());
                 }
             }
 
