@@ -61,11 +61,11 @@ class TravelAnnual extends EmbeddedProduct
             'travelQuote.advisor',
             'travelQuote.quoteRequestEntityMapping',
         )
-        ->join('payments', function ($join) {
-            $join->on('embedded_transactions.code', '=', 'payments.code')
-                ->where('payments.paymentable_type', '=', 'App\\Models\\TravelQuote');
-        })
-        ->where('embedded_transactions.is_selected', true)
+            ->join('payments', function ($join) {
+                $join->on('embedded_transactions.code', '=', 'payments.code')
+                    ->where('payments.paymentable_type', '=', 'App\\Models\\TravelQuote');
+            })
+            ->where('embedded_transactions.is_selected', true)
             ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
