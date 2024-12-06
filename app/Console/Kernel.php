@@ -75,7 +75,7 @@ class Kernel extends ConsoleKernel
             ->at('9:00');
 
         $schedule
-            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(5);
+            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(5);
 
         $schedule
             ->command('AddBatchNumberNonMotors:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(5);
