@@ -325,7 +325,7 @@ class CarAllocationService extends AllocationService
         return [];
     }
 
-    private function getAdvisorBaseQuery($status, $tierUserIds, $advisorId = null, $teamId = null)
+    private function getAdvisorBaseQuery($status, $userIds, $advisorId = null, $teamId = null)
     {
         $excludedUserIds = $this->getExcludedUserIds($teamId);
 
@@ -337,7 +337,7 @@ class CarAllocationService extends AllocationService
                 // Filter by advisor status.
                 $query->where('status', $status);
             })
-            ->whereIn('user_id', $tierUserIds)
+            ->whereIn('user_id', $userIds)
             ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
