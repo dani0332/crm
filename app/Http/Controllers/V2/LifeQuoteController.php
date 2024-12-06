@@ -36,6 +36,7 @@ use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
@@ -105,6 +106,7 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
+        dd((new PolicyIssuanceService)->executePolicyIssuanceAutomationSteps());
         /* Start - Temporarily adding for correcting historic data  */
         $quote = LifeQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);

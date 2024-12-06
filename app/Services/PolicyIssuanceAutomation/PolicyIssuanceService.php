@@ -7,7 +7,6 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\PolicyIssuance;
-use App\Repositories\PolicyIssuanceRepository;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 
 class PolicyIssuanceService
@@ -25,17 +24,61 @@ class PolicyIssuanceService
             default => null,
         };
     }
+
+    public function schedulePolicyIssuance($quote, $insurer, $quoteType, $logFor)
+    {
+        $policyIssuance = $quote->policyIssuance;
+
+        if ($policyIssuance) {
+            info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule already exists PID : '.$policyIssuance->id);
+        } else {
+            $policyIssuance = $this->create([
+                'insurance_provider_id' => $insurer->id, 'model_type' => $quote->getMorphClass(), 'model_id' => $quote->id, 'quote_type' => $quoteType, 'status' => PolicyIssuanceEnum::PENDING_STATUS,
+            ]);
+            info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule created PID : '.$policyIssuance->id);
+        }
+    }
     public function executePolicyIssuanceAutomationSteps()
     {
-        $policyIssuanceProcesses = $this->policyIssuanceByStatus([PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
+        info('cmd:'.$this->className.' fn:'.__FUNCTION__);
 
-        if (count($policyIssuanceProcesses) > 0) {
-            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - Total Policy Issuance Processes Count : '.count($policyIssuanceProcesses));
-            $insurerAutomationStatus = $this->getInsurerAutomationStatus($policyIssuanceProcesses);
-            $this->processPolicyIssuanceRecords($policyIssuanceProcesses, $insurerAutomationStatus);
+        /* Get Unique Insurer per lob to get the statuses for which automation is enabled */
+        $uniqueInsurerListByLob = PolicyIssuance::with(['insuranceProvider:id,code,text'])
+            ->whereIn('status', [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS])
+            ->select(['quote_type', 'insurance_provider_id'])
+            ->distinct()->get();
+
+        if (count($uniqueInsurerListByLob) > 0) {
+            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - Total Unique Insurer List By LOB Count : '.count($uniqueInsurerListByLob));
+            /* Get the statuses for which automation is enabled for insurers against each LOB */
+            $policyIssuanceAutomationStatuses = $this->getInsurerAutomationStatus($uniqueInsurerListByLob);
+            foreach ($policyIssuanceAutomationStatuses as $policyIssuanceAutomationStatus) {
+                info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - Process Automation for Quote Type : '.$policyIssuanceAutomationStatus->quote_type.' - Insurer : '.$policyIssuanceAutomationStatus?->insuranceProvider?->code);
+                /* process policy issuance automation for each insurer against each LOB */
+                $this->processPolicyIssuanceRecords($policyIssuanceAutomationStatus);
+            }
         } else {
-            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - No Policy Issuance Process found');
+            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - No Unique Insurer found');
         }
+    }
+
+    public function getInsurerAutomationStatus($policyIssuanceProcesses)
+    {
+        info('cmd:'.$this->className.' fn:'.__FUNCTION__);
+        foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
+            $statuses = [];
+            $quoteType = $policyIssuanceProcess?->quote_type;
+            $insuranceProvider = $policyIssuanceProcess?->insuranceProvider;
+            if ($this->init($quoteType, $insuranceProvider?->code)?->isPolicyIssuanceAutomationEnabled()) {
+                $statuses[] = PolicyIssuanceEnum::PENDING_STATUS;
+            }
+            if ($this->init($quoteType, $insuranceProvider?->code)?->isPolicyIssuanceAutomationRetryEnabledForTimeout()) {
+                $statuses[] = PolicyIssuanceEnum::TIMEOUT_STATUS;
+            }
+            $policyIssuanceProcess->statuses = $statuses;
+        }
+
+        return $policyIssuanceProcesses;
     }
 
     public function getPolicyIssuanceStepsStatus($quote, $quoteType): array
@@ -56,80 +99,25 @@ class PolicyIssuanceService
 
     }
 
-    public function getInsurerAutomationStatus($policyIssuanceProcesses)
+    private function processPolicyIssuanceRecords($policyIssuanceAutomationStatus)
     {
+        $quoteType = $policyIssuanceAutomationStatus?->quote_type;
+        $insuranceProvider = $policyIssuanceAutomationStatus?->insuranceProvider;
+        $statuses = $policyIssuanceAutomationStatus?->statuses;
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Process Records for Quote Type: '.$quoteType.', Insurer : '.$insuranceProvider?->code.' - Statuses : '.json_encode($statuses));
+        /* Fetch Policy Issuance Records against statuses by each LOB and Insurer */
+        PolicyIssuance::where(['quote_type' => $quoteType, 'insurance_provider_id' => $insuranceProvider->id])
+            ->whereIn('status', $statuses)
+            ->chunk(100, function ($policyIssuanceProcesses) {
+                foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
+                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' dispatch automation job');
+                    PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation');
+                    info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' automation job dispatched');
+                }
+            });
 
-        $insurerAutomationStatus = [];
-        foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
-            $quoteType = $policyIssuanceProcess?->quote_type;
-            $insuranceProvider = $policyIssuanceProcess?->insuranceProvider;
-            $insurerAutomationStatus[$insuranceProvider->code.'_'.$quoteType] = $this->init($quoteType, $insuranceProvider?->code)?->isPolicyIssuanceAutomationEnabled();
-            $insurerAutomationStatus[$insuranceProvider->code.'_'.$quoteType.'_retry'] = $this->init($quoteType, $insuranceProvider?->code)?->isPolicyIssuanceAutomationRetryEnabledForTimeout();
-        }
-
-        return $insurerAutomationStatus;
     }
 
-    public function isPolicyIssuanceAutomationEnabled($quoteType, $insurerCode)
-    {
-        return $this->init($quoteType, $insurerCode)?->isPolicyIssuanceAutomationEnabled();
-    }
-    public function isPolicyIssuanceAutomationRetryEnabledForTimeout($quoteType, $insurerCode)
-    {
-        return $this->init($quoteType, $insurerCode)?->isPolicyIssuanceAutomationRetryEnabledForTimeout();
-    }
 
-    private function processPolicyIssuanceRecords($policyIssuanceProcesses, $insurerAutomationStatus)
-    {
-        foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
-            $quoteType = $policyIssuanceProcess?->quote_type;
-            $insuranceProvider = $policyIssuanceProcess?->insuranceProvider;
-            $isAutomationEnabled = isset($insurerAutomationStatus[$insuranceProvider->code.'_'.$quoteType]) && $insurerAutomationStatus[$insuranceProvider->code.'_'.$quoteType];
-            $isAutomationRetryEnabled = isset($insurerAutomationStatus[$insuranceProvider->code.'_'.$quoteType.'_retry']) && $insurerAutomationStatus[$insuranceProvider->code.'_'.$quoteType];
-            if ($isAutomationEnabled) {
-                info('cmd:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' with status '.$policyIssuanceProcess->status.' for Insurer : '.$insuranceProvider?->text);
-                $this->dipatchAutomationJob($policyIssuanceProcess, $isAutomationRetryEnabled);
-            } else {
-                info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - '.$insuranceProvider?->text.' '.$quoteType.' Automation is disabled');
-            }
-        }
-    }
-
-    public function schedulePolicyIssuance($quote, $insurer, $quoteType, $logFor)
-    {
-        $policyIssuance = $quote->policyIssuance;
-
-        if ($policyIssuance) {
-            info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule already exists PID : '.$policyIssuance->id);
-        } else {
-            $policyIssuance = $this->create([
-                'insurance_provider_id' => $insurer->id, 'model_type' => $quote->getMorphClass(), 'model_id' => $quote->id, 'quote_type' => $quoteType, 'status' => PolicyIssuanceEnum::PENDING_STATUS,
-            ]);
-            info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule created PID : '.$policyIssuance->id);
-        }
-    }
-
-    public function policyIssuanceByStatus($statuses)
-    {
-        return PolicyIssuance::with('insurance_provider')->whereIn('status', $statuses)->orderBy('created_at')->get();
-    }
-
-    private function dipatchAutomationJob($policyIssuanceProcess, $isAutomationRetryEnabled)
-    {
-
-        if ($policyIssuanceProcess->status === PolicyIssuanceEnum::PENDING_STATUS) {
-            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' dispatch automation job');
-            PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation');
-            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' automation job dispatched');
-        } elseif ($policyIssuanceProcess->status === PolicyIssuanceEnum::TIMEOUT_STATUS && $isAutomationRetryEnabled) {
-            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' Retry is enabled');
-            PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation');
-            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' retry automation job dispatched');
-
-        } elseif ($policyIssuanceProcess->status === PolicyIssuanceEnum::TIMEOUT_STATUS && ! $isAutomationRetryEnabled) {
-            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' Retry is disabled');
-        }
-
-    }
 
 }
