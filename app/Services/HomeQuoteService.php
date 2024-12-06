@@ -1037,28 +1037,27 @@ class HomeQuoteService extends BaseService
 
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
+
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
-        if ($quotePlans == null) {
-            // $quotePlans = app(CentralService::class)->getQuotePlans(quoteTypeCode::Bike, $data['quote_uuid']);
-            $quotePlans = app(CentralService::class)->getQuotePlans(quoteTypeCode::Bike, 'VQP4NXPR');
-        }
-
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         if (! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
         }
 
-        $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('insuranceProviderId')->toArray();
+        $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
 
-        $quote->load(['bikeQuote.bikeMake', 'bikeQuote.bikeModel', 'advisor' => function ($q) {
-            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
-
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.bike_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons'));
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+            ->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Home Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
