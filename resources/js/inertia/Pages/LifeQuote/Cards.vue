@@ -555,7 +555,7 @@ watch(
         
       </div>
 
-      <div class="flex justify-between gap-3 mb-4 mt-1">
+      <div class="flex justify-end gap-3 mb-4 mt-1">
         <div class="flex gap-3 justify-self-end">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="resetFilters">
