@@ -1056,6 +1056,8 @@ class HomeQuoteService extends BaseService
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
             ->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
 
+        // return $pdf->stream('debug.pdf');
+
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Home Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
 

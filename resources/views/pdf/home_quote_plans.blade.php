@@ -386,16 +386,7 @@
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
-        $benefits = [
-            'feature',
-            'inpatient',
-            'outpatient',
-            'exclusion',
-            'coInsurance',
-            'regionCover',
-            'maternityCover',
-            'networkList',
-        ];
+        $benefits = ['exclusion', 'inclusion', 'content', 'personalBelonging', 'building', 'additionalCover'];
         $vatPercentage =
             \App\Models\ApplicationStorage::where('key_name', \App\Enums\ApplicationStorageEnums::VAT_VALUE)->first()
                 ->value ?? 0;
@@ -415,12 +406,13 @@
         //  'selectedPlanIds','hasAdultAndSeniorMember'
 
         foreach ($quotePlans->quotes->plans as &$quotePlan) {
-            $addonsPrice = $addonsVat = $quotePlan->total = 0;
+            $plans[$quotePlan->planId] = $quotePlan;
+            $quotePlan->total = 0;
             if (!isset($quotePlan->vat)) {
                 $quotePlan->vat = 0;
             }
 
-            if (!isset($quotePlan->id) || !in_array($quotePlan->id, $planIds)) {
+            if (!isset($quotePlan->planId) || !in_array($quotePlan->planId, $planIds)) {
                 continue;
             }
 
@@ -444,69 +436,31 @@
                     ->keyBy('code')
                     ->toJson(),
             );
-            $quotePlan->feature = json_decode(
-                collect($quotePlan->benefits->feature)
+            $quotePlan->content = json_decode(
+                collect($quotePlan->benefits->content)
                     ->keyBy('code')
                     ->toJson(),
             );
-            $quotePlan->emergencyMedicalCover = json_decode(
-                collect($quotePlan->benefits->emergencyMedicalCover)
+            $quotePlan->personalBelonging = json_decode(
+                collect($quotePlan->benefits->personalBelonging)
                     ->keyBy('code')
                     ->toJson(),
             );
-            $quotePlan->covid19 = json_decode(
-                collect($quotePlan->benefits->covid19)
+            $quotePlan->additionalCover = json_decode(
+                collect($quotePlan->benefits->additionalCover)
                     ->keyBy('code')
                     ->toJson(),
             );
-            $quotePlan->travelInconvenienceCover = json_decode(
-                collect($quotePlan->benefits->travelInconvenienceCover)
+            $quotePlan->building = json_decode(
+                collect($quotePlan->benefits->building)
                     ->keyBy('code')
                     ->toJson(),
             );
-
-            $quotePlan->addons = isset($addons[$quotePlan->id])
-                ? json_decode(json_encode($addons[$quotePlan->id]))
-                : json_decode(
-                    collect($quotePlan->addons)
-                        ->keyBy('code')
-                        ->toJson(),
-                );
-
-            foreach ($quotePlan->addons as &$addon) {
-                $addon = (object) $addon;
-                //set default value to excluded
-                $addon->value = 'Excluded';
-
-                //set default values
-                $addon->price = 0;
-                $addon->vat = 0;
-
-                if (sizeof($addon->addonOptions)) {
-                    //replace exclude with selected value if found
-
-                    foreach ($addon->addonOptions as $index => $travelAddonOption) {
-                        $travelAddonOption = (object) $travelAddonOption;
-
-                        if ($travelAddonOption->isSelected) {
-                            $addon->value = 'Included';
-                            $addonsPrice += $travelAddonOption->price;
-                            $addonsVat += $travelAddonOption->vat;
-                            $addon->price = $travelAddonOption->price;
-                            $addon->vat = $travelAddonOption->vat;
-                            break; //only one value will be selected
-                        }
-                    }
-                }
-            }
 
             $discountPremium = $vat = [];
 
             // Discount Premium and VAT new Implementation
 
-            $quotePlan->vat += $addonsVat;
-            //$quotePlan->vat = 100;
-            $quotePlan->discountPremium += $addonsPrice;
             $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
 
             foreach ($quotePlan->benefits as &$benefit) {
@@ -517,35 +471,146 @@
                 //set default values
                 $benefit->price = 0;
                 $benefit->vat = 0;
-                $plans[$quotePlan->id] = $quotePlan;
+                // $plans[$quotePlan->id] = $quotePlan;
             }
-
-            // Add Basma Price
-            if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
-                $quotePlan->discountPremium += $quotePlan->basmah;
-                $quotePlan->total += $quotePlan->basmah;
-            }
-
-            // Add Policy Price
-            $policyFee =
-                property_exists($quotePlan, 'insuranceProviderId') &&
-                isset($providers[$quotePlan->insuranceProviderId]['travel_policy_fee'])
-                    ? $providers[$quotePlan->insuranceProviderId]['travel_policy_fee']
-                    : 0;
-            $quotePlan->discountPremium += $policyFee;
-            // $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
-            $quotePlan->total += $policyFee;
         }
 
-        $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
+        $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('planId')->toArray();
 
         $features = [
+            // Content
             ['code' => 'heading', 'title' => 'Contents'],
             [
                 'code' => 'claimExcessDeductiblesForEachEveryLoss',
                 'title' => 'Claim Excess / Deductibles for each & every loss',
+                'type' => 'content',
             ],
-            ['code' => 'accidentalDamageWhileInYourHome', 'title' => 'Accidental Damage while in your home'],
+            [
+                'code' => 'accidentalDamageWhileInYourHome',
+                'title' => 'Accidental Damage while in your home',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'TheftVisibleViolentForcibleEntryOrExit',
+                'title' => 'Theft (visible, violent, forcible entry or exit)',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'fireExplosionLightningOrEarthquake',
+                'title' => 'Fire, explosion, lightning or earthquake',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'stormAndFlood',
+                'title' => 'Storm and flood',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'spoilageOfFoodInFreezer',
+                'title' => 'Spoilage of food in freezer',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'contentsTemporarilyRemoved',
+                'title' => 'Contents temporarily removed',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'singleArticleLimitForContentsSal',
+                'title' => 'Single Article Limit for contents (SAL)',
+                'type' => 'content',
+            ],
+
+            ['code' => 'spacer', 'title' => ''],
+
+            // Personal Belongings
+            ['code' => 'heading', 'title' => 'Personal Belongings'],
+            [
+                'code' => 'claimExcessDeductiblesForEachEveryLoss',
+                'title' => 'Claim Excess / Deductibles for each & every loss',
+                'type' => 'personalBelonging',
+            ],
+            [
+                'code' => 'lossOfDocuments',
+                'title' => 'Loss of documents',
+                'type' => 'personalBelonging',
+            ],
+            [
+                'code' => 'valuablesAndPortableEquipment',
+                'title' => 'Valuables and portable equipment',
+                'type' => 'personalBelonging',
+            ],
+            [
+                'code' => 'jewellery',
+                'title' => 'Jewellery',
+                'type' => 'personalBelonging',
+            ],
+            [
+                'code' => 'singleArticleLimitForPersonalBelongingsSal',
+                'title' => 'Single article limit for personal belongings (SAL)',
+                'type' => 'personalBelonging',
+            ],
+
+            ['code' => 'spacer', 'title' => ''],
+
+            // Building
+            ['code' => 'heading', 'title' => 'Building'],
+            [
+                'code' => 'claimExcessDeductibles',
+                'title' => 'Claim Excess / Deductibles',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'ownersLiabilityToThePublic',
+                'title' => 'Owner\'s liability to the public',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'breakageOfFixedGlassAndSanitaryFixtures',
+                'title' => 'Breakage of fixed glass and sanitary fixtures',
+                'type' => 'building',
+            ],
+            [
+                'code' => ' damageToServicesPipesAndCables',
+                'title' => ' Damage to Services (Pipes and Cables)',
+                'type' => 'building',
+            ],
+
+            ['code' => 'spacer', 'title' => ''],
+
+            // Additional Cover
+            ['code' => 'heading', 'title' => 'Additional Cover'],
+            [
+                'code' => 'legalAssistance',
+                'title' => 'Legal assistance',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'tenantsLiability',
+                'title' => 'Tenant\'s liability',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'occupiersPersonalAndEmployersLiability',
+                'title' => 'Occupiers personal and employers liability',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'fatalInjuryBenefit',
+                'title' => 'Fatal injury benefit',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForContents',
+                'title' => 'Loss of rent or cost of alternative accommodation for Contents',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForBuilding',
+                'title' => 'Loss of rent or cost of alternative accommodation for Building',
+                'type' => 'additionalCover',
+            ],
+
             ['code' => 'spacer', 'title' => ''],
         ];
 
@@ -638,7 +703,7 @@
                     @foreach ($planIds as $planId)
                         <th style="border: solid 1px #bfbfbf; text-align: center;">
                             <p class="text-center" style="font-size: 14px">
-                                {{ $plans[$planId]->planName }}
+                                {{ $plans[$planId]->planName ?? '' }}
                             </p>
                         </th>
                     @endforeach
@@ -671,27 +736,25 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info">Main Country: <b>N/A</b></p>
+                        <p class="quote-info">Gross Price: <b>{{ $plans[$planId]->actualPremium }}</b></p>
                     </th>
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info">Number of Days: <b>{{ $quote->days_cover_for }} </b></p>
+                        <p class="quote-info">Vat: <b>{{ $plans[$planId]->vat }} </b></p>
                     </th>
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info">Region: <b>{{ $quote->regionCoverFor?->text }}</b></p>
+                        <p class="quote-info">Total Price (wtih VAT):
+                            <b>{{ $plans[$planId]->actualPremium + $plans[$planId]->vat }}</b>
+                        </p>
                     </th>
                 </tr>
             </thead>
             <tbody>
                 @php $featCount = 0 @endphp
                 @foreach ($features as $feature)
-                    @if ($feature['code'] == 'coPayment' && !isset($addons))
-                        @php continue; @endphp
-                    @endif
-
                     {{-- heading row --}}
                     @if (@$feature['code'] == 'heading')
                         <tr>
@@ -760,15 +823,15 @@
                             <td class="{{ @$feature['col_class'] }}">
                                 <p>
                                     <?php if ($return_value == 'Excluded') {
-                        $planIterate++;
-                        ?>
+                                        $planIterate++;
+                                        ?>
                                     Excluded
                                     <?php } else {
-                        $planIterate = 0;
-                        ?>
+                                        $planIterate = 0;
+                                        ?>
                                     <?php echo $return_value; ?>
 
-                                    <?php  } ?>
+                                    <?php } ?>
                                 </p>
 
                             </td>
@@ -782,7 +845,7 @@
                             <?php
 
                             }
-                   ?>
+                    ?>
                         @endforeach
                     </tr>
                     <?php $featCount++; ?>
