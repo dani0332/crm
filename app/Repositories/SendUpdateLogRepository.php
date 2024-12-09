@@ -179,7 +179,9 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'status' => $status ?? $sendUpdate->status,
             ]);
-            $this->updatePayment($data);
+            if ($sendUpdate->payments[0]) {
+                app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $sendUpdate->payments[0]);
+            }
         } catch (\Exception $ex) {
             info('SendUpdate id: '.$data['id'].' '.$ex->getMessage());
             $result = (object) [
