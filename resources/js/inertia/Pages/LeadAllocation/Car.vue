@@ -309,7 +309,6 @@ onMounted(() => {
 
 <template>
   <div>
-    <UserStatus />
     <Head title="Car Lead Allocation" />
     <div class="flex justify-between items-center">
       <div

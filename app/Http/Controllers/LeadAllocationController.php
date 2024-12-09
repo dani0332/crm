@@ -7,7 +7,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
-use App\Events\UserStatusChanged;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
 use App\Jobs\ReAssignLeads;
@@ -183,6 +182,11 @@ class LeadAllocationController extends Controller
                     if (isset($item['is_available'])) {
                         $updateLogString = $updateLogString.' is_available to : '.$item['is_available'];
                         $leadAllocationUser->is_available = $item['is_available'];
+                    $user = User::where('id', $item['userId'])->first();
+                    if ($user) {
+                        $user->status = $item['reason'];
+                        info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
+                        $user->save();
                     }
 
                     if ($quoteTypeId && isset($item['max_cap'])) {

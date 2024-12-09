@@ -2242,4 +2242,24 @@ class CarQuoteService extends BaseService
             info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
         }
     }
+
+    public function pauseAndResumeFollowUpCounters($data)
+    {
+
+        $quote = CarQuote::where('uuid', $data['quote_uuid'])->first();
+
+        if (! $quote || ! $quote->carQuoteRequestDetail) {
+            return response()->json(['success' => false, 'message' => 'Quote or related details not found'], 200);
+        }
+
+        $field = $data['action'] === 'pause' ? 'followup_pause_count' : 'followup_resume_count';
+        $quote->carQuoteRequestDetail->updateOrCreate(
+            ['car_quote_request_id' => $quote->id],
+            [
+                $field => ($quote->carQuoteRequestDetail->$field ?? 0) + 1,
+            ]
+        );
+
+        return response()->json(['success' => true]);
+    }
 }
