@@ -22,7 +22,7 @@ class InstallmentReportService extends ManagementReport
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::INSTALLMENT;
-        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::TRANSACTION_PAYMENTS;
+        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
 
         if ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
             $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
@@ -72,6 +72,7 @@ class InstallmentReportService extends ManagementReport
                 'l.text as transaction_type',
                 DB::raw('CASE WHEN ps.sr_no=1 THEN p.commmission_percentage ELSE 0 END as commmission_percentage'),
                 'personal_quotes.source',
+                'ps.sage_reciept_id',
             )
             ->join('payments as p', function ($join) {
                 $join->on('personal_quotes.code', '=', 'p.code')
@@ -149,7 +150,7 @@ class InstallmentReportService extends ManagementReport
         return [
             'paymentDueDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::INSTALLMENT,
-            'reportType' => ManagementReportTypeEnum::TRANSACTION_PAYMENTS,
+            'reportType' => ManagementReportTypeEnum::APPROVED_TRANSACTIONS,
         ];
     }
 

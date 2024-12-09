@@ -43,9 +43,4 @@ class CarAddOnOption extends Model implements AuditableContract
     {
         return ['addon_id'];
     }
-
-    public function processGetDSL($filters, $update)
-    {
-        return self::processGetBaseDSL($filters, $update);
-    }
 }

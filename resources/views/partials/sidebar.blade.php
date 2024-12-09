@@ -135,31 +135,19 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                             @endcan
                             @can(PermissionsEnum::PetQuotesList)
-                            @if(in_array(quoteTypeCode::Pet, newUi()))
                             <li><a href="{{ url('personal-quotes/pet') }}">Pet Quotes</a></li>
-                            @else
-                            <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::BikeQuotesList)
-                            @if(in_array(quoteTypeCode::Bike, newUi()))
                             <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::CycleQuotesList)
-                            @if(in_array(quoteTypeCode::Cycle, newUi()))
                             <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::YachtQuotesList)
-                            @if(in_array(quoteTypeCode::Yacht, newUi()))
                             <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::JetskiQuotesList)
-                            @if(in_array(quoteTypeCode::Jetski, newUi()))
                             <li><a href="{{ url('personal-quotes/jetski') }}">JetSki Quotes</a></li>
-                            @endif
                             @endcan
                         </ul>
                     </li>

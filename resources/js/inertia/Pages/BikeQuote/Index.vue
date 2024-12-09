@@ -5,6 +5,7 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   quoteType: {
     type: String,
     default: 'bike',
@@ -32,7 +33,7 @@ let availableFilters = {
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  renewal_batch: '',
+  renewal_batch_id: [],
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
@@ -57,6 +58,14 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(renewalBatch => ({
+    value: renewalBatch.id,
+    label: renewalBatch.name,
+  }));
+});
+
 function onSubmit(isValid) {
   if (isValid) {
     if (validateDateRange()) {
@@ -165,7 +174,7 @@ const tableHeader = [
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Renewal Batch', value: 'renewal_batch_model' },
 ];
 
 const can = permission => useCan(permission);
@@ -190,6 +199,7 @@ const onLeadAssigned = () => {
   quotesSelected.value = [];
 };
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'bike');
@@ -197,7 +207,13 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Bike'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 function daysAgoFromAuthorizedDate(authorizedDate) {
   let date = authorizedDate.split(' ')[0];
@@ -451,12 +467,10 @@ watch(
           />
         </x-field>
         <x-field label="Renewal Batch">
-          <x-input
-            v-model="filters.renewal_batch"
-            type="search"
-            name="renewal_batch"
-            class="w-full"
+          <ComboBox
+            v-model="filters.renewal_batch_id"
             placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
           />
         </x-field>
         <x-field label="Is Renewal">
@@ -524,6 +538,7 @@ watch(
             color="emerald"
             @click.prevent="onDataExport"
             class="justify-self-start"
+            :loading="exportLoader"
           >
             Export
           </x-button>
@@ -622,6 +637,11 @@ watch(
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-renewal_batch_model="item">
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
       </template>
     </DataTable>
 

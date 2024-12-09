@@ -26,7 +26,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function model()
     {
-        return (in_array(quoteTypeCode::Pet, newUi())) ? PersonalQuote::class : PetQuote::class;
+        return PersonalQuote::class;
     }
 
     public function fetchCreate($request)
@@ -103,6 +103,7 @@ class PetQuoteRepository extends BaseRepository
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
             'paymentStatus',
             'payments',
+            'renewalBatchModel',
             'quoteDetail',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
