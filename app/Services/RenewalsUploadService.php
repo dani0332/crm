@@ -987,6 +987,7 @@ class RenewalsUploadService
             $quoteObject = $this->createQuoteObject(ucfirst($quoteType->code));
 
             $quote = $quoteObject->where('previous_quote_policy_number', $data['policy_number'])
+                ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
                 ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))->first();
 
             throw_unless($quote, ('Quote not found for PolicyNumber: '.$data['policy_number'].' EndDate: '.$data['end_date'].' Batch: '.$renewalQuoteProcess->batch));
