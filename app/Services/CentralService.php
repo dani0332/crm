@@ -137,9 +137,7 @@ class CentralService
                     return false;
                 }
 
-                $response = in_array(ucfirst($lob), newUi()) ?
-                    ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
-                    Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
+                $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
@@ -178,7 +176,7 @@ class CentralService
         }
 
         $leadsIds = array_map('intval', explode(',', $leadsIds));
-        $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+        $model = (in_array(ucfirst($request->modelType), $personalQuotes)) ?
             ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
             ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
 
@@ -193,7 +191,7 @@ class CentralService
                 $getQuoteLead->quote_batch_id = $quoteBatch->id;
                 $getQuoteLead->save();
 
-                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes)) ?
                     'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
 
                 $model['child']::updateOrCreate(
@@ -297,7 +295,7 @@ class CentralService
 
             $quote->update($data->toArray());
 
-            // Will remove this once move to stage 
+            // Will remove this once move to stage
             // $this->updateQuotePayment($quote, $data->price_with_vat, $data->insurance_provider_id);
 
             $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id);
@@ -920,15 +918,16 @@ class CentralService
 
         return false;
     }
-    
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null){
+
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null)
+    {
         info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {
             $payment = $quoteObject->payments()->mainLeadPayment()->first();
         } else {
             $payment = $sendUpdatePayment;
         }
-        if ($payment){ 
+        if ($payment) {
             if ($insuranceProviderId) {
                 $payment->insurance_provider_id = $insuranceProviderId;
             }
@@ -946,7 +945,9 @@ class CentralService
      */
     public function updateQuoteInformation($type, $id)
     {
-        if ($type == 'send-update') return true;
+        if ($type == 'send-update') {
+            return true;
+        }
         if (request()->has('quote_type')) {
             $type = request()->quote_type;
         }
@@ -957,7 +958,7 @@ class CentralService
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
-                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);;
+                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
                 if (app(QuoteDocumentService::class)->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
