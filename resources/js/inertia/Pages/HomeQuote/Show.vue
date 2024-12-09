@@ -731,6 +731,7 @@ const handlePlanSelected = plan => {
     preserveScroll: true,
     only: ['payments', 'quoteRequest'],
   });
+  onLoadAvailablePlansData();
 };
 
 const onMemberUpdated = async () => {

@@ -151,7 +151,7 @@ const modal2Ref = ref(null);
 
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
-const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
+const quoteTypesToCheck = ['Car', 'Health', 'Travel', 'Home']; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
