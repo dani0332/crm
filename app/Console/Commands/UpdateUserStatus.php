@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\quoteTypeCode;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
-use App\Events\UserStatusChanged;
 use App\Jobs\ActivityAlertEmailJob;
 use App\Jobs\ReAssignBikeLeadsJob;
 use App\Jobs\ReAssignCarLeadsJob;
@@ -91,7 +90,6 @@ class UpdateUserStatus extends Command
                 if (($newStatus != $currentUserStatus && $currentUserStatus != UserStatusEnum::MANUAL_OFFLINE) || ($newStatus != $currentUserStatus && $currentUserStatus == UserStatusEnum::MANUAL_OFFLINE && $newStatus != UserStatusEnum::OFFLINE)) {
                     info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus.' for user : '.$session->user->name);
                     User::where('id', $userId)->update(['status' => $newStatus]);
-                    event(new UserStatusChanged($userId, $newStatus, $session->user->name));
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
                         $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()->pluck('id');
                         $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()->pluck('id');
@@ -129,7 +127,6 @@ class UpdateUserStatus extends Command
                 }
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE && $currentUserStatus != UserStatusEnum::MANUAL_OFFLINE) {
                 info('System will now change the status to Active from status : '.$currentUserStatus.' for user : '.$session->user->name);
-                event(new UserStatusChanged($userId, UserStatusEnum::ONLINE, $session->user->name));
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
             }
         }
