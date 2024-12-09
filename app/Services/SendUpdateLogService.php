@@ -1130,6 +1130,7 @@ class SendUpdateLogService
         }
 
         $emailData = (object) [
+            'clientFirstName' => $quote->first_name,
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
             'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
             'carQuoteId' => $sendUpdateLog->code,

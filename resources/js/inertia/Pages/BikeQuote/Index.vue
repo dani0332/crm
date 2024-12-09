@@ -199,6 +199,7 @@ const onLeadAssigned = () => {
   quotesSelected.value = [];
 };
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'bike');
@@ -206,7 +207,13 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Bike'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 function daysAgoFromAuthorizedDate(authorizedDate) {
   let date = authorizedDate.split(' ')[0];
@@ -531,6 +538,7 @@ watch(
             color="emerald"
             @click.prevent="onDataExport"
             class="justify-self-start"
+            :loading="exportLoader"
           >
             Export
           </x-button>
