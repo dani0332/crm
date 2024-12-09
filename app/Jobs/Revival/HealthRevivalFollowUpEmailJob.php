@@ -319,7 +319,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
             info($this->logPrefix.'Email Sent - UUID - '.$emailData->uuid.' Follow Up Count: '.$revivalRecord->follow_up_email_count);
         } else {
-            info($this->logPrefix.'Email Sent - UUID - '.$emailData->uuid);
+            info($this->logPrefix.'Email NOT Sent - UUID - '.$emailData->uuid);
         }
     }
 
