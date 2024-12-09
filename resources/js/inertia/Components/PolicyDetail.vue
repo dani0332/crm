@@ -245,12 +245,24 @@ const rules = {
       currentDate.setHours(0, 0, 0, 0);
 
       const allowedMaxDate = new Date(currentDate);
-      allowedMaxDate.setMonth(currentDate.getMonth() + 2);
+
+      let validationErrorMsg = '';
+      // For Travel LOB, start date can be within 6 months from current date. For other LOBs, start date can be within 2 months from current date.
+      let isTravelQuote =
+        props.modelType === quoteTypeCodeEnum.Travel.toLowerCase();
+      if (isTravelQuote) {
+        allowedMaxDate.setMonth(currentDate.getMonth() + 6);
+        validationErrorMsg = 'Please select a date within the next six months';
+      } else {
+        allowedMaxDate.setMonth(currentDate.getMonth() + 2);
+        validationErrorMsg = 'Please select a date within the next two months';
+      }
+
       allowedMaxDate.setHours(0, 0, 0, 0);
       date.setHours(0, 0, 0, 0);
 
       if (date > allowedMaxDate) {
-        return 'Please select a date within the next two months';
+        return validationErrorMsg;
       }
 
       return true;
