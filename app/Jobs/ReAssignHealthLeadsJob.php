@@ -49,12 +49,21 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 
         foreach ($leads as $lead) {
             info('-------- Reassignment of lead : '.$lead->uuid.' started ---------');
+
+            if ($lead->isAllocationInProgress()) {
+                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                continue;
+            }
+
+            $lead->startAllocation();
+
             $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
                 info('No health team found against lead : '.$lead->uuid);
 
-                return false; // when system is not able to identify sub team based on price
+                continue;
             }
 
             $advisor = $this->fetchAvailableAdvisor($lead->health_team_type, $lead);
@@ -62,10 +71,12 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             if (! $advisor) {
                 info('No advisors found against lead : '.$lead->uuid);
 
-                return false; // when no advisor is found
+                continue;
             }
 
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
+
+            $lead->endAllocation();
             info('-------- Reassignment of lead : '.$lead->uuid.' ended ---------');
         }
         info('-------- Reassignment health job ended at : '.now().' ---------');
