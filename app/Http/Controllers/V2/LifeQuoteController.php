@@ -106,7 +106,6 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        dd((new PolicyIssuanceService)->executePolicyIssuanceAutomationSteps());
         /* Start - Temporarily adding for correcting historic data  */
         $quote = LifeQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
