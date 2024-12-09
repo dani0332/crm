@@ -27,6 +27,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     private mixed $processId;
     private mixed $process;
     public $uniqueFor = 60 * 15; // 15 minutes
+    public $uniqueKey = null; // 15 minutes
 
     /**
      * Create a new job instance.
@@ -34,6 +35,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function __construct($processId)
     {
         $this->processId = $processId;
+        $this->uniqueKey = 'policy-issuance-automation-id-'.$processId;
     }
 
     /**
@@ -95,12 +97,12 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->process->model->code.'-'.Carbon::now()->format('YmdHi')))->dontRelease()];
+        return [(new WithoutOverlapping($this->uniqueKey.'-'.Carbon::now()->format('YmdHi')))->dontRelease()];
     }
 
     public function uniqueId(): string
     {
-        return $this->process->model->code;
+        return $this->uniqueKey;
     }
 
     private function isProcessable($process)

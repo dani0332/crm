@@ -104,20 +104,23 @@ class PolicyIssuanceService
         $quoteType = $policyIssuanceAutomationStatus?->quote_type;
         $insuranceProvider = $policyIssuanceAutomationStatus?->insuranceProvider;
         $statuses = $policyIssuanceAutomationStatus?->statuses;
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Process Records for Quote Type: '.$quoteType.', Insurer : '.$insuranceProvider?->code.' - Statuses : '.json_encode($statuses));
+
         /* Fetch Policy Issuance Records against statuses by each LOB and Insurer */
-        PolicyIssuance::where(['quote_type' => $quoteType, 'insurance_provider_id' => $insuranceProvider->id])
-            ->whereIn('status', $statuses)
-            ->chunk(100, function ($policyIssuanceProcesses) {
+        $policyIssuanceQuery = PolicyIssuance::where(['quote_type' => $quoteType, 'insurance_provider_id' => $insuranceProvider->id])->whereIn('status', $statuses);
+
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Process Records for Quote Type: '.$quoteType.', Insurer : '.$insuranceProvider?->code.' - Count : '.$policyIssuanceQuery->count().' - Statuses : '.json_encode($statuses));
+        if ($policyIssuanceQuery->count() > 0) {
+            $policyIssuanceQuery->chunk(100, function ($policyIssuanceProcesses) {
                 foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' dispatch automation job');
                     PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation');
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' automation job dispatched');
                 }
             });
+        } else {
+            info('automation:'.$this->className.' fn:'.__FUNCTION__.' No Records found for Quote Type: '.$quoteType.', Insurer : '.$insuranceProvider?->code.' - Statuses : '.json_encode($statuses));
+        }
 
     }
-
-
 
 }
