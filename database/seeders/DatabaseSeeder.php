@@ -19,7 +19,6 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
-            SUAdditionalCRNSubTypesSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
         ]);
