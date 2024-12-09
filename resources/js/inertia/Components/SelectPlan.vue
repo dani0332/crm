@@ -64,6 +64,10 @@ const updateSelectedPlan = () => {
     }
   }
 
+  if (props.quoteType.toLocaleLowerCase() == 'home') {
+    data.plan_id = props.plan.planId;
+  }
+
   axios
     .post(
       `/personal-quotes/${props.quoteType}/${props.uuid}/update-selected-plan`,
@@ -105,13 +109,23 @@ const updateSelectedPlan = () => {
         }
         emit('update:selectedPlanChanged', selectedPlan);
       } else {
-        emit('update:selectedPlanChanged', {
-          id: props.plan.id,
-          providerName: props.plan.providerName,
-          planName: props.plan.name,
-          premium: premium.toFixed(2),
-          planType: props.plan.plan_type,
-        });
+        if (props.quoteType.toLowerCase() == 'home') {
+          emit('update:selectedPlanChanged', {
+            id: props.plan.planId,
+            providerName: props.plan.providerName,
+            planName: props.plan.planName,
+            premium: premium.toFixed(2),
+            planType: props.plan.plan_type,
+          });
+        } else {
+          emit('update:selectedPlanChanged', {
+            id: props.plan.id,
+            providerName: props.plan.providerName,
+            planName: props.plan.name,
+            premium: premium.toFixed(2),
+            planType: props.plan.plan_type,
+          });
+        }
       }
       notification.success({
         title: 'Selected plan updated',

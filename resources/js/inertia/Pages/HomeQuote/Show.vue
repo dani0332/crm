@@ -722,7 +722,7 @@ console.log('selectedProviderPlan', selectedProviderPlan.value.id);
 
 const handlePlanSelected = plan => {
   console.log('handlePlanSelected', plan);
-  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.id = plan.planId;
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
