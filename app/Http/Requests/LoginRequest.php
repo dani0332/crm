@@ -25,7 +25,7 @@ class LoginRequest extends FormRequest
     public function rules()
     {
         return [
-            'email' => Rule::in(['im.automation4@gmail.com']),
+            'email' => Rule::in(['qa_automation@myalfred.com']),
             'password' => 'required',
         ];
     }

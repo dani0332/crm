@@ -415,7 +415,7 @@
         //  'selectedPlanIds','hasAdultAndSeniorMember'
 
         foreach ($quotePlans->quotes->plans as &$quotePlan) {
-            $addonsPrice = $addonsVat = $quotePlan->discountPremium = $quotePlan->total = 0;
+            $addonsPrice = $addonsVat = $quotePlan->total = 0;
             if (!isset($quotePlan->vat)) {
                 $quotePlan->vat = 0;
             }
@@ -465,15 +465,46 @@
                     ->toJson(),
             );
 
-            // $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+
+            foreach ($quotePlan->addons as &$addon) {
+
+                $addon = (object) $addon;
+                //set default value to excluded
+                $addon->value = "Excluded";
+
+                //set default values
+                $addon->price = 0;
+                $addon->vat = 0;
+
+                if(sizeof($addon->addonOptions))
+                {
+                    //replace exclude with selected value if found
+
+                    foreach ($addon->addonOptions as $index =>  $travelAddonOption) {
+
+                        $travelAddonOption = (object) $travelAddonOption;
+
+                        if($travelAddonOption->isSelected) {
+                            $addon->value = 'Included';
+                            $addonsPrice += $travelAddonOption->price;
+                            $addonsVat += $travelAddonOption->vat;
+                            $addon->price = $travelAddonOption->price;
+                            $addon->vat   = $travelAddonOption->vat;
+                            break;//only one value will be selected
+                        }
+                    }
+                }
+            }
+
             $discountPremium = $vat = [];
 
             // Discount Premium and VAT new Implementation
 
-            $quotePlan->vat = $quotePlan->vat;
+            $quotePlan->vat += $addonsVat;
             //$quotePlan->vat = 100;
-            $quotePlan->total = $quotePlan->actualPremium + $quotePlan->vat;
-            $quotePlan->discountPremium = $quotePlan->discountPremium;
+            $quotePlan->discountPremium += $addonsPrice;
+            $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
 
             foreach ($quotePlan->benefits as &$benefit) {
                 $benefit = (object) $benefit;
@@ -576,6 +607,66 @@
                 'code' => 'travelTreatmentTestedPositive',
                 'title' => 'Treatment if tested positive - hospitalized for more than 24 hrs',
                 'type' => 'covid19',
+            ],
+            [
+                "code" => "heading",
+                "title" => "Optional Covers",
+                "type" => ""
+            ],
+            [
+                "code" => "hazardousActivities",
+                "title" => "Hazardous Activities Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "adventureSports",
+                "title" => "Adventure Sports Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "winterSports",
+                "title" => "Winter Sports Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "waterSports",
+                "title" => "Water Sports Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "business",
+                "title" => "Business Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "golf",
+                "title" => "Golf Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "terrorism",
+                "title" => "Terrorism Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "excessWaiver",
+                "title" => "Excess Waiver",
+                "type" => "addons"
+            ],
+            [
+                "code" => "rentalCar",
+                "title" => "Rental Car Excess",
+                "type" => "addons"
+            ],
+            [
+                "code" => "trekking",
+                "title" => "Trekking (GIG)",
+                "type" => "addons"
+            ],
+            [
+                "code" => "safari",
+                "title" => "Safari (GIG)",
+                "type" => "addons"
             ],
             [
                 'code' => 'actualPremium',
@@ -689,7 +780,7 @@
                     @foreach ($planIds as $planId)
                         <th style="border: solid 1px #bfbfbf; text-align: center;">
                                 <p class="text-center" style="font-size: 14px">
-                                {{$plans[$planId]->planName}}
+                                {{$plans[$planId]->planName ?? ''}}
                                 </p>
                         </th>
                     @endforeach
@@ -768,13 +859,13 @@
 
                     {{-- feature rows --}}
                     <?php $planIterate = 0; ?>
-                    <tr class="<?php echo 'row_' . $featCount; ?> {{ $feature['row_class'] ?? '' }}">
+                    <tr class="<?php echo 'row_'.$featCount; ?> {{ $feature['row_class'] ?? '' }}">
                         <td class="{{ @$feature['heading_class'] }}">
                             <p class="text-left">{{ @$feature['title'] }}</p>
                         </td>
                         @foreach ($planIds as $planId)
                             <?php $return_value = '';
-                            ?>
+                    ?>
                             @if ($feature['type'] == 'info')
                                 @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
                             @elseif($feature['type'] == 'excess')
@@ -812,15 +903,15 @@
                             <td class="{{ @$feature['col_class'] }}">
                                 <p>
                                     <?php if ($return_value == 'Excluded') {
-                        $planIterate++;
-                        ?>
+                                        $planIterate++;
+                                        ?>
                                     Excluded
                                     <?php } else {
-                        $planIterate = 0;
-                        ?>
+                                        $planIterate = 0;
+                                        ?>
                                     <?php echo $return_value; ?>
 
-                                    <?php  } ?>
+                                    <?php } ?>
                                 </p>
 
                             </td>
@@ -834,7 +925,7 @@
                             <?php
 
                             }
-                   ?>
+                    ?>
                         @endforeach
                     </tr>
                     <?php $featCount++; ?>

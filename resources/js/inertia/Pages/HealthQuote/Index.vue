@@ -1,8 +1,11 @@
 <script setup>
+import { computed } from 'vue';
+
 defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   teams: Object,
   userMaxCap: Number,
   todayAutoCount: Number,
@@ -124,7 +127,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -153,7 +156,7 @@ const filters = reactive({
   is_ecommerce: '',
   is_renewal: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   date: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
@@ -191,6 +194,9 @@ watch(
   { deep: true, immediate: true },
 );
 
+const canExportRMLeads = computed(() => {
+  return filters.transaction_approved_dates ?? false;
+});
 const subTeamOptions = [
   { value: '', label: 'All' },
   { value: 'Best', label: 'Best' },
@@ -211,6 +217,13 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
+  }));
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
   }));
 });
 
@@ -361,7 +374,7 @@ const fixedValue = numberString => {
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-
+const exportLoader = ref(false);
 const onDataExport = () => {
   if (filters.created_at_start && filters.created_at_end) {
     filters.created_at_start = useDateFormat(
@@ -393,13 +406,51 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 const exportRmLeads = () => {
+  let filtersCleaned = { ...cleanObj(filters) };
+  let maxdays = calculateDaysDifference(
+    filtersCleaned.transaction_approved_dates[0],
+    filtersCleaned.transaction_approved_dates[1],
+  );
+
+  if (maxdays > 31) {
+    notification.error({
+      message:
+        'Maximum of 31 days (Transaction Approved date) are allowed to be exported.',
+      position: 'top',
+    });
+    return;
+  }
+
+  exportLoader.value = true;
+
+  const params = new URLSearchParams(cleanObj(filtersCleaned));
+  // filters.transaction_approved_dates.forEach(date => {
+  //   params.append('transaction_approved_dates[]', date);
+  // });
+
+  // console.log(params.toString());
+  // return;
+  // const data = useObjToUrl(filters);
+
   logAndExportQuotes({
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
-    url: `${window.location.origin}/rm-leads-export`,
+    // url: `${window.location.origin}/rm-leads-export`,
+    url: `${window.location.origin}/rm-leads-export` + '?' + params.toString(),
+  }).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
   });
 };
 
@@ -743,15 +794,12 @@ watch(() => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+        <ComboBox
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
         />
-
         <DatePicker
           v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
           v-model="filters.assigned_to_date_start"
@@ -845,6 +893,7 @@ watch(() => {
             v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start mr-3"
           >
@@ -866,14 +915,29 @@ watch(() => {
           </x-tooltip>
 
           <x-button
-            v-if="can(permissionsEnum.EXPORT_RM_LEADS)"
+            v-if="canExportRMLeads && can(permissionsEnum.EXPORT_RM_LEADS)"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click="exportRmLeads()"
             class="justify-self-start mr-3"
           >
             Export RM Leads by Car Advisors
           </x-button>
+
+          <x-tooltip
+            v-if="!canExportRMLeads && can(permissionsEnum.EXPORT_RM_LEADS)"
+            placement="right"
+          >
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export RM Leads by Car Advisors
+            </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Transaction Approved dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
         </div>
         <div class="flex justify-self-end gap-3">
           <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
@@ -989,6 +1053,11 @@ watch(() => {
 
       <template #item-premium="item">
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p>
+          {{ item.renewal_batch_text }}
+        </p>
       </template>
     </DataTable>
 

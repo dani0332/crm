@@ -6,7 +6,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
-use App\Events\UserStatusChanged;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
 use App\Models\LeadAllocation;
@@ -163,7 +162,6 @@ class LeadAllocationController extends Controller
                     if ($user) {
                         $user->status = $item['reason'];
                         info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
-                        event(new UserStatusChanged($user->id, $user->status, $user->name));
                         $user->save();
                     }
                 }
