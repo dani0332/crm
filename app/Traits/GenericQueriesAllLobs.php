@@ -3,13 +3,10 @@
 namespace App\Traits;
 
 use App\Enums\DatabaseColumnsString;
-use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -18,7 +15,6 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
-use App\Models\PaymentSplits;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;

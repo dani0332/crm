@@ -2000,6 +2000,7 @@ class CRUDController extends Controller
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($quoteModel, $payment, $request->modelType);
             info('Quote Code: '.$quoteModel->code.' BIN Generated for transactional leads');
         }
+
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',
         ]);
