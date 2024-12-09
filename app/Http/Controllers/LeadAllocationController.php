@@ -174,7 +174,6 @@ class LeadAllocationController extends Controller
                         if ($user) {
                             $user->status = $item['reason'];
                             info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
-                            event(new UserStatusChanged($user->id, $user->status, $user->name));
                             $user->save();
                         }
                     }
@@ -182,11 +181,6 @@ class LeadAllocationController extends Controller
                     if (isset($item['is_available'])) {
                         $updateLogString = $updateLogString.' is_available to : '.$item['is_available'];
                         $leadAllocationUser->is_available = $item['is_available'];
-                    $user = User::where('id', $item['userId'])->first();
-                    if ($user) {
-                        $user->status = $item['reason'];
-                        info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
-                        $user->save();
                     }
 
                     if ($quoteTypeId && isset($item['max_cap'])) {
