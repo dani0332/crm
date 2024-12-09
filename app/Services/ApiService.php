@@ -172,11 +172,13 @@ class ApiService
             $quoteType = QuoteTypes::getName($quoteTypeId);
             if (! $quoteType) {
                 info("Invalid Quote Type ID {$quoteTypeId} for uuid : {$request->quoteUuid}");
+
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
             }
 
             if (! $quoteType?->model()->where('uuid', $request->quoteUuid)->exists()) {
                 info("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
+
                 return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found');
             }
 
