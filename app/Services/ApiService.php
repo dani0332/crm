@@ -182,7 +182,7 @@ class ApiService
 
             $ocbEmailJob = $quoteType?->ocbEmailJob();
             if ($ocbEmailJob) {
-                info("------ SIC workflow trigger request received for lead : {$request->quoteUuid} ------");
+                info("------ Going to Trigger Workflow for lead : {$request->quoteUuid} ------");
                 dispatch(new $ocbEmailJob($request->quoteUuid, null, true));
                 info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
 
