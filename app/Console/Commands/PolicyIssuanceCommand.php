@@ -2,9 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\PolicyIssuanceEnum;
-use App\Jobs\PolicyIssuanceJob;
-use App\Repositories\PolicyIssuanceRepository;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Console\Command;
 
@@ -40,7 +37,5 @@ class PolicyIssuanceCommand extends Command
         (new PolicyIssuanceService)->executePolicyIssuanceAutomationSteps();
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Ended');
     }
-
-
 
 }
