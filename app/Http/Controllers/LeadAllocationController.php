@@ -142,7 +142,7 @@ class LeadAllocationController extends Controller
         foreach ($request->all() as $item) {
             if ($quoteTypeId) {
                 $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('quote_type_id', $quoteTypeId)->where('id', $item['id'])->first();
-                if($leadAllocationUser) {
+                if ($leadAllocationUser) {
                     if (isset($item['reason'])) {
                         if ($item['reason'] != UserStatusEnum::OFFLINE && $item['reason'] != UserStatusEnum::ONLINE) {
                             info('User status is going to change to : '.UserStatusEnum::getUserStatusText($item['reason']));
@@ -199,7 +199,7 @@ class LeadAllocationController extends Controller
                     if ($quoteTypeId) {
                         $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('quote_type_id', $quoteTypeId)->where('user_id', $item['userId'])->first();
 
-                        if($leadAllocationObj) {
+                        if ($leadAllocationObj) {
                             if ($request->type === 'buy-lead') {
                                 $leadAllocationObj->buy_lead_max_capacity = (int) $item['maxCap'];
                             } else {
