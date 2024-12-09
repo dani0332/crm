@@ -641,4 +641,17 @@ class QuoteDocumentService extends BaseService
             return response()->json(['error' => 'File does not exist on server']);
         }
     }
+
+    /**
+     * Check if all required documents are uploaded to enable send policy to customer & book policy button in book policy section
+     * Triggering from updateQuoteStatus & bookPolicyPayload
+     *
+     * @return bool
+     */
+    public function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)
+    {
+        $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
+        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+        return $quoteDocumentsCount == count($documentTypeCodes);
+    }
 }

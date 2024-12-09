@@ -1989,7 +1989,6 @@ class CRUDController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyPending,
             ]);
         }
-
         // store policy issuer
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         if ($payment) {
@@ -1997,16 +1996,14 @@ class CRUDController extends Controller
             $payment->save();
         }
 
-        app(CentralService::class)->synchronizePaymentInformation($quoteModel);
-        $this->updateQuoteStatus($request->modelType, $request->quote_id);
-
+        $centralService = app(CentralService::class);
+        $centralService->synchronizePaymentInformation($quoteModel);
+        $centralService->updateQuoteInformation($request->modelType, $request->quote_id);
         info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
-
         if (in_array($quoteModel->quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer])) {
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($quoteModel, $payment, $request->modelType);
             info('Quote Code: '.$quoteModel->code.' BIN Generated for transactional leads');
         }
-
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',
         ]);

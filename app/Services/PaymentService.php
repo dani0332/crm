@@ -39,7 +39,10 @@ class PaymentService extends BaseService
 
         $payment->total_price = $priceWithVat;
         $this->setTotalAmount($payment);
-        $payment->save();
+        
+        if ($payment->isDirty()){
+            $payment->save();
+        }
     }
 
     private function handleSystemAdjustedDiscount($payment, $difference, $initialDifference){

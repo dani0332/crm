@@ -271,7 +271,7 @@ trait GenericQueriesAllLobs
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
-                $isAllRequiredDocumentUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record);
+                $isAllRequiredDocumentUploaded = app(QuoteDocumentService::class)->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record);
                 $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
                 if ($isAllRequiredDocumentUploaded) {
                     $bookPolicyDetails['sendButton'] = true;
@@ -344,41 +344,6 @@ trait GenericQueriesAllLobs
         }
 
         return (isset($quote->id)) ? $quote : false;
-    }
-
-    /**
-     * Updates quote & policy issuance status, first will check if the quote's current status is not already set to 'Policy Sent to Customer'
-     * We check policy issuance status is not 'Policy Issued' & if afilled policy details & required documents are uploaded
-     * This will trigger once policy details section update or new document upload from upload document section
-     */
-    public function updateQuoteStatus($type, $id)
-    {
-        if ($type == 'send-update') {
-            return true;
-        }
-        if (request()->has('quote_type')) {
-            $type = request()->quote_type;
-        }
-
-        $quote = $this->getQuoteObject($type, $id);
-        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called');
-        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
-            $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-            info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
-            if ($isPolicyDetailsFilled) {
-                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
-                $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
-                info('Quote Code: '.$quote->code.' Is all required documents filled for '.$isAllRequiredDocumentAreUploaded);
-                if ($isAllRequiredDocumentAreUploaded) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-                        'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
-                        'policy_issuance_status_other' => '',
-                    ]);
-                }
-                info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
-            }
-        }
     }
 
     /**
@@ -481,23 +446,6 @@ trait GenericQueriesAllLobs
         }
 
         return true;
-    }
-
-    /**
-     * Check if all required documents are uplaoded to enable send policy to customer & book policybutton in book policy section
-     * Triggering from updateQuoteStatus & bookPolicyPayload
-     *
-     * @return bool
-     */
-    private function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)
-    {
-        $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
-        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
-
-        info('Quote Code: '.$record->code.' isAllRequiredDocumentAreUploaded: '.$record->code.' Total number of document required: '.count($documentTypeCodes).' Upload number of document: '.$quoteDocumentsCount);
-        info('Quote Code: '.$record->code.' documentTypeCodes: ', $documentTypeCodes);
-
-        return $quoteDocumentsCount == count($documentTypeCodes);
     }
 
     /**

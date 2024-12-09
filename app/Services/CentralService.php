@@ -10,6 +10,7 @@ use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -933,7 +934,39 @@ class CentralService
             }
             app(PaymentService::class)->processMasterPayment($payment, $quoteObject);
             app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment);
+
             return $this->isLackingPayment($payment);
+        }
+    }
+
+    /**
+     * Updates quote & policy issuance status, first will check if the quote's current status is not already set to 'Policy Sent to Customer'
+     * We check policy issuance status is not 'Policy Issued' & if afilled policy details & required documents are uploaded
+     * This will trigger once policy details section update or new document upload from upload document section
+     */
+    public function updateQuoteInformation($type, $id)
+    {
+        if ($type == 'send-update') return true;
+        if (request()->has('quote_type')) {
+            $type = request()->quote_type;
+        }
+
+        $quote = $this->getQuoteObject($type, $id);
+        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called');
+        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+            $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
+            info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
+            if ($isPolicyDetailsFilled) {
+                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);;
+                if (app(QuoteDocumentService::class)->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote)) {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                        'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+                        'policy_issuance_status_other' => '',
+                    ]);
+                }
+                info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
+            }
         }
     }
 }
