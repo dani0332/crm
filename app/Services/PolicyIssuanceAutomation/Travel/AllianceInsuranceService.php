@@ -245,7 +245,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $premium = $issuePolicyResult?->premium;
         $priceVatApplicable = $premium / (1 + ((float) $this->vat / 100));
         $policyIssuanceDate = Carbon::now();
-        $policyExpiryDate = Carbon::parse($quote->policy_start_date)->addDays($quote->days_cover_for);
+        /* Last Cover day should be the expiry date as per business requirement */
+        $policyExpiryDate = Carbon::parse($quote->policy_start_date)->addDays($quote->days_cover_for)->subDay();
 
         $quote->update([
             'insurer_policy_id' => $insurerPolicyId,
