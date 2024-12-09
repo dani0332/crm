@@ -244,7 +244,6 @@ const rules = {
         props.modelType === quoteTypeCodeEnum.Travel.toLowerCase();
 
       if (!isTravelQuote) {
-
         const date = new Date(policyDetailsForm.quote_policy_start_date);
 
         const currentDate = new Date();
@@ -258,7 +257,7 @@ const rules = {
         date.setHours(0, 0, 0, 0);
 
         if (date > allowedMaxDate) {
-            return 'Please select a date within the next two months';
+          return 'Please select a date within the next two months';
         }
       }
 
