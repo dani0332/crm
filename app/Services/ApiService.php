@@ -163,6 +163,8 @@ class ApiService
 
             return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
         } else {
+            info('------ SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
+
             $quoteTypeId = QuoteTypeId::Car;
             if ($request->has('quoteTypeId')) {
                 $quoteTypeId = $request->quoteTypeId;
