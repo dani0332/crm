@@ -489,6 +489,8 @@ class BikeAllocationService extends AllocationService
         // Save the updated lead.
         $lead->save();
 
+        $lead->endAllocation();
+
         return $lead;
     }
 

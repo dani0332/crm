@@ -41,6 +41,14 @@ class TravelAllocation implements Allocation
                 info(self::class." - executeSteps: Lead not found for : {$this->allocationId}");
                 $response = AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
+                if ($lead->isAllocationInProgress()) {
+                    info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                    return AllocationFactory::createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
+                }
+
+                $lead->startAllocation();
+
                 $advisor = $this->fetchAvailableAdvisor();
 
                 if (! $advisor) {
@@ -51,6 +59,7 @@ class TravelAllocation implements Allocation
                     $response = AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
                     $this->assignLead($lead, $advisor); // Assign the lead to the advisor
+                    $lead->endAllocation();
                     $response = AllocationFactory::createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
                 }
             }

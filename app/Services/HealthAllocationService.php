@@ -207,7 +207,7 @@ class HealthAllocationService extends AllocationService
             ->first();
     }
 
-    public function assignLead($lead, $advisor, $assignmentType)
+    public function assignLead(HealthQuote $lead, $advisor, $assignmentType)
     {
         if ($lead->advisor_id === $advisor->id) {
             info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
@@ -236,6 +236,8 @@ class HealthAllocationService extends AllocationService
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
+
+        $lead->endAllocation();
 
         if ($this->isBuyLeadAdvisor) {
             $this->buyLeadRequest->buyLead($lead, QuoteTypes::HEALTH);

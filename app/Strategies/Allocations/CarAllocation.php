@@ -42,6 +42,14 @@ class CarAllocation implements Allocation
                 return AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
+            if ($lead->isAllocationInProgress()) {
+                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                return AllocationFactory::createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
+            }
+
+            $lead->startAllocation();
+
             $tier = $this->determineTier($lead);
 
             if ($tier) {
@@ -92,6 +100,8 @@ class CarAllocation implements Allocation
             $lead->tier_id = $tier->id;
             $lead->save();
 
+            $lead->endAllocation();
+
             return AllocationFactory::createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier->id);
         }
 
@@ -102,6 +112,8 @@ class CarAllocation implements Allocation
 
         if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
             info('Advisor is same as previous advisor. Skipping for now.');
+
+            $lead->endAllocation();
 
             return AllocationFactory::createResponse($advisorId, 'Advisor is same as previous advisor. Skipping for now', Response::HTTP_OK);
         }

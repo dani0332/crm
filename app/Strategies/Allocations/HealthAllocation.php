@@ -35,10 +35,20 @@ class HealthAllocation implements Allocation
                 return AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
+            if ($lead->isAllocationInProgress()) {
+                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                return AllocationFactory::createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
+            }
+
+            $lead->startAllocation();
+
             $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
                 info('No health team found against lead : '.$lead->uuid);
+
+                $lead->endAllocation();
 
                 return AllocationFactory::createResponse(0, 'No health team found', Response::HTTP_NOT_FOUND);
             }
@@ -60,11 +70,13 @@ class HealthAllocation implements Allocation
 
             if ($advisor->id == $lead->advisor_id) {
                 info('Advisor is same as previous advisor. Skipping for now.');
+                $lead->endAllocation();
 
                 return AllocationFactory::createResponse($advisor->id, 'Advisor is same as previous advisor. Skipping for now.', Response::HTTP_OK);
             }
 
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
+            $lead->endAllocation();
 
             return AllocationFactory::createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
         } catch (\Throwable $th) {

@@ -36,6 +36,14 @@ class BikeAllocation implements Allocation
 
                 $response = AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
+                if ($lead->isAllocationInProgress()) {
+                    info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                    return AllocationFactory::createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
+                }
+
+                $lead->startAllocation();
+
                 // Find the appropriate tier for the lead
                 $tier = $lead->tier_id != null ? $this->getTier($lead->tier_id) : $this->findTier($lead);
 
@@ -52,9 +60,11 @@ class BikeAllocation implements Allocation
 
                     if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
                         info('Advisor is same as previous advisor. Skipping for now.');
+                        $lead->endAllocation();
                         $response = AllocationFactory::createResponse($advisorId, 'Advisor is same as previous advisor. Skipping for now', Response::HTTP_OK);
                     } elseif ($advisorId && $advisorId != 0) {
                         $this->assignLead($lead, $advisorId, $tier);
+                        $lead->endAllocation();
                         $response = AllocationFactory::createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
                     } else {
                         $this->bikeAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::BIKE);
@@ -67,6 +77,7 @@ class BikeAllocation implements Allocation
                 } else {
                     // Log that tier was not found for the lead and skip processing
                     info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+                    $lead->endAllocation();
                     $response = AllocationFactory::createResponse(0, 'Tier not found', Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
             }

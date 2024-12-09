@@ -637,6 +637,8 @@ class CarAllocationService extends AllocationService
             info('Lead Id '.$lead->uuid.' assigned to advisor id : '.$userId);
         }
 
+        $lead->endAllocation();
+
         return $lead;
     }
 
