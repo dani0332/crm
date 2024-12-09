@@ -149,6 +149,7 @@ trait QuoteModelTrait
         self::withoutEvents(function () {
             $this->update([
                 'lead_allocation_failed_at' => now(),
+                'lead_allocation_started_at' => null,
             ]);
         });
     }
@@ -162,6 +163,7 @@ trait QuoteModelTrait
         self::withoutEvents(function () {
             $this->update([
                 'lead_allocation_failed_at' => null,
+                'lead_allocation_started_at' => null,
             ]);
         });
     }
@@ -210,5 +212,41 @@ trait QuoteModelTrait
             $this->sic_advisor_requested == 1 ||
             $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
             $this->assignment_type == AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+    }
+
+    public function startAllocation()
+    {
+        if ($this->lead_allocation_started_at) {
+            return; // Already Started
+        }
+
+        self::withoutEvents(function () {
+            $this->update([
+                'lead_allocation_started_at' => now(),
+            ]);
+        });
+    }
+
+    public function scopeAllocationNotInProgress($q)
+    {
+        $q->whereNull('lead_allocation_started_at');
+    }
+
+    public function isAllocationInProgress(): bool
+    {
+        return $this->lead_allocation_started_at !== null;
+    }
+
+    public function endAllocation()
+    {
+        if (! $this->lead_allocation_started_at) {
+            return; // Already Ended
+        }
+
+        self::withoutEvents(function () {
+            $this->update([
+                'lead_allocation_started_at' => null,
+            ]);
+        });
     }
 }
