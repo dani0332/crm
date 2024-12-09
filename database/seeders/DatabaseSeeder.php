@@ -18,17 +18,12 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
             HealthRevivalQuotesSeeder::class,
-            AddSuperLeadStatusChangePermission::class,
             QuoteStatusSeeder::class,
-            AddReApprovePaymentPermission::class,
-            // SendUpdateAdditionalTaxInvoice::class,
+            LookupSeeder::class,
             SUAdditionalCRNSubTypesSeeder::class,
+            CallBackNotificationDataMigrationSeeder::class,
             //DocumentTypeSeeder::class,
-            InsurerTaxInvoicePermissionsSeeder::class,
-            SendUpdatePermission::class,
-            GenericPermissionSeeder::class,
-            SendUpdateAdditionalSubType::class,
-            PermissionsSeeder::class,
+            // SendUpdateAdditionalSubType::class,
         ]);
     }
 }
