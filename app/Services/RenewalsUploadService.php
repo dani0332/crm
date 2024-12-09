@@ -1045,6 +1045,7 @@ class RenewalsUploadService
                 'year_of_manufacture' => $data['year'] ?? null,
                 'previous_advisor_id' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
                 'has_ncd_supporting_documents' => $data['nc_letter'],
+                'is_gcc_standard' => $data['is_gcc'] == 'Yes' ? 1 : 0,
             ]);
 
             /*

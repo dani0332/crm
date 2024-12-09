@@ -485,11 +485,11 @@ const onToggle = e => {};
                 <td>200</td>
               </tr>
               <tr>
-                <td>41</td>
-                <td>Renewal Batch REF</td>
-                <td>Renewal Batch REF</td>
+                <td>42</td>
+                <td>Is GCC</td>
+                <td>Is GCC - Yes/No</td>
                 <td>No</td>
-                <td>50</td>
+                <td>3</td>
               </tr>
             </tbody>
           </table>
