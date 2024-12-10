@@ -78,7 +78,7 @@ class SearchService extends BaseService
                 $selectColumns = array_merge($selectColumns, $suSelectColumns);
                 $this->searchQuoteQueryFilters($baseQuery, request(), true);
                 PersonalQuote::applyQuoteRequestEntityMappingJoin($baseQuery, request(), $this->filteredQuoteTypes);
-                $selectColumns[] = DB::raw('CASE '.$this->getFilteredCompanyCases($this->filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes).' ELSE "N/A" END as company_name');
+                $selectColumns = $this->getFilteredCompanyCases($this->filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns);
                 $baseQuery->select($selectColumns);
 
             } else {
@@ -92,7 +92,7 @@ class SearchService extends BaseService
                 $this->searchQuoteQueryFilters($baseQuery, request());
                 PersonalQuote::applyQuoteRequestEntityMappingJoin($baseQuery, request(), $this->filteredQuoteTypes);
                 $selectColumns = array_merge($selectColumns, ['personal_quotes.uuid', 'quote_status.text as quote_status']);
-                $selectColumns[] = DB::raw('CASE '.$this->getFilteredCompanyCases($this->filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes).' ELSE "N/A" END as company_name');
+                $selectColumns = $this->getFilteredCompanyCases($this->filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns);
                 $baseQuery->select($selectColumns);
             }
 
@@ -108,7 +108,7 @@ class SearchService extends BaseService
         return [];
     }
 
-    private function getFilteredCompanyCases($filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes): string
+    private function getFilteredCompanyCases($filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns): array
     {
         $filteredCompanyCases = '';
         $quoteTypes = is_array($filteredQuoteTypes) ? $filteredQuoteTypes : [];
@@ -133,7 +133,13 @@ class SearchService extends BaseService
             $filteredCompanyCases .= ' WHEN personal_quotes.quote_type_id = '.$quoteType.' THEN '.$quoteRequestTable.'_entity.company_name';
         }
 
-        return $filteredCompanyCases;
+        if ($filteredCompanyCases == '') {
+            $selectColumns[] = DB::raw('"N/A" as company_name');
+        } else {
+            $selectColumns[] = DB::raw('CASE '.$filteredCompanyCases.' ELSE "N/A" END as company_name');
+        }
+
+        return $selectColumns;
     }
 
     private function searchQuoteQueryFilters($query, $request, $isSendUpdateFilter = false): void
