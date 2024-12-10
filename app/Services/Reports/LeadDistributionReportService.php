@@ -50,6 +50,7 @@ class LeadDistributionReportService extends BaseService
             $query = $this->getPersonsalQuoteQuery($lob);
             $query = $this->applyFilters($query, $filters);
         }
+
         // dd($query->toSql(), $query->getBindings());
         return $query->paginate(15)
             ->withQueryString();
@@ -146,7 +147,7 @@ class LeadDistributionReportService extends BaseService
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->groupBy('teams.name')
             ->orderBy('teams.name');
-            
+
         if (
             ! auth()->user()->hasAnyRole([
                 RolesEnum::LeadPool,
@@ -275,7 +276,7 @@ class LeadDistributionReportService extends BaseService
 
         return [
             'lob' => $lobs,
-            'maxDays' => $maxDays
+            'maxDays' => $maxDays,
         ];
     }
 
@@ -299,8 +300,8 @@ class LeadDistributionReportService extends BaseService
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');
 
         $query->when($lob === quoteTypeCode::Travel, function ($q) {
-                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
-            })
+            $q->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
+        })
             ->when($lob === quoteTypeCode::Health, function ($q) {
                 $q->filterBySegment(request()->segment_filter, QuoteTypeId::Health);
             })
