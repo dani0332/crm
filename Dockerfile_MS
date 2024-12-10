@@ -79,7 +79,8 @@ libpng16-16 \
 libzip4 \
 zlib1g \
 libicu-dev \
-libmemcached11 
+libmemcached11 \
+ghostscript
 
 # Set working directory
 WORKDIR /var/www
