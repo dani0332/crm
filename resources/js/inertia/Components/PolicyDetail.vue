@@ -239,18 +239,26 @@ const rules = {
   },
   policy_start_date: v => {
     if (v) {
-      const date = new Date(policyDetailsForm.quote_policy_start_date);
+      // For Travel LOB, there is no start date validation. For other LOBs, start date can be within 2 months from current date.
+      let isTravelQuote =
+        props.modelType === quoteTypeCodeEnum.Travel.toLowerCase();
 
-      const currentDate = new Date();
-      currentDate.setHours(0, 0, 0, 0);
+      if (!isTravelQuote) {
+        const date = new Date(policyDetailsForm.quote_policy_start_date);
 
-      const allowedMaxDate = new Date(currentDate);
-      allowedMaxDate.setMonth(currentDate.getMonth() + 2);
-      allowedMaxDate.setHours(0, 0, 0, 0);
-      date.setHours(0, 0, 0, 0);
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
 
-      if (date > allowedMaxDate) {
-        return 'Please select a date within the next two months';
+        const allowedMaxDate = new Date(currentDate);
+
+        allowedMaxDate.setMonth(currentDate.getMonth() + 2);
+
+        allowedMaxDate.setHours(0, 0, 0, 0);
+        date.setHours(0, 0, 0, 0);
+
+        if (date > allowedMaxDate) {
+          return 'Please select a date within the next two months';
+        }
       }
 
       return true;
