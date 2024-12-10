@@ -3664,6 +3664,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                                   ? editPaymentModal(item, 0, 0, 1)
                                   : alertCapture(item)
                               "
+                              :disabled="isApproveConfirmed"
                             >
                               Capture
                             </x-button>
@@ -3680,6 +3681,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                                   ? editPaymentModal(item, 0, 0, 2)
                                   : alertCapture(item)
                               "
+                              :disabled="isApproveConfirmed"
                             >
                               Approve
                             </x-button>
@@ -5660,6 +5662,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                       type="submit"
                       tabindex="0"
                       :loading="paymentMethodsForm.processing"
+                      :disabled="isApproveConfirmed"
                     >
                       <template v-if="isCreditApprovalView && isCreditCardView">
                         Capture
