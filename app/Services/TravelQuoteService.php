@@ -152,7 +152,8 @@ class TravelQuoteService extends BaseService
             'tqr.insly_migrated',
             'tqr.sic_advisor_requested',
             'tqr.aml_status',
-            'tqr.departure_country_id'
+            'tqr.departure_country_id',
+            'tqr.insurance_provider_id',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
