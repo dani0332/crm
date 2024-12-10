@@ -93,10 +93,10 @@ function getTableHeader() {
     { text: 'First Name', value: 'first_name', sortingOrder: 2 },
     { text: 'Last Name', value: 'last_name', sortingOrder: 3 },
     { text: 'Company Name', value: 'company_name', sortingOrder: 4 },
-    { text: 'Line of Business', value: 'quote_type_id', sortingOrder: 5 },
+    { text: 'Line of Business', value: 'quote_type', sortingOrder: 5 },
     {
       text: 'Business Insurance Type',
-      value: 'business_type_of_insurance_id',
+      value: 'business_insurance_type',
       sortingOrder: 6,
     },
     {
@@ -118,7 +118,7 @@ function getTableHeader() {
       align: 'center',
       sortingOrder: 9,
     },
-    { text: 'Status', value: 'quote_status_id', sortingOrder: 10 },
+    { text: 'Status', value: 'quote_status', sortingOrder: 10 },
   ];
 }
 
@@ -133,8 +133,8 @@ function updateTableDetails() {
     );
     tableHeader.value.push(
       { text: 'SU Ref-ID', value: 'code', width:100, sortingOrder: 1 },
-      { text: 'Type', value: 'category_id', width:200, sortingOrder: 10 },
-      { text: 'Sub type', value: 'option_id', width:200, sortingOrder: 11 },
+      { text: 'Type', value: 'category', width:200, sortingOrder: 10 },
+      { text: 'Sub type', value: 'option', width:200, sortingOrder: 11 },
       { text: 'Notes', value: 'notes', width: 300, sortingOrder: 12 },
       { text: 'Status', value: 'status', sortingOrder: 13 },
     );
@@ -443,7 +443,7 @@ onMounted(() => {
         </x-tooltip>
       </template>
 
-      <template #header-business_type_of_insurance_id="header">
+      <template #header-business_insurance_type="header">
         <x-tooltip placement="top">
           <p class="underline decoration-dotted">
             {{ header.text }}
@@ -476,7 +476,7 @@ onMounted(() => {
         </x-tooltip>
       </template>
 
-      <template v-if="!isSendUpdateListView" #header-quote_status_id="header">
+      <template v-if="!isSendUpdateListView" #header-quote_status="header">
         <x-tooltip placement="top">
           <p class="underline decoration-dotted">
             {{ header.text }}
@@ -523,6 +523,20 @@ onMounted(() => {
       </template>
       <!-- Datatable Header Tooltips End -->
 
+<!--        :href="-->
+<!--        isSendUpdateListView-->
+<!--        ? getSendUpdatePageRoute(uuid, [-->
+<!--        personal_quote?.uuid,-->
+<!--        personal_quote?.quote_type_id,-->
+<!--        personal_quote?.business_type_of_insurance_id,-->
+<!--        ])-->
+<!--        : getDetailPageRoute(-->
+<!--        uuid,-->
+<!--        quote_type_id,-->
+<!--        business_type_of_insurance_id,-->
+<!--        )-->
+<!--        "-->
+
       <template
         #item-code="{
           code,
@@ -533,86 +547,36 @@ onMounted(() => {
         }"
       >
         <Link
-          :href="
-            isSendUpdateListView
-              ? getSendUpdatePageRoute(uuid, [
-                  personal_quote?.uuid,
-                  personal_quote?.quote_type_id,
-                  personal_quote?.business_type_of_insurance_id,
-                ])
-              : getDetailPageRoute(
-                  uuid,
-                  quote_type_id,
-                  business_type_of_insurance_id,
-                )
-          "
+
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ code }}</span>
         </Link>
       </template>
-      <template
-        v-if="isSendUpdateListView"
-        #item-first_name="{ personal_quote }"
-      >
-        {{ personal_quote?.first_name }}
+      <template #item-company_name="{ company_name }">
+<!--        {{ destructCompanyName(isSendUpdateListView, item) ?? 'N/A' }}-->
+          {{ company_name ?? 'N/A' }}
       </template>
-      <template
-        v-if="isSendUpdateListView"
-        #item-last_name="{ personal_quote }"
-      >
-        {{ personal_quote?.last_name }}
-      </template>
-      <template #item-company_name="item">
-        {{ destructCompanyName(isSendUpdateListView, item) ?? 'N/A' }}
-      </template>
-      <template #item-quote_type_id="{ quote_type }">
-        {{ quote_type?.code }}
-      </template>
-      <template
-        #item-business_type_of_insurance_id="{
-          business_type_of_insurance,
-          quote_type_id,
-          personal_quote,
-        }"
-      >
+      <template #item-business_insurance_type="{ quote_type_id, business_insurance_type }">
         {{
-          isSendUpdateListView
-            ? personal_quote?.quote_type_id === props.quoteTypeIdEnum.Business
-              ? (personal_quote?.business_type_of_insurance?.text ?? 'N/A')
-              : 'N/A'
-            : quote_type_id === props.quoteTypeIdEnum.Business
-              ? (business_type_of_insurance?.text ?? 'N/A')
-              : 'N/A'
+          quote_type_id === props.quoteTypeIdEnum.Business ? business_insurance_type : 'N/A'
         }}
       </template>
       <template
-        #item-policy_expiry_date="{ policy_expiry_date, personal_quote }"
+        #item-policy_expiry_date="{ policy_expiry_date }"
       >
+        {{ policy_expiry_date ? dateFormat(policy_expiry_date) : 'N/A' }}
+      </template>
+      <template #item-policy_number="{ policy_number }">
         {{
-          isSendUpdateListView
-            ? dateFormat(personal_quote?.policy_expiry_date)
-            : dateFormat(policy_expiry_date)
+           policy_number ?? 'N/A'
         }}
-      </template>
-      <template #item-policy_number="{ policy_number, personal_quote }">
-        {{
-          (isSendUpdateListView
-            ? personal_quote?.policy_number
-            : policy_number) ?? 'N/A'
-        }}
-      </template>
-      <template v-if="isSendUpdateListView" #item-category_id="{ category }">
-        {{ category?.text }}
-      </template>
-      <template v-if="isSendUpdateListView" #item-option_id="{ option }">
-        {{ option?.text }}
       </template>
       <template
         v-if="!isSendUpdateListView"
-        #item-quote_status_id="{ quote_status, policy_number }"
+        #item-quote_status="{ quote_status, policy_number }"
       >
-        {{ policy_number == null ? 'N/A' : quote_status?.text }}
+        {{ policy_number == null ? 'N/A' : quote_status }}
       </template>
       <template v-if="isSendUpdateListView" #item-notes="{ notes }">
         <div class="flex gap-2 cursor-pointer">

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\CentralTrait;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
-    use Auditable;
+    use Auditable, CentralTrait;
 
     protected $guarded = [];
     protected $casts = [
