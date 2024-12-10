@@ -4,6 +4,7 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
@@ -21,7 +22,6 @@ use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Enums\QuoteStatusEnum;
 
 class TravelEmailService extends BaseService
 {
@@ -309,6 +309,7 @@ class TravelEmailService extends BaseService
             info("SendOCBTravelRenewalIntroEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
             $lead->quote_status_id = QuoteStatusEnum::Quoted;
             $lead->save();
+
             return $response->status_code;
         } else {
             info("SendOCBTravelRenewalIntroEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
