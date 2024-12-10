@@ -283,8 +283,10 @@ class QuoteDocumentService extends BaseService
                     return preg_match('/^Certificate of Insurance$/', $document->original_name);
                 });
             }
+
             return $quoteDocument;
         }
+
         // Return all documents associated with the quote if no specific document type codes are provided
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
