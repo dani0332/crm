@@ -445,7 +445,7 @@ watch(
       <div class="mt-5 flex gap-2 justify-end">
         <x-button
           size="sm"
-          @click.prevent="((showAddNotes = false), (isEdit = false))"
+          @click.prevent="(showAddNotes = false), (isEdit = false)"
         >
           Cancel
         </x-button>
