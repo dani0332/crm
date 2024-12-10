@@ -276,9 +276,15 @@ class QuoteDocumentService extends BaseService
 
         if ($quote && $documentTypeCodes) {
             // Return documents filtered by document type codes if provided
-            return $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
+            if (ucfirst($quoteType) == quoteTypeCode::Travel) {
+                return $quoteDocument->filter(function ($document) {
+                    // Match the exact text "Certificate of Insurance" only
+                    return preg_match('/^Certificate of Insurance$/', $document->original_name);
+                });
+            }
+            return $quoteDocument;
         }
-
         // Return all documents associated with the quote if no specific document type codes are provided
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }

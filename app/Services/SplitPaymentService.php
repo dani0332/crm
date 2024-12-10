@@ -550,6 +550,9 @@ class SplitPaymentService
     public function generateSplitPaymentLink($request)
     {
         $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
+        if (! $splitPayment) {
+            return response()->json(['success' => false]);
+        }
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
         $quoteId = $request->quoteId;
