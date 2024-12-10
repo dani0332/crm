@@ -2066,7 +2066,7 @@ class SageApiService
                     $quote->save();
                 } elseif ($isPolicyBookingFailed) {
                     info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - execute updateQuoteApiIssuanceStatusAndAllocate');
-                    $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote->uuid, PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+                    $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
                     info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - updateQuoteApiIssuanceStatusAndAllocate executed');
                 }
 
