@@ -12,7 +12,8 @@ const loader = reactive({
   table: false,
   export: false,
 });
-
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const { isRequired } = useRules();
 
 const tableHeader = [
@@ -37,14 +38,10 @@ let availableFilters = {
 const isDateMandatory = ref(true);
 const isSearchValueRequired = ref(false);
 const isQuoteTypeEmpty = ref(false);
-const filtersForm = useForm({
-  quoteType: null,
-  searchType: '',
-  searchField: '',
-  matchFound: '',
+const filtersForm = useForm(availableFilters);
+const customErrors = reactive({
   amlCreatedStartDate: '',
   amlCreatedEndDate: '',
-  page: 1,
 });
 
 function onReset() {
@@ -66,9 +63,8 @@ function onSubmit(isValid) {
   if (!isValid || !filtersForm.quoteType) return;
 
   //remove empty fields
-  Object.keys(filtersForm).forEach(
-    key => filtersForm[key] === '' && delete filtersForm[key],
-  );
+  removeEmptyFields(filtersForm);
+
   filtersForm.get(`/kyc/aml`, {
     preserveScroll: true,
     onBefore: () => {
@@ -96,6 +92,67 @@ function onSubmit(isValid) {
       });
       return false;
     },
+  });
+}
+
+const resetBeforeSubmit = () => {
+  checkDateValidation();
+  resetCustomErrors();
+};
+
+const resetCustomErrors = () => {
+  customErrors.amlCreatedStartDate = '';
+  customErrors.amlCreatedEndDate = '';
+};
+
+const onDataExport = flag => {
+  isDateMandatory.value = true;
+  isQuoteTypeEmpty.value = false;
+  resetCustomErrors();
+
+  let hasErrors = false;
+  if (!filtersForm.amlCreatedStartDate) {
+    customErrors.amlCreatedStartDate = 'This field is required';
+    hasErrors = true;
+  }
+
+  if (!filtersForm.amlCreatedEndDate) {
+    customErrors.amlCreatedEndDate = 'This field is required';
+    hasErrors = true;
+  }
+
+  if (
+    dayjs(filtersForm.amlCreatedEndDate).diff(
+      dayjs(filtersForm.amlCreatedStartDate),
+      'day',
+    ) > 30
+  ) {
+    customErrors.amlCreatedStartDate =
+      'Allowed no. of days between start & end dates are 30 days.';
+    hasErrors = true;
+  }
+
+  if (hasErrors) {
+    return;
+  }
+
+  const exportData = {};
+  Object.keys(availableFilters).forEach(key => {
+    exportData[key] = filtersForm[key];
+  });
+
+  //remove empty fields
+  removeEmptyFields(exportData);
+
+  const url = `/kyc/export`;
+  window.open(url + '?' + useObjToUrl(exportData));
+};
+
+function removeEmptyFields(obj) {
+  Object.keys(obj).forEach(key => {
+    if (obj[key] === '') {
+      delete obj[key];
+    }
   });
 }
 
@@ -151,7 +208,10 @@ onMounted(() => {
           v-model="filtersForm.quoteType"
           label="Quote Type"
           placeholder="Search by Quote Type"
-          :options="quoteTypeOptions.value"
+          :options="[
+            { value: '', label: 'Select Quote Type' },
+            ...quoteTypeOptions.value,
+          ]"
           :single="true"
           :hasError="isQuoteTypeEmpty"
         />
@@ -183,6 +243,7 @@ onMounted(() => {
           class="w-full"
           :rules="isDateMandatory ? [isRequired] : []"
           :customError="filtersForm.errors.amlCreatedStartDate"
+          :error="customErrors.amlCreatedStartDate"
         />
         <DatePicker
           v-model="filtersForm.amlCreatedEndDate"
@@ -191,11 +252,33 @@ onMounted(() => {
           class="w-full"
           :rules="isDateMandatory ? [isRequired] : []"
           :customError="filtersForm.errors.amlCreatedEndDate"
+          :error="customErrors.amlCreatedEndDate"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
+        <x-button
+          v-if="can(permissionsEnum.DATA_EXTRACTION)"
+          size="sm"
+          color="#48bb78"
+          @click.prevent="onDataExport()"
+          :disabled="loader.table"
+        >
+          Export to Excel
+        </x-button>
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          type="submit"
+          :disabled="loader.table"
+          @click="resetBeforeSubmit()"
+          >Search</x-button
+        >
+        <x-button
+          size="sm"
+          color="primary"
+          :disabled="loader.table"
+          @click.prevent="onReset"
+        >
           Reset
         </x-button>
       </div>
