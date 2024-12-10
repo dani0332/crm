@@ -523,19 +523,7 @@ onMounted(() => {
       </template>
       <!-- Datatable Header Tooltips End -->
 
-<!--        :href="-->
-<!--        isSendUpdateListView-->
-<!--        ? getSendUpdatePageRoute(uuid, [-->
-<!--        personal_quote?.uuid,-->
-<!--        personal_quote?.quote_type_id,-->
-<!--        personal_quote?.business_type_of_insurance_id,-->
-<!--        ])-->
-<!--        : getDetailPageRoute(-->
-<!--        uuid,-->
-<!--        quote_type_id,-->
-<!--        business_type_of_insurance_id,-->
-<!--        )-->
-<!--        "-->
+
 
       <template
         #item-code="{
@@ -547,7 +535,17 @@ onMounted(() => {
         }"
       >
         <Link
-
+            :href="
+                isSendUpdateListView
+                    ? getSendUpdatePageRoute(uuid, [
+                        personal_quote?.uuid,
+                        personal_quote?.quote_type_id,
+                        personal_quote?.business_type_of_insurance_id,
+                    ]) : getDetailPageRoute(
+                        uuid,
+                        quote_type_id,
+                        business_type_of_insurance_id,
+                    )"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ code }}</span>
