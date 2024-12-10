@@ -31,8 +31,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 {
     private $className = 'allianceInsuranceService';
     private mixed $baseUrl;
-    private mixed $agencyId;
-    private mixed $agencyCode;
+    private mixed $authParam;
 
     public const INSURER_CODE = InsuranceProvidersEnum::ALNC;
     public const TYPE = quoteTypeCode::Travel;
@@ -45,8 +44,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $this->vat = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
 
         $this->baseUrl = config('constants.ALLIANCE_API_BASE_URL');
-        $this->agencyId = config('constants.ALLIANCE_AGENCY_ID');
-        $this->agencyCode = config('constants.ALLIANCE_AGENCY_CODE');
+        $this->authParam = [
+            'agency_id' => config('constants.ALLIANCE_AGENCY_ID'),
+            'agency_code' => config('constants.ALLIANCE_AGENCY_CODE'),
+        ];
 
     }
 
@@ -207,10 +208,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $nationalityTraveller[] = $member->nationality->alliance_nationality_id;
         }
 
-        $endPoint = $this->baseUrl.'/v1/quote/'.$travelType.'/finalise';
+        $endPoint = '/v1/quote/'.$travelType.'/finalise';
         $payload = [
-            'agency_id' => $this->agencyId,
-            'agency_code' => $this->agencyCode,
             'quote_id' => $selectedPlan?->insurer_quote_id,
             'scheme_id' => $selectedPlan?->alliance_scheme_id,
             'title_customer' => $title,
@@ -228,7 +227,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
-        $issuePolicy = Http::post($endPoint, $payload);
+        $issuePolicy = $this->allianceHttpCall($endPoint, $payload);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$issuePolicy);
 
         $issuePolicyResponse = $issuePolicy->object();
@@ -271,16 +270,14 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
         $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_PURCHASE_POLICY, 'error' => null, 'message' => null];
-        $endPoint = $this->baseUrl.'/v1/quote/'.$travelType.'/purchase';
+        $endPoint = '/v1/quote/'.$travelType.'/purchase';
 
         $payload = [
-            'agency_id' => $this->agencyId,
-            'agency_code' => $this->agencyCode,
             'policy_id' => $quote->insurer_policy_id,
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
-        $policyPurchase = Http::post($endPoint, $payload);
+        $policyPurchase = $this->allianceHttpCall($endPoint, $payload);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyPurchase);
 
         $policyPurchaseResponse = $policyPurchase->object();
@@ -320,19 +317,17 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS, 'error' => null, 'message' => null];
 
         $payload = [
-            'agency_id' => $this->agencyId,
-            'agency_code' => $this->agencyCode,
             'policy_id' => $quote->insurer_policy_id,
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
-        $endPoint = $this->baseUrl.'/v1/policy/'.$travelType.'/documents';
+        $endPoint = '/v1/policy/'.$travelType.'/documents';
 
         do {
             info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Waiting for 10 seconds so  Provider can generate the policy documents');
             sleep($retryDelay);
 
-            $policyDocuments = Http::post($endPoint, $payload);
+            $policyDocuments = $this->allianceHttpCall($endPoint, $payload);
             info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyDocuments);
 
             $policyDocumentsResponse = $policyDocuments->object();
@@ -378,15 +373,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS, 'error' => null, 'message' => null];
 
         $payload = [
-            'agency_id' => $this->agencyId,
-            'agency_code' => $this->agencyCode,
             'policy_id' => $quote->insurer_policy_id,
             'policy_number' => $quote->policy_number,
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
-        $endPoint = $this->baseUrl.'/v1/agency/buyer-tax-invoices';
-        $buyerTaxInvoice = Http::post($endPoint, $payload);
+        $endPoint = '/v1/agency/buyer-tax-invoices';
+        $buyerTaxInvoice = $this->allianceHttpCall($endPoint, $payload);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$buyerTaxInvoice);
 
         $buyerTaxInvoiceResponse = $buyerTaxInvoice->object();
@@ -657,6 +650,14 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         }
 
         return $title;
+    }
+
+    private function allianceHttpCall($endPoint, $param, $method = 'POST')
+    {
+        $payload = array_merge($this->authParam, $param);
+        $url = $this->baseUrl.$endPoint;
+
+        return Http::post($url, $payload);
     }
 
 }

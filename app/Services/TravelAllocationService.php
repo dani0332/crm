@@ -7,6 +7,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
@@ -17,10 +18,12 @@ use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Support\Facades\Log;
 
 class TravelAllocationService extends AllocationService
 {
+    public const TYPE = quoteTypeCode::Travel;
     public function fetchLead($quoteId, $overrideAdvisorId = false)
     {
         $travelQuote = TravelQuote::where('uuid', $quoteId)->first();
@@ -52,10 +55,11 @@ class TravelAllocationService extends AllocationService
                 PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
             ]);
 
-            info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - isALNC : '.$isALNC.' - isFailedStatus : '.$isFailedStatus.' - isAllianceTravelAutomationEnabled : '.isAllianceTravelAutomationEnabled());
+            $isAutomationEnabled = (new PolicyIssuanceService)->init(self::TYPE, $insurerCode)?->isPolicyIssuanceAutomationEnabled();
+            info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - isALNC : '.$isALNC.' - isFailedStatus : '.$isFailedStatus.' - isAllianceTravelAutomationEnabled : '.$isAutomationEnabled);
 
             // Skip the lead if it's Alliance Provider, Automation is enabled for Alliance and insurer api status is failed
-            if ($isALNC && ! $isFailedStatus && isAllianceTravelAutomationEnabled()) {
+            if ($isALNC && ! $isFailedStatus && $isAutomationEnabled) {
                 return null;
             }
         }
