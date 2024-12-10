@@ -96,6 +96,11 @@ class SearchService extends BaseService
                 $baseQuery->select($selectColumns);
             }
 
+            // TODO:: Check which lob(s) manager is logged in, then only those LOB(s) data should be visible
+            $baseQuery->when($this->isAdvisorRole(), function ($query) {
+                $query->where('personal_quotes.advisor_id', auth()->id());
+            });
+
             $baseQuery->orderBy($baseTable.'.'.(request()->sortBy ?? 'updated_at'), request()->sortType ?? 'desc');
 
             if ($isExport) {
@@ -106,6 +111,25 @@ class SearchService extends BaseService
         }
 
         return [];
+    }
+
+    private function isAdvisorRole(): bool
+    {
+        $advisorRoles = [
+            RolesEnum::CarAdvisor,
+            RolesEnum::HomeAdvisor,
+            RolesEnum::HealthAdvisor,
+            RolesEnum::LifeAdvisor,
+            RolesEnum::BusinessAdvisor,
+            RolesEnum::BikeAdvisor,
+            RolesEnum::YachtAdvisor,
+            RolesEnum::TravelAdvisor,
+            RolesEnum::PetAdvisor,
+            RolesEnum::CycleAdvisor,
+            RolesEnum::JetskiAdvisor,
+        ];
+
+        return auth()->user()->hasAnyRole($advisorRoles);
     }
 
     private function getFilteredCompanyCases($filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns): array
@@ -346,7 +370,7 @@ class SearchService extends BaseService
             RolesEnum::Admin,
             RolesEnum::Engineering,
         ])) {
-            $usersReportToLoggedInUser = UserManager::where('manager_id', auth()->user()->id)
+            $usersReportToLoggedInUser = UserManager::where('manager_id', auth()->id())
                 ->whereIn('user_id', $usersByTeamProduct)->pluck('user_id')->toArray();
         }
 

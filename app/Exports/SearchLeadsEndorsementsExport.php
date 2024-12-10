@@ -2,7 +2,6 @@
 
 namespace App\Exports;
 
-use App\Enums\QuoteTypeId;
 use App\Exports\Reports\BaseReportsExport;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
@@ -33,61 +32,30 @@ class SearchLeadsEndorsementsExport extends BaseReportsExport implements WithTit
         if (request()->list == 'leads') {
             $response = [
                 $row->code,
-                ($row?->customer?->first_name.' '.$row?->customer?->last_name) ?? $this->notAvailable,
-                $this->getCompanyName(request()->list, $row),
-                $row?->quoteStatus?->text ?? $this->notAvailable,
-                $row?->quotePayments->first()?->total_price ?? $this->notAvailable,
+                // ($row?->customer?->first_name.' '.$row?->customer?->last_name) ?? $this->notAvailable,
+                $row->company_name,
+                $row->quote_status ?? $this->notAvailable,
+                //                $row?->quotePayments->first()?->total_price ?? $this->notAvailable,
                 $row->policy_number ?? $this->notAvailable,
-                $row?->quotePayments->first()?->insuranceProvider?->text ?? $this->notAvailable,
-                $row?->quoteType?->code ?? $this->notAvailable,
-                $row?->advisor?->name ?? $this->notAvailable,
+                //                $row?->quotePayments->first()?->insuranceProvider?->text ?? $this->notAvailable,
+                $row->quote_type ?? $this->notAvailable,
+                //                $row?->advisor?->name ?? $this->notAvailable,
             ];
         } else {
             $response = [
                 $row->code,
-                ($row?->personalQuote?->customer?->first_name.' '.$row?->personalQuote?->customer?->last_name) ?? $this->notAvailable,
-                $this->getCompanyName(request()->list, $row),
+                //                ($row?->personalQuote?->customer?->first_name.' '.$row?->personalQuote?->customer?->last_name) ?? $this->notAvailable,
+                $row->company_name,
                 $row->status ?? $this->notAvailable,
-                $row?->sendUpdatePayments?->first()?->total_price ?? $this->notAvailable,
-                $row?->personalQuote?->policy_number ?? $this->notAvailable,
-                $row?->insuranceProvider?->text ?? $this->notAvailable,
-                $row?->quoteType?->code ?? $this->notAvailable,
-                $row?->personalQuote?->advisor?->name ?? $this->notAvailable,
+                //                $row?->sendUpdatePayments?->first()?->total_price ?? $this->notAvailable,
+                $row->policy_number ?? $this->notAvailable,
+                //                $row?->insuranceProvider?->text ?? $this->notAvailable,
+                $row->quote_type ?? $this->notAvailable,
+                //                $row?->personalQuote?->advisor?->name ?? $this->notAvailable,
             ];
         }
 
         return $response;
-    }
-
-    private function getCompanyName($exportType, $row): string
-    {
-        $personalLOBs = [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski, QuoteTypeId::TradeCredit];
-        $nonEcomLOBs = [
-            QuoteTypeId::Car => 'carQuoteRequest',
-            QuoteTypeId::Home => 'homeQuoteRequest',
-            QuoteTypeId::Health => 'healthQuoteRequest',
-            QuoteTypeId::Life => 'lifeQuoteRequest',
-            QuoteTypeId::Business => 'BusinessQuoteRequest',
-            QuoteTypeId::Travel => 'TravelQuoteRequest',
-            QuoteTypeId::GroupMedical => 'BusinessQuoteRequest',
-            QuoteTypeId::GroupMedicalBusiness => 'BusinessQuoteRequest',
-            QuoteTypeId::Corpline => 'BusinessQuoteRequest',
-            QuoteTypeId::CorplineBusiness => 'BusinessQuoteRequest',
-        ];
-
-        $isPersonalLOB = in_array($row->quote_type_id, $personalLOBs);
-        $rowObject = $exportType == 'leads' ? $row : $row?->personalQuote;
-
-        return $this->getCompanyNameFromRow($rowObject, $isPersonalLOB, $nonEcomLOBs) ?? $this->notAvailable;
-    }
-
-    private function getCompanyNameFromRow($row, $isPersonalLOB, $nonEcomLOBs): string
-    {
-        if ($isPersonalLOB) {
-            return $row?->quoteRequestEntityMapping?->entity?->company_name ?? $this->notAvailable;
-        }
-
-        return $row?->{$nonEcomLOBs[$row->quote_type_id]}?->quoteRequestEntityMapping?->entity?->company_name ?? $this->notAvailable;
     }
 
     public function title(): string
