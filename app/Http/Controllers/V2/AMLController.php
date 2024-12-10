@@ -170,6 +170,7 @@ class AMLController extends Controller
             'created_at',
             'decision',
         ])
+            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
             ->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
 
         $data = collect();
