@@ -15,7 +15,7 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->addReceiveNotificationsPermission();
+        // $this->addReceiveNotificationsPermission();
         $this->searchModulePermissions();
     }
 

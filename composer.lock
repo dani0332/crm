@@ -4,7 +4,7 @@
     "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
     "This file is @generated automatically"
   ],
-  "content-hash": "57f665fb79ad7cb4ec81dc3e1e5a5cf9",
+  "content-hash": "17980ff009cd1ec285ba6a3329a54e54",
   "packages": [
     {
       "name": "aws/aws-crt-php",
@@ -304,6 +304,58 @@
         "source": "https://github.com/Azure-OSS/azure-storage-php-adapter-laravel/tree/1.2.0"
       },
       "time": "2024-11-12T07:29:38+00:00"
+    },
+    {
+      "name": "bacon/bacon-qr-code",
+      "version": "v3.0.1",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/Bacon/BaconQrCode.git",
+        "reference": "f9cc1f52b5a463062251d666761178dbdb6b544f"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/Bacon/BaconQrCode/zipball/f9cc1f52b5a463062251d666761178dbdb6b544f",
+        "reference": "f9cc1f52b5a463062251d666761178dbdb6b544f",
+        "shasum": ""
+      },
+      "require": {
+        "dasprid/enum": "^1.0.3",
+        "ext-iconv": "*",
+        "php": "^8.1"
+      },
+      "require-dev": {
+        "phly/keep-a-changelog": "^2.12",
+        "phpunit/phpunit": "^10.5.11 || 11.0.4",
+        "spatie/phpunit-snapshot-assertions": "^5.1.5",
+        "squizlabs/php_codesniffer": "^3.9"
+      },
+      "suggest": {
+        "ext-imagick": "to generate QR code images"
+      },
+      "type": "library",
+      "autoload": {
+        "psr-4": {
+          "BaconQrCode\\": "src/"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["BSD-2-Clause"],
+      "authors": [
+        {
+          "name": "Ben Scholzen 'DASPRiD'",
+          "email": "mail@dasprids.de",
+          "homepage": "https://dasprids.de/",
+          "role": "Developer"
+        }
+      ],
+      "description": "BaconQrCode is a QR code generator for PHP.",
+      "homepage": "https://github.com/Bacon/BaconQrCode",
+      "support": {
+        "issues": "https://github.com/Bacon/BaconQrCode/issues",
+        "source": "https://github.com/Bacon/BaconQrCode/tree/v3.0.1"
+      },
+      "time": "2024-10-01T13:55:55+00:00"
     },
     {
       "name": "baopham/dynamodb",
@@ -905,6 +957,51 @@
         }
       ],
       "time": "2024-09-19T14:15:21+00:00"
+    },
+    {
+      "name": "dasprid/enum",
+      "version": "1.0.6",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/DASPRiD/Enum.git",
+        "reference": "8dfd07c6d2cf31c8da90c53b83c026c7696dda90"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/DASPRiD/Enum/zipball/8dfd07c6d2cf31c8da90c53b83c026c7696dda90",
+        "reference": "8dfd07c6d2cf31c8da90c53b83c026c7696dda90",
+        "shasum": ""
+      },
+      "require": {
+        "php": ">=7.1 <9.0"
+      },
+      "require-dev": {
+        "phpunit/phpunit": "^7 || ^8 || ^9 || ^10 || ^11",
+        "squizlabs/php_codesniffer": "*"
+      },
+      "type": "library",
+      "autoload": {
+        "psr-4": {
+          "DASPRiD\\Enum\\": "src/"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["BSD-2-Clause"],
+      "authors": [
+        {
+          "name": "Ben Scholzen 'DASPRiD'",
+          "email": "mail@dasprids.de",
+          "homepage": "https://dasprids.de/",
+          "role": "Developer"
+        }
+      ],
+      "description": "PHP 7.1 enum implementation",
+      "keywords": ["enum", "map"],
+      "support": {
+        "issues": "https://github.com/DASPRiD/Enum/issues",
+        "source": "https://github.com/DASPRiD/Enum/tree/1.0.6"
+      },
+      "time": "2024-08-09T14:30:48+00:00"
     },
     {
       "name": "dflydev/dot-access-data",
@@ -1701,55 +1798,6 @@
         "source": "https://github.com/ezyang/htmlpurifier/tree/v4.18.0"
       },
       "time": "2024-11-01T03:51:45+00:00"
-    },
-    {
-      "name": "filippo-toso/pdf-watermarker",
-      "version": "v1.1.1",
-      "source": {
-        "type": "git",
-        "url": "https://github.com/filippotoso/pdf-watermarker.git",
-        "reference": "3365cdf795b1b322397943577aa0e2452ea3ef69"
-      },
-      "dist": {
-        "type": "zip",
-        "url": "https://api.github.com/repos/filippotoso/pdf-watermarker/zipball/3365cdf795b1b322397943577aa0e2452ea3ef69",
-        "reference": "3365cdf795b1b322397943577aa0e2452ea3ef69",
-        "shasum": ""
-      },
-      "require": {
-        "illuminate/support": ">=7.0",
-        "php": ">=7.1.0",
-        "setasign/fpdf": "^1.8",
-        "setasign/fpdi": "^2.3"
-      },
-      "type": "library",
-      "extra": {
-        "laravel": {
-          "aliases": {
-            "PdfWatermark": "FilippoToso\\PdfWatermarker\\Facades\\PdfWatermarker",
-            "ImageWatermark": "FilippoToso\\PdfWatermarker\\Facades\\ImageWatermarker"
-          }
-        }
-      },
-      "autoload": {
-        "psr-4": {
-          "FilippoToso\\PdfWatermarker\\": "src"
-        }
-      },
-      "notification-url": "https://packagist.org/downloads/",
-      "license": ["MIT"],
-      "authors": [
-        {
-          "name": "Filippo Toso",
-          "email": "filippo.toso@creativepark.it"
-        }
-      ],
-      "description": "Simple PDF Watermarker with Laravel support",
-      "support": {
-        "issues": "https://github.com/filippotoso/pdf-watermarker/issues",
-        "source": "https://github.com/filippotoso/pdf-watermarker/tree/v1.1.1"
-      },
-      "time": "2024-06-27T05:22:50+00:00"
     },
     {
       "name": "firebase/php-jwt",
@@ -2732,7 +2780,65 @@
           "type": "community_bridge"
         }
       ],
-      "time": "2024-11-20T13:15:13+00:00"
+      "time": "2024-10-25T10:15:16+00:00"
+    },
+    {
+      "name": "laravel/fortify",
+      "version": "v1.24.5",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/laravel/fortify.git",
+        "reference": "bba8c2ecc3fcc78e8632e0d719ae10bef6343eef"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/laravel/fortify/zipball/bba8c2ecc3fcc78e8632e0d719ae10bef6343eef",
+        "reference": "bba8c2ecc3fcc78e8632e0d719ae10bef6343eef",
+        "shasum": ""
+      },
+      "require": {
+        "bacon/bacon-qr-code": "^3.0",
+        "ext-json": "*",
+        "illuminate/support": "^10.0|^11.0",
+        "php": "^8.1",
+        "pragmarx/google2fa": "^8.0",
+        "symfony/console": "^6.0|^7.0"
+      },
+      "require-dev": {
+        "mockery/mockery": "^1.0",
+        "orchestra/testbench": "^8.16|^9.0",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^10.4"
+      },
+      "type": "library",
+      "extra": {
+        "branch-alias": {
+          "dev-master": "1.x-dev"
+        },
+        "laravel": {
+          "providers": ["Laravel\\Fortify\\FortifyServiceProvider"]
+        }
+      },
+      "autoload": {
+        "psr-4": {
+          "Laravel\\Fortify\\": "src/"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["MIT"],
+      "authors": [
+        {
+          "name": "Taylor Otwell",
+          "email": "taylor@laravel.com"
+        }
+      ],
+      "description": "Backend controllers and scaffolding for Laravel authentication.",
+      "keywords": ["auth", "laravel"],
+      "support": {
+        "issues": "https://github.com/laravel/fortify/issues",
+        "source": "https://github.com/laravel/fortify"
+      },
+      "time": "2024-11-12T14:51:12+00:00"
     },
     {
       "name": "laravel/framework",
@@ -3013,7 +3119,66 @@
         "issues": "https://github.com/laravel/horizon/issues",
         "source": "https://github.com/laravel/horizon/tree/v5.29.4"
       },
-      "time": "2024-11-21T15:06:10+00:00"
+      "time": "2024-11-07T21:51:45+00:00"
+    },
+    {
+      "name": "laravel/jetstream",
+      "version": "v5.3.2",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/laravel/jetstream.git",
+        "reference": "e5b9ef610bf13fb3b6053893f711227213833f35"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/laravel/jetstream/zipball/e5b9ef610bf13fb3b6053893f711227213833f35",
+        "reference": "e5b9ef610bf13fb3b6053893f711227213833f35",
+        "shasum": ""
+      },
+      "require": {
+        "ext-json": "*",
+        "illuminate/console": "^11.0",
+        "illuminate/support": "^11.0",
+        "laravel/fortify": "^1.20",
+        "mobiledetect/mobiledetectlib": "^4.8",
+        "php": "^8.2.0",
+        "symfony/console": "^7.0"
+      },
+      "require-dev": {
+        "inertiajs/inertia-laravel": "^1.0",
+        "laravel/sanctum": "^4.0",
+        "livewire/livewire": "^3.3",
+        "mockery/mockery": "^1.0",
+        "orchestra/testbench": "^9.0",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^10.4"
+      },
+      "type": "library",
+      "extra": {
+        "laravel": {
+          "providers": ["Laravel\\Jetstream\\JetstreamServiceProvider"]
+        }
+      },
+      "autoload": {
+        "psr-4": {
+          "Laravel\\Jetstream\\": "src/"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["MIT"],
+      "authors": [
+        {
+          "name": "Taylor Otwell",
+          "email": "taylor@laravel.com"
+        }
+      ],
+      "description": "Tailwind scaffolding for the Laravel framework.",
+      "keywords": ["auth", "laravel", "tailwind"],
+      "support": {
+        "issues": "https://github.com/laravel/jetstream/issues",
+        "source": "https://github.com/laravel/jetstream"
+      },
+      "time": "2024-11-11T20:18:18+00:00"
     },
     {
       "name": "laravel/prompts",
@@ -3724,6 +3889,69 @@
       "time": "2024-08-09T21:24:39+00:00"
     },
     {
+      "name": "league/fractal",
+      "version": "0.20.1",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/thephpleague/fractal.git",
+        "reference": "8b9d39b67624db9195c06f9c1ffd0355151eaf62"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/thephpleague/fractal/zipball/8b9d39b67624db9195c06f9c1ffd0355151eaf62",
+        "reference": "8b9d39b67624db9195c06f9c1ffd0355151eaf62",
+        "shasum": ""
+      },
+      "require": {
+        "php": ">=7.4"
+      },
+      "require-dev": {
+        "doctrine/orm": "^2.5",
+        "illuminate/contracts": "~5.0",
+        "mockery/mockery": "^1.3",
+        "pagerfanta/pagerfanta": "~1.0.0",
+        "phpstan/phpstan": "^1.4",
+        "phpunit/phpunit": "^9.5",
+        "squizlabs/php_codesniffer": "~3.4",
+        "vimeo/psalm": "^4.22",
+        "zendframework/zend-paginator": "~2.3"
+      },
+      "suggest": {
+        "illuminate/pagination": "The Illuminate Pagination component.",
+        "pagerfanta/pagerfanta": "Pagerfanta Paginator",
+        "zendframework/zend-paginator": "Zend Framework Paginator"
+      },
+      "type": "library",
+      "extra": {
+        "branch-alias": {
+          "dev-master": "0.20.x-dev"
+        }
+      },
+      "autoload": {
+        "psr-4": {
+          "League\\Fractal\\": "src"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["MIT"],
+      "authors": [
+        {
+          "name": "Phil Sturgeon",
+          "email": "me@philsturgeon.uk",
+          "homepage": "http://philsturgeon.uk/",
+          "role": "Developer"
+        }
+      ],
+      "description": "Handle the output of complex data structures ready for API output.",
+      "homepage": "http://fractal.thephpleague.com/",
+      "keywords": ["api", "json", "league", "rest"],
+      "support": {
+        "issues": "https://github.com/thephpleague/fractal/issues",
+        "source": "https://github.com/thephpleague/fractal/tree/0.20.1"
+      },
+      "time": "2022-04-11T12:47:17+00:00"
+    },
+    {
       "name": "league/mime-type-detection",
       "version": "1.16.0",
       "source": {
@@ -4160,6 +4388,68 @@
         "source": "https://github.com/Masterminds/html5-php/tree/2.9.0"
       },
       "time": "2024-03-31T07:05:07+00:00"
+    },
+    {
+      "name": "mobiledetect/mobiledetectlib",
+      "version": "4.8.06",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/serbanghita/Mobile-Detect.git",
+        "reference": "af088b54cecc13b3264edca7da93a89ba7aa2d9e"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/serbanghita/Mobile-Detect/zipball/af088b54cecc13b3264edca7da93a89ba7aa2d9e",
+        "reference": "af088b54cecc13b3264edca7da93a89ba7aa2d9e",
+        "shasum": ""
+      },
+      "require": {
+        "php": ">=8.0",
+        "psr/simple-cache": "^2 || ^3"
+      },
+      "require-dev": {
+        "friendsofphp/php-cs-fixer": "^v3.35.1",
+        "phpbench/phpbench": "^1.2",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^9.6",
+        "squizlabs/php_codesniffer": "^3.7"
+      },
+      "type": "library",
+      "autoload": {
+        "psr-4": {
+          "Detection\\": "src/"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["MIT"],
+      "authors": [
+        {
+          "name": "Serban Ghita",
+          "email": "serbanghita@gmail.com",
+          "homepage": "http://mobiledetect.net",
+          "role": "Developer"
+        }
+      ],
+      "description": "Mobile_Detect is a lightweight PHP class for detecting mobile devices. It uses the User-Agent string combined with specific HTTP headers to detect the mobile environment.",
+      "homepage": "https://github.com/serbanghita/Mobile-Detect",
+      "keywords": [
+        "detect mobile devices",
+        "mobile",
+        "mobile detect",
+        "mobile detector",
+        "php mobile detect"
+      ],
+      "support": {
+        "issues": "https://github.com/serbanghita/Mobile-Detect/issues",
+        "source": "https://github.com/serbanghita/Mobile-Detect/tree/4.8.06"
+      },
+      "funding": [
+        {
+          "url": "https://github.com/serbanghita",
+          "type": "github"
+        }
+      ],
+      "time": "2024-03-01T22:28:42+00:00"
     },
     {
       "name": "mongodb/laravel-mongodb",
@@ -5768,6 +6058,56 @@
       "time": "2024-09-16T03:06:04+00:00"
     },
     {
+      "name": "pragmarx/google2fa",
+      "version": "v8.0.3",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/antonioribeiro/google2fa.git",
+        "reference": "6f8d87ebd5afbf7790bde1ffc7579c7c705e0fad"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/antonioribeiro/google2fa/zipball/6f8d87ebd5afbf7790bde1ffc7579c7c705e0fad",
+        "reference": "6f8d87ebd5afbf7790bde1ffc7579c7c705e0fad",
+        "shasum": ""
+      },
+      "require": {
+        "paragonie/constant_time_encoding": "^1.0|^2.0|^3.0",
+        "php": "^7.1|^8.0"
+      },
+      "require-dev": {
+        "phpstan/phpstan": "^1.9",
+        "phpunit/phpunit": "^7.5.15|^8.5|^9.0"
+      },
+      "type": "library",
+      "autoload": {
+        "psr-4": {
+          "PragmaRX\\Google2FA\\": "src/"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["MIT"],
+      "authors": [
+        {
+          "name": "Antonio Carlos Ribeiro",
+          "email": "acr@antoniocarlosribeiro.com",
+          "role": "Creator & Designer"
+        }
+      ],
+      "description": "A One Time Password Authentication package, compatible with Google Authenticator.",
+      "keywords": [
+        "2fa",
+        "Authentication",
+        "Two Factor Authentication",
+        "google2fa"
+      ],
+      "support": {
+        "issues": "https://github.com/antonioribeiro/google2fa/issues",
+        "source": "https://github.com/antonioribeiro/google2fa/tree/v8.0.3"
+      },
+      "time": "2024-09-05T11:56:40+00:00"
+    },
+    {
       "name": "predis/predis",
       "version": "v2.3.0",
       "source": {
@@ -6968,6 +7308,134 @@
       "time": "2024-09-02T10:17:15+00:00"
     },
     {
+      "name": "spatie/fractalistic",
+      "version": "2.9.5",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/spatie/fractalistic.git",
+        "reference": "6f12686a03d035f4558d166989c62aa93bde2151"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/spatie/fractalistic/zipball/6f12686a03d035f4558d166989c62aa93bde2151",
+        "reference": "6f12686a03d035f4558d166989c62aa93bde2151",
+        "shasum": ""
+      },
+      "require": {
+        "league/fractal": "^0.20.1",
+        "php": "^7.4|^8.0"
+      },
+      "require-dev": {
+        "illuminate/pagination": "~5.3.0|~5.4.0",
+        "phpunit/phpunit": "^9.0"
+      },
+      "type": "library",
+      "autoload": {
+        "psr-4": {
+          "Spatie\\Fractalistic\\": "src"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["MIT"],
+      "authors": [
+        {
+          "name": "Freek Van der Herten",
+          "email": "freek@spatie.be",
+          "homepage": "https://spatie.be",
+          "role": "Developer"
+        }
+      ],
+      "description": "A developer friendly wrapper around Fractal",
+      "homepage": "https://github.com/spatie/fractalistic",
+      "keywords": ["api", "fractal", "fractalistic", "spatie", "transform"],
+      "support": {
+        "issues": "https://github.com/spatie/fractalistic/issues",
+        "source": "https://github.com/spatie/fractalistic/tree/2.9.5"
+      },
+      "funding": [
+        {
+          "url": "https://github.com/spatie",
+          "type": "github"
+        }
+      ],
+      "time": "2022-04-21T12:26:22+00:00"
+    },
+    {
+      "name": "spatie/laravel-fractal",
+      "version": "6.2.1",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/spatie/laravel-fractal.git",
+        "reference": "0a30630d2ab49590af118172c03c99c0d838dab1"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/spatie/laravel-fractal/zipball/0a30630d2ab49590af118172c03c99c0d838dab1",
+        "reference": "0a30630d2ab49590af118172c03c99c0d838dab1",
+        "shasum": ""
+      },
+      "require": {
+        "illuminate/contracts": "^8.0|^9.0|^10.0|^11.0",
+        "illuminate/support": "^8.0|^9.0|^10.0|^11.0",
+        "league/fractal": "^0.20.1|^0.20",
+        "nesbot/carbon": "^2.63|^3.0",
+        "php": "^8.0",
+        "spatie/fractalistic": "^2.9.5|^2.9",
+        "spatie/laravel-package-tools": "^1.11"
+      },
+      "require-dev": {
+        "ext-json": "*",
+        "orchestra/testbench": "^7.0|^8.0|^9.0",
+        "pestphp/pest": "^1.22|^2.34"
+      },
+      "type": "library",
+      "extra": {
+        "laravel": {
+          "providers": ["Spatie\\Fractal\\FractalServiceProvider"],
+          "aliases": {
+            "Fractal": "Spatie\\Fractal\\Facades\\Fractal"
+          }
+        }
+      },
+      "autoload": {
+        "files": ["src/helpers.php"],
+        "psr-4": {
+          "Spatie\\Fractal\\": "src"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["MIT"],
+      "authors": [
+        {
+          "name": "Freek Van der Herten",
+          "email": "freek@spatie.be",
+          "homepage": "https://spatie.be",
+          "role": "Developer"
+        }
+      ],
+      "description": "An easy to use Fractal integration for Laravel applications",
+      "homepage": "https://github.com/spatie/laravel-fractal",
+      "keywords": [
+        "api",
+        "fractal",
+        "laravel",
+        "laravel-fractal",
+        "lumen",
+        "spatie",
+        "transform"
+      ],
+      "support": {
+        "source": "https://github.com/spatie/laravel-fractal/tree/6.2.1"
+      },
+      "funding": [
+        {
+          "url": "https://spatie.be/open-source/support-us",
+          "type": "custom"
+        }
+      ],
+      "time": "2024-06-04T09:33:08+00:00"
+    },
+    {
       "name": "spatie/laravel-navigation",
       "version": "1.3.0",
       "source": {
@@ -7035,6 +7503,61 @@
       "time": "2024-09-20T13:15:41+00:00"
     },
     {
+      "name": "spatie/laravel-package-tools",
+      "version": "1.16.5",
+      "source": {
+        "type": "git",
+        "url": "https://github.com/spatie/laravel-package-tools.git",
+        "reference": "c7413972cf22ffdff97b68499c22baa04eddb6a2"
+      },
+      "dist": {
+        "type": "zip",
+        "url": "https://api.github.com/repos/spatie/laravel-package-tools/zipball/c7413972cf22ffdff97b68499c22baa04eddb6a2",
+        "reference": "c7413972cf22ffdff97b68499c22baa04eddb6a2",
+        "shasum": ""
+      },
+      "require": {
+        "illuminate/contracts": "^9.28|^10.0|^11.0",
+        "php": "^8.0"
+      },
+      "require-dev": {
+        "mockery/mockery": "^1.5",
+        "orchestra/testbench": "^7.7|^8.0",
+        "pestphp/pest": "^1.22",
+        "phpunit/phpunit": "^9.5.24",
+        "spatie/pest-plugin-test-time": "^1.1"
+      },
+      "type": "library",
+      "autoload": {
+        "psr-4": {
+          "Spatie\\LaravelPackageTools\\": "src"
+        }
+      },
+      "notification-url": "https://packagist.org/downloads/",
+      "license": ["MIT"],
+      "authors": [
+        {
+          "name": "Freek Van der Herten",
+          "email": "freek@spatie.be",
+          "role": "Developer"
+        }
+      ],
+      "description": "Tools for creating Laravel packages",
+      "homepage": "https://github.com/spatie/laravel-package-tools",
+      "keywords": ["laravel-package-tools", "spatie"],
+      "support": {
+        "issues": "https://github.com/spatie/laravel-package-tools/issues",
+        "source": "https://github.com/spatie/laravel-package-tools/tree/1.16.5"
+      },
+      "funding": [
+        {
+          "url": "https://github.com/spatie",
+          "type": "github"
+        }
+      ],
+      "time": "2024-08-27T18:56:10+00:00"
+    },
+    {
       "name": "spatie/laravel-permission",
       "version": "6.10.1",
       "source": {
@@ -7069,6 +7592,9 @@
         "branch-alias": {
           "dev-main": "6.x-dev",
           "dev-master": "6.x-dev"
+        },
+        "laravel": {
+          "providers": ["Spatie\\Permission\\PermissionServiceProvider"]
         }
       },
       "autoload": {
@@ -9453,76 +9979,6 @@
         }
       ],
       "time": "2024-11-08T15:48:14+00:00"
-    },
-    {
-      "name": "tecnickcom/tcpdf",
-      "version": "6.7.7",
-      "source": {
-        "type": "git",
-        "url": "https://github.com/tecnickcom/TCPDF.git",
-        "reference": "cfbc0028cc23f057f2baf9e73bdc238153c22086"
-      },
-      "dist": {
-        "type": "zip",
-        "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/cfbc0028cc23f057f2baf9e73bdc238153c22086",
-        "reference": "cfbc0028cc23f057f2baf9e73bdc238153c22086",
-        "shasum": ""
-      },
-      "require": {
-        "php": ">=5.5.0"
-      },
-      "type": "library",
-      "autoload": {
-        "classmap": [
-          "config",
-          "include",
-          "tcpdf.php",
-          "tcpdf_parser.php",
-          "tcpdf_import.php",
-          "tcpdf_barcodes_1d.php",
-          "tcpdf_barcodes_2d.php",
-          "include/tcpdf_colors.php",
-          "include/tcpdf_filters.php",
-          "include/tcpdf_font_data.php",
-          "include/tcpdf_fonts.php",
-          "include/tcpdf_images.php",
-          "include/tcpdf_static.php",
-          "include/barcodes/datamatrix.php",
-          "include/barcodes/pdf417.php",
-          "include/barcodes/qrcode.php"
-        ]
-      },
-      "notification-url": "https://packagist.org/downloads/",
-      "license": ["LGPL-3.0-or-later"],
-      "authors": [
-        {
-          "name": "Nicola Asuni",
-          "email": "info@tecnick.com",
-          "role": "lead"
-        }
-      ],
-      "description": "TCPDF is a PHP class for generating PDF documents and barcodes.",
-      "homepage": "http://www.tcpdf.org/",
-      "keywords": [
-        "PDFD32000-2008",
-        "TCPDF",
-        "barcodes",
-        "datamatrix",
-        "pdf",
-        "pdf417",
-        "qrcode"
-      ],
-      "support": {
-        "issues": "https://github.com/tecnickcom/TCPDF/issues",
-        "source": "https://github.com/tecnickcom/TCPDF/tree/6.7.7"
-      },
-      "funding": [
-        {
-          "url": "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&currency_code=GBP&business=paypal@tecnick.com&item_name=donation%20for%20tcpdf%20project",
-          "type": "custom"
-        }
-      ],
-      "time": "2024-10-26T12:15:02+00:00"
     },
     {
       "name": "tightenco/ziggy",
