@@ -2,28 +2,28 @@
 
 namespace App\Services;
 
-use setasign\Fpdi\Fpdi;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypeId;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCategory;
+use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Jobs\WatermarkDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\DocumentTypeCode;
-use PhpOffice\PhpWord\IOFactory;
-use App\Models\ApplicationStorage;
-use App\Enums\DocumentTypeCategory;
-use App\Jobs\WatermarkDocumentsJob;
-use Illuminate\Support\Facades\Log;
-use Intervention\Image\ImageManager;
+use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\SendUpdateLogStatusEnum;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Traits\GetWatermarkPropertyTrait;
 use Intervention\Image\Drivers\Gd\Driver;
-use App\Repositories\DocumentTypeRepository;
+use Intervention\Image\ImageManager;
+use PhpOffice\PhpWord\IOFactory;
+use setasign\Fpdi\Fpdi;
 
 class QuoteDocumentService extends BaseService
 {
@@ -456,12 +456,12 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $outputFile = $outputPath = storage_path('temp/' .$docName);
+        $outputFile = $outputPath = storage_path('temp/'.$docName);
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
         $fileContent = file_get_contents($azureFilePath);
 
-        $tempFilePath = storage_path('temp/temp_' .$docName);
+        $tempFilePath = storage_path('temp/temp_'.$docName);
         file_put_contents($tempFilePath, $fileContent);
 
         // Convert the PDF to a version compatible with FPDI
@@ -493,6 +493,7 @@ class QuoteDocumentService extends BaseService
         $pdf->Output($outputPath, 'F');
 
         unlink($tempFilePath);
+
         return $this->storeWatermarkedMedia($docName, $data, $documentType);
     }
 
@@ -591,7 +592,7 @@ class QuoteDocumentService extends BaseService
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
         $fileContent = file_get_contents($azureFilePath);
 
-        $tempFile = storage_path('temp/' .$docName);
+        $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
 
         $phpWord = IOFactory::load($tempFile);

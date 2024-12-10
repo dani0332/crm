@@ -4,13 +4,12 @@ namespace App\Jobs;
 
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
-use Illuminate\Bus\Queueable;
 use App\Services\QuoteDocumentService;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class WatermarkDocumentsJob implements ShouldQueue
@@ -41,13 +40,14 @@ class WatermarkDocumentsJob implements ShouldQueue
      */
     public function handle()
     {
-        info("watermark job started");
+        info('watermark job started');
         $quoteDocument = QuoteDocument::find($this->quoteDocumentId);
         $documentType = DocumentType::find($this->documentTypeId);
 
         // Ensure the quoteDocument and documentType exist
-        if (!$quoteDocument || !$documentType) {
+        if (! $quoteDocument || ! $documentType) {
             Log::error('Document or DocumentType not found.');
+
             return;
         }
 
@@ -69,6 +69,6 @@ class WatermarkDocumentsJob implements ShouldQueue
             'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
             'watermarked_doc_url' => $watermarkData['watermarked_doc_url'] ?? null,
         ]);
-        info("watermark job completed");
+        info('watermark job completed');
     }
 }
