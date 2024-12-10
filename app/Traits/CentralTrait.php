@@ -56,9 +56,4 @@ trait CentralTrait
         // Return a new File instance pointing to the temporary file
         return new File($tempFilePath);
     }
-
-    public static function applySendUpdateEntityMappingJoin($query)
-    {
-        $query->where('code', 'EF-1024-26');
-    }
 }
