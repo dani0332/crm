@@ -2,29 +2,26 @@
 
 namespace App\Repositories;
 
-use Carbon\Carbon;
-use App\Facades\Capi;
+use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use Illuminate\Support\Arr;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Facades\Capi;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
-use App\Models\SendUpdateLog;
-use App\Services\CRUDService;
-use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatusLog;
-use App\Enums\DocumentTypeCode;
-use App\Enums\PaymentStatusEnum;
+use App\Models\SendUpdateLog;
 use App\Services\CentralService;
-use App\Enums\PaymentMethodsEnum;
-use App\Models\InsuranceProvider;
-use Illuminate\Support\Facades\DB;
-use App\Jobs\WatermarkDocumentsJob;
-use App\Enums\WatermarkDocTypesEnum;
-use Illuminate\Support\Facades\Auth;
-use App\Enums\InsuranceProvidersEnum;
-use App\Traits\GenericQueriesAllLobs;
-use App\Enums\SendUpdateLogStatusEnum;
+use App\Services\CRUDService;
 use App\Services\SendUpdateLogService;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PersonalQuoteRepository extends BaseRepository
 {
@@ -140,7 +137,7 @@ class PersonalQuoteRepository extends BaseRepository
             // info('Document array prepared for creation', $document);
 
             try {
-                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, $isWaterMarkQualifyDoc, $file, $data, $fileMimeType, $docName) {
+                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, $isWaterMarkQualifyDoc, $data, $docName) {
 
                     $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
                     $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];

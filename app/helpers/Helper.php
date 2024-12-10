@@ -1,47 +1,46 @@
 <?php
 
-use Carbon\Carbon;
-use App\Models\Team;
-use App\Models\User;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\EmbeddedProductEnum;
+use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\LookupsEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\WatermarkDocTypesEnum;
+use App\Models\ApplicationStorage;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
-use App\Enums\QuoteTypes;
-use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypeId;
+use App\Models\Team;
 use App\Models\TravelQuote;
-use Illuminate\Support\Str;
-use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
-use App\Models\BusinessQuote;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\CustomerTypeEnum;
+use App\Models\User;
 use App\Services\CentralService;
-use App\Models\InsuranceProvider;
-use App\Enums\EmbeddedProductEnum;
-use App\Models\ApplicationStorage;
-use Illuminate\Support\Facades\DB;
-use App\Enums\IMCRMSearchTypesEnum;
-use Illuminate\Support\Facades\Log;
-use App\Enums\WatermarkDocTypesEnum;
 use App\Services\HealthQuoteService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
-use App\Enums\InsuranceProvidersEnum;
-use Illuminate\Support\Facades\Cache;
-use App\Enums\ApplicationStorageEnums;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\JoinClause;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Query\JoinClause;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
     /**
@@ -1554,18 +1553,17 @@ if (! function_exists('getInsuranceProvider')) {
 }
 
 if (! function_exists('getWatermarkProperty')) {
-    function getWatermarkProperty($quote, $documentType, $insuranceProviderId=null)
+    function getWatermarkProperty($quote, $documentType, $insuranceProviderId = null)
     {
         $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
 
-        if($insuranceProviderId)
-        {
+        if ($insuranceProviderId) {
             $skipWatermark = in_array($insuranceProviderId, $ips);
         } else {
             $skipWatermark = in_array($quote->insurance_provider_id, $ips);
         }
 
-        if (!$skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
+        if (! $skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
             return true;
         }
 
