@@ -530,7 +530,7 @@ onMounted(() => {
           code,
           uuid,
           quote_type_id,
-          personal_quote,
+          quote_uuid,
           business_type_of_insurance_id,
         }"
       >
@@ -538,9 +538,9 @@ onMounted(() => {
             :href="
                 isSendUpdateListView
                     ? getSendUpdatePageRoute(uuid, [
-                        personal_quote?.uuid,
-                        personal_quote?.quote_type_id,
-                        personal_quote?.business_type_of_insurance_id,
+                        quote_uuid,
+                        quote_type_id,
+                        business_type_of_insurance_id,
                     ]) : getDetailPageRoute(
                         uuid,
                         quote_type_id,

@@ -246,89 +246,19 @@ trait QuoteModelTrait
                 $join->on('personal_quotes.code', '=', $tableName.'.code');
             });
 
-            // For entity mappings
             $query->leftJoin('quote_request_entity_mapping as '.$tableName.'_qrem', function ($join) use ($quoteTypeId, $tableName) {
                 $join->where($tableName.'_qrem.quote_type_id', '=', $quoteTypeId);
                 $join->on($tableName.'_qrem.quote_request_id', '=', $tableName.'.id');
             });
 
-            // For the entities themselves
             $query->leftJoin('entities as '.$tableName.'_entity', $tableName.'_qrem.entity_id', '=', $tableName.'_entity.id');
         }
 
-        // Personal Quote Request Join For Entity Mapping
         $query->leftJoin('quote_request_entity_mapping as personal_qrem', function ($entityMappingJoin) {
             $entityMappingJoin->whereIn('personal_qrem.quote_type_id', [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski]);
             $entityMappingJoin->on('personal_qrem.quote_request_id', 'personal_quotes.id');
         });
 
         $query->leftJoin('entities as personal_entity', 'personal_qrem.entity_id', 'personal_entity.id');
-
-        //        // Car Quote Request Join For Entity Mapping
-        //        $query->leftJoin('car_quote_request', function ($carQuoteRequest) {
-        //            $carQuoteRequest->where('personal_quotes.quote_type_id', QuoteTypeId::Car);
-        //            $carQuoteRequest->on('personal_quotes.code', '=', 'car_quote_request.code');
-        //        });
-        //        $query->leftJoin('quote_request_entity_mapping as car_qrem', function ($entityMappingJoin) {
-        //            $entityMappingJoin->where('car_qrem.quote_type_id', QuoteTypeId::Car);
-        //            $entityMappingJoin->on('car_qrem.quote_request_id', 'car_quote_request.id');
-        //        });
-        //        $query->leftJoin('entities as car_entity', 'car_qrem.entity_id', 'car_entity.id');
-        //
-        //        // Home Quote Request Join For Entity Mapping
-        //        $query->leftJoin('home_quote_request', function ($homeQuoteRequest) {
-        //            $homeQuoteRequest->where('personal_quotes.quote_type_id', QuoteTypeId::Home);
-        //            $homeQuoteRequest->on('personal_quotes.code', '=', 'home_quote_request.code');
-        //        });
-        //        $query->leftJoin('quote_request_entity_mapping as home_qrem', function ($entityMappingJoin) {
-        //            $entityMappingJoin->where('home_qrem.quote_type_id', QuoteTypeId::Home);
-        //            $entityMappingJoin->on('home_qrem.quote_request_id', 'home_quote_request.id');
-        //        });
-        //        $query->leftJoin('entities as home_entity', 'home_qrem.entity_id', 'home_entity.id');
-        //
-        //        // Health Quote Request Join For Entity Mapping
-        //        $query->leftJoin('health_quote_request', function ($healthQuoteRequest) {
-        //            $healthQuoteRequest->where('personal_quotes.quote_type_id', QuoteTypeId::Health);
-        //            $healthQuoteRequest->on('personal_quotes.code', '=', 'health_quote_request.code');
-        //        });
-        //        $query->leftJoin('quote_request_entity_mapping as heath_qrem', function ($entityMappingJoin) {
-        //            $entityMappingJoin->where('heath_qrem.quote_type_id', QuoteTypeId::Health);
-        //            $entityMappingJoin->on('heath_qrem.quote_request_id', 'health_quote_request.id');
-        //        });
-        //        $query->leftJoin('entities as health_entity', 'heath_qrem.entity_id', 'health_entity.id');
-        //
-        //        // Life Quote Request Join For Entity Mapping
-        //        $query->leftJoin('life_quote_request', function ($lifeQuoteRequest) {
-        //            $lifeQuoteRequest->where('personal_quotes.quote_type_id', QuoteTypeId::Life);
-        //            $lifeQuoteRequest->on('personal_quotes.code', '=', 'life_quote_request.code');
-        //        });
-        //        $query->leftJoin('quote_request_entity_mapping as life_qrem', function ($entityMappingJoin) {
-        //            $entityMappingJoin->where('life_qrem.quote_type_id', QuoteTypeId::Life);
-        //            $entityMappingJoin->on('life_qrem.quote_request_id', 'life_quote_request.id');
-        //        });
-        //        $query->leftJoin('entities as life_entity', 'life_qrem.entity_id', 'life_entity.id');
-        //
-        //        // Business Quote Request Join For Entity Mapping
-        //        $query->leftJoin('business_quote_request', function ($businessQuoteRequest) {
-        //            $businessQuoteRequest->where('personal_quotes.quote_type_id', QuoteTypeId::Business);
-        //            $businessQuoteRequest->on('personal_quotes.code', '=', 'business_quote_request.code');
-        //        });
-        //        $query->leftJoin('quote_request_entity_mapping as business_qrem', function ($entityMappingJoin) {
-        //            $entityMappingJoin->where('business_qrem.quote_type_id', QuoteTypeId::Business);
-        //            $entityMappingJoin->on('business_qrem.quote_request_id', 'business_quote_request.id');
-        //        });
-        //        $query->leftJoin('entities as business_entity', 'business_qrem.entity_id', 'business_entity.id');
-        //
-        //        // Travel Quote Request Join For Entity Mapping
-        //        $query->leftJoin('travel_quote_request', function ($travelQuoteRequest) {
-        //            $travelQuoteRequest->where('personal_quotes.quote_type_id', QuoteTypeId::Travel);
-        //            $travelQuoteRequest->on('personal_quotes.code', '=', 'travel_quote_request.code');
-        //        });
-        //        $query->leftJoin('quote_request_entity_mapping as travel_qrem', function ($entityMappingJoin) {
-        //            $entityMappingJoin->where('travel_qrem.quote_type_id', QuoteTypeId::Travel);
-        //            $entityMappingJoin->on('travel_qrem.quote_request_id', 'travel_quote_request.id');
-        //        });
-        //        $query->leftJoin('entities as travel_entity', 'travel_qrem.entity_id', 'travel_entity.id');
-
     }
 }
