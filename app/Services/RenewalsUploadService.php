@@ -1047,7 +1047,7 @@ class RenewalsUploadService
                 'has_ncd_supporting_documents' => $data['nc_letter'],
                 'is_gcc_standard' => $data['is_gcc'],
             ]);
-            
+
             /*
              * API refresh plans when quote_updated_at have latest date
              */
