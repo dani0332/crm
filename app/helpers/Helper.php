@@ -25,17 +25,14 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Services\CentralService;
-use App\Models\InsuranceProvider;
 use App\Enums\EmbeddedProductEnum;
 use App\Models\ApplicationStorage;
 use Illuminate\Support\Facades\DB;
 use App\Enums\IMCRMSearchTypesEnum;
 use Illuminate\Support\Facades\Log;
-use App\Enums\WatermarkDocTypesEnum;
 use App\Services\HealthQuoteService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use App\Enums\InsuranceProvidersEnum;
 use Illuminate\Support\Facades\Cache;
 use App\Enums\ApplicationStorageEnums;
 use Illuminate\Database\Eloquent\Builder;
@@ -1550,25 +1547,5 @@ if (! function_exists('getInsuranceProvider')) {
         }
 
         return $insuranceProvider;
-    }
-}
-
-if (! function_exists('getWatermarkProperty')) {
-    function getWatermarkProperty($quote, $documentType, $insuranceProviderId=null)
-    {
-        $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
-
-        if($insuranceProviderId)
-        {
-            $skipWatermark = in_array($insuranceProviderId, $ips);
-        } else {
-            $skipWatermark = in_array($quote->insurance_provider_id, $ips);
-        }
-
-        if (!$skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
-            return true;
-        }
-
-        return false;
     }
 }

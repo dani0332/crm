@@ -21,12 +21,14 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\SendUpdateLogStatusEnum;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\GetWatermarkPropertyTrait;
 use Intervention\Image\Drivers\Gd\Driver;
 use App\Repositories\DocumentTypeRepository;
 
 class QuoteDocumentService extends BaseService
 {
     use GenericQueriesAllLobs;
+    use GetWatermarkPropertyTrait;
 
     /**
      * get list of active document types can be presented to customer to upload documents.
@@ -121,7 +123,7 @@ class QuoteDocumentService extends BaseService
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
 
-        $isWaterMarkQualifyDoc = getWatermarkProperty($quote, $documentType);
+        $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
         try {
 

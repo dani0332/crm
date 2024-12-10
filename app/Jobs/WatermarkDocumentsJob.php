@@ -17,7 +17,13 @@ class WatermarkDocumentsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $quoteDocumentId, $tempFilePath, $data, $documentTypeId;
+    public $timeout = 120; // 2 minutes
+    public $tries = 3;
+
+    private $quoteDocumentId;
+    private $tempFilePath;
+    private $data;
+    private $documentTypeId;
 
     /**
      * Create a new job instance.

@@ -16,19 +16,18 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
 use App\Services\CentralService;
 use App\Enums\PaymentMethodsEnum;
-use App\Models\InsuranceProvider;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\WatermarkDocumentsJob;
-use App\Enums\WatermarkDocTypesEnum;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\InsuranceProvidersEnum;
 use App\Traits\GenericQueriesAllLobs;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Services\SendUpdateLogService;
+use App\Traits\GetWatermarkPropertyTrait;
 
 class PersonalQuoteRepository extends BaseRepository
 {
     use GenericQueriesAllLobs;
+    use GetWatermarkPropertyTrait;
 
     public function model()
     {
@@ -111,7 +110,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $quote = $this->getQuoteObject($quoteType ?? '', $id);
             }
 
-            $isWaterMarkQualifyDoc = getWatermarkProperty($quote, $documentType, $insuranceProviderId);
+            $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType, $insuranceProviderId);
 
             $originalName = sanitizeFileName($file->getClientOriginalName());
             $docName = preg_replace('/\s+/', '', $originalName);
