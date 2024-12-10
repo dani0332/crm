@@ -919,7 +919,7 @@ class RenewalsUploadService
     public function getNonEmptyValues($values)
     {
         return collect($values)->filter(function ($value) {
-            return $value ?? null;
+            return $value;
         })->toArray();
     }
 
@@ -1020,7 +1020,7 @@ class RenewalsUploadService
             }
 
             $this->updateCustomer($quote, $customerData);
-
+            $data['is_gcc'] == 'Yes' ? 1 : 0;
             $quoteData = $this->getNonEmptyValues([
                 'first_name' => $customerData['first_name'],
                 'last_name' => $customerData['last_name'],
@@ -1045,8 +1045,11 @@ class RenewalsUploadService
                 'year_of_manufacture' => $data['year'] ?? null,
                 'previous_advisor_id' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
                 'has_ncd_supporting_documents' => $data['nc_letter'],
-                'is_gcc_standard' => $data['is_gcc'] == 'Yes' ? 1 : 0,
+                'is_gcc_standard' => $data['is_gcc'],
             ]);
+            
+            info("********************** Quote Data **********************");
+            info('quote data: '.json_encode($quoteData));
 
             /*
              * API refresh plans when quote_updated_at have latest date
