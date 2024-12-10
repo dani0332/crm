@@ -132,9 +132,9 @@ function updateTableDetails() {
       item => !excludedSortingOrders.includes(item.sortingOrder),
     );
     tableHeader.value.push(
-      { text: 'SU Ref-ID', value: 'code', width:100, sortingOrder: 1 },
-      { text: 'Type', value: 'category', width:200, sortingOrder: 10 },
-      { text: 'Sub type', value: 'option', width:200, sortingOrder: 11 },
+      { text: 'SU Ref-ID', value: 'code', width: 100, sortingOrder: 1 },
+      { text: 'Type', value: 'category', width: 200, sortingOrder: 10 },
+      { text: 'Sub type', value: 'option', width: 200, sortingOrder: 11 },
       { text: 'Notes', value: 'notes', width: 300, sortingOrder: 12 },
       { text: 'Status', value: 'status', sortingOrder: 13 },
     );
@@ -372,7 +372,12 @@ onMounted(() => {
         <template v-if="can(permissionsEnum.DATA_EXTRACTION_SEARCH_ALL_LEADS)">
           <template v-if="!tableData?.length > 0">
             <x-tooltip placement="bottom">
-              <x-button disabled size="sm" color="emerald" :loading="loader.table">
+              <x-button
+                disabled
+                size="sm"
+                color="emerald"
+                :loading="loader.table"
+              >
                 Export to Excel
               </x-button>
               <template #tooltip>
@@ -392,10 +397,20 @@ onMounted(() => {
             </x-button>
           </template>
         </template>
-        <x-button size="sm" color="primary" @click="listChange()" :loading="loader.table">
+        <x-button
+          size="sm"
+          color="primary"
+          @click="listChange()"
+          :loading="loader.table"
+        >
           {{ isSendUpdateListView ? 'Lead' : 'Send Update' }} List
         </x-button>
-        <x-button size="sm" color="orange" @click.prevent="filterModal = true" :loading="loader.table">
+        <x-button
+          size="sm"
+          color="orange"
+          @click.prevent="filterModal = true"
+          :loading="loader.table"
+        >
           <x-icon
             icon="magnifyingGlass"
             size="sm"
@@ -408,7 +423,7 @@ onMounted(() => {
 
     <x-divider class="my-4" />
 
-<!--    compact table-fixed -->
+    <!--    compact table-fixed -->
 
     <DataTable
       table-class-name="table-fixed"
@@ -523,8 +538,6 @@ onMounted(() => {
       </template>
       <!-- Datatable Header Tooltips End -->
 
-
-
       <template
         #item-code="{
           code,
@@ -535,40 +548,45 @@ onMounted(() => {
         }"
       >
         <Link
-            :href="
-                isSendUpdateListView
-                    ? getSendUpdatePageRoute(uuid, [
-                        quote_uuid,
-                        quote_type_id,
-                        business_type_of_insurance_id,
-                    ]) : getDetailPageRoute(
-                        uuid,
-                        quote_type_id,
-                        business_type_of_insurance_id,
-                    )"
+          :href="
+            isSendUpdateListView
+              ? getSendUpdatePageRoute(uuid, [
+                  quote_uuid,
+                  quote_type_id,
+                  business_type_of_insurance_id,
+                ])
+              : getDetailPageRoute(
+                  uuid,
+                  quote_type_id,
+                  business_type_of_insurance_id,
+                )
+          "
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ code }}</span>
         </Link>
       </template>
       <template #item-company_name="{ company_name }">
-<!--        {{ destructCompanyName(isSendUpdateListView, item) ?? 'N/A' }}-->
-          {{ company_name ?? 'N/A' }}
-      </template>
-      <template #item-business_insurance_type="{ quote_type_id, business_insurance_type }">
-        {{
-          quote_type_id === props.quoteTypeIdEnum.Business ? business_insurance_type : 'N/A'
-        }}
+        <!--        {{ destructCompanyName(isSendUpdateListView, item) ?? 'N/A' }}-->
+        {{ company_name ?? 'N/A' }}
       </template>
       <template
-        #item-policy_expiry_date="{ policy_expiry_date }"
+        #item-business_insurance_type="{
+          quote_type_id,
+          business_insurance_type,
+        }"
       >
+        {{
+          quote_type_id === props.quoteTypeIdEnum.Business
+            ? business_insurance_type
+            : 'N/A'
+        }}
+      </template>
+      <template #item-policy_expiry_date="{ policy_expiry_date }">
         {{ policy_expiry_date ? dateFormat(policy_expiry_date) : 'N/A' }}
       </template>
       <template #item-policy_number="{ policy_number }">
-        {{
-           policy_number ?? 'N/A'
-        }}
+        {{ policy_number ?? 'N/A' }}
       </template>
       <template
         v-if="!isSendUpdateListView"
@@ -582,7 +600,9 @@ onMounted(() => {
             class="overflow-hidden h-auto"
             :class="expandNotes ? 'overflow-auto' : 'truncate w-60'"
           >
-            <span v-if="expandNotes" class="whitespace-normal">{{ notes }}</span>
+            <span v-if="expandNotes" class="whitespace-normal">{{
+              notes
+            }}</span>
             <span v-else class="whitespace-nowrap">{{ notes }}</span>
           </p>
           <x-icon
