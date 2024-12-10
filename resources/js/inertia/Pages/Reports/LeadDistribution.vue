@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
-  reportData: Object,
+  reportData: Array,
+  filtersByLob: Object,
   filterOptions: Object,
   defaultFilters: Object,
 });
@@ -10,13 +11,17 @@ const loaders = reactive({
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-const quoteSegments = page.props.quoteSegments;
+let quoteSegments = reactive(page.props.quoteSegments ?? []);
 
 const params = useUrlSearchParams('history');
+const isDirty = ref(false);
+const isMounted = ref(false);
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const toast = useToast();
 const tableHeader = [
   {
-    text: 'Tier Name',
-    value: 'tier_name',
+    text: 'Team Name',
+    value: 'team_name',
   },
   {
     text: 'Received Leads',
@@ -44,28 +49,50 @@ const tableHeader = [
   },
 ];
 
-const filters = reactive({
-  createdAtDates: [],
-  tiers: [],
-  assignmentTypes: 'All',
-  isCommercial: 'All',
-  segment_filter: 'all',
-  sic_advisor_requested: 'All',
-  page: 1,
-});
+const getFiltersObject = () => {
+  return {
+    lob: quoteTypeCodeEnum.Car,
+    createdAtDates: [],
+    assignmentTypes: 'All',
+    segment_filter: 'all',
+    page: 1,
+  };
+};
 
-function onSubmit(isValid) {
-  if (isValid) {
+let filters = reactive(getFiltersObject());
+
+function onSubmit(isValid, isMounted = false) {
+  if (!filters.lob && isMounted === false) {
+    toast.error({
+      title: 'Please select Line of Business',
+      position: 'top',
+    });
+    return;
+  }
+
+  if (isValid && filters.lob) {
+    isDirty.value = false;
     filters.page = 1;
+    const payLoad = cleanFilters(filters);
     router.visit('/reports/lead-distribution', {
       method: 'get',
-      data: cleanFilters(filters),
+      data: {
+        ...payLoad,
+        ...(payLoad.batches && {
+          batches: Array.isArray(payLoad.batches)
+            ? payLoad.batches
+            : [payLoad.batches],
+        }),
+        ...(payLoad.leadSources && {
+          leadSources: Array.isArray(payLoad.leadSources)
+            ? payLoad.leadSources
+            : [payLoad.leadSources],
+        }),
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loaders.table = true),
-      onFinish: () => {
-        loaders.table = false;
-      },
+      onFinish: () => (loaders.table = false),
     });
   } else {
     console.log('Invalid');
@@ -73,25 +100,49 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  if (page.props.defaultFilters) {
-    filters.createdAtDates = page.props.defaultFilters.createdAtDates;
-  }
+  filters = getFiltersObject();
+  setDefaultValues();
+
+  isDirty.value = false;
   router.visit('/reports/lead-distribution', {
     method: 'get',
-    data: {
-      createdAtDates: filters.createdAtDates,
-      page: 1,
-    },
+    data: filters,
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onSuccess: () => (loaders.table = false),
   });
 }
 
+const quoteTypesOptions = computed(() => {
+  return Object.keys(page.props.filterOptions.lob).map(text => ({
+    label: text,
+    value: page.props.filterOptions.lob[text],
+  }));
+});
+
 const cleanFilters = filters => {
+  // remove unused filters
+  filters = removeUnusedFilters(filters);
   Object.keys(filters).forEach(
-    key => (filters[key] === '' || filters[key] == null) && delete filters[key],
+    key =>
+      (filters[key] === '' ||
+        filters[key] == null ||
+        filters[key].length == 0) &&
+      delete filters[key],
   );
+  return filters;
+};
+
+const removeUnusedFilters = filters => {
+  const filtersByLob = page.props.filtersByLob;
+  Object.keys(filtersByLob).forEach(key => {
+    if (
+      filtersByLob[key]['lobs'] &&
+      !filtersByLob[key]['lobs'].includes(filters.lob)
+    ) {
+      delete filters[key];
+    }
+  });
   return filters;
 };
 
@@ -105,15 +156,88 @@ function setQueryStringFilters() {
   }
 }
 
-onMounted(() => {
-  if (page.props.defaultFilters) {
-    filters.createdAtDates = page.props.defaultFilters.createdAtDates;
+const setDefaultValues = () => {
+  if (page.props.defaultFilters && !params['page']) {
+    Object.keys(page.props.defaultFilters).forEach(key => {
+      if (filters.hasOwnProperty(key)) {
+        filters[key] = page.props.defaultFilters[key];
+      }
+    });
   }
+};
+
+onMounted(() => {
+  setDefaultValues();
   setQueryStringFilters();
+  onLobChange(filters.lob, true);
+
+  isMounted.value = true;
+
+  onSubmit(true, true);
 });
+
+const canShow = element => {
+  if (page.props.filtersByLob && page.props.filtersByLob[element]) {
+    const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
+
+    if (
+      lobs.length == 0 ||
+      (lobs.length != 0 && Object.values(lobs).includes(filters.lob))
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  return true;
+};
+
+const isDisabled = element => {
+  if (
+    page.props.filtersByLob &&
+    page.props.filtersByLob[element] &&
+    filters.lob
+  ) {
+    const canView =
+      page.props.filtersByLob[element]['can_view'][filters.lob] ?? true;
+
+    if (canView) {
+      return true;
+    }
+
+    return false;
+  }
+
+  return true;
+};
 
 const calculateTotalSum = (data, key) => {
   return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
+};
+
+const onLobChange = (e, isOnMounted = false) => {
+  // if (!isOnMounted) {
+  //   filters.lob = quoteTypeCodeEnum.Car;
+  //   filters.createdAtDates = [];
+  //   filters.assignmentTypes = 'All';
+  //   filters.segment_filter = 'all';
+  // }
+
+  if (
+    [
+      quoteTypeCodeEnum.Car,
+      quoteTypeCodeEnum.Health,
+      quoteTypeCodeEnum.CORPLINE,
+      quoteTypeCodeEnum.GroupMedical,
+    ].includes(filters.lob)
+  ) {
+    if (filters.lob == quoteTypeCodeEnum.Health) {
+      quoteSegments = quoteSegments.filter(
+        segment => segment.value !== 'sic-revival',
+      );
+    }
+  }
 };
 </script>
 
@@ -127,6 +251,16 @@ const calculateTotalSum = (data, key) => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <ComboBox
+          v-model="filters.lob"
+          label="Line of Business"
+          placeholder="Select Line of Business"
+          :options="quoteTypesOptions"
+          class="w-full"
+          :single="true"
+          @update:modelValue="onLobChange"
+        />
+
         <DatePicker
           v-model="filters.createdAtDates"
           label="Created Date"
@@ -135,27 +269,6 @@ const calculateTotalSum = (data, key) => {
           :max-range="92"
           size="sm"
           model-type="yyyy-MM-dd"
-        />
-        <ComboBox
-          v-model="filters.tiers"
-          label="Tiers"
-          placeholder="Search by Tiers"
-          :options="
-            Object.keys(filterOptions.tiers).map(key => ({
-              value: key,
-              label: filterOptions.tiers[key],
-            }))
-          "
-        />
-        <x-select
-          v-model="filters.isCommercial"
-          label="Commercial"
-          placeholder="Select any option"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
         />
 
         <ComboBox
@@ -173,22 +286,17 @@ const calculateTotalSum = (data, key) => {
         />
 
         <ComboBox
-          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          v-if="
+            can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
+          "
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
-          :options="quoteSegments"
-          :single="true"
-        />
-        <ComboBox
-          v-model="filters.sic_advisor_requested"
-          label="Advisor Requested"
-          placeholder="Select any option"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: 1, label: 'Yes' },
-            { value: 0, label: 'No' },
-          ]"
+          :options="
+            quoteSegments?.filter(segment =>
+              filters.lob === 'Travel' ? segment.value !== 'sic-revival' : true,
+            )
+          "
           :single="true"
         />
       </div>
@@ -204,35 +312,32 @@ const calculateTotalSum = (data, key) => {
       table-class-name="tablefixed"
       :loading="loaders.table"
       :headers="tableHeader"
-      :items="reportData.data || []"
+      :items="reportData || []"
       border-cell
       hide-rows-per-page
       hide-footer
     >
-      <template #item-advisor_name="item">
-        <span class="font-bold"> {{ item.advisor_name }} </span>
-      </template>
 
       <template #body-append>
-        <tr v-if="reportData.data.length > 0" class="total-row">
+        <tr v-if="reportData.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'received_leads') }}
+            {{ calculateTotalSum(reportData, 'received_leads') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'lead_created') }}
+            {{ calculateTotalSum(reportData, 'lead_created') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'total_leads') }}
+            {{ calculateTotalSum(reportData, 'total_leads') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'unassigned_leads') }}
+            {{ calculateTotalSum(reportData, 'unassigned_leads') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'auto_assigned') }}
+            {{ calculateTotalSum(reportData, 'auto_assigned') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'manually_assigned') }}
+            {{ calculateTotalSum(reportData, 'manually_assigned') }}
           </td>
         </tr>
       </template>
