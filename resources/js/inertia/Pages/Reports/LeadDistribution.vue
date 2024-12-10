@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  reportData: Array,
+  reportData: Object,
   filtersByLob: Object,
   filterOptions: Object,
   defaultFilters: Object,
@@ -217,13 +217,6 @@ const calculateTotalSum = (data, key) => {
 };
 
 const onLobChange = (e, isOnMounted = false) => {
-  // if (!isOnMounted) {
-  //   filters.lob = quoteTypeCodeEnum.Car;
-  //   filters.createdAtDates = [];
-  //   filters.assignmentTypes = 'All';
-  //   filters.segment_filter = 'all';
-  // }
-
   if (
     [
       quoteTypeCodeEnum.Car,
@@ -312,32 +305,32 @@ const onLobChange = (e, isOnMounted = false) => {
       table-class-name="tablefixed"
       :loading="loaders.table"
       :headers="tableHeader"
-      :items="reportData || []"
+      :items="reportData.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
     >
 
       <template #body-append>
-        <tr v-if="reportData.length > 0" class="total-row">
+        <tr v-if="reportData.data && reportData.data.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'received_leads') }}
+            {{ calculateTotalSum(reportData.data, 'received_leads') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'lead_created') }}
+            {{ calculateTotalSum(reportData.data, 'lead_created') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'total_leads') }}
+            {{ calculateTotalSum(reportData.data, 'total_leads') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'unassigned_leads') }}
+            {{ calculateTotalSum(reportData.data, 'unassigned_leads') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'auto_assigned') }}
+            {{ calculateTotalSum(reportData.data, 'auto_assigned') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'manually_assigned') }}
+            {{ calculateTotalSum(reportData.data, 'manually_assigned') }}
           </td>
         </tr>
       </template>
