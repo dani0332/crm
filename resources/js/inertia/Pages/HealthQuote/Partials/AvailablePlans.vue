@@ -703,9 +703,9 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                 <dt class="font-medium">Total VAT amount</dt>
                 <dd>
                   {{
-                    (vatAmount = Number(props.plan.vat)
+                    vatAmount = Number(props.plan.vat)
                       .toFixed(2)
-                      ?.toLocaleString())
+                      ?.toLocaleString()
                   }}
                 </dd>
               </div>
