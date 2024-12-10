@@ -1549,17 +1549,3 @@ if (! function_exists('getInsuranceProvider')) {
         return $insuranceProvider;
     }
 }
-
-//if (! function_exists('getIntersectedValuesByKey')) {
-//    function getIntersectedValuesByKey($firstArray, $secondArray): array
-//    {
-//        $commonQuoteTypes = array_intersect_key($firstArray, $secondArray);
-//        $result = [];
-//        foreach ($commonQuoteTypes as $key => $values) {
-//            $result[$key] = array_intersect($values, $secondArray[$key]);
-//        }
-//        return array_filter($result, function ($value) {
-//            return ! empty($value);
-//        });
-//    }
-//}

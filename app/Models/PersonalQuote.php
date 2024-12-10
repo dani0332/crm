@@ -106,31 +106,6 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(QuoteType::class);
     }
 
-    public function carQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(CarQuote::class, 'code', 'code');
-    }
-
-    public function homeQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(HomeQuote::class, 'code', 'code');
-    }
-
-    public function healthQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(HealthQuote::class, 'code', 'code');
-    }
-
-    public function lifeQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(LifeQuote::class, 'code', 'code');
-    }
-
-    public function businessQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(BusinessQuote::class, 'code', 'code');
-    }
-
     /**
      * bike quote request relation.
      *
@@ -147,11 +122,6 @@ class PersonalQuote extends Model implements AuditableContract
     public function jetskiQuote()
     {
         return $this->hasOne(JetskiQuote::class);
-    }
-
-    public function travelQuoteRequest(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(TravelQuote::class, 'code', 'code');
     }
 
     /**
@@ -278,11 +248,6 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
-    public function quotePayments(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Payment::class, 'code', 'code');
-    }
-
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -361,15 +326,6 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
-    public function businessTypeOfInsurance(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(BusinessInsuranceType::class);
-    }
-
-    public function sendUpdateLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(SendUpdateLog::class);
-    }
     public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');

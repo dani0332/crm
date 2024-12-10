@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\CentralTrait;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
-    use Auditable, CentralTrait;
+    use Auditable;
 
     protected $guarded = [];
     protected $casts = [
@@ -53,11 +52,6 @@ class SendUpdateLog extends Model implements AuditableContract
         return $this->hasMany(Payment::class);
     }
 
-    public function sendUpdatePayments(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Payment::class, 'send_update_log_id', 'id');
-    }
-
     public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
@@ -77,11 +71,6 @@ class SendUpdateLog extends Model implements AuditableContract
         return [
             'auditable_type' => self::class,
         ];
-    }
-
-    public function personalQuote(): BelongsTo
-    {
-        return $this->belongsTo(PersonalQuote::class);
     }
 
     protected function createdAt(): Attribute
