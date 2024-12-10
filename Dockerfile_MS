@@ -41,7 +41,8 @@ RUN apt-get update && apt-get install -y \
     lua-zlib-dev \
     libmemcached-dev \
     wget \
-    gnupg
+    gnupg \
+    ghostscript
 
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
 RUN docker-php-ext-install -j$(nproc) gd
@@ -78,7 +79,8 @@ libpng16-16 \
 libzip4 \
 zlib1g \
 libicu-dev \
-libmemcached11 
+libmemcached11 \
+ghostscript
 
 # Set working directory
 WORKDIR /var/www

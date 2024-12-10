@@ -45,7 +45,7 @@ class UpdatePolicyDetailRequest extends FormRequest
 
                 'quote_policy_number' => 'required|max:75',
                 'quote_policy_issuance_date' => 'required',
-                'quote_policy_start_date' => 'required|date|before_or_equal:'.Carbon::now()->addMonths(2)->endOfDay(),
+                'quote_policy_start_date' => 'required|date',
                 'quote_policy_expiry_date' => 'required|date|after:quote_policy_start_date',
                 'price_vat_notapplicable' => 'required_without:price_vat_applicable|nullable|numeric|between:0,9999999.99',
                 'price_vat_applicable' => 'nullable|numeric|between:0,9999999.99',
@@ -73,6 +73,7 @@ class UpdatePolicyDetailRequest extends FormRequest
             $this->validatePolicyNumberExists($validator, $quoteModel);
             $this->validatePolicyBookingFailed($validator, $quoteModel);
             $this->validatePolicyExpiryDate($validator);
+            $this->validatePolicyStartDate($validator);
 
             // Check if there are any errors and throw a validation exception if there are
             if ($validator->errors()->isNotEmpty()) {
@@ -163,6 +164,21 @@ class UpdatePolicyDetailRequest extends FormRequest
         }
     }
 
+    private function validatePolicyStartDate($validator)
+    {
+        $modelType = ucwords(ucfirst(request()->modelType));
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search($modelType);
+        $startDate = Carbon::parse(request()->quote_policy_start_date);
+
+        if ($quoteTypeId !== QuoteTypeId::Travel) {
+            $maxStartDate = Carbon::now()->addMonths(2)->endOfDay();
+
+            if ($startDate > $maxStartDate) {
+                $validator->errors()->add('quote_policy_start_date', 'Please select a date within the next two months.');
+            }
+        }
+    }
+
     public function messages()
     {
         return [
@@ -170,7 +186,6 @@ class UpdatePolicyDetailRequest extends FormRequest
             'price_vat_notapplicable.between' => 'Price (VAT NOT APPLICABLE) must be less than 13 digits',
             'amount.between' => 'Price (VAT NOT APPLICABLE) must be less than 13 digits',
             'amount_with_vat.required' => 'Total price is required',
-            'quote_policy_start_date.before_or_equal' => 'Please select a start date within next two months',
             'quote_policy_expiry_date.after' => 'Please select a date that is after the start date and in the current or future year',
         ];
     }
