@@ -40,6 +40,8 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -129,6 +131,8 @@ class HandleInertiaRequests extends Middleware
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
+            'carRegistrationType' => CarRegistrationType::asArray(),
+            'carVehicleUse' => CarVehicleUse::asArray(),
         ];
     }
 

@@ -19,6 +19,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
+const carRegistrationType = page.props.carRegistrationType;
+const carVehicleUse = page.props.carVehicleUse;
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -81,6 +83,9 @@ const quoteForm = useForm({
     landmark: page.props.customerAddressData?.landmark || null,
   },
   courierQuoteStatus: page.props.courierQuoteStatus || 'Pending',
+  registration_type: carRegistrationType.PERSONAL,
+  vehicle_use: '',
+  company_name: '',
 });
 
 const isDisbaled =
@@ -221,6 +226,16 @@ const addressTypes = [
   { value: 'Office', label: 'Office' },
 ];
 
+const registrationTypeOptions = [
+  { value: carRegistrationType.PERSONAL, label: 'Personal' },
+  { value: carRegistrationType.COMPANY, label: 'Company' },
+];
+
+const vehicleUseOptions = [
+  { value: carVehicleUse.PRIVATE, label: 'Private' },
+  { value: carVehicleUse.COMMERCIAL, label: 'Commercial' },
+];
+
 const villaApartmentOfficeLabel = computed(() => {
   let label;
 
@@ -297,7 +312,28 @@ const isCourierStatusPending = computed(() => {
 						/>
 				</x-field> -->
 
-        <x-field label="FIRST NAME" required>
+        <x-field label="REGISTRATION TYPE">
+          <x-select
+            v-model="quoteForm.registration_type"
+            :options="registrationTypeOptions"
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field 
+        v-if="quoteForm.registration_type == carRegistrationType.COMPANY"
+        label="VEHICLE USE">
+          <x-select
+            v-model="quoteForm.vehicle_use"
+            :options="vehicleUseOptions"
+            placeholder="Please select vehicle use"
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field 
+        v-if="quoteForm.registration_type == carRegistrationType.COMPANY"
+        label="YOUR COMPANY NAME" required>
           <x-input
             maxLength="20"
             v-model="quoteForm.first_name"
@@ -307,17 +343,21 @@ const isCourierStatusPending = computed(() => {
           />
         </x-field>
 
-        <x-field label="LAST NAME" required>
+        <x-field 
+        v-if="quoteForm.registration_type == carRegistrationType.COMPANY"
+        label="POINT OF CONTACT NAME" required>
           <x-input
-            maxLength="50"
-            v-model="quoteForm.last_name"
+            maxLength="20"
+            v-model="quoteForm.first_name"
             :rules="[isRequired]"
             class="w-full"
-            :error="quoteForm.errors.last_name"
+            :error="quoteForm.errors.first_name"
           />
         </x-field>
 
-        <x-field label="EMAIL" required>
+        <x-field 
+        v-if="quoteForm.registration_type == carRegistrationType.COMPANY"
+        label="POINT OF CONTACT EMAIL" required>
           <x-input
             v-model="quoteForm.email"
             type="email"
@@ -328,7 +368,9 @@ const isCourierStatusPending = computed(() => {
           />
         </x-field>
 
-        <x-field label="PHONE NUMBER" required>
+        <x-field 
+        v-if="quoteForm.registration_type == carRegistrationType.COMPANY"
+        label="POINT OF CONTACT PHONE NUMBER" required>
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
@@ -339,7 +381,73 @@ const isCourierStatusPending = computed(() => {
           />
         </x-field>
 
-        <x-field label="Address Type">
+        <x-field 
+        v-if="quoteForm.registration_type == carRegistrationType.COMPANY"
+        label="BUSINESS ACTIVITY">
+          <ComboBox
+            v-model="quoteForm.addressObj.address_type"
+            placeholder="Select address type"
+            :options="addressTypes"
+            :single="true"
+            :disabled="isCourierStatusPending"
+          />
+        </x-field>
+
+        <x-field 
+        v-if="quoteForm.vehicle_use == carVehicleUse.PRIVATE || quoteForm.registration_type == carRegistrationType.PERSONAL"
+        :label="quoteForm.registration_type == carRegistrationType.COMPANY && quoteForm.vehicle_use == carVehicleUse.PRIVATE ? 'DRIVER\'S FIRST NAME' : 'FIRST NAME'"
+        required>
+          <x-input
+            maxLength="20"
+            v-model="quoteForm.first_name"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.first_name"
+          />
+        </x-field>
+
+        <x-field
+        v-if="quoteForm.vehicle_use == carVehicleUse.PRIVATE || quoteForm.registration_type == carRegistrationType.PERSONAL"
+        :label="quoteForm.registration_type == carRegistrationType.COMPANY && quoteForm.vehicle_use == carVehicleUse.PRIVATE ? 'DRIVER\'S LAST NAME' : 'LAST NAME'"
+        required>
+          <x-input
+            maxLength="50"
+            v-model="quoteForm.last_name"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.last_name"
+          />
+        </x-field>
+
+        <x-field
+        v-if="quoteForm.registration_type == carRegistrationType.PERSONAL"
+        label="EMAIL" required>
+          <x-input
+            v-model="quoteForm.email"
+            type="email"
+            :disabled="isEdit"
+            :rules="[isRequired, isEmail]"
+            class="w-full"
+            :error="quoteForm.errors.email"
+          />
+        </x-field>
+
+        <x-field 
+        v-if="quoteForm.registration_type == carRegistrationType.PERSONAL"
+        label="PHONE NUMBER" required>
+          <x-input
+            v-model="quoteForm.mobile_no"
+            type="tel"
+            :rules="[isRequired]"
+            class="w-full"
+            :disabled="isEdit"
+            :error="quoteForm.errors.mobile_no"
+          />
+        </x-field>
+
+        <x-field 
+        v-if="quoteForm.registration_type == carRegistrationType.PERSONAL" 
+        label="Address Type">
           <ComboBox
             v-model="quoteForm.addressObj.address_type"
             placeholder="Select address type"
@@ -428,7 +536,10 @@ const isCourierStatusPending = computed(() => {
           </div>
         </x-field>
 
-        <x-field label="DATE OF BIRTH" required>
+        <x-field
+        v-if="quoteForm.vehicle_use == carVehicleUse.PRIVATE || quoteForm.registration_type == carRegistrationType.PERSONAL"
+        :label="quoteForm.registration_type == carRegistrationType.COMPANY && quoteForm.vehicle_use == carVehicleUse.PRIVATE ? 'DRIVER\'S DATE OF BIRTH' : 'DATE OF BIRTH'"
+        required>
           <DatePicker
             v-model="quoteForm.dob"
             :rules="[isRequired]"
@@ -437,7 +548,10 @@ const isCourierStatusPending = computed(() => {
           />
         </x-field>
 
-        <x-field label="NATIONALITY" required>
+        <x-field
+        v-if="quoteForm.vehicle_use == carVehicleUse.PRIVATE || quoteForm.registration_type == carRegistrationType.PERSONAL"
+        :label="quoteForm.registration_type == carRegistrationType.COMPANY && quoteForm.vehicle_use == carVehicleUse.PRIVATE ? 'DRIVER\'S NATIONALITY' : 'NATIONALITY'"
+        required>
           <ComboBox
             v-model="quoteForm.nationality_id"
             :single="true"
@@ -453,7 +567,9 @@ const isCourierStatusPending = computed(() => {
           />
         </x-field>
 
-        <x-field label="UAE LICENCE HELD FOR" required>
+        <x-field 
+        v-if="quoteForm.vehicle_use == carVehicleUse.PRIVATE || quoteForm.registration_type == carRegistrationType.PERSONAL"
+        label="UAE LICENCE HELD FOR" required>
           <ComboBox
             v-model="quoteForm.uae_license_held_for_id"
             :single="true"
@@ -470,7 +586,9 @@ const isCourierStatusPending = computed(() => {
           />
         </x-field>
 
-        <x-field label="HOME COUNTRY DRIVING LICENSE HELD FOR">
+        <x-field
+        v-if="quoteForm.vehicle_use == carVehicleUse.PRIVATE || quoteForm.registration_type == carRegistrationType.PERSONAL"
+        label="HOME COUNTRY DRIVING LICENSE HELD FOR">
           <x-select
             v-model="quoteForm.back_home_license_held_for_id"
             :options="
