@@ -368,9 +368,12 @@ const getS3TempUrl = async docURL => {
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
           :key="index"
-          :disabled="key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS && !quote.insurance_provider_id"
+          :disabled="
+            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
+            !quote.insurance_provider_id
+          "
         >
-        <div
+          <div
             v-for="documentType in docType"
             :key="documentType.id"
             class="grid md:grid-cols-2 gap-2 my-4 border-b"
