@@ -368,13 +368,13 @@ export const getQuoteTypeId = (quoteTypes, quoteType) => {
 // Function to log quote export and open the URL
 export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
-  axios
+  return axios
     .post('/quotes/export-logs/create', payload)
     .then(res => {
-      console.log(res);
+      return res.data.success;
     })
     .catch(err => {
-      console.log(err);
+      throw err;
     })
     .finally(() => {
       window.open(payload.url);
@@ -388,5 +388,17 @@ export const getIp = async () => {
     return res.data.ip;
   } catch (err) {
     return null;
+  }
+};
+
+//Function to validate single field in form before submit
+export const validateField = (form, fieldValue, errorField, validationRule) => {
+  const validationError = validationRule(fieldValue);
+  if (validationError !== true) {
+    form.errors[errorField] = validationError;
+    return false;
+  } else {
+    form.errors[errorField] = '';
+    return true;
   }
 };

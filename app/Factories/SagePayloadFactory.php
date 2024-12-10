@@ -1344,7 +1344,7 @@ class SagePayloadFactory
 
     private static function getTermsCode($splitPaymentsCount)
     {
-        return $splitPaymentsCount >= 10 ? 'SPLI'.$splitPaymentsCount : 'SPLIT'.$splitPaymentsCount;
+        return $splitPaymentsCount === 1 ? 'COD' : ($splitPaymentsCount >= 10 ? 'SPLI'.$splitPaymentsCount : 'SPLIT'.$splitPaymentsCount);
     }
 
     private static function createAppliedReceiptsAdjustmentsForSplitPayments($splitPaymentRecords, $sageCustomerNumber, $paymentRecord)

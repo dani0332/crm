@@ -176,7 +176,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 
     $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
     $nameSpace = 'App\\Models\\';
-    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+    $modelType = (checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
     if (! class_exists($modelType)) {
         return false;
@@ -464,27 +464,6 @@ function generateRouteNames($prefix)
     ];
 }
 
-if (! function_exists('newUi')) {
-    function newUi(): array
-    {
-        return [
-            quoteTypeCode::Health,
-            quoteTypeCode::Car,
-            quoteTypeCode::Travel,
-            quoteTypeCode::Home,
-            quoteTypeCode::Life,
-            quoteTypeCode::Pet,
-            quoteTypeCode::CORPLINE,
-            quoteTypeCode::Business,
-            quoteTypeCode::Cycle,
-            quoteTypeCode::Bike,
-            quoteTypeCode::Yacht,
-            quoteTypeCode::Jetski,
-            quoteTypeCode::Aml,
-        ];
-    }
-}
-
 if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
@@ -502,7 +481,7 @@ if (! function_exists('createCdnUrl')) {
 if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
-        return ['im.automation4@gmail.com', 'muhammad.abdullah@insurancemarket.ae'];
+        return ['qa_automation@myalfred.com'];
     }
 }
 
