@@ -3,21 +3,21 @@
 namespace App\Repositories;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Facades\Capi;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
-use App\Enums\PaymentMethodsEnum;
-use App\Jobs\WatermarkDocumentsJob;
-use App\Enums\SendUpdateLogStatusEnum;
 use App\Services\SendUpdateLogService;
-use App\Traits\GetWatermarkPropertyTrait;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\GetWatermarkPropertyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;

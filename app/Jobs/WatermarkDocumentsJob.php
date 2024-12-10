@@ -18,7 +18,6 @@ class WatermarkDocumentsJob implements ShouldQueue
 
     public $timeout = 120; // 2 minutes
     public $tries = 3;
-
     private $quoteDocumentId;
     private $tempFilePath;
     private $data;
