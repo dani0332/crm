@@ -1048,9 +1048,6 @@ class RenewalsUploadService
                 'is_gcc_standard' => $data['is_gcc'],
             ]);
             
-            info("********************** Quote Data **********************");
-            info('quote data: '.json_encode($quoteData));
-
             /*
              * API refresh plans when quote_updated_at have latest date
              */
