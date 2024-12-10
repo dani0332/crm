@@ -11,6 +11,7 @@ class RuleType extends Model
 
     public const LEAD_SOURCE = 'lead source';
     public const CAR_MAKE_MODEL = 'car make and model';
+    public const  VEHICLE_USE = 'vehicle use';
 
     /**
      * const @var array
@@ -18,5 +19,6 @@ class RuleType extends Model
     const RULE_TYPES_LIST = [
         self::LEAD_SOURCE,
         self::CAR_MAKE_MODEL,
+        self::VEHICLE_USE,
     ];
 }

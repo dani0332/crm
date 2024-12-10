@@ -385,7 +385,12 @@ class CarAllocationService extends AllocationService
                 ||
                 ($commercialCarMake && $commercialCarModel)
             ) {
-                return $this->getCommercialRule();
+                if(!$lead->is_commercial) {
+                    return $this->getRulesForVehicleUse($lead);
+                }
+                else {
+                    return $this->getCommercialRule($lead);
+                }
             }
         }
 
@@ -423,6 +428,37 @@ class CarAllocationService extends AllocationService
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
             )->get();
     }
+    public function getRulesForVehicleUse($lead)
+    {
+        $vehicleUse = $lead->vehicle_use;
+
+        if ($vehicleUse == 'Private') {
+            return $this->getPrivateUseRule($lead);
+        } elseif ($vehicleUse == 'Commercial') {
+            return $this->getCommercialRule();
+        }
+
+        return [];
+    }
+
+    private function getPrivateUseRule($lead)
+    {
+        if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_QUOTE) {
+            return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('rule_type', RuleTypeEnum::VEHICLE_USE)
+            ->where('rules.is_active', 1)
+            ->groupBy('rule_details.rule_id')
+            ->select(
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+            )->get();
+        }
+
+        return [];
+    }
+
+
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId): mixed
     {
