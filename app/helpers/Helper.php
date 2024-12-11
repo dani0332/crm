@@ -19,6 +19,7 @@ use App\Models\CustomerMembers;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
@@ -173,7 +174,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 
     $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
     $nameSpace = 'App\\Models\\';
-    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+    $modelType = (checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
     if (! class_exists($modelType)) {
         return false;
@@ -190,6 +191,15 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where('quote_status_id', $statusId)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
+        })
+        ->when($modelType == LifeQuote::class, function($query) {
+            $query->with([
+                'nationality' => function($subquery) {
+                    $subquery->select('id', 'text');
+                },
+                'insuranceTenure' => function ($subquery) {
+                $subquery->select('id', 'text');
+            }]);
         });
 
     $modelQuery = $modelType::when($modelType == BusinessQuote::class, function ($query) {
@@ -204,6 +214,15 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where('advisor_id', auth()->user()->id)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
+        })
+        ->when($modelType == LifeQuote::class, function($query) {
+            $query->with([
+                'nationality' => function($subquery) {
+                    $subquery->select('id', 'text');
+                },
+                'insuranceTenure' => function ($subquery) {
+                $subquery->select('id', 'text');
+            }]);
         });
 
     // Reminder: previous quote id is not available in personal quote
@@ -238,6 +257,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
         }
+        if($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('sum_insured_value');
+        }
         $result['leads_list'] = $modelQuery->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
@@ -248,6 +270,9 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
+        }
+        if($modelType == LifeQuote::class) {
+            $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->sum('sum_insured_value');
         }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
@@ -461,27 +486,6 @@ function generateRouteNames($prefix)
     ];
 }
 
-if (! function_exists('newUi')) {
-    function newUi(): array
-    {
-        return [
-            quoteTypeCode::Health,
-            quoteTypeCode::Car,
-            quoteTypeCode::Travel,
-            quoteTypeCode::Home,
-            quoteTypeCode::Life,
-            quoteTypeCode::Pet,
-            quoteTypeCode::CORPLINE,
-            quoteTypeCode::Business,
-            quoteTypeCode::Cycle,
-            quoteTypeCode::Bike,
-            quoteTypeCode::Yacht,
-            quoteTypeCode::Jetski,
-            quoteTypeCode::Aml,
-        ];
-    }
-}
-
 if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
@@ -499,7 +503,7 @@ if (! function_exists('createCdnUrl')) {
 if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
-        return ['im.automation4@gmail.com', 'muhammad.abdullah@insurancemarket.ae'];
+        return ['qa_automation@myalfred.com'];
     }
 }
 

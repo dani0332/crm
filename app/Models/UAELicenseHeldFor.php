@@ -10,11 +10,6 @@ class UAELicenseHeldFor extends BaseModel
 
     protected $table = 'uae_license_held_for';
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, 'uae_license_held_for', ['code', 'id', 'text', 'text_ar']);
-    }
-
     /**
      * scope to get active records
      *

@@ -116,6 +116,9 @@ const tableHeader = reactive([
     value: 'renewal_batch_model',
     is_active: true,
   },
+  { text: 'Type of Insurance', value: 'tenure_of_insurance', is_active: true },
+  { text: 'Tenure of Cover', value: 'number_of_years', is_active: true },
+  { text: 'Sum Assured', value: 'sum_insured_value', is_active: true },
 ]);
 
 const advisorOptions = computed(() => {
@@ -237,6 +240,7 @@ const canExport = ref(false);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const exportLoader = ref(false);
 const onExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'life');
@@ -244,7 +248,13 @@ const onExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Life'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 watch(
@@ -605,6 +615,7 @@ watch(
             color="emerald"
             class="justify-self-start"
             @click.prevent="onExport"
+            :loading="exportLoader"
           >
             Export
           </x-button>
@@ -727,6 +738,16 @@ watch(
       <template #item-renewal_batch_model="item">
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
+      </template>
+      <template #item-tenure_of_insurance="item">
+        <p>
+          {{ item?.insurance_tenure?.text ?? '' }}
+        </p>
+      </template>
+      <template #item-number_of_years="item">
+        <p>
+          {{ item?.number_of_years?.text ?? '' }}
         </p>
       </template>
     </DataTable>

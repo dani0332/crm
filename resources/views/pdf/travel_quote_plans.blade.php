@@ -415,7 +415,7 @@
         //  'selectedPlanIds','hasAdultAndSeniorMember'
 
         foreach ($quotePlans->quotes->plans as &$quotePlan) {
-            $addonsPrice = $addonsVat = $quotePlan->discountPremium = $quotePlan->total = 0;
+            $addonsPrice = $addonsVat = $quotePlan->total = 0;
             if (!isset($quotePlan->vat)) {
                 $quotePlan->vat = 0;
             }

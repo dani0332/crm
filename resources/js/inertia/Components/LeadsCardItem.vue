@@ -210,6 +210,11 @@ const formatDate = date => {
         business_type_of_insurance,
         stale_at,
         previous_policy_expiry_date,
+        sum_insured_value,
+        dob,
+        nationality_text,
+        insurance_tenure_text,
+        age,
       } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
@@ -229,6 +234,22 @@ const formatDate = date => {
         <span class="font-semibold text-sm">
           {{ first_name }} {{ last_name }}
         </span>
+      </div>
+       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ insurance_tenure_text }}</p>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="money" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ Number(sum_insured_value).toLocaleString() }}</p>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="globe" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ nationality_text }}</p>
+      </div>
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+        <x-icon icon="person" size="sm" class="text-primary-400" />
+        <p class="text-xs">{{ age }}</p>
       </div>
 
       <div
@@ -257,7 +278,7 @@ const formatDate = date => {
         <p class="text-xs">{{ company_name }}</p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div v-if="quoteType != 'Life'" class="flex items-center gap-2">
         <x-tooltip placement="left">
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
@@ -300,7 +321,7 @@ const formatDate = date => {
         </x-tooltip>
         <p class="text-xs">{{ updated_at }}</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div v-if="quoteType != 'Life'" class="flex items-center gap-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="1em"

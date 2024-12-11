@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
-use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Jetstream\HasProfilePhoto;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
@@ -20,10 +18,8 @@ class User extends Authenticatable implements AuditableContract
 {
     use Auditable;
     use HasFactory;
-    use HasProfilePhoto;
     use HasRoles;
     use Notifiable;
-    use TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -56,15 +52,6 @@ class User extends Authenticatable implements AuditableContract
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-    ];
-
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var array
-     */
-    protected $appends = [
-        'profile_photo_url',
     ];
 
     public function getAuditables()
@@ -234,17 +221,6 @@ class User extends Authenticatable implements AuditableContract
         $userTeamIds = UserTeams::where('user_id', $userId)->get()->pluck('team_id');
 
         return Team::whereIn('id', $userTeamIds)->get()->pluck('name');
-    }
-
-    public function processGetDSL($filters = [])
-    {
-        if (Auth::user()->hasAnyRole([RolesEnum::ProductionApprovalManager, RolesEnum::Advisor, RolesEnum::Admin])) {
-            return $this->getUserRoles();
-        }
-
-        return self::with(['usersroles' => function ($query) {
-            $query->where('name', 'admin');
-        }])->get();
     }
 
     public function hasMyLeadAccess()
