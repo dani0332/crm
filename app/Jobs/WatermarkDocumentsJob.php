@@ -48,6 +48,7 @@ class WatermarkDocumentsJob implements ShouldQueue
             Log::error('Document or DocumentType not found.');
             info('Not Found QuoteDocumentId Job Parameter: '.$this->quoteDocumentId);
             info('Not Found DocumentTypeId Job Parameter: '.$this->documentTypeId);
+
             return;
         }
 
