@@ -51,11 +51,11 @@ class PolicyIssuanceService
         if (count($uniqueInsurerListByLob) > 0) {
             info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - Total Unique Insurer List By LOB Count : '.count($uniqueInsurerListByLob));
             /* Get the statuses for which automation is enabled for insurers against each LOB */
-            $policyIssuanceAutomationStatuses = $this->getInsurerAutomationStatus($uniqueInsurerListByLob);
-            foreach ($policyIssuanceAutomationStatuses as $policyIssuanceAutomationStatus) {
-                info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - Process Automation for Quote Type : '.$policyIssuanceAutomationStatus->quote_type.' - Insurer : '.$policyIssuanceAutomationStatus?->insuranceProvider?->code);
+            $policyIssuanceInsurerAutomationStatuses = $this->getInsurerAutomationStatus($uniqueInsurerListByLob);
+            foreach ($policyIssuanceInsurerAutomationStatuses as $policyIssuanceInsurerAutomationStatus) {
+                info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - Process Automation for Quote Type : '.$policyIssuanceInsurerAutomationStatus->quote_type.' - Insurer : '.$policyIssuanceInsurerAutomationStatus?->insuranceProvider?->code);
                 /* process policy issuance automation for each insurer against each LOB */
-                $this->processPolicyIssuanceRecords($policyIssuanceAutomationStatus);
+                $this->processPolicyIssuanceRecords($policyIssuanceInsurerAutomationStatus);
             }
         } else {
             info('cmd:'.$this->className.' fn:'.__FUNCTION__.' - No Unique Insurer found');
@@ -107,9 +107,9 @@ class PolicyIssuanceService
 
         /* Fetch Policy Issuance Records against statuses by each LOB and Insurer */
         $policyIssuanceQuery = PolicyIssuance::where(['quote_type' => $quoteType, 'insurance_provider_id' => $insuranceProvider->id])->whereIn('status', $statuses);
-
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Process Records for Quote Type: '.$quoteType.', Insurer : '.$insuranceProvider?->code.' - Count : '.$policyIssuanceQuery->count().' - Statuses : '.json_encode($statuses));
-        if ($policyIssuanceQuery->count() > 0) {
+        $policyIssuanceCount = $policyIssuanceQuery->count();
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Process Records for Quote Type: '.$quoteType.', Insurer : '.$insuranceProvider?->code.' - Count : '.$policyIssuanceCount.' - Statuses : '.json_encode($statuses));
+        if ($policyIssuanceCount > 0) {
             $policyIssuanceQuery->chunk(100, function ($policyIssuanceProcesses) {
                 foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' dispatch automation job');
