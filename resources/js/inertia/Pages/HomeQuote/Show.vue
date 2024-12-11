@@ -1669,7 +1669,7 @@ const copyLink = () => {
                 </p>
                 <div class="flex gap-1">
                   <x-tag
-                    v-if="item.isManualUpdate"
+                    v-if="item.isManualPlan"
                     size="xs"
                     color="primary"
                     class="mt-0.5 text-[10px]"
@@ -1683,6 +1683,14 @@ const copyLink = () => {
                     class="mt-0.5 text-[10px]"
                   >
                     Hidden
+                  </x-tag>
+                  <x-tag
+                    v-if="item.puaType"
+                    size="xs"
+                    color="primary"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    PUA
                   </x-tag>
                 </div>
               </template>
