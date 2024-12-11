@@ -1085,7 +1085,7 @@ class TravelQuoteService extends BaseService
             // Lead with the code already exists
             return false;
         }
-        info('Master payment code: '.$leadModal->code.' before creating duplicate region_cover_for_id ' . $leadModal->region_cover_for_id);
+        info('Master payment code: '.$leadModal->code.' before creating duplicate region_cover_for_id '.$leadModal->region_cover_for_id);
         $duplicateLead = $leadModal->replicate();
         $duplicateLead->parent_id = $leadModal->id;
         $duplicateLead->uuid = $leadModal->uuid.'-1';
@@ -1094,7 +1094,7 @@ class TravelQuoteService extends BaseService
         $duplicateLead->quote_status_id = $quoteStatusId;
         $duplicateLead->region_cover_for_id = $leadModal->region_cover_for_id;
         $duplicateLead->save();
-        info('Master payment code: '.$leadModal->code.' parent region_cover_for_id ' . $leadModal->region_cover_for_id . ' Child region_cover_for_id ' . $duplicateLead->region_cover_for_id);
+        info('Master payment code: '.$leadModal->code.' parent region_cover_for_id '.$leadModal->region_cover_for_id.' Child region_cover_for_id '.$duplicateLead->region_cover_for_id);
 
         if ($duplicateLead) {
             //update morph relation in payments table
