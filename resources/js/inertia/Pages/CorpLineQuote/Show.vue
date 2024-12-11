@@ -67,10 +67,12 @@ const rules = {
 };
 
 const disableStatusSection = computed(() => {
-  return props.quote?.quote_status_id == quoteStatusEnum?.Lost ||
-    props.quote?.quote_status_id == quoteStatusEnum?.TransactionApproved
-    ? true
-    : false;
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
 });
 
 const dateToYMD = date => {
@@ -925,6 +927,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
                   <dd class="break-words">{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>

@@ -19,6 +19,8 @@ const customerForm = useForm({
   nationality_id: page.props.customer.nationality_id || null,
   has_alfred_access: page.props.customer.has_alfred_access || null,
   has_reward_access: page.props.customer.has_reward_access || null,
+  receive_marketing_updates:
+    page.props.customer.receive_marketing_updates || null,
 });
 
 const nationalityOptions = computed(() => {
@@ -137,11 +139,20 @@ function onSubmit(isValid) {
         :options="nationalityOptions"
         :error="customerForm.errors.nationality_id"
       />
-      <div class="grid grid-cols-2 gap-2">
+      <div class="flex gap-5">
         <x-form-group v-model="customerForm.has_alfred_access">
           <x-checkbox label="Has Alfred Access" color="primary" />
           <x-checkbox label="Has Reward Access" color="primary" />
         </x-form-group>
+        <div class="flex mt-0.5">
+          <x-checkbox
+            v-model="customerForm.receive_marketing_updates"
+            color="primary"
+            class="font-normal"
+            style="font-weight: 300"
+          />
+          <x-label> Receive Marketing Updates </x-label>
+        </div>
       </div>
     </div>
     <x-divider class="my-4" />

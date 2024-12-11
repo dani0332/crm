@@ -10,6 +10,7 @@ use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -135,9 +136,7 @@ class CentralService
                     return false;
                 }
 
-                $response = in_array(ucfirst($lob), newUi()) ?
-                    ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
-                    Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
+                $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
@@ -176,7 +175,7 @@ class CentralService
         }
 
         $leadsIds = array_map('intval', explode(',', $leadsIds));
-        $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+        $model = (in_array(ucfirst($request->modelType), $personalQuotes)) ?
             ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
             ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
 
@@ -191,7 +190,7 @@ class CentralService
                 $getQuoteLead->quote_batch_id = $quoteBatch->id;
                 $getQuoteLead->save();
 
-                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes)) ?
                     'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
 
                 $model['child']::updateOrCreate(
@@ -416,8 +415,11 @@ class CentralService
         }
 
         // Lock functionality check for Lead status Section
-        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined]);
-        if (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
+        $lockedForQuoteStatus = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED];
+        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, $lockedForQuoteStatus);
+        if (auth()->check() && auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+            in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked]) ? $lockFunctionalities['lead_status'] = true : $lockFunctionalities['lead_status'] = false;
+        } elseif (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
             $lockFunctionalities['lead_status'] = true;
         }
 
@@ -864,10 +866,11 @@ class CentralService
 
     public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
     {
-        SendUpdateStatusLog::create([
+        SendUpdateStatusLog::updateOrCreate([
             'send_update_log_id' => $sendUpdateLogId,
             'previous_status' => $previousStatus,
             'current_status' => $currentStatus,
+        ], [
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
@@ -875,14 +878,40 @@ class CentralService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
-        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatus) {
+        $sendUpdateStatusArray = is_string($sendUpdateStatus) ? [$sendUpdateStatus] : $sendUpdateStatus;
+
+        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatusArray) {
             $query->where('send_update_log_id', $sendUpdateId)
-                ->where(function ($query) use ($sendUpdateStatus) {
-                    $query->where('current_status', $sendUpdateStatus)
-                        ->orWhere('previous_status', $sendUpdateStatus);
+                ->where(function ($query) use ($sendUpdateStatusArray) {
+                    $query->whereIn('current_status', $sendUpdateStatusArray)
+                        ->orWhereIn('previous_status', $sendUpdateStatusArray);
                 });
         })->count();
 
         return $sendUpdateStatusCount > 0;
+    }
+
+    /**
+     * This method is used to check if the COMMISSION (VAT NOT APPLICABLE) is enabled or not.
+     *
+     * @param  $quoteType  - Life, Business etc.
+     * @param  $businessTypeOfInsuranceId  - Business type of insurance id, if quote type is Business.
+     */
+    public function commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId = null): bool
+    {
+        if (
+            ($quoteType == quoteTypeCode::Business &&
+            in_array($businessTypeOfInsuranceId, [
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoIndividual),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineHull),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoOpenCover),
+                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupLife),
+            ])) ||
+            $quoteType == quoteTypeCode::Life
+        ) {
+            return true;
+        }
+
+        return false;
     }
 }

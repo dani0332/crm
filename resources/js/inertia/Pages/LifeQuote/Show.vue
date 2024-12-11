@@ -49,7 +49,8 @@ const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
 const modelClass = 'App\\Models\\LifeQuote';
 const hasRole = role => useHasRole(role);
-
+const permissionEnum = page.props.permissionsEnum;
+const quoteStatusEnum = page.props.quoteStatuses;
 const modals = reactive({
   duplicate: false,
   activity: false,
@@ -294,9 +295,11 @@ const leadStatusOptions = computed(() => {
 });
 
 const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
   return (
-    page.props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.TransactionApproved
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
 
@@ -888,6 +891,14 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>
+                    {{
+                      quote.customer.receive_marketing_updates ? 'Yes' : 'No'
+                    }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>

@@ -171,7 +171,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $masterPayment = (object) $request->payment;
-
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
                 info('Payment does not exist for Payment Code: '.$request->paymentCode);
@@ -187,14 +186,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'updated_by' => $request->user()->id,
                 ];
 
-                // Check if payment frequency is upfron and Old or new Payment method is Proforma Payment Request, only than update parent payment method
-                $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
-                $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
-                $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
-                if ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod)) {
+                if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)) {
                     $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
                 }
-
             } else {
 
                 $paymentInformation = [
@@ -237,6 +231,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
         }, $maxRetries);
+    }
+
+    /**
+     * Determine if the parent payment method should be updated.
+     */
+    private function shouldUpdateParentPaymentMethod($payment, $masterPayment): bool
+    {
+        $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
+        $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
+        $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+        $isCreditApprovalRemoved = $payment->credit_approval !== $masterPayment->credit_approval;
+
+        return $isCreditApprovalRemoved || ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod));
     }
 
     //Add split payments
@@ -393,51 +400,78 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $request->paymentCode);
     }
 
-    public function fetchUpdateSplitPaymentsApprove($request)
+    // Will move this code to helper or some where else later
+    private function getQuoteModel($modelType, $quoteId, $sendUpdateId = 0)
     {
-        if ($request->is_declined) {
-            if ($request->send_update_id > 0) {
-                $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
-            } else {
-                $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-            }
-            $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
-            $firstPayment->update([
-                'decline_reason_id' => $request->declined_reason,
-                'decline_custom_reason' => $request->declined_custom_reason,
-                'updated_by' => Auth::user()->id,
-            ]);
-            if ($request->send_update_id > 0) {
-                app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_DECLINE);
-                $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
-            } else {
-                $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
-            }
-            $quoteModel->save();
-            $successMessage = 'Transaction declined';
-            info('Transaction declined for Payment Code: '.$request->payment_code);
+        if ($sendUpdateId > 0) {
+            return SendUpdateLogRepository::getLogById($sendUpdateId);
         } else {
-            if ($request->is_capture) { //update collected amount in childs
-                foreach ($request->collection_amount as $key => $splitAmount) {
-                    $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
-                    if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
+            return $this->getQuoteObject($modelType, $quoteId);
+        }
+    }
 
-                        // Log the split payment approval process
-                        info('Approving split payment. Payment Code: '.$request->payment_code.', SR No: '.$key);
+    /**
+     * This method processes the decline of a payment by updating the payment record with the decline reason,
+     * updating the status of the quote model, and logging the transaction decline.
+     *
+     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
+     * @return string The result of the transaction processing.
+     */
+    private function handlePaymentDecline($request)
+    {
+        $quoteModel = $this->getQuoteModel($request->modelType, $request->quote_id, $request->send_update_id);
+        $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
+        $firstPayment->update([
+            'decline_reason_id' => $request->declined_reason,
+            'decline_custom_reason' => $request->declined_custom_reason,
+            'updated_by' => Auth::user()->id,
+        ]);
+        if ($request->send_update_id > 0) {
+            app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_DECLINE);
+            $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
+        } else {
+            $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
+        }
+        $quoteModel->save();
+        info('Master payment code: '.$request->payment_code.' Transaction declined');
 
-                        // process split payment approve
-                        app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
-                    }
+        return 'Transaction declined';
+    }
+
+    /**
+     * This method processes the approval of a payment by updating the collected amount for split payments,
+     * logging the approval process, and calling the appropriate service to handle the approval.
+     *
+     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
+     * @return mixed The result of the master payment approval process.
+     */
+    private function handlePaymentApprove($request)
+    {
+        if ($request->is_capture) { //update collected amount in childs
+            foreach ($request->collection_amount as $key => $splitAmount) {
+                $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
+                if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
+
+                    // Log the split payment approval process
+                    info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' approving process started');
+
+                    // process split payment approve
+                    app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
                 }
             }
-            // Log the master payment approval process
-            info('Processing master payment approval for Payment Code: '.$request->payment_code);
-
-            // process master payment approve
-            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
         }
+        // Log the master payment approval process
+        info('Master payment code: '.$request->payment_code.' processing master payment approval');
 
-        return $successMessage;
+        // process master payment approve
+        return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
+
+    }
+
+    // This method handles the approval or decline of split payments based on the request.
+    public function fetchUpdateSplitPaymentsApprove($request)
+    {
+        return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);
     }
 
     //migrate payments
@@ -624,6 +658,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     private function updatePaymentStatusNonUpFront($payment)
     {
+        $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
+        $paidOrAuthorisedSplits = $this->getPaidOrAuthorisedSplits($paymentSplits);
+
+        // Update payment method for credit approval payments when credit approval is present
+        if (! empty($payment->credit_approval) && $paidOrAuthorisedSplits) {
+            $this->updatePaymentMethodForCreditApproval($payment);
+        }
+
         $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
             PaymentStatusEnum::PAID,
             PaymentStatusEnum::CAPTURED,
@@ -633,38 +675,61 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             ->where('code', $payment->code)
             ->count();
 
-        info('Total paid payments for '.$payment->code.': '.$totalPaidPayments.' out of '.$payment->total_payments);
+        info('Master payment code: '.$payment->code.' Total paid payments: '.$totalPaidPayments.' out of '.$payment->total_payments);
 
-        if (
-            $totalPaidPayments == $payment->total_payments
-            && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)
-        ) {
-            info('All payments are captured. Updating Payment status to CAPTURED: '.$payment->code);
-            $payment->update(
-                ['payment_status_id' => PaymentStatusEnum::CAPTURED]
-            );
+        if ($totalPaidPayments == $payment->total_payments && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)) {
+            info('Master payment code: '.$payment->code.' All payments are captured. Updating Payment status to CAPTURED');
+            $payment->update(['payment_status_id' => PaymentStatusEnum::CAPTURED]);
         } elseif ($totalPaidPayments > 0) {
-            info('Some payments are captured. Updating Payment status to PARTIAL_CAPTURED: '.$payment->code);
-            $payment->update(
-                ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
-            );
+            info('Master payment code: '.$payment->code.' Some payments are captured. Updating Payment status to PARTIAL_CAPTURED');
+            $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]);
         } else {
             //verify credit approved status
             $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
                 PaymentStatusEnum::CREDIT_APPROVED,
             ])->where('code', $payment->code)->count();
-            info('Total credit approved payments for '.$payment->code.': '.$totalCreditPayments);
+            info('Master payment code: '.$payment->code.' Total credit approved payments: '.$totalCreditPayments);
             if ($totalCreditPayments > 0) {
-                info('Updating payment status to CREDIT_APPROVED for '.$payment->code);
-                $payment->update(
-                    ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
-                );
+                info('Master payment code: '.$payment->code.' Updating payment status to CREDIT_APPROVED');
+                $payment->update(['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]);
             } else {
-                info('Updating payment status to NEW for '.$payment->code);
-                $payment->update(
-                    ['payment_status_id' => PaymentStatusEnum::NEW]
-                );
+                info('Master payment code: '.$payment->code.' Updating payment status to NEW');
+                $payment->update(['payment_status_id' => PaymentStatusEnum::NEW]);
             }
+        }
+    }
+
+    private function getPaidOrAuthorisedSplits($paymentSplits)
+    {
+        $paidOrAuthorisedStatuses = [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::CAPTURED,
+        ];
+
+        return $paymentSplits->contains(function ($split) use ($paidOrAuthorisedStatuses) {
+            return in_array($split->payment_status_id, $paidOrAuthorisedStatuses);
+        });
+    }
+
+    private function updatePaymentMethodForCreditApproval($payment)
+    {
+        info('Master payment code: '.$payment->code.' with credit approval & paid/authorised child payments');
+        // Define the frequencies that should result in a PARTIAL_PAYMENT status
+        $partialPaymentFrequencies = [
+            PaymentFrequency::CUSTOM,
+            PaymentFrequency::SEMI_ANNUAL,
+            PaymentFrequency::QUARTERLY,
+            PaymentFrequency::MONTHLY,
+        ];
+
+        // Update parent payment based on frequency
+        if (in_array($payment->frequency, $partialPaymentFrequencies)) {
+            info('Master payment code: '.$payment->code.' Updating payment method to Partial Payment');
+            $payment->update(['payment_methods_code' => PaymentMethodsEnum::PartialPayment]);
+        } elseif ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+            info('Master payment code: '.$payment->code.' Updating payment method to Multiple Payment');
+            $payment->update(['payment_methods_code' => PaymentMethodsEnum::MultiplePayment]);
         }
     }
 
@@ -676,7 +741,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             } else {
                 $this->updatePaymentStatusNonUpFront($payment);
             }
-            info('Updating lead status for Payment Code: '.$payment->code);
+            info('Master payment code: '.$payment->code.' Updating lead status');
             app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
         }
     }

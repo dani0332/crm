@@ -165,6 +165,8 @@ class YachtQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');

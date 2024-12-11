@@ -5,6 +5,7 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   quoteType: {
     type: String,
     default: 'cycle',
@@ -32,6 +33,7 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
+  renewal_batch_id: [],
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
@@ -76,6 +78,13 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
+  }));
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
   }));
 });
 
@@ -146,7 +155,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
 ]);
 
 function onSubmit(isValid) {
@@ -216,6 +225,7 @@ const handleSelectedFilters = selectedFilters => {
   onSubmit(true);
 };
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'cycle');
@@ -223,7 +233,13 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Cycle'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function setQueryStringFilters() {
@@ -522,12 +538,10 @@ const validateDateRange = () => {
           />
         </x-field>
         <x-field label="Renewal Batch">
-          <x-input
-            v-model="filters.renewal_batch"
-            type="search"
-            name="renewal_batch"
-            class="w-full"
+          <ComboBox
+            v-model="filters.renewal_batch_id"
             placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
           />
         </x-field>
         <x-field label="Policy Expiry Start Date">
@@ -652,6 +666,7 @@ const validateDateRange = () => {
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >
@@ -752,6 +767,11 @@ const validateDateRange = () => {
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-renewal_batch_model="item">
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
       </template>
     </DataTable>
 

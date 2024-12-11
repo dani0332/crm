@@ -72,6 +72,12 @@ const modals = reactive({
 });
 
 const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    if (props.quote.quote_status_id == quoteStatusEnum.PolicyBooked) {
+      return true;
+    }
+    return false;
+  }
   return (
     (props.quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
       props.quote.quote_status_id == quoteStatusEnum.Lost) ??
@@ -892,6 +898,10 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>

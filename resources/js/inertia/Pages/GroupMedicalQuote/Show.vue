@@ -1,7 +1,7 @@
 <script setup>
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MigratePayment from '../../Components/MigratePayment.vue';
 import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
@@ -379,6 +379,15 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
   createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
 </script>
 
 <template>
@@ -756,6 +765,14 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   <dd>{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>
+                    {{
+                      quote.customer.receive_marketing_updates ? 'Yes' : 'No'
+                    }}
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
                   <dd>{{ customerProfileForm.company_name }}</dd>
                 </div>
@@ -989,9 +1006,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   label="Status"
                   :options="leadStatusOptions"
                   :disabled="
-                    quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved ||
-                    lockLeadSectionsDetails.lead_status
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
                   "
                   placeholder="Lead Status"
                   class="w-full"
@@ -1004,9 +1019,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   placeholder="Lead Notes"
                   class="w-full"
                   :disabled="
-                    quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved ||
-                    lockLeadSectionsDetails.lead_status
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
                   "
                 />
               </div>
@@ -1044,10 +1057,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                isDisabled
-              "
+              :disabled="allowStatusUpdate || isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Change Status
