@@ -29,33 +29,17 @@ class SearchLeadsEndorsementsExport extends BaseReportsExport implements WithTit
 
     public function map($row): array
     {
-        if (request()->list == 'leads') {
-            $response = [
-                $row->code,
-                // ($row?->customer?->first_name.' '.$row?->customer?->last_name) ?? $this->notAvailable,
-                $row->company_name,
-                $row->quote_status ?? $this->notAvailable,
-                //                $row?->quotePayments->first()?->total_price ?? $this->notAvailable,
-                $row->policy_number ?? $this->notAvailable,
-                //                $row?->quotePayments->first()?->insuranceProvider?->text ?? $this->notAvailable,
-                $row->quote_type ?? $this->notAvailable,
-                //                $row?->advisor?->name ?? $this->notAvailable,
-            ];
-        } else {
-            $response = [
-                $row->code,
-                //                ($row?->personalQuote?->customer?->first_name.' '.$row?->personalQuote?->customer?->last_name) ?? $this->notAvailable,
-                $row->company_name,
-                $row->status ?? $this->notAvailable,
-                //                $row?->sendUpdatePayments?->first()?->total_price ?? $this->notAvailable,
-                $row->policy_number ?? $this->notAvailable,
-                //                $row?->insuranceProvider?->text ?? $this->notAvailable,
-                $row->quote_type ?? $this->notAvailable,
-                //                $row?->personalQuote?->advisor?->name ?? $this->notAvailable,
-            ];
-        }
-
-        return $response;
+        return [
+            $row->code,
+            ($row->customer_first_name.' '.$row->customer_last_name) ?? $this->notAvailable,
+            $row->company_name ?? $this->notAvailable,
+            ((request()->list == 'leads') ? $row->quote_status : $row->status) ?? $this->notAvailable,
+            $row->total_price ?? $this->notAvailable,
+            $row->policy_number ?? $this->notAvailable,
+            $row->insurance_provider ?? $this->notAvailable,
+            $row->quote_type ?? $this->notAvailable,
+            $row->advisor_name ?? $this->notAvailable,
+        ];
     }
 
     public function title(): string

@@ -79,7 +79,6 @@ class SearchService extends BaseService
                 $this->searchQuoteQueryFilters($baseQuery, request(), true);
                 PersonalQuote::applyQuoteRequestEntityMappingJoin($baseQuery, request(), $this->filteredQuoteTypes);
                 $selectColumns = $this->getFilteredCompanyCases($this->filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns);
-                $baseQuery->select($selectColumns);
 
             } else {
                 $baseQuery = DB::table($baseTable)
@@ -93,7 +92,6 @@ class SearchService extends BaseService
                 PersonalQuote::applyQuoteRequestEntityMappingJoin($baseQuery, request(), $this->filteredQuoteTypes);
                 $selectColumns = array_merge($selectColumns, ['personal_quotes.uuid', 'quote_status.text as quote_status']);
                 $selectColumns = $this->getFilteredCompanyCases($this->filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns);
-                $baseQuery->select($selectColumns);
             }
 
             // TODO:: Check which lob(s) manager is logged in, then only those LOB(s) data should be visible
@@ -104,8 +102,35 @@ class SearchService extends BaseService
             $baseQuery->orderBy($baseTable.'.'.(request()->sortBy ?? 'updated_at'), request()->sortType ?? 'desc');
 
             if ($isExport) {
+                if (! request()->has('insured_name')) {
+                    $baseQuery->leftJoin('customer', 'personal_quotes.customer_id', 'customer.id');
+                }
+
+                if (! request()->has('department')) {
+                    $baseQuery->leftJoin('users', 'personal_quotes.advisor_id', 'users.id');
+                }
+
+                if (! request()->has('payment_status') && request()->has('date_type') && ! in_array(request()->date_type, ['payment_due_date', 'payment_date'])) {
+                    if ($isEndorsementList) {
+                        $baseQuery->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
+                    } else {
+                        $baseQuery->leftJoin('payments', 'personal_quotes.code', 'payments.code');
+                    }
+                }
+
+                if ($isEndorsementList) {
+                    $baseQuery->leftJoin('insurance_provider', 'send_update_logs.insurance_provider_id', 'insurance_provider.id');
+                } else {
+                    $baseQuery->leftJoin('insurance_provider', 'payments.insurance_provider_id', 'insurance_provider.id');
+                }
+
+                $excelExportColumns = ['customer.first_name as customer_first_name', 'customer.last_name as customer_last_name', 'users.name as advisor_name', 'payments.total_price', 'insurance_provider.text as insurance_provider'];
+                $baseQuery->select(array_merge($selectColumns, $excelExportColumns));
+
                 return $baseQuery->get();
             }
+
+            $baseQuery->select($selectColumns);
 
             return $baseQuery->simplePaginate(15)->withQueryString();
         }
@@ -310,7 +335,11 @@ class SearchService extends BaseService
 
         if (request()->has('payment_status') && ! isset(request()->code)) {
             if (request()->has('date_type') && ! in_array($request->date_type, ['payment_due_date', 'payment_date'])) {
-                $query->join('payments', 'personal_quotes.code', 'payments.code');
+                if ($isSendUpdateFilter) {
+                    $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
+                } else {
+                    $query->join('payments', 'personal_quotes.code', 'payments.code');
+                }
             }
             $query->whereIn('payments.payment_status_id', request()->payment_status);
         }
