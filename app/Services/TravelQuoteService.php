@@ -1074,7 +1074,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->save();
     }
 
-    public function createDuplicateLead($leadModal, $quoteStatusId)
+    public function createDuplicateLead($leadModal)
     {
         if (! $leadModal) {
             return false; // Add validation to avoid failure if $leadModal is null
@@ -1091,8 +1091,6 @@ class TravelQuoteService extends BaseService
         $duplicateLead->uuid = $leadModal->uuid.'-1';
         $duplicateLead->code = $newLeadCode;
         $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
-        $duplicateLead->quote_status_id = $quoteStatusId;
-        $duplicateLead->region_cover_for_id = $leadModal->region_cover_for_id;
         $duplicateLead->save();
         info('Master payment code: '.$leadModal->code.' parent region_cover_for_id '.$leadModal->region_cover_for_id.' Child region_cover_for_id '.$duplicateLead->region_cover_for_id);
 
@@ -1107,24 +1105,9 @@ class TravelQuoteService extends BaseService
                 });
             });
 
-            // Update the above 65 age member
-            $aboveAgeMemberCount = $this->getAboveAgeMembers($leadModal->id);
-            info("Above age member count for lead code {$leadModal->code}: {$aboveAgeMemberCount}");
-            if ($aboveAgeMemberCount > 0) {
-                info("Updating above age members for lead code {$leadModal->code} to duplicate lead code {$duplicateLead->code}");
-                $this->updateAboveAgeMember($leadModal->id, $duplicateLead->id);
-            }
-
             info("Updating plan and premium for parent lead code {$leadModal->code} and child lead code {$duplicateLead->code}");
             // update plan & premium for parent & child lead
             $this->updatePlanAndPremium($leadModal, $duplicateLead);
-
-            $leadModal->TravelDestinations()->get()->each(function ($destination) use ($duplicateLead) {
-                $duplicateDestination = $destination->replicate();
-                $duplicateDestination->quote_id = $duplicateLead->id;
-                $duplicateDestination->uuid = $duplicateLead->uuid;
-                $duplicateDestination->save();
-            });
         }
 
         return true;
@@ -1289,15 +1272,6 @@ class TravelQuoteService extends BaseService
         }
 
         return $access;
-    }
-
-    // Update above age members to new quote
-    private function updateAboveAgeMember($oldQuoteId, $newQuoteId)
-    {
-        CustomerMembers::where('quote_id', $oldQuoteId)
-            ->where('quote_type', 'App\Models\TravelQuote')
-            ->whereDate('dob', '<=', now()->subYears(65))
-            ->update(['quote_id' => $newQuoteId]);
     }
 
     private function updatePlanAndPremium($parentLead, $childLead)
