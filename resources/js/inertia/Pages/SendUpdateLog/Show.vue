@@ -498,6 +498,7 @@ onBeforeMount(() => {
               <template v-if="!state.edit">
                 <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                   <x-button
+                    class="focus:ring-2 focus:ring-black"
                     size="sm"
                     @click="onEdit"
                     :disabled="props.isEditDisabledForQueuedBooking"
@@ -518,13 +519,14 @@ onBeforeMount(() => {
                   size="sm"
                   color="orange"
                   @click="onCancel"
-                  class="mr-3"
+                  class="mr-3 focus:ring-2 focus:ring-black"
                   :loading="sendUpdateForm.processing"
                   :disabled="sendUpdateForm.processing"
                 >
                   Cancel
                 </x-button>
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   color="primary"
                   type="submit"

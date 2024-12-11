@@ -596,7 +596,7 @@ const rules = {
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+              <x-button v-else size="sm" @click="onEdit" class="focus:ring-2 focus:ring-black"> Edit </x-button>
             </template>
             <template v-else>
               <x-button
@@ -610,6 +610,7 @@ const rules = {
                 Cancel
               </x-button>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="primary"
                 type="submit"
