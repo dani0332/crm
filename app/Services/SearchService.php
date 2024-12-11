@@ -13,6 +13,7 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
+use App\Models\Role;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\UserManager;
@@ -94,7 +95,10 @@ class SearchService extends BaseService
                 $selectColumns = $this->getFilteredCompanyCases($this->filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns);
             }
 
-            // TODO:: Check which lob(s) manager is logged in, then only those LOB(s) data should be visible
+            if ($this->isManagerialRole()) {
+                $baseQuery->whereIn('personal_quotes.advisor_id', $this->getAdvisorsByManagers());
+            }
+
             $baseQuery->when($this->isAdvisorRole(), function ($query) {
                 $query->where('personal_quotes.advisor_id', auth()->id());
             });
@@ -136,6 +140,32 @@ class SearchService extends BaseService
         }
 
         return [];
+    }
+
+    private function isManagerialRole(): bool
+    {
+        $lobs = [
+            QuoteTypes::CAR->value,
+            QuoteTypes::HOME->value,
+            QuoteTypes::HEALTH->value,
+            QuoteTypes::LIFE->value,
+            QuoteTypes::BUSINESS->value,
+            QuoteTypes::BIKE->value,
+            QuoteTypes::YACHT->value,
+            QuoteTypes::TRAVEL->value,
+            QuoteTypes::PET->value,
+            QuoteTypes::CYCLE->value,
+            QuoteTypes::JETSKI->value,
+        ];
+
+        // Get manager roles based on quote types
+        $managerRoles = collect($lobs)
+            ->map(fn ($lob) => strtoupper($lob).'_MANAGER')
+            ->toArray();
+
+        $managers = Role::whereIn('name', $managerRoles)->get();
+
+        return $managers->isNotEmpty() && auth()->user()->hasAnyRole($managerRoles);
     }
 
     private function isAdvisorRole(): bool

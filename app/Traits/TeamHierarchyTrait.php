@@ -239,4 +239,9 @@ trait TeamHierarchyTrait
 
         return array_unique(array_merge($teamUserIds, $productUserIds));
     }
+
+    public function getAdvisorsByManagers(): array
+    {
+        return DB::table('user_manager')->where('manager_id', auth()->id())->pluck('user_id')->toArray() ?? [];
+    }
 }
