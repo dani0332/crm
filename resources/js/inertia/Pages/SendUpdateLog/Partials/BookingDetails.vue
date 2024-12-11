@@ -2441,10 +2441,14 @@ watch(
       >
         {{ isStating }}
       </x-alert>
-      <x-checkbox
-        v-model="modals.isConfirmed"
-        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
-      />
+      <x-label class="flex items-center gap-2">
+        <x-checkbox v-model="modals.isConfirmed" />
+        <div>
+          I confirm and attest that all information recorded is correct.
+          <br>
+          I confirm I am in compliance with the COC.
+        </div>
+      </x-label>
       <template #actions>
         <div class="flex gap-4 justify-end">
           <x-button
