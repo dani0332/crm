@@ -8,7 +8,7 @@ RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/re
 tar xzf ./remote_syslog*.tar.gz && \
 cp remote_syslog/remote_syslog /usr/local/bin
 
-FROM node:21.7.3 as frontend
+FROM node:22.12.0 as frontend
 WORKDIR /var/www
 COPY package*.json yarn.lock /var/www/
 RUN yarn install --pure-lockfile
