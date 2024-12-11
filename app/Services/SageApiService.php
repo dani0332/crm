@@ -2110,7 +2110,7 @@ class SageApiService
                 $quote->save();
 
             } elseif ($isPolicyAutomationStatusCompleted && $isPolicyBookingFailed) {
-                if(!$insurerApiStatus){
+                if (! $insurerApiStatus) {
                     $quote->insurer_api_status_id = PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
                 }
                 $quote->api_issuance_status_id = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
