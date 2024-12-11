@@ -780,7 +780,7 @@
                     @foreach ($planIds as $planId)
                         <th style="border: solid 1px #bfbfbf; text-align: center;">
                                 <p class="text-center" style="font-size: 14px">
-                                {{$plans[$planId]->planName}}
+                                {{$plans[$planId]->planName ?? ''}}
                                 </p>
                         </th>
                     @endforeach
@@ -859,13 +859,13 @@
 
                     {{-- feature rows --}}
                     <?php $planIterate = 0; ?>
-                    <tr class="<?php echo 'row_' . $featCount; ?> {{ $feature['row_class'] ?? '' }}">
+                    <tr class="<?php echo 'row_'.$featCount; ?> {{ $feature['row_class'] ?? '' }}">
                         <td class="{{ @$feature['heading_class'] }}">
                             <p class="text-left">{{ @$feature['title'] }}</p>
                         </td>
                         @foreach ($planIds as $planId)
                             <?php $return_value = '';
-                            ?>
+                    ?>
                             @if ($feature['type'] == 'info')
                                 @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
                             @elseif($feature['type'] == 'excess')
@@ -903,15 +903,15 @@
                             <td class="{{ @$feature['col_class'] }}">
                                 <p>
                                     <?php if ($return_value == 'Excluded') {
-                        $planIterate++;
-                        ?>
+                                        $planIterate++;
+                                        ?>
                                     Excluded
                                     <?php } else {
-                        $planIterate = 0;
-                        ?>
+                                        $planIterate = 0;
+                                        ?>
                                     <?php echo $return_value; ?>
 
-                                    <?php  } ?>
+                                    <?php } ?>
                                 </p>
 
                             </td>
@@ -925,7 +925,7 @@
                             <?php
 
                             }
-                   ?>
+                    ?>
                         @endforeach
                     </tr>
                     <?php $featCount++; ?>
