@@ -44,7 +44,7 @@ function listChange() {
 
 const dateFormat = dateString =>
   dateString
-    ? useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY hh:mma').value
+    ? useDateFormat(useConvertDate(dateString), 'DD-MM-YYYY').value
     : '';
 
 const getDetailPageRoute = (
@@ -314,15 +314,14 @@ function onSubmit() {
 
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      availableFilters[key.substring(0, key.length - 2)] = [...params[key]].map(
-        item => {
-          return isNaN(Number(item)) ? item : Number(item); // If conversion fails, keep the original string
-        },
-      );
-    } else {
-      availableFilters[key] = params[key];
-    }
+      if (key === 'date_range[0]' || key === 'date_range[1]') {
+        availableFilters.date_range = [
+          params['date_range[0]'],
+          params['date_range[1]'],
+        ];
+      } else {
+          availableFilters[key] = params[key];
+      }
   }
 }
 
@@ -567,7 +566,6 @@ onMounted(() => {
         </Link>
       </template>
       <template #item-company_name="{ company_name }">
-        <!--        {{ destructCompanyName(isSendUpdateListView, item) ?? 'N/A' }}-->
         {{ company_name ?? 'N/A' }}
       </template>
       <template
@@ -581,6 +579,9 @@ onMounted(() => {
             ? business_insurance_type
             : 'N/A'
         }}
+      </template>
+      <template #item-created_at="{ created_at }">
+          {{ created_at ? dateFormat(created_at) : 'N/A' }}
       </template>
       <template #item-policy_expiry_date="{ policy_expiry_date }">
         {{ policy_expiry_date ? dateFormat(policy_expiry_date) : 'N/A' }}

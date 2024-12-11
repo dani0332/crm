@@ -72,11 +72,4 @@ class SendUpdateLog extends Model implements AuditableContract
             'auditable_type' => self::class,
         ];
     }
-
-    protected function createdAt(): Attribute
-    {
-        return Attribute::make(
-            get: fn (string $value) => $this->asDateTime($value)->timezone(config('app.timezone'))->format(config('constants.datetime_format'))
-        );
-    }
 }
