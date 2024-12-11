@@ -568,13 +568,13 @@
             <tr>
 
                 <td class="customer">
-                    @if(in_array($quoteTypeName, [QuoteTypeShortCode::BUS, QuoteTypeShortCode::CAR, QuoteTypeShortCode::HOM, QuoteTypeShortCode::YAC]))
+                    @if(in_array($quoteTypeName, [QuoteTypeShortCode::BUS, QuoteTypeShortCode::CAR, QuoteTypeShortCode::HOM, QuoteTypeShortCode::YAC]) && (!empty($quote->company_name) || !empty($quote->company_address)))
                         {{ $quote->company_name ?? '' }} </br>
                         {{ $quote->company_address ?? '' }} </br>
-                    @elseif($entity)
+                    @elseif($entity && (!empty($entity->company_name) || !empty($entity->company_address)))
                         {{ $entity->company_name ?? '' }} </br>
                         {{ $entity->company_address ?? '' }} </br>
-                    @elseif($customerName)
+                    @elseif($customerName && !empty($customerName))
                         {{ $customerName }} </br>
                     @else
                         {{ $customerDetail->employer_company_name ?? '' }}
