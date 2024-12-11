@@ -162,12 +162,12 @@ class SaveBookingDetailsRequest extends FormRequest
                         $query->where('insurer_tax_number', $insurerTaxInvoiceNumber)
                             ->orWhere('insurer_commmission_invoice_number', $insurerTaxInvoiceNumber);
                     })->first() ||
-                SendUpdateLog::select('id')->whereNot('uuid', $this->sendUpdate->uuid)
-                    ->where(function ($query) use ($insurerTaxInvoiceNumber) {
-                        $query->where('insurer_tax_invoice_number', $insurerTaxInvoiceNumber)
-                            ->orWhere('insurer_commission_invoice_number', $insurerTaxInvoiceNumber);
-                    })
-                    ->first();
+                    SendUpdateLog::select('id')->whereNot('uuid', $this->sendUpdate->uuid)
+                        ->where(function ($query) use ($insurerTaxInvoiceNumber) {
+                            $query->where('insurer_tax_invoice_number', $insurerTaxInvoiceNumber)
+                                ->orWhere('insurer_commission_invoice_number', $insurerTaxInvoiceNumber);
+                        })
+                        ->first();
 
                 if ($taxInvoiceValidation) {
                     $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists, Please enter a unique value.');
@@ -181,12 +181,12 @@ class SaveBookingDetailsRequest extends FormRequest
                         $query->where('insurer_commmission_invoice_number', $insurerCommissionInvoiceNumber)
                             ->orWhere('insurer_tax_number', $insurerCommissionInvoiceNumber);
                     })->first() ||
-                SendUpdateLog::select('id')->whereNot('uuid', $this->sendUpdate->uuid)
-                    ->where(function ($query) use ($insurerCommissionInvoiceNumber) {
-                        $query->where('insurer_commission_invoice_number', $insurerCommissionInvoiceNumber)
-                            ->orWhere('insurer_tax_invoice_number', $insurerCommissionInvoiceNumber);
-                    })
-                    ->first();
+                    SendUpdateLog::select('id')->whereNot('uuid', $this->sendUpdate->uuid)
+                        ->where(function ($query) use ($insurerCommissionInvoiceNumber) {
+                            $query->where('insurer_commission_invoice_number', $insurerCommissionInvoiceNumber)
+                                ->orWhere('insurer_tax_invoice_number', $insurerCommissionInvoiceNumber);
+                        })
+                        ->first();
 
                 if ($commissionInvoiceValidation) {
                     $validator->errors()->add('error', 'Insurer Commission Invoice Number already exists, Please enter a unique value.');
