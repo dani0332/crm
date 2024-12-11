@@ -1667,7 +1667,7 @@ const copyLink = () => {
                 </p>
                 <div class="flex gap-1">
                   <x-tag
-                    v-if="item.isManualPlan"
+                    v-if="item.isManualUpdate"
                     size="xs"
                     color="primary"
                     class="mt-0.5 text-[10px]"
