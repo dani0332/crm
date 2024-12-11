@@ -46,8 +46,8 @@ class WatermarkDocumentsJob implements ShouldQueue
         // Ensure the quoteDocument and documentType exist
         if (! $quoteDocument || ! $documentType) {
             Log::error('Document or DocumentType not found.');
-            Log::error('Document ID: '.$this->quoteDocumentId);
-            Log::error('Document Type ID: '.$this->documentTypeId);
+            info('Not Found QuoteDocumentId Job Parameter: '.$this->quoteDocumentId);
+            info('Not Found DocumentTypeId Job Parameter: '.$this->documentTypeId);
             return;
         }
 
