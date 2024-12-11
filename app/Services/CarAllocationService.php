@@ -358,7 +358,7 @@ class CarAllocationService extends AllocationService
 
         $userIds = array_values(array_intersect(
             $buyLeadRequestedUserIds,
-            $tierUserIds->toArray()
+            is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray()
         ));
 
         $advisors = $this->getAdvisorBaseQuery($status, $userIds, $advisorId, $teamId)
