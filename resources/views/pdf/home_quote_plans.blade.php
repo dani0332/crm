@@ -7,7 +7,8 @@
 
     <style>
         @page {
-            margin: 0;
+            margin: 500px 20px 200px; /* Top = header space, Bottom = footer space */
+            /* margin: 0; */
             padding: 0;
         }
 
@@ -20,17 +21,10 @@
         body {
             line-height: 1;
             font-family: "DejaVu Sans", sans-serif;
+            
 
         }
 
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 200px;
-            width: 100%;
-            display: block;
-        }
 
         div,
         span,
@@ -84,6 +78,7 @@
             max-width: 1220px;
             margin: 7px 12px auto;
             border-spacing: 0;
+            border-radius: 10px;
         }
 
         tbody {
@@ -143,9 +138,9 @@
         td>p,
         th>p {
             padding: 4px;
-            font-size: 12px !important;
+            /* font-size: 14px !important; */
             text-align: center;
-            font-weight: normal;
+            /* font-weight: normal; */
         }
 
         .text-left {
@@ -185,13 +180,10 @@
 
         .provider {
             border: 1px solid #bfbfbf;
-            /*font-size: 15px;*/
-            /*line-height: 28px;*/
+
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
-            /*max-height: 50px;*/
-            /*height: 50px;*/
         }
 
         .spacer {
@@ -217,7 +209,7 @@
             text-align: left;
             padding: 8px;
             max-width: 100%;
-            font-weight: normal;
+            font-weight: bold;
         }
 
         .info h5 {
@@ -289,8 +281,6 @@
             background-color: #1d83bc;
             color: black;
             text-align: center;
-            position: fixed;
-            bottom: 0px;
             height: 145px;
             z-index: 1500;
         }
@@ -358,6 +348,15 @@
             max-height: 60px;
         }
 
+        header{
+             position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px; 
+             /* z-index: 1000;  */
+        }
+
         .header .logo {
             float: left;
             background-color: white;
@@ -377,6 +376,16 @@
             text-align: right;
             padding-right: 18px;
         }
+
+        .text-blue{
+            color: #1d83bc;
+        }
+
+        /* main {
+        margin: 250px 0 200px;
+        padding: 20px;
+        height: 500px  !important;
+    } */
     </style>
 </head>
 
@@ -614,6 +623,7 @@
             ['code' => 'spacer', 'title' => ''],
         ];
 
+
     @endphp
 
     {{-- PDF Page Header --}}
@@ -624,58 +634,11 @@
             </div>
             <h3>Your Tailor Made <br />Home Insurance Comparison Table</h3>
         </div>
-    </header>
-
-    {{-- PDF Page Footer --}}
-    <footer>
-        <table class="tbl-footer">
-            {{-- <div style="float: left;">
-                <img style="height: 110px; border-radius: 50%;"
-                    src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
-                    alt="advisor">
-            </div>
-            <div style="float: left; margin-left: 10px; margin-top: 10px">
-                @if (isset($quote->advisor->name) && !empty($quote->advisor->name))
-                    <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
-                @endif
-                @if (isset($quote->advisor->email) && !empty($quote->advisor->email))
-                    <p class="text-left text-white text-xl">Email: <a class="text-white"
-                            href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
-                @endif
-                @if (isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no))
-                    <p class="text-left text-white text-xl mar">Mobile number:
-                        {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white"
-                            style="margin-top:3px"><img style="height:20px;"
-                                src="{{ public_path('images/whatsapp-small.png') }}" alt="advisor phone"></span></p>
-                @endif
-                @if (isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
-                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white"
-                            href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
-                @endif
-
-            </div> --}}
-            <div>
-                <h4 class="text-right text-white">InsuranceMarket.ae</h4>
-                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">Happiness Center:
-                        800 ALFRED (800-253-733)</a></p>
-                <p class="text-right text-white text-xl"><a class="text-white"
-                        href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
-                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai,</p>
-                <p class="text-right text-white text-xl">United Arab Emirates, PO Box 26423 <a
-                        class="text-white text-underline"
-                        href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">(map)</a>
-                </p>
-            </div>
-        </table>
-    </footer>
-
-    {{-- PDF Page Inner Content --}}
-    <main>
-        <table class="table-fixed text-center tbl-plans"
-            style="position: relative;top: 90px;margin-bottom: 70px;table-layout: fixed">
-            <thead>
+        <table>
+            <caption class="text-sm text-right" style="padding: 10px;">Your home insurance referance ID is <span class="text-blue">HOM : 12ERTYWE</span></caption>
+        <thead>
                 <tr>
-                    <th class="alfred" id="alfred-th">
+                    <th class="alfred" id="alfred-th" rowspan="2">
                         <img src="{{ public_path('images/alfred.png') }}" />
                     </th>
                     @foreach ($planIds as $planId)
@@ -699,7 +662,7 @@
                     @endforeach
                 </tr>
                 <tr>
-                    <th></th>
+                <!-- <th style="display: none;"></th>  -->
                     @foreach ($planIds as $planId)
                         <th style="border: solid 1px #bfbfbf; text-align: center;">
                             <p class="text-center" style="font-size: 14px">
@@ -714,8 +677,40 @@
                         <p class="quote-info">Home insurance comparison for: <b>{{ $quote->first_name }}
                                 {{ $quote->last_name }}</b></p>
                     </th>
-                    @foreach ($planIds as $planId)
-                        <th rowspan="4">
+                    <th>
+                    <p class="text-center" style="font-size: 14px">
+                        4000
+                    </p>
+                    </th>
+                   
+                </tr>
+                <tr>
+                    <th class="bg-light-blue">
+                        <p class="quote-info">Gross Price</b></p>
+                    </th>
+                    <th>
+                    <p class="text-center" style="font-size: 14px">
+                        4000
+                    </p>
+                    </th>
+                </tr>
+                <tr>
+                    <th class="bg-light-blue">
+                        <p class="quote-info">Vat</b></p>
+                    </th>
+                    <th>
+                    <p class="text-center" style="font-size: 14px">
+                        4000
+                    </p>
+                    </th>
+                </tr>
+                <tr>
+                    <th class="bg-light-blue">
+                        <p class="quote-info">Total Price (wtih VAT)
+                        </p>
+                    </th>
+                     @foreach ($planIds as $planId)
+                        <th>
                             <p class="text-center">
                                 @php
                                     if (in_array($planId, $selectedPlanIds)) {
@@ -734,32 +729,23 @@
                         </th>
                     @endforeach
                 </tr>
-                <tr>
-                    <th class="bg-light-blue">
-                        <p class="quote-info">Gross Price: <b>{{ $plans[$planId]->actualPremium }}</b></p>
-                    </th>
-                </tr>
-                <tr>
-                    <th class="bg-light-blue">
-                        <p class="quote-info">Vat: <b>{{ $plans[$planId]->vat }} </b></p>
-                    </th>
-                </tr>
-                <tr>
-                    <th class="bg-light-blue">
-                        <p class="quote-info">Total Price (wtih VAT):
-                            <b>{{ $plans[$planId]->actualPremium + $plans[$planId]->vat }}</b>
-                        </p>
-                    </th>
-                </tr>
             </thead>
+        </table>
+    </header>
+
+
+
+    {{-- PDF Page Inner Content --}}
+    <main>
+        <table>
             <tbody>
                 @php $featCount = 0 @endphp
                 @foreach ($features as $feature)
                     {{-- heading row --}}
                     @if (@$feature['code'] == 'heading')
                         <tr>
-                            <td colspan="1" class="text-heading">
-                                <p class="text-left">{{ $feature['title'] }}</p>
+                            <td colspan="{{ sizeof($planIds)  + 1}}" class="text-heading">
+                                <p class="text-left !font-bold">{{ $feature['title'] }}</p>
                             </td>
                             <td colspan="{{ sizeof($planIds) }}" class="heading-desc">
                                 {{ $feature['description'] ?? '' }}</td>
@@ -780,8 +766,8 @@
                     {{-- feature rows --}}
                     <?php $planIterate = 0; ?>
                     <tr class="<?php echo 'row_' . $featCount; ?> {{ $feature['row_class'] ?? '' }}">
-                        <td class="{{ @$feature['heading_class'] }}">
-                            <p class="text-left">{{ @$feature['title'] }}</p>
+                        <td style="background-color: rgb(186 230 253)">
+                            <p class="text-left font-bold">{{ @$feature['title'] }}</p>
                         </td>
                         @foreach ($planIds as $planId)
                             <?php $return_value = '';
@@ -872,7 +858,7 @@
             </tbody>
         </table>
 
-        <table class="tbl-dec" style="margin-top: 20px; padding-top: 40px;">
+        <table class="tbl-dec" style="padding-top: 40px;">
             <tbody>
                 <tr>
                     <td>
@@ -897,7 +883,49 @@
             </tbody>
         </table>
     </main>
+    
+    {{-- PDF Page Footer --}}
+    <footer>
+        <table class="tbl-footer">
+            {{-- <div style="float: left;">
+                <img style="height: 110px; border-radius: 50%;"
+                    src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
+                    alt="advisor">
+            </div>
+            <div style="float: left; margin-left: 10px; margin-top: 10px">
+                @if (isset($quote->advisor->name) && !empty($quote->advisor->name))
+                    <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
+                @endif
+                @if (isset($quote->advisor->email) && !empty($quote->advisor->email))
+                    <p class="text-left text-white text-xl">Email: <a class="text-white"
+                            href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
+                @endif
+                @if (isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no))
+                    <p class="text-left text-white text-xl mar">Mobile number:
+                        {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white"
+                            style="margin-top:3px"><img style="height:20px;"
+                                src="{{ public_path('images/whatsapp-small.png') }}" alt="advisor phone"></span></p>
+                @endif
+                @if (isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
+                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white"
+                            href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
+                @endif
 
+            </div> --}}
+            <div>
+                <h4 class="text-right text-white">InsuranceMarket.ae</h4>
+                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">Happiness Center:
+                        800 ALFRED (800-253-733)</a></p>
+                <p class="text-right text-white text-xl"><a class="text-white"
+                        href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
+                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai,</p>
+                <p class="text-right text-white text-xl">United Arab Emirates, PO Box 26423 <a
+                        class="text-white text-underline"
+                        href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">(map)</a>
+                </p>
+            </div>
+        </table>
+    </footer>
     {{-- Last Page --}}
     <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}" class="full-page-image" />
 </body>
