@@ -712,11 +712,8 @@ class CarAllocationService extends AllocationService
     public function isLeadReassigned($lead)
     {
         $leadDetail = CarQuoteRequestDetail::where('car_quote_request_id', $lead->id)->first();
-        if ($leadDetail && $leadDetail->advisor_assigned_date > now()->subMinutes(2)) {
-            return true;
-        } else {
-            return false;
-        }
+
+        return $leadDetail && $leadDetail->advisor_assigned_date > now()->subMinutes(2);
     }
 
     public function updateLeadTier($lead, $tier): void
@@ -731,12 +728,10 @@ class CarAllocationService extends AllocationService
     public function getEligibleUserForSAPLead($ruleUserIds): array
     {
         // Create a query to fetch lead allocations with their associated users.
-        $sapUserIds = LeadAllocation::with('leadAllocationUser')
+        return LeadAllocation::with('leadAllocationUser')
             ->whereIn('user_id', $ruleUserIds) // it will be the rule user ids for SAP rule only
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->orderBy('last_allocated')
             ->pluck('user_id')->toArray();
-
-        return $sapUserIds;
     }
 }
