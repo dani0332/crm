@@ -834,7 +834,8 @@ class SplitPaymentService
 
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $sendUpdateId) {
-                    if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
+                    $quoteStatusId = $quoteModel->quote_status_id;
+                    if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel, $quoteStatusId)) {
                         $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
                         info('Master payment code: '.$quoteModel->code.' Duplicate lead created for Quote Code: '.$quoteModel->code.'-1');
                     }
