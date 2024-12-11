@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
