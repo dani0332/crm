@@ -2351,25 +2351,27 @@ watch(
               </x-button>
 
               <template v-if="isLackingPayment">
-                <x-tooltip>
-                  <x-button
-                    class="focus:ring-2 focus:ring-black"
-                    size="sm"
-                    color="orange"
-                    v-if="props.updateBtn"
-                    :loading="loader.sendUpdateSectionBtn"
-                    @click="sendUpdateValidation"
-                    :disabled="sendUpdatePermissionCheck || isLackingPayment"
-                  >
-                    {{ props.updateBtn }}
-                  </x-button>
-                  <template #tooltip>
-                    <span class="custom-tooltip-content">
+                <div>
+                  <x-tooltip>
+                    <x-button
+                        class="focus:ring-2 focus:ring-black"
+                        size="sm"
+                        color="orange"
+                        v-if="props.updateBtn"
+                        :loading="loader.sendUpdateSectionBtn"
+                        @click="sendUpdateValidation"
+                        :disabled="sendUpdatePermissionCheck || isLackingPayment"
+                    >
+                      {{ props.updateBtn }}
+                    </x-button>
+                    <template #tooltip>
+                    <span>
                       Action Needed: Please revise payment details to reflect
                       plan changes.
                     </span>
-                  </template>
-                </x-tooltip>
+                    </template>
+                  </x-tooltip>
+                </div>
               </template>
               <template v-else>
                 <x-button
