@@ -229,7 +229,7 @@ class TravelRenewalService extends BaseService
 
         $lead = TravelQuote::where('uuid', $quoteUID)->first();
         // Only apply teamId if the payment status is AUTHORIZED
-        $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
+        $currentTeamId = $lead->isPaid() ? $teamId : false;
 
         if ($lead) {
             $response = QuoteTypes::TRAVEL->allocate($quoteUID, $currentTeamId);

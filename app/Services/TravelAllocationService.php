@@ -140,6 +140,6 @@ class TravelAllocationService extends AllocationService
             ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereNotNull('advisor_id')
             ->latest('created_at')
-            ->first();
+            ->value('advisor_id');
     }
 }
