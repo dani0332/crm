@@ -3,13 +3,12 @@
 namespace App\Traits;
 
 use App\Enums\WatermarkDocTypesEnum;
-use App\Models\InsuranceProvider;
 
 trait GetWatermarkPropertyTrait
 {
     public function getWatermarkProperty($quote, $documentType, $insuranceProviderId = null)
     {
-        $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
+        $ips = [2]; // Insurance Providers that should not have watermarks. TEMP HARDCODE fix
 
         if ($insuranceProviderId) {
             $skipWatermark = in_array($insuranceProviderId, $ips);
