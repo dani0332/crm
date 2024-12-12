@@ -66,6 +66,8 @@ class InstantChatDataMigration extends Command
 
                     }
                 });
+            info('InstantChatMigration - '.$lob.' Migration Completed');
         }
+        info('InstantChatMigration - All Migration Completed');
     }
 }
