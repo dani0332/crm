@@ -2,29 +2,29 @@
 
 namespace App\Services;
 
-use setasign\Fpdi\Fpdi;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypeId;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCategory;
+use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\WatermarkDocTypesEnum;
+use App\Jobs\WatermarkDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
+use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\DocumentTypeCode;
-use PhpOffice\PhpWord\IOFactory;
-use App\Models\InsuranceProvider;
-use App\Models\ApplicationStorage;
-use App\Enums\DocumentTypeCategory;
-use App\Jobs\WatermarkDocumentsJob;
-use Illuminate\Support\Facades\Log;
-use App\Enums\WatermarkDocTypesEnum;
-use Intervention\Image\ImageManager;
+use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\SendUpdateLogStatusEnum;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
-use App\Repositories\DocumentTypeRepository;
+use Intervention\Image\ImageManager;
+use PhpOffice\PhpWord\IOFactory;
+use setasign\Fpdi\Fpdi;
 
 class QuoteDocumentService extends BaseService
 {
@@ -648,11 +648,6 @@ class QuoteDocumentService extends BaseService
 
     /**
      * verify if a document is watermark qualified function
-     *
-     * @param $quote
-     * @param $documentType
-     * @param $insuranceProviderId
-     * @return bool
      */
     public function getWatermarkProperty($quote, $documentType, $insuranceProviderId = null): bool
     {
