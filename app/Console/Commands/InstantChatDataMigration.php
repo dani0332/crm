@@ -54,11 +54,13 @@ class InstantChatDataMigration extends Command
                                 $quote = $this->getQuoteDetailObject($item['quote_type'], $quoteModel->id);
                                 if ($quote) {
                                     $quote->update(['chat_initiated_at' => $carbonDate->format('Y-m-d H:i:s')]);
-                                    info('Chat initiated at updated for Quote ID: '.$item['quote_id'].' Quote Type: '.$item['quote_type']);
+                                    info('InstantChatMigration - Chat initiated at updated for Quote ID: '.$item['quote_id'].' Quote Type: '.$item['quote_type']);
+                                } else {
+                                    info('InstantChatMigration - Quote Detail not found for Quote ID: '.$item['quote_id'].' Quote Type: '.$item['quote_type']);
                                 }
 
                             } else {
-                                info('Quote not found for Quote ID: '.$item['quote_id'].' Quote Type: '.$item['quote_type']);
+                                info('InstantChatMigration - Quote Detail not found for Quote ID: '.$item['quote_id'].' Quote Type: '.$item['quote_type']);
                             }
                         }
 
