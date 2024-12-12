@@ -36,7 +36,7 @@ class SendOCBTravelRenewalIntroEmailJob implements ShouldQueue
      */
     private function verifyPreChecks($lead)
     {
-        if (! $lead) {
+        if (empty($lead)) {
             info(self::class." - Lead not found for uuid: {$this->quoteUuid}");
 
             return false;
@@ -59,6 +59,7 @@ class SendOCBTravelRenewalIntroEmailJob implements ShouldQueue
     {
         try {
             $lead = TravelQuote::where('uuid', $this->quoteUuid)->first();
+            info("OCB INTRO Email Job Started for uuid: {$lead->uuid} with advisor id: {$lead->advisor_id} time: ".now());
             if (! $this->verifyPreChecks($lead)) {
                 return;
             }
