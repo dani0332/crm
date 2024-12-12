@@ -34,6 +34,7 @@ use App\Models\User;
 use App\Models\UserTeams;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Enums\RuleEnum;
 
 class CarAllocationService extends AllocationService
 {
@@ -385,7 +386,8 @@ class CarAllocationService extends AllocationService
                 ||
                 ($commercialCarMake && $commercialCarModel)
             ) {
-                if(!$lead->is_commercial) {
+                if($lead->registration_type == 'Company') {
+
                     return $this->getRulesForVehicleUse($lead);
                 }
                 else {
@@ -430,29 +432,31 @@ class CarAllocationService extends AllocationService
     }
     public function getRulesForVehicleUse($lead)
     {
-        $vehicleUse = $lead->vehicle_use;
-
-        if ($vehicleUse == 'Private') {
-            return $this->getPrivateUseRule($lead);
-        } elseif ($vehicleUse == 'Commercial') {
-            return $this->getCommercialRule();
+        if(!$lead->is_commercial) {
+            return $this->getCompanyUsageRules($lead, RuleEnum::PRIVATE_USE->value);
         }
-
-        return [];
+        else {
+            return $this->getCommercialRule($lead,RuleEnum::COMMERCIAL_USE->value);
+        }
     }
 
-    private function getPrivateUseRule($lead)
+    private function getCompanyUsageRules($lead,$ruleName=null)
     {
-        if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_QUOTE) {
+        if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_QUOTE ) {
+            info("Quote found for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} |  Time: ".now());
             return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('rules.name', $ruleName)
             ->where('rule_type', RuleTypeEnum::VEHICLE_USE)
             ->where('rules.is_active', 1)
             ->groupBy('rule_details.rule_id')
             ->select(
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
             )->get();
+        }
+        else {
+            info("No rule found for {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} Time: ".now());
         }
 
         return [];
