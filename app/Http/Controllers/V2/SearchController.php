@@ -36,7 +36,7 @@ class SearchController extends Controller
 
         ]);
         $quoteTypes = QuoteTypeRepository::getList('code');
-        $businessInsuranceTypes = BusinessInsuranceType::withActive()->orderBy('text')->get();
+        $businessInsuranceTypes = BusinessInsuranceType::where('is_active', 1)->orderBy('text')->get();
         $insuranceProviders = InsuranceProviderRepository::getList('text');
         $departments = Department::active()->orderBy('name')->get();
         $quoteTypeIdEnum = QuoteTypeId::asArray();
