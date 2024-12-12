@@ -390,7 +390,7 @@
     $customerDetail =  $customer->detail;
     $vat = 0;
     $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
-    $entity = $quote?->quoteRequestEntityMapping?->entity;
+    $entity = null;
 
     if($isRequestFromSendUpdateLogPage){
         $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
@@ -399,7 +399,7 @@
         $totalAmount =   $subTotal + $vat;
 
     }else{
-
+        $entity = $quote?->quoteRequestEntityMapping?->entity;
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
             $carQuoteDetails = $quote->carQuoteRequestDetail;
             $subTotal =  $carQuoteDetails->actual_premium;
@@ -410,9 +410,6 @@
             $vat =  $proformaPaymentRequest->price_vat;
             $totalAmount =  $subTotal + $vat;
         }
-
-
-
     }
 
 @endphp
