@@ -1,23 +1,94 @@
 <script setup>
 const props = defineProps({
   logs: Object,
+  leadStatuses: Array,
+  batches: Array,
+  pagination: Object,
 });
+
+const page = usePage();
+const notification = useNotifications('toast');
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
+const { isRequired } = useRules();
+
+const objToUrl = obj => useObjToUrl(obj);
+const cleanObj = obj => useCleanObj(obj);
+
 const filters = reactive({
   quoteId: null,
-  start_date: useDateFormat(getPreviousDate(1), 'YYYY-MM-DD').value,
-  end_date: useDateFormat(useNow(), 'YYYY-MM-DD').value,
+  quoteType: 'Car',
+  chat_initiated_at: [
+    useDateFormat(new Date(), 'YYYY-MM-DD').value,
+    useDateFormat(new Date(), 'YYYY-MM-DD').value,
+  ],
   page: 1,
+  transaction_type_id: [],
+  quote_batch_id: [],
+  quote_status_id: [],
+  payment_status_id: [],
+  sale_leads: null,
+  fallback: null,
+  channel: null,
+  segment: null,
+  mobile_no: null,
+  report: null,
+  email: null,
 });
 
 const params = useUrlSearchParams('history');
 
+const reportButtonCon = computed(() => {
+  let data = {
+    disable: false,
+    msg: null,
+  };
+  if (filters.report == null) {
+    data.disable = true;
+    data.msg = 'Please select the report type';
+  } else if (filters.quoteId || filters.email || filters.mobile_no) {
+    data.disable = false;
+  } else if (
+    filters.chat_initiated_at == null ||
+    filters.chat_initiated_at == []
+  ) {
+    data.disable = true;
+    data.msg = 'Please select the Start Date and End Date ';
+  }
+
+  return data;
+});
+
+const leadStatus = computed(() => {
+  return props.leadStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
+
+const leadBatches = computed(() => {
+  return props.batches.map(status => ({
+    value: status.id,
+    label: status.name,
+  }));
+});
+
+const paymentStatus = computed(() => {
+  return [...Object.keys(page.props.paymentStatusEnum)].map(
+    (status, index) => ({
+      value: page.props.paymentStatusEnum[status],
+      label: status,
+    }),
+  );
+});
+
+const quoteSegments = page.props.quoteSegments;
+
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 
-const { isRequired } = useRules();
 const isError = ref(false);
-const page = usePage();
-
-const notification = useNotifications('toast');
 
 const loader = reactive({
   table: false,
@@ -31,7 +102,7 @@ const chatMessages = ref({
 });
 
 const tableHeader = reactive([
-  { text: 'Ref-ID', value: 'quote_id' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Created At', value: 'created_at' },
   { text: 'Actions', value: 'action' },
 ]);
@@ -50,22 +121,12 @@ const isQuoteTypeSelected = computed(() => {
 });
 
 function onSubmit() {
-  let diff = calculateDaysDifference(filters.start_date, filters.end_date);
-  if (diff > 30) {
-    notification.error({
-      message: 'Maximum of 30 days  are allowed',
-      position: 'top',
-    });
-    return;
-  }
-
-  if (filters.start_date && filters.end_date) {
-    filters.start_date = useDateFormat(filters.start_date, 'YYYY-MM-DD').value;
-    filters.end_date = useDateFormat(filters.end_date, 'YYYY-MM-DD').value;
+  if (filters.quoteId || filters.email || filters.mobile_no) {
+    filters.chat_initiated_at = [];
   }
 
   filters.page = 1;
-  router.visit(route('instant-alfred.logs'), {
+  router.visit(route('instant-alfred.index'), {
     method: 'get',
     data: useGenerateQueryString(filters),
     preserveState: true,
@@ -76,7 +137,7 @@ function onSubmit() {
 }
 
 function onReset() {
-  router.visit(route('instant-alfred.logs'), {
+  router.visit(route('instant-alfred.index'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -95,21 +156,30 @@ function setQueryStringFilters() {
   }
 }
 
+const createQueryParams = item => {
+  return {
+    quoteId: item.code.split('-')[1],
+    quoteType: filters.quoteType.toUpperCase(),
+    created_at: useDateFormat(
+      item.code.includes('CAR')
+        ? item.chat_initiated_at.split(' ')[0]
+        : item.chat_initiated_at.split(' ')[0],
+      'YYYY-MM-DD',
+    ).value,
+  };
+};
+
 const showChat = item => {
   loader.view = true;
   axios
-    .post('/get-alfred-chat-by-date', {
-      quoteId: item.quote_id,
-      quoteType: item.quote_type,
-      created_at: useDateFormat(item.created_at.split(' ')[0], 'YYYY-MM-DD')
-        .value,
+    .post('/instant-alfred/chats', {
+      ...createQueryParams(item),
     })
     .then(response => {
       let { data } = { ...response.data };
       loader.view = false;
-      chatMessages.value.created_at = item.created_at;
-      chatMessages.value.data = data;
-      chatMessages.value.id = item.quote_type + '-' + item.quote_id;
+      chatMessages.value.data = data.length > 0 ? data : [];
+      chatMessages.value.id = item.code;
       showChatLogs.value = true;
     })
     .catch(error => {
@@ -120,6 +190,12 @@ const showChat = item => {
 onMounted(() => {
   setQueryStringFilters();
 });
+
+const downloadReport = () => {
+  const data = useObjToUrl(useCleanObj(filters));
+  const url = route('exportChatData');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
 </script>
 
 <template>
@@ -153,19 +229,230 @@ onMounted(() => {
         >
         </combo-box>
       </x-field>
-      <x-field label="Start Date">
-        <DatePicker v-model="filters.start_date" class="w-full" />
+      <!-- <ToolTip
+        :title="'Select Start & End Date'"
+        :tooltip="'Maximum 30 days are allowed'"
+      >
+      </ToolTip>
+      <DatePicker
+        class="py-1"
+        v-model="filters.chat_initiated_at"
+        placeholder="Select Start & End Date"
+        range
+        :max-range="31"
+        size="sm"
+        model-type="yyyy-MM-dd"
+        :rules="[isRequired]"
+        :onlySelect="true"
+      /> -->
+      <div>
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm decoration-primary-600"
+          >
+            Select Start & End Date <span class="text-red-500">*</span>
+          </label>
+          <template #tooltip> Maximum 30 days are allowed </template>
+        </x-tooltip>
+        <DatePicker
+          class="py-1"
+          v-model="filters.chat_initiated_at"
+          placeholder="Select Start & End Date"
+          range
+          :max-range="31"
+          size="md"
+          model-type="yyyy-MM-dd"
+          :rules="
+            filters.quoteId || filters.email || filters.mobile_no
+              ? []
+              : [isRequired]
+          "
+          :onlySelect="true"
+        />
+      </div>
+
+      <!-- <DatePicker
+        label="Start Date"
+        :rules="
+          filters.quoteId || filters.email || filters.mobile_no
+            ? []
+            : [isRequired]
+        "
+        v-model="filters.start_date"
+        class="w-full"
+      /> -->
+      <!-- <DatePicker
+        label="End Date"
+        :rules="
+          filters.quoteId || filters.email || filters.mobile_no
+            ? []
+            : [isRequired]
+        "
+        v-model="filters.end_date"
+        class="w-full"
+      /> -->
+      <x-field label="Transaction Type">
+        <combo-box
+          v-model="filters.transaction_type_id"
+          :options="[
+            { label: 'New Business', value: 132 },
+            { label: 'Existing Customer\'s Renewal', value: 133 },
+            { label: 'Existing Customer\'s New Business', value: 134 },
+          ]"
+          placeholder="Search by Transaction type"
+          class="w-full"
+        >
+        </combo-box>
       </x-field>
-      <x-field label="End Date">
-        <DatePicker v-model="filters.end_date" class="w-full" />
+      <x-field label="Batch">
+        <combo-box
+          v-model="filters.quote_batch_id"
+          :options="leadBatches"
+          placeholder="Search by Batch"
+          class="w-full"
+        >
+        </combo-box>
+      </x-field>
+      <x-field label="Lead Status">
+        <combo-box
+          v-model="filters.quote_status_id"
+          :options="leadStatus"
+          placeholder="Select the Lead status"
+          class="w-full"
+        >
+        </combo-box>
+      </x-field>
+      <x-field label="Payment Status">
+        <combo-box
+          v-model="filters.payment_status_id"
+          :options="paymentStatus"
+          placeholder="Search by Payment status"
+          class="w-full"
+        />
+      </x-field>
+      <x-field label="Sale leads">
+        <x-select
+          v-model="filters.sale_leads"
+          :options="[
+            { value: null, label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          placeholder="Search by Sale leads"
+          class="w-full"
+        />
+      </x-field>
+      <!-- <x-field label="Fallback">
+        <x-select
+          v-model="filters.fallback"
+          :options="[
+            { value: null, label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          placeholder="Search by Fallback"
+          class="w-full"
+        />
+      </x-field> -->
+      <!-- <x-field label=" Message channel">
+        <x-select
+          v-model="filters.channel"
+          :options="[
+            { value: null, label: 'All' },
+            { value: 'WHATSAPP', label: 'Whatsapp' },
+            { value: 'EMAIL', label: 'Email' },
+            { value: 'WEBSITE', label: 'Website' },
+          ]"
+          placeholder="Search by Message channel"
+          class="w-full"
+        />
+      </x-field> -->
+      <x-field label="Segment">
+        <x-select
+          v-model="filters.segment"
+          :options="quoteSegments"
+          placeholder="Search by SIC"
+          class="w-full"
+        />
+      </x-field>
+      <x-field label="Report Category">
+        <x-select
+          v-model="filters.report"
+          :options="[
+            { value: null, label: 'All', tooltip: null },
+            {
+              value: 'Summary',
+              label: 'Summary',
+              suffix:
+                'A summary of InstantAlfred\'s interactions for each lead',
+            },
+            {
+              value: 'Detailed',
+              label: 'Detailed',
+              suffix:
+                ' Detailed InstantAlfred\'s interactions across all channels for each lead',
+            },
+          ]"
+          placeholder="Select the Report type"
+          class="w-full"
+        >
+          <template #suffix="{ item }">
+            <x-tooltip v-if="item.label != 'All'">
+              <x-icon icon="info" color="error" />
+              <template #tooltip>
+                {{
+                  item.label == 'Detailed'
+                    ? "Detailed InstantAlfred's interactions across all channels for each lead"
+                    : "A summary of InstantAlfred's interactions for each lead"
+                }}
+              </template>
+            </x-tooltip>
+          </template>
+        </x-select>
+      </x-field>
+      <x-field label="Email">
+        <x-input
+          v-model="filters.email"
+          placeholder="Search by Email"
+          class="w-full"
+        />
+      </x-field>
+      <x-field label="Mobile Number">
+        <x-input
+          v-model="filters.mobile_no"
+          placeholder="Search by Mobile number"
+          class="w-full"
+        />
       </x-field>
     </div>
 
-    <div class="flex justify-end gap-3">
-      <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-      <x-button size="sm" color="primary" @click.prevent="onReset">
-        Reset
-      </x-button>
+    <div class="flex justify-between gap-3">
+      <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+        <x-tooltip v-if="reportButtonCon.disable" position="right">
+          <x-button size="sm" color="emerald">Export Excel</x-button>
+          <template #tooltip v-if="reportButtonCon.msg">
+            <span class="font-medium">
+              {{ reportButtonCon.msg }}
+            </span>
+          </template>
+        </x-tooltip>
+
+        <x-button
+          :disabled="reportButtonCon.disable"
+          v-else
+          size="sm"
+          color="emerald"
+          @click.prevent="downloadReport"
+          >Export Excel</x-button
+        >
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+        <x-button size="sm" color="primary" @click.prevent="onReset">
+          Reset
+        </x-button>
+      </div>
     </div>
   </x-form>
 
@@ -184,19 +471,10 @@ onMounted(() => {
     hide-rows-per-page
     hide-footer
   >
-    <template #item-quote_id="{ quote_id, quote_type }">
-      <span v-if="quote_type.toLowerCase().includes('hea')">
-        {{ 'HEA' + '-' + quote_id }}
+    <template #item-created_at="item">
+      <span>
+        {{ dateFormat(item.chat_initiated_at.split(' ')[0]) }}
       </span>
-      <span v-else-if="quote_type.toLowerCase().includes('travel')">
-        {{ 'TRA' + '-' + quote_id }}
-      </span>
-      <span v-else>
-        {{ quote_type + '-' + quote_id }}
-      </span>
-    </template>
-    <template #item-created_at="{ created_at }">
-      {{ dateFormat(created_at.split(' ')[0]) }}
     </template>
     <template #item-action="item">
       <x-button
@@ -220,4 +498,14 @@ onMounted(() => {
       to: logs.to,
     }"
   />
+
+  <!-- <Pagination
+    :links="{
+      next: pagination.next_page_url,
+      prev: pagination.prev_page_url,
+      current: Number(pagination.current_page),
+      from: pagination.from,
+      to: pagination.to,
+    }"
+  /> -->
 </template>
