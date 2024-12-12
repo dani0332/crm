@@ -925,9 +925,9 @@ class HomeQuoteService extends BaseService
             $discountedPremium = $request->actual_premium;
 
             $homePlanData = [
-                'quoteUID' => $request->quote_uuid,
+                'quoteUID' => $request->plan['quote_uuid'],
                 'update' => true,
-                'url' => strval($request->current_url),
+                'url' => strval($request->plan['current_url']),
                 'ipAddress' => request()->ip(),
                 'userAgent' => request()->header('User-Agent'),
                 'userId' => strval(auth()->id()),
@@ -952,7 +952,6 @@ class HomeQuoteService extends BaseService
                         'isDisabled' => isset($request->plan['is_disabled']) ? (bool) $request->plan['is_disabled'] : (bool) false,
                         'insurerQuoteNo' => strval($request->plan['insurer_quote_no']),
                         'isManualUpdate' => $request->plan['is_manual_update'],
-                        'ancillaryExcess' => (int) $request->plan['ancillary_excess'],
                     ],
                 ],
             ];
