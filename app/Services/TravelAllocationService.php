@@ -46,7 +46,7 @@ class TravelAllocationService extends AllocationService
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quote->uuid}");
             if ($quote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-                $previousAdvisorId = $this->getPreviousAdvisor($quote->customer_id);
+                $previousAdvisorId = $this->getPreviousAdvisor($quote->customer_id)->advisor_id ?? null;
                 info("lead is renewal pervious advisor-ID:{$previousAdvisorId} lead uuid: {$quote->uuid} | Time: ".now());
             }
             $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC, $previousAdvisorId ?? null);
@@ -140,6 +140,6 @@ class TravelAllocationService extends AllocationService
             ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereNotNull('advisor_id')
             ->latest('created_at')
-            ->value('advisor_id');
+            ->first();
     }
 }
