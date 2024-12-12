@@ -39,11 +39,11 @@ class InstantChatDataMigration extends Command
         ];
 
         foreach ($lobs as $lob) {
+            info('InstantChatMigration - '.$lob.' Migration Initiated');
             AlfredChat::select('quote_id', 'quote_type', 'created_at')
                 ->where('quote_type', $lob)
                 ->groupBy('quote_id')
-                ->chunk(500, function ($chunk) {
-
+                ->chunk(100, function ($chunk) {
                     foreach ($chunk as $item) {
                         if ($item['quote_id']) {
                             $quoteModel = $this->getQuoteObjectBy(strtolower($item['quote_type']), $item['quote_id'], 'uuid');
