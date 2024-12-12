@@ -227,9 +227,7 @@ const onLobChange = (e, isOnMounted = false) => {
         />
 
         <ComboBox
-          v-if="
-            can(permissionsEnum.SEGMENT_FILTER)
-          "
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
