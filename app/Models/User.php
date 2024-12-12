@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
-use Auth;
-use App\Enums\RolesEnum;
 use App\Enums\PermissionsEnum;
-use OwenIt\Auditing\Auditable;
 use App\Enums\PolicyIssuanceEnum;
-use Illuminate\Support\Collection;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Notifications\Notifiable;
+use App\Enums\RolesEnum;
+use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements AuditableContract
 {

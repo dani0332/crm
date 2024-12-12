@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -10,7 +9,6 @@ use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\TravelQuote;
-use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -49,7 +47,7 @@ class TravelQuoteObserver
                 $travelQuote->markLeadAllocationPassed();
 
                 // If advisor is not CHS advisor, then send FTC email
-                if(isCHSAdvisor($dirty['advisor_id'])) {
+                if (isCHSAdvisor($dirty['advisor_id'])) {
                     info(self::class." - Advisor is CHS advisor for uuid: {$travelQuote->uuid} so not sending FTC email");
                 } else {
                     $oldAdvisorId = $changes['advisor_id']['old'];
