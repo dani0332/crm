@@ -36,7 +36,6 @@ use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
@@ -699,49 +698,49 @@ class LifeQuoteService extends BaseService
         return 'true';
     }
 
-    public function storeLifeQuote($data)
+    public function storeLifeQuote(array $lifeQuoteData)
     {
-        $lifeData = [
-            'firstName' => $data['first_name'],
-            'lastName' => $data['last_name'],
-            'email' => $data['email'],
-            'mobileNo' => $data['mobile_no'],
-            'dob' => $data['dob'],
-            'sumInsuredValue' => $data['sum_insured_value'],
-            'nationalityId' => $data['nationality_id'],
-            'sumInsuredCurrencyId' => $data['sum_insured_currency_id'],
-            'maritalStatusId' => $data['marital_status_id'],
-            'purposeOfInsuranceId' => $data['purpose_of_insurance_id'],
-            'tenureOfInsuranceId' => $data['tenure_of_insurance_id'],
-            'numberOfYearsId' => $data['number_of_years_id'],
-            'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
-            'gender' => $data['gender'],
-            'othersInfo' => $data['others_info'],
-            'height' => $data['height'],
-            'weight' => $data['weight'],
-            'bmi' => $data['bmi'],
-            'age' => $data['age'],
+        $mappedLifeQuoteData = [
+            'firstName' => $lifeQuoteData['first_name'],
+            'lastName' => $lifeQuoteData['last_name'],
+            'email' => $lifeQuoteData['email'],
+            'mobileNo' => $lifeQuoteData['mobile_no'],
+            'dob' => $lifeQuoteData['dob'],
+            'sumInsuredValue' => $lifeQuoteData['sum_insured_value'],
+            'nationalityId' => $lifeQuoteData['nationality_id'],
+            'sumInsuredCurrencyId' => $lifeQuoteData['sum_insured_currency_id'],
+            'maritalStatusId' => $lifeQuoteData['marital_status_id'],
+            'purposeOfInsuranceId' => $lifeQuoteData['purpose_of_insurance_id'],
+            'tenureOfInsuranceId' => $lifeQuoteData['tenure_of_insurance_id'],
+            'numberOfYearsId' => $lifeQuoteData['number_of_years_id'],
+            'isSmoker' => $lifeQuoteData['is_smoker'] == 1 ? 1 : 0,
+            'gender' => $lifeQuoteData['gender'],
+            'othersInfo' => $lifeQuoteData['others_info'],
+            'height' => $lifeQuoteData['height'],
+            'weight' => $lifeQuoteData['weight'],
+            'bmi' => $lifeQuoteData['bmi'],
+            'age' => $lifeQuoteData['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
-        $response = Capi::request('/api/v2-save-life-quote', 'post', $lifeData);
+        $response = Capi::request('/api/v2-save-life-quote', 'post', $mappedLifeQuoteData);
 
         if (isset($response->quoteUID)) {
             //todo: will remove this code once handled on Capi
             LifeQuote::where('uuid', $response->quoteUID)
-                    ->update(['height' => $lifeData['height'], 
-                            'weight' => $lifeData['weight'], 
-                            'bmi' => $lifeData['bmi'], 
-                            'age' => $lifeData['age']
+                    ->update(['height' => $mappedLifeQuoteData['height'], 
+                            'weight' => $mappedLifeQuoteData['weight'], 
+                            'bmi' => $mappedLifeQuoteData['bmi'], 
+                            'age' => $mappedLifeQuoteData['age']
                         ]);
         }
 
         return $response;
     }
 
-    public function updateLifeQuote($uuid, $validatedData)
+    public function updateLifeQuote(string $uuid, array $validatedData)
     {
         LifeQuote::where('uuid', $uuid)->update($validatedData);
     }
@@ -770,7 +769,6 @@ class LifeQuoteService extends BaseService
             })
             ->when(! empty(request()->sum_insured_range) && ! empty(request()->sum_insured_currency_id), function ($query) {
                 $query->where('sum_insured_currency_id', request()->sum_insured_currency_id);
-                    // ->whereBetween('sum_insured_value', request()->sum_insured_range);
                 switch (request()->sum_insured_range) {
                     case 'lt500k':
                         $query->where('sum_insured_value', '<', 500000);
