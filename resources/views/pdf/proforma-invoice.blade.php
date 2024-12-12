@@ -390,7 +390,7 @@
     $customerDetail =  $customer->detail;
     $vat = 0;
     $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
-    $entity = null;
+    $entity = $quote?->quoteRequestEntityMapping?->entity;
 
     if($isRequestFromSendUpdateLogPage){
         $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
@@ -410,9 +410,8 @@
             $vat =  $proformaPaymentRequest->price_vat;
             $totalAmount =  $subTotal + $vat;
         }
-        if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
-            $entity = $quote?->quoteRequestEntityMapping?->entity;
-        }
+
+
 
     }
 
@@ -581,11 +580,7 @@
             <tr>
 
                 <td class="customer">
-                    {{--   temp code to be removed in next deployment --}}
-                    @if($quote->code != 'BUS-AD8GZJ6Y')
-                        {{ $customerName }} </br>
-                    @endif
-
+                    {{ $customerName }} </br>
                 </td>
 
                 <th class="date">
