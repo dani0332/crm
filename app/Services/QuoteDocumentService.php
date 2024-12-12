@@ -10,14 +10,15 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\WatermarkDocTypesEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
+use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\GetWatermarkPropertyTrait;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -28,7 +29,6 @@ use setasign\Fpdi\Fpdi;
 class QuoteDocumentService extends BaseService
 {
     use GenericQueriesAllLobs;
-    use GetWatermarkPropertyTrait;
 
     /**
      * get list of active document types can be presented to customer to upload documents.
@@ -644,5 +644,25 @@ class QuoteDocumentService extends BaseService
             // Return an error message if the file does not exist
             return response()->json(['error' => 'File does not exist on server']);
         }
+    }
+
+    /**
+     * verify if a document is watermark qualified function
+     */
+    public function getWatermarkProperty($quote, $documentType, $insuranceProviderId = null): bool
+    {
+        $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
+
+        if ($insuranceProviderId) {
+            $skipWatermark = in_array($insuranceProviderId, $ips);
+        } else {
+            $skipWatermark = in_array($quote->insurance_provider_id, $ips);
+        }
+
+        if (! $skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
+            return true;
+        }
+
+        return false;
     }
 }
