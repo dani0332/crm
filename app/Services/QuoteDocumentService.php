@@ -2,33 +2,33 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\DocumentTypeCategory;
-use App\Enums\DocumentTypeCode;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
+use setasign\Fpdi\Fpdi;
 use App\Enums\RolesEnum;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Jobs\WatermarkDocumentsJob;
-use App\Models\ApplicationStorage;
+use App\Enums\QuoteTypeId;
+use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Repositories\DocumentTypeRepository;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\GetWatermarkPropertyTrait;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\DocumentTypeCode;
+use PhpOffice\PhpWord\IOFactory;
+use App\Models\InsuranceProvider;
+use App\Models\ApplicationStorage;
+use App\Enums\DocumentTypeCategory;
+use App\Jobs\WatermarkDocumentsJob;
 use Illuminate\Support\Facades\Log;
+use App\Enums\WatermarkDocTypesEnum;
+use Intervention\Image\ImageManager;
+use App\Traits\GenericQueriesAllLobs;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\SendUpdateLogStatusEnum;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
-use Intervention\Image\ImageManager;
-use PhpOffice\PhpWord\IOFactory;
-use setasign\Fpdi\Fpdi;
+use App\Repositories\DocumentTypeRepository;
 
 class QuoteDocumentService extends BaseService
 {
     use GenericQueriesAllLobs;
-    use GetWatermarkPropertyTrait;
 
     /**
      * get list of active document types can be presented to customer to upload documents.
@@ -644,5 +644,30 @@ class QuoteDocumentService extends BaseService
             // Return an error message if the file does not exist
             return response()->json(['error' => 'File does not exist on server']);
         }
+    }
+
+    /**
+     * verify if a document is watermark qualified function
+     *
+     * @param $quote
+     * @param $documentType
+     * @param $insuranceProviderId
+     * @return bool
+     */
+    public function getWatermarkProperty($quote, $documentType, $insuranceProviderId = null): bool
+    {
+        $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
+
+        if ($insuranceProviderId) {
+            $skipWatermark = in_array($insuranceProviderId, $ips);
+        } else {
+            $skipWatermark = in_array($quote->insurance_provider_id, $ips);
+        }
+
+        if (! $skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
+            return true;
+        }
+
+        return false;
     }
 }
