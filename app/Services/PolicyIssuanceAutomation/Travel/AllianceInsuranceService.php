@@ -551,11 +551,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
         }
 
-        /*if ($isPolicyBookingFailed) {
-            $status = PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
-            $issuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
-        }*/
-
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Start');
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$status);
