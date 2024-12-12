@@ -1,7 +1,6 @@
 <script setup>
 defineProps({
   reportData: Object,
-  filtersByLob: Object,
   filterOptions: Object,
   defaultFilters: Object,
 });
@@ -121,8 +120,6 @@ const quoteTypesOptions = computed(() => {
 });
 
 const cleanFilters = filters => {
-  // remove unused filters
-  filters = removeUnusedFilters(filters);
   Object.keys(filters).forEach(
     key =>
       (filters[key] === '' ||
@@ -130,19 +127,6 @@ const cleanFilters = filters => {
         filters[key].length == 0) &&
       delete filters[key],
   );
-  return filters;
-};
-
-const removeUnusedFilters = filters => {
-  const filtersByLob = page.props.filtersByLob;
-  Object.keys(filtersByLob).forEach(key => {
-    if (
-      filtersByLob[key]['lobs'] &&
-      !filtersByLob[key]['lobs'].includes(filters.lob)
-    ) {
-      delete filters[key];
-    }
-  });
   return filters;
 };
 
@@ -175,42 +159,6 @@ onMounted(() => {
 
   onSubmit(true, true);
 });
-
-const canShow = element => {
-  if (page.props.filtersByLob && page.props.filtersByLob[element]) {
-    const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
-
-    if (
-      lobs.length == 0 ||
-      (lobs.length != 0 && Object.values(lobs).includes(filters.lob))
-    ) {
-      return true;
-    }
-
-    return false;
-  }
-
-  return true;
-};
-
-const isDisabled = element => {
-  if (
-    page.props.filtersByLob &&
-    page.props.filtersByLob[element] &&
-    filters.lob
-  ) {
-    const canView =
-      page.props.filtersByLob[element]['can_view'][filters.lob] ?? true;
-
-    if (canView) {
-      return true;
-    }
-
-    return false;
-  }
-
-  return true;
-};
 
 const calculateTotalSum = (data, key) => {
   return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
@@ -280,7 +228,7 @@ const onLobChange = (e, isOnMounted = false) => {
 
         <ComboBox
           v-if="
-            can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
+            can(permissionsEnum.SEGMENT_FILTER)
           "
           v-model="filters.segment_filter"
           label="Segment"

@@ -4,7 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -18,7 +18,6 @@ use App\Services\BaseService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LeadDistributionReportService extends BaseService
@@ -51,7 +50,6 @@ class LeadDistributionReportService extends BaseService
             $query = $this->applyFilters($query, $filters);
         }
 
-        // dd($query->toSql(), $query->getBindings());
         return $query->paginate(15)
             ->withQueryString();
     }
@@ -175,104 +173,13 @@ class LeadDistributionReportService extends BaseService
         return $query;
     }
 
-    public function getFiltersByLob()
-    {
-        $canView = [
-            quoteTypeCode::Car => ! Auth::user()->hasRole(RolesEnum::CarAdvisor),
-            quoteTypeCode::Bike => ! Auth::user()->hasRole(RolesEnum::BikeAdvisor),
-            quoteTypeCode::Health => ! Auth::user()->hasRole(RolesEnum::RMAdvisor),
-            quoteTypeCode::Travel => ! Auth::user()->hasRole(RolesEnum::TravelAdvisor),
-            quoteTypeCode::Pet => ! Auth::user()->hasRole(RolesEnum::PetAdvisor),
-            quoteTypeCode::Cycle => ! Auth::user()->hasRole(RolesEnum::CycleAdvisor),
-            quoteTypeCode::Yacht => ! Auth::user()->hasRole(RolesEnum::YachtAdvisor),
-            quoteTypeCode::Life => ! Auth::user()->hasRole(RolesEnum::LifeAdvisor),
-            quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
-            quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
-            quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
-        ];
-
-        return [
-            'advisors' => [
-                'can_view' => $canView,
-            ],
-            'teams' => [
-                'can_view' => $canView,
-                'lobs' => [
-                    quoteTypeCode::Car,
-                    quoteTypeCode::Health,
-                    quoteTypeCode::CORPLINE,
-                    quoteTypeCode::GroupMedical,
-                ],
-            ],
-            'sub_teams' => [
-                'can_view' => $canView,
-                'lobs' => [
-                    quoteTypeCode::Car,
-                    quoteTypeCode::GroupMedical,
-                ],
-            ],
-            'tiers' => [
-                'lobs' => [
-                    quoteTypeCode::Car,
-                    quoteTypeCode::Bike,
-                ],
-            ],
-            'is_ecommerce' => [
-                'lobs' => [
-                    quoteTypeCode::Car,
-                    quoteTypeCode::Bike,
-                    quoteTypeCode::Health,
-                    quoteTypeCode::Travel,
-                ],
-            ],
-            'vehicle_type' => [
-                'lobs' => [
-                    quoteTypeCode::Car,
-                ],
-            ],
-            'isCommercial' => [
-                'lobs' => [
-                    quoteTypeCode::Car,
-                ],
-            ],
-            'isEmbeddedProducts' => [
-                'lobs' => [
-                    quoteTypeCode::Travel,
-                ],
-            ],
-            'insurance_type' => [
-                'lobs' => [
-                    quoteTypeCode::Travel,
-                    quoteTypeCode::Life,
-                    quoteTypeCode::CORPLINE,
-                ],
-            ],
-            'insurance_for' => [
-                'lobs' => [
-                    quoteTypeCode::Health,
-                    quoteTypeCode::Home,
-                ],
-            ],
-            'travel_coverage' => [
-                'lobs' => [
-                    quoteTypeCode::Travel,
-                ],
-            ],
-            'segment_filter' => [
-                'lobs' => [
-                    quoteTypeCode::Car,
-                    quoteTypeCode::Health,
-                    quoteTypeCode::Travel,
-                ],
-            ],
-        ];
-    }
-
     public function getFilterOptions()
     {
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
 
-        $lobs = $this->getLobByPermissions();
+        $lobs = $this->getUserProducts(auth()->user()->id)
+            ->pluck('name', 'name')
+            ->toArray();
 
         return [
             'lob' => $lobs,
@@ -299,20 +206,51 @@ class LeadDistributionReportService extends BaseService
         $lob = $filters->lob ?? '';
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');
 
-        $query->when($lob === quoteTypeCode::Travel, function ($q) {
-            $q->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
+        $query->when(in_array($lob, [quoteTypeCode::Travel, quoteTypeCode::Health]), function ($q) use ($lob) {
+            $segmentMap = [
+                quoteTypeCode::Travel => QuoteTypeId::Travel,
+                quoteTypeCode::Health => QuoteTypeId::Health,
+            ];
+            $q->filterBySegment(request()->segment_filter, $segmentMap[$lob]);
         })
-            ->when($lob === quoteTypeCode::Health, function ($q) {
-                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Health);
-            })
-            ->when($lob === quoteTypeCode::Car, function ($q) {
-                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Car);
-            })
             ->when($freshLoad || isset($filters->createdAtDates), function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('personal_quotes.created_at', [$startDate, $endDate]);
             })
             ->when(isset($filters->assignmentTypes) && $filters->assignmentTypes != 'All', function ($q) use ($filters) {
                 $q->where('personal_quotes.assignment_type', $filters->assignmentTypes);
+            })
+            ->when($lob === quoteTypeCode::Health, function ($q) {
+                $q->join('health_quote_request', 'health_quote_request.uuid', 'personal_quotes.uuid');
+            })
+            ->when($lob === quoteTypeCode::Home, function ($q) {
+                $q->join('home_quote_request', 'home_quote_request.uuid', 'personal_quotes.uuid');
+            })
+            ->when($lob === quoteTypeCode::Life, function ($q) {
+                $q->join('life_quote_request', 'life_quote_request.uuid', 'personal_quotes.uuid');
+            })
+            ->when(in_array($lob, [quoteTypeCode::Business, quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]), function ($q) use ($lob) {
+                $q->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid')
+                    ->when(in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]), function ($q) {
+                        $q->where('business_quote_request.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+                    });
+            })
+            ->when($lob === quoteTypeCode::Travel, function ($q) {
+                $q->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
+            })
+            ->when($lob === quoteTypeCode::Pet, function ($q) {
+                $q->join('pet_quote_request', 'pet_quote_request.uuid', 'personal_quotes.uuid');
+            })
+            ->when($lob === quoteTypeCode::Bike, function ($q) {
+                $q->join('bike_quote_request', 'bike_quote_request.uuid', 'personal_quotes.uuid');
+            })
+            ->when($lob === quoteTypeCode::Yacht, function ($q) {
+                $q->join('yacht_quote_request', 'yacht_quote_request.uuid', 'personal_quotes.uuid');
+            })
+            ->when($lob === quoteTypeCode::Cycle, function ($q) {
+                $q->join('cycle_quote_request', 'cycle_quote_request.personal_quote_id', 'personal_quotes.id');
+            })
+            ->when($lob === quoteTypeCode::Jetski, function ($q) {
+                $q->join('jetski_quote_request', 'jetski_quote_request.personal_quote_id', 'personal_quotes.id');
             });
 
         return $query;
@@ -340,41 +278,5 @@ class LeadDistributionReportService extends BaseService
             });
 
         return $query;
-    }
-
-    public function getLobByPermissions()
-    {
-        $lobs = [
-            quoteTypeCode::Car => PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
-            quoteTypeCode::Bike => PermissionsEnum::BIKE_DISTRIBUTION_REPORT,
-            quoteTypeCode::Health => PermissionsEnum::HEALTH_DISTRIBUTION_REPORT,
-            quoteTypeCode::Travel => PermissionsEnum::TRAVEL_DISTRIBUTION_REPORT,
-            quoteTypeCode::Pet => PermissionsEnum::PET_DISTRIBUTION_REPORT,
-            quoteTypeCode::Cycle => PermissionsEnum::CYCLE_DISTRIBUTION_REPORT,
-            quoteTypeCode::Yacht => PermissionsEnum::YACHT_DISTRIBUTION_REPORT,
-            quoteTypeCode::Life => PermissionsEnum::LIFE_DISTRIBUTION_REPORT,
-            quoteTypeCode::Home => PermissionsEnum::HOME_DISTRIBUTION_REPORT,
-        ];
-
-        $lobs = array_filter($lobs, function ($permission) {
-            return Auth::user()->can($permission);
-        });
-
-        $lobs = QuoteTypeRepository::GetList()
-            ->filter(function ($lob) use ($lobs) {
-                return array_key_exists($lob->code, $lobs);
-            })
-            ->pluck('code', 'text')
-            ->toArray();
-
-        if (Auth::user()->can(PermissionsEnum::CORPLINE_DISTRIBUTION_REPORT)) {
-            $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
-        }
-
-        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT)) {
-            $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
-        }
-
-        return $lobs;
     }
 }

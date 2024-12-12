@@ -96,7 +96,6 @@ class ReportsController extends Controller
     {
         return inertia('Reports/LeadDistribution', [
             'reportData' => $leadDistributionReportService->getReportData($request),
-            'filtersByLob' => $leadDistributionReportService->getFiltersByLob(),
             'filterOptions' => $leadDistributionReportService->getFilterOptions(),
             'defaultFilters' => $leadDistributionReportService->getDefaultFilters(),
         ]);
