@@ -661,10 +661,10 @@ Route::get('/add-batch-number', function () {
 });
 
 //Migration Not Required For Now 21 Nov 24
-// Route::get('run-insly-email-fix', function () {
+Route::get('run-instant-chat-migration', function () {
 
-//     if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-//         Artisan::queue('InslyEmailFix:cron');
-//     }
+    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+        Artisan::queue('IInstantChatDataMigration:cron');
+    }
 
-// });
+});
