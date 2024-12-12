@@ -1,4 +1,4 @@
-<p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a> </p>
+<p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a></p>
 
 ## About Blanka - IMCRM
 
@@ -18,7 +18,7 @@ URLs:
 
 Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
 
-### Other stack & libraries
+## Other stack & libraries
 
 - [Vue](https://vuejs.org/)
 - [InertiaJS](https://inertiajs.com/)
