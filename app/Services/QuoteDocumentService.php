@@ -208,6 +208,8 @@ class QuoteDocumentService extends BaseService
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
                 );
+            } else {
+                info('Watermkark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
