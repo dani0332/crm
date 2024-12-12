@@ -234,7 +234,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
     });
 
-    Route::group(['middleware' => ['permission:' . PermissionsEnum::EXTRACT_REPORT]], function () {
+    Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
         Route::get('/reports/management-report/export', [ReportsController::class, 'exportManagementReport'])->name('management-report-export');
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
@@ -274,7 +274,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('view:clear');
         Artisan::call('schedule:clear-cache');
 
-        return '<h1>All cache cleared. LARAVEL Version=' . app()->version() . '</h1>';
+        return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
@@ -470,7 +470,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
-        Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy'])->middleware('permission:' . PermissionsEnum::POLICY_DETAILS_ADD);
+        Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy'])->middleware('permission:'.PermissionsEnum::POLICY_DETAILS_ADD);
         Route::post('{quoteType}/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
         Route::post('{quoteType}/export-car-pdf', [CRUDController::class, 'exportCarPdf'])->name('exportCarPdf');
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
@@ -605,7 +605,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
-    Route::get('sage-api-logs/{sectionId}', [SageApi::class, 'sageApiLogs'])->name('sage-api-logs')->middleware('permission:' . PermissionsEnum::VIEW_SAGE_API_LOGS);
+    Route::get('sage-api-logs/{sectionId}', [SageApi::class, 'sageApiLogs'])->name('sage-api-logs')->middleware('permission:'.PermissionsEnum::VIEW_SAGE_API_LOGS);
     Route::get('sage-api-logs/{sectionId}/latest-error', [SageApi::class, 'getLastSageError'])->name('sage-api-logs-latest-error');
 
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
@@ -647,8 +647,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
     //bookpolicy routes
-    Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy')->middleware('permission:' . PermissionsEnum::BOOK_POLICY_DETAILS_ADD);
-    Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy')->middleware('permission:' . PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON . '|' . PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON . '|' . PermissionsEnum::BOOK_POLICY_BUTTON);
+    Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy')->middleware('permission:'.PermissionsEnum::BOOK_POLICY_DETAILS_ADD);
+    Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy')->middleware('permission:'.PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON.'|'.PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON.'|'.PermissionsEnum::BOOK_POLICY_BUTTON);
 
     /* health quote members */
     Route::post('/health-quote-add-member', [HealthQuoteController::class, 'healthQuoteAddMember']);
