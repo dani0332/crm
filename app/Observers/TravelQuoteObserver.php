@@ -34,8 +34,6 @@ class TravelQuoteObserver
      */
     public function updated(TravelQuote $travelQuote): void
     {
-        // Advisor to be used when policy is booked using policy issuance automations
-        $user = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();
         $dirty = $travelQuote->getDirty();
         $changes = [];
 
@@ -46,7 +44,7 @@ class TravelQuoteObserver
             ];
         }
 
-        if (isset($dirty['advisor_id']) && $dirty['advisor_id'] !== $user?->id) {
+        if (isset($dirty['advisor_id'])) {
             try {
                 $travelQuote->markLeadAllocationPassed();
 
