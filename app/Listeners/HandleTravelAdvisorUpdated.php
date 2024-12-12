@@ -57,6 +57,7 @@ class HandleTravelAdvisorUpdated
                 SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->delay(now()->addSeconds(30));
                 info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$lead->uuid} | Time:  ".now());
             }
+
             return;
         }
 
