@@ -3,14 +3,18 @@
 namespace App\Services;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Facades\Ken;
 use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\Customer;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -530,5 +534,64 @@ class AMLService
         //            $responseCode = $ex->getCode();
         //            Log::error('sendAmlQuoteStatusUpdateMail: '.$responseCode.'/'.$ex->getMessage());
         //        }
+    }
+
+    public function amlScreeningGIG($quoteDetails, $quoteTypeId, $customerType, $membersDetails)
+    {
+        if ($quoteDetails->insurance_provider_id && $quoteDetails->insurance_provider_id == InsuranceProvidersEnum::AXA) {
+            info('fn:amlScreeningGIG - Ref-ID: '.$quoteDetails->code.' - Insurance Provider ID: '.$quoteDetails->insurance_provider_id);
+
+            try {
+                $emirateDetails = Customer::select(['emirates_id_number', 'emirates_id_expiry_date'])->where('id', $quoteDetails->customer_id)->get();
+                $customerOrEntityName = $customerType == CustomerTypeEnum::Individual ?
+                    $membersDetails['first_name'].(($membersDetails['last_name'] == 'NULL' || $membersDetails['last_name'] == null) ? '' : ' '.$membersDetails['last_name']) :
+                    $membersDetails['company_name'];
+
+                $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', [
+                    'quoteUID' => $quoteDetails->uuid,
+                    'quoteTypeId' => $quoteTypeId,
+                    'emirateDetails' => [
+                        'emirateNumber' => $emirateDetails->emirates_id_number,
+                        'emirateExpiryDate' => $emirateDetails->emirates_id_expiry_date,
+                    ],
+                    'chassisNumber' => $quoteDetails->chassis_number ?? '',
+                ]);
+
+                $response = json_decode($screeningResponse->getBody()) ?? [];
+                $response['screening_type'] = InsuranceProvidersEnum::AXA;
+                $kycLogDetails = [
+                    'quote_request_id' => $quoteDetails->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'results' => json_encode($response['result']),
+                    // 'results_found' => 0, TODO:: Can we get from GIG response, need to ask with Shahrukh
+                    'created_at' => Carbon::now(),
+                    'input' => $customerOrEntityName,
+                    'search_type' => $customerType,
+                    'customer_code' => $membersDetails['code'],
+                ];
+
+                if ($response['status'] == AMLStatusCode::AMLScreeningCleared) {
+                    info('fn:amlScreeningGIG - GIG AML Screening Cleared - Ref-ID: '.$quoteDetails->code.' - response:'.$response['message']);
+                    $kycLogDetails['match_found'] = 0;
+                    $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
+                } else {
+                    info('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response:'.$response['message']);
+                    $kycLogDetails['match_found'] = 1;
+                    $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
+                }
+
+                KycLog::insert($kycLogDetails);
+                info('fn:amlScreeningGIG - AML Screening GIG Potential Matches inserted into kyc_logs table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' Code: '.$membersDetails['code']);
+
+            } catch (Exception $exception) {
+                info('fn:amlScreeningGIG - GIG Screening failed - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' Code: '.$membersDetails['code'].' - Error : '.$exception->getMessage());
+
+                return false;
+            }
+        }
+
+        info('fn:amlScreeningGIG - Insurance provider not found. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' Code: '.$membersDetails['code']);
+
+        return false;
     }
 }

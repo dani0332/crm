@@ -6,6 +6,7 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -240,7 +241,12 @@ class AMLController extends Controller
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $aml->orWhereNull('decision');
             })->whereNull('screenshot');
-        $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
+        $kycLogs = $amlRecordFetch->orderBy('created_at', 'asc')->get()
+            ->filter(function ($item) {
+                return !isset(json_decode($item->results, true)['screening_type']);
+            })
+            ->values();
+
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 
         $isPersonalQuote = checkPersonalQuotes($quoteType->code);
@@ -599,6 +605,7 @@ class AMLController extends Controller
             );
         }
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
+            $quoteTypeIds = [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Corpline];
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quoteRequestId,
@@ -607,7 +614,8 @@ class AMLController extends Controller
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
-            if ($quoteTypeId == QuoteTypeId::Health || $quoteTypeId == QuoteTypeId::Home || $quoteTypeId == QuoteTypeId::Cycle || $quoteTypeId == QuoteTypeId::Pet || $quoteTypeId == QuoteTypeId::Yacht || $quoteTypeId == QuoteTypeId::Corpline) {
+
+            if (in_array($quoteTypeId, $quoteTypeIds)) {
                 $quoteDetails->stale_at = null;
             }
 
@@ -616,8 +624,11 @@ class AMLController extends Controller
             // this event only working for travel lob
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 $this->stopHapexReminder($quoteDetails);
+                //TODO:: Question: Need to send quote type because GIG screening is for MOTOR and HOME also? confirm with Daniyal bhai
+                app(AMLService::class)->amlScreeningGIG($quoteDetails, $quoteTypeId, $customerType, $membersDetails);
+
             }
-            info('AML Screening Bridger - Potential Matche(s) not Found, Quote Status changed to AML Screening Cleared');
+            info('AML Screening Bridger - Potential Matches not Found, Quote Status changed to AML Screening Cleared');
         } else {
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
@@ -635,7 +646,7 @@ class AMLController extends Controller
                     $this->sendHapexReminder($quoteDetails);
                 }
             }
-            info('AML Screening Bridger - Potential Matche(s) Found, Quote Status changed to AML Screening Failed');
+            info('AML Screening Bridger - Potential Matches Found, Quote Status changed to AML Screening Failed');
         }
         session()->forget('amlResponseCheck');
     }
