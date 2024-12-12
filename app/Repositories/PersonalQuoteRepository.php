@@ -138,7 +138,9 @@ class PersonalQuoteRepository extends BaseRepository
             // info('Document array prepared for creation', $document);
 
             try {
-                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, $isWaterMarkQualifyDoc, $data, $docName) {
+                $quoteDocument = null;
+
+                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, &$quoteDocument) {
 
                     $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
                     $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
@@ -159,12 +161,15 @@ class PersonalQuoteRepository extends BaseRepository
 
                     $quoteDocument = $quote->documents()->create($document);
                     info('Document uploaded - Ref: '.$quote->code);
-                    if ($isWaterMarkQualifyDoc) {
-                        WatermarkDocumentsJob::dispatch(
-                            $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
-                        );
-                    }
                 });
+
+                if ($isWaterMarkQualifyDoc && $quoteDocument) {
+                    WatermarkDocumentsJob::dispatch(
+                        $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
+                    );
+                } else {
+                    info('Watermkark job not dispatched - Ref: '.$quote->code);
+                }
 
                 if (! $insuranceProviderId && request()->is_send_update) {
                     info('Insurance Provider not found - Ref: '.$quote->code);
