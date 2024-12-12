@@ -29,8 +29,10 @@ class LeadDistributionReportService extends BaseService
     public function getReportData($request)
     {
         $lob = $request->lob ?? '';
-        
-        if (!$lob) { return []; }
+
+        if (! $lob) {
+            return [];
+        }
 
         $filters = $this->getFilters($request);
         $reportDataQuery = $this->buildQuery($lob, $filters);
@@ -55,14 +57,15 @@ class LeadDistributionReportService extends BaseService
         // Build query for Car LOB
         if ($lob === quoteTypeCode::Car) {
             $carQuery = $this->getCarQuoteQuery($lob);
+
             return $this->applyFiltersForCar($carQuery, $filters);
         }
 
         // Build query for Personal Quotes
         $personalQuoteQuery = $this->getPersonalQuoteQuery($lob);
+
         return $this->applyFilters($personalQuoteQuery, $filters);
     }
-
 
     private function getCarQuoteQuery($lob)
     {
@@ -80,8 +83,7 @@ class LeadDistributionReportService extends BaseService
 
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $carQuoteQuery->where('car_quote_request.advisor_id', auth()->user()->id);
-        }
-        elseif (!$this->hasAdminPrivileges()) {
+        } elseif (! $this->hasAdminPrivileges()) {
             $userIds = $this->getEligibleUserIds($lob);
             $carQuoteQuery->whereIn('car_quote_request.advisor_id', $userIds);
         }
@@ -106,7 +108,7 @@ class LeadDistributionReportService extends BaseService
     private function getEligibleUserIds($lob)
     {
         $userIds = $this->walkTree(auth()->user()->id, $lob);
-        
+
         if (auth()->user()->isManagerORDeputy()) {
             $userIds = UserManager::where('manager_id', auth()->user()->id)
                 ->get()
@@ -119,7 +121,6 @@ class LeadDistributionReportService extends BaseService
 
         return $userIds;
     }
-
 
     private function getBindings(string $table)
     {
@@ -175,7 +176,7 @@ class LeadDistributionReportService extends BaseService
             ->orderBy('teams.name');
 
         // Apply user-specific filters if necessary
-        if (!$this->hasAdminPrivileges()) {
+        if (! $this->hasAdminPrivileges()) {
             $userIds = $this->getUserIdsForAccess($lob);
             $personalQuoteQuery->whereIn('personal_quotes.advisor_id', $userIds);
         }
@@ -187,8 +188,8 @@ class LeadDistributionReportService extends BaseService
 
     private function getLobId($lob)
     {
-        $mappedLob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) 
-            ? quoteTypeCode::Business 
+        $mappedLob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])
+            ? quoteTypeCode::Business
             : $lob;
 
         return QuoteTypeRepository::where('code', $mappedLob)->value('id');
@@ -248,12 +249,12 @@ class LeadDistributionReportService extends BaseService
             ];
             $q->filterBySegment(request()->segment_filter, $segmentMap[$lob]);
         })
-        ->when($freshLoad || isset($filters->createdAtDates), function ($q) use ($startDate, $endDate) {
-            $q->whereBetween('personal_quotes.created_at', [$startDate, $endDate]);
-        })
-        ->when(isset($filters->assignmentTypes) && $filters->assignmentTypes !== 'All', function ($q) use ($filters) {
-            $q->where('personal_quotes.assignment_type', $filters->assignmentTypes);
-        });
+            ->when($freshLoad || isset($filters->createdAtDates), function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('personal_quotes.created_at', [$startDate, $endDate]);
+            })
+            ->when(isset($filters->assignmentTypes) && $filters->assignmentTypes !== 'All', function ($q) use ($filters) {
+                $q->where('personal_quotes.assignment_type', $filters->assignmentTypes);
+            });
 
         // Map LOBs to their respective table and join conditions
         $joinConditions = [
@@ -275,8 +276,8 @@ class LeadDistributionReportService extends BaseService
             $q->join($table, $foreignKey, $localKey);
 
             if (in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])) {
-                $q->where('business_quote_request.business_type_of_insurance_id', 
-                        quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+                $q->where('business_quote_request.business_type_of_insurance_id',
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
             }
         });
 
@@ -289,16 +290,16 @@ class LeadDistributionReportService extends BaseService
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');
 
         $query->filterBySegment()
-            ->when($freshLoad || !empty($filters->createdAtDates), function ($q) use ($startDate, $endDate) {
+            ->when($freshLoad || ! empty($filters->createdAtDates), function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
             })
-            ->when(!empty($filters->assignmentTypes) && $filters->assignmentTypes !== 'All', function ($q) use ($filters) {
+            ->when(! empty($filters->assignmentTypes) && $filters->assignmentTypes !== 'All', function ($q) use ($filters) {
                 $q->where('car_quote_request.assignment_type', $filters->assignmentTypes);
             })
             ->when(isset($filters->isCommercial) && $filters->isCommercial !== 'All', function ($q) use ($filters) {
                 $q->where('car_model.is_commercial', $filters->isCommercial === 'true');
             })
-            ->when(!empty($filters->sic_advisor_requested) && $filters->sic_advisor_requested !== 'All', function ($q) use ($filters) {
+            ->when(! empty($filters->sic_advisor_requested) && $filters->sic_advisor_requested !== 'All', function ($q) use ($filters) {
                 $q->where('car_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
             });
 
