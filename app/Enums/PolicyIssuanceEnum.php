@@ -10,6 +10,7 @@ final class PolicyIssuanceEnum extends Enum
 {
     //Advisor email to be used to assign advisor to leads which booked automatically using policy issuance automations
     const API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL = 'happiness@support.insurancemarket.ae';
+    const API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL = 'Auto Issued';
     const PENDING_STATUS = 'pending';
     const PROCESSING_STATUS = 'processing';
     const TIMEOUT_STATUS = 'timeout';

@@ -68,6 +68,7 @@ defineProps({
 const modelClass = 'App\\Models\\TravelQuote';
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
@@ -1716,7 +1717,7 @@ const allowStatusUpdate = computed(() => {
                   <dd>{{ field?.value }}</dd>
                 </div>
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
-                <dd>{{ field?.value }}</dd>
+                <dd>{{ field.title == 'Advisor' ? (quote.api_issuance_status == policyIssuanceEnum.POLICY_ISSUANCE_API_STATUS_YES_ID ? policyIssuanceEnum.API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL : field?.value) : field?.value }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">AML STATUS</dt>

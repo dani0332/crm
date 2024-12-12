@@ -2045,8 +2045,8 @@ class SageApiService
     {
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - start');
 
-        $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
-        $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
+        /*$isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
+        $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;*/
 
         $policyIssuanceAutomation = $quote?->policyIssuance;
 
@@ -2056,11 +2056,14 @@ class SageApiService
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
 
             // Advisor to be used when policy is booked using policy issuance automations
-            $user = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();
-            /* If advisor is not assigned already than check that if the the Policy Issuance exist for the Insurer and LOB and assign the Advisor */
+            /*$user = User::where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL)->first();*/
+
+            /* If advisor is not assigned already than check that if the Policy Issuance exist for the Insurer and LOB and assign the Advisor */
             if (! $quote->advisor_id && $insuranceProviderAutomation) {
                 info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor to quote');
-                if ($isPolicyBooked && $user) {
+                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
+
+                /*if ($isPolicyBooked && $user) {
                     info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor to quote - status : '.QuoteStatusEnum::PolicyBooked.'User ID'.$user?->id);
                     $quote->advisor_id = $user->id;
                     $quote->save();
@@ -2068,7 +2071,7 @@ class SageApiService
                     info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - execute updateQuoteApiIssuanceStatusAndAllocate');
                     $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
                     info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - updateQuoteApiIssuanceStatusAndAllocate executed');
-                }
+                }*/
 
             } else {
                 info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - advisor is already assigned to quote');
@@ -2076,14 +2079,15 @@ class SageApiService
         } else {
             info('Policy Book : Quote '.$quote?->code.' : policy issuance automation not found');
         }
-        if ($isPolicyBooked || $isPolicyBookingFailed) {
-            $this->updateApiIssuanceStatus($quote, $policyIssuanceAutomation, $quoteTypeId);
-        }
+
+        /* if ($isPolicyBooked || $isPolicyBookingFailed) {
+                    $this->updateApiIssuanceStatus($quote, $policyIssuanceAutomation, $quoteTypeId);
+                }*/
 
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - end');
     }
 
-    public function updateApiIssuanceStatus($quote, $policyIssuanceAutomation, $quoteTypeId)
+    /*public function updateApiIssuanceStatus($quote, $policyIssuanceAutomation, $quoteTypeId)
     {
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - start');
 
@@ -2119,5 +2123,5 @@ class SageApiService
         }
 
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - end');
-    }
+    }*/
 }
