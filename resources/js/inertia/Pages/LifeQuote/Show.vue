@@ -513,22 +513,20 @@ const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
 const getBMITag = () => {
-    const bmi = page.props.quote.bmi
-    if (bmi < 16) {
-      return { text: "High Risk-Underweight", color: "red" };
-    } else if (bmi >= 16 && bmi <= 18.4) {
-      return { text: "Low Risk-Underweight", color: "yellow" };
-    } else if (bmi >= 18.5 && bmi <= 25) {
-      return { text: "Normal", color: "green" };
-    } else if (bmi > 25 && bmi <= 30) {
-      return { text: "Low Risk-Overweight", color: "yellow" };
-    } else if (bmi > 30 && bmi <= 40) {
-      return { text: "Low Risk-Obese", color: "yellow" };
-    } else if (bmi > 40) {
-      return { text: "High Risk-Obese", color: "red" };
-    } else {
-      return { text: "Invalid BMI", color: "gray" };
-    }
+    const bmi = page.props.quote.bmi;
+    
+    const bmiRanges = [
+      { min: 0, max: 15.99, text: "High Risk-Underweight", color: "red" },
+      { min: 16, max: 18.4, text: "Low Risk-Underweight", color: "yellow" },
+      { min: 18.41, max: 25, text: "Normal", color: "green" },
+      { min: 25.01, max: 30, text: "Low Risk-Overweight", color: "yellow" },
+      { min: 30.01, max: 40, text: "Low Risk-Obese", color: "yellow" },
+      { min: 40.01, max: Infinity, text: "High Risk-Obese", color: "red" },
+    ];
+
+    const tag = bmiRanges.find(range => bmi >= range.min && bmi <= range.max);
+
+    return tag || { text: "Invalid BMI", color: "gray" };
   }
 </script>
 
