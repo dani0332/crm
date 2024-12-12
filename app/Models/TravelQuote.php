@@ -259,13 +259,39 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphOne(PolicyIssuance::class, 'model');
     }
+
     public function sageProcess()
     {
         return $this->morphOne(SageProcess::class, 'model');
     }
 
-    public function isParentLead()
+    public function isSingleTrip()
+    {
+        return $this->coverage_code === TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP;
+    }
+
+    public function isAnnualTrip()
+    {
+        return $this->coverage_code === TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP;
+    }
+
+    public function isParent()
     {
         return is_null($this->parent_id) || empty($this->parent_id);
+    }
+
+    public function isChild()
+    {
+        return ! $this->isParent();
+    }
+
+    public function isAutomationCompleted()
+    {
+        return $this->api_issuance_status_id === PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+    }
+
+    public function hasChild()
+    {
+        return $this->child()->exists();
     }
 }

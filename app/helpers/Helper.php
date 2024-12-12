@@ -1549,3 +1549,12 @@ if (! function_exists('getInsuranceProvider')) {
         return $insuranceProvider;
     }
 }
+
+if (! function_exists('isCHSAdvisor')) {
+    function isCHSAdvisor($userId)
+    {
+        $user = User::select('id')->chs()->first();
+
+        return $user?->id == $userId;
+    }
+}

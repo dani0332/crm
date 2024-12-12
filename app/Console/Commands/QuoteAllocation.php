@@ -155,7 +155,8 @@ class QuoteAllocation extends Command
     public function executeTravelAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
     {
         $processedRecords = 0;
-        $leads = TravelQuote::whereNull('advisor_id')
+        $leads = TravelQuote::with('parent')
+            ->whereNull('advisor_id')
             ->select('uuid', 'payment_status_id')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
@@ -173,6 +174,12 @@ class QuoteAllocation extends Command
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         foreach ($leads->get() as $lead) {
+            // Skip the child leads if the parent lead does not have an advisor
+            if($lead->isChild() && empty($lead->parent?->advisor_id)) {
+                info('Skipping Travel record for Quote Allocation with uuid: '.$lead->uuid.' as parent lead does not have an advisor');
+                continue;
+
+            }
             info('Processing Travel record for Quote Allocation with uuid: '.$lead->uuid);
 
             // Only apply teamId if the payment status is AUTHORIZED
