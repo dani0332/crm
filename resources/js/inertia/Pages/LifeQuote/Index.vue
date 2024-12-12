@@ -169,7 +169,6 @@ function filterQuotes(isValid) {
     });
     return;
   }
-  console.log(!filters['sum_insured_range'], !filters['sum_insured_currency_id'])
   if(!filters['sum_insured_range'] || !filters['sum_insured_currency_id']) {
     delete filters['sum_insured_range'];
     delete filters['sum_insured_currency_id'];
