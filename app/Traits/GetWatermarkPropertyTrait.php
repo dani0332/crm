@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use App\Enums\WatermarkDocTypesEnum;
-use App\Models\InsuranceProvider;
 
 trait GetWatermarkPropertyTrait
 {
