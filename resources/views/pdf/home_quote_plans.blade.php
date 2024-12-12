@@ -7,8 +7,7 @@
 
     <style>
         @page {
-            margin: 500px 20px 200px; /* Top = header space, Bottom = footer space */
-            /* margin: 0; */
+            margin: 0;
             padding: 0;
         }
 
@@ -138,7 +137,7 @@
         td>p,
         th>p {
             padding: 4px;
-            /* font-size: 14px !important; */
+            font-size: 14px !important;
             text-align: center;
             /* font-weight: normal; */
         }
@@ -282,7 +281,7 @@
             color: black;
             text-align: center;
             height: 145px;
-            z-index: 1500;
+            /* z-index: 1500; */
         }
 
         table.tbl-footer {
@@ -381,17 +380,21 @@
             color: #1d83bc;
         }
 
-        /* main {
-        margin: 250px 0 200px;
-        padding: 20px;
-        height: 500px  !important;
-    } */
+        .page-image{
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+        }
+
+        .content {
+
+        }
     </style>
 </head>
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_home_first_page.png') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_home_first_page.jpg') }}" class="page-image" />
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
@@ -639,7 +642,7 @@
         <thead>
                 <tr>
                     <th class="alfred" id="alfred-th" rowspan="2">
-                        <img src="{{ public_path('images/alfred.png') }}" />
+                        <img src="{{ public_path('images/home-alfred.png') }}" />
                     </th>
                     @foreach ($planIds as $planId)
                         <th class="provider" style="border: solid 1px #bfbfbf;">
