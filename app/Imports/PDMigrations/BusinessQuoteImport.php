@@ -16,12 +16,12 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
         if ((isset($row['quote_id']) && isset($row['created_at']))) {
             $carbonDate = Carbon::parse($row['created_at']);
 
-            // $lead = CarQuote::with('carQuoteRequestDetail')->where('uuid', $row['quote_id'])->first();
-            $lead = HealthQuote::with('healthQuoteRequestDetail')->where('uuid', $row['quote_id'])->first();
+            $lead = CarQuote::with('carQuoteRequestDetail')->where('uuid', $row['quote_id'])->first();
+            // $lead = HealthQuote::with('healthQuoteRequestDetail')->where('uuid', $row['quote_id'])->first();
 
             if ($lead) {
-                // $quoteRequestDetail = $lead->carQuoteRequestDetail;
-                $quoteRequestDetail = $lead->healthQuoteRequestDetail;
+                $quoteRequestDetail = $lead->carQuoteRequestDetail;
+                // $quoteRequestDetail = $lead->healthQuoteRequestDetail;
 
                 $existingDate = $quoteRequestDetail->chat_initiated_at;
 

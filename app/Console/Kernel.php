@@ -116,7 +116,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('18:00')->onOneServer()->withoutOverlapping(10);
+        $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('18:25')->onOneServer()->withoutOverlapping(10);
 
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
