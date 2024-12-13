@@ -49,9 +49,10 @@ class HandleTravelAdvisorUpdated
         if ($lead) {
             SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addSeconds(5));
         }
-        $skippableSources = [ LeadSourceEnum::INSLY];
+        $skippableSources = [LeadSourceEnum::INSLY];
         if (in_array($lead->source, $skippableSources)) {
             info(self::class.' - lead is source is '.$lead->source.' upload. Skipping intro email job');
+
             return;
         }
 
@@ -62,7 +63,6 @@ class HandleTravelAdvisorUpdated
 
             return;
         }
-
 
         $oldAdvisorId = $event->oldAdvisorId;
 
@@ -98,7 +98,6 @@ class HandleTravelAdvisorUpdated
 
         info(self::class.' - Going to dispatch SendTravelOCBIntroEmailJob ................');
         SendTravelOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
-
 
     }
 }
