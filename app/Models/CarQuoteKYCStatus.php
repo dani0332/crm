@@ -36,11 +36,6 @@ class CarQuoteKYCStatus extends BaseModel
         return ['status'];
     }
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
-
     public function saveForm($request, $update = false)
     {
         if (Auth::user()->hasRole('pa') && $request->has('status')) {

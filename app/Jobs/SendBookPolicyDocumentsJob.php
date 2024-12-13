@@ -113,6 +113,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
+            $emailData->clientFirstName = $quote->first_name;
             $emailData->policy_number = $quote->policy_number;
             $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['policy_expiry_date']));
             $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));

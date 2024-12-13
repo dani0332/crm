@@ -41,7 +41,8 @@ class SavePolicyDetailsRequest extends FormRequest
             'quote_type' => 'nullable|string',
         ];
 
-        if ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option->code == SendUpdateLogStatusEnum::PPE) {
+        // if category CPD or option is PPE under EF.
+        if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD || $sendUpdate?->option?->code == SendUpdateLogStatusEnum::PPE) {
             $rules['expiry_date'] = 'required|date|after:start_date';
         }
 

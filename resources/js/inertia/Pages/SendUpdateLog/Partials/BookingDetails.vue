@@ -1608,6 +1608,7 @@ watch(
           <template v-if="!state.reversalSectionEdit">
             <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 @click="onReversalEdit"
                 :disabled="props.isEditDisabledForQueuedBooking"
@@ -1621,10 +1622,18 @@ watch(
                 </span>
               </template>
             </x-tooltip>
-            <x-button v-else size="sm" @click="onReversalEdit"> Edit </x-button>
+            <x-button
+              v-else
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              @click="onReversalEdit"
+            >
+              Edit
+            </x-button>
           </template>
           <template v-else>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="orange"
               @click="state.reversalSectionEdit = false"
@@ -1634,6 +1643,7 @@ watch(
               Cancel
             </x-button>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="primary"
               :loading="loader.selectInvoice"
@@ -2317,6 +2327,7 @@ watch(
             <template v-if="!state.isEdit">
               <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   @click="checkSectionToEdit"
                   :disabled="props.isEditDisabledForQueuedBooking"
@@ -2330,13 +2341,19 @@ watch(
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="checkSectionToEdit">
+              <x-button
+                v-else
+                class="focus:ring-2 focus:ring-black"
+                size="sm"
+                @click="checkSectionToEdit"
+              >
                 Edit
               </x-button>
 
               <template v-if="isLackingPayment">
                 <x-tooltip>
                   <x-button
+                    class="focus:ring-2 focus:ring-black"
                     size="sm"
                     color="orange"
                     v-if="props.updateBtn"
@@ -2356,6 +2373,7 @@ watch(
               </template>
               <template v-else>
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   color="orange"
                   v-if="props.updateBtn"
@@ -2369,6 +2387,7 @@ watch(
             </template>
             <template v-else>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="orange"
                 @click="onCancel"
@@ -2378,6 +2397,7 @@ watch(
                 Cancel
               </x-button>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="#0CA789"
                 type="submit"
@@ -2394,6 +2414,7 @@ watch(
 
     <sendUpdateCustConfirmBtnTemp>
       <x-button
+        class="focus:ring-2 focus:ring-black"
         size="sm"
         color="error"
         @click.prevent="submitToCustomer"
@@ -2406,6 +2427,7 @@ watch(
 
     <x-modal
       v-model="modals.sendConfirm"
+      size="md"
       title="Send Update"
       show-close
       backdrop
@@ -2424,8 +2446,9 @@ watch(
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
       />
       <template #actions>
-        <div class="text-right space-x-4">
+        <div class="flex gap-4 justify-end">
           <x-button
+            class="focus:ring-2 focus:ring-black"
             size="sm"
             ghost
             :disabled="isLoading"
@@ -2433,15 +2456,17 @@ watch(
           >
             Cancel
           </x-button>
-          <template v-if="!modals.isConfirmed">
-            <x-tooltip placement="left">
-              <SendUpdateCustReuseBtnTemp />
-              <template #tooltip>
-                Please select the checkbox to proceed
-              </template>
-            </x-tooltip>
-          </template>
-          <SendUpdateCustReuseBtnTemp v-else />
+          <div>
+            <template v-if="!modals.isConfirmed">
+              <x-tooltip placement="right">
+                <SendUpdateCustReuseBtnTemp />
+                <template #tooltip>
+                  Please select the checkbox to proceed
+                </template>
+              </x-tooltip>
+            </template>
+            <SendUpdateCustReuseBtnTemp v-else />
+          </div>
         </div>
       </template>
     </x-modal>
@@ -2461,6 +2486,7 @@ watch(
             Go Back
           </x-button>
           <x-button
+            class="focus:ring-2 focus:ring-black"
             size="sm"
             color="error"
             :loading="isSendUpdateWithEmail ? isLoading : loader.sendUpdate"
@@ -2478,6 +2504,7 @@ watch(
 
     <sendUpdateConfirmBtnTemp>
       <x-button
+        class="focus:ring-2 focus:ring-black"
         size="sm"
         color="error"
         :disabled="!confirmationCheck"
@@ -2500,7 +2527,7 @@ watch(
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
       />
       <template #actions>
-        <div class="text-right space-x-4">
+        <div class="flex gap-4 justify-end">
           <x-button
             size="sm"
             ghost
@@ -2509,15 +2536,17 @@ watch(
           >
             Cancel
           </x-button>
-          <template v-if="!confirmationCheck">
-            <x-tooltip placement="left">
-              <SendUpdateReuseBtnTemp />
-              <template #tooltip>
-                Please select the checkbox to proceed
-              </template>
-            </x-tooltip>
-          </template>
-          <SendUpdateReuseBtnTemp v-else />
+          <div>
+            <template v-if="!confirmationCheck">
+              <x-tooltip placement="left">
+                <SendUpdateReuseBtnTemp />
+                <template #tooltip>
+                  Please select the checkbox to proceed
+                </template>
+              </x-tooltip>
+            </template>
+            <SendUpdateReuseBtnTemp v-else />
+          </div>
         </div>
       </template>
     </x-modal>
