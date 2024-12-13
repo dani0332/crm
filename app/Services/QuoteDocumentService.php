@@ -656,9 +656,15 @@ class QuoteDocumentService extends BaseService
         if ($insuranceProviderId) {
             $skipWatermark = in_array($insuranceProviderId, $ips);
         } else {
-            $skipWatermark = in_array($quote->insurance_provider_id, $ips);
+            $insuranceProviderId = $quote->insurance_provider_id;
+            if ($insuranceProviderId == null && $quote->plan) {
+                $insuranceProviderId = $quote->plan->provider_id;
+            }
+            if ( $insuranceProviderId == null){
+                return false;
+            }
+            $skipWatermark = in_array($insuranceProviderId, $ips);
         }
-
         if (! $skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
             return true;
         }

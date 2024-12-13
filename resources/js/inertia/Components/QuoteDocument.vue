@@ -370,7 +370,7 @@ const getS3TempUrl = async docURL => {
           :key="index"
           :disabled="
             key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
-            !quote.insurance_provider_id
+            !quote.insurance_provider_id && !quote.plan_id
           "
         >
           <div
