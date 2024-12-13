@@ -455,6 +455,7 @@ class QuoteDocumentService extends BaseService
         if (! file_exists(storage_path('/temp'))) {
             mkdir(storage_path('/temp'), 0775, true);
         }
+        $docName = time().'_'.$docName;
 
         $outputFile = $outputPath = storage_path('temp/'.$docName);
 
