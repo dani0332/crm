@@ -550,10 +550,10 @@ class AMLService
                 $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', [
                     'quoteUID' => $quoteDetails->uuid,
                     'quoteTypeId' => $quoteTypeId,
-                    'emirateDetails' => [
-                        'emirateNumber' => $emirateDetails->emirates_id_number,
-                        'emirateExpiryDate' => $emirateDetails->emirates_id_expiry_date,
-                    ],
+//                    'emirateDetails' => [
+//                        'emirateNumber' => $emirateDetails->emirates_id_number,
+//                        'emirateExpiryDate' => $emirateDetails->emirates_id_expiry_date,
+//                    ],
                     'chassisNumber' => $quoteDetails->chassis_number ?? '',
                 ]);
 
@@ -563,7 +563,7 @@ class AMLService
                     'quote_request_id' => $quoteDetails->id,
                     'quote_type_id' => $quoteTypeId,
                     'results' => json_encode($response['result']),
-                    // 'results_found' => 0, TODO:: Can we get from GIG response, need to ask with Shahrukh
+                    'results_found' => $response['status'] == AMLStatusCode::AMLScreeningCleared ? 0 : 1,
                     'created_at' => Carbon::now(),
                     'input' => $customerOrEntityName,
                     'search_type' => $customerType,

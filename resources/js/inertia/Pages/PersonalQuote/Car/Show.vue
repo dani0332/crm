@@ -1851,6 +1851,10 @@ const allowStatusUpdate = computed(() => {
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURER AML STATUS</dt>
+                  <dd>{{ 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BATCH</dt>
                 <dd>{{ record.quote_batch_id_text }}</dd>
               </div>
