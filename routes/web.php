@@ -122,10 +122,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::post('get-lob-raw-data', [RawQueryController::class, 'show'])->name('getRawData');
 
-    Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
+    Route::get('instant-alfred/index', [AlfredChatController::class, 'index'])->name('instant-alfred.index');
 
-    Route::post('get-alfred-chat', [AlfredChatController::class, 'index']);
-    Route::post('get-alfred-chat-by-date', [AlfredChatController::class, 'getChatByDate'])->name('getChatByDate');
+    Route::post('instant-alfred/chats', [AlfredChatController::class, 'chats']);
+    Route::get('instant-alfred/export', [AlfredChatController::class, 'exportChat'])->name('exportChatData');
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
@@ -668,3 +668,11 @@ Route::get('/add-batch-number', function () {
 //     }
 
 // });
+
+Route::get('run-instant-chat-migration', function () {
+
+    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+        Artisan::queue('InstantChatDataMigration:cron');
+    }
+
+});
