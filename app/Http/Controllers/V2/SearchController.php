@@ -5,14 +5,17 @@ namespace App\Http\Controllers\V2;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Exports\SearchLeadsEndorsementsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportSearchLeadsOrEndorsementsRequest;
 use App\Models\BusinessInsuranceType;
 use App\Models\Department;
+use App\Models\PaymentStatus;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PaymentStatusRepository;
 use App\Repositories\QuoteTypeRepository;
+use App\Repositories\UserRepository;
 use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\SearchService;
@@ -25,16 +28,16 @@ class SearchController extends Controller
         $isEndorsementList = (request()->get('list') == 'endorsements');
         $sendUpdateTypes = $sendUpdateStatuses = [];
         $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList);
-        $getAdvisorsList = app(SearchService::class)->getAdvisorsList();
+        $getAdvisorsList = UserRepository::advisorsList();
         $quoteStatuses = app(LookupService::class)->getLeadStatuses([QuoteStatusEnum::SentForTransactionApproval], [QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued]);
-        $paymentStatuses = PaymentStatusRepository::getList([
+        $paymentStatuses = PaymentStatus::withActive()->whereNotIn('id', [
             PaymentStatusEnum::CAPTURED,
             PaymentStatusEnum::STARTED,
             PaymentStatusEnum::FAILED,
             PaymentStatusEnum::DRAFT,
             PaymentStatusEnum::PARTIAL_CAPTURED,
 
-        ]);
+        ])->orderBy('sort_order')->get();
         $quoteTypes = QuoteTypeRepository::getList('code');
         $businessInsuranceTypes = BusinessInsuranceType::where('is_active', 1)->orderBy('text')->get();
         $insuranceProviders = InsuranceProviderRepository::getList('text');
@@ -43,7 +46,7 @@ class SearchController extends Controller
 
         if ($isEndorsementList) {
             $sendUpdateTypes = app(LookupService::class)->getSendUpdateCategories();
-            $sendUpdateStatuses = app(SendUpdateLogService::class)->sendUpdateStatuses();
+            $sendUpdateStatuses = SendUpdateLogStatusEnum::sendUpdateStatuses();
         }
 
         return inertia('Search/Index', [

@@ -420,24 +420,4 @@ class SearchService extends BaseService
             $query->whereIn('send_update_logs.category_id', $request->send_update_type);
         }
     }
-
-    public function getAdvisorsList()
-    {
-        $usersByTeamProduct = $this->usersByTeamProduct();
-        if (! auth()->user()->hasAnyRole([
-            RolesEnum::SeniorManagement,
-            RolesEnum::Admin,
-            RolesEnum::Engineering,
-        ])) {
-            $usersReportToLoggedInUser = UserManager::where('manager_id', auth()->id())
-                ->whereIn('user_id', $usersByTeamProduct)->pluck('user_id')->toArray();
-        }
-
-        return User::whereIn('id', $usersByTeamProduct)
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->where('is_active', 1)
-            ->get()
-            ->toArray();
-    }
 }
