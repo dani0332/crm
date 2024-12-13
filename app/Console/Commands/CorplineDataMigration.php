@@ -44,11 +44,11 @@ class CorplineDataMigration extends Command
             $fullPath = Storage::disk('instantchat')->path($filePath);
 
             try {
-                Log::info('Health Quote data migrations started.');
+                Log::info('InstantChatMigrationCSV - data migrations started.');
 
                 Excel::import(new BusinessQuoteImport, $fullPath);
 
-                Log::info('Health Quote data migrations succeeded.');
+                Log::info('InstantChatMigrationCSV - data migrations succeeded.');
             } catch (\Exception $e) {
                 Log::error('Error importing file: '.$e->getMessage());
             }
