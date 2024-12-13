@@ -747,6 +747,8 @@ class LifeQuoteService extends BaseService
 
     public function getLifeQuoteData()
     {
+        $sort_by = isset(request()->sortBy) && request()->sortBy != '' ? request()->sortBy : 'created_at';
+        $sort_type = isset(request()->sortType) && request()->sortType != '' ? request()->sortType : 'desc';
         $query = LifeQuote::with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
             'renewalBatchModel', 'lifeQuoteRequestDetail', 'paymentStatus',
             'payments'])
@@ -783,7 +785,13 @@ class LifeQuoteService extends BaseService
             })
             ->filter()
             ->withFakeLeadCriteria()
-            ->orderBy('life_quote_request.created_at', 'desc');
+            ->when($sort_by === 'number_of_years', function ($query) use ($sort_type) {
+                $query->join('life_number_of_year', 'life_number_of_year.id', '=', 'life_quote_request.number_of_years_id')
+                      ->orderBy('life_number_of_year.sort_order', $sort_type)
+                      ->select('life_quote_request.*');
+            }, function ($query) use ($sort_by, $sort_type) {
+                $query->orderBy($sort_by, $sort_type);
+            });
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
