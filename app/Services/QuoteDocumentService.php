@@ -455,15 +455,14 @@ class QuoteDocumentService extends BaseService
         if (! file_exists(storage_path('/temp'))) {
             mkdir(storage_path('/temp'), 0775, true);
         }
+        $docName = time().'_'.$docName;
 
         $outputFile = $outputPath = storage_path('temp/'.$docName);
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
         $fileContent = file_get_contents($azureFilePath);
 
-        $tempDocName = time().'_'.$docName;
-
-        $tempFilePath = storage_path('temp/temp_'.$tempDocName);
+        $tempFilePath = storage_path('temp/temp_'.$docName);
         file_put_contents($tempFilePath, $fileContent);
 
         // Convert the PDF to a version compatible with FPDI
