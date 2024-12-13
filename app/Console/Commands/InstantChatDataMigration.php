@@ -32,9 +32,9 @@ class InstantChatDataMigration extends Command
     {
 
         $lobs = [
-            'CAR',
-            // 'TRAVEL',
-            // 'HEALTH',
+            // 'CAR',
+            'TRAVEL',
+            'HEALTH',
             // 'BIKE',
         ];
 
