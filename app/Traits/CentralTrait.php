@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use App\Enums\QuoteTypes;
-use Illuminate\Http\File;
 
 trait CentralTrait
 {
