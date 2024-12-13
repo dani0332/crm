@@ -577,7 +577,7 @@ const onLoadAvailablePlansData = async () => {
 
       // If you need to update the table and store the ids
       availablePlansTable.data = homePlans.quotes.plans;
-      homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.planId);
+      homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
       console.log('homePlansIds :', homePlansIds);
     } else {
       console.error('Error: Unexpected status code', status);
@@ -592,8 +592,8 @@ const onTogglePlans = toggle => {
 
   const planIds = useArrayUnique(
     selectedPlans.value.map(p => {
-      console.log('p.planId', p.planId);
-      return p.planId;
+      console.log('p.planId', p.id);
+      return p.id;
     }),
   ).value;
 
@@ -632,7 +632,7 @@ const getPlanDetails = item => {
   console.log('getPlanDetails', item);
   try {
     axios
-      .get(`/home/${page.props.quote.uuid}/plan_details/${item.planId}`)
+      .get(`/home/${page.props.quote.uuid}/plan_details/${item.id}`)
       .then(res => {
         console.log('Plan Details:', res.data);
         planDetails.value = res.data;
@@ -676,7 +676,7 @@ const onExportPlans = () => {
   //   }
   exportLoader.value = true;
   const planIds = selectedPlans.value.map(p => {
-    return p.planId;
+    return p.id;
   });
   console.log('selectedPlans', planIds);
 
@@ -713,7 +713,7 @@ const onExportPlans = () => {
 
 const selectedProviderPlan = ref({
   id: page.props?.quote?.plan_id,
-  planName: page.props?.quote?.plans?.planName,
+  planName: page.props?.quote?.plans?.name,
   providerName: page.props?.quote?.plans?.providerName,
   premium: page.props?.quote?.plans?.premium,
 });
@@ -722,8 +722,8 @@ console.log('selectedProviderPlan', selectedProviderPlan.value.id);
 
 const handlePlanSelected = plan => {
   console.log('handlePlanSelected', plan);
-  selectedProviderPlan.value.id = plan.planId;
-  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.name;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
   router.reload({
@@ -1519,7 +1519,7 @@ const copyLink = () => {
                   v-model="leadStatusForm.lostReason"
                   :options="
                     lostReasons?.map(item => ({
-                      value: item.planId,
+                      value: item.id,
                       label: item.text,
                     }))
                   "
@@ -1706,7 +1706,7 @@ const copyLink = () => {
               </template>
               <template #item-name="item">
                 <span class="text-primary-600 uppercase">{{
-                  item.planName
+                  item.name
                 }}</span>
               </template>
               <template #item-actualPremium="item">
@@ -1740,7 +1740,7 @@ const copyLink = () => {
 
                   <span>
                     <!-- <SelectPlan
-                      v-if="!selectedPlanIds.includes(item.planId)"
+                      v-if="!selectedPlanIds.includes(item.id)"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="modelType"
@@ -1763,7 +1763,7 @@ const copyLink = () => {
 
                     <!-- new -->
                     <SelectPlan
-                      v-if="selectedProviderPlan.id != item.planId"
+                      v-if="selectedProviderPlan.id != item.id"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="'Home'"
