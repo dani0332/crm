@@ -42,7 +42,7 @@ class InstantChatDataMigration extends Command
             info('InstantChatMigration - '.$lob.' Migration Initiated');
             AlfredChat::select('quote_id', 'quote_type', 'created_at')
                 ->where('quote_type', $lob)
-                ->where('created_at', '>=', '2024-08-21T14:50:38+00:00')
+                ->where('created_at', '>', '2024-08-20T00:00:00+00:00')
                 ->chunk(500, function ($chunk) {
                     $items = $chunk->unique('quote_id');
                     foreach ($items as $item) {
