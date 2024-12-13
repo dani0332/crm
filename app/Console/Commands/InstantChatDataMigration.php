@@ -33,9 +33,9 @@ class InstantChatDataMigration extends Command
 
         $lobs = [
             // 'CAR',
-            // 'TRAVEL',
-            // 'HEALTH',
-            'BIKE',
+            'TRAVEL',
+            'HEALTH',
+            // 'BIKE',
         ];
 
         foreach ($lobs as $lob) {
