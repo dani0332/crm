@@ -152,7 +152,8 @@ class TravelQuoteService extends BaseService
             'tqr.insly_migrated',
             'tqr.sic_advisor_requested',
             'tqr.aml_status',
-            'tqr.departure_country_id'
+            'tqr.departure_country_id',
+            'tqr.insurance_provider_id',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -1101,6 +1102,10 @@ class TravelQuoteService extends BaseService
                     $split->documents()->update(['quote_documentable_id' => $duplicateLead->id]);
                 });
             });
+
+            info("Updating plan and premium for parent lead code {$leadModal->code} and child lead code {$duplicateLead->code}");
+            // update plan & premium for parent & child lead
+            $this->updatePlanAndPremium($leadModal, $duplicateLead);
         }
 
         return true;
@@ -1265,5 +1270,23 @@ class TravelQuoteService extends BaseService
         }
 
         return $access;
+    }
+
+    private function updatePlanAndPremium($parentLead, $childLead)
+    {
+        $parentPayment = Payment::where('code', $parentLead->code)->first();
+        $childPayment = Payment::where('code', $childLead->code)->first();
+
+        $parentLead->premium = $parentPayment->total_price;
+        $parentLead->plan_id = $parentPayment->plan_id;
+        $parentLead->insurance_provider_id = $parentPayment->insurance_provider_id;
+        $parentLead->save();
+        info("Updated parent lead code {$parentLead->code} with premium {$parentLead->premium} and plan ID {$parentLead->plan_id}");
+
+        $childLead->premium = $childPayment->total_price;
+        $childLead->plan_id = $childPayment->plan_id;
+        $childLead->insurance_provider_id = $childPayment->insurance_provider_id;
+        $childLead->save();
+        info("Updated child lead code {$childLead->code} with premium {$childLead->premium} and plan ID {$childLead->plan_id}");
     }
 }
