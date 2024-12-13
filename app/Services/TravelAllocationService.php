@@ -139,7 +139,7 @@ class TravelAllocationService extends AllocationService
     public function getAdvisorByStatus($status, $teamId = null, ?TravelQuote $lead = null)
     {
         if ($this->isCHSAdvisor) {
-            info(self::class." - getAdvisorByStatus: CHC Advisor is required for lead: {$lead->uuid}");
+            info(self::class." - getAdvisorByStatus: CHS Advisor is required for lead: {$lead->uuid}");
 
             return User::select('users.id as user_id')->chs()->first();
         }
