@@ -32,7 +32,6 @@ class CorplineDataMigration extends Command
         $filePaths = [
             'instant_alfred_car.csv',
             // 'instant_alfred_health.csv',
-            // 'instant_alfred_travel.csv',
         ];
 
         foreach ($filePaths as $filePath) {

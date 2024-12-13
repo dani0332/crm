@@ -28,12 +28,10 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
             $lead = CarQuote::with('carQuoteRequestDetail')->where('uuid', $row['quote_id'])->first();
             // $lead = HealthQuote::with('healthQuoteRequestDetail')->where('uuid', $row['quote_id'])->first();
-            // $lead = TravelQuote::with('travelQuoteRequestDetail')->where('uuid', $row['quote_id'])->first();
             
             if($lead){
                 $quoteRequestDetail = $lead->carQuoteRequestDetail;
                 // $quoteRequestDetail = $lead->healthQuoteRequestDetail;
-                // $quoteRequestDetail = $lead->travelQuoteRequestDetail;
     
                 if ($lead && is_null($quoteRequestDetail->chat_initiated_at)) {
                     $quoteRequestDetail->update(['chat_initiated_at' => $carbonDate->format('Y-m-d H:i:s')]);
