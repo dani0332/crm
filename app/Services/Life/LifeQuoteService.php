@@ -751,7 +751,7 @@ class LifeQuoteService extends BaseService
         $sort_type = isset(request()->sortType) && request()->sortType != '' ? request()->sortType : 'desc';
         $query = LifeQuote::with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
             'renewalBatchModel', 'lifeQuoteRequestDetail', 'paymentStatus',
-            'payments'])
+            'payments', 'insuranceTenure', 'numberOfYears'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
