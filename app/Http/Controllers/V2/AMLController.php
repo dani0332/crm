@@ -6,7 +6,6 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
-use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -243,7 +242,7 @@ class AMLController extends Controller
             })->whereNull('screenshot');
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'asc')->get()
             ->filter(function ($item) {
-                return !isset(json_decode($item->results, true)['screening_type']);
+                return ! isset(json_decode($item->results, true)['screening_type']);
             })
             ->values();
 

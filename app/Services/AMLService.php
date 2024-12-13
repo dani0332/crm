@@ -550,10 +550,10 @@ class AMLService
                 $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', [
                     'quoteUID' => $quoteDetails->uuid,
                     'quoteTypeId' => $quoteTypeId,
-//                    'emirateDetails' => [
-//                        'emirateNumber' => $emirateDetails->emirates_id_number,
-//                        'emirateExpiryDate' => $emirateDetails->emirates_id_expiry_date,
-//                    ],
+                    //                    'emirateDetails' => [
+                    //                        'emirateNumber' => $emirateDetails->emirates_id_number,
+                    //                        'emirateExpiryDate' => $emirateDetails->emirates_id_expiry_date,
+                    //                    ],
                     'chassisNumber' => $quoteDetails->chassis_number ?? '',
                 ]);
 
