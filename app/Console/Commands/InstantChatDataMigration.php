@@ -45,7 +45,7 @@ class InstantChatDataMigration extends Command
                 ->chunk(500, function ($chunk) {
                     $items = $chunk->unique('quote_id');
                     foreach ($items as $item) {
-                        if ($item['quote_id'] && !is_null($item['created_at'])) {
+                        if ($item['quote_id'] && ! is_null($item['created_at'])) {
                             $quoteModel = $this->getQuoteObjectBy(strtolower($item['quote_type']), $item['quote_id'], 'uuid');
 
                             if ($quoteModel) {
@@ -58,21 +58,21 @@ class InstantChatDataMigration extends Command
                                     // Update if no date exists or the new date is earlier
                                     if (is_null($existingDate) || $carbonDate->lessThan(Carbon::parse($existingDate))) {
                                         $quote->update(['chat_initiated_at' => $carbonDate->format('Y-m-d H:i:s')]);
-                                        info('InstantChatMigration - Chat initiated at updated for Quote ID: ' . $item['quote_id']);
+                                        info('InstantChatMigration - Chat initiated at updated for Quote ID: '.$item['quote_id']);
                                     } else {
-                                        info('InstantChatMigration - Existing chat_initiated_at is older or same, skipping update for Quote ID: ' . $item['quote_id']);
+                                        info('InstantChatMigration - Existing chat_initiated_at is older or same, skipping update for Quote ID: '.$item['quote_id']);
                                     }
                                 } else {
-                                    info('InstantChatMigration - Quote Detail not found for Quote ID: ' . $item['quote_id']);
+                                    info('InstantChatMigration - Quote Detail not found for Quote ID: '.$item['quote_id']);
                                 }
                             } else {
-                                info('InstantChatMigration - Quote Object not found for Quote ID: ' . $item['quote_id']);
+                                info('InstantChatMigration - Quote Object not found for Quote ID: '.$item['quote_id']);
                             }
                         }
                     }
                 });
 
-            info('InstantChatMigration - ' . $lob . ' Migration Completed');
+            info('InstantChatMigration - '.$lob.' Migration Completed');
         }
 
         info('InstantChatMigration - All Migration Completed');
