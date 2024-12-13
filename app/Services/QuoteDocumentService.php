@@ -660,7 +660,7 @@ class QuoteDocumentService extends BaseService
             if ($insuranceProviderId == null && $quote->plan) {
                 $insuranceProviderId = $quote->plan->provider_id;
             }
-            if ( $insuranceProviderId == null){
+            if ($insuranceProviderId == null) {
                 return false;
             }
             $skipWatermark = in_array($insuranceProviderId, $ips);
