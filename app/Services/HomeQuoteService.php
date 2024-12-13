@@ -841,15 +841,15 @@ class HomeQuoteService extends BaseService
         }
 
         // Find the specific plan by $id
-        $selectedPlan = collect($plans)->firstWhere('planId', $id);
+        $selectedPlan = collect($plans)->firstWhere('id', $id);
 
-        if (!$selectedPlan) {
+        if (! $selectedPlan) {
             return response()->json(['message' => 'Plan not found.'], 404);
         }
 
         // Prepare response data
         $data = [
-            'listQuotePlanName' => $selectedPlan->planName ?? '',
+            'listQuotePlanName' => $selectedPlan->name ?? '',
             'providerCode' => $selectedPlan->providerCode ?? '',
             'providerName' => $selectedPlan->providerName ?? '',
             'actualPremium' => $selectedPlan->actualPremium ?? '',
@@ -867,7 +867,7 @@ class HomeQuoteService extends BaseService
             'insurer_quote_no' => $selectedPlan->insurerQuoteNo ?? '',
             'isRatingAvailable' => $selectedPlan->isRatingAvailable ?? false,
             'excess' => $selectedPlan->excess ?? '',
-            'id' => $selectedPlan->planId ?? '',
+            'id' => $selectedPlan->id ?? '',
             'listQuotePlanBenefitsPolicyDetails' => $selectedPlan->policyWordings ?? [],
             'listQuotePlanBenefitsPolicyDetailLink' => collect($selectedPlan->policyWordings)->first()?->link ?? '',
             'permissionsEnum' => PermissionsEnum::class,
@@ -875,7 +875,6 @@ class HomeQuoteService extends BaseService
 
         return response()->json($data, 200);
     }
-
 
     public function updateManualPlansBulk($request)
     {
@@ -925,9 +924,9 @@ class HomeQuoteService extends BaseService
             $discountedPremium = $request->actual_premium;
 
             $homePlanData = [
-                'quoteUID' => $request->quote_uuid,
+                'quoteUID' => $request->plan['quote_uuid'],
                 'update' => true,
-                'url' => strval($request->current_url),
+                'url' => strval($request->plan['current_url']),
                 'ipAddress' => request()->ip(),
                 'userAgent' => request()->header('User-Agent'),
                 'userId' => strval(auth()->id()),
@@ -952,7 +951,6 @@ class HomeQuoteService extends BaseService
                         'isDisabled' => isset($request->plan['is_disabled']) ? (bool) $request->plan['is_disabled'] : (bool) false,
                         'insurerQuoteNo' => strval($request->plan['insurer_quote_no']),
                         'isManualUpdate' => $request->plan['is_manual_update'],
-                        'ancillaryExcess' => (int) $request->plan['ancillary_excess'],
                     ],
                 ],
             ];

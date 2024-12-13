@@ -577,7 +577,7 @@ const onLoadAvailablePlansData = async () => {
 
       // If you need to update the table and store the ids
       availablePlansTable.data = homePlans.quotes.plans;
-      homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.planId);
+      homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
       console.log('homePlansIds :', homePlansIds);
     } else {
       console.error('Error: Unexpected status code', status);
@@ -592,8 +592,8 @@ const onTogglePlans = toggle => {
 
   const planIds = useArrayUnique(
     selectedPlans.value.map(p => {
-      console.log('p.planId', p.planId);
-      return p.planId;
+      console.log('p.planId', p.id);
+      return p.id;
     }),
   ).value;
 
@@ -632,7 +632,7 @@ const getPlanDetails = item => {
   console.log('getPlanDetails', item);
   try {
     axios
-      .get(`/home/${page.props.quote.uuid}/plan_details/${item.planId}`)
+      .get(`/home/${page.props.quote.uuid}/plan_details/${item.id}`)
       .then(res => {
         console.log('Plan Details:', res.data);
         planDetails.value = res.data;
@@ -667,18 +667,18 @@ const onCopyText = text => {
 };
 
 const onExportPlans = () => {
-//   if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
-//     notification.error({
-//       title: 'Please select 2 to 5 plans to download PDF.',
-//       position: 'top',
-//     });
-//     return;
-//   }
-exportLoader.value = true;
-const planIds = selectedPlans.value.map(p => {
-    return p.planId;
-});
-console.log('selectedPlans', planIds);
+  //   if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+  //     notification.error({
+  //       title: 'Please select 2 to 5 plans to download PDF.',
+  //       position: 'top',
+  //     });
+  //     return;
+  //   }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
+  console.log('selectedPlans', planIds);
 
   axios
     .post(
@@ -713,7 +713,7 @@ console.log('selectedPlans', planIds);
 
 const selectedProviderPlan = ref({
   id: page.props?.quote?.plan_id,
-  planName: page.props?.quote?.plans?.planName,
+  planName: page.props?.quote?.plans?.name,
   providerName: page.props?.quote?.plans?.providerName,
   premium: page.props?.quote?.plans?.premium,
 });
@@ -722,8 +722,8 @@ console.log('selectedProviderPlan', selectedProviderPlan.value.id);
 
 const handlePlanSelected = plan => {
   console.log('handlePlanSelected', plan);
-  selectedProviderPlan.value.id = plan.planId;
-  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.name;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
   router.reload({
@@ -866,65 +866,63 @@ const copyLink = () => {
       </template>
     </x-modal>
 
-
     <!-- Home Ecom Details -->
     <div class="p-4 rounded shadow mb-6 bg-white">
-        <div class="flex justify-between items-center flex-wrap gap-2">
-          <h2 class="text-lg font-semibold text-primary-800">E-COM Detail</h2>
-        </div>
-        <x-divider class="my-4" />
-        <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PRICE</dt>
-              <dd>{{ quote?.premium ?? '' }}</dd>
-            </div>
-
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PAID AT</dt>
-              <dd>{{ quote?.paid_at ?? '' }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">AML STATUS</dt>
-              <dd>{{ amlStatusName ?? '' }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PAYMENT STATUS</dt>
-              <dd>{{ quote?.payment_status?.text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PROVIDER NAME</dt>
-              <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PAYMENT METHOD</dt>
-              <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PLAN NAME</dt>
-              <dd>{{ quote?.car_plan?.text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">ECOMMERCE</dt>
-              <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">QUOTE LINK</dt>
-              <dd>{{ quote?.quote_link ?? '' }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">ORDER REFERENCE</dt>
-              <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PAYMENT REFERENCE</dt>
-              <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
-            </div>
-          </dl>
-        </div>
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <h2 class="text-lg font-semibold text-primary-800">E-COM Detail</h2>
       </div>
-    <!-- Home Ecom Details -->
+      <x-divider class="my-4" />
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PRICE</dt>
+            <dd>{{ quote?.premium ?? '' }}</dd>
+          </div>
 
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAID AT</dt>
+            <dd>{{ quote?.paid_at ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AML STATUS</dt>
+            <dd>{{ amlStatusName ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAYMENT STATUS</dt>
+            <dd>{{ quote?.payment_status?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PROVIDER NAME</dt>
+            <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAYMENT METHOD</dt>
+            <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN NAME</dt>
+            <dd>{{ quote?.car_plan?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ECOMMERCE</dt>
+            <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">QUOTE LINK</dt>
+            <dd>{{ quote?.quote_link ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ORDER REFERENCE</dt>
+            <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAYMENT REFERENCE</dt>
+            <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+    <!-- Home Ecom Details -->
 
     <div class="p-4 rounded shadow mt-6 mmmbmb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -1521,7 +1519,7 @@ const copyLink = () => {
                   v-model="leadStatusForm.lostReason"
                   :options="
                     lostReasons?.map(item => ({
-                      value: item.planId,
+                      value: item.id,
                       label: item.text,
                     }))
                   "
@@ -1684,10 +1682,32 @@ const copyLink = () => {
                   >
                     Hidden
                   </x-tag>
+                  <x-tooltip>
+                    <x-tag
+                      v-if="item.puaType"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px]"
+                    >
+                      PUA
+                    </x-tag>
+                    <template #tooltip>
+                      <span
+                        >Pending Underwriter Approval (PUA) indicates that this
+                        quote is prepared using our internal rating calculator.
+                        Please contact the client to get the required documents,
+                        to proceed with generating a quote on the insurer portal
+                        and connect with the underwriter to obtain their
+                        approval.</span
+                      >
+                    </template>
+                  </x-tooltip>
                 </div>
               </template>
               <template #item-name="item">
-                <span class="text-primary-600 uppercase">{{ item.planName }}</span>
+                <span class="text-primary-600 uppercase">{{
+                  item.name
+                }}</span>
               </template>
               <template #item-actualPremium="item">
                 <span class="text-primary-600">
@@ -1720,7 +1740,7 @@ const copyLink = () => {
 
                   <span>
                     <!-- <SelectPlan
-                      v-if="!selectedPlanIds.includes(item.planId)"
+                      v-if="!selectedPlanIds.includes(item.id)"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="modelType"
@@ -1743,7 +1763,7 @@ const copyLink = () => {
 
                     <!-- new -->
                     <SelectPlan
-                      v-if="selectedProviderPlan.id != item.planId"
+                      v-if="selectedProviderPlan.id != item.id"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="'Home'"
