@@ -51,8 +51,9 @@ class TravelAllocationService extends AllocationService
             info(self::class." - verifyFetchLeadPreChecks: {$quoteUUID} - isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
 
             if ($isALNC && $isAutomationEnabled && $travelQuote->isSingleTrip() && $travelQuote->isPaid()) {
-                if ($travelQuote->isAutomationCompleted()) {
-                    info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is completed so proceed with allocation");
+                if ($travelQuote->isAutomationCompleted() || $travelQuote->isBookingFailed()) {
+                    $travelQuote->isAutomationCompleted() && info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is completed so proceed with allocation");
+                    $travelQuote->isBookingFailed() && info(self::class.":fetchLead - {$quoteUUID} is Alliance and booking failed so proceed with allocation");
                     $this->isCHSAdvisor = true;
                     $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
                 } else {
