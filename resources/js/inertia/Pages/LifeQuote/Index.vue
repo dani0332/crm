@@ -1,7 +1,7 @@
 <script setup>
 defineProps({
   quotes: Object,
-  quoteStatuses: Array,
+  leadStatuses: Array,
   renewalBatches: Array,
   advisors: Array,
   authorizedDays: Number,
@@ -74,9 +74,47 @@ const filters = reactive({
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   tenure_of_insurance_id: '',
-  sum_insured_currency_id: '',
+  sum_insured_currency_id: page.props.currency.find(item => item.text === 'AED')?.id || null,
   sum_insured_range: '',
 });
+
+const filterButtonStatuses = [
+  {
+    text: 'Policy Booked',
+    value: 1,
+    quoteCodes: ['Policy Booked'],
+    tooltip:
+      '',
+  },
+   {
+    text: 'In Negotiation',
+    value: 2,
+    quoteCodes: ['In Negotiation'],
+    tooltip:
+      '',
+  },
+   {
+    text: 'Application Submitted',
+    value: 3,
+    quoteCodes: ['Application Submitted'],
+    tooltip:
+      '',
+  },
+  {
+    text: 'Followed Up',
+    value: 4,
+    quoteCodes: ['Followed Up'],
+    tooltip:
+      '',
+  },
+  {
+    text: 'Quoted',
+    value: 5,
+    quoteCodes: ['Quoted'],
+    tooltip:
+      '',
+  }
+];
 
 const loader = reactive({
   table: false,
@@ -96,8 +134,9 @@ const tableHeader = ref([
     text: 'CREATED DATE',
     value: 'created_at',
     is_active: true,
+    sortable: true,
   },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at', sortable: true, is_active: true },
   {
     text: 'POLICY EXPIRY DATE',
     value: 'previous_policy_expiry_date',
@@ -108,7 +147,7 @@ const tableHeader = ref([
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
+  { text: 'PRICE', value: 'premium', sortable: true, is_active: true },
   {
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
@@ -125,8 +164,8 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'Type of Insurance', value: 'tenure_of_insurance', is_active: true },
-  { text: 'Tenure of Cover', value: 'number_of_years', is_active: true },
-  { text: 'Sum Assured', value: 'sum_insured_value', is_active: true },
+  { text: 'Tenure of Cover', value: 'number_of_years', sortable: true, is_active: true },
+  { text: 'Sum Assured', value: 'sum_insured_value', sortable: true, is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -209,15 +248,8 @@ const handleSelectedFilters = selectedFilters => {
   }
 
   if (selectedFilters.quote_status) {
-    filters.quote_status = selectedFilters.quote_status;
+    filters.quote_status_id = selectedFilters.quote_status;
   }
-
-  if (selectedFilters.payment_status) {
-    filters.payment_status = selectedFilters.payment_status;
-  }
-
-  filters.is_cold = selectedFilters.cold;
-  filters.is_stale = selectedFilters.stale;
 
   filterQuotes(true);
 };
@@ -464,6 +496,7 @@ watch(
           :is-shown="showFilters"
           :filters="filters"
           :filters-count="filtersCount"
+          :filterStatuses="filterButtonStatuses"
           @selected-filters="handleSelectedFilters"
           @toggleFilters="showFilters = !showFilters"
         />
@@ -560,7 +593,7 @@ watch(
             name="quote_status_id"
             placeholder="Search by Lead Status"
             :options="
-              quoteStatuses.map(item => ({
+              leadStatuses.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -579,9 +612,8 @@ watch(
             name="policy_expiry_date_end"
           />
         </x-field>
-        <x-field label="Advisor">
+        <x-field label="Advisor" v-if="!hasRole(rolesEnum.TravelAdvisor) && !hasRole(rolesEnum.LifeAdvisor)">
           <ComboBox
-            v-if="!hasRole(rolesEnum.TravelAdvisor)"
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
@@ -688,7 +720,7 @@ watch(
             "
         />
 
-        <div>
+        <div v-if="!hasRole(rolesEnum.LifeAdvisor)">
           <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-1">
             <x-select
               v-model="filters.sum_insured_currency_id"
@@ -810,7 +842,7 @@ watch(
         </p>
       </template>
       <template #item-expiry_date="item">
-        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED' && item?.payments[0]?.authorized_at">
           {{ daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at) }}
         </p>
       </template>

@@ -44,7 +44,7 @@ class LifeQuoteController extends Controller
 
         return inertia('LifeQuote/Index', [
             'quotes' => $lifeQuotes,
-            'quoteStatuses' => $quoteStatuses,
+            'leadStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'renewalBatches' => $renewalBatches,
             'authorizedDays' => intval($authorizedDays->value),
@@ -153,7 +153,7 @@ class LifeQuoteController extends Controller
             'quotes' => array_values($quotes),
             'quoteTypeId' => QuoteTypes::LIFE->id(),
             'quoteType' => QuoteTypes::LIFE->value,
-            'quoteStatuses' => $quoteStatuses,
+            'leadStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'renewalBatches' => $renewalBatches,
             'typesOfInsurance' => $typesOfInsurance,

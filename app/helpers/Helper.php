@@ -839,6 +839,10 @@ if (! function_exists('getCardViewRequestFilters')) {
                 'relation' => 'businessQuoteRequestDetail',
                 'column' => 'advisor_assigned_date',
             ],
+            LifeQuote::class => [
+                'relation' => 'lifeQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ],
         ];
 
         if (array_key_exists($modelType, $modelTypeMappings)) {

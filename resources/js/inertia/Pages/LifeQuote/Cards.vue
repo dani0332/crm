@@ -4,7 +4,7 @@ const props = defineProps({
   quoteTypeId: String,
   lostReasons: Object,
   quoteType: String,
-  quoteStatuses: Array,
+  leadStatuses: Array,
   renewalBatches: Array,
   advisors: Array,
   typesOfInsurance: Array,
@@ -62,7 +62,7 @@ const filters = reactive({
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  quote_status_id: [],
+  quote_status: [],
   advisor_id: [],
   renewal_batch_id: [],
   payment_due_date: '',
@@ -77,9 +77,47 @@ const filters = reactive({
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   tenure_of_insurance_id: '',
-  sum_insured_currency_id: '',
+  sum_insured_currency_id: page.props.currency.find(item => item.text === 'AED')?.id || null,
   sum_insured_range: '',
 });
+
+const filterButtonStatuses = [
+  {
+    text: 'Policy Booked',
+    value: 1,
+    quoteCodes: ['Policy Booked'],
+    tooltip:
+      '',
+  },
+   {
+    text: 'In Negotiation',
+    value: 2,
+    quoteCodes: ['In Negotiation'],
+    tooltip:
+      '',
+  },
+   {
+    text: 'Application Submitted',
+    value: 3,
+    quoteCodes: ['Application Submitted'],
+    tooltip:
+      '',
+  },
+  {
+    text: 'Followed Up',
+    value: 4,
+    quoteCodes: ['Followed Up'],
+    tooltip:
+      '',
+  },
+  {
+    text: 'Quoted',
+    value: 5,
+    quoteCodes: ['Quoted'],
+    tooltip:
+      '',
+  }
+];
 
 const handleSelectedFilters = selectedFilters => {
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
@@ -90,13 +128,6 @@ const handleSelectedFilters = selectedFilters => {
   if (selectedFilters.quote_status) {
     filters.quote_status = selectedFilters.quote_status;
   }
-
-  if (selectedFilters.payment_status) {
-    filters.payment_status = selectedFilters.payment_status;
-  }
-
-  filters.is_cold = selectedFilters.cold;
-  filters.is_stale = selectedFilters.stale;
 
   filterQuotes(true);
 };
@@ -313,6 +344,7 @@ watch(
           :is-shown="showFilters"
           :filters="filters"
           :filters-count="filtersCount"
+          :filterStatuses="filterButtonStatuses"
           @selected-filters="handleSelectedFilters"
           @toggleFilters="showFilters = !showFilters"
         />
@@ -393,11 +425,11 @@ watch(
         </x-field>
         <x-field label="Lead Status">
           <ComboBox
-            v-model="filters.quote_status_id"
-            name="quote_status_id"
+            v-model="filters.quote_status"
+            name="quote_status"
             placeholder="Search by Lead Status"
             :options="
-              quoteStatuses.map(item => ({
+              leadStatuses.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -416,9 +448,8 @@ watch(
             name="policy_expiry_date_end"
           />
         </x-field>
-        <x-field label="Advisor">
+        <x-field label="Advisor" v-if="!hasRole(rolesEnum.TravelAdvisor) && !hasRole(rolesEnum.LifeAdvisor)">
           <ComboBox
-            v-if="!hasRole(rolesEnum.TravelAdvisor)"
             v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
@@ -525,7 +556,7 @@ watch(
             "
         />
 
-        <div>
+        <div v-if="!hasRole(rolesEnum.LifeAdvisor)">
           <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-1">
             <x-select
               v-model="filters.sum_insured_currency_id"

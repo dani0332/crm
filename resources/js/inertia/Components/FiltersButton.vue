@@ -9,6 +9,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  filterStatuses: {
+    type: Array,
+    default: () => [],
+  }
 });
 
 const emit = defineEmits(['toggleFilters', 'selectedFilters']);
@@ -40,7 +44,7 @@ const dateOptions = ref([
   { text: 'This month', value: 5 },
 ]);
 
-const statuses = ref([
+const defaultStatuses = [
   {
     text: 'Sales Opportunity',
     value: 1,
@@ -91,7 +95,11 @@ const statuses = ref([
     tooltip:
       'Typically, these are the leads where the status has not changed for the last 30 days.',
   },
-]);
+];
+
+const statuses = computed(() => {
+  return props.filterStatuses.length ? props.filterStatuses : defaultStatuses;
+});
 
 const handleDateFilter = dateId => {
   let range = [];
