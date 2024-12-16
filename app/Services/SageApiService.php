@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
@@ -23,7 +22,6 @@ use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
-use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -125,6 +123,7 @@ class SageApiService
             };
             $responseBody = is_array($response->json()) ? json_encode($response->json()) : $response->body();
             info('Sage API : '.$endPoint.' : '.$responseBody);
+
             return $responseBody;
         } catch (Exception $e) {
             logger()->error('Sage API : '.$endPoint.' : '.$e->getMessage());
