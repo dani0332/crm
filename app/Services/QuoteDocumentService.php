@@ -453,63 +453,57 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkPdf($file, $docName, $data, $documentType)
     {
-        try {
-
-            if (! file_exists(storage_path('/temp'))) {
-                mkdir(storage_path('/temp'), 0775, true);
-            }
-
-            $docName = time().'_'.$docName;
-
-            $outputFile = $outputPath = storage_path('temp/'.$docName);
-
-            $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
-            $fileContent = file_get_contents($azureFilePath);
-
-            $tempFilePath = storage_path('temp/temp_'.$docName);
-            file_put_contents($tempFilePath, $fileContent);
-
-            // Convert the PDF to a version compatible with FPDI
-            shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
-
-            info('Watermarking starting for Quote: '.$data.' File Name: '.$docName);
-            $pdf = new Fpdi;
-
-            $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
-
-            info('Source file created For Quote: '.$data.' File path: '.$outputFile.' Page Count: '.$pageCount);
-            $watermarkImagePath = public_path('images/watermark1.png');
-            $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
-
-            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                $templateId = $pdf->importPage($pageNo);
-                $size = $pdf->getTemplateSize($templateId);
-
-                Log::info('Page size: '.json_encode($size));
-
-                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                // Add watermark
-                if ($size['orientation'] === 'P') {
-                    $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
-                } else {
-                    $pdf->Image($watermarkImageAA4Path, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
-                }
-
-                $pdf->useTemplate($templateId);
-            }
-
-            $pdf->Output($outputPath, 'F');
-
-            // Delete the temporary file
-            if (file_exists($tempFilePath)) {
-                unlink($tempFilePath);
-            }
-
-            return $this->storeWatermarkedMedia($docName, $data, $documentType);
-
-        } catch (\Exception $e) {
-            Log::error('Error in watermarkPdf: Quote uuid: '.$data.' Error '.$e->getMessage());
+        if (! file_exists(storage_path('/temp'))) {
+            mkdir(storage_path('/temp'), 0775, true);
         }
+
+        $docName = time() . '_' . $docName;
+
+        $outputFile = $outputPath = storage_path('temp/' . $docName);
+
+        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/' . $file;
+        $fileContent = file_get_contents($azureFilePath);
+
+        $tempFilePath = storage_path('temp/temp_' . $docName);
+        file_put_contents($tempFilePath, $fileContent);
+
+        // Convert the PDF to a version compatible with FPDI
+        shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+
+        info('watermark job starting for Quote: ' . $data . ' File Name: ' . $docName);
+        $pdf = new Fpdi;
+
+        $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
+
+        info('watermark job source file created For Quote: ' . $data . ' File path: ' . $outputFile . ' Page Count: ' . $pageCount);
+        $watermarkImagePath = public_path('images/watermark1.png');
+        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
+
+        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+            $templateId = $pdf->importPage($pageNo);
+            $size = $pdf->getTemplateSize($templateId);
+
+            Log::info('Page size: ' . json_encode($size));
+
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            // Add watermark
+            if ($size['orientation'] === 'P') {
+                $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+            } else {
+                $pdf->Image($watermarkImageAA4Path, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+            }
+
+            $pdf->useTemplate($templateId);
+        }
+
+        $pdf->Output($outputPath, 'F');
+
+        // Delete the temporary file
+        if (file_exists($tempFilePath)) {
+            unlink($tempFilePath);
+        }
+
+        return $this->storeWatermarkedMedia($docName, $data, $documentType);
     }
 
     /**
@@ -590,7 +584,9 @@ class QuoteDocumentService extends BaseService
         }
 
         // delete temp file
-        unlink(storage_path('temp/'.$docName));
+        if (file_exists(storage_path('temp/'.$docName))) {
+            unlink(storage_path('temp/'.$docName));
+        }
 
         return [
             'watermarked_doc_name' => $docName,
