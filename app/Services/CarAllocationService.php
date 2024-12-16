@@ -371,7 +371,7 @@ class CarAllocationService extends AllocationService
 
         $this->isBuyLeadAdvisor = $advisors->count() > 0;
 
-        info('Buy Lead Advisors found for uuid: '.$lead->uuid);
+        $advisors->count() > 0 && info('Buy Lead Advisors found for uuid: '.$lead->uuid);
 
         return $advisors;
     }
