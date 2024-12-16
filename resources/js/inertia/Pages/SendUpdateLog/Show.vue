@@ -273,7 +273,7 @@ onBeforeMount(() => {
               <dl class="grid md:grid-cols-2">
                 <div class="grid sm:grid-cols-2 mb-2">
                   <dt>
-                    <x-tooltip placement="left">
+                    <x-tooltip>
                       <label
                         class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                       >
@@ -314,7 +314,7 @@ onBeforeMount(() => {
                     "
                   >
                     <dt>
-                      <x-tooltip placement="left">
+                      <x-tooltip>
                         <label
                           class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                         >
@@ -333,7 +333,7 @@ onBeforeMount(() => {
                 </div>
                 <div class="grid md:grid-cols-2 mb-2">
                   <dt>
-                    <x-tooltip placement="left">
+                    <x-tooltip>
                       <label
                         class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                       >
@@ -362,7 +362,7 @@ onBeforeMount(() => {
                     "
                   >
                     <dt>
-                      <x-tooltip placement="left">
+                      <x-tooltip>
                         <label
                           class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                         >
