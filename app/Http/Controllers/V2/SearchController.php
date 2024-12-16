@@ -18,7 +18,6 @@ use App\Repositories\UserRepository;
 use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\SearchService;
-use App\Services\SendUpdateLogService;
 
 class SearchController extends Controller
 {
