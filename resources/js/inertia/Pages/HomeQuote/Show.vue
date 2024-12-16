@@ -751,6 +751,18 @@ const copyLink = () => {
       position: 'top',
     });
 };
+
+const getLookupValueText = (lookupKey, id, defaultValue = '') => {
+  const lookUpData = page?.props?.quote?.lookUpData || {};
+  const lookupArray = Array.isArray(lookUpData[lookupKey]) ? lookUpData[lookupKey] : [];
+  if (!lookUpData[lookupKey]) {
+    console.log(`Lookup key "${lookupKey}" not found in lookUpData or is not an array.`);
+  }
+  const matchedValue = lookupArray.find(item => item.id === id);
+  return matchedValue?.text || defaultValue;
+};
+
+
 </script>
 
 <template>
@@ -1067,31 +1079,43 @@ const copyLink = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS CONTENTS</dt>
-                <dd>{{ quote?.home_quote?.has_contents ? 'Yes' : 'No' }}</dd>
+                <dd>
+                  {{ quote?.home_quote?.contents_value_id ? 'Yes' : 'No' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CONTENTS AED</dt>
-                <dd>{{ quote?.home_quote?.contents_aed }}</dd>
+                <dd>
+                  {{
+                    getLookupValueText('contentValues', quote?.home_quote?.contents_value_id)
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS BUILDING</dt>
-                <dd>{{ quote?.home_quote?.has_building ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote?.home_quote?.building_value ? 'Yes' : 'No' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BUILDING AED</dt>
-                <dd>{{ quote?.home_quote?.building_aed }}</dd>
+                <dd>{{ quote?.home_quote?.building_value }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS PERSONAL BELONGINGS</dt>
                 <dd>
                   {{
-                    quote?.home_quote?.has_personal_belongings ? 'Yes' : 'No'
+                    quote?.home_quote?.personal_belongings_value_id
+                      ? 'Yes'
+                      : 'No'
                   }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PERSONAL BELONGINGS AED</dt>
-                <dd>{{ quote?.home_quote?.personal_belongings_aed }}</dd>
+                <dd>
+                  {{
+                    getLookupValueText('personalBelongingValues', quote?.home_quote?.personal_belongings_value_id)
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
@@ -1192,7 +1216,7 @@ const copyLink = () => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality_id_text }}</dd>
+                  <dd>{{ quote.nationality?.text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
@@ -1705,9 +1729,7 @@ const copyLink = () => {
                 </div>
               </template>
               <template #item-name="item">
-                <span class="text-primary-600 uppercase">{{
-                  item.name
-                }}</span>
+                <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
               <template #item-actualPremium="item">
                 <span class="text-primary-600">
