@@ -670,11 +670,3 @@ Route::get('/add-batch-number', function () {
 //     }
 
 // });
-
-Route::get('run-instant-chat-migration', function () {
-
-    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-        Artisan::queue('InstantChatDataMigration:cron');
-    }
-
-});
