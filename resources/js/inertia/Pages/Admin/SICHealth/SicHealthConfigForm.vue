@@ -15,6 +15,7 @@ let errors = reactive({});
 const sicConfigurableForm = useForm({
   id: props.sicConfigurable?.id ?? null,
   min_age: props.sicConfigurable?.min_age ?? 0,
+  price_starting_from: props.sicConfigurable?.price_starting_from ?? 0,
   max_age: props.sicConfigurable?.max_age ?? 0,
   plan_types: [],
   is_type: props.sicConfigurable?.is_type ?? false,
@@ -23,6 +24,8 @@ const sicConfigurableForm = useForm({
   is_nationality: props.sicConfigurable?.is_nationality ?? false,
   is_member_category: props.sicConfigurable?.is_member_category ?? false,
   is_age: props.sicConfigurable?.is_age ?? false,
+  is_price_starting_from:
+    props.sicConfigurable?.is_price_starting_from ?? false,
 });
 
 onMounted(() => {
@@ -188,6 +191,27 @@ const ageRangeValid = computed(() => {
                 :multiple="true"
                 :autocomplete="true"
                 :error="sicConfigurableForm?.errors.member_categories"
+              />
+            </x-field>
+          </div>
+        </div>
+        <div class="col-span-1 sm:col-span-1">
+          <x-checkbox
+            v-model="sicConfigurableForm.is_price_starting_from"
+            label="Price Starting From"
+          />
+          <div
+            class="grid sm:grid-cols-1 gap-4"
+            v-if="sicConfigurableForm.is_price_starting_from"
+          >
+            <x-field label="Price Starting From" required>
+              <x-input
+                v-model="sicConfigurableForm.price_starting_from"
+                required
+                placeholder="Price Starting From"
+                class="w-full"
+                :rules="[isRequired]"
+                :error="errors.price_starting_from"
               />
             </x-field>
           </div>

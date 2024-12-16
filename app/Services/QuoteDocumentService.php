@@ -10,14 +10,15 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\WatermarkDocTypesEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
+use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\GetWatermarkPropertyTrait;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -28,7 +29,6 @@ use setasign\Fpdi\Fpdi;
 class QuoteDocumentService extends BaseService
 {
     use GenericQueriesAllLobs;
-    use GetWatermarkPropertyTrait;
 
     /**
      * get list of active document types can be presented to customer to upload documents.
@@ -117,7 +117,7 @@ class QuoteDocumentService extends BaseService
      * @param  $uuid
      * @return \Illuminate\Http\JsonResponse
      */
-    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $tempKycFile = null)
+    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false)
     {
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
@@ -152,7 +152,6 @@ class QuoteDocumentService extends BaseService
                 if (! $uploaded) {
                     return false;
                 }
-                // $fileOrBase64 = $tempKycFile;
             } elseif ($isKyc) {
                 if (isset($data['pdf_name'])) {
                     $originalName = $data['pdf_name'];
@@ -171,7 +170,6 @@ class QuoteDocumentService extends BaseService
                 if (! $uploaded) {
                     return false;
                 }
-                // $fileOrBase64 = $tempKycFile;
             } else {
                 $originalName = sanitizeFileName($fileOrBase64->getClientOriginalName());
 
@@ -208,6 +206,8 @@ class QuoteDocumentService extends BaseService
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
                 );
+            } else {
+                info('Watermkark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
@@ -463,6 +463,7 @@ class QuoteDocumentService extends BaseService
         if (! file_exists(storage_path('/temp'))) {
             mkdir(storage_path('/temp'), 0775, true);
         }
+        $docName = time().'_'.$docName;
 
         $outputFile = $outputPath = storage_path('temp/'.$docName);
 
@@ -650,5 +651,31 @@ class QuoteDocumentService extends BaseService
             // Return an error message if the file does not exist
             return response()->json(['error' => 'File does not exist on server']);
         }
+    }
+
+    /**
+     * verify if a document is watermark qualified function
+     */
+    public function getWatermarkProperty($quote, $documentType, $insuranceProviderId = null): bool
+    {
+        $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
+
+        if ($insuranceProviderId) {
+            $skipWatermark = in_array($insuranceProviderId, $ips);
+        } else {
+            $insuranceProviderId = $quote->insurance_provider_id;
+            if ($insuranceProviderId == null && $quote->plan) {
+                $insuranceProviderId = $quote->plan->provider_id;
+            }
+            if ($insuranceProviderId == null) {
+                return false;
+            }
+            $skipWatermark = in_array($insuranceProviderId, $ips);
+        }
+        if (! $skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
+            return true;
+        }
+
+        return false;
     }
 }
