@@ -232,17 +232,24 @@ enum QuoteTypes: string
         return $typesWithIds;
     }
 
-    public static function getClassObject($quoteType): string
+    public static function getQuoteTypeIdToClass($quoteType): string
     {
-        return match ($quoteType) {
-            self::getId(self::CAR) => CarQuote::class,
-            self::getId(self::HOME) => HomeQuote::class,
-            self::getId(self::HEALTH) => HealthQuote::class,
-            self::getId(self::LIFE) => LifeQuote::class,
-            self::getId(self::BUSINESS) => BusinessQuote::class,
-            self::getId(self::TRAVEL) => TravelQuote::class,
-            default => PersonalQuote::class,
-        };
+        switch ($quoteType) {
+            case self::getId(self::CAR):
+                return CarQuote::class;
+            case self::getId(self::HOME):
+                return HomeQuote::class;
+            case self::getId(self::HEALTH):
+                return HealthQuote::class;
+            case self::getId(self::LIFE):
+                return LifeQuote::class;
+            case self::getId(self::BUSINESS):
+                return BusinessQuote::class;
+            case self::getId(self::TRAVEL):
+                return TravelQuote::class;
+            default:
+                return PersonalQuote::class;
+        }
     }
 
 }

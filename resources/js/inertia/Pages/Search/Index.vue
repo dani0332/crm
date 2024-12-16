@@ -1,4 +1,5 @@
 <script setup>
+
 const props = defineProps({
   leadsOrEndorsementData: Object,
   quoteStatuses: Array,
@@ -20,7 +21,6 @@ const permissionsEnum = page.props.permissionsEnum;
 const isSendUpdateListView = ref(false);
 const filterModal = ref(false);
 const cleanObj = obj => useCleanObj(obj);
-const objToUrl = obj => useObjToUrl(obj);
 const loader = reactive({
   table: false,
   export: false,
@@ -75,7 +75,6 @@ function statusTitleFormat(str) {
 }
 
 let params = useUrlSearchParams('history');
-const showFilters = ref(true);
 const expandNotes = ref(false);
 const filtersCount = ref(0);
 const serverOptions = ref({
@@ -146,7 +145,8 @@ function updateTableDetails() {
 const availableFilters = reactive({
   code: '',
   insured_name: '',
-  member_name: '',
+  member_first_name: '',
+  member_last_name: '',
   company_name: '',
   policy_number: '',
   mobile_no: '',
@@ -166,6 +166,7 @@ const availableFilters = reactive({
   update_status: '',
   send_update_type: '',
 });
+
 const dateTypesFilter = ref([
   { value: 'created_at', label: 'Created Date' },
   { value: 'payment_due_date', label: 'Payment Due Date' },
@@ -175,6 +176,7 @@ const dateTypesFilter = ref([
   { value: 'policy_start_date', label: 'Policy Start Date' },
   { value: 'policy_expiry_date', label: 'Policy End Date' },
 ]);
+
 dateTypesFilter.value.sort((a, b) => a.label.localeCompare(b.label));
 
 const [
@@ -197,7 +199,8 @@ const presetDates = [
 
 const autoApplyDateRangeFields = [
   'insured_name',
-  'member_name',
+  'member_first_name',
+  'member_last_name',
   'company_name',
   'policy_number',
   'quote_status',
@@ -209,35 +212,6 @@ const autoApplyDateRangeFields = [
   'advisors',
   'update_status',
 ];
-
-function destructCompanyName(isSendUpdateView, item) {
-  const companyNameMappingForNonEcom = {
-    [props.quoteTypeIdEnum.Car]: 'car_quote_request',
-    [props.quoteTypeIdEnum.Home]: 'home_quote_request',
-    [props.quoteTypeIdEnum.Health]: 'health_quote_request',
-    [props.quoteTypeIdEnum.Life]: 'life_quote_request',
-    [props.quoteTypeIdEnum.Business]: 'business_quote_request',
-    [props.quoteTypeIdEnum.Travel]: 'travel_quote_request',
-  };
-
-  const quoteRequestKeyForNonEcom =
-    companyNameMappingForNonEcom[item.quote_type_id] ?? null;
-  const isIndividual =
-    item.customer_type === 'Individual' ||
-    item.personal_quote?.customer_type === 'Individual';
-  if (isIndividual) return 'N/A';
-
-  const getCompanyName = (isSendUpdateListView, quoteRequestKey) => {
-    const itemObject = isSendUpdateListView ? item.personal_quote : item;
-
-    return quoteRequestKey
-      ? itemObject?.[quoteRequestKey]?.quote_request_entity_mapping?.entity
-          ?.company_name
-      : itemObject?.quote_request_entity_mapping?.entity?.company_name;
-  };
-
-  return getCompanyName(isSendUpdateView, quoteRequestKeyForNonEcom);
-}
 
 function updateDateRange() {
   availableFilters.date_type = 'created_at';
@@ -288,6 +262,19 @@ function filterValidation(filtersCleaned) {
 function onReset() {
   removedSavedParams();
   router.visit(route('search-leads'));
+}
+
+function checkMemberOrCompanyFilter() {
+    // TODO:: Reminder:: agar query filter mai koi quote type select hai to wo aegi
+    const { member_first_name, member_last_name, company_name } = availableFilters;
+
+    if (member_first_name || member_last_name || company_name) {
+        availableFilters.line_of_business = company_name ? props.quoteTypeIdEnum.Business : props.quoteTypeIdEnum.Health;
+        return true;
+    }
+
+    availableFilters.line_of_business = '';
+    return false;
 }
 
 function onSubmit() {
@@ -347,6 +334,7 @@ onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
 });
+
 </script>
 
 <template>
@@ -359,12 +347,12 @@ onMounted(() => {
         >
           {{ isSendUpdateListView ? 'Send Update' : 'Lead' }} List
         </h2>
-        <template #tooltip
-          >{{
-            isSendUpdateListView
-              ? 'Displays here are the requests created or booked under send update'
-              : 'Displays here are the leads created or booked under the main lead'
-          }}
+        <template #tooltip>
+            {{
+                isSendUpdateListView
+                  ? 'Displays here are the requests created or booked under send update'
+                  : 'Displays here are the leads created or booked under the main lead'
+            }}
         </template>
       </x-tooltip>
       <div class="space-x-3">
@@ -419,11 +407,7 @@ onMounted(() => {
         </x-button>
       </div>
     </div>
-
     <x-divider class="my-4" />
-
-    <!--    compact table-fixed -->
-
     <DataTable
       table-class-name="table-fixed"
       :headers="tableHeader"
@@ -440,11 +424,13 @@ onMounted(() => {
           <p class="underline decoration-dotted">
             {{ header.text }}
           </p>
-          <template #tooltip>{{
-            isSendUpdateListView
-              ? 'A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.'
-              : 'Ref ID of the lead/policy'
-          }}</template>
+          <template #tooltip>
+              {{
+                isSendUpdateListView
+                  ? 'A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.'
+                  : 'Ref ID of the lead/policy'
+              }}
+          </template>
         </x-tooltip>
       </template>
 
@@ -474,10 +460,9 @@ onMounted(() => {
           <p class="underline decoration-dotted">
             {{ header.text }}
           </p>
-          <template #tooltip
-            >The date when the "Send Update" request was created. It indicates
-            when the action was initiated</template
-          >
+          <template #tooltip>
+              The date when the "Send Update" request was created. It indicates when the action was initiated
+          </template>
         </x-tooltip>
       </template>
 
@@ -664,14 +649,23 @@ onMounted(() => {
               placeholder="Search by Insured Name"
             />
           </x-field>
-          <x-field label="Member Name">
+          <x-field label="Member First Name">
             <x-input
-              v-model="availableFilters.member_name"
+              v-model="availableFilters.member_first_name"
               type="search"
-              name="member_name"
+              name="member_first_name"
               class="w-full"
-              placeholder="Search by Member Name"
+              placeholder="Search by Member First Name"
             />
+          </x-field>
+          <x-field label="Member Last Name">
+              <x-input
+                  v-model="availableFilters.member_last_name"
+                  type="search"
+                  name="member_last_name"
+                  class="w-full"
+                  placeholder="Search by Member Last Name"
+              />
           </x-field>
           <x-field label="Company Name">
             <x-input
@@ -769,7 +763,18 @@ onMounted(() => {
               "
             />
           </x-field>
-          <x-field label="Line of Business">
+          <x-field label="Line of Business" v-if="checkMemberOrCompanyFilter()">
+              <x-select
+                  v-model="availableFilters.line_of_business"
+                  placeholder="Search by Line of Business"
+                  :options=" quoteTypes.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))"
+              class="w-full"
+              />
+          </x-field>
+          <x-field label="Line of Business" v-else>
             <ComboBox
               v-model="availableFilters.line_of_business"
               name="line_of_business"

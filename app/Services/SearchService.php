@@ -6,17 +6,8 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Models\BusinessQuote;
-use App\Models\CarQuote;
-use App\Models\CustomerMembers;
-use App\Models\HealthQuote;
-use App\Models\HomeQuote;
-use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\Role;
-use App\Models\TravelQuote;
-use App\Models\User;
-use App\Models\UserManager;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
 
@@ -24,22 +15,10 @@ class SearchService extends BaseService
 {
     use TeamHierarchyTrait;
 
-    private mixed $filteredQuoteTypes = [];
-
     public function getSearchLeads($isEndorsementList = false, $isExport = false)
     {
         if (! empty(request()->except('list'))) {
             $baseTable = $isEndorsementList ? 'send_update_logs' : 'personal_quotes';
-            $personalQuoteTypes = [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski];
-            $baseTableAgainstQuoteTypes = [
-                QuoteTypeId::Car => 'car_quote_request',
-                QuoteTypeId::Home => 'home_quote_request',
-                QuoteTypeId::Health => 'health_quote_request',
-                QuoteTypeId::Life => 'life_quote_request',
-                QuoteTypeId::Business => 'business_quote_request',
-                QuoteTypeId::Travel => 'travel_quote_request',
-            ];
-
             $selectColumns = [
                 'personal_quotes.code',
                 'personal_quotes.first_name',
@@ -77,9 +56,9 @@ class SearchService extends BaseService
                     });
 
                 $selectColumns = array_merge($selectColumns, $suSelectColumns);
+                PersonalQuote::applyRequestTableJoins($baseQuery, request());
                 $this->searchQuoteQueryFilters($baseQuery, request(), true);
-                PersonalQuote::applyQuoteRequestEntityMappingJoin($baseQuery, request(), $this->filteredQuoteTypes);
-                $selectColumns = $this->getFilteredCompanyCases($this->filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns);
+                $selectColumns = $this->getFilteredCompanyCases(request(), $selectColumns);
 
             } else {
                 $baseQuery = DB::table($baseTable)
@@ -89,10 +68,10 @@ class SearchService extends BaseService
                         $query->on('business_type_of_insurance.id', 'personal_quotes.business_type_of_insurance_id');
                         $query->where('personal_quotes.quote_type_id', QuoteTypeId::Business);
                     });
+                PersonalQuote::applyRequestTableJoins($baseQuery, request());
                 $this->searchQuoteQueryFilters($baseQuery, request());
-                PersonalQuote::applyQuoteRequestEntityMappingJoin($baseQuery, request(), $this->filteredQuoteTypes);
                 $selectColumns = array_merge($selectColumns, ['personal_quotes.uuid', 'quote_status.text as quote_status']);
-                $selectColumns = $this->getFilteredCompanyCases($this->filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns);
+                $selectColumns = $this->getFilteredCompanyCases(request(), $selectColumns);
             }
 
             if ($this->isManagerialRole()) {
@@ -187,35 +166,12 @@ class SearchService extends BaseService
         return auth()->user()->hasAnyRole($advisorRoles);
     }
 
-    private function getFilteredCompanyCases($filteredQuoteTypes, $personalQuoteTypes, $baseTableAgainstQuoteTypes, $selectColumns): array
+    private function getFilteredCompanyCases($request, $selectColumns): array
     {
-        $filteredCompanyCases = '';
-        $quoteTypes = is_array($filteredQuoteTypes) ? $filteredQuoteTypes : [];
-        if (empty($filteredQuoteTypes) && is_array($filteredQuoteTypes)) {
-            $quoteTypes = [
-                QuoteTypeId::Car,
-                QuoteTypeId::Home,
-                QuoteTypeId::Health,
-                QuoteTypeId::Life,
-                QuoteTypeId::Business,
-                QuoteTypeId::Bike,
-                QuoteTypeId::Yacht,
-                QuoteTypeId::Travel,
-                QuoteTypeId::Pet,
-                QuoteTypeId::Cycle,
-                QuoteTypeId::Jetski,
-            ];
-        }
-
-        foreach ($quoteTypes as $quoteType) {
-            $quoteRequestTable = in_array($quoteType, $personalQuoteTypes) ? 'personal' : $baseTableAgainstQuoteTypes[$quoteType];
-            $filteredCompanyCases .= ' WHEN personal_quotes.quote_type_id = '.$quoteType.' THEN '.$quoteRequestTable.'_entity.company_name';
-        }
-
-        if ($filteredCompanyCases == '') {
-            $selectColumns[] = DB::raw('"N/A" as company_name');
+        if ($request->has('company_name') && $request->has('line_of_business')) {
+            $selectColumns[] = 'entities.company_name';
         } else {
-            $selectColumns[] = DB::raw('CASE '.$filteredCompanyCases.' ELSE "N/A" END as company_name');
+            $selectColumns[] = DB::raw('"N/A" as company_name');
         }
 
         return $selectColumns;
@@ -229,87 +185,58 @@ class SearchService extends BaseService
 
         if (request()->has('insured_name') && ! isset(request()->code)) {
             $query->join('customer', 'personal_quotes.customer_id', 'customer.id');
-            $query->where(DB::raw("CONCAT(insured_first_name, ' ', insured_last_name)"), 'like', '%'.request()->insured_name.'%');
+            $query->where(DB::raw("CONCAT(customer.insured_first_name, ' ', customer.insured_last_name)"), 'like', '%'.request()->insured_name.'%');
         }
 
-        if (request()->has('member_name') || request()->has('company_name')) {
-            $applyFilteredDataMembers = $applyFilteredDataCompany = [];
-
-            if (request()->has('member_name') && ! isset(request()->code)) {
-                $customerMembers = CustomerMembers::where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', '%'.request()->member_name.'%')->get();
-                $applyFilteredDataMembers = array_reduce($customerMembers->toArray(), function ($result, $item) {
-                    if (! isset($result[$item['quote_type']])) {
-                        $result[$item['quote_type']] = [];
-                    }
-                    $result[$item['quote_type']][] = $item['quote_id'];
-
-                    return $result;
-                }, []);
-            }
-
-            if (request()->has('company_name') && ! isset(request()->code)) {
-                $getEntities = DB::table('entities')->join('quote_request_entity_mapping', 'entities.id', 'quote_request_entity_mapping.entity_id')
-                    ->where('entities.company_name', 'like', '%'.request()->company_name.'%')
-                    ->select(['quote_request_entity_mapping.quote_type_id', 'quote_request_entity_mapping.quote_request_id'])
-                    ->get();
-
-                $applyFilteredDataCompany = array_reduce($getEntities->toArray(), function ($result, $item) {
-                    $key = ($item->quote_type_id > QuoteTypeId::Jetski) ? QuoteTypes::getClassObject(QuoteTypeId::Business) : QuoteTypes::getClassObject($item->quote_type_id);
-                    if (! isset($result[$key])) {
-                        $result[$key] = [];
-                    }
-                    $result[$key][] = $item->quote_request_id;
-
-                    return $result;
-                }, []);
-            }
-            $quoteTypeIds = [];
-            $quoteTypesMapping = [
-                CarQuote::class => QuoteTypeId::Car,
-                HomeQuote::class => QuoteTypeId::Home,
-                HealthQuote::class => QuoteTypeId::Health,
-                LifeQuote::class => QuoteTypeId::Life,
-                BusinessQuote::class => QuoteTypeId::Business,
-                TravelQuote::class => QuoteTypeId::Travel,
-                PersonalQuote::class => [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski],
-            ];
-
-            if (! empty($applyFilteredDataMembers) && ! empty($applyFilteredDataCompany)) {
-                $commonQuoteTypes = array_intersect_key($applyFilteredDataMembers, $applyFilteredDataCompany);
-                $applyFilteredData = [];
-                foreach ($commonQuoteTypes as $key => $values) {
-                    $applyFilteredData[$key] = array_intersect($values, $applyFilteredDataCompany[$key]);
-                }
-                $applyFilteredData = array_filter($applyFilteredData, function ($value) {
-                    return ! empty($value);
-                });
-            } else {
-                $applyFilteredData = request()->has('member_name') ? $applyFilteredDataMembers : $applyFilteredDataCompany;
-            }
-
-            $query->where(function ($query) use ($quoteTypesMapping, $applyFilteredData, &$quoteTypeIds) {
-                if (! empty($applyFilteredData)) {
-                    foreach ($quoteTypesMapping as $quoteClass => $quoteTypeId) {
-                        $query->when(in_array($quoteClass, array_keys($applyFilteredData)), function ($query) use ($quoteTypeId, &$quoteTypeIds, $quoteClass, $applyFilteredData) {
-                            if (is_array($quoteTypeId)) {
-                                $quoteTypeIds = array_merge($quoteTypeIds, $quoteTypeId);
-                            } else {
-                                $this->filteredQuoteTypes[] = $quoteTypeId;
-                                $quoteTypeIds[] = $quoteTypeId;
-                            }
-
-                            $quoteRequestTable = ($quoteClass == PersonalQuote::class) ? 'personal_quotes' : str_replace('quote', '_quote', strtolower(class_basename($quoteClass))).'_request';
-                            $query->orWhereIn($quoteRequestTable.'.id', $applyFilteredData[$quoteClass]);
-                        });
-                    }
+        if (request()->has('member_first_name') || request()->has('member_last_name')) {
+            $resolveQuoteTypeObject = QuoteTypes::getQuoteTypeIdToClass(request()->line_of_business);
+            $isPersonalQuote = $resolveQuoteTypeObject == PersonalQuote::class;
+            $query->join('customer_members', function ($query) use ($isPersonalQuote) {
+                if ($isPersonalQuote) {
+                    $query->on('personal_quotes.id', 'customer_members.quote_id');
                 } else {
-                    $quoteTypeIds = [];
-                    $this->filteredQuoteTypes = false;
-                    $query->where('personal_quotes.id', 0);
+                    $quoteTypes = [
+                        QuoteTypeId::Car => 'car_quote_request',
+                        QuoteTypeId::Home => 'home_quote_request',
+                        QuoteTypeId::Health => 'health_quote_request',
+                        QuoteTypeId::Life => 'life_quote_request',
+                        QuoteTypeId::Business => 'business_quote_request',
+                        QuoteTypeId::Travel => 'travel_quote_request',
+                    ];
+                    $query->on($quoteTypes[request()->line_of_business].'.id', 'customer_members.quote_id');
                 }
             });
+            $query->when(request()->has('member_first_name') || request()->has('member_last_name'), function ($query) {
+                if (request()->has('member_first_name')) {
+                    $query->where('customer_members.first_name', 'like', '%'.request()->member_first_name.'%');
+                }
+                if (request()->has('member_last_name')) {
+                    $query->where('customer_members.last_name', 'like', '%'.request()->member_last_name.'%');
+                }
+            });
+        }
 
-            $query->whereIn('personal_quotes.quote_type_id', $quoteTypeIds);
+        if (request()->has('company_name')) {
+            $resolveQuoteTypeObject = QuoteTypes::getQuoteTypeIdToClass(request()->line_of_business);
+            $isPersonalQuote = $resolveQuoteTypeObject == PersonalQuote::class;
+            $query->join('quote_request_entity_mapping', function ($query) use ($isPersonalQuote) {
+                if ($isPersonalQuote) {
+                    $query->on('personal_quotes.id', 'quote_request_entity_mapping.quote_request_id');
+                } else {
+                    $quoteTypes = [
+                        QuoteTypeId::Car => 'car_quote_request',
+                        QuoteTypeId::Home => 'home_quote_request',
+                        QuoteTypeId::Health => 'health_quote_request',
+                        QuoteTypeId::Life => 'life_quote_request',
+                        QuoteTypeId::Business => 'business_quote_request',
+                        QuoteTypeId::Travel => 'travel_quote_request',
+                    ];
+                    $query->on($quoteTypes[request()->line_of_business].'.id', 'quote_request_entity_mapping.quote_request_id');
+                }
+                $query->where('quote_request_entity_mapping.quote_type_id', request()->line_of_business);
+            });
+            $query->join('entities', 'quote_request_entity_mapping.entity_id', 'entities.id');
+            $query->where('entities.company_name', 'like', '%'.request()->company_name.'%');
         }
 
         if (request()->has('policy_number') && ! isset(request()->code)) {
@@ -375,7 +302,7 @@ class SearchService extends BaseService
         }
 
         if (request()->has('line_of_business') && ! isset(request()->code)) {
-            $query->whereIn('personal_quotes.quote_type_id', request()->line_of_business);
+            $query->whereIn('personal_quotes.quote_type_id', (array) request()->line_of_business);
         }
 
         if (request()->has('business_insurance_type') && ! isset(request()->code)) {

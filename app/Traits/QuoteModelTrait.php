@@ -204,61 +204,25 @@ trait QuoteModelTrait
         });
     }
 
-    public static function applyQuoteRequestEntityMappingJoin($query, $request, $filteredQuoteTypes)
+    public static function applyRequestTableJoins($query, $request): void
     {
-        $personalQuoteTypes = [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski];
-        $tableReference = [
+        $applicableFilters = ['member_first_name', 'member_last_name', 'company_name'];
+        $quoteTypes = [
             QuoteTypeId::Car => 'car_quote_request',
             QuoteTypeId::Home => 'home_quote_request',
             QuoteTypeId::Health => 'health_quote_request',
             QuoteTypeId::Life => 'life_quote_request',
             QuoteTypeId::Business => 'business_quote_request',
-            QuoteTypeId::Bike => 'personal_quotes',
-            QuoteTypeId::Yacht => 'personal_quotes',
             QuoteTypeId::Travel => 'travel_quote_request',
-            QuoteTypeId::Pet => 'personal_quotes',
-            QuoteTypeId::Cycle => 'personal_quotes',
-            QuoteTypeId::Jetski => 'personal_quotes',
         ];
 
-        if (! empty($filteredQuoteTypes) || ! is_array($filteredQuoteTypes)) {
-            $quoteTypes = [];
-            if (is_array($filteredQuoteTypes)) {
-                foreach ($filteredQuoteTypes as $quoteType) {
-                    $quoteTypes[$quoteType] = $tableReference[$quoteType];
-                }
-                $quoteTypes = array_diff_key($quoteTypes, array_flip($personalQuoteTypes));
+        if ($request->hasAny($applicableFilters) && $request->has('line_of_business')) {
+            if (isset($quoteTypes[$request->line_of_business])) {
+                $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
+                    $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
+                    $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
+                });
             }
-        } else {
-            $quoteTypes = [
-                QuoteTypeId::Car => 'car_quote_request',
-                QuoteTypeId::Home => 'home_quote_request',
-                QuoteTypeId::Health => 'health_quote_request',
-                QuoteTypeId::Life => 'life_quote_request',
-                QuoteTypeId::Business => 'business_quote_request',
-                QuoteTypeId::Travel => 'travel_quote_request',
-            ];
         }
-
-        foreach ($quoteTypes as $quoteTypeId => $tableName) {
-            $query->leftJoin($tableName, function ($join) use ($quoteTypeId, $tableName) {
-                $join->where('personal_quotes.quote_type_id', '=', $quoteTypeId);
-                $join->on('personal_quotes.code', '=', $tableName.'.code');
-            });
-
-            $query->leftJoin('quote_request_entity_mapping as '.$tableName.'_qrem', function ($join) use ($quoteTypeId, $tableName) {
-                $join->where($tableName.'_qrem.quote_type_id', '=', $quoteTypeId);
-                $join->on($tableName.'_qrem.quote_request_id', '=', $tableName.'.id');
-            });
-
-            $query->leftJoin('entities as '.$tableName.'_entity', $tableName.'_qrem.entity_id', '=', $tableName.'_entity.id');
-        }
-
-        $query->leftJoin('quote_request_entity_mapping as personal_qrem', function ($entityMappingJoin) {
-            $entityMappingJoin->whereIn('personal_qrem.quote_type_id', [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski]);
-            $entityMappingJoin->on('personal_qrem.quote_request_id', 'personal_quotes.id');
-        });
-
-        $query->leftJoin('entities as personal_entity', 'personal_qrem.entity_id', 'personal_entity.id');
     }
 }
