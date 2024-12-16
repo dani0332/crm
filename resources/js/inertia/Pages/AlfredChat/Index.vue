@@ -222,6 +222,7 @@ const downloadReport = () => {
             { label: 'Car', value: 'Car' },
             { label: 'Health', value: 'Health' },
             { label: 'Travel', value: 'Travel' },
+            { label: 'Bike', value: 'Bike' },
           ]"
           placeholder="Select a Quote Type"
           class="w-full"
@@ -498,14 +499,4 @@ const downloadReport = () => {
       to: logs.to,
     }"
   />
-
-  <!-- <Pagination
-    :links="{
-      next: pagination.next_page_url,
-      prev: pagination.prev_page_url,
-      current: Number(pagination.current_page),
-      from: pagination.from,
-      to: pagination.to,
-    }"
-  /> -->
 </template>

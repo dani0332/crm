@@ -11,6 +11,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\AlfredChat;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,8 +21,9 @@ class InstantAlfredService extends BaseService
     private $carQuery;
     private $healthQuery;
     private $travelQuery;
+    private $personalQuery;
 
-    private function buildQueryByModel($modelType)
+    private function buildQueryByModel($modelType, $quoteTypeId)
     {
         $aliases = [];
         if ($modelType == CarQuote::class) {
@@ -34,8 +36,6 @@ class InstantAlfredService extends BaseService
                     'cqr.payment_status_id',
                     'cqr.plan_id',
                     'cp.text AS plan_id_text',
-                    'cp.provider_id AS car_plan_provider_id',
-                    'cpip.text AS car_plan_provider_id_text',
                     'cqr.quote_status_id',
                     'qs.text AS quote_status_id_text',
                     'cqr.quote_batch_id',
@@ -254,8 +254,68 @@ class InstantAlfredService extends BaseService
                 ->groupBy('tqr.id');
 
             $aliases = [TravelQuote::class => ['query' => $this->travelQuery, 'alias' => 'tqr']];
+        } else if($modelType == PersonalQuote::class){
+            $this->personalQuery = DB::table('personal_quotes as pqr')
+                ->select(
+                    'pqr.uuid',
+                    'pqr.id',
+                    'pqr.email',
+                    'pqr.code',
+                    'pqr.payment_status_id',
+                    'pqr.plan_id',
+                    'cp.text AS plan_id_text',
+                    'pqr.quote_status_id',
+                    'qs.text AS quote_status_id_text',
+                    'pqr.quote_batch_id',
+                    'cpip.code as plan_provider_code',
+                    'pqr.insurance_provider_id',
+                    'pqrd.chat_initiated_at',
+                    'qb.name as quote_batch_id_text',
+                    'lu.text as transaction_type_text',
+                    // 'qt.name as segment',
+                    'ps.text AS payment_status',
+                    'cpip.text as provider_name',
+                    // 'cti.text as plan_type',
+                    // 'cp.repair_type as plan_type',
+                    'cp.text as plan_name',
+                    'pqr.premium as total_price',
+                    // 'ps.created_at AS payment_created_at',
+                    DB::raw('DATE_FORMAT(pqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
+                    DB::raw('DATE_FORMAT(pqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+                    DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
+                    // 'ep.display_name',
+                )
+                ->where('pqr.quote_type_id', $quoteTypeId)
+                ->leftJoin('payments as py', function ($join) {
+                    $join->on('py.paymentable_id', '=', 'pqr.id')
+                        ->where('py.paymentable_type', '=', PersonalQuote::class);
+                })
+                ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
+                ->leftJoin('quote_tags as qt', function ($join) use($quoteTypeId) {
+                    $join->on('qt.quote_uuid', '=', 'pqr.uuid')
+                        ->where('qt.quote_type_id', '=', $quoteTypeId);
+                })
+                ->leftJoin('personal_plans as cp', 'cp.id', '=', 'pqr.plan_id')
+                ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.insurance_provider_id')
+                ->leftJoin('lookups as lu', 'lu.id', '=', 'pqr.transaction_type_id')
+                ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
+                ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
+                ->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
+                ->addSelect([
+                    DB::raw("
+                        CASE 
+                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
+                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
+                            AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
+                            THEN 'SIC-REVIVAL'
+                        WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
+                        ELSE 'N/A'
+                        END as segment
+                    "),
+                ])
+                ->groupBy('pqr.id');
+            $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
         }
-
         return $aliases;
     }
 
@@ -264,9 +324,10 @@ class InstantAlfredService extends BaseService
 
         $modelType = $request->quoteType ?? 'Car';
         $nameSpace = 'App\\Models\\';
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $modelType = (checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-        $aliases = $this->buildQueryByModel($modelType);
+        $aliases = $this->buildQueryByModel($modelType, $quoteTypeId);
 
         $modelData = $aliases[$modelType] ?? $aliases[CarQuote::class];
 
@@ -276,6 +337,7 @@ class InstantAlfredService extends BaseService
 
         $partialQuery->whereNotNull('chat_initiated_at');
 
+        // dd($partialQuery);
         $quoteId = null;
         if ($request->has('quoteId') && $request->quoteId != null) {
             if (strpos($request->quoteId, '-') !== false) {
