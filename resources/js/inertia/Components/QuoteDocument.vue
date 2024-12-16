@@ -5,7 +5,6 @@ import DownloadDocuments from './DownloadDocuments.vue';
 defineProps({
   quote: Object,
   quoteDocuments: Object,
-  paymentStatusEnum: Object,
   documentTypes: Object,
   storageUrl: String,
   expanded: {
@@ -38,6 +37,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
