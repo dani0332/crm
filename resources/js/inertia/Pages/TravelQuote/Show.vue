@@ -881,6 +881,10 @@ const availablePlansTable = reactive({
       value: 'name',
     },
     {
+      text: 'Insurer Quote Number',
+      value: 'insurerQuoteId',
+    },
+    {
       text: 'Travel Type',
       value: 'travelType',
     },
@@ -909,6 +913,10 @@ const availableSeniorPlansTable = reactive({
     {
       text: 'Plan Name',
       value: 'name',
+    },
+    {
+      text: 'Insurer Quote Number',
+      value: 'insurerQuoteId',
     },
     {
       text: 'Travel Type',
