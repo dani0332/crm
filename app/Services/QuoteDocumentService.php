@@ -457,14 +457,14 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $docName = time() . '_' . $docName;
+        $docName = time().'_'.$docName;
 
-        $outputFile = $outputPath = storage_path('temp/' . $docName);
+        $outputFile = $outputPath = storage_path('temp/'.$docName);
 
-        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/' . $file;
+        $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
         $fileContent = file_get_contents($azureFilePath);
 
-        $tempFilePath = storage_path('temp/temp_' . $docName);
+        $tempFilePath = storage_path('temp/temp_'.$docName);
         file_put_contents($tempFilePath, $fileContent);
 
         // Convert the PDF to a version compatible with FPDI
@@ -482,7 +482,7 @@ class QuoteDocumentService extends BaseService
             $templateId = $pdf->importPage($pageNo);
             $size = $pdf->getTemplateSize($templateId);
 
-            Log::info('Page size: ' . json_encode($size));
+            Log::info('Page size: '.json_encode($size));
 
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
             // Add watermark
