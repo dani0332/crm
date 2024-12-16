@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use App\Enums\QuoteTypes;
-use Illuminate\Http\File;
 
 trait CentralTrait
 {
@@ -40,29 +39,5 @@ trait CentralTrait
         }
 
         return $link;
-    }
-
-    /**
-     * Create a temporary PDF file for watermarking
-     *
-     * @param  string  $pdfFile
-     */
-    public function createTempPdfFileForWatermark($pdfFile): File
-    {
-        if (! file_exists(storage_path('temp'))) {
-            mkdir(storage_path('temp'), 0775, true);
-        }
-        // Create a temporary file and write the PDF content to it
-        $tempDir = storage_path('temp');
-
-        // Generate a unique filename for the temp PDF file
-        $tempFileName = 'pdf_'.uniqid().'.pdf';
-        $tempFilePath = $tempDir.'/'.$tempFileName;
-
-        // Create the temporary file and write the PDF content to it
-        file_put_contents($tempFilePath, $pdfFile);
-
-        // Return a new File instance pointing to the temporary file
-        return new File($tempFilePath);
     }
 }
