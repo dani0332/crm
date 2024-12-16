@@ -2,30 +2,30 @@
 
 namespace App\Services;
 
-use setasign\Fpdi\Fpdi;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypeId;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCategory;
+use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\WatermarkDocTypesEnum;
+use App\Jobs\WatermarkDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
+use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\DocumentTypeCode;
-use PhpOffice\PhpWord\IOFactory;
-use App\Models\InsuranceProvider;
-use App\Models\ApplicationStorage;
-use App\Enums\DocumentTypeCategory;
-use App\Jobs\WatermarkDocumentsJob;
-use Illuminate\Support\Facades\Log;
-use App\Enums\WatermarkDocTypesEnum;
-use Intervention\Image\ImageManager;
+use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\SendUpdateLogStatusEnum;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
+use PhpOffice\PhpWord\IOFactory;
+use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
-use App\Repositories\DocumentTypeRepository;
 
 class QuoteDocumentService extends BaseService
 {
@@ -453,7 +453,7 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkPdf($file, $docName, $data, $documentType)
     {
-        try{
+        try {
 
             if (! file_exists(storage_path('/temp'))) {
                 mkdir(storage_path('/temp'), 0775, true);
@@ -472,12 +472,12 @@ class QuoteDocumentService extends BaseService
             // Convert the PDF to a version compatible with FPDI
             shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
 
-            info("Watermarking starting for Quote: ".$data." File Name: ".$docName);
+            info('Watermarking starting for Quote: '.$data.' File Name: '.$docName);
             $pdf = new Fpdi;
 
             $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
 
-            info('Source file created For Quote: '.$data. " File path: ".$outputFile. ' Page Count: '.$pageCount);
+            info('Source file created For Quote: '.$data.' File path: '.$outputFile.' Page Count: '.$pageCount);
             $watermarkImagePath = public_path('images/watermark1.png');
             $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
 
@@ -508,7 +508,7 @@ class QuoteDocumentService extends BaseService
             return $this->storeWatermarkedMedia($docName, $data, $documentType);
 
         } catch (\Exception $e) {
-            Log::error('Error in watermarkPdf: Quote uuid: '.$data.' Error ' .$e->getMessage());
+            Log::error('Error in watermarkPdf: Quote uuid: '.$data.' Error '.$e->getMessage());
         }
     }
 
