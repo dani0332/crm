@@ -265,11 +265,19 @@ function onReset() {
 }
 
 function checkMemberOrCompanyFilter() {
-    // TODO:: Reminder:: agar query filter mai koi quote type select hai to wo aegi
     const { member_first_name, member_last_name, company_name } = availableFilters;
 
     if (member_first_name || member_last_name || company_name) {
-        availableFilters.line_of_business = company_name ? props.quoteTypeIdEnum.Business : props.quoteTypeIdEnum.Health;
+        let isQueryStringSet = false;
+        for (const [key] of Object.entries(params)) {
+            if (key === 'line_of_business') {
+                isQueryStringSet = true;
+                availableFilters.line_of_business = parseInt(params[key]);
+            }
+        }
+        if (!isQueryStringSet) {
+            availableFilters.line_of_business = company_name ? props.quoteTypeIdEnum.Business : props.quoteTypeIdEnum.Health;
+        }
         return true;
     }
 

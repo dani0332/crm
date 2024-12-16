@@ -13,7 +13,6 @@ use App\Models\BusinessInsuranceType;
 use App\Models\Department;
 use App\Models\PaymentStatus;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\PaymentStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;

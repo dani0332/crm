@@ -25,7 +25,8 @@ class ExportSearchLeadsOrEndorsementsRequest extends FormRequest
             'list' => 'required|string',
             'code' => 'nullable|string',
             'insured_name' => 'nullable|string',
-            'member_name' => 'nullable|string',
+            'member_first_name' => 'nullable|string',
+            'member_last_name' => 'nullable|string',
             'company_name' => 'nullable|string',
             'policy_number' => 'nullable|string',
             'mobile_no' => 'nullable|string',
@@ -71,7 +72,8 @@ class ExportSearchLeadsOrEndorsementsRequest extends FormRequest
         $fieldPresent = false;
         $autoApplyDateRangeFields = [
             'insured_name',
-            'member_name',
+            'member_first_name',
+            'member_last_name',
             'company_name',
             'policy_number',
             'quote_status',
