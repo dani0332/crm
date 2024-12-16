@@ -474,7 +474,7 @@ class QuoteDocumentService extends BaseService
 
         $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
 
-        info('watermark job started for Quote: ' . $uuid . ' source file read successfully. File path: ' . $outputFile);
+        info('watermark job started for Quote: '.$uuid.' source file read successfully. File path: '.$outputFile);
         $watermarkImagePath = public_path('images/watermark1.png');
         $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
 
