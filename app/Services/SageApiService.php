@@ -122,6 +122,7 @@ class SageApiService
             };
             $responseBody = is_array($response->json()) ? json_encode($response->json()) : $response->body();
             info('Sage API : '.$endPoint.' : '.$responseBody);
+
             return $responseBody;
         } catch (Exception $e) {
             logger()->error('Sage API : '.$endPoint.' : '.$e->getMessage());
