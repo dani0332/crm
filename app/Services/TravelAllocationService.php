@@ -47,6 +47,7 @@ class TravelAllocationService extends AllocationService
             info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quote->uuid}");
             if ($quote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
                 $previousAdvisorId = $this->getPreviousAdvisor($quote->customer_id)->advisor_id ?? null;
+                $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
                 info("lead is renewal pervious advisor-ID:{$previousAdvisorId} lead uuid: {$quote->uuid} | Time: ".now());
             }
             $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC, $previousAdvisorId ?? null);
