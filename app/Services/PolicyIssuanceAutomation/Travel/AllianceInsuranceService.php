@@ -528,6 +528,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function updateQuoteApiIssuanceStatusAndAllocate($quote, $status = null, $issuanceStatus = null)
     {
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Start');
+
         $policyIssuanceAutomation = $quote->policyIssuance;
         $isPolicyBooked = $quote->quote_status_id === QuoteStatusEnum::PolicyBooked;
         $isPolicyBookingFailed = $quote->quote_status_id === QuoteStatusEnum::POLICY_BOOKING_FAILED;
@@ -547,20 +549,26 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 $issuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
             }
         }
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code, [
+            'insurerApiStatus' => $insurerApiStatus,
+            'apiIssuanceStatus' => $apiIssuanceStatus,
+            'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted,
+            'isPolicyBooked' => $isPolicyBooked,
+            'isPolicyBookingFailed' => $isPolicyBookingFailed,
+        ]);
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Start');
-
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$status);
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote Insurer API  Status : '.$status);
         if ($status) {
             $quote->update(['insurer_api_status_id' => $status]);
         }
+
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$issuanceStatus);
         if ($issuanceStatus) {
             $quote->update(['api_issuance_status_id' => $issuanceStatus]);
         }
 
         $this->allocateLead($quote->uuid);
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' start allocation of failed lead ');
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' start allocation of lead ');
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
