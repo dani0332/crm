@@ -20,17 +20,17 @@ class WatermarkDocumentsJob implements ShouldQueue
     public $tries = 3;
     private $quoteDocumentId;
     private $tempFilePath;
-    private $data;
+    private $uuid;
     private $documentTypeId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteDocumentId, $tempFilePath, $data, $documentTypeId)
+    public function __construct($quoteDocumentId, $tempFilePath, $uuid, $documentTypeId)
     {
         $this->quoteDocumentId = $quoteDocumentId;
         $this->tempFilePath = $tempFilePath;
-        $this->data = $data;
+        $this->uuid = $uuid;
         $this->documentTypeId = $documentTypeId;
     }
 
@@ -58,11 +58,11 @@ class WatermarkDocumentsJob implements ShouldQueue
         $docName = str_replace('original_', '', $quoteDocument->doc_name);
 
         if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') {
-            $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->data, $documentType);
+            $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
         } elseif (in_array($fileMimeType, ['image/jpeg', 'image/png', 'image/jpg'])) {
-            $watermarkData = $watermarkService->watermarkImage($quoteDocument->doc_url, $docName, $this->data, $documentType);
+            $watermarkData = $watermarkService->watermarkImage($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
         } elseif (in_array($fileMimeType, ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'])) {
-            $watermarkData = $watermarkService->watermarkWordDocs($quoteDocument->doc_url, $docName, $this->data, $documentType);
+            $watermarkData = $watermarkService->watermarkWordDocs($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
         }
 
         // Update the document with watermark data

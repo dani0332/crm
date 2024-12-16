@@ -447,11 +447,11 @@ class QuoteDocumentService extends BaseService
      *
      * @param [type] $file
      * @param [type] $docName
-     * @param [type] $data
+     * @param [type] $uuid
      * @param [type] $documentType
      * @return void
      */
-    public function watermarkPdf($file, $docName, $data, $documentType)
+    public function watermarkPdf($file, $docName, $uuid, $documentType)
     {
         if (! file_exists(storage_path('/temp'))) {
             mkdir(storage_path('/temp'), 0775, true);
@@ -470,12 +470,11 @@ class QuoteDocumentService extends BaseService
         // Convert the PDF to a version compatible with FPDI
         shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
 
-        info('watermark job starting for Quote: ' . $data . ' File Name: ' . $docName);
         $pdf = new Fpdi;
 
         $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
 
-        info('watermark job source file created For Quote: ' . $data . ' File path: ' . $outputFile . ' Page Count: ' . $pageCount);
+        info('watermark job started for Quote: ' . $uuid . ' source file read successfully. File path: ' . $outputFile);
         $watermarkImagePath = public_path('images/watermark1.png');
         $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
 
@@ -503,7 +502,7 @@ class QuoteDocumentService extends BaseService
             unlink($tempFilePath);
         }
 
-        return $this->storeWatermarkedMedia($docName, $data, $documentType);
+        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
     /**
@@ -511,11 +510,11 @@ class QuoteDocumentService extends BaseService
      *
      * @param [type] $file
      * @param [type] $docName
-     * @param [type] $data
+     * @param [type] $uuid
      * @param [type] $documentType
      * @return void
      */
-    public function watermarkImage($file, $docName, $data, $documentType)
+    public function watermarkImage($file, $docName, $uuid, $documentType)
     {
         if (! file_exists(storage_path('/temp'))) {
             mkdir(storage_path('/temp'), 0775, true);
@@ -557,31 +556,25 @@ class QuoteDocumentService extends BaseService
 
         $image->save(storage_path('temp/'.$docName));
 
-        return $this->storeWatermarkedMedia($docName, $data, $documentType);
+        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
     /**
      * store watermarked media
      *
      * @param [type] $docName
-     * @param [type] $data
+     * @param [type] $uuid
      * @param [type] $documentType
      * @return void
      */
-    public function storeWatermarkedMedia($docName, $data, $documentType)
+    public function storeWatermarkedMedia($docName, $uuid, $documentType)
     {
         $watermarkedFile = new \Illuminate\Http\File(storage_path('temp/'.$docName));
 
         // Set the filename for Azure storage
-        $watermarkedFileNameAzure = uniqid().'_'.$data.'_'.$docName;
+        $watermarkedFileNameAzure = uniqid().'_'.$uuid.'_'.$docName;
         // upload file to azure
         $filePathAzure = Storage::disk('azureIM')->putFileAs('documents/'.$documentType->folder_path, $watermarkedFile, $watermarkedFileNameAzure);
-
-        // Generate a unique UUID
-        $docUuid = uniqid();
-        while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
-            $docUuid = uniqid().rand(1, 100);
-        }
 
         // delete temp file
         if (file_exists(storage_path('temp/'.$docName))) {
@@ -594,7 +587,7 @@ class QuoteDocumentService extends BaseService
         ];
     }
 
-    public function watermarkWordDocs($file, $docName, $data, $documentType)
+    public function watermarkWordDocs($file, $docName, $uuid, $documentType)
     {
         if (! file_exists(storage_path('/temp'))) {
             mkdir(storage_path('/temp'), 0775, true);
@@ -616,7 +609,7 @@ class QuoteDocumentService extends BaseService
         $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
         $objWriter->save($tempFile);
 
-        return $this->storeWatermarkedMedia($docName, $data, $documentType);
+        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
     public function isEnableUploadDocument($quoteStatusId)
