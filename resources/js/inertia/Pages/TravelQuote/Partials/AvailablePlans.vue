@@ -174,6 +174,10 @@ const onUpdatePlan = () => {
               <dt class="font-medium">Discount Price</dt>
               <dd>{{ props.plan.discountPremium }}</dd>
             </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Insurer Quote Number</dt>
+              <dd>{{ props.plan.insurerQuoteNo }}</dd>
+            </div>
           </dl>
         </TabPanel>
 
