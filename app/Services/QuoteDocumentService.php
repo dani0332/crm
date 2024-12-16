@@ -472,7 +472,7 @@ class QuoteDocumentService extends BaseService
             // Convert the PDF to a version compatible with FPDI
             shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
 
-            info("Watermarking starting for Quote: ".$data);
+            info("Watermarking starting for Quote: ".$data." File Name: ".$docName);
             $pdf = new Fpdi;
 
             $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
