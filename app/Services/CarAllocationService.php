@@ -35,6 +35,7 @@ use App\Models\UserTeams;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Enums\RuleEnum;
+use App\Enums\CarRegistrationType;
 
 class CarAllocationService extends AllocationService
 {
@@ -386,7 +387,7 @@ class CarAllocationService extends AllocationService
                 ||
                 ($commercialCarMake && $commercialCarModel)
             ) {
-                if($lead->registration_type == 'Company') {
+                if($lead->registration_type == CarRegistrationType::COMPANY) {
 
                     return $this->getRulesForVehicleUse($lead);
                 }
