@@ -406,13 +406,13 @@
         //  'selectedPlanIds','hasAdultAndSeniorMember'
 
         foreach ($quotePlans->quotes->plans as &$quotePlan) {
-            $plans[$quotePlan->planId] = $quotePlan;
+            $plans[$quotePlan->id] = $quotePlan;
             $quotePlan->total = 0;
             if (!isset($quotePlan->vat)) {
                 $quotePlan->vat = 0;
             }
 
-            if (!isset($quotePlan->planId) || !in_array($quotePlan->planId, $planIds)) {
+            if (!isset($quotePlan->id) || !in_array($quotePlan->id, $planIds)) {
                 continue;
             }
 
@@ -475,7 +475,7 @@
             }
         }
 
-        $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('planId')->toArray();
+        $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
 
         $features = [
             // Content
