@@ -403,7 +403,7 @@ onBeforeMount(() => {
                   </template>
                 </div>
                 <div
-                  class="grid sm:grid-cols-2 mb-2 ml-10"
+                  class="grid sm:grid-cols-2 mb-2 md:ml-10"
                   v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car"
                 >
                   <template
