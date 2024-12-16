@@ -107,6 +107,7 @@ class CarAllocation implements Allocation
         }
 
         if ($advisorId && $advisorId != 0) {
+
             $this->assignLead($lead, $advisorId, $tier);
 
             if ($lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {

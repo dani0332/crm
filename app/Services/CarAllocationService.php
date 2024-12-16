@@ -94,11 +94,26 @@ class CarAllocationService extends AllocationService
             });
 
             $carValue = 0;
+            if($carLead->registration_type == CarRegistrationType::COMPANY) {
+                if(!$carLead->is_commercial){
+                    if (! empty($axaValuation)) {
+                        $firstAxaValuation = reset($axaValuation); // Get the first element of the array
+                        $carValue = $firstAxaValuation->carValue;
+                    }
+                }
+                else {
+                    $carValue = $carLead->car_value;
+                }
 
-            if (! empty($axaValuation)) {
-                $firstAxaValuation = reset($axaValuation); // Get the first element of the array
-                $carValue = $firstAxaValuation->carValue;
             }
+            else {
+                if (! empty($axaValuation)) {
+                    $firstAxaValuation = reset($axaValuation); // Get the first element of the array
+                    $carValue = $firstAxaValuation->carValue;
+                }
+            }
+
+
 
             info('car value as per valuation engine for GIG is '.$carValue.' for lead : '.$carLead->uuid);
             $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
