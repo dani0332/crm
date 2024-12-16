@@ -3,10 +3,9 @@
 namespace Database\Seeders;
 
 use App\Enums\TeamNameEnum;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Team;
 use App\Enums\TeamTypeEnum;
+use App\Models\Team;
+use Illuminate\Database\Seeder;
 
 class TravelRenewalTeamSeeder extends Seeder
 {
@@ -19,8 +18,8 @@ class TravelRenewalTeamSeeder extends Seeder
             ['name' => TeamNameEnum::TRAVEL_RENEWALS],
             [
                 'type' => TeamTypeEnum::TEAM,
-                'is_active'=>1,
-                'slabs_count'=>0,
+                'is_active' => 1,
+                'slabs_count' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
 
