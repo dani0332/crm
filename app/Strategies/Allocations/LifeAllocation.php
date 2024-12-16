@@ -46,17 +46,17 @@ class LifeAllocation extends BaseAllocation
 
     private function getCountriesMapping()
     {
-        $a = [
+        $catACountryMapping = [
             'South African', 'Australian', 'New Zealander', 'Canadian', 'United Kingdom', 'Lebanese', 'Filipino', 'American', 'Europe',
         ];
 
-        $b = cache()->remember('countries_category_mapping', now()->addHours(24), function () use ($a) {
-            return Nationality::whereNotIn('code', [...$a])->pluck('code')->toArray();
+        $catBCountryMapping = cache()->remember('countries_category_mapping', now()->addHours(24), function () use ($catACountryMapping) {
+            return Nationality::whereNotIn('code', [...$catACountryMapping])->pluck('code')->toArray();
         });
 
         return [
-            self::CAT_A => $a,
-            self::CAT_B => $b,
+            self::CAT_A => $catACountryMapping,
+            self::CAT_B => $catBCountryMapping,
         ];
     }
 
