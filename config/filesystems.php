@@ -86,9 +86,9 @@ return [
             'url' => env('AZURE_IM_STORAGE_URL'),
             'prefix' => null,
         ],
-        'pdmigrations' => [
+        'instantchat' => [
             'driver' => 'local',
-            'root' => storage_path('PDMigrations'),
+            'root' => storage_path('InstantChat'),
         ],
     ],
 
