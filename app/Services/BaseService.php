@@ -463,7 +463,6 @@ class BaseService
         $this->upsertManualAllocationCount($lead->advisor_id, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType->id());
 
         $this->addOrUpdateQuoteViewCount($lead, $quoteType->id(), $userId);
-        $lead->auto_assigned = false;
 
         $lead->save();
     }
