@@ -43,7 +43,6 @@ final class TeamNameEnum extends Enum
     public const Bike_Team = 'Bike - Team';
     public const TRAVEL_RENEWALS = 'Travel - Renewals';
 
-
     public static function getTeamID(string $teamName)
     {
         $teamIDs = [
