@@ -510,6 +510,13 @@ class SplitPaymentService
 
     private function getInsuranceCompany($quote, $modelType)
     {
+        if ($modelType === QuoteTypes::CAR->value) {
+            $isCommercialVehicle = app(LeadAllocationService::class)->isCommercialVehicles($quote);
+            if ($isCommercialVehicle) {
+                $quote->load(['insuranceProvider']);
+                return $quote->insuranceProvider->text;
+            }
+        }
         if (in_array($modelType, [QuoteTypes::BUSINESS->value, QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::HOME->value])) {
             $quote->load(['insuranceProviderDetails']);
 
@@ -520,7 +527,6 @@ class SplitPaymentService
             return $quote->plan->text;
         } else {
             $quote->load(['insuranceProvider']);
-
             return $quote->insuranceProvider->text;
         }
     }
