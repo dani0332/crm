@@ -15,7 +15,7 @@ class EndorsementNumberSeeder extends Seeder
     public function run(): void
     {
         Permission::firstOrCreate([
-            'name' => PermissionsEnum::TAP_BET_ACCESS,
+            'name' => PermissionsEnum::TAP_BETA_ACCESS,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

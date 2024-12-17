@@ -387,7 +387,7 @@ const isEFOrEN = computed(() => {
                 <div
                   class="grid sm:grid-cols-2"
                   :class="isEFOrEN ?  'md:ml-10' : ''"
-                  v-if="can(permissionsEnum.TAP_BET_ACCESS)"
+                  v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
                 >
                   <dt class="font-bold">ENDORSEMENT NUMBER</dt>
                   <dd>
