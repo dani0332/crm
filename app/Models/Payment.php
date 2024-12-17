@@ -18,13 +18,15 @@ class Payment extends Model implements Auditable
         'updated',
     ];
     protected $table = 'payments';
-    protected $primaryKey = 'code';
-    public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount',
+    protected $fillable = [
+        'code', 'payment_status_id', 'plan_id', 'captured_amount',
         'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by',
         'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'total_payments', 'credit_approval', 'frequency', 'discount_type', 'discount_reason', 'custom_reason', 'notes', 'total_price', 'collection_date', 'payer_name', 'paid_by',
         'discount_value', 'total_amount', 'payment_allocation_status', 'decline_reason_id', 'decline_custom_reason', 'discount_custom_reason',
+        'commission_vat', 'commission_without_vat', 'commission_vat_applicable', 'commission_vat_not_applicable', 'commission', 'tax_invoice_number', 'broker_invoice_number', 'insurer_invoice_date', 'invoice_description', 'insurer_tax_number', 'transaction_payment_status', 'insurer_commmission_invoice_number', 'commmission_percentage',
+        'send_update_log_id', 'policy_expiry_date', 'paymentable_id', 'paymentable_type', 'price_vat_applicable', 'price_vat',
+
     ];
     protected $forceDeleting = true;
 
@@ -165,6 +167,16 @@ class Payment extends Model implements Auditable
         return $this->belongsTo(HealthPlan::class, 'plan_id');
     }
 
+    public function carPlan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
+    public function bikePlan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
     // Should be removed because it's already declared above paymentStatusLogs()
     public function paymentStatusLog()
     {
@@ -181,6 +193,11 @@ class Payment extends Model implements Auditable
         return $this->hasMany(PaymentSplits::class, 'code', 'code');
     }
 
+    public function policyIssuer()
+    {
+        return $this->belongsTo(User::class, 'policy_issuer_id', 'id')->select(['id', 'name', 'email']);
+    }
+
     // render payment status PAID if payment status is CAPTURED
     public function getPaymentStatusIdAttribute($value)
     {
@@ -191,5 +208,20 @@ class Payment extends Model implements Auditable
         } else {
             return $value;
         }
+    }
+
+    public function isPaymentAuthorized()
+    {
+        return $this->payment_status_id == PaymentStatusEnum::AUTHORISED;
+    }
+
+    public function sendUpdateLog()
+    {
+        return $this->belongsTo(SendUpdateLog::class, 'send_update_log_id', 'id');
+    }
+
+    public function scopeMainLeadPayment($q)
+    {
+        return $q->whereNull('send_update_log_id');
     }
 }

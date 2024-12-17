@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Http\Requests\MemberDetailRequest;
@@ -296,25 +297,116 @@ class HealthQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
+
+        $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
+
+        $newBusinessTeam = in_array(TeamNameEnum::RM_NB, $userTeams);
+        $renewalsTeam = in_array(TeamNameEnum::RM_RENEWALS, $userTeams);
+
+        $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
+
+        $isManagerOrDeputy = auth()->user()->hasAnyRole(RolesEnum::HealthManager, RolesEnum::HealthDeputyManager, RolesEnum::HealthRenewalManager);
+
+        if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
+            $request->merge(['is_renewal' => quoteTypeCode::yesText]);
+        } elseif ($request->is_renewal === null && $newBusinessTeam) {
+            $request->merge(['is_renewal' => quoteTypeCode::noText]);
+        } elseif ($request->is_renewal === null && $renewalsTeam) {
+            $request->merge(['is_renewal' => quoteTypeCode::yesText]);
+        }
+
         $quotes = [
             ['id' => QuoteStatusEnum::Lost, 'title' => quoteStatusCode::LOST, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Lost, $request)],
             ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Allocated, $request)],
-            ['id' => QuoteStatusEnum::RenewalTermsReceived, 'title' => quoteStatusCode::RENEWAL_TERMS_RECEIVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::RenewalTermsReceived, $request)],
             ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::RenewalTermsReceived, 'title' => quoteStatusCode::RENEWAL_TERMS_RECEIVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::RenewalTermsReceived, $request)],
             ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::FollowedUp, $request)],
             ['id' => QuoteStatusEnum::ApplicationPending, 'title' => quoteStatusCode::APPLICATION_PENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationPending, $request)],
             ['id' => QuoteStatusEnum::ApplicationSubmitted, 'title' => quoteStatusCode::APPLICATION_SUBMITTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationSubmitted, $request)],
             ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::InNegotiation, $request)],
             ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PaymentPending, $request)],
+            ['id' => QuoteStatusEnum::PolicyDocumentsPending, 'title' => quoteStatusCode::POLICY_DOCUMENTS_PENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyDocumentsPending, $request)],
             ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PolicySentToCustomer, 'title' => quoteStatusCode::POLICY_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicySentToCustomer, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyIssued, $request)],
+            ['id' => QuoteStatusEnum::PolicyBooked, 'title' => quoteStatusCode::POLICY_BOOKED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyBooked, $request)],
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $userId = auth()->id();
-        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if (array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)) {
+
+        $newBusiness = [
+            QuoteStatusEnum::Quoted => 0,
+            QuoteStatusEnum::FollowedUp => 1,
+            QuoteStatusEnum::ApplicationPending => 2,
+            QuoteStatusEnum::ApplicationSubmitted => 3,
+            QuoteStatusEnum::InNegotiation => 4,
+            QuoteStatusEnum::PaymentPending => 5,
+            QuoteStatusEnum::PolicyDocumentsPending => 7,
+            QuoteStatusEnum::TransactionApproved => 8,
+            QuoteStatusEnum::PolicySentToCustomer => 9,
+            QuoteStatusEnum::PolicyBooked => 10,
+        ];
+
+        $renewals = [
+            QuoteStatusEnum::Lost => 0,
+            QuoteStatusEnum::Allocated => 1,
+            QuoteStatusEnum::RenewalTermsReceived => 2,
+            QuoteStatusEnum::Quoted => 3,
+            QuoteStatusEnum::InNegotiation => 4,
+            QuoteStatusEnum::ApplicationPending => 5,
+            QuoteStatusEnum::PaymentPending => 6,
+            QuoteStatusEnum::PolicyDocumentsPending => 7,
+            QuoteStatusEnum::TransactionApproved => 8,
+            QuoteStatusEnum::PolicySentToCustomer => 9,
+            QuoteStatusEnum::PolicyBooked => 10,
+        ];
+
+        if ($areBothTeamsPresent || $isManagerOrDeputy) {
+            if ($request->is_renewal === quoteTypeCode::yesText) {
+                $renewalKeys = array_keys($renewals);
+                $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                    return in_array($quote['id'], $renewalKeys);
+                });
+
+                // Sort filtered quotes based on the renewals array order
+                usort($quotes, function ($a, $b) use ($renewals) {
+                    return $renewals[$a['id']] <=> $renewals[$b['id']];
+                });
+            }
+            if ($request->is_renewal === quoteTypeCode::noText) {
+                $newBusinessKeys = array_keys($newBusiness);
+                $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
+                    return in_array($quote['id'], $newBusinessKeys);
+                });
+
+                // Sort filtered quotes based on the newBusiness array order
+                usort($quotes, function ($a, $b) use ($newBusiness) {
+                    return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
+                });
+            }
+
+        } elseif ($newBusinessTeam) {
+            $newBusinessKeys = array_keys($newBusiness);
+            $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
+                return in_array($quote['id'], $newBusinessKeys);
+            });
+
+            // Sort filtered quotes based on the newBusiness array order
+            usort($quotes, function ($a, $b) use ($newBusiness) {
+                return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
+            });
+        } elseif ($renewalsTeam) {
+            $renewalKeys = array_keys($renewals);
+            $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                return in_array($quote['id'], $renewalKeys);
+            });
+
+            // Sort filtered quotes based on the renewals array order
+            usort($quotes, function ($a, $b) use ($renewals) {
+                return $renewals[$a['id']] <=> $renewals[$b['id']];
+            });
+        } elseif (array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Lost,
                 QuoteStatusEnum::Allocated,
@@ -347,6 +439,8 @@ class HealthQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::HEALTH->id(),
             'quoteType' => QuoteTypes::HEALTH->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : HealthQuoteRepository::getData(true, true),
+            'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
+            'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
         ]);
     }
 }

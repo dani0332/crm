@@ -9,6 +9,8 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +18,8 @@ use Illuminate\Support\Facades\URL;
 
 class CycleQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -60,25 +64,43 @@ class CycleQuoteRepository extends BaseRepository
      */
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        $request = request();
-
-        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
-        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
 
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'paymentStatus',
+            'payments',
+            'quoteDetail',
+            'renewalBatchModel',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
+            ->when(isset(request()->advisors) && ! empty(request()->advisors), function ($query) {
+                $advisors = request()->advisors;
+                $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
+            })
+            ->when(! empty(request()->advisor_assigned_date), function ($query) {
+                $dateArray = request()->advisor_assigned_date;
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                });
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy($sort_by, $sort_type);
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            return 0;
+            // return $query->count();
         }
 
         return ($forExport) ? $query->get() : $query;
@@ -112,7 +134,7 @@ class CycleQuoteRepository extends BaseRepository
 
             $quote->cycleQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new CycleQuote())->allowedColumns())
+                Arr::only($data, (new CycleQuote)->allowedColumns())
             );
 
             return $quote;
@@ -155,15 +177,18 @@ class CycleQuoteRepository extends BaseRepository
                         'paymentSplits' => function ($query) {
                             $query->orderBy('sr_no', 'asc');
                         },
-                        'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
+                        'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentable',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'customer',
                 'createdBy',
                 'updatedBy',
+                'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
@@ -173,6 +198,9 @@ class CycleQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
+                'policy_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping

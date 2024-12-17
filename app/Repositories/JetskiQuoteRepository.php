@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\URL;
 
 class JetskiQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -99,7 +102,7 @@ class JetskiQuoteRepository extends BaseRepository
         return $this->byQuoteTypeId(QuoteTypes::JETSKI->id())
             ->where($column, $value)
             ->with(['jetskiQuote', 'nationality', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();
@@ -110,15 +113,22 @@ class JetskiQuoteRepository extends BaseRepository
      */
     public function fetchGetData($forExport = false)
     {
+
         $query = $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with([
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'paymentStatus',
+            'payments',
+            'renewalBatchModel',
         ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
         })->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->withFakeLeadCriteria();
+
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }

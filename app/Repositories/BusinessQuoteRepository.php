@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
 use App\Traits\CentralTrait;
+use Illuminate\Support\Facades\DB;
 
 class BusinessQuoteRepository extends BaseRepository
 {
@@ -58,8 +59,9 @@ class BusinessQuoteRepository extends BaseRepository
             $query->where('advisor_id', auth()->user()->id);
         })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy('created_at', 'desc');
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+        $this->adjustQueryByDateFilters($query, 'business_quote_request');
+        $query->orderBy('business_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
             return $query->count();
@@ -85,7 +87,9 @@ class BusinessQuoteRepository extends BaseRepository
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'quoteRequestEntityMapping' => function ($entityMapping) {
@@ -97,7 +101,7 @@ class BusinessQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                \DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
             ])
             ->firstOrFail();
 

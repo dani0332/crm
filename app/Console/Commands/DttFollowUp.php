@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
 use App\Jobs\CarRevivalFollowUpEmailJob;
 use App\Models\ApplicationStorage;
@@ -12,8 +13,8 @@ use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
-use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use Carbon\Carbon;
@@ -80,13 +81,14 @@ class DttFollowUp extends Command
         $logPrefix = 'carRevivalFollowUpEmailJob -';
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
+        $leadStatusArray = [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake];
         foreach ($unreplied as $item) {
             $created_at = $item->created_at;
             $lead = CarQuote::where('uuid', $item->uuid)->first();
 
             //Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
             //or if the source is Revival Paid or if the lead is assigned to an advisor
-            if (! empty($created_at) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
+            if (! empty($created_at) && ! in_array($lead->quote_status_id, $leadStatusArray) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
                 $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
                 $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
                 $aftertThirteenDays = Carbon::parse($created_at)->addDays(13)->startOfDay();

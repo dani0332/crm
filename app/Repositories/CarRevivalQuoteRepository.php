@@ -20,6 +20,7 @@ use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class CarRevivalQuoteRepository extends BaseRepository
@@ -161,27 +162,11 @@ class CarRevivalQuoteRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchupdateQuote($data)
+    public function fetchupdateQuote(CarQuote $lead)
     {
-        $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
-
-        $subject = $inbound->Subject();
-
-        preg_match('/(?<=CAR-)\w+/', $subject, $matches);
-        if (! empty($matches[0])) {
-            $uuid = $matches[0];
-            $lead = CarQuote::where('uuid', $uuid)->first();
-            if (! $lead) {
-                info('UpdateLeadSource - UUID - '.$uuid.' - not found');
-
-                return false;
-            }
-            $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-            DttRevival::where('uuid', $uuid)->update(['reply_received' => 1]);
-            info('UpdateLeadSource  - UUID - '.$uuid.' - source updated to Revival');
-        } else {
-            info('UpdateLeadSource uuid not found in subject');
-        }
+        $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+        DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+        info('UpdateLeadSource  - UUID - '.$lead->uuid.' - source updated to Revival');
     }
 
     public function fetchGetReportsData($request)
@@ -239,5 +224,35 @@ class CarRevivalQuoteRepository extends BaseRepository
         }
 
         return $data;
+    }
+
+    public function fetchUpdate($uuid, $data)
+    {
+        $lead = $this->where('uuid', $uuid)->firstOrFail();
+        $lead->update(Arr::only($data, [
+            'first_name',
+            'last_name',
+            'dob',
+            'email',
+            'mobile_no',
+            'nationality_id',
+            'uae_license_held_for_id',
+            'back_home_license_held_for_id',
+            'car_make_id',
+            'car_model_id',
+            'cylinder',
+            'car_model_detail_id',
+            'year_of_manufacture',
+            'car_value',
+            'vehicle_type_id',
+            'seat_capacity',
+            'emirate_of_registration_id',
+            'car_type_insurance_id',
+            'currently_insured_with',
+            'claim_history_id',
+            'additional_notes',
+        ]));
+
+        return $lead;
     }
 }

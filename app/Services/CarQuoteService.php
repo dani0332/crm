@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -18,6 +20,8 @@ use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\CustomerAdditionalContact;
+use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
@@ -33,7 +37,8 @@ use PDF;
 
 class CarQuoteService extends BaseService
 {
-    protected $query;
+    private $query;
+    private $exportQuery;
     protected $httpService;
     protected $childUserIds = [];
     protected $leadAllocationService;
@@ -57,8 +62,9 @@ class CarQuoteService extends BaseService
                 'cqr.id',
                 'cqr.first_name',
                 'cqr.last_name',
-                'cqr.email',
-                'cqr.mobile_no',
+                DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
+                // 'cqr.email',
+                // 'cqr.mobile_no',
                 DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
                 'cqr.car_value',
                 'cqr.additional_notes',
@@ -66,6 +72,7 @@ class CarQuoteService extends BaseService
                 'cqr.year_of_manufacture',
                 'cqr.code',
                 'cqr.is_ecommerce',
+                'cqr.sic_advisor_requested',
                 'cqr.premium',
                 DB::raw('DATE_FORMAT(cqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                 'cqr.payment_gateway',
@@ -81,7 +88,7 @@ class CarQuoteService extends BaseService
                 'cqr.policy_number',
                 'cqr.previous_quote_id',
                 'cqr.renewal_batch',
-                DB::raw('DATE_FORMAT(cqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
+                'cqr.policy_expiry_date',
                 'cqr.order_reference',
                 'cqr.payment_reference',
                 'cqr.calculated_value',
@@ -105,7 +112,15 @@ class CarQuoteService extends BaseService
                 'pra.name AS previous_advisor_id_text',
                 'cqr.payment_status_id',
                 'ps.text AS payment_status_id_text',
+                'cqr.price_vat_not_applicable',
+                'cqr.price_vat_applicable',
+                'cqr.price_with_vat',
+                'cqr.vat',
+                'cqr.insurer_quote_number',
+                'cqr.policy_issuance_status_id',
+                'cqr.policy_issuance_status_other',
                 'cqr.plan_id',
+                'cqr.payment_paid_at',
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
@@ -138,8 +153,8 @@ class CarQuoteService extends BaseService
                 'cqr.back_home_license_held_for_id',
                 'cqr.kyc_decision',
                 'ulhfs.TEXT as back_home_license_held_for_id_text',
-                DB::raw('DATE_FORMAT(cqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
-                DB::raw('DATE_FORMAT(cqr.policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
+                'cqr.policy_start_date',
+                'cqr.policy_issuance_date',
                 'cqr.customer_id',
                 'cqr.parent_duplicate_quote_id',
                 'cqr.renewal_import_code',
@@ -172,6 +187,7 @@ class CarQuoteService extends BaseService
                 'c.insured_last_name',
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
+                'c.receive_marketing_updates',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -183,9 +199,25 @@ class CarQuoteService extends BaseService
                 //'cqr.prefill_plan_selected_at',
                 //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
-                //'cqr.aml_status_id',
-                DB::raw('GROUP_CONCAT(team.name) as team_name')
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                'cqr.policy_booking_date',
+                DB::raw('GROUP_CONCAT(team.name) as team_name'),
+                'cqr.insurance_provider_id',
+                'cqr.insurer_quote_number',
+                'cqr.price_vat_applicable',
+                'cqr.price_vat_not_applicable',
+                'cqr.price_with_vat',
+                'cpdip.text as insurer_name',
+                'cqr.policy_booking_date',
+                DB::raw('GROUP_CONCAT(team.name) as team_name'),
+                DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
+                'cqr.insly_migrated',
+                'cqr.aml_status',
             )
+            ->leftJoin('payments as py', function ($join) {
+                $join->on('py.paymentable_id', '=', 'cqr.id')
+                    ->where('py.paymentable_type', '=', CarQuote::class);
+            })
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
@@ -201,6 +233,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+            ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
             //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
             //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
@@ -240,7 +273,7 @@ class CarQuoteService extends BaseService
                 'cqr.updated_at as updated_at',
                 'n.TEXT AS nationality_id_text',
                 'cqr.policy_number',
-                'cqr.renewal_expiry_date',
+                'cqr.policy_expiry_date',
                 'cqr.created_by',
                 'cqr.updated_by',
                 'ulhf.TEXT AS uae_license_held_for_id_text',
@@ -266,6 +299,7 @@ class CarQuoteService extends BaseService
                 't.cost_per_lead as cost_per_lead',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
+                'cqr.insly_migrated',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -401,9 +435,6 @@ class CarQuoteService extends BaseService
         if ($request->trim) {
             $carQuote->car_model_detail_id = $request->trim;
         }
-        if ($request->policy_start_date) {
-            $carQuote->policy_start_date = $request->policy_start_date;
-        }
         if ($request->renewal_batch) {
             $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
         }
@@ -455,20 +486,23 @@ class CarQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('cqr.uuid', $id)->first();
+        return $this->query->addSelect(['cqr.email', 'cqr.mobile_no'])->where('cqr.uuid', $id)->first();
     }
 
     public function updateChildRecord($id)
     {
         $childRecord = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date ?? null;
 
-        if (! $childRecord) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
+            ['car_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
+
+        info('updateChildRecord - leadId : '.$id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
 
         return $oldAdvisorAssignedDate;
     }
@@ -559,28 +593,31 @@ class CarQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return CarQuoteRequestDetail::create([
-            'car_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return CarQuoteRequestDetail::firstOrCreate(
+            ['car_quote_request_id' => $id],
+        );
     }
 
     public function getEntityPlain($id)
     {
-        return CarQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        return CarQuote::where('id', $id)->with([
+            'insuranceProviderDetails',
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                            'processJob',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                $payment->orderBy('created_at');
+            },
+        ])->first();
     }
 
     public function fillModelProperties()
@@ -631,7 +668,7 @@ class CarQuoteService extends BaseService
             'additional_notes' => 'textarea|',
             'advisor_id' => 'select|title||multiple|ss:17',
             'policy_number' => 'input|text|title',
-            'renewal_expiry_date' => 'input|date|title|range|ss:15',
+            'policy_expiry_date' => 'input|date|title|range|ss:15',
             'is_gcc_standard' => '|static|title|Yes,No',
             'is_modified' => '|static|title|Yes,No',
             'premium' => 'input|number',
@@ -756,8 +793,8 @@ class CarQuoteService extends BaseService
             case 'renewal_batch':
                 $title = 'Renewal Batch #';
                 break;
-            case 'renewal_expiry_date':
-                $title = 'Renewal Expiry Date';
+            case 'policy_expiry_date':
+                $title = 'Policy Expiry Date';
                 break;
             case 'policy_number':
                 $title = 'Policy Number';
@@ -877,7 +914,6 @@ class CarQuoteService extends BaseService
             $request['created_at'] = $request->created_at_start;
         }
 
-        // if ($request->ajax()) {
         $this->addLeadViewEligibilityCheck();
 
         if (
@@ -892,9 +928,9 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
             $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
-        if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
-            $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
-            $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
+            $dateFrom = $this->parseDate($request['policy_expiry_date'], true);
+            $dateTo = $this->parseDate($request['policy_expiry_date_end'], false);
             $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
@@ -902,7 +938,7 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at)) {
+        if (! $request->code && ! $request->email && ! $request->mobile_no && ! $request->created_at && ! $request->payment_due_date && ! $request->booking_date && ! $request->previous_quote_policy_number && ! $request->renewal_batch && ! $request->insurer_tax_invoice_number && ! $request->insurer_commission_tax_invoice_number) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (
@@ -912,6 +948,11 @@ class CarQuoteService extends BaseService
             && empty($request->code)
             && empty($request->renewal_batch)
             && empty($request->quote_batch_id)
+            && empty($request->payment_due_date)
+            && empty($request->booking_date)
+            && ! isset($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
@@ -919,8 +960,21 @@ class CarQuoteService extends BaseService
         }
 
         if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
-            CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr');
+            CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr', QuoteTypeId::Car);
         }
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
+
+            $this->query->where('cqr.sic_advisor_requested', $request->sic_advisor_requested);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
         if ($request->transaction_approved_dates) {
 
             $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
@@ -934,12 +988,21 @@ class CarQuoteService extends BaseService
 
             $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
         }
-        if ($request->teams) {
+        if (! empty($request->teams) && is_array($request->teams)) {
             $this->query->whereIn('team.id', $request->teams);
         }
 
+        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+            $this->query->where(function ($query) use ($request) {
+                $query->where('cqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('cqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
+        }
+
+        $this->adjustQueryByDateFilters($this->query, 'cqr');
+
         foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
+            if (! empty($request[$item]) && $item != 'created_at' && $item != 'policy_expiry_date' && $item != 'advisor_assigned_date') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
@@ -975,7 +1038,17 @@ class CarQuoteService extends BaseService
                 }
             }
         }
-        // }
+
+        $wheres = collect($this->query->wheres)->pluck('', 'column')->toArray();
+        if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch', 'insurer_tax_invoice_number', 'insurer_commission_tax_invoice_number'])) {
+            $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
+
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
+        } else {
+            return $this->query->orderBy('cqr.created_at', 'DESC');
+        }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -990,7 +1063,7 @@ class CarQuoteService extends BaseService
 
     private function addLeadViewEligibilityCheck()
     {
-        if (Auth::user()->hasRole(RolesEnum::CarManager) || Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
+        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
             $this->walkTree(Auth::user()->id);
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
@@ -1116,27 +1189,27 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date,car_value,show_renewal_upload_leads',
+            'create' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,policy_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date,car_value,show_renewal_upload_leads',
             'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,renewal_batch,show_renewal_upload_leads',
-            'update' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,source,transapp_code,previous_quote_policy_premium,quote_status_id,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date,show_renewal_upload_leads,renewal_batch,previous_quote_policy_number,previous_policy_expiry_date',
-            'show' => 'is_modified,is_gcc_standard,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,quote_status_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count,id,renewal_batch,policy_start_date,is_ecommerce,quote_link,transapp_code,order_reference,payment_reference,policy_number,renewal_expiry_date,lost_reason,show_renewal_upload_leads',
+            'update' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,policy_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,source,transapp_code,previous_quote_policy_premium,quote_status_id,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date,show_renewal_upload_leads,renewal_batch,previous_quote_policy_number,previous_policy_expiry_date',
+            'show' => 'is_modified,is_gcc_standard,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,quote_status_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count,id,renewal_batch,policy_start_date,is_ecommerce,quote_link,transapp_code,order_reference,payment_reference,policy_number,policy_expiry_date,lost_reason,show_renewal_upload_leads',
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads', 'assignment_type'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'policy_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads', 'assignment_type'];
 
         return $searchProperties;
     }
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with', 'previous_quote_policy_number'];
+        $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'vehicle_type_id', 'policy_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with', 'previous_quote_policy_number'];
         $model->renewalSkipProperties = [
-            'create' => 'policy_start_date,parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code',
-            'list' => 'policy_start_date,parent_duplicate_quote_id,trim,additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,transapp_code,is_ecommerce,payment_status_id,policy_number,renewal_expiry_date,premium,car_model_detail_id,renewal_import_code',
-            'update' => 'parent_duplicate_quote_id,id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source,transapp_code,quote_status_id,renewal_batch,policy_number,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code',
+            'create' => 'policy_start_date,parent_duplicate_quote_id,id,advisor_id,paid_at,policy_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code',
+            'list' => 'policy_start_date,parent_duplicate_quote_id,trim,additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,transapp_code,is_ecommerce,payment_status_id,policy_number,policy_expiry_date,premium,car_model_detail_id,renewal_import_code',
+            'update' => 'parent_duplicate_quote_id,id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,policy_expiry_date,source,transapp_code,quote_status_id,renewal_batch,policy_number,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code',
             'show' => 'trim,device,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,cylinder,seat_capacity,quote_status_id,vehicle_type_id',
         ];
     }
@@ -1150,8 +1223,23 @@ class CarQuoteService extends BaseService
     {
         $carQuote = CarQuote::select(
             [
-                'id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'customer_id',
-                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'renewal_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date',
+                'id',
+                'code',
+                'uuid',
+                'advisor_id',
+                'first_name',
+                'last_name',
+                'email',
+                'car_make_id',
+                'customer_id',
+                'car_model_id',
+                'currently_insured_with',
+                'quote_status_id',
+                'payment_status_id',
+                'policy_number',
+                'policy_expiry_date',
+                'previous_quote_policy_number',
+                'previous_policy_expiry_date',
             ]
         )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name')->with(['additionalContacts' => function ($q) {
@@ -1220,14 +1308,15 @@ class CarQuoteService extends BaseService
             ];
         }
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1245,9 +1334,12 @@ class CarQuoteService extends BaseService
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
+
+            Log::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
 
             if (isset($response->message)) {
                 $responseBodyAsString = $response->message;
@@ -1366,7 +1458,7 @@ class CarQuoteService extends BaseService
                 $plan_id = CarQuote::where('uuid', '=', $request->car_quote_uuid)->value('plan_id');
                 if ($plan_id == $request->car_plan_id) {
                     $request->merge(['plan_id' => $request->car_plan_id]);
-                    (new CentralService())->updateSelectedPlan(quoteTypeCode::Car, $request->car_quote_uuid, $request);
+                    (new CentralService)->updateSelectedPlan(quoteTypeCode::Car, $request->car_quote_uuid, $request);
                 }
                 $this->lockCarQuote($request->car_quote_uuid);
             }
@@ -1549,7 +1641,7 @@ class CarQuoteService extends BaseService
 
     public function validateRequest($request)
     {
-        $isLeadPool = Auth::user()->isLeadPool();
+        $canReAssignAdvisor = Auth::user()->isLeadPool() || auth()->user()->can(PermissionsEnum::ASSIGN_PAID_LEADS);
         $userId = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
         if ($leadsIds == '' || $leadsIds == null) {
@@ -1561,7 +1653,7 @@ class CarQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! ($isLeadPool)) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! $canReAssignAdvisor) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }
@@ -1721,7 +1813,7 @@ class CarQuoteService extends BaseService
             $allowQuoteLogAction = false;
 
             //validations for Car Advisor / Deputy Manager Role
-            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
                 $allowQuoteLogAction = false;
 
                 if ($lead->quote_status_id == QuoteStatusEnum::CarSold && $paymentEntityModel?->carLostQuoteLog?->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2) {
@@ -1773,62 +1865,6 @@ class CarQuoteService extends BaseService
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
-        }
-    }
-
-    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
-    {
-        if ($advisorAllocationRecord === null || $lead === null) {
-            return;
-        }
-
-        // Determine if the lead was system-assigned or manually assigned
-        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
-
-        // Update allocation counts based on assignment type
-        if ($isSystemAssigned) {
-            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
-        } else {
-            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
-        }
-
-        // Increment the total allocation count and update timestamps
-        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
-        $advisorAllocationRecord->last_allocated = now()->timestamp;
-        $advisorAllocationRecord->updated_at = now();
-
-        // Save the updated allocation record
-        $advisorAllocationRecord->save();
-    }
-
-    private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
-    {
-        // Check if there is a previous advisor and the lead assignment date is today
-        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
-            if ($previousAdvisorAllocationRecord !== null) {
-                // Determine if the previous assignment was system-assigned
-                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
-
-                info('Previous assignment type is : '.$isSystemAssigned);
-
-                // Update allocation counts based on assignment type (if applicable)
-                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('About to deduct from auto assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('About to deduct from manual assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-                }
-
-                // Decrement the total allocation count (if it's greater than 0) and update timestamps
-                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
-                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
-                    $previousAdvisorAllocationRecord->updated_at = now();
-                }
-
-                // Save the updated allocation record
-                $previousAdvisorAllocationRecord->save();
-            }
         }
     }
 
@@ -1992,7 +2028,7 @@ class CarQuoteService extends BaseService
 
     private function addLeadViewEligibilityCheckExport()
     {
-        if (Auth::user()->hasRole(RolesEnum::CarManager) || Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
+        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
             $this->walkTree(Auth::user()->id);
             $this->exportQuery->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
@@ -2003,5 +2039,227 @@ class CarQuoteService extends BaseService
         } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
             $this->exportQuery->where('cqr.advisor_id', Auth::user()->id);
         }
+    }
+
+    public function exportnonPUAAuthorized()
+    {
+        $carTeam = $this->getProductByName(quoteTypeCode::Car);
+
+        $nonPUAAuthLead = DB::table('car_quote_request as q')
+            ->select(
+                'q.code as RefID',
+                'q.premium_authorized as premiumauthorized',
+                'q.payment_status_date as paymentauthdate',
+                DB::raw('qs.text as `leadstatus`'),
+                DB::raw("'AUTHORIZED' as `paymentstatus`"),
+                'q.source as source',
+                'cmk.text as make',
+                'cmd.text as model',
+                'u.email as assignedadvisoremail'
+            )
+            ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
+            ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
+            ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            ->where('t.parent_team_id', $carTeam->id)
+            ->whereNotIn('q.uuid', function ($query) {
+                $query->select('q.uuid')
+                    ->from('car_quote_plan_details as cqp')
+                    ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+                    ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
+                    ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+                    ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+                    ->whereNotNull('cqp.pua_premium')
+                    ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+                    ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
+            })
+            ->orderBy('q.paid_at', 'desc')
+            ->get();
+
+        $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
+            ->select(
+                't.name as Team',
+                DB::raw('COUNT(*) as Total')
+            )
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('t.parent_team_id', $carTeam->id)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            ->whereNotIn('q.uuid', function ($query) {
+                $query->select('q.uuid')
+                    ->from('car_quote_plan_details as cqp')
+                    ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+                    ->whereNotNull('cqp.pua_premium')
+                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
+            })
+            ->groupBy('t.name')
+            ->get();
+
+        return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
+    }
+
+    public function exportPUAAuthorized()
+    {
+        $carTeam = $this->getProductByName(quoteTypeCode::Car);
+
+        $puaAuthUpdate = DB::table('car_quote_plan_details as cqp')
+            ->select(
+                'q.code as RefID',
+                'q.premium_authorized as premiumauthorized',
+                'q.payment_status_date as paymentauthdate',
+                DB::raw('qs.text as `leadstatus`'),
+                DB::raw("'AUTHORIZED' as `paymentstatus`"),
+                'q.source as source',
+                'cmk.text as make',
+                'cmd.text as model',
+                'u.email as assignedadvisoremail'
+            )
+            ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+            ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
+            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+            ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
+            ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
+            ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereNotNull('cqp.pua_premium')
+            ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
+            ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
+            ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
+            ->where('t.parent_team_id', '=', $carTeam->id)
+            ->orderBy('q.paid_at', 'desc')
+            ->get();
+
+        $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')
+            ->select(
+                't.name as Team',
+                DB::raw('COUNT(*) as Total')
+            )
+            ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereNotNull('cqp.pua_premium')
+            ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
+            ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
+            ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
+            ->where('t.parent_team_id', '=', $carTeam->id)
+            ->groupBy('t.name')
+            ->get();
+
+        return [$puaAuthUpdate, $puaAuthTeamUpdate];
+    }
+
+    public function exportPUAUpdates()
+    {
+        $startDate = Carbon::now()->subDay()->startOfDay();
+        $endDate = Carbon::now()->subDay()->endOfDay();
+
+        return DB::table('car_quote_plan_details as cqp')
+            ->join('car_quote_request as cqr', 'cqp.quote_uuid', '=', 'cqr.uuid')
+            ->join('car_make as cmk', 'cqr.car_make_id', '=', 'cmk.id')
+            ->join('car_model as cmd', 'cqr.car_model_id', '=', 'cmd.id')
+            ->join('nationality as n', 'cqr.nationality_id', '=', 'n.id')
+            ->join('payment_status as ps', 'cqr.payment_status_id', '=', 'ps.id')
+            ->join('quote_status as qs', 'cqr.quote_status_id', '=', 'qs.id')
+            ->join('vehicle_type as vt', 'cqr.vehicle_type_id', '=', 'vt.id')
+            ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
+            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+            ->whereNotNull('cqp.pua_premium')
+            ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
+            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
+            ->whereColumn('cqp.plan_id', 'cqr.plan_id');
+    }
+
+    public function sendAddressNotificationToCustomer($lead, $address)
+    {
+        info('Checking for sending courier notification : '.$lead->uuid);
+
+        // Use a different variable name for the result of the query
+        $existingAddress = CustomerAddress::where([
+            'quote_uuid' => $lead->uuid,
+            'customer_id' => $lead->customer_id,
+        ])->first();
+
+        if (! $existingAddress) {
+            info('Sending address notification to customer for lead : '.$lead->uuid);
+            // only trigger bird flow if address is not already added
+            $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);
+        }
+    }
+
+    public function triggerBirdFlow($lead, $address, $actionType)
+    {
+        if ($lead->embeddedTransactions()->exists()) {
+            info('Checking for courier transaction for lead : '.$lead->uuid);
+            $courierEmbeddedTransaction = $lead->embeddedTransactions
+                ->filter(function ($transaction) {
+                    return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
+                });
+        }
+
+        if (
+            ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
+            in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
+        ) {
+            info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
+            $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
+            $address = app(CustomerAddressService::class)->fetchFormattedAddress($address);
+            $customerAdditionalContact = CustomerAdditionalContact::select('value')
+                ->firstWhere([
+                    ['customer_id', $lead->customer_id],
+                    ['key', 'alternate_mobile_no'],
+                ]);
+            $payload = [
+                'quoteUID' => $lead->uuid,
+                'quoteTypeId' => (int) QuoteTypes::CAR->id(),
+                'actionType' => $actionType,
+                'refId' => $embeddedTransactionRefId,
+                'address' => $address,
+                'alternateNumber' => $customerAdditionalContact->value ?? '',
+            ];
+            info('Payload for Bird Courier Flow : '.json_encode($payload));
+
+            Ken::request('/trigger-bird-courier-flow', 'post', $payload);
+        } else {
+            info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
+        }
+    }
+
+    public function pauseAndResumeFollowUpCounters($data)
+    {
+
+        $quote = CarQuote::where('uuid', $data['quote_uuid'])->first();
+
+        if (! $quote || ! $quote->carQuoteRequestDetail) {
+            return response()->json(['success' => false, 'message' => 'Quote or related details not found'], 200);
+        }
+
+        $field = $data['action'] === 'pause' ? 'followup_pause_count' : 'followup_resume_count';
+        $quote->carQuoteRequestDetail->updateOrCreate(
+            ['car_quote_request_id' => $quote->id],
+            [
+                $field => ($quote->carQuoteRequestDetail->$field ?? 0) + 1,
+            ]
+        );
+
+        return response()->json(['success' => true]);
     }
 }

@@ -80,7 +80,7 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD)
                             <li><a href="{{ url('car-lead-allocation') }}">Car</a></li>
                             @endcan
-                           
+
                         </ul>
                     </li>
                 </ul>
@@ -135,31 +135,19 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                             @endcan
                             @can(PermissionsEnum::PetQuotesList)
-                            @if(in_array(quoteTypeCode::Pet, newUi()))
                             <li><a href="{{ url('personal-quotes/pet') }}">Pet Quotes</a></li>
-                            @else
-                            <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::BikeQuotesList)
-                            @if(in_array(quoteTypeCode::Bike, newUi()))
                             <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::CycleQuotesList)
-                            @if(in_array(quoteTypeCode::Cycle, newUi()))
                             <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::YachtQuotesList)
-                            @if(in_array(quoteTypeCode::Yacht, newUi()))
                             <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::JetskiQuotesList)
-                            @if(in_array(quoteTypeCode::Jetski, newUi()))
                             <li><a href="{{ url('personal-quotes/jetski') }}">JetSki Quotes</a></li>
-                            @endif
                             @endcan
                         </ul>
                     </li>
@@ -289,39 +277,6 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                <!-- // Scheduled to delete 15th April 2024
-                @can(PermissionsEnum::ClaimList)
-                <ul class="nav side-menu">
-                    <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            <li><a href="{{ url('claim/claims') }}">Claims</a></li>
-
-                            @can(PermissionsEnum::CRMAdmin)
-                            <li><a href="#">Admin <span class="fa fa-chevron-down"></span></a>
-                                <ul class="nav child_menu">
-                                    @can(PermissionsEnum::TypeOfInsuranceList)
-                                    <li><a href="{{ url('claim/typeofinsurance') }}">Type of Insurance</a></li>
-                                    @endcan
-                                    @can(PermissionsEnum::SubTypeOfInsuranceList)
-                                    <li><a href="{{ url('claim/subtypeofinsurance') }}">Sub Type of Insurance</a>
-                                    </li>
-                                    @endcan
-                                    @can(PermissionsEnum::ClaimStatusList)
-                                    <li><a href="{{ url('claim/claimsstatus') }}">Claim Status</a></li>
-                                    @endcan
-                                    @can(PermissionsEnum::CarRepairCoverageList)
-                                    <li><a href="{{ url('claim/carrepaircoverage') }}">Car Repair Coverage</a></li>
-                                    @endcan
-                                    @can(PermissionsEnum::CarRepairTypeList)
-                                    <li><a href="{{ url('claim/carrepairtype') }}">Car Repair Type</a></li>
-                                    @endcan
-                                </ul>
-                            </li>
-                            @endcan
-                        </ul>
-                    </li>
-                </ul>
-                @endcan -->
                 @can(PermissionsEnum::AMLList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
@@ -331,18 +286,17 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @can(PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR)
+                @can(PermissionsEnum::EMBEDDED_PRODUCT_CONFIG)
                 <ul class="nav side-menu">
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
                 @endcan
-                @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+
                 <ul class="nav side-menu">
                     @can(PermissionsEnum::VIEW_LEGACY_DETAILS)
                     <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy Policies</a>
                     @endcan
                 </ul>
-                @endif
 
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">

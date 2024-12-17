@@ -3,13 +3,15 @@
 namespace App\Listeners;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
-use App\Jobs\SendOCBIntroEmailJob;
+use App\Jobs\OCB\SendCarOCBIntroEmailJob;
+use App\Jobs\SendFTCEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\User;
 use App\Services\CarAllocationService;
-use App\Services\CarEmailService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\HttpRequestService;
 use App\Services\SendSmsCustomerService;
 use App\Services\SIBService;
@@ -47,8 +49,13 @@ class HandleCarAdvisorUpdated
 
         $lead = $event->lead;
 
-        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-            info('lead is source is renewal upload. Skipping intro email job');
+        if ($lead) {
+            SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(now()->addSeconds(5));
+        }
+
+        $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
+        if (in_array($lead->source, $skippableSources)) {
+            info('lead is source is '.$lead->source.' upload. Skipping intro email job');
 
             return;
         }
@@ -85,7 +92,7 @@ class HandleCarAdvisorUpdated
             }
         }
 
-        SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+        SendCarOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
 
         info('SMS sending code reached');
     }

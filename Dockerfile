@@ -1,4 +1,4 @@
-FROM php:8.1-fpm
+FROM php:8.2-fpm
 ARG IMCRM_TOKEN
 ARG NODE_MAJOR=20
 
@@ -14,7 +14,7 @@ RUN install-php-extensions mbstring pdo_mysql zip exif pcntl memcached
 RUN pecl install redis \
     && docker-php-ext-enable redis
 # Install node 21
-RUN curl -sL https://deb.nodesource.com/setup_21.x -o /tmp/nodesource_setup.sh
+RUN curl -sL https://deb.nodesource.com/setup_22.x -o /tmp/nodesource_setup.sh
 RUN bash /tmp/nodesource_setup.sh
 #RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
 #    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
@@ -27,6 +27,7 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.lis
 RUN apt-get update && apt-get install -y \
     build-essential libssl-dev pkg-config \
     libpng-dev \
+    libjpeg-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     locales \
@@ -42,8 +43,10 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     supervisor \
     nodejs \
-    yarn
-RUN docker-php-ext-install gd
+    yarn \
+    ghostscript
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
+RUN docker-php-ext-install -j$(nproc) gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
@@ -114,5 +117,7 @@ RUN composer install --optimize-autoloader --no-dev
 #RUN yarn
 # RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
+RUN usermod -aG root www-data
+RUN usermod -aG root www
 
 ENTRYPOINT ["/var/www/docker/run.sh"]

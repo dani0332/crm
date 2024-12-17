@@ -4,15 +4,20 @@ const props = defineProps({
   products: Array,
   teams: Array,
   subTeams: Array,
+  departments: Array,
+  departmentIds: Array,
   user: Object,
   userRole: Object,
   selectedAdditionalTeams: Array,
   userProductIds: Array,
   userTeamIds: Array,
+  department_ids: Array,
   managers: Array,
   userManagerIds: Array,
   permissions: Array,
   userPermissions: Array,
+  businessTypes: Array,
+  userBusinessTypeIds: Array,
 });
 
 const page = usePage();
@@ -22,9 +27,11 @@ const notification = useToast();
 
 const { isRequired, isMobileNo, isEmail, allowEmpty } = useRules();
 const subTeams = ref([]);
+const departments = ref([]);
 const teams = ref([]);
 const managers = ref([]);
 const isError = ref(false);
+const showBusinessCategories = ref(false);
 
 const loader = reactive({
   table: false,
@@ -36,6 +43,10 @@ const loader = reactive({
 const selectedRoles = computed(() => {
   if (props.user && props.user.roles) return props.user.roles.map(x => x.name);
   else return [];
+});
+
+const isAllowed = computed(() => {
+  return hasRole(rolesEnum.Admin);
 });
 
 const userForm = useForm({
@@ -59,6 +70,9 @@ const userForm = useForm({
   permissions: props?.userPermissions ?? null,
   calendar_link: props.user?.calendar_link ?? null,
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
+  department_id: props.user?.department_id ?? null,
+  businessTypes: props?.userBusinessTypeIds ?? [],
+  department_ids: props.department_ids?.length > 0 ? props.department_ids : [],
 });
 
 const isAdvisor = computed(() => {
@@ -86,6 +100,15 @@ const computedTeams = computed(() => {
 const computedSubTeams = computed(() => {
   if (subTeams.value.length > 0)
     return subTeams.value.map(item => ({ value: item.id, label: item.name }));
+  else return [];
+});
+
+const computedDepartments = computed(() => {
+  if (page.props.departments?.length > 0)
+    return page.props.departments?.map(item => ({
+      value: item.id,
+      label: item.name,
+    }));
   else return [];
 });
 
@@ -118,6 +141,21 @@ const loadTeamsByProduct = async e => {
     loader.teamLoader = false;
   } catch (e) {
     loader.teamLoader = false;
+  }
+};
+const loadDepartmentsByTeam = async e => {
+  loader.departLoader = true;
+  try {
+    let response = await axios.post('/get-team-departments', {
+      teamIds: userForm.teams,
+    });
+    if (response.data.length > 0) {
+      departments.value = response.data;
+    }
+
+    loader.departLoader = false;
+  } catch (e) {
+    loader.departLoader = false;
   }
 };
 
@@ -187,10 +225,18 @@ function onSubmit(isValid) {
   }
 }
 
+const resolveBusinessCategoriesShowHide = selectedRoles => {
+  showBusinessCategories.value = selectedRoles.includes(
+    rolesEnum.CorpLineAdvisor,
+  );
+};
+
 const setInitialState = async () => {
   if (isEdit.value) {
+    resolveBusinessCategoriesShowHide(userForm.roles);
     await loadTeamsByProduct();
     await loadSubTeams();
+    await loadDepartmentsByTeam();
   }
 };
 
@@ -200,6 +246,7 @@ watch(
   () => userForm.teams,
   () => {
     loadSubTeams();
+    loadDepartmentsByTeam();
   },
   { deep: true },
 );
@@ -263,13 +310,8 @@ watch(
           class="w-full"
         />
       </x-field>
-      <x-field label="PASSWORD" required v-if="!isEdit">
-        <x-input
-          :rules="!isEdit ? [isRequired] : []"
-          v-model="userForm.password"
-          class="w-full"
-          type="password"
-        />
+      <x-field label="PASSWORD" required v-if="isAllowed">
+        <x-input v-model="userForm.password" class="w-full" type="password" />
       </x-field>
       <x-field label="ROLES" required>
         <ComboBox
@@ -282,6 +324,19 @@ watch(
           "
           :rules="[isRequired]"
           :hasError="validRole"
+          autocomplete
+          @update:model-value="resolveBusinessCategoriesShowHide"
+        />
+      </x-field>
+      <x-field
+        label="Busineess Categories"
+        v-if="hasRole(rolesEnum.Admin) && showBusinessCategories"
+      >
+        <ComboBox
+          :multiple="true"
+          v-model="userForm.businessTypes"
+          :options="businessTypes"
+          class="w-full"
           autocomplete
         />
       </x-field>
@@ -311,14 +366,32 @@ watch(
         />
       </x-field>
       <x-field label="SUB TEAM">
-        <x-select
+        <ComboBox
           v-model="userForm.sub_team_id"
-          class="w-full"
-          :loading="loader.subTeamLoader"
-          :options="computedSubTeams"
           placeholder="Select sub team"
-        ></x-select>
+          :options="computedSubTeams"
+          :single="true"
+          :loading="loader.subTeamLoader"
+        />
       </x-field>
+      <x-field label="DEPARTMENT">
+        <ComboBox
+          v-model="userForm.department_id"
+          placeholder="Select Department"
+          :options="computedDepartments"
+          :single="true"
+        />
+      </x-field>
+      <x-field label="DEPARTMENTS VISIBILITY">
+        <ComboBox
+          v-model="userForm.department_ids"
+          :loading="loader.departLoader"
+          placeholder="Select Department"
+          :options="computedDepartments"
+          :multiple="true"
+        />
+      </x-field>
+
       <x-field label="LOB VISIBILITY">
         <ComboBox
           :multiple="true"

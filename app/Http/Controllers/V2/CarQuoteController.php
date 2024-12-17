@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
 use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
+use App\Jobs\NBEventFollowup;
 use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
+use App\Services\CarPlanService;
+use App\Services\CarQuoteService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
@@ -157,5 +162,67 @@ class CarQuoteController extends Controller
         return inertia('CarQuote/Index', [
             'quotes' => $personalQuotes,
         ]);
+    }
+
+    public function carPlanUpdateManualProcess(Request $request)
+    {
+        $response = app(CarQuoteService::class)->carPlanModify($request);
+
+        $message = 'Car Plan has not been updated';
+
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Plan has been updated';
+
+            return redirect()->back()->with('message', $message);
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Car Plan has not been updated '.$responseMessage;
+        }
+
+        return redirect()->back()->with('error', $message);
+    }
+
+    public function carPlansByInsuranceProvider(Request $request)
+    {
+        $insuranceProviderId = $request->insuranceProviderId;
+        $quoteUuId = $request->quoteUuId;
+
+        $quotePlans = app(CarQuoteService::class)->getQuotePlans($quoteUuId);
+
+        $quotePlanId = [];
+        $listQuotePlans = [];
+        if (isset($quotePlans->quotes->plans)) {
+            $listQuotePlans = $quotePlans->quotes->plans;
+        }
+
+        foreach ($listQuotePlans as $key => $quotePlan) {
+            if (! isset($quotePlan->id)) {
+                continue;
+            }
+
+            $quotePlanId[] = $quotePlan->id;
+        }
+
+        $carPlans = app(CarPlanService::class)->getNonQuotedCarPlans($insuranceProviderId, $quotePlanId);
+
+        return response()->json($carPlans);
+    }
+
+    public function sendNBEventFollowup(Request $request)
+    {
+
+        if (count($request->uuids) < 1) {
+            return back()->with('error', 'No UUID provided');
+        }
+
+        foreach ($request->uuids as $uuid) {
+            NBEventFollowup::dispatch($uuid, $request->followup_type)->delay(Carbon::now()->addMinutes(2));
+        }
+
+        return back()->with('success', 'Event Followup sending successful');
     }
 }

@@ -14,10 +14,10 @@ class AddRenewalExpiryDateToUsersTable extends Migration
     public function up()
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if (! Schema::hasColumn('car_quote_request', 'renewal_expiry_date')) {
-                $table->dateTime('renewal_expiry_date')->nullable();
+            if (! Schema::hasColumn('car_quote_request', 'policy_expiry_date')) {
+                $table->dateTime('policy_expiry_date')->nullable();
                 $table->index('renewal_batch', 'idx_renewal_bacth_number');
-                $table->index('renewal_expiry_date', 'idx_renewal_expiry_date');
+                $table->index('policy_expiry_date', 'idx_policy_expiry_date');
             }
         });
     }

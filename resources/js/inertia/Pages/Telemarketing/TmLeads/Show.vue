@@ -64,7 +64,7 @@ function onSubmit(isValid) {
       <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
         <div class="grid sm:grid-cols-2">
           <div>
-            <x-tooltip position="bottom">
+            <x-tooltip placement="bottom">
               <label
                 class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
               >
@@ -240,6 +240,7 @@ function onSubmit(isValid) {
   <AuditLogs
     v-if="can(permissionsEnum.Auditable)"
     :type="'App\\Models\\TmLead'"
+    :quoteType="'TmLead'"
     :id="$page.props.tmlead.id"
   />
 </template>

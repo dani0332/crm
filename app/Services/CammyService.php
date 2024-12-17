@@ -44,7 +44,7 @@ class CammyService
             }
 
             $plans = collect();
-            if (is_array($quote->plans)) {
+            if (isset($quote->plans) && is_array($quote->plans)) {
                 foreach ($quote->plans as $plan) {
                     $features = collect();
                     if (isset($plan->benefits->feature)) {
@@ -68,6 +68,10 @@ class CammyService
                         'planLink' => $plan->planLink ?? '',
                     ]);
                 }
+            } else {
+                info('Cammy Service - Error - '.$lead->code.' - Plans Object Not Found');
+
+                return false;
             }
         }
         $apiEndPoint = config('constants.CAMMY_END_POINT');
@@ -109,7 +113,7 @@ class CammyService
         }
 
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $cammyRequest = $client->post(
                 $apiEndPoint,
                 [

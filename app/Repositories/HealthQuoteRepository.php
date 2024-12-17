@@ -11,10 +11,12 @@ use App\Traits\CentralTrait;
 class HealthQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+
     public function model()
     {
         return HealthQuote::class;
     }
+
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
         $request = request();
@@ -34,7 +36,9 @@ class HealthQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            // return $query->count();
+            return 0;
         }
 
         return ($forExport) ? $query->get() : $query->Paginate();
@@ -43,7 +47,8 @@ class HealthQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+            ['advisor', 'nationality', 'insuranceProvider']
+        )->orderBy('created_at', 'desc');
     }
 
     public function fetchCreateDuplicate(array $dataArr): object

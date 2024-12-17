@@ -8,22 +8,24 @@ use Illuminate\Support\Facades\Log;
 
 trait SageLoggable
 {
-    protected function logSageApiCall($payload, $response = [], $section = null, $step = null, $totalSteps = null, $status = 'success')
+    public function logSageApiCall($payload, $response = [], $section = null, $step = null, $totalSteps = null, $status = 'success', $loggedInUserId = null)
     {
         try {
-            $userId = Auth::id();
+            $userId = $section->userId ?? ($loggedInUserId ?? Auth::id());
             // Ensure mandatory fields are populated
             SageApiLog::updateOrCreate(
                 [
                     'section_id' => optional($section)->id,
                     'section_type' => optional($section)->getMorphClass(),
                     'step' => $step,
+                    'sage_request_type' => $payload['sage_request_type'] ?? '',
+                    'entry_type' => $payload['entry_type'] ?? '',
                 ],
                 [
                     'user_id' => $userId,
                     'total_steps' => $totalSteps,
                     'sage_end_point' => $payload['endPoint'],
-                    'sage_payload' => json_encode($payload['payload']),
+                    'sage_payload' => json_encode($payload['payload'] ?? []),
                     'response' => json_encode($response),
                     'status' => $status,
                 ]

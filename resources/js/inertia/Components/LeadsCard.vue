@@ -20,9 +20,9 @@ const quotes = ref(props.quotes);
 const quote = ref(props.quote);
 const page = usePage();
 const quoteType = inject('quoteType');
+const filters = inject('filters');
 
 const computedLeads = computed(() => {
-  console.log();
   return quote.value.data.leads_list.data;
 });
 
@@ -49,6 +49,7 @@ const onLoadMore = id => {
         page: quotes.value.pages[id],
         modelType: props.quoteType,
         status: id,
+        ...filters,
       }),
     )
     .then(({ data }) => {
@@ -196,7 +197,16 @@ watch(
         <span>{{ quote.data.total_leads }} </span>
       </div>
       <div class="flex justify-between gap-1" v-show="quoteType == 'Health'">
-        <span>Total Opportunity</span>
+        <x-tooltip placement="left">
+          <span>Total Opportunity</span>
+          <template #tooltip>
+            <div class="max-w-[194px] text-xs">
+              Total Opportunity shows the sum of the minimum price of all leads
+              at a specific stage, giving you an overview of the potential
+              business to close
+            </div>
+          </template>
+        </x-tooltip>
         <span>{{
           Number(quote.data.total_opportunity) > 0
             ? Number(quote.data.total_opportunity).toLocaleString()
@@ -237,9 +247,12 @@ watch(
         <x-icon icon="box" class="text-secondary-600 mb-2" />
         <p>No Leads Found</p>
       </div>
-<!--        quote.title.split(' ').join('')-->
       <leads-card-item
-        :title="quote.title ? quote.title.split(' ').join('') : quote.text.split(' ').join('') "
+        :title="
+          quote.title
+            ? quote.title.split(' ').join('')
+            : quote.text.split(' ').join('')
+        "
         :id="quote.id"
         :leads="computedLeads"
         @UpdateLeadsCount="data => UpdateLeadsCount(data)"

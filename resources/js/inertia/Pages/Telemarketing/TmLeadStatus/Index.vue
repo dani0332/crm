@@ -40,7 +40,6 @@ const tableHeader = ref([
     border-cell
     hide-rows-per-page
     hide-footer
-    fixed-checkbox
   >
     <template #item-id="{ id }">
       <Link

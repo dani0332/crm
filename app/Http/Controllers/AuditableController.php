@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CarQuote;
 use App\Models\InsurerRequestResponse;
+use App\Models\TravelInsurerRequestResponses;
+use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
@@ -39,6 +40,13 @@ class AuditableController extends Controller
     public function loadAuditLogs(Request $request)
     {
         $code = isset($request->code) ? $request->code : '';
+
+        $documentIds = [];
+        if ($request->auditableType === 'App\Models\SendUpdateLog') {
+            $code = $this->getSendUpdatePaymentCode($request->auditableId);
+            $documentIds = $this->getSendUpdateDocumentIds($request->auditableId);
+        }
+
         $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
@@ -46,31 +54,43 @@ class AuditableController extends Controller
             ->where('auditable_id', $request->auditableId)
             ->where('auditable_type', $request->auditableType);
 
-        if ($code != '') {
-            $query->orWhere(function ($query) use ($code, $auditableTypes) {
-                $query->where('old_values', 'like', '%"code":"'.$code.'"%')
-                    ->whereIn('auditable_type', $auditableTypes);
+        // if ($code != '') {
+        //     $query->orWhere(function ($query) use ($code, $auditableTypes) {
+        //         $query->where('old_values', 'like', '%"code":"'.$code.'"%')
+        //             ->whereIn('auditable_type', $auditableTypes);
+        //     });
+        // }
+
+        if (! empty($documentIds)) {
+            $query->orWhere(function ($query) use ($documentIds) {
+                $query->where('auditable_type', 'App\Models\QuoteDocument')
+                    ->whereIn('auditable_id', $documentIds);
             });
         }
 
         return $query->orderBy('created_at', 'desc')->get();
-
     }
 
     public function loadApiLogs(Request $request)
     {
-        if ($request->auditableType == CarQuote::class) {
-            $query = InsurerRequestResponse::with('insuranceProvider')
-                ->select('*')
-                ->where('insurer_request_response.quote_uuid', CarQuote::where('id', $request->auditableId)->value('uuid'))
-                ->orderByDesc('insurer_request_response.created_at');
+        $auditableType = $request->get('auditableType');
 
-            if ($request->insurance_provider) {
-                $query->where('insurer_request_response.provider_id', $request->insurance_provider);
-            }
+        $quoteUuid = $request->auditableType::where('id', $request->auditableId)->value('uuid');
 
-            return $query->get();
+        if ($auditableType == TravelQuote::class) {
+            $query = TravelInsurerRequestResponses::with('insuranceProvider');
+            $query->whereNotIn('call_type', ['oAuth', 'login']);
+        } else {
+            $query = InsurerRequestResponse::with('insuranceProvider');
         }
+        $query->select('*')->where('quote_uuid', $quoteUuid)
+            ->orderByDesc('created_at');
+
+        if ($request->insurance_provider) {
+            $query->where('insurer_request_response.provider_id', $request->insurance_provider);
+        }
+
+        return $query->get();
     }
 
     /**
@@ -82,4 +102,5 @@ class AuditableController extends Controller
 
         return ($request->jsonData) ? response()->json($audits) : $audits;
     }
+
 }

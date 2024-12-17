@@ -1,12 +1,12 @@
 <script setup>
 const notification = useToast();
 const uploadForm = useForm({
-  csvFile: ''
+  csvFile: '',
 });
 let errors = {
   type: '',
-  step: ''
-}
+  step: '',
+};
 let file = '';
 let files = [];
 function handleFileUpload(event) {
@@ -21,34 +21,33 @@ function onSubmit(isValid) {
     // return;
     formData.append('file_name', file);
     formData.append('renewals_upload_type', 'create');
-    axios.post('/quotes/travel-upload-create',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-    ).then(() => {
-      console.log('SUCCESS!!');
-      notification.success({
-        title: 'Uploaded renewals records has been stored',
-        position: 'top',
-      });
-      files = [];
-      uploadForm.setError([]);
-      uploadForm.errors.file_name = [];
-      uploadForm.errors.type = [];
-      uploadForm.csvFile = '';
-    })
-        .catch((error) => {
-          console.log('FAILURE!!');
-          uploadForm.setError(error.response.data.errors);
-          notification.error({
-            title: 'Error while uploading . Please try again',
-            position: 'top',
-          });
-          document.getElementById("file_name").value = "";
+    axios
+      .post('/quotes/travel-upload-create', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then(() => {
+        console.log('SUCCESS!!');
+        notification.success({
+          title: 'Uploaded renewals records has been stored',
+          position: 'top',
         });
+        files = [];
+        uploadForm.setError([]);
+        uploadForm.errors.file_name = [];
+        uploadForm.errors.type = [];
+        uploadForm.csvFile = '';
+      })
+      .catch(error => {
+        console.log('FAILURE!!');
+        uploadForm.setError(error.response.data.errors);
+        notification.error({
+          title: 'Error while uploading . Please try again',
+          position: 'top',
+        });
+        document.getElementById('file_name').value = '';
+      });
   } else {
     notification.error({
       title: 'Error. Please try again',
@@ -61,35 +60,36 @@ const can = permission => useCan(permission);
 
 <template>
   <div>
-    <Head title="Upload Travel Expired Policies For Renewal"/>
+    <Head title="Upload Travel Expired Policies For Renewal" />
 
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Upload Travel Expired Policies For Renewal</h2>
+      <h2 class="text-xl font-semibold">
+        Upload Travel Expired Policies For Renewal
+      </h2>
     </div>
-    <x-divider class="my-4"/>
+    <x-divider class="my-4" />
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
-      <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-      </div>
+      <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4"></div>
 
-      <Dropzone v-model="uploadForm.csvFile"
-                @change="handleFileUpload( $event )"
-                :error="uploadForm.errors.type"
+      <Dropzone
+        v-model="uploadForm.csvFile"
+        @change="handleFileUpload($event)"
+        :error="uploadForm.errors.type"
       ></Dropzone>
       <a
-          v-for="uploadFile in files"
-          class="block px-2 py-2 border rounded mt-2 mb-2 text-xs hover:text-primary-600 truncate"
+        v-for="uploadFile in files"
+        class="block px-2 py-2 border rounded mt-2 mb-2 text-xs hover:text-primary-600 truncate"
       >
         {{ uploadFile.file.name }}
         {{ uploadFile.original_name || uploadFile.name }}
       </a>
       <span class="text-red-500" v-for="error in uploadForm.errors.type">
-                                {{ error }}
-                        </span>
+        {{ error }}
+      </span>
       <span class="text-red-500" v-for="error in uploadForm.errors.file_name">
-                                {{ error }}
-                        </span>
-
+        {{ error }}
+      </span>
 
       <x-alert class="mt-2">
         <h4 class="text-red-500"><b>Import Instructions must be follow:</b></h4>
@@ -97,10 +97,17 @@ const can = permission => useCan(permission);
           <li>File must be a xlsx file with the following fields.</li>
           <li>Please ensure there are no commas in file.</li>
           <li>First row will be skipped while uploading.</li>
-          <li>Please ensure there are no spaces in start and end of columns data.</li>
+          <li>
+            Please ensure there are no spaces in start and end of columns data.
+          </li>
           <li>Please ensure max allowed size is 2mb (2048kb).</li>
-          <li>Please ensure columns header and allocation same as per given in sample xlsx file.</li>
-          <li>Please ensure all required columns data filled in the xlsx file.</li>
+          <li>
+            Please ensure columns header and allocation same as per given in
+            sample xlsx file.
+          </li>
+          <li>
+            Please ensure all required columns data filled in the xlsx file.
+          </li>
           <li>Arabic is not supported in xlsx file upload.</li>
           <li>Remove unnecessary formatting.</li>
           <li>Unhide all columns.</li>
@@ -110,7 +117,9 @@ const can = permission => useCan(permission);
         <x-button size="sm" color="#ff5e00" type="submit">Upload</x-button>
       </div>
       <div class="vue3-easy-data-table tablefixed">
-        <div class="vue3-easy-data-table__main fixed-header table-fixed hoverable border-cell">
+        <div
+          class="vue3-easy-data-table__main fixed-header table-fixed hoverable border-cell"
+        >
           <table class="table table-bordered w-full">
             <thead class="vue3-easy-data-table__header">
               <tr>
@@ -125,7 +134,7 @@ const can = permission => useCan(permission);
               <tr>
                 <td>1</td>
                 <td>REF-ID</td>
-                <td style="width:450px;">Reference Id</td>
+                <td style="width: 450px">Reference Id</td>
                 <td>Yes</td>
                 <td>20</td>
               </tr>
@@ -167,7 +176,7 @@ const can = permission => useCan(permission);
               <tr>
                 <td>7</td>
                 <td>Batch Number</td>
-                <td>Batch Number </td>
+                <td>Batch Number</td>
                 <td>Yes</td>
                 <td>20</td>
               </tr>
@@ -245,8 +254,6 @@ const can = permission => useCan(permission);
           </table>
         </div>
       </div>
-
     </x-form>
-
   </div>
 </template>

@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   teams: Array,
   volumeSegmentAdvisorsId: Array,
@@ -20,6 +22,7 @@ const notification = useToast();
 const { isRequired } = useRules();
 const isSagmentVolumeEmpty = ref(false);
 const isSagmentValueEmpty = ref(false);
+
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
@@ -59,7 +62,6 @@ const generateSlabArray = () => {
       }
     });
   });
-
   return slabs;
 };
 
@@ -71,7 +73,7 @@ const batchForm = useForm({
   end_date: props?.renewalBatch?.end_date ?? null,
   dead_date: props.carSoldDeadline ?? null,
   batchMonth: +props?.renewalBatch?.month
-    ? { month: props?.renewalBatch.month - 1 }
+    ? { month: props?.renewalBatch.month - 1, year: props?.renewalBatch?.year }
     : null,
   slab: props.lastBatchSlabs,
   segment_volume: props.volumeSegmentAdvisorsId ?? [],
@@ -81,8 +83,8 @@ const batchForm = useForm({
   quote_status_id: [props.quoteStatus.CarSold],
   deadline_date: [],
   month: '',
+  year: props?.renewalBatch?.year ?? null,
 });
-
 const generateDeadlineDate = () => {
   let data = {
     [props.quoteStatus.CarSold]: batchForm.dead_date,
@@ -96,6 +98,10 @@ const setBatchMonth = () => {
   return batchForm.batchMonth.month.toString()
     ? batchForm.batchMonth.month + 1
     : batchForm.batchMonth;
+};
+
+const setBatchYear = () => {
+  return batchForm.batchMonth.year;
 };
 
 function onSubmit(isValid) {
@@ -117,6 +123,7 @@ function onSubmit(isValid) {
 
   batchForm.clearErrors();
   batchForm.month = setBatchMonth();
+  batchForm.year = setBatchYear();
   batchForm.transform(data => ({
     ...data,
     [dynamicKey]: data.dead_date,
@@ -226,10 +233,9 @@ onMounted(() => {
             class="w-full"
             :monthPicker="true"
             placeholder="Batch Month"
-            format="MMM"
+            format="MMM-yyyy"
             :disableYear="true"
-            :minDate="new Date(new Date().getFullYear(), 0)"
-            :maxDate="new Date(new Date().getFullYear(), 11)"
+            teleport
           />
         </x-field>
         <x-field label="Start Date" required>
@@ -238,6 +244,7 @@ onMounted(() => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="Start Date"
+            teleport
           />
         </x-field>
         <x-field label="End Date" required>
@@ -246,6 +253,7 @@ onMounted(() => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="End Date"
+            teleport
           />
         </x-field>
       </div>
@@ -261,6 +269,7 @@ onMounted(() => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="Car Sold Deadline"
+            teleport
           />
         </x-field>
       </div>

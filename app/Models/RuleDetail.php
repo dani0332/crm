@@ -34,6 +34,6 @@ class RuleDetail extends Model implements AuditableContract
      */
     public static function getFillables()
     {
-        return (new static())->fillable;
+        return (new static)->fillable;
     }
 }

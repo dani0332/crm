@@ -32,10 +32,20 @@ class BikeQuoteRequest extends FormRequest
             'dob' => 'required|date_format:Y-m-d|before:today',
             'nationality_id' => 'required|exists:nationality,id',
             'uae_license_held_for_id' => 'required|exists:uae_license_held_for,id',
-            'bike_company_to_insure' => 'required',
-            'asset_value' => 'required|numeric',
             'year_of_manufacture' => 'required|exists:year_of_manufacture,text',
-            'currently_insured_with_id' => 'required|exists:insurance_provider,id',
+            'additional_notes' => 'nullable',
+            'back_home_license_held_for_id' => 'nullable',
+            'has_ncd_supporting_documents' => 'nullable',
+            'claim_history_id' => 'required',
+            'insurance_type_id' => 'required',
+            'emirate_of_registration_id' => 'required',
+            'seat_capacity' => 'required',
+            'make_id' => 'required',
+            'model_id' => 'required',
+            'bike_value_tier' => 'required',
+            'currently_insured_with' => 'required',
+            'cubic_capacity' => 'required',
+            'asset_value' => 'nullable|numeric',
         ];
     }
 

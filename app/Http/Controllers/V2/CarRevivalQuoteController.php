@@ -31,9 +31,7 @@ class CarRevivalQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
@@ -118,6 +116,8 @@ class CarRevivalQuoteController extends Controller
                 'assignee' => User::where('id', $activity->assignee_id)->first()->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
             ];
             array_push($activities, $updatedActivity);
         }
@@ -171,14 +171,8 @@ class CarRevivalQuoteController extends Controller
      */
     public function update($uuid, CarRevivalQuoteRequest $carRevivalQuoteRequest)
     {
-        CarRevivalQuoteRepository::where(['uuid' => $uuid])->update($carRevivalQuoteRequest->validated());
+        CarRevivalQuoteRepository::update($uuid, $carRevivalQuoteRequest->validated());
 
-        return back()->with('message', 'Quote updated successfully');
-    }
-
-    public function updateQuote(Request $request)
-    {
-
-        CarRevivalQuoteRepository::updateQuote($request);
+        return redirect('quotes/revival/'.$uuid)->with('success', 'Quote updated successfully');
     }
 }

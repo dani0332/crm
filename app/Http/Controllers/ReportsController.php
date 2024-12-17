@@ -4,25 +4,37 @@ namespace App\Http\Controllers;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Factories\ManagementReportServiceFactory;
+use App\Models\Department;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\UserManager;
 use App\Repositories\CarRevivalQuoteRepository;
+use App\Services\ConversionAsAtReportService;
+use App\Services\DropdownSourceService;
 use App\Services\Reports\AdvisorConversionReportService;
 use App\Services\Reports\AdvisorDistributionReportService;
 use App\Services\Reports\AdvisorPerformanceReportService;
 use App\Services\Reports\LeadDistributionReportService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\Reports\ReportService;
+use App\Services\Reports\RetentionReportService;
+use App\Strategies\ManagementReport;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use PDF;
 
 class ReportsController extends Controller
 {
@@ -31,8 +43,13 @@ class ReportsController extends Controller
 
     public function __construct()
     {
-        $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConverionReportPermissions());
+        $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConversionReportPermissions());
         $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
+
+        $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
+        $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
+
+        // $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -62,8 +79,9 @@ class ReportsController extends Controller
             'quoteBatchId' => $request->quote_batch_id,
             'page' => $request->page,
             'isCommercial' => $request->isCommercial,
+            'isEmbeddedProducts' => $request->isEmbeddedProducts,
             'lob' => $request->lob,
-            'subeams' => $request->sub_teams,
+            'subteams' => $request->sub_teams,
             'vehicle_type' => $request->vehicle_type,
             'insurance_type' => $request->insurance_type,
             'insurance_for' => $request->insurance_for,
@@ -87,6 +105,7 @@ class ReportsController extends Controller
     {
         return inertia('Reports/AdvisorDistribution', [
             'reportData' => $advisorDistributionReportService->getReportData($request),
+            'filtersByLob' => $advisorDistributionReportService->getFiltersByLob(),
             'filterOptions' => $advisorDistributionReportService->getFilterOptions(),
             'defaultFilters' => $advisorDistributionReportService->getDefaultFilters(),
         ]);
@@ -155,23 +174,14 @@ class ReportsController extends Controller
      */
     public function fetchAdvisorsListByLob(Request $request)
     {
-        $loginUserId = auth()->user()->id;
-        if (
-            auth()->user()->hasAnyRole([
-                RolesEnum::SeniorManagement,
-                RolesEnum::Admin,
-                RolesEnum::Engineering,
-            ])
-        ) {
-            $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
-        } else {
-            $usersReportToLoggedInUser = $this->walkTree($loginUserId, $request->lob);
-
-            if (auth()->user()->isManagerOrDeputy()) {
-                $usersReportToLoggedInUser = array_filter($usersReportToLoggedInUser, function ($userId) use ($loginUserId) {
-                    return $userId !== $loginUserId;
-                });
-            }
+        $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob);
+        if (! auth()->user()->hasAnyRole([
+            RolesEnum::SeniorManagement,
+            RolesEnum::Admin,
+            RolesEnum::Engineering,
+        ])) {
+            $usersReportToLoggedInUser = UserManager::where('manager_id', auth()->user()->id)
+                ->whereIn('user_id', $usersReportToLoggedInUser)->pluck('user_id')->toArray();
         }
 
         return User::whereIn('id', $usersReportToLoggedInUser)
@@ -223,21 +233,26 @@ class ReportsController extends Controller
         ) {
             $advisorIdsByTeam = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
         } else {
-            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
+            // Managers can see only advisors assigned to them
             $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
-            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
-
-            if (auth()->user()->isManagerOrDeputy()) {
-                $advisorIdsByTeam = array_filter($advisorIdsByTeam, function ($userId) {
-                    return $userId !== auth()->user()->id;
-                });
-            }
+            $advisorIdsByTeam = UserManager::where('manager_id', auth()->user()->id)
+                ->whereIn('user_id', $teamUsers)->pluck('user_id')->toArray();
         }
 
         return User::whereIn('id', $advisorIdsByTeam)
             ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+    public function fetchAdvisorListByDepartment(Request $request)
+    {
+        return User::select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->where('department_id', $request->department_id)
             ->get()
             ->toArray();
     }
@@ -254,14 +269,9 @@ class ReportsController extends Controller
         ) {
             $advisorIdsByTeam = $teamUsers;
         } else {
-            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
-            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
-
-            if (auth()->user()->isManagerOrDeputy()) {
-                $advisorIdsByTeam = array_filter($advisorIdsByTeam, function ($userId) {
-                    return $userId !== auth()->user()->id;
-                });
-            }
+            // Managers can see only advisors assigned to them
+            $advisorIdsByTeam = UserManager::where('manager_id', auth()->user()->id)
+                ->whereIn('user_id', $teamUsers)->pluck('user_id')->toArray();
         }
 
         return User::whereIn('id', $advisorIdsByTeam)
@@ -364,7 +374,7 @@ class ReportsController extends Controller
             $qry->orderBy('id', 'desc');
         }, 'teams' => function ($qry) {
             $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
-        }])->get();
+        }])->where('quote_type_id', QuoteTypeId::Car)->get();
 
         $renewalBatches = $renewalBatches->map(function ($renewalBatch) {
             $renewalBatch->slabs = $renewalBatch->slabs->map(function ($slab) {
@@ -378,11 +388,108 @@ class ReportsController extends Controller
 
         return inertia('Reports/RenewalBatch', [
             'reportData' => $renewalBatchReportService->getReportData($request),
-            'superRetentionData' => $renewalBatchReportService->getSuperRetentinoData($request),
+            'superRetentionData' => $renewalBatchReportService->getSuperRetentionData($request),
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
-            'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
             'renewalBatchesList' => $renewalBatches,
         ]);
+    }
+
+    public function renderPaymentSummary(Request $request, ReportService $reportService)
+    {
+        $user = Auth::user();
+        $request->teamIds = $user->getUserTeamsIds($user->id);
+        if ($request->quoteType) {
+            $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType));
+            $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', $quoteTypeId);
+            $leadStatuses = $leadStatuses->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'text' => $item->text,
+                ];
+            })->toArray();
+        }
+        $fieldDisable = true;
+        if ($user->isAdvisor()) {
+            $advisor = [
+                [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                ],
+            ];
+            $fieldDisable = false;
+        } else {
+            $advisor = $this->fetchAdvisorsByTeam($request);
+        }
+
+        return inertia('Reports/AuthorisedPaymentSummary', [
+            'reportData' => $reportService->getPaymentAuthorisedSummary($request),
+            'defaultFilters' => $reportService->authorizedPaymentSummaryFilters(),
+            'advisor' => $advisor,
+            'fieldDisable' => $fieldDisable,
+            'leadStatuses' => $leadStatuses ?? [],
+        ]);
+    }
+
+    public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
+    {
+
+        $displayBy = $request->displayBy ?? null;
+        $createdAtDate = $request->createdAtDate ?? null;
+        $includeUnassignedLeads = $request->includeUnassignedLeads ?? null;
+        $quoteTypes = QuoteTypeId::getOptions();
+        $quoteTypeCodes = quoteTypeCode::asArray();
+        $quoteTypeIdEnum = QuoteTypeId::asArray();
+
+        return inertia('Reports/ConversionAsAt', [
+            'reportData' => $conversionAsAtReportService->getReportData($request),
+            'unassignedLeadsCount' => $conversionAsAtReportService->getUnassignedLeadsCount($request),
+            'filterOptions' => $conversionAsAtReportService->getFilterOptions(),
+            'quoteTypes' => $quoteTypes,
+            'displayByColumn' => $displayBy,
+            'createdAtDate' => $createdAtDate,
+            'includeUnassignedLeads' => $includeUnassignedLeads,
+            'quoteTypeCodes' => $quoteTypeCodes,
+            'quoteTypeIdEnum' => $quoteTypeIdEnum,
+        ]);
+    }
+
+    public function conversionAsAtReportPdf(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
+    {
+        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+        $timeOnlyFormat = config('constants.TIME_ONLY_FORMAT');
+        $dateTimeFormat = config('constants.DATETIME_DISPLAY_FORMAT');
+
+        $displayByColumn = $request->displayBy ?? null;
+        $displayBy = $request->displayBy ? ucfirst(str_replace('_', ' ', $request->displayBy)) : 'N/A';
+        $lob = QuoteTypes::getName($request->lob)->value.' Insurance';
+
+        $reportData = $conversionAsAtReportService->getReportData($request);
+        $totalGrossConversion = $conversionAsAtReportService->calculateTotalGrossConversion($reportData);
+        $totalNetConversion = $conversionAsAtReportService->calculateTotalNetConversion($reportData);
+        // this is explicitly pdf data, if I set name to 'data' then may be some dev(s) may get confused about it
+        // that what this data may refers to, so to avoid confusion I am specifying it as pdfData.
+        // Thanks
+        $pdfDate = [
+            'report_data' => $reportData->toArray(),
+            'total_gross_conversion' => $totalGrossConversion,
+            'total_net_conversion' => $totalNetConversion,
+            'lob' => $lob,
+            'display_by_column' => $displayByColumn,
+            'display_by' => $displayBy,
+            'start_date' => Carbon::parse($request->startEndDate[0])->format($dateFormat),
+            'end_date' => Carbon::parse($request->startEndDate[1])->format($dateFormat),
+            'as_at_date' => Carbon::parse($request->asAtDate)->format($dateFormat),
+            'title' => 'Conversion As At Report',
+            'auth' => auth()->user()->name,
+            'date' => date($dateFormat),
+            'time' => now()->format($timeOnlyFormat),
+        ];
+
+        $pdf = PDF::loadView('pdf.conversion_as_at_report', compact('pdfDate'))->setOptions(['defaultFont' => 'DejaVu Sans']);
+        $name = 'InsuranceMarket.ae™ Conversion As At Report - '.Carbon::now()->format($dateTimeFormat).'.pdf';
+
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $name]);
     }
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)
@@ -411,15 +518,40 @@ class ReportsController extends Controller
 
     public function renderSaleManagementReport(Request $request)
     {
+        $shouldLoadData = isset($request->reportCategory);
         $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+        $reportData = null;
+        $endorsementData = null;
+        if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY && $shouldLoadData) {
+            $rawReportData = $reportInstance->getReportData($request);
+            $endorsementData = $reportInstance->getEndorsementsData($request);
+            /**
+             * process the endorsements data
+             */
+            $reportData = ManagementReport::processEndorsementsData($rawReportData, $endorsementData, $request);
+            $reportInstance->formatData($reportData);
+        }
 
         return inertia('ManagementReport/index', [
-            'reportData' => $reportInstance->getReportData($request),
+            'reportData' => $shouldLoadData ? ($reportData ?? $reportInstance->getReportData($request, $shouldLoadData)) : [],
             'filterOptions' => $reportInstance->getFilterOptions(),
             'defaultFilters' => $reportInstance->getDefaultFilters(),
             'reportName' => $reportCategory,
         ]);
+    }
+
+    /**
+     * export method for management reports.
+     *
+     * @return void
+     */
+    public function exportManagementReport(Request $request)
+    {
+        $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
+        $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+
+        return $reportInstance->getReportData($request);
     }
 
     public function totalPremiumLeadsSaleReport(Request $request, ReportService $reportService)
@@ -429,6 +561,38 @@ class ReportsController extends Controller
         return inertia('Reports/TotalPremiumLeadsSale', [
             'reportData' => $resp ?? null,
             'filterOptions' => $reportService->getDefaultFiltersForTotalPremium(),
+
         ]);
+    }
+
+    public function renderRetentionReport(Request $request, RetentionReportService $retentionReportService)
+    {
+        @[$retentionReportData, $footerData] = $retentionReportService->getReportData($request);
+
+        return inertia('Reports/RetentionReport', [
+            'filterOptions' => $retentionReportService->getFilterOptions(),
+            'filtersByLob' => $retentionReportService->getFiltersByLob(),
+            'reportData' => $retentionReportData,
+            'footerData' => $footerData,
+            'productName' => $retentionReportService->getUserPorductName(),
+            'retentionReportEnum' => RetentionReportEnum::asArray(),
+            'departments' => Department::where('is_active', true)->whereIn('id', Auth::user()->departments->pluck('id')->toArray())->get()
+                ->map(function ($department) {
+                    return [
+                        'value' => $department->id,
+                        'label' => $department->name,
+                    ];
+                })->toArray(),
+        ]);
+    }
+
+    public function fetchRetentionLeadsData(Request $request, RetentionReportService $retentionReportService)
+    {
+        return $retentionReportService->getRetentionLeadsData($request);
+    }
+
+    public function fetchBatchByDates(Request $request, RetentionReportService $retentionReportService)
+    {
+        return $retentionReportService->getBatchByDates($request);
     }
 }

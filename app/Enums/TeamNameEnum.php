@@ -39,4 +39,15 @@ final class TeamNameEnum extends Enum
     public const AMT = 'AMT';
     public const MICRO_SME = 'Micro SME';
     public const CORPLINE_NEW = 'Corpline - Team';
+    public const BIKE = 'Bike';
+    public const Bike_Team = 'Bike - Team';
+
+    public static function getTeamID(string $teamName)
+    {
+        $teamIDs = [
+            self::CAR => 2,
+        ];
+
+        return $teamIDs[$teamName] ?? null;
+    }
 }

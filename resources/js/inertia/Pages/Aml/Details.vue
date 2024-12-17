@@ -1,7 +1,8 @@
 <script setup>
-import IndividualModel from './Partials/IndividualModel.vue';
+import { ref } from 'vue';
+import { formatDate } from '../../Composables/utilities.js';
 import EntityModel from './Partials/EntityModel.vue';
-import { onMounted, ref } from 'vue';
+import IndividualModel from './Partials/IndividualModel.vue';
 
 const props = defineProps({
   quoteType: Object,
@@ -20,7 +21,8 @@ const props = defineProps({
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
-    cardHolderName:Object,
+  cardHolderName: Object,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -58,9 +60,12 @@ if (can(permissionsEnum.AMLDecisionUpdate)) {
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
 
-const dateAndTimeFormat = date => {
-  return date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
-};
+function dateAndTimeFormat(inputDate) {
+  if (!inputDate) {
+    return 'N/A';
+  }
+  return formatDate(inputDate);
+}
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
@@ -75,15 +80,50 @@ const dateToYear = date => {
 };
 
 const decisionStatus = {
-    [props.amlDecisionStatusEnum.PASS] : "Pass",
-    [props.amlDecisionStatusEnum.FALSE_POSITIVE] : "Pass",
-    [props.amlDecisionStatusEnum.TRUE_MATCH_ACCEPT_RISK] : "Pass",
-    [props.amlDecisionStatusEnum.ESCALATED] : "Escalated",
-    [props.amlDecisionStatusEnum.SENT_FOR_REVIEW] : "Sent For Review",
-    [props.amlDecisionStatusEnum.REJECTED] : "Rejected",
-    [props.amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK] : "Rejected",
+  [props.amlDecisionStatusEnum.PASS]: 'Pass',
+  [props.amlDecisionStatusEnum.FALSE_POSITIVE]: 'Pass',
+  [props.amlDecisionStatusEnum.TRUE_MATCH_ACCEPT_RISK]: 'Pass',
+  [props.amlDecisionStatusEnum.ESCALATED]: 'Escalated',
+  [props.amlDecisionStatusEnum.SENT_FOR_REVIEW]: 'Sent For Review',
+  [props.amlDecisionStatusEnum.REJECTED]: 'Rejected',
+  [props.amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK]: 'Rejected',
 };
-
+const open = ref(false);
+const updateOpenModel = () => {
+  open.value = true;
+};
+const updateCloseModel = () => {
+  open.value = false;
+};
+const complianceComment = ref(props.quoteRequest.compliance_comments);
+const contactLoader = ref(false);
+const updateComments = async () => {
+  contactLoader.value = true;
+  await axios
+    .post('/aml/update-quote-comment', {
+      modelType: props.quoteType.code,
+      quote_id: props.quoteRequest.id,
+      compliance_comments: complianceComment.value,
+    })
+    .then(response => {
+      open.value = false;
+      contactLoader.value = false;
+      props.quoteRequest.compliance_comments =
+        response.data.data.compliance_comments;
+    })
+    .catch(error => {
+      console.error(error);
+    });
+};
+const activeField = ref(true);
+function activeComments() {
+  if (hasRole(rolesEnum.ComplianceSuperUser)) {
+    activeField.value = false;
+  }
+}
+onMounted(() => {
+  activeComments();
+});
 </script>
 
 <template>
@@ -107,7 +147,7 @@ const decisionStatus = {
           </div>
           <div class="grid sm:grid-cols-2">
             <div>
-              <x-tooltip position="bottom">
+              <x-tooltip placement="bottom">
                 <label
                   class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                 >
@@ -116,11 +156,22 @@ const decisionStatus = {
                 <template #tooltip> Reference ID</template>
               </x-tooltip>
             </div>
-            <div>{{ quoteRequest.code }}</div>
+            <div>
+              <Link
+                :href="quoteRequest?.quote_link"
+                class="text-primary-500 hover:underline"
+              >
+                {{ quoteRequest.code }}
+              </Link>
+            </div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">QUOTE STATUS</dt>
             <dd>{{ quoteRequest?.quote_status?.text ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AML STATUS</dt>
+            <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PHONE NUMBER</dt>
@@ -565,6 +616,54 @@ const decisionStatus = {
             <dt class="font-medium">PREVIOUS QUOTE ID</dt>
             <dd>{{ quoteRequest.previous_quote_id }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2" v-if="!activeField">
+            <dt class="font-medium">Compliance Officer Comments</dt>
+            <dd v-if="!open" class="flex">
+              {{
+                quoteRequest.compliance_comments == null ||
+                quoteRequest.compliance_comments == ''
+                  ? 'N/A'
+                  : quoteRequest.compliance_comments
+              }}
+              <span class="ml-2" @click="updateOpenModel">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 50 50"
+                  width="15px"
+                  height="15px"
+                >
+                  <path
+                    d="M 43.125 2 C 41.878906 2 40.636719 2.488281 39.6875 3.4375 L 38.875 4.25 L 45.75 11.125 C 45.746094 11.128906 46.5625 10.3125 46.5625 10.3125 C 48.464844 8.410156 48.460938 5.335938 46.5625 3.4375 C 45.609375 2.488281 44.371094 2 43.125 2 Z M 37.34375 6.03125 C 37.117188 6.0625 36.90625 6.175781 36.75 6.34375 L 4.3125 38.8125 C 4.183594 38.929688 4.085938 39.082031 4.03125 39.25 L 2.03125 46.75 C 1.941406 47.09375 2.042969 47.457031 2.292969 47.707031 C 2.542969 47.957031 2.90625 48.058594 3.25 47.96875 L 10.75 45.96875 C 10.917969 45.914063 11.070313 45.816406 11.1875 45.6875 L 43.65625 13.25 C 44.054688 12.863281 44.058594 12.226563 43.671875 11.828125 C 43.285156 11.429688 42.648438 11.425781 42.25 11.8125 L 9.96875 44.09375 L 5.90625 40.03125 L 38.1875 7.75 C 38.488281 7.460938 38.578125 7.011719 38.410156 6.628906 C 38.242188 6.246094 37.855469 6.007813 37.4375 6.03125 C 37.40625 6.03125 37.375 6.03125 37.34375 6.03125 Z"
+                  />
+                </svg>
+              </span>
+            </dd>
+
+            <dd v-else="">
+              <x-input
+                type="text"
+                placeholder="Compliance Officer Comments"
+                v-model="complianceComment"
+              />
+              <x-button
+                size="xs"
+                class="mt-1 mr-1"
+                color="#ff5e00"
+                @click="updateComments"
+                :loading="contactLoader"
+              >
+                Update</x-button
+              >
+              <x-button
+                size="xs"
+                class="mt-1"
+                color="#ff5e00"
+                @click="updateCloseModel"
+              >
+                Cancel</x-button
+              >
+            </dd>
+          </div>
         </dl>
         <div class="flex justify-end">
           <x-button
@@ -581,17 +680,18 @@ const decisionStatus = {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-        v-if="props.kycStatus === customerTypeEnum.EntityShort"
-        v-model="modals.insuranceForm"
-        :quoteType="quoteType"
-        :quoteDetails="quoteRequest"
-        :entityDetails="entityDetails"
-        :nationalities="nationalities"
-        :membersDetails="membersDetails"
-        :uboDetails="uboDetails"
-        :customerTypeEnum="customerTypeEnum"
-        :lookups="lookups"
-        :quote-aml-status="page.props.quoteAmlStatus"
+      v-if="props.kycStatus === customerTypeEnum.EntityShort"
+      v-model="modals.insuranceForm"
+      :quoteType="quoteType"
+      :quoteDetails="quoteRequest"
+      :entityDetails="entityDetails"
+      :nationalities="nationalities"
+      :membersDetails="membersDetails"
+      :uboDetails="uboDetails"
+      :customerTypeEnum="customerTypeEnum"
+      :lookups="lookups"
+      :quote-aml-status="page.props.quoteAmlStatus"
+      :kycLogs="kycLogs"
     />
 
     <IndividualModel
@@ -609,6 +709,7 @@ const decisionStatus = {
       :quote-aml-status="page.props.quoteAmlStatus"
       :customer-details="props.customerDetails"
       :cardHolderName="cardHolderName"
+      :kycLogs="kycLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -623,7 +724,6 @@ const decisionStatus = {
         :items="kycLogs || []"
         border-cell
         :rows-per-page="40"
-        fixed-checkbox
         :hide-footer="kycLogs.length < 40"
       >
         <template #item-insurance_type="{ quotetype }">
@@ -634,10 +734,19 @@ const decisionStatus = {
         </template>
 
         <template #item-status="{ match_found, decision }">
-         {{ match_found > 0 ? (decision !== null ? decisionStatus[decision] : amlDecisionStatusEnum.ESCALATED) : amlDecisionStatusEnum.PASS}}
+          {{
+            match_found > 0
+              ? decision !== null
+                ? decisionStatus[decision]
+                : amlDecisionStatusEnum.ESCALATED
+              : amlDecisionStatusEnum.PASS
+          }}
         </template>
 
-        <template v-if="can(permissionsEnum.AMLDecisionUpdate)" #item-action="{ id }">
+        <template
+          v-if="can(permissionsEnum.AMLDecisionUpdate)"
+          #item-action="{ id }"
+        >
           <div class="space-x-4">
             <x-button
               size="xs"
@@ -654,6 +763,7 @@ const decisionStatus = {
     <AuditLogs
       :type="`App\\Models\\${quoteType.code}Quote`"
       :id="quoteRequest.id"
+      :quoteType="quoteType.code"
     />
   </div>
 </template>

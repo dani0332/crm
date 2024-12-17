@@ -22,13 +22,14 @@ class UserService extends BaseService
 
     public function createUserRecord(Request $request)
     {
-        $user = new User();
+        $user = new User;
         $user->name = $request->name;
         $user->email = $request->email;
         $user->mobile_no = $request->mobile_no;
         $user->landline_no = $request->landline_no;
         $user->calendar_link = $request->calendar_link;
         $user->phone_calendar_link = $request->phone_calendar_link;
+        $user->department_id = $request->department_id ?? null;
         $user->password = bcrypt($request->password);
         $user->is_active = true;
         if ((! empty($request->additionalTeams) && $request->sub_team_id != '0')) {
@@ -41,7 +42,13 @@ class UserService extends BaseService
                 $user->additional_team_ids = $request->additionalTeams[0];
             }
         }
+
         $user->save();
+
+        if ($request->department_ids != null) {
+            app(DepartmentService::class)->saveUserDepartments($user, $request->department_ids);
+        }
+
         if ($request->manager != '0' && isset($request->manager)) {
             DB::table('user_manager')->where('user_id', $user->id)->delete();
             foreach ($request->manager as $managerId) {
@@ -101,5 +108,10 @@ class UserService extends BaseService
         }
 
         return false;
+    }
+
+    public function getDepartmentsList()
+    {
+        return DB::table('departments')->where('is_active', 1)->orderBy('name')->get();
     }
 }

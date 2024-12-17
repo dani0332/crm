@@ -9,6 +9,8 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +18,8 @@ use Illuminate\Support\Facades\URL;
 
 class YachtQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -69,7 +73,7 @@ class YachtQuoteRepository extends BaseRepository
 
             $quote->yachtQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new YachtQuote())->allowedColumns())
+                Arr::only($data, (new YachtQuote)->allowedColumns())
             );
 
             return $quote;
@@ -92,10 +96,12 @@ class YachtQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'createdBy',
@@ -110,6 +116,9 @@ class YachtQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
+                'policy_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -132,25 +141,38 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        $request = request();
-
-        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
-        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
 
         $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'paymentStatus',
+            'payments',
+            'quoteDetail',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
+            ->when(! empty(request()->advisor_assigned_date), function ($query) {
+                $dateArray = request()->advisor_assigned_date;
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                });
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy($sort_by, $sort_type);
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
-            return $query->count();
+            //PD Revert
+            // return $query->count();
+            return 0;
         }
 
         return ($forExport) ? $query->get() : $query;

@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PermissionsEnum;
+use App\Models\PaymentSplits;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SplitPaymentUpdateRequest extends FormRequest
@@ -34,6 +37,39 @@ class SplitPaymentUpdateRequest extends FormRequest
             'plan_id' => 'required|integer',
             'quote_id' => 'required|integer',
             'splitPaymentId' => 'required|integer',
+            'collection_type' => 'required|string',
         ];
+    }
+
+    /**
+     * validate quote record
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $request = request();
+            $user = auth()->user();
+
+            // Get payment split record if needed
+            $paymentSplit = null;
+            if ($request->is_approved === true && $user->can(PermissionsEnum::INPL_APPROVER)) {
+                $paymentSplit = PaymentSplits::find($request->splitPaymentId);
+            }
+
+            // Check if payment method is INPL
+            if ($paymentSplit && $paymentSplit->payment_method === PaymentMethodsEnum::InsureNowPayLater) {
+                return;
+            }
+
+            // Check authorization for broker
+            if ($request->collection_type === 'broker' && $request->is_approved === true && $user->cannot(PermissionsEnum::PAYMENT_VERIFICATION_COLLECTED_BY_BROKER)) {
+                $validator->errors()->add('value', 'You are not authorized to approve this payment');
+            }
+
+            // Check authorization for insurer
+            if ($request->collection_type === 'insurer' && $request->is_approved === true && $user->cannot(PermissionsEnum::PAYMENT_VERIFICATION_COLLECTED_BY_INSURER)) {
+                $validator->errors()->add('value', 'You are not authorized to approve this payment');
+            }
+        });
     }
 }

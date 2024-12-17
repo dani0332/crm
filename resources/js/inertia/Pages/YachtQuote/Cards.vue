@@ -10,6 +10,9 @@ const props = defineProps({
   },
   leadStatuses: Array,
   advisors: Array,
+  teams: Object,
+  areBothTeamsPresent: Boolean,
+  is_renewal: String,
 });
 
 const page = usePage();
@@ -17,7 +20,7 @@ const page = usePage();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
-
+const notification = useNotifications('toast');
 const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.YachtAdvisor,
@@ -47,21 +50,33 @@ watch(
   { deep: true },
 );
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
 const leadsCount = ref(props.totalCount);
 const previousDate = getPreviousDate;
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.total-leads-count',
-);
+
+const channelName = `public.${page.props.appEnv}.total-leads-count`;
+const eventName = 'leads.count';
 
 const listen = () => {
-  channel.bind('leads.count', function (e) {
-    leadsCount.value = e.totalLeadsCount;
+  const worker = new SharedWorker('/build/workers/pusher.worker.js');
+
+  worker.port.addEventListener('message', e => {
+    leadsCount.value = e.data.totalLeadsCount;
+  });
+
+  worker.onerror = function (error) {
+    console.log(error.message);
+    worker.port.close();
+  };
+
+  worker.port.start();
+
+  //Subscribe to channel/event
+  worker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
   });
 };
 
@@ -73,6 +88,7 @@ const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
+
 const filters = reactive({
   date: null,
   status_filters: null,
@@ -84,7 +100,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
-  previous_quote_policy_number: '',
+  is_renewal: props.is_renewal,
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
@@ -92,7 +108,14 @@ const filters = reactive({
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  advisors: [],
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
+  last_modified_date: '',
+  advisor_assigned_date: '',
 });
+
+provide('filters', filters);
 
 const serverOptions = ref({
   page: 1,
@@ -136,6 +159,14 @@ const handleSelectedFilters = selectedFilters => {
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -183,8 +214,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  channel.unbind('leads.count');
-  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+  //Unsubscribe to channel/event
+  worker.port.postMessage({
+    action: 'unsubscribe',
+    channel: channelName,
+    event: eventName,
+  });
 });
 
 function onReset() {
@@ -197,6 +232,22 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
 </script>
 
 <template>
@@ -205,10 +256,11 @@ function onReset() {
     <sticky-header>
       <template #header>
         <h2 class="text-xl font-semibold">Yacht List</h2>
-        <LeadsCount
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <FiltersButton
@@ -231,7 +283,7 @@ function onReset() {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -313,9 +365,21 @@ function onReset() {
             "
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="Advisor" v-if="isAllowed">
           <ComboBox
-            v-model="filters.advisor_id"
+            v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
           />
@@ -341,14 +405,15 @@ function onReset() {
             placeholder="Search by Renewal Batch"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
-            v-model="filters.previous_quote_policy_number"
+            :disabled="!props.areBothTeamsPresent"
+            v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[
               { value: '', label: 'All' },
-              { value: 0, label: 'Yes' },
-              { value: 1, label: 'No' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
             ]"
             class="w-full"
           />
@@ -357,9 +422,24 @@ function onReset() {
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.YachtManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

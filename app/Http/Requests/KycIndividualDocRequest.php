@@ -50,6 +50,12 @@ class KycIndividualDocRequest extends FormRequest
             'pep' => 'sometimes',
             'financial_sanctions' => 'sometimes',
             'dual_nationality' => 'sometimes',
+            'transaction_pattern' => 'sometimes',
+            'premium_tenure' => 'sometimes',
+            'in_sanction_list' => 'sometimes',
+            'deal_sanction_list' => 'sometimes',
+            'is_operation_high_risk' => 'sometimes',
+            'is_partner' => 'sometimes',
         ];
     }
 }

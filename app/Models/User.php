@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,8 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
-use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Jetstream\HasProfilePhoto;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
@@ -19,10 +18,8 @@ class User extends Authenticatable implements AuditableContract
 {
     use Auditable;
     use HasFactory;
-    use HasProfilePhoto;
     use HasRoles;
     use Notifiable;
-    use TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -57,15 +54,12 @@ class User extends Authenticatable implements AuditableContract
         'email_verified_at' => 'datetime',
     ];
 
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var array
-     */
-    protected $appends = [
-        'profile_photo_url',
-    ];
-
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
     public function getPermissionAttribute()
     {
         return $this->getAllPermissions();
@@ -143,22 +137,22 @@ class User extends Authenticatable implements AuditableContract
 
     public function isRenewalAdvisor()
     {
-        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalAdvisor, RolesEnum::TravelRenewalAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HomeRenewalAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::PetRenewalAdvisor]);
+        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HomeRenewalAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::PetRenewalAdvisor]);
     }
 
     public function isRenewalManager()
     {
-        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalManager, RolesEnum::TravelRenewalManager, RolesEnum::HealthRenewalManager, RolesEnum::HomeRenewalManager, RolesEnum::LifeRenewalManager, RolesEnum::GMRenewalManager, RolesEnum::CorpLineRenewalManager, RolesEnum::PetRenewalManager]);
+        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalManager, RolesEnum::HealthRenewalManager, RolesEnum::HomeRenewalManager, RolesEnum::LifeRenewalManager, RolesEnum::GMRenewalManager, RolesEnum::CorpLineRenewalManager, RolesEnum::PetRenewalManager]);
     }
 
     public function isNewBusinessManager()
     {
-        return Auth::user()->hasAnyRole([RolesEnum::HealthNewBusinessManager, RolesEnum::TravelNewBusinessManager, RolesEnum::HomeNewBusinessManager, RolesEnum::LifeNewBusinessManager, RolesEnum::GMNewBusinessManager, RolesEnum::CorpLineNewBusinessManager, RolesEnum::PetNewBusinessManager]);
+        return Auth::user()->hasAnyRole([RolesEnum::PetNewBusinessManager]);
     }
 
     public function isNewBusinessAdvisor()
     {
-        return Auth::user()->hasAnyRole([RolesEnum::CarNewBusinessAdvisor, RolesEnum::TravelNewBusinessAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HomeNewBusinessAdvisor, RolesEnum::LifeNewBusinessAdvisor, RolesEnum::GMNewBusinessAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetNewBusinessAdvisor]);
+        return Auth::user()->hasAnyRole([RolesEnum::CarNewBusinessAdvisor]);
     }
 
     public function isHealthManager()
@@ -217,6 +211,11 @@ class User extends Authenticatable implements AuditableContract
         return Auth::user()->hasRole(RolesEnum::SeniorManagement);
     }
 
+    public function isDepartmentManager()
+    {
+        return Auth::user()->can(PermissionsEnum::DEPARTMENT_MANAGER);
+    }
+
     public function getUserTeams($userId)
     {
         $userTeamIds = UserTeams::where('user_id', $userId)->get()->pluck('team_id');
@@ -224,28 +223,17 @@ class User extends Authenticatable implements AuditableContract
         return Team::whereIn('id', $userTeamIds)->get()->pluck('name');
     }
 
-    public function processGetDSL($filters = [])
-    {
-        if (Auth::user()->hasAnyRole([RolesEnum::ProductionApprovalManager, RolesEnum::Advisor, RolesEnum::Admin])) {
-            return $this->getUserRoles();
-        }
-
-        return self::with(['usersroles' => function ($query) {
-            $query->where('name', 'admin');
-        }])->get();
-    }
-
     public function hasMyLeadAccess()
     {
         return Auth::user()->hasAnyRole([
             RolesEnum::Admin, RolesEnum::BusinessAdvisor, RolesEnum::HealthAdvisor, RolesEnum::HomeAdvisor,
             RolesEnum::LifeAdvisor, RolesEnum::TravelAdvisor, RolesEnum::GMAdvisor, RolesEnum::RMAdvisor, RolesEnum::CorpLineAdvisor,
-            RolesEnum::EBPAdvisor, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor,
-            RolesEnum::TravelAdvisor, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor,
-            RolesEnum::TravelRenewalAdvisor, RolesEnum::TravelNewBusinessAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::LifeNewBusinessAdvisor,
-            RolesEnum::HomeRenewalAdvisor, RolesEnum::HomeNewBusinessAdvisor, RolesEnum::GMNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor,
+            RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor,
+            RolesEnum::TravelAdvisor, RolesEnum::HealthRenewalAdvisor,
+            RolesEnum::LifeRenewalAdvisor,
+            RolesEnum::HomeRenewalAdvisor, RolesEnum::GMRenewalAdvisor,
             RolesEnum::CorpLineRenewalAdvisor,
-            RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetRenewalAdvisor, RolesEnum::PetNewBusinessAdvisor, RolesEnum::CarRenewalAdvisor, RolesEnum::PetAdvisor,
+            RolesEnum::PetRenewalAdvisor, RolesEnum::CarRenewalAdvisor, RolesEnum::PetAdvisor,
         ]);
     }
 
@@ -327,7 +315,7 @@ class User extends Authenticatable implements AuditableContract
      */
     public function scopeWithActive($query)
     {
-        return $query->where('is_active', 1);
+        return $query->where('users.is_active', 1);
     }
 
     /**
@@ -360,5 +348,20 @@ class User extends Authenticatable implements AuditableContract
     {
         return $this->hasMany(UserProducts::class);
 
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class)->select('id', 'name');
+    }
+
+    public function businessTypes()
+    {
+        return $this->belongsToMany(BusinessTypeOfInsurance::class, 'business_type_of_insurance_user', 'user_id', 'business_type_of_insurance_id');
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
     }
 }

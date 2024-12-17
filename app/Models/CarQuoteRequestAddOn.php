@@ -10,6 +10,7 @@ class CarQuoteRequestAddOn extends Model
     use HasFactory;
 
     protected $table = 'car_quote_request_addon';
+    protected $guarded = [];
     public $access = [
 
         'write' => ['advisor', 'oe'],
@@ -39,10 +40,5 @@ class CarQuoteRequestAddOn extends Model
     public function relations()
     {
         return ['addon_option_id'];
-    }
-
-    public function processGetDSL($filters, $update)
-    {
-        return self::processGetBaseDSL($filters, $update);
     }
 }

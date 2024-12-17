@@ -101,7 +101,7 @@ class TravelUploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChun
             'policy_number' => ['index' => 17, 'title' => 'POLICY NUMBER', 'rules' => 'max:100'],
             'destination' => ['index' => 18, 'title' => 'DESTINATION', 'rules' => 'max:100'],
             'currently_located_in' => ['index' => 19, 'title' => 'CURRENTLY LOCATED IN', 'rules' => 'max:100'],
-            'renewal_expiry_date' => ['index' => 20, 'title' => 'EXPIRY DATE', 'rules' => 'max:100'],
+            'policy_expiry_date' => ['index' => 20, 'title' => 'EXPIRY DATE', 'rules' => 'max:100'],
             'is_ecommerce' => ['index' => 21, 'title' => 'IS ECOMMERCE', 'rules' => 'max:3'],
             'payment_status' => ['index' => 22, 'title' => 'PAYMENT STATUS', 'rules' => 'max:20'],
             'customer_mobile' => ['index' => 23, 'title' => 'MOBILE NUMBER', 'rules' => 'max:20'],

@@ -5,27 +5,29 @@ namespace App\Services;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
-use Auth;
 use Carbon\Carbon;
 use Config;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class BusinessQuoteService extends BaseService
 {
     protected $query;
-
-    use AddPremiumAllLobs, GetUserTreeTrait, RolePermissionConditions;
+    use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
     protected $leadAllocationService;
 
@@ -64,8 +66,9 @@ class BusinessQuoteService extends BaseService
                 'bqr.source',
                 'bqr.policy_number',
                 'bqr.previous_quote_id',
-                'bqr.renewal_expiry_date',
+                'bqr.policy_expiry_date',
                 'bqr.renewal_batch',
+                'rb.name as renewal_batch_text',
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
                 'bqr.previous_quote_policy_premium',
@@ -81,11 +84,13 @@ class BusinessQuoteService extends BaseService
                 'c.insured_last_name',
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
+                'c.receive_marketing_updates',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
                 'ent.company_name',
                 'ent.company_address',
+                'bqr.risk_score',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
                 'ent.emirate_of_registration_id',
@@ -95,7 +100,24 @@ class BusinessQuoteService extends BaseService
                 'bqr.price_vat_not_applicable',
                 'bqr.price_with_vat',
                 'bqr.company_name as business_company_name',
+                DB::raw('DATE_FORMAT(bqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
+                'ent.emirate_of_registration_id',
+                'bqr.price_vat_applicable',
+                'bqr.vat',
+                'bqr.insurer_quote_number',
+                'bqr.policy_issuance_status_id',
+                'bqr.policy_issuance_status_other',
+                'bqr.policy_booking_date',
+                'policy_start_date',
+                'policy_issuance_date',
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                'ps.text AS payment_status_id_text',
+                'bqr.payment_status_id',
+                'bqr.insly_migrated',
+                'bqr.aml_status',
             )
+            ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
@@ -104,6 +126,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
+            ->leftJoin('renewal_batches as rb', 'bqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
@@ -149,40 +172,28 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
-    }
-
-    public function updateChildRecord($id)
-    {
-        $childRecord = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        return BusinessQuote::where('id', $id)->with([
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                            'processJob',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                $payment->orderBy('created_at');
+            },
+        ])->first();
     }
 
     public function getDetailEntity($id)
     {
-        $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return BusinessQuoteRequestDetail::create([
-            'business_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return BusinessQuoteRequestDetail::firstOrCreate(['business_quote_request_id' => $id]);
     }
 
     public function getSelectedLostReason($id)
@@ -246,6 +257,11 @@ class BusinessQuoteService extends BaseService
         } else {
             $searchProperties = $model->searchProperties;
         }
+
+        if (! isset($request->code) && ! isset($request->advisor_assigned_date) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date)
+        && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
+            $this->query->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
         // if ($request->ajax()) {
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
@@ -253,6 +269,22 @@ class BusinessQuoteService extends BaseService
         ) {
             $this->query->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
+
+        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
+            $dateArray = $request['last_modified_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('bqr.updated_at', [$dateFrom, $dateTo]);
+        }
+
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateArray = $request['advisor_assigned_date'];
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
@@ -263,22 +295,35 @@ class BusinessQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('bqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-            $dateFrom = $request['created_at'];
-            $dateTo = $request['created_at_end'];
-            $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
+        if (isset($request->company_name)) {
+            $this->query->where('ent.company_name', 'like', '%'.$request->company_name.'%');
         }
 
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-
+        if (
+            in_array('created_at', $searchProperties)
+            && isset($request->created_at_start) && $request->created_at_start != ''
+            && empty($request->email)
+            && empty($request->code)
+            && empty($request->renewal_batches)
+            && empty($request->quote_batch_id)
+            && empty($request->payment_due_date)
+            && empty($request->booking_date)
+            && ! isset($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
+        ) {
+            $dateFrom = Carbon::parse($request['created_at_start'])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::parse($request['created_at_end'])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
-
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
+            $this->query->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+        }
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
         if (isset($request->code) && $request->code != '') {
             $this->query->where('bqr.code', $request->code);
@@ -296,10 +341,13 @@ class BusinessQuoteService extends BaseService
             $this->query->where('bqr.policy_number', $request->policy_number);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where(function ($query) use ($request) {
+                $query->where('bqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('bqr.renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
+            $this->query->whereIn('bqr.renewal_batch_id', $request->renewal_batches);
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
@@ -335,8 +383,16 @@ class BusinessQuoteService extends BaseService
             $this->query->whereNotNull('bqr.stale_at');
         }
 
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
         foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at') {
+            if (! empty($request[$item]) && $item != 'created_at' && $item != 'company_name') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
@@ -345,6 +401,8 @@ class BusinessQuoteService extends BaseService
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
                     }
+                } elseif ($item == 'business_type_of_insurance_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    $this->query->whereIn('bqr.business_type_of_insurance_id', $request[$item]);
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
                 } else {
@@ -356,6 +414,8 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
+
+        $this->adjustQueryByDateFilters($this->query, 'bqr');
 
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {
@@ -445,8 +505,8 @@ class BusinessQuoteService extends BaseService
             'brief_details' => 'textarea|required',
             'previous_quote_id' => 'readonly|title',
             'is_renewal' => 'static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
-            'renewal_expiry_date' => 'input|date|title|range',
-            'renewal_batch' => 'input|none',
+            'policy_expiry_date' => 'input|date|title|range',
+            'renewal_batches' => 'select|title|multiple',
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_number' => 'input|title',
             'previous_quote_policy_premium' => 'input|title',
@@ -494,7 +554,7 @@ class BusinessQuoteService extends BaseService
             case 'previous_quote_id':
                 $title = 'Previous Quote Id';
                 break;
-            case 'renewal_expiry_date':
+            case 'policy_expiry_date':
                 $title = 'Expiry Date';
                 break;
             case 'previous_quote_policy_number':
@@ -525,9 +585,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
-            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,brief_details,dob,renewal_expiry_date,next_followup_date,renewal_import_code,device',
-            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
+            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code,policy_expiry_date,renewal_import_code,device',
+            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,brief_details,dob,policy_expiry_date,next_followup_date,renewal_import_code,device',
+            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code,policy_expiry_date,renewal_import_code,device',
             'show' => 'is_renewal,previous_quote_id,quote_status_id',
         ];
     }
@@ -541,10 +601,10 @@ class BusinessQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'renewal_batch', 'previous_quote_policy_number', 'previous_policy_expiry_date', 'previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
-            'create' => 'parent_duplicate_quote_id,gender,previous_quote_policy_premium,renewal_expiry_date,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_import_code,device',
-            'list' => 'parent_duplicate_quote_id,gender,renewal_expiry_date,policy_number,is_renewal,previous_quote_id,email,mobile_no,brief_details,dob,next_followup_date,lost_reason,source,transapp_code,business_type_of_insurance_id,number_of_employees,renewal_import_code,device',
-            'update' => 'parent_duplicate_quote_id,gender,previous_quote_policy_premium,renewal_expiry_date,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code,device',
-            'show' => 'gender,renewal_expiry_date,is_renewal,policy_number,previous_quote_id',
+            'create' => 'parent_duplicate_quote_id,gender,previous_quote_policy_premium,policy_expiry_date,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_import_code,device',
+            'list' => 'parent_duplicate_quote_id,gender,policy_expiry_date,policy_number,is_renewal,previous_quote_id,email,mobile_no,brief_details,dob,next_followup_date,lost_reason,source,transapp_code,business_type_of_insurance_id,number_of_employees,renewal_import_code,device',
+            'update' => 'parent_duplicate_quote_id,gender,previous_quote_policy_premium,policy_expiry_date,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code,device',
+            'show' => 'gender,policy_expiry_date,is_renewal,policy_number,previous_quote_id',
         ];
     }
 
@@ -552,9 +612,9 @@ class BusinessQuoteService extends BaseService
     {
         $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number', 'advisor_id'];
         $model->newBusinessSkipProperties = [
-            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
-            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,previous_policy_expiry_date,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date,previous_quote_id,renewal_import_code,device',
-            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
+            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,policy_expiry_date,renewal_import_code,device',
+            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,previous_policy_expiry_date,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,policy_expiry_date,previous_quote_id,renewal_import_code,device',
+            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,policy_expiry_date,renewal_import_code,device',
             'show' => 'member_category_id,salary_band_id,is_renewal,id,previous_quote_id',
         ];
     }
@@ -583,10 +643,8 @@ class BusinessQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::BUSINESS, BusinessQuoteRequestDetail::class, 'business_quote_request_id');
         }
 
         return $result;
@@ -605,7 +663,7 @@ class BusinessQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }

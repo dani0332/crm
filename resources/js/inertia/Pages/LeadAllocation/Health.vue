@@ -51,16 +51,7 @@ const leadData = ref([
   },
 ]);
 
-const statusModal = reactive({
-  show: false,
-  loader: false,
-  data: {
-    id: 0,
-    userId: 0,
-    reason: 1,
-    loader: false,
-  },
-});
+const statusModal = getStatusModal();
 
 const confirmModal = reactive({
   show: false,
@@ -75,14 +66,7 @@ const loader = reactive({
   table: false,
 });
 
-const statusText = statusId =>
-  ({
-    1: 'Online',
-    2: 'Offline',
-    3: 'Unavailable',
-    4: 'Sick',
-    5: 'On leave',
-  }[parseInt(statusId)] || 'Unavailable');
+const statusText = statusId => resolveUserStatusText(statusId);
 
 const currentRow = id => {
   const row = leadData?.value.find(item => item.id === id);
@@ -223,7 +207,10 @@ const onSubmitChanges = async () => {
     });
 
   await axios
-    .post(`/lead-allocation/${page.props.quoteType}/update-availability`, max_cap)
+    .post(
+      `/lead-allocation/${page.props.quoteType}/update-availability`,
+      max_cap,
+    )
     .then(() => {
       router.get('/lead-allocation', {
         replace: true,
@@ -239,7 +226,11 @@ const onSubmitChanges = async () => {
 const onToggleResetCap = async (active, userId, leadId) => {
   loader.submit = true;
   await axios
-    .post('/lead-allocation/toggle-reset-cap', {leadId, userId, resetCap: active })
+    .post('/lead-allocation/toggle-reset-cap', {
+      leadId,
+      userId,
+      resetCap: active,
+    })
     .finally(() => {
       loader.submit = false;
     });
@@ -251,7 +242,7 @@ onMounted(() => {
       id: item.id,
       userId: item.userId,
       cap: item.max_capacity,
-      
+
       capEdit: false,
       status: item.is_available,
     };
@@ -293,18 +284,6 @@ onMounted(() => {
   <div class="mt-5 mb-5">
     <h2 class="text-lg font-semibold">Unassigned Leads Count</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 w-full gap-5">
-      <div class="labox border-[#e46122]">
-        <h3>Good</h3>
-        <p>{{ unAssignedGood ?? 0 }}</p>
-      </div>
-      <div class="labox border-[#db8b1d]">
-        <h3>Best</h3>
-        <p>{{ unAssignedBest ?? 0 }}</p>
-      </div>
-      <div class="labox border-[#d80ca8]">
-        <h3>Entry Level</h3>
-        <p>{{ unAssignedEntryLevel ?? 0 }}</p>
-      </div>
       <TransitionGroup name="fade">
         <div v-if="isCapChanged" class="col-span-2">
           <x-alert type="info" light>For Unlimited Capactiy Add ( -1 )</x-alert>
@@ -402,11 +381,11 @@ onMounted(() => {
 
   <x-modal
     v-model="statusModal.show"
+    title="Select Reason of Unavailability "
     show-close
     backdrop
     @update:model-value="onStatusModalClose($event)"
   >
-    <template #header> Select Reason of Unavailability </template>
     <x-select
       placeholder="Select Reason"
       :options="[
@@ -437,11 +416,11 @@ onMounted(() => {
 
   <x-modal
     v-model="confirmModal.show"
+    title="Status Change"
     show-close
     backdrop
     @update:model-value="onConfirmClose($event)"
   >
-    <template #header> Status Change </template>
     <p>
       Are you sure you want to change
       <strong>{{ confirmModal.title }}</strong> status?

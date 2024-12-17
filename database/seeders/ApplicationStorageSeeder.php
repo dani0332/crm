@@ -15,121 +15,129 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-        $enableCammyFollowUps = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_CAMMY_FOLLOWUP)->first();
-        if (! $enableCammyFollowUps) {
-            ApplicationStorage::insert([
-                'key_name' => ApplicationStorageEnums::ENABLE_CAMMY_FOLLOWUP,
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
+            [
+                'value' => '2024-12-01',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY],
+            [
+                'value' => 'PFW43eLvGkOFh521QmolXW1fTLpT5C3Z3hiA',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION],
+            [
+                'value' => '24',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PROCESS_CC_PAYMENTS_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        $this->seedHomeAdvisors();
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/5fd51eb0-a17a-43d4-b9a8-11910469e7ac/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PUBLIC_HOLIDAY_START_DATE],
+            [
+                'value' => '2024-12-02 10:00:00',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PUBLIC_HOLIDAY_END_DATE],
+            [
+                'value' => '2024-12-03 23:59:59',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+    }
+
+    private function seedHomeAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_VALUE_ADVISORS],
+            [
+                'value' => 'marialuisa.deguzman@insurancemarket.ae,virgilio.ocon@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_VOLUME_ADVISORS],
+            [
+                'value' => 'ghana.naeem@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/114f64e5-5a67-4110-bb66-7038f3f34c04/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH],
+            [
                 'value' => '0',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
-            ]);
-        }
+            ],
+        );
 
-        $advisorNotificationTemplateId = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_TEMPLATE')->count();
-        if ($advisorNotificationTemplateId == 0) {
-            $advisorNotificationTemplateId = ApplicationStorage::create([
-                'key_name' => 'ADVISOR_NOTIFICATION_TEMPLATE',
-                'value' => '603',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $advisorNotificationCarAdvisor = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_CAR_ADVISOR')->count();
-        if ($advisorNotificationCarAdvisor == 0) {
-            $advisorNotificationCarAdvisor = ApplicationStorage::create([
-                'key_name' => 'ADVISOR_NOTIFICATION_CAR_ADVISOR',
-                'value' => 'Veeral Joshi,veeral.joshi@insurancemarket.ae',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $advisorNotificationHealthAdvisor = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_HEALTH_ADVISOR')->count();
-        if ($advisorNotificationHealthAdvisor == 0) {
-            $advisorNotificationHealthAdvisor = ApplicationStorage::create([
-                'key_name' => 'ADVISOR_NOTIFICATION_HEALTH_ADVISOR',
-                'value' => 'Agatha Alicdan,agatha.alicdan@insurancemarket.ae',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $advisorNotificationBccEmails = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_BCC_EMAILS')->count();
-        if ($advisorNotificationBccEmails == 0) {
-            $advisorNotificationBccEmails = ApplicationStorage::create([
-                'key_name' => 'ADVISOR_NOTIFICATION_BCC_EMAILS',
-                'value' => 'IM HR,hr@insurancemarket.ae,Hitesh Motwani,hitesh.motwani@insurancemarket.ae,Fayaz Kariyambath,fayaz.k@insurancemarket.ae',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $advisorNotificationEnable = ApplicationStorage::where('key_name', ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE)->count();
-        if ($advisorNotificationEnable == 0) {
-            $advisorNotificationEnable = ApplicationStorage::create([
-                'key_name' => ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE,
-                'value' => '0',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
-        if (! $epMdxV2From) {
-            ApplicationStorage::insert([
-                'key_name' => ApplicationStorageEnums::EP_MDX_V2_FROM,
-                'value' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ]);
-        }
-
-        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::EMAIL_CAMPAIGN)->exists()) {
-            ApplicationStorage::create([
-                'key_name' => ApplicationStorageEnums::EMAIL_CAMPAIGN,
-                'value' => 'WIN-FOR-SURE',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN)->exists()) {
-            ApplicationStorage::create([
-                'key_name' => ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN,
-                'value' => '651',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED)->exists()) {
-            ApplicationStorage::insert([
-                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_ENABLED,
-                'value' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ]);
-        }
-
-        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS)->exists()) {
-            ApplicationStorage::insert([
-                'key_name' => ApplicationStorageEnums::QUOTE_SYNC_CLEANUP_DAYS,
-                'value' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ]);
-        }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\PersonalQuote;
@@ -39,7 +40,7 @@ class LeadAssignRequest extends FormRequest
             $leadsIds = array_map('intval', explode(',', request()->assigned_lead_id));
             $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
 
-            $model = (in_array(ucfirst(request()->modelType), $personalQuotes) && in_array(ucfirst(request()->modelType), newUi())) ?
+            $model = (in_array(ucfirst(request()->modelType), $personalQuotes)) ?
                 PersonalQuote::class : (ucfirst(request()->modelType).'Quote');
 
             /**
@@ -52,7 +53,7 @@ class LeadAssignRequest extends FormRequest
                     break;
                 }
 
-                if (isset($getQuoteLead->quote_status_id) && $getQuoteLead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                if (isset($getQuoteLead->quote_status_id) && $getQuoteLead->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
                     $validator->errors()->add('assigned_lead_id', 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.');
                     break;
                 }

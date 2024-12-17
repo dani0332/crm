@@ -2,13 +2,17 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
@@ -18,13 +22,17 @@ use App\Models\Tier;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ReportService extends BaseService
 {
+    use GenericQueriesAllLobs;
     use GetUserTreeTrait;
     use TeamHierarchyTrait;
 
@@ -222,6 +230,53 @@ class ReportService extends BaseService
         return $query;
     }
 
+    public function authorizedPaymentSummaryFilters()
+    {
+
+        $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
+
+        $quoteTypes = [
+            QuoteTypes::CAR,
+            QuoteTypes::HOME,
+            QuoteTypes::HEALTH,
+            QuoteTypes::LIFE,
+            QuoteTypes::BUSINESS,
+            QuoteTypes::BIKE,
+            QuoteTypes::YACHT,
+            QuoteTypes::TRAVEL,
+            QuoteTypes::PET,
+            QuoteTypes::CYCLE,
+            QuoteTypes::JETSKI,
+        ];
+
+        $allowedLOBs = [];
+        foreach ($quoteTypes as $quoteType) {
+            if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
+                $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
+            } elseif (in_array(RolesEnum::Admin, $userRoles)) {
+                $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
+            } else {
+                continue;
+            }
+        }
+
+        $loginUserId = auth()->user()->id;
+        $teamIds = $this->getUserTeams($loginUserId);
+        $teams = Team::whereIn('id', $teamIds->pluck('id'))
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        return [
+            'teams' => $teams,
+            'quoteTypes' => $allowedLOBs,
+        ];
+    }
+
     public function getDefaultFiltersForLeadsList()
     {
         $loginUserId = auth()->user()->id;
@@ -262,6 +317,7 @@ class ReportService extends BaseService
             Carbon::parse(now())->startOfDay()->format($dateFormat),
             Carbon::parse(now())->endOfDay()->format($dateFormat),
         ];
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::Cycle, quoteTypeCode::Bike, quoteTypeCode::Yacht])->get();
 
         return [
             'tiers' => $tiers,
@@ -269,6 +325,7 @@ class ReportService extends BaseService
             'leadSource' => $leadSource,
             'paymentStatus' => $paymentStatus,
             'advisorAssignedDates' => $advisorAssignedDates,
+            'quoteTypes' => $lobs,
         ];
     }
 
@@ -300,7 +357,9 @@ class ReportService extends BaseService
 
         // Re-index the filtered array to ensure consistent indexing
         $filteredProductsName = array_values($filteredProductsName);
-
+        if ($filteredProductsName == null) {
+            return abort(404);
+        }
         $lob = $request->lob ?? $filteredProductsName[0];
         $start = $request->date[0] ?? Carbon::now()->subDays(90)->format('Y-m-d H:i:s');
         $end = $request->date[1] ?? Carbon::now()->format('Y-m-d H:i:s');
@@ -503,7 +562,7 @@ class ReportService extends BaseService
             ->orderBy(DB::raw('DATE(cqr.transaction_approved_at)'));
 
         // Apply team filter
-        if ((isset($request->teams) && is_array($request->team)) && count($request->teams) > 0) {
+        if ((! empty($request->teams)) && is_array($request->teams)) {
             $totalPremiumQuery->whereIn('cqr.advisor_id', function ($teamsSubQuery) use ($request) {
                 $teamsSubQuery->select('ut.user_id')
                     ->from('user_team as ut')
@@ -517,7 +576,178 @@ class ReportService extends BaseService
             $totalPremiumQuery->whereIn('cqr.advisor_id', $request->userIds);
         }
 
+        $startTime = microtime(true);
+        $result = $totalPremiumQuery->get();
+        $endTime = microtime(true);
+
+        info('totalPremiumQuery took '.number_format($endTime - $startTime, 4).' seconds to run');
+
+        //dd($totalPremiumQuery->toSql(), $totalPremiumQuery->getBindings());
         // Execute the query and return the result
-        return $totalPremiumQuery->get();
+        return $result;
+    }
+
+    public function getPaymentAuthorisedSummary($request)
+    {
+
+        $user = Auth::user();
+
+        $userTeams = $user->getUserTeams($user->id);
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $expiryDays = $authorizedDays->value;
+
+        $lobTable = [
+            quoteTypeCode::Car => ['table' => 'car_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Home => ['table' => 'home_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Health => ['table' => 'health_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Business => ['table' => 'business_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Travel => ['table' => 'travel_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Life => ['table' => 'life_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Pet => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Pet],
+            quoteTypeCode::Yacht => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Yacht],
+            quoteTypeCode::Bike => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],
+            quoteTypeCode::Cycle => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Cycle],
+            quoteTypeCode::Jetski => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Jetski],
+        ];
+
+        $quoteTypes = [
+            QuoteTypes::CAR,
+            QuoteTypes::HOME,
+            QuoteTypes::HEALTH,
+            QuoteTypes::LIFE,
+            QuoteTypes::BUSINESS,
+            QuoteTypes::BIKE,
+            QuoteTypes::YACHT,
+            QuoteTypes::TRAVEL,
+            QuoteTypes::PET,
+            QuoteTypes::CYCLE,
+            QuoteTypes::JETSKI,
+        ];
+
+        $allowedLOBs = [];
+        if (isset($request->quoteType)) {
+            $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+            $allowedLOBs[] = $lobTable[ucfirst($quoteType)];
+        } else {
+            $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
+            foreach ($quoteTypes as $quoteType) {
+                if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
+                    $allowedLOBs[] = $lobTable[$quoteType->value];
+                } elseif (in_array(RolesEnum::Admin, $userRoles)) {
+                    $allowedLOBs[] = $lobTable[$quoteType->value];
+                } else {
+                    continue;
+                }
+            }
+        }
+        $dataCollection = collect();
+        foreach ($allowedLOBs as $details) {
+            $premiumColumn = $details['table'].'.premium';
+
+            $query = DB::table($details['table'])
+                ->select(
+                    'users.id as advisor_id',
+                    'users.name as advisor_name',
+                    'quote_status_id',
+                    DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
+                    DB::raw('SUM('.$premiumColumn.') as total_premium'),
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days")
+                )
+                ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
+                ->join('users', 'users.id', $details['table'].'.advisor_id')
+                ->when($details['quoteTypeId'] !== null, function ($query) use ($details) {
+                    return $query->where($details['table'].'.quote_type_id', $details['quoteTypeId']);
+                });
+            $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED);
+            $query->where($details['table'].'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+            if ($user->isAdvisor()) {
+                $query->where($details['table'].'.advisor_id', $user->id);
+            } else {
+                $query->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->whereIn('teams.name', $userTeams);
+            }
+            if (isset($request->userIds)) {
+                $query->whereIn('advisor_id', $request->userIds);
+            }
+            if (isset($request->statusId)) {
+                $query->whereIn('quote_status_id', $request->statusId);
+            }
+
+            if (isset($request->expireDate)) {
+                $expireDate = Carbon::parse($request->expireDate)->startOfDay();
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $expireDate);
+            }
+
+            if (isset($request->todayDate)) {
+                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 1);
+            }
+
+            if (isset($request->tomorrowDate)) {
+                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 2);
+            }
+
+            if (isset($request->thisWeek)) {
+                $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
+                $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
+            }
+
+            if (isset($request->customDate)) {
+                $startDate = Carbon::parse($request->customDate[0])->startOfDay();
+                $endDate = Carbon::parse($request->customDate[1])->endOfDay();
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
+            }
+
+            $dataCollection = $dataCollection->merge($query->groupBy('users.id')
+                ->orderBy('total_leads', 'desc')->get());
+        }
+        $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
+            return [
+                'advisor_id' => $group->first()->advisor_id,
+                'advisor_name' => $group->first()->advisor_name,
+                'total_premium' => $group->sum('total_premium'),
+                'total_leads' => $group->sum('total_leads'),
+            ];
+        });
+
+        $collection = collect($items)->groupBy('advisor_id')->flatten(1);
+        $sorted = $collection->sortByDesc('total_leads');
+
+        $result = $sorted->values()->all();
+
+        $perPage = 5;
+        $currentPage = (int) $request->input('page', 1);
+        $total = count($result);
+        $lastPage = ceil($total / $perPage);
+
+        $paginatedData = array_slice($result, ($currentPage - 1) * $perPage, $perPage);
+
+        $path = $request->fullUrl();
+
+        $key = 'page';
+        // Remove specific parameter from query string
+        $path = preg_replace('~(\?|&)'.$key.'=[^&]*~', '$1', $path);
+
+        $nextPageUrl = $currentPage < $lastPage
+            ? $path.'?&page='.($currentPage + 1) : null;
+
+        $prevPageUrl = $currentPage > 1
+            ? $path.'?&page='.($currentPage - 1) : null;
+
+        $pagination = [
+            'data' => $paginatedData,
+            'current_page' => $currentPage,
+            'per_page' => $perPage,
+            'total' => $total,
+            'last_page' => ceil($total / $perPage),
+            'from' => ($currentPage - 1) * $perPage + 1,
+            'to' => min($currentPage * $perPage, $total),
+            'next_page_url' => $nextPageUrl,
+            'prev_page_url' => $prevPageUrl,
+        ];
+
+        return $pagination;
     }
 }

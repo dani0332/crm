@@ -1,16 +1,16 @@
 <script setup>
-import { onMounted } from 'vue';
-
 const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
   lostReasons: Object,
-    quoteType: String,
+  quoteType: String,
 });
 const page = usePage();
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
+
+provide('quoteType', 'Travel');
 
 const quotes = reactive({
   data: page.props.quotes || [],
@@ -115,7 +115,6 @@ const onSearch = id => {
       quotes.searching = false;
     });
 };
-
 
 onMounted(() => {
   console.log(quotes.data);

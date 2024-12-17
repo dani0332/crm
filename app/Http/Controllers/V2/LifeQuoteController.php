@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TravelQuoteEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\ApplicationStorage;
@@ -19,23 +22,31 @@ use App\Models\Emirate;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
-use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
-use App\Services\AMLService;
+use App\Services\BaseService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * Display a listing of the resource.
      *
@@ -46,11 +57,15 @@ class LifeQuoteController extends Controller
         $lifeQuotes = LifeQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('LifeQuote/Index', [
             'quotes' => $lifeQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'renewalBatches' => $renewalBatches,
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -90,13 +105,18 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
+        /* Start - Temporarily adding for correcting historic data  */
+        $quote = LifeQuoteRepository::where('uuid', $uuid)->first();
+        abort_if(! $quote, 404);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
+        /* End - Temporarily adding for correcting historic data  */
+
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
-        $payments = $quote->payments;
-
+        $payments = $quote?->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
+        $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
 
-        $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
-        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::LIFE->value);
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $membersDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name);
@@ -109,16 +129,31 @@ class LifeQuoteController extends Controller
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'quote_request_id' => $quote->id,
-        ])->with('assignee')->orderBy('created_at', 'desc')->get();
+        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
         $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::LIFE->id(), $quote->id)) {
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::LIFE->id(), $quoteStatuses);
+
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();
+        }
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::LIFE->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
         $activitiesData = [];
@@ -136,11 +171,20 @@ class LifeQuoteController extends Controller
                 'assignee' => $activity->assignee->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
+                'user_id' => $activity?->user_id,
             ];
         }
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Life);
+
+        $isQuoteDocumentEnabled = app(BaseService::class)->quoteDocumentEnabled(QuoteTypes::LIFE->value);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -149,12 +193,13 @@ class LifeQuoteController extends Controller
             'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
             'quote' => $quote,
+            'amlStatusName' => $amlStatusName,
+            'record' => $quote,
             'activities' => $activitiesData,
             'advisors' => $advisors,
             'allowedDuplicateLOB' => $duplicateAllowedLobs,
             'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
             'lostReasons' => $lostReasons,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'modelType' => QuoteTypes::LIFE,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
             'embeddedProducts' => $embeddedProducts,
@@ -166,14 +211,27 @@ class LifeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
-            'paymentMethods' => (new LookupService())->getPaymentMethods(),
+            'paymentMethods' => (new LookupService)->getPaymentMethods(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'payments' => $payments,
             'insuranceProviders' => $insuranceProviders,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+
+            'enums' => [
+                'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+            ],
+            'bookPolicyDetails' => $bookPolicyDetails,
             'vatPercentage' => $vatPercentage,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
-            'isAmlClearedForPayment' => $isAmlClearedForPayment,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

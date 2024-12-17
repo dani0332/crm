@@ -11,16 +11,19 @@ const props = defineProps({
   leadStatuses: Array,
   advisors: Array,
   insuranceTypeOptions: Array,
+  teams: Object,
+  areBothTeamsPresent: Boolean,
+  is_renewal: String,
 });
 
 const page = usePage();
+const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
-
+const notification = useNotifications('toast');
 const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.CorpLineRenewalAdvisor,
-    rolesEnum.CorpLineNewBusinessAdvisor,
     rolesEnum.CorpLineAdvisor,
   ]);
 });
@@ -46,21 +49,33 @@ watch(
   { deep: true },
 );
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
 const leadsCount = ref(props.totalCount);
 const previousDate = getPreviousDate;
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.total-leads-count',
-);
+
+const channelName = `public.${page.props.appEnv}.total-leads-count`;
+const eventName = 'leads.count';
 
 const listen = () => {
-  channel.bind('leads.count', function (e) {
-    leadsCount.value = e.totalLeadsCount;
+  const worker = new SharedWorker('/build/workers/pusher.worker.js');
+
+  worker.port.addEventListener('message', e => {
+    leadsCount.value = e.data.totalLeadsCount;
+  });
+
+  worker.onerror = function (error) {
+    console.log(error.message);
+    worker.port.close();
+  };
+
+  worker.port.start();
+
+  //Subscribe to channel/event
+  worker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
   });
 };
 
@@ -71,6 +86,18 @@ const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
+const renewalInitialState = () => {
+  if (hasTeams([teamsEnum.CORPLINE_TEAM, teamsEnum.CORPLINE_RENEWALS])) {
+    return 'Yes';
+  } else if (hasTeams([teamsEnum.CORPLINE_RENEWALS])) {
+    return 'Yes';
+  } else if (hasTeams([teamsEnum.CORPLINE_TEAM])) {
+    return 'No';
+  } else {
+    return null;
+  }
+};
+
 const filters = reactive({
   date: null,
   status_filters: null,
@@ -82,17 +109,23 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   quote_status_id: '',
-  advisor_id: '',
+  advisors: '',
   business_type_of_insurance_id: '',
   company_name: '',
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
-  is_renewal: '',
+  is_renewal: props.is_renewal,
   payment_status: [],
   is_cold: false,
   is_stale: false,
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
+  last_modified_Date: null,
+  advisor_assigned_date: null,
 });
+
+provide('filters', filters);
 
 const serverOptions = ref({
   page: 1,
@@ -143,6 +176,14 @@ const handleSelectedFilters = selectedFilters => {
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -165,6 +206,32 @@ function onSubmit(isValid) {
   }
 }
 
+const setIntialState = () => {
+  Object.assign(filters, {
+    code: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    mobile_no: '',
+    created_at_start: '',
+    created_at_end: '',
+    quote_status_id: '',
+    advisors: '',
+    business_type_of_insurance_id: '',
+    company_name: '',
+    page: 1,
+    previous_quote_policy_number: '',
+    renewal_batch: '',
+    is_renewal: props.is_renewal,
+    payment_status: [],
+    is_cold: false,
+    is_stale: false,
+    last_modified_date: null,
+    advisor_assigned_date: null,
+  });
+  filtersCount.value = 0;
+};
+
 function resetFilters() {
   removedSavedParams();
   router.visit(route('business.cards'), {
@@ -178,6 +245,7 @@ function resetFilters() {
       filters.page = 1;
       // loader.table = true;
     },
+    onSuccess: () => setIntialState(),
   });
 }
 
@@ -206,8 +274,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  channel.unbind('leads.count');
-  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+  //Unsubscribe to channel/event
+  worker.port.postMessage({
+    action: 'unsubscribe',
+    channel: channelName,
+    event: eventName,
+  });
 });
 
 watch(
@@ -216,6 +288,23 @@ watch(
     leadsCount.value = props.totalCount;
   },
 );
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
 </script>
 
 <template>
@@ -224,10 +313,11 @@ watch(
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">CorpLine List</h2>
-        <LeadsCount
+        <!-- PD Revert
+          <LeadsCount
           :leadsCount="$page.props.totalCount"
           :key="$page.props.totalCount"
-        />
+        /> -->
       </template>
       <template #default>
         <FiltersButton
@@ -250,7 +340,7 @@ watch(
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -329,6 +419,18 @@ watch(
             class="w-full"
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="Business Insurance Type">
           <x-select
             v-model="filters.business_type_of_insurance_id"
@@ -338,20 +440,19 @@ watch(
           />
         </x-field>
         <x-field label="Advisor" v-if="isAllowed">
-          <x-select
-            v-model="filters.advisor_id"
+          <ComboBox
+            v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-            class="w-full"
           />
         </x-field>
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -362,8 +463,9 @@ watch(
           placeholder="Search by Renewal Batch"
         />
         <x-select
+          :disabled="!props.areBothTeamsPresent"
           v-model="filters.is_renewal"
-          label="Is Renewal"
+          label="Renewal"
           placeholder="Search by Renewal"
           :options="[
             { value: '', label: 'All' },
@@ -371,6 +473,21 @@ watch(
             { value: 'No', label: 'No' },
           ]"
           class="w-full"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.CorplineManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

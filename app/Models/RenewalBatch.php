@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\QuoteTypes;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -62,6 +64,8 @@ class RenewalBatch extends Model implements AuditableContract
         'start_date',
         'end_date',
         'month',
+        'year',
+        'quote_type_id',
     ];
 
     /**
@@ -136,5 +140,37 @@ class RenewalBatch extends Model implements AuditableContract
             'id',
             'deadlines'
         )->withTimestamps()->withPivot('deadline_date');
+    }
+
+    public function scopeDateFilter($q, $reportDateEnd = null, $includePreviousMonth = true)
+    {
+        $baseDate = $reportDateEnd ? Carbon::parse($reportDateEnd) : now();
+
+        $monthsYears = [
+            ['month' => $baseDate->month, 'year' => $baseDate->year],
+            ['month' => $baseDate->copy()->addMonth()->month, 'year' => $baseDate->copy()->addMonth()->year],
+        ];
+
+        if ($includePreviousMonth) {
+            array_unshift($monthsYears, ['month' => $baseDate->copy()->subMonth()->month, 'year' => $baseDate->copy()->subMonth()->year]);
+        }
+
+        $q->where(function ($query) use ($monthsYears) {
+            foreach ($monthsYears as $monthYear) {
+                $query->orWhere(function ($query) use ($monthYear) {
+                    $query->where('month', $monthYear['month'])->where('year', $monthYear['year']);
+                });
+            }
+        });
+    }
+
+    public function scopeNonMotor($q)
+    {
+        $q->whereNull('quote_type_id');
+    }
+
+    public function scopeMotor($q)
+    {
+        $q->where('quote_type_id', QuoteTypes::CAR->id());
     }
 }

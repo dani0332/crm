@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -55,7 +57,7 @@ class AllocationService
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $request = $client->post(
             $apiEndPoint,
             [
@@ -100,8 +102,8 @@ class AllocationService
     {
 
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
-        info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
         if (! empty($allocationRecord)) {
+            info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
             $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
             $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
             $allocationRecord->updated_at = now();
@@ -112,22 +114,15 @@ class AllocationService
         }
     }
 
-    public function updateExistingQuoteDetail($quoteDetail, $uuid): void
+    public function upsertQuoteDetail($leadId, $quoteModel, $keyColumn): void
     {
-        $quoteDetail->advisor_assigned_date = now();
-        $quoteDetail->advisor_assigned_by_id = auth()->id();
-        $quoteDetail->save();
-    }
-
-    public function createNewQuoteDetail($leadId, $quoteModel, $keyColumn): void
-    {
-        $quoteModel::create([
-            $keyColumn => $leadId,
-            'advisor_assigned_date' => now(),
-            'advisor_assigned_by_id' => auth()->id(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $quoteModel::updateOrCreate(
+            [$keyColumn => $leadId],
+            [
+                'advisor_assigned_date' => now(),
+                'advisor_assigned_by_id' => auth()->id(),
+            ]
+        );
     }
 
     public function getAssignmentTypeText($assignmentType)
@@ -242,7 +237,7 @@ class AllocationService
         $allocationCount = LeadAllocation::where('user_id', $userId)->select('auto_assignment_count', 'manual_assignment_count', 'max_capacity')
             ->first();
 
-        $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+        $leads = CarQuote::select('assignment_type')->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
@@ -321,4 +316,70 @@ class AllocationService
         return $query->get();
     }
 
+    public function deductLeadAllocationCount($quoteModel, $quoteUuid)
+    {
+        $quote = $quoteModel::with('advisor')->where('uuid', $quoteUuid)->first();
+
+        if ($quote->advisor) {
+            $leadAllocation = LeadAllocation::where('user_id', $quote->advisor->id)->first();
+            $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;
+            if (in_array($quote->assignment_type, [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])) {
+                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count - 1;
+            } elseif (in_array($quote->assignment_type, [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])) {
+                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count - 1;
+            }
+            $leadAllocation->save();
+        }
+
+    }
+
+    public function leadAllocationFailed(string $uuid, QuoteTypes $quoteType)
+    {
+        $quote = $quoteType->model()->where('uuid', $uuid)->first();
+
+        if ($quote) {
+            $quote->markLeadAllocationFailed();
+        }
+    }
+
+    public function createResponse(int $advisorId, string $message, int $status, ?int $tierId = null): array
+    {
+        $resp = [
+            'advisorId' => $advisorId,
+            'message' => $message,
+            'tierId' => $tierId,
+            'status' => $status,
+        ];
+
+        if (! $tierId) {
+            unset($resp['tierId']);
+        }
+
+        return $resp;
+    }
+    public function shouldProceedWithReAllocation($allocationSwitchName)
+    {
+        // Fetch reassignment start and end times
+        $startTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
+        $endTime = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
+
+        // Check if current time is within reassignment window and master switch is ON
+        $shouldProceed = now()->between($startTime, $endTime) && (config($allocationSwitchName) == 1);
+        info('Reassignment with current time check: '.$shouldProceed);
+        // Fetch public holiday start and end
+        $publicHolidayStart = $this->getAppStorageValueByKey(ApplicationStorageEnums::PUBLIC_HOLIDAY_START_DATE);
+        $publicHolidayEnd = $this->getAppStorageValueByKey(ApplicationStorageEnums::PUBLIC_HOLIDAY_END_DATE);
+
+        if ($publicHolidayStart && $publicHolidayEnd) {
+            // Parse public holiday dates with start and end times for accurate range
+            $publicHolidayStartDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $publicHolidayStart);
+            $publicHolidayEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $publicHolidayEnd);
+
+            // Ensure the current time is not within the public holiday period
+            $shouldProceed = $shouldProceed && ! now()->between($publicHolidayStartDateTime, $publicHolidayEndDateTime);
+        }
+        info('Reassignment with public holiday check: '.$shouldProceed);
+
+        return $shouldProceed;
+    }
 }

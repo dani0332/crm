@@ -2,10 +2,18 @@
 
 namespace App\Providers;
 
+use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\HealthQuoteAdvisorUpdated;
+use App\Events\QuoteEmailUpdated;
+use App\Events\TravelQuoteAdvisorUpdated;
+use App\Listeners\HandleBikeAdvisorUpdated;
 use App\Listeners\HandleCarAdvisorUpdated;
+use App\Listeners\HandleHealthAdvisorUpdated;
+use App\Listeners\HandleTravelAdvisorUpdated;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
+use App\Listeners\UpdateCustomerEmail;
 use App\Models\RenewalBatch;
 use App\Observers\RenewalBatchObserver;
 use Illuminate\Auth\Events\Login;
@@ -28,11 +36,23 @@ class EventServiceProvider extends ServiceProvider
         CarQuoteAdvisorUpdated::class => [
             HandleCarAdvisorUpdated::class,
         ],
+        TravelQuoteAdvisorUpdated::class => [
+            HandleTravelAdvisorUpdated::class,
+        ],
+        HealthQuoteAdvisorUpdated::class => [
+            HandleHealthAdvisorUpdated::class,
+        ],
         Login::class => [
             LoginListener::class,
         ],
         Logout::class => [
             LogoutListener::class,
+        ],
+        QuoteEmailUpdated::class => [
+            UpdateCustomerEmail::class,
+        ],
+        BikeQuoteAdvisorUpdated::class => [
+            HandleBikeAdvisorUpdated::class,
         ],
     ];
 

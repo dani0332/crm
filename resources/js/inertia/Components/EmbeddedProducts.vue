@@ -1,7 +1,5 @@
 <script setup>
 const notification = useNotifications('toast');
-import { XButton } from '@indielayer/ui';
-import { useCan, useCanAny } from '../Composables/can';
 
 const page = usePage();
 const props = defineProps({
@@ -33,15 +31,24 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  isEpLoading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
+const propsDataReactive = ref(props.data);
+const documentsReactive = ref([]);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const embeddedProductEnum = page.props.embeddedProductEnum;
 const modals = reactive({
   cancelPayment: false,
+  viewDocuments: false,
+  addDocument: false,
 });
 
-const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+const { isRequired, isEmail, isNumberOrDecimal, isMobileNo } = useRules();
 
 const cancelPaymentForm = item => {
   paymentForm.reset();
@@ -59,48 +66,44 @@ const paymentForm = useForm({
   processing: false,
 });
 
+const syncDocumentLoader = ref(false);
 const downloadLoader = ref(false);
 const sendDocumentLoader = ref(false);
+const viewDocumentLoader = ref(false);
+const downloadDocumentLoader = ref(false);
+const addDocumentLoader = ref(false);
 const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
   isInertia: true,
 });
 
-const downloadDcoument = id => {
-  downloadLoader.value = true;
-  axios
-    .post(
-      '/embedded-products/download-document',
-      {
-        quoteId: props.quote.id,
-        modelType: props.modelType,
-        epId: id,
-        isInertia: true,
+const addDocumentForm = useForm({
+  epId: null,
+  type: null,
+  title: null,
+  file: null,
+});
+
+const syncDocument = id => {
+  syncDocumentLoader.value = true;
+  sendDocumentForm
+    .transform(data => ({
+      ...data,
+      epId: id,
+    }))
+    .post('/embedded-products/sync-document', {
+      preserveScroll: true,
+      responseType: 'blob', // Ensure this is correctly set
+      onSuccess: response => {
+        syncDocumentLoader.value = false;
       },
-      {
-        responseType: 'json',
+      onError: () => {
+        syncDocumentLoader.value = false;
       },
-    )
-    .then(response => {
-      const link = document.createElement('a');
-      let fileName = response.data.name;
-      link.href = response.data.data;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      notification.success({
-        title: 'Certificate Downloaded',
-        position: 'top',
-      });
-    })
-    .catch(error => {
-      console.log(error);
-    })
-    .finally(() => {
-      downloadLoader.value = false;
     });
 };
+
 const sendDcoument = id => {
   sendDocumentLoader.value = true;
   sendDocumentForm
@@ -118,6 +121,64 @@ const sendDcoument = id => {
       },
     });
 };
+
+const downloadFile = download => {
+  const save = document.createElement('a');
+  if (typeof save.download !== 'undefined') {
+    // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
+    // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
+    save.href =
+      window.location.protocol +
+      '//' +
+      window.location.host +
+      '/embedded-products/download/force?path=' +
+      download.path;
+    save.target = '_blank';
+    save.download = download.name;
+    save.dispatchEvent(new MouseEvent('click'));
+  } else {
+    window.location.href =
+      window.location.protocol +
+      '//' +
+      window.location.host +
+      '/embedded-products/download/force?path=' +
+      download.path; // so that it opens new tab for IE11
+  }
+
+  downloadLoader.value = true;
+  setTimeout(() => {
+    downloadLoader.value = false;
+  }, 1300);
+};
+
+const viewDocument = id => {
+  viewDocumentLoader.value = true;
+
+  axios
+    .post(
+      '/embedded-products/get-documents',
+      {
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+        epId: id,
+        isInertia: true,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      documentsReactive.value = response.data;
+      modals.viewDocuments = true;
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      viewDocumentLoader.value = false;
+    });
+};
+
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -140,11 +201,7 @@ const epTable = reactive({
       value: 'prices',
     },
     {
-      text: 'EP Status',
-      value: 'ep_status',
-    },
-    {
-      text: 'Last Updated Date',
+      text: 'Payment Captured date',
       value: 'updated_at',
     },
     {
@@ -158,38 +215,65 @@ const epTable = reactive({
   ],
 });
 
+const epDocuments = reactive({
+  isLoading: false,
+  columns: [
+    {
+      text: 'Document Type',
+      value: 'document_type',
+    },
+    {
+      text: 'Document Number',
+      value: 'document_number',
+    },
+    {
+      text: 'Actions',
+      value: 'actions',
+      width: 100,
+    },
+  ],
+});
+
+const getBlog = file => useObjectUrl(file);
+
 const ppDoc = str => {
   const doc = JSON.parse(str);
   return doc[0]?.path !== '' ? usePage().props.cdnPath + doc[0]?.path : '';
-};
-const checkTransactionExist = item => {
-  for (let price of item.prices) {
-    for (let transaction of price.transactions) {
-      const paymentStatusDate = transaction.payment_status_date;
-      if(paymentStatusDate) {
-        var timeStart = new Date(paymentStatusDate);
-        var timeEnd = new Date();
-        var timeDifferenceInMiliseconds = timeEnd.getTime() - timeStart.getTime();
-        if ((transaction.payment_status_id == 6 || transaction.payment_status_id == 4) && timeDifferenceInMiliseconds <= 259200000) {
-          return false;
-        }
-      }
-    }
-  }
-  return true;
 };
 
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
+  let providerCode = props.quote.plan_provider_code;
+  if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Bike.toLowerCase()
+  ) {
+    providerCode = props.quote.car_plan?.insurance_provider?.code;
+  }
 
-let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'/payment?planId='+props.quote.plan_id+'&providerCode='+props.quote.plan_provider_code;
+  let paymentLink =
+    page.props.epLink +
+    '/' +
+    props.modelType.toLowerCase() +
+    '-insurance/quote/' +
+    props.quote.uuid +
+    '/payment?planId=' +
+    props.quote.plan_id +
+    '&providerCode=' +
+    providerCode;
   copy(paymentLink);
   if (copied)
     notification.success({
       title: 'Link copied to clipboard',
       position: 'top',
     });
+};
+
+const getFirstPriceWithTransaction = prices => {
+  return prices.find(
+    price => price.transactions && price.transactions.length > 0,
+  );
 };
 
 const paymentStatus = id => {
@@ -199,21 +283,47 @@ const paymentStatus = id => {
 };
 
 const toggleProduct = (ep, event) => {
+  let removeIdFromSelection = [];
+  propsDataReactive.value?.forEach(item => {
+    if (item.id === ep.embedded_product_id) {
+      item.prices.forEach(price => {
+        if (
+          price.id !== ep.id &&
+          price.transactions.length > 0 &&
+          price.transactions[0].is_selected !== false
+        ) {
+          price.transactions[0].is_selected = false;
+          removeIdFromSelection.push(price.id);
+        }
+      });
+    }
+  });
+
   let id = ep.id;
   if (event.target.checked) {
     selectedEp.value.push(id);
   } else {
-    var index =  selectedEp.value.indexOf(id);
-    if (index !== -1) {
-      selectedEp.value.splice(id, 1);
-    }
+    removeIdFromSelection.push(id);
   }
-  let data = { quote_uuid: props.quote.uuid, id: id,modelType:props.modelType };
+
+  if (removeIdFromSelection.length > 0) {
+    removeIdFromSelection.forEach(id => {
+      const indexToRemove = selectedEp.value.indexOf(id);
+      if (indexToRemove !== -1) {
+        selectedEp.value.splice(indexToRemove, 1);
+      }
+    });
+  }
+
+  let data = {
+    quote_uuid: props.quote.uuid,
+    id: id,
+    modelType: props.modelType,
+  };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
     .post(requestUrl, data)
     .then(res => {
-        console.log('res',res);
       notification.success('Updated');
     })
     .catch(err => {
@@ -228,7 +338,7 @@ const onActivitySubmit = isValid => {
   axios
     .post(url, paymentForm)
     .then(res => {
-        modals.cancelPayment = false;
+      modals.cancelPayment = false;
       notification.success('Processed');
     })
     .catch(err => {
@@ -243,106 +353,408 @@ const onActivitySubmit = isValid => {
     });
 };
 const hasAnyRole = roles => useHasAnyRole(roles);
+const canAny = permissions => useCanAny(permissions);
+const can = permission => useCan(permission);
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+
+const addEpDocument = id => {
+  modals.viewDocuments = false;
+  modals.addDocument = true;
+  addDocumentForm.epId = id;
+};
+
+const resetAddForm = () => {
+  addDocumentForm.epId = null;
+  addDocumentForm.title = null;
+  addDocumentForm.type = null;
+  addDocumentForm.file = null;
+};
+
+const uploadEpDocument = event => {
+  addDocumentForm.file = event.files;
+};
+
+const cancelEpDocument = () => {
+  modals.addDocument = false;
+  resetAddForm();
+  modals.viewDocuments = true;
+};
+
+const onAddDocumentSubmit = event => {
+  if (!addDocumentForm.title || !addDocumentForm.type) {
+    return;
+  }
+
+  if (addDocumentForm.file && addDocumentForm.file.length == 0) {
+    notification.error({
+      title: 'Document upload failed, invalid file selected',
+      position: 'top',
+    });
+    return;
+  }
+
+  const epId = addDocumentForm.epId;
+  let url = '/embedded-products/upload-quote-document';
+  addDocumentLoader.value = true;
+
+  return new Promise((resolve, reject) => {
+    addDocumentForm
+      .transform(data => ({
+        ...data,
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+      }))
+      .post(url, {
+        preserveScroll: true,
+        preserveState: true,
+        onError: errors => {
+          addDocumentForm.setError(errors.error);
+          notification.error({
+            title: 'File upload failed',
+            position: 'top',
+          });
+          reject(errors);
+        },
+        onSuccess: data => {
+          resetAddForm();
+          modals.addDocument = false;
+          modals.viewDocuments = true;
+          viewDocument(epId);
+        },
+        onFinish: () => {
+          addDocumentLoader.value = false;
+        },
+      });
+  });
+};
 </script>
 
 <template>
-  <div v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_ADVISOR, permissionsEnum.EMBEDDED_PRODUCT_ADMIN])">
-    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
-
+  <x-accordion
+    v-if="
+      canAny([
+        permissionsEnum.EMBEDDED_PRODUCT_VIEW,
+        permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL,
+      ])
+    "
+    show-icon
+  >
+    <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center">
         <h3 class="font-semibold text-primary-800 text-lg">
-          Embedded Products <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
+          Embedded Products
+          <x-tag size="sm">{{ propsDataReactive.length || 0 }}</x-tag>
         </h3>
-        <div style="margin-right:50px;">
-          <x-button v-if="selectedEp.length > 0" size="sm" @click.stop="onCopyText()">
+        <div style="margin-right: 50px">
+          <x-button
+            v-if="selectedEp.length > 0"
+            size="sm"
+            @click.stop="onCopyText()"
+          >
             Copy Payment Link
           </x-button>
         </div>
       </div>
       <template #content>
-        <x-divider class="mb-4 mt-2 mt-1" />
-        <DataTable table-class-name="tablefixed" :headers="epTable.columns" :items="props.data || []" border-cell
-          hide-rows-per-page hide-footer>
+        <x-divider class="mb-4 mt-2" />
+        <DataTable
+          table-class-name="tablefixed"
+          :headers="epTable.columns"
+          :items="propsDataReactive || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+          :loading="isEpLoading"
+        >
           <template #item-code="{ short_code }">
             {{ short_code + '-' + props.code }}
           </template>
 
           <template #item-prices="{ prices }">
-
             <div v-if="prices.length > 0" class="flex gap-3">
-
-
-              <x-tag color="primary" v-for="priceItem in prices">
-                <x-checkbox v-if="priceItem.transactions[0]?.is_selected == '1'"
-                  @change="toggleProduct(priceItem, $event)" :model-value="true" color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
-                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
-                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED" />
-                <x-checkbox v-else @change="toggleProduct(priceItem, $event)" color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
-                  || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
-                  || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED" />
-                {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
-              </x-tag>
-
+              <div v-for="(priceItem, index) in prices" :key="index">
+                <x-tag v-if="priceItem.transactions.length" color="primary">
+                  <x-checkbox
+                    v-model="priceItem.transactions[0].is_selected"
+                    @change="toggleProduct(priceItem, $event)"
+                    color="primary"
+                    :disabled="
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.AUTHORISED ||
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.CAPTURED ||
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.PARTIAL_CAPTURED
+                    "
+                  />
+                  {{
+                    (
+                      parseFloat(priceItem.price) +
+                      (priceItem.price * 5) / 100
+                    ).toFixed(2)
+                  }}
+                </x-tag>
+              </div>
             </div>
-
           </template>
-
-          <template #item-ep_status="{ ep_status }"> N/A </template>
 
           <template #item-payment_status="{ prices }">
-            {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
+            {{
+              paymentStatus(
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payment_status_id,
+              )
+            }}
           </template>
 
-          <template #item-updated_at="{ updated_at }">
-            {{ dateFormat(updated_at) }}
+          <template #item-updated_at="{ prices }">
+            <span
+              v-if="
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payment_status_id == paymentStatusEnum.CAPTURED
+              "
+            >
+              {{
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payments[0]?.captured_at
+              }}
+            </span>
+            <span v-else> - </span>
           </template>
 
           <template #item-actions="item">
-            <div class="flex flex-col gap-1">
-              <x-button size="xs" color="emerald" :disabled="!item.send_document_button" :loading="sendDocumentLoader"
-                @click.prevent="sendDcoument(item.id)">
+            <div
+              class="flex flex-col gap-1"
+              v-if="readOnlyMode.isDisable === true"
+            >
+              <x-button
+                size="xs"
+                color="emerald"
+                v-if="item.sync_document_button"
+                :disabled="!item.sync_document_button"
+                :loading="syncDocumentLoader"
+                @click.prevent="syncDocument(item.id)"
+              >
+                Sync Documents from Provider
+              </x-button>
+              <x-button
+                size="xs"
+                color="emerald"
+                :disabled="
+                  !item.send_document_button ||
+                  item.short_code == embeddedProductEnum.COURIER
+                "
+                :loading="sendDocumentLoader"
+                @click.prevent="sendDcoument(item.id)"
+              >
                 Send Documents
               </x-button>
-              <x-button v-if="item.canGenerateCerticate" size="xs" color="#ff5e00"
-                :disabled="!item.send_document_button" :loading="downloadLoader"
-                @click.prevent="downloadDcoument(item.id)">
-                Download Certificate
+              <x-button
+                size="xs"
+                color="#ff5e00"
+                :disabled="item.short_code == embeddedProductEnum.COURIER"
+                :loading="viewDocumentLoader"
+                @click.prevent="viewDocument(item.id)"
+              >
+                View Documents
               </x-button>
-              <x-button size="xs" color="primary" :href="ppDoc(item.company_documents)" target="_blank"
-                :disabled="ppDoc(item.company_documents) === ''">
-                Download Product Wordings
-              </x-button>
-              <x-button v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_ADMIN)" size="xs" color="#ff5e00"
-                :disabled="checkTransactionExist(item)" @click.prevent="cancelPaymentForm(item)">
+              <x-button
+                v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+                size="xs"
+                color="#ff5e00"
+                :disabled="!item.can_cancel_payment"
+                @click.prevent="cancelPaymentForm(item)"
+              >
                 Cancel Payments
               </x-button>
             </div>
           </template>
         </DataTable>
-        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_ADMIN)" v-model="modals.cancelPayment" size="lg"
-          show-close backdrop>
-          <template #header> Cancel Payment </template>
+        <x-modal
+          v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+          title="Cancel Payment"
+          v-model="modals.cancelPayment"
+          size="md"
+          show-close
+          backdrop
+          is-form
+          @submit="onActivitySubmit"
+        >
+          <div class="grid gap-4">
+            <x-input
+              v-model="paymentForm.amount"
+              label="Amount"
+              :rules="[isRequired, isNumberOrDecimal]"
+              class="w-full"
+            />
 
-          <x-form @submit="onActivitySubmit" :auto-focus="false">
-            <div class="grid gap-4">
-              <x-input v-model="paymentForm.amount" label="Amount" :rules="[isRequired, isNumber]" class="w-full" />
+            <x-textarea
+              v-model="paymentForm.reason"
+              label="Reason"
+              maxlength="250"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+          </div>
 
-              <x-textarea v-model="paymentForm.reason" label="Reason" maxlength="250" :adjust-to-text="false"
-                class="w-full" />
+          <template #secondary-action>
+            <x-button
+              size="sm"
+              ghost
+              tabindex="-1"
+              @click.prevent="modals.cancelPayment = false"
+            >
+              Cancel
+            </x-button>
+          </template>
+          <template #primary-action>
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="paymentForm.processing"
+              type="submit"
+            >
+              Cancel Payment
+            </x-button>
+          </template>
+        </x-modal>
+        <x-modal v-model="modals.viewDocuments" size="lg" show-close backdrop>
+          <template #header>
+            <div class="px-6 py-4 bg-gray-100">
+              EP - {{ documentsReactive.ep.display_name }} - Documents
+            </div>
+          </template>
+
+          <template #footer>
+            <div class="mt-2 mb-5 text-center hidden">
+              <x-button
+                size="xs"
+                class="border-0 shadow-none"
+                style="box-shadow: none"
+                @click.prevent="addEpDocument(documentsReactive.ep.id)"
+                v-if="documentsReactive.can_add_document"
+              >
+                <span
+                  class="bg-primary color-white leading-5 mr-1 rounded-full h-[20px] w-[20px] inline-block"
+                  >+</span
+                >
+                Click to add document(s)
+              </x-button>
+            </div>
+          </template>
+
+          <DataTable
+            :headers="epDocuments.columns"
+            :items="documentsReactive.documents || []"
+            border-cell
+            hide-rows-per-page
+            hide-footer
+            :loading="viewDocumentLoader"
+          >
+            <template #item-actions="item">
+              <div class="flex flex-row gap-3">
+                <x-button
+                  size="xs"
+                  color="primary"
+                  outlined
+                  :href="item.url"
+                  target="_blank"
+                >
+                  View
+                </x-button>
+
+                <x-button
+                  size="xs"
+                  color="emerald"
+                  outlined
+                  :loading="downloadLoader"
+                  @click.prevent="downloadFile(item)"
+                >
+                  Download
+                </x-button>
+              </div>
+            </template>
+          </DataTable>
+        </x-modal>
+
+        <x-modal
+          v-model="modals.addDocument"
+          size="md"
+          show-close
+          backdrop
+          is-form
+          @submit="onAddDocumentSubmit"
+        >
+          <template #header>
+            <div class="px-6 py-4 bg-gray-100">Add Document</div>
+          </template>
+
+          <div class="grid gap-4">
+            <x-input
+              v-model="addDocumentForm.type"
+              label="Document Type"
+              :rules="[isRequired]"
+              class="w-full"
+            />
+
+            <x-input
+              v-model="addDocumentForm.title"
+              label="Document serial number / title"
+              :rules="[isRequired]"
+              class="w-full"
+            />
+
+            <div
+              v-if="addDocumentForm.file"
+              class="relative bg-primary-50 rounded-md text-center flex flex-col gap-4 items-center border border-primary-300 ease-linear transition-all duration-150 p-4"
+            >
+              <div>
+                {{ addDocumentForm.file[0].file.name }}
+              </div>
+
+              <x-button
+                @click="addDocumentForm.file = null"
+                size="xs"
+                color="error"
+              >
+                Remove
+              </x-button>
             </div>
 
-            <div class="text-right space-x-4 mt-12">
-              <x-button size="sm" @click.prevent="modals.cancelPayment = false">
-                Cancel
-              </x-button>
+            <Dropzone
+              v-else
+              @change="uploadEpDocument($event)"
+              :maxSize="documentsReactive.document_type?.max_size"
+              :accept="documentsReactive.document_type?.accepted_files"
+            />
+          </div>
 
-              <x-button size="sm" color="emerald" :loading="paymentForm.processing" type="submit">
-                Cancel Payment
-              </x-button>
-            </div>
-          </x-form>
+          <template #secondary-action>
+            <x-button
+              ghost
+              tabindex="-1"
+              @click="cancelEpDocument()"
+              :disabled="addDocumentLoader"
+            >
+              Cancel
+            </x-button>
+          </template>
+          <template #primary-action>
+            <x-button
+              color="primary"
+              type="submit"
+              :loading="addDocumentLoader"
+            >
+              Save
+            </x-button>
+          </template>
         </x-modal>
       </template>
-    </x-collapse>
-  </div>
+    </x-accordion-item>
+  </x-accordion>
 </template>

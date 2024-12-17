@@ -2,11 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteSyncStatus;
 use App\Models\ApplicationStorage;
-use App\Models\PersonalQuote;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class QuoteSyncUpdateCommand extends Command
 {
@@ -28,6 +31,8 @@ class QuoteSyncUpdateCommand extends Command
 
     public function handle()
     {
+        $this->init();
+
         info('----------- QuoteSyncJob Started -----------');
         $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
 
@@ -37,31 +42,56 @@ class QuoteSyncUpdateCommand extends Command
             return;
         }
 
-        $entries = QuoteSync::where('is_synced', false)->take(300)->get();
+        $this->reQueueFailedOrStuck();
 
-        if ($entries->isEmpty()) {
-            info('----------- No entries found to be processed in quote sync table -----------');
+        $entries = QuoteSync::where('is_synced', false)
+            ->where('status', QuoteSyncStatus::WAITING)
+            ->where('id', '>', $this->startId)
+            ->take(2000)
+            ->get();
 
-            return;
-        }
+        $this->processQuoteSyncEntries($entries);
+    }
 
-        $uuids = $entries->unique('quote_uuid')->pluck('quote_uuid')->toArray();
-        $quotes = PersonalQuote::whereIn('uuid', $uuids)->get()->keyBy(function (PersonalQuote $item, int $key) {
-            return $item->uuid.'_'.$item->quote_type_id;
-        })->all();
+    private function reQueueFailedOrStuck()
+    {
+        try {
 
-        foreach ($entries as $entry) {
+            $beforeTime = Carbon::now()->setTimezone('Asia/Dubai')->subMinutes(15);
+            $quoteUuids = QuoteSync::where('is_synced', false)
+                ->whereIn('status', [QuoteSyncStatus::INPROGRESS, QuoteSyncStatus::FAILED])
+                ->where('id', '>', $this->startId)
+                ->get()
+                ->filter(function ($entry) use ($beforeTime) {
+                    return Carbon::parse($entry->updated_at)->diffInMinutes($beforeTime, false) >= 0;
+                })->unique('quote_uuid')->pluck('quote_uuid')->toArray();
 
-            info('Syncing entry: '.$entry->quote_uuid);
+            if (count($quoteUuids) > 0) {
+                $quoteUuids = "'".implode("','", $quoteUuids)."'";
 
-            $key = $entry->quote_uuid.'_'.$entry->quote_type_id;
-            if (! empty($quotes[$key])) {
-                // Existing quote
-                $this->processExistingQuote($quotes[$key], $entry);
-            } else {
-                // Quote not found
-                $quotes[$key] = $this->processQuoteNotFound($entry);
+                DB::table('quote_sync as qs')
+                    ->join(DB::raw("(
+                            SELECT 
+                                MIN(CASE WHEN is_synced = false THEN id END) AS min_id,
+                                quote_uuid
+                            FROM quote_sync
+                            WHERE quote_uuid IN ({$quoteUuids})
+                            AND id > ".intval($this->startId).'
+                            AND status IN ('.QuoteSyncStatus::INPROGRESS.', '.QuoteSyncStatus::FAILED.')
+                            GROUP BY quote_uuid
+                        ) as subquery'), function ($join) {
+                        $join->on('qs.id', '>=', 'subquery.min_id')
+                            ->on('qs.quote_uuid', '=', 'subquery.quote_uuid');
+                    })
+                    ->update([
+                        'qs.is_synced' => false,
+                        'qs.status' => QuoteSyncStatus::WAITING,
+                    ]);
             }
+
+        } catch (Exception $e) {
+            $error = 'QuoteSyncJob Error re-queing failed or stuck entries: '.$quoteUuids.' - '.$e->getMessage();
+            info($error.' --- '.$e->getTraceAsString());
         }
     }
 }

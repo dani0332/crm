@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\LifeQuote;
 use App\Traits\CentralTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
 class LifeQuoteRepository extends BaseRepository
@@ -70,15 +71,29 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetData()
     {
-        return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
+            'renewalBatchModel', 'lifeQuoteRequestDetail', 'paymentStatus',
+            'payments'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
+            ->when(! empty(request()->advisor_assigned_date), function ($query) {
+                $dateArray = request()->advisor_assigned_date;
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('lifeQuoteRequestDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                });
+            })
             ->filter()
             ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate()
-            ->withQueryString();
+            ->orderBy('life_quote_request.created_at', 'desc');
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
+
+        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+
+        return $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()
@@ -94,7 +109,7 @@ class LifeQuoteRepository extends BaseRepository
         $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
             'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
-            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents',
+            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob',
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
@@ -111,6 +126,9 @@ class LifeQuoteRepository extends BaseRepository
             ])
             ->select([
                 'life_quote_request.*',
+                'policy_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -153,10 +171,12 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchExportData()
     {
-        return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->filter(false)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
+            ->withFakeLeadCriteria();
+        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+
+        return $query->orderBy('life_quote_request.created_at', 'desc')
             ->get();
     }
 

@@ -9,15 +9,23 @@ use App\Http\Requests\PersonalQuotePolicyRequest;
 use App\Http\Requests\PersonalQuoteStatusRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\CentralService;
+use App\Services\CustomerService;
+use App\Traits\GenericQueriesAllLobs;
 
 class PersonalQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
     {
-        $response = PersonalQuoteRepository::updateStatus($quoteType, $quoteId, $request->validated());
+        $response = PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
+
+        // Update payment allocation status when lead status changes when lead status as Policy Issue
+        app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
 
         if (! $response['activity_created']) {
             return back()->with('message', 'Status updated successfully');
@@ -28,9 +36,15 @@ class PersonalQuoteController extends Controller
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
-        PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->validated());
+        $response = PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->all());
+        if (! $response['status'] || $response['status'] == false) {
+            return back()->with('error', $response['message']);
+        }
 
-        return back()->with('message', 'File Uploaded');
+        // update status policy issued of req fulfilled
+        $this->updateQuoteStatus($request->folder_path, $quoteId);
+
+        return back()->with('message', $response['message']);
     }
 
     /**
@@ -76,7 +90,8 @@ class PersonalQuoteController extends Controller
      */
     public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)
     {
-        PersonalQuoteRepository::changePrimaryContact($quoteId, $request->validated());
+        $quoteObject = PersonalQuoteRepository::findOrFail($quoteId);
+        app(CustomerService::class)->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
 
         return back();
     }
