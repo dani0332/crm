@@ -30,7 +30,6 @@ use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
-use App\Models\PaymentStatus;
 use App\Models\PolicyIssuanceStatus;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;

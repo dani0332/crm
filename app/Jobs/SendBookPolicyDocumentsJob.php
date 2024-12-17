@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
@@ -138,7 +137,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->advisorLandlineNo = $quote->advisor->landline_no;
                 $emailData->googleMeet = $quote->advisor->calendar_link;
                 $emailData->profilePicture = $quote->advisor->profile_photo_path;
-                if ($emailData->advisorEmail === PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL ) {
+                if ($emailData->advisorEmail === PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL) {
                     $emailData->isChsAdvisor = true;
                 }
             }

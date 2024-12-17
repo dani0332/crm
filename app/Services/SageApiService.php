@@ -676,7 +676,7 @@ class SageApiService
         $skipBookPolicyDocumentJob = false;
         if ($quoteTypeId === QuoteTypeId::Travel) {
             $quote->load('policyIssuance');
-            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && !$quote->advisor_id) {
+            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
                 $skipBookPolicyDocumentJob = true;
             }
         }
@@ -1976,8 +1976,8 @@ class SageApiService
             QuoteStatusLog::create($quoteLogData);
         }
 
-        if(in_array($quote->quote_status_id , [QuoteStatusEnum::PolicyBooked,QuoteStatusEnum::POLICY_BOOKING_FAILED ])){
-            info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.' start assignAdvisor Quote Status ID : ' . $quote->quote_status_id);
+        if (in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED])) {
+            info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.' start assignAdvisor Quote Status ID : '.$quote->quote_status_id);
             $this->assignAdvisor($quote, $quoteTypeId);
         }
 
