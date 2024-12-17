@@ -34,7 +34,6 @@ class TravelRenewalService extends BaseService
         ])
         ->where('direction_code', TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
         ->whereDate('start_date', $startDate)
-        ->take(20)
         ->chunkById(100, function ($quotes) {
                 $quoteCount = $quotes->count();
                 info(self::class . " - Total quotes in current chunk: {$quoteCount} | Time: " . now());
