@@ -90,6 +90,12 @@ class TravelAllocationService extends AllocationService
                 QuoteStatusEnum::Lost,
             ])
             ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
+            ->where(function ($query) {
+                $query->sicFlowDisabled()
+                    ->orWhere(function ($subQuery) {
+                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                    });
+            })
             ->first();
     }
 

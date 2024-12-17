@@ -7,12 +7,14 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
@@ -206,5 +208,32 @@ trait QuoteModelTrait
         $q->where(function ($sq) {
             $sq->where('sic_advisor_requested', 1)->orWhere('payment_status_id', PaymentStatusEnum::AUTHORISED);
         });
+    }
+
+    public function getForeignKey()
+    {
+        return Str::snake(Str::singular($this->getTable())).'_id';
+    }
+
+    public static function applyRequestTableJoins($query, $request): void
+    {
+        $applicableFilters = ['member_first_name', 'member_last_name', 'company_name'];
+        $quoteTypes = [
+            QuoteTypeId::Car => 'car_quote_request',
+            QuoteTypeId::Home => 'home_quote_request',
+            QuoteTypeId::Health => 'health_quote_request',
+            QuoteTypeId::Life => 'life_quote_request',
+            QuoteTypeId::Business => 'business_quote_request',
+            QuoteTypeId::Travel => 'travel_quote_request',
+        ];
+
+        if ($request->hasAny($applicableFilters) && $request->has('line_of_business')) {
+            if (isset($quoteTypes[$request->line_of_business])) {
+                $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
+                    $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
+                    $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
+                });
+            }
+        }
     }
 }

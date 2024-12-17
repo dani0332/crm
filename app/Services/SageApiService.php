@@ -122,10 +122,13 @@ class SageApiService
                 default => Http::timeout(80)->withBasicAuth($this->sageLogin, $this->sagePassword)
                     ->get($sageEndPoint, $payLoad),
             };
-            $responseBody = is_array($response->json()) ? json_encode($response->json()) : $response->body();
-            info('Sage API : '.$endPoint.' : '.$responseBody);
 
-            return $responseBody;
+            if ($response->failed()) {
+                $responseBody = is_array($response->json()) ? $response->json() : json_decode($response->body());
+                info('Sage API : '.$endPoint.' : '.$responseBody['error']['message']['value'] ?? 'Something went wrong with Sage Server.');
+            }
+
+            return is_array($response->json()) ? json_encode($response->json()) : $response->body();
         } catch (Exception $e) {
             logger()->error('Sage API : '.$endPoint.' : '.$e->getMessage());
 

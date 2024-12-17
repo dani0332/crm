@@ -500,6 +500,7 @@ class TravelController extends Controller
                 $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
                 $addons = $listQuotePlan->addons;
                 $vat = $listQuotePlan->vat;
+                $insurerQuoteNo = $listQuotePlan->insurerQuoteId;
 
                 foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                     $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
@@ -527,6 +528,7 @@ class TravelController extends Controller
             'addons' => $addons,
             'id' => $planId,
             'vat' => $vat,
+            'insurerQuoteNo' => $insurerQuoteNo,
         ];
 
         return response()->json($data, 200);

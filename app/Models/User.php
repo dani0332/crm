@@ -316,7 +316,7 @@ class User extends Authenticatable implements AuditableContract
      */
     public function scopeWithActive($query)
     {
-        return $query->where('is_active', 1);
+        return $query->where('users.is_active', 1);
     }
 
     /**
@@ -354,6 +354,11 @@ class User extends Authenticatable implements AuditableContract
     public function department()
     {
         return $this->belongsTo(Department::class)->select('id', 'name');
+    }
+
+    public function businessTypes()
+    {
+        return $this->belongsToMany(BusinessTypeOfInsurance::class, 'business_type_of_insurance_user', 'user_id', 'business_type_of_insurance_id');
     }
 
     public function departments()
