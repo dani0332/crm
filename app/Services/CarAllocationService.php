@@ -419,9 +419,10 @@ class CarAllocationService extends AllocationService
             ->where('rule_type', RuleTypeEnum::CAR_MAKE_MODEL)
             ->where('rules.is_active', 1)
             ->groupBy('rule_details.rule_id')
-            ->select(
+            ->select([
+                'rules.name AS ruleName',
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-            )->get();
+            ])->get();
     }
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId): mixed
