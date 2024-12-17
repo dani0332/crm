@@ -10,10 +10,10 @@ use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
-use App\Factories\AllocationFactory;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
@@ -580,8 +580,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info(self::class.' fn:'.__FUNCTION__.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
-        $allocationStrategy = AllocationFactory::createStrategy(self::TYPE_ID, $uuid, $unassistedTeamId);
-        $response = $allocationStrategy->executeSteps();
+
+        $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
         if ($response) {
             info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
             SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
