@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -19,8 +18,6 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
-            SUAdditionalCRNSubTypesSeeder::class,
-            CallBackNotificationDataMigrationSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
         ]);

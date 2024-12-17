@@ -391,6 +391,34 @@ export const getIp = async () => {
   }
 };
 
+export const resolveUserStatusText = statusId => {
+  switch (parseInt(statusId)) {
+    case 1:
+      return 'Online';
+    case 2:
+      return 'Offline';
+    case 3:
+      return 'Unavailable';
+    case 4:
+      return 'Sick';
+    case 5:
+      return 'On leave';
+    default:
+      return 'Unavailable';
+  }
+};
+
+export const getStatusModal = () =>
+  reactive({
+    show: false,
+    loader: false,
+    data: {
+      id: 0,
+      userId: 0,
+      reason: 1,
+      loader: false,
+    },
+  });
 //Function to validate single field in form before submit
 export const validateField = (form, fieldValue, errorField, validationRule) => {
   const validationError = validationRule(fieldValue);

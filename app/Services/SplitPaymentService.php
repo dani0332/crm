@@ -437,10 +437,7 @@ class SplitPaymentService
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            // Create a temporary file and write the PDF content to it
-            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
-
-            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true, $tempFile);
+            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true);
         } catch (\Exception $ex) {
             info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' Payment Reciept - ERROR:'.$ex->getMessage());
         }
@@ -542,6 +539,9 @@ class SplitPaymentService
     public function generateSplitPaymentLink($request)
     {
         $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
+        if (! $splitPayment) {
+            return response()->json(['success' => false]);
+        }
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
         $quoteId = $request->quoteId;

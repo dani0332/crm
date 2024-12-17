@@ -36,6 +36,7 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
         SageProcessesMarkFailedCommand::class,
+        Commands\CorplineDataMigration::class,
     ];
 
     /**
@@ -75,7 +76,7 @@ class Kernel extends ConsoleKernel
             ->at('9:00');
 
         $schedule
-            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(5);
+            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(5);
 
         $schedule
             ->command('AddBatchNumberNonMotors:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(5);
@@ -113,7 +114,6 @@ class Kernel extends ConsoleKernel
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
-
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
 
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
