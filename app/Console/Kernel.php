@@ -22,7 +22,6 @@ class Kernel extends ConsoleKernel
         Commands\AddBatchNumberNonMotors::class,
         Commands\Dtt::class,
         Commands\DttFollowUp::class,
-        Commands\TierAssignment::class,
         Commands\UpdateUserStatus::class,
         Commands\QuoteAllocation::class,
         Commands\LeadsReassignment::class,
@@ -31,12 +30,10 @@ class Kernel extends ConsoleKernel
         Commands\UpdateStaleLeads::class,
         Commands\AutomateActivitiesCommand::class,
         Commands\PaymentOverdueStatus::class,
-        Commands\AlfredFollowUpSchedulerCommand::class,
         Commands\ProcessCCPaymentsCommand::class,
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
         SageProcessesMarkFailedCommand::class,
-        Commands\CorplineDataMigration::class,
     ];
 
     /**

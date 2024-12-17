@@ -659,12 +659,3 @@ Route::get('/add-batch-number', function () {
     $addBtchNuimber->handle();
     echo 'Done';
 });
-
-//Migration Not Required For Now 21 Nov 24
-// Route::get('run-insly-email-fix', function () {
-
-//     if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-//         Artisan::queue('InslyEmailFix:cron');
-//     }
-
-// });
