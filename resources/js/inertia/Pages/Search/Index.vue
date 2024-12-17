@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   leadsOrEndorsementData: Object,
   quoteStatuses: Array,
@@ -265,24 +264,27 @@ function onReset() {
 }
 
 function checkMemberOrCompanyFilter() {
-    const { member_first_name, member_last_name, company_name } = availableFilters;
+  const { member_first_name, member_last_name, company_name } =
+    availableFilters;
 
-    if (member_first_name || member_last_name || company_name) {
-        let isQueryStringSet = false;
-        for (const [key] of Object.entries(params)) {
-            if (key === 'line_of_business') {
-                isQueryStringSet = true;
-                availableFilters.line_of_business = parseInt(params[key]);
-            }
-        }
-        if (!isQueryStringSet) {
-            availableFilters.line_of_business = company_name ? props.quoteTypeIdEnum.Business : props.quoteTypeIdEnum.Health;
-        }
-        return true;
+  if (member_first_name || member_last_name || company_name) {
+    let isQueryStringSet = false;
+    for (const [key] of Object.entries(params)) {
+      if (key === 'line_of_business') {
+        isQueryStringSet = true;
+        availableFilters.line_of_business = parseInt(params[key]);
+      }
     }
+    if (!isQueryStringSet) {
+      availableFilters.line_of_business = company_name
+        ? props.quoteTypeIdEnum.Business
+        : props.quoteTypeIdEnum.Health;
+    }
+    return true;
+  }
 
-    availableFilters.line_of_business = '';
-    return false;
+  availableFilters.line_of_business = '';
+  return false;
 }
 
 function onSubmit() {
@@ -342,7 +344,6 @@ onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
 });
-
 </script>
 
 <template>
@@ -356,11 +357,11 @@ onMounted(() => {
           {{ isSendUpdateListView ? 'Send Update' : 'Lead' }} List
         </h2>
         <template #tooltip>
-            {{
-                isSendUpdateListView
-                  ? 'Displays here are the requests created or booked under send update'
-                  : 'Displays here are the leads created or booked under the main lead'
-            }}
+          {{
+            isSendUpdateListView
+              ? 'Displays here are the requests created or booked under send update'
+              : 'Displays here are the leads created or booked under the main lead'
+          }}
         </template>
       </x-tooltip>
       <div class="space-x-3">
@@ -433,11 +434,11 @@ onMounted(() => {
             {{ header.text }}
           </p>
           <template #tooltip>
-              {{
-                isSendUpdateListView
-                  ? 'A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.'
-                  : 'Ref ID of the lead/policy'
-              }}
+            {{
+              isSendUpdateListView
+                ? 'A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.'
+                : 'Ref ID of the lead/policy'
+            }}
           </template>
         </x-tooltip>
       </template>
@@ -469,7 +470,8 @@ onMounted(() => {
             {{ header.text }}
           </p>
           <template #tooltip>
-              The date when the "Send Update" request was created. It indicates when the action was initiated
+            The date when the "Send Update" request was created. It indicates
+            when the action was initiated
           </template>
         </x-tooltip>
       </template>
@@ -667,13 +669,13 @@ onMounted(() => {
             />
           </x-field>
           <x-field label="Member Last Name">
-              <x-input
-                  v-model="availableFilters.member_last_name"
-                  type="search"
-                  name="member_last_name"
-                  class="w-full"
-                  placeholder="Search by Member Last Name"
-              />
+            <x-input
+              v-model="availableFilters.member_last_name"
+              type="search"
+              name="member_last_name"
+              class="w-full"
+              placeholder="Search by Member Last Name"
+            />
           </x-field>
           <x-field label="Company Name">
             <x-input
@@ -772,15 +774,17 @@ onMounted(() => {
             />
           </x-field>
           <x-field label="Line of Business" v-if="checkMemberOrCompanyFilter()">
-              <x-select
-                  v-model="availableFilters.line_of_business"
-                  placeholder="Search by Line of Business"
-                  :options=" quoteTypes.map(item => ({
+            <x-select
+              v-model="availableFilters.line_of_business"
+              placeholder="Search by Line of Business"
+              :options="
+                quoteTypes.map(item => ({
                   value: item.id,
                   label: item.text,
-                }))"
+                }))
+              "
               class="w-full"
-              />
+            />
           </x-field>
           <x-field label="Line of Business" v-else>
             <ComboBox
