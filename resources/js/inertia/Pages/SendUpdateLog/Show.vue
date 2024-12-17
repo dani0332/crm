@@ -346,19 +346,19 @@ onBeforeMount(() => {
                   </dt>
                   <dd>{{ sendUpdateLog.display_status }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
-                  <template
-                    v-if="
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CI &&
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CIR &&
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CPU &&
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CPD
-                    "
-                  >
+                <div class="grid sm:grid-cols-2"
+                   v-if="
+                    sendUpdateLog.category.code !==
+                      props.sendUpdateStatusEnum.CI &&
+                    sendUpdateLog.category.code !==
+                      props.sendUpdateStatusEnum.CIR &&
+                    sendUpdateLog.category.code !==
+                      props.sendUpdateStatusEnum.CPU &&
+                    sendUpdateLog.category.code !==
+                      props.sendUpdateStatusEnum.CPD
+                  "
+                >
+                  <template>
                     <dt>
                       <x-tooltip placement="left">
                         <label
