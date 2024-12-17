@@ -256,6 +256,16 @@ const isEFOrEN = computed(() => {
     props.sendUpdateStatusEnum.CPD,
   ].includes(props.sendUpdateLog.category.code);
 });
+
+const isAOCOV = computed(() => props.sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.AOCOV);
+
+const isCOEOrCOE_NFI = computed(() => {
+  return [props.sendUpdateStatusEnum.COE, props.sendUpdateStatusEnum.COE_NFI].includes(props.sendUpdateLog?.option?.code);
+});
+
+const isCISCOrCISC_NFI = computed(() => {
+  return [props.sendUpdateStatusEnum.CISC, props.sendUpdateStatusEnum.CISC_NFI].includes(props.sendUpdateLog?.option?.code);
+});
 </script>
 
 <template>
@@ -385,28 +395,17 @@ const isEFOrEN = computed(() => {
                   </template>
                 </div>
                 <div
-                  class="grid sm:grid-cols-2"
-                  :class="isEFOrEN ?  'md:ml-10' : ''"
-                  v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
-                >
-                  <dt class="font-bold">ENDORSEMENT NUMBER</dt>
-                  <dd>
-                    <x-input
-                      v-model="sendUpdateForm.endorsement_number"
-                      size="xs"
-                      :disabled="!state.edit"
-                    />
-                  </dd>
-                </div>
-                <div
                   class="grid sm:grid-cols-2 mb-2"
-                  :class="!isEFOrEN ?  'md:ml-10' : ''"
-                  v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car"
+                  :class="(isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI) ? 'md:ml-10' : ''"
+                  v-if="
+                    props.quoteType === page.props.quoteTypeCodeEnum.Car &&
+                    (isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI)
+                  "
                 >
                   <template
                     v-if="
                       props.additionalField &&
-                      sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.AOCOV
+                      isAOCOV
                     "
                   >
                     <dt>
@@ -433,10 +432,7 @@ const isEFOrEN = computed(() => {
                   <template
                     v-else-if="
                       props.additionalField &&
-                      (sendUpdateLog?.option?.code ===
-                        props.sendUpdateStatusEnum.COE ||
-                        sendUpdateLog?.option?.code ===
-                          props.sendUpdateStatusEnum.COE_NFI)
+                      isCOEOrCOE_NFI
                     "
                   >
                     <dt>
@@ -461,10 +457,7 @@ const isEFOrEN = computed(() => {
                   <template
                     v-else-if="
                       props.additionalField &&
-                      (sendUpdateLog?.option?.code ===
-                        props.sendUpdateStatusEnum.CISC ||
-                        sendUpdateLog?.option?.code ===
-                          props.sendUpdateStatusEnum.CISC_NFI)
+                      isCISCOrCISC_NFI
                     "
                   >
                     <dt>
@@ -487,6 +480,20 @@ const isEFOrEN = computed(() => {
                       />
                     </dd>
                   </template>
+                </div>
+                <div
+                    class="grid sm:grid-cols-2"
+                    :class="(!(isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI) && isEFOrEN) ? 'md:ml-10' : ''"
+                    v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
+                >
+                  <dt class="font-bold">ENDORSEMENT NUMBER</dt>
+                  <dd>
+                    <x-input
+                        v-model="sendUpdateForm.endorsement_number"
+                        size="xs"
+                        :disabled="!state.edit"
+                    />
+                  </dd>
                 </div>
               </dl>
             </div>
