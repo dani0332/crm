@@ -388,6 +388,8 @@ final class PermissionsEnum extends Enum
     public const DEPARTMENT_MANAGER = 'department-manager';
     public const ASSIGN_PAID_LEADS = 'assign-paid-leads';
     public const RECEIVE_NOTIFICATIONS = 'receive-notifications';
+    public const SEARCH_ALL_LEAD_LOB = 'search-all-lead-lob';
+    public const DATA_EXTRACTION_SEARCH_ALL_LEADS = 'data-extraction-search-all-leads';
 
     public static function getAdvisorConversionReportPermissions()
     {

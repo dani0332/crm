@@ -281,6 +281,10 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Activities', route('activities.index'));
         }
 
+        if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
+            $nav = $nav->add('Search', route('search-leads'));
+        }
+
         /* personal quotes section */
         $nav = $nav->add('Personal Quotes', '', function (Section $section) {
             $section

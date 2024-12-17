@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\LeadSourceEnum;
@@ -34,6 +35,7 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
+use App\Models\QuoteExportLog;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -935,5 +937,21 @@ class CentralService extends BaseService
         }
 
         return false;
+    }
+
+    public function generateExportLogs(): void
+    {
+        try {
+            $exportLogs = QuoteExportLog::create([
+                'type' => ExportLogsTypeEnum::SEARCH_MODULE,
+                'quote_type_id' => request()->quote_type_id ?? null,
+                'user_id' => auth()->id(),
+                'ip_address' => request()->ip(),
+                'url' => request()->fullUrl(),
+            ]);
+            info('fn: generateExportLogs export log created');
+        } catch (\Exception $e) {
+            info('fn: generateExportLogs error: '.$e->getMessage());
+        }
     }
 }
