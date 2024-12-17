@@ -15,6 +15,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Factories\AllocationFactory;
 use App\Interfaces\PolicyIssuanceInterface;
+use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
@@ -567,22 +568,28 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $quote->update(['api_issuance_status_id' => $issuanceStatus]);
         }
 
-        $this->allocateLead($quote->uuid);
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' start allocation of lead ');
+        $this->allocateLead($quote);
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' start allocation of failed lead ');
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
 
-    public function allocateLead($uuid)
+    public function allocateLead($quote)
     {
+        $uuid =$quote->uuid;
         info(self::class.' fn:'.__FUNCTION__.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         $allocationStrategy = AllocationFactory::createStrategy(self::TYPE_ID, $uuid, $unassistedTeamId);
         $response = $allocationStrategy->executeSteps();
         if ($response) {
-            info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
+            info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
             SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+            // Here we need to dispatch document email
+            $data = new \stdClass();
+            $data->model_type = quoteTypeCode::Travel;
+            $data->quote_id = $quote->id;
+            SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
         }
     }
 

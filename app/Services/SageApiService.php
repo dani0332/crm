@@ -669,8 +669,16 @@ class SageApiService
         } else {
             info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
+        $skipBookPolicyDocumentJob = false;
+        if ($quoteTypeId === QuoteTypeId::Travel){
+            $quote->load('policyIssuance');
+            if ($quote->policyIssuance){
+                $skipBookPolicyDocumentJob = true;
+            }
+        }
 
-        if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+        info("Quote code : " . $quote->code . ' Skip book policy document job '. $skipBookPolicyDocumentJob ? "Yes": "No");
+        if (!$skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
