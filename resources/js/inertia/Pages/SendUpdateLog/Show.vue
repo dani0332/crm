@@ -4,6 +4,7 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyProviderDetails from './Partials/ProviderDetails.vue';
+import {XInput} from "@indielayer/ui";
 
 const props = defineProps({
   quoteType: String,
@@ -114,6 +115,7 @@ const sendUpdateForm = useForm({
   car_addons: props.sendUpdateLog?.car_addons || null,
   emirates_id: props.sendUpdateLog?.emirates_id || null,
   seating_capacity: props.sendUpdateLog?.seating_capacity || null,
+  endorsement_number: props.sendUpdateLog?.endorsement_number || null,
 });
 
 onMounted(() => {
@@ -143,8 +145,8 @@ const onCancel = () => {
   sendUpdateForm.option_id = props.sendUpdateLog?.option_id || null;
   sendUpdateForm.car_addons = props.sendUpdateLog?.car_addons || null;
   sendUpdateForm.emirates_id = props.sendUpdateLog?.emirates_id || null;
-  sendUpdateForm.seating_capacity =
-    props.sendUpdateLog?.seating_capacity || null;
+  sendUpdateForm.seating_capacity = props.sendUpdateLog?.seating_capacity || null;
+  sendUpdateForm.endorsement_number = props.sendUpdateLog?.endorsement_number || null;
 };
 
 const onUpdateLog = isValid => {
@@ -244,6 +246,15 @@ const showBookingFailedAlert = () => {
 
 onBeforeMount(() => {
   showBookingFailedAlert();
+});
+
+const isEFOrEN = computed(() => {
+  return ![
+    props.sendUpdateStatusEnum.CI,
+    props.sendUpdateStatusEnum.CIR,
+    props.sendUpdateStatusEnum.CPU,
+    props.sendUpdateStatusEnum.CPD,
+  ].includes(props.sendUpdateLog.category.code);
 });
 </script>
 
@@ -348,19 +359,8 @@ onBeforeMount(() => {
                   </dt>
                   <dd>{{ sendUpdateLog.display_status }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2 mb-2">
-                  <template
-                    v-if="
-                    sendUpdateLog.category.code !==
-                      props.sendUpdateStatusEnum.CI &&
-                    sendUpdateLog.category.code !==
-                      props.sendUpdateStatusEnum.CIR &&
-                    sendUpdateLog.category.code !==
-                      props.sendUpdateStatusEnum.CPU &&
-                    sendUpdateLog.category.code !==
-                      props.sendUpdateStatusEnum.CPD
-                  "
-                  >
+                <div v-if="isEFOrEN" class="grid sm:grid-cols-2">
+                  <template v-if="isEFOrEN">
                     <dt>
                       <x-tooltip>
                         <label
@@ -384,15 +384,25 @@ onBeforeMount(() => {
                     </dd>
                   </template>
                 </div>
+                <div class="grid sm:grid-cols-2" :class="isEFOrEN ?  'md:ml-10' : ''">
+                  <dt class="font-bold">ENDORSEMENT NUMBER</dt>
+                  <dd>
+                    <x-input
+                      v-model="sendUpdateForm.endorsement_number"
+                      size="xs"
+                      :disabled="!state.edit"
+                    />
+                  </dd>
+                </div>
                 <div
-                    class="grid sm:grid-cols-2 mb-2 md:ml-10"
+                  class="grid sm:grid-cols-2 mb-2"
+                  :class="!isEFOrEN ?  'md:ml-10' : ''"
                   v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car"
                 >
                   <template
                     v-if="
                       props.additionalField &&
-                      sendUpdateLog?.option?.code ===
-                        props.sendUpdateStatusEnum.AOCOV
+                      sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.AOCOV
                     "
                   >
                     <dt>

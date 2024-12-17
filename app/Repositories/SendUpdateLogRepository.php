@@ -138,6 +138,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'car_addons' => $data['car_addons'] ?? null,
                 'emirates_id' => $data['emirates_id'] ?? null,
                 'seating_capacity' => $data['seating_capacity'] ?? null,
+                'endorsement_number' => $data['endorsement_number'] ?? null,
             ]);
         } catch (\Exception $ex) {
             $sendUpdate = (object) [
