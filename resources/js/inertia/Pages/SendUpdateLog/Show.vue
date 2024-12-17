@@ -486,12 +486,24 @@ const isCISCOrCISC_NFI = computed(() => {
                     :class="(!(isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI) && isEFOrEN) ? 'md:ml-10' : ''"
                     v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
                 >
-                  <dt class="font-bold">ENDORSEMENT NUMBER</dt>
+                  <dt>
+                    <x-tooltip>
+                      <label
+                          class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      >
+                        ENDORSEMENT NUMBER
+                      </label>
+                      <template #tooltip>
+                        The number associated with a specific endorsement or update to the policy. This is the endorsement number available on the tax invoice or provided by the insurance provider.
+                      </template>
+                    </x-tooltip>
+                  </dt>
                   <dd>
                     <x-input
                         v-model="sendUpdateForm.endorsement_number"
                         size="xs"
                         :disabled="!state.edit"
+                        placeholder="Enter Endorsement Number"
                     />
                   </dd>
                 </div>
