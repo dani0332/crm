@@ -13,6 +13,7 @@ use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
@@ -205,5 +206,10 @@ trait QuoteModelTrait
         $q->where(function ($sq) {
             $sq->where('sic_advisor_requested', 1)->orWhere('payment_status_id', PaymentStatusEnum::AUTHORISED);
         });
+    }
+
+    public function getForeignKey()
+    {
+        return Str::snake(Str::singular($this->getTable())).'_id';
     }
 }
