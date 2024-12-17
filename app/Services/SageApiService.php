@@ -670,15 +670,15 @@ class SageApiService
             info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
         $skipBookPolicyDocumentJob = false;
-        if ($quoteTypeId === QuoteTypeId::Travel){
+        if ($quoteTypeId === QuoteTypeId::Travel) {
             $quote->load('policyIssuance');
-            if ($quote->policyIssuance){
+            if ($quote->policyIssuance) {
                 $skipBookPolicyDocumentJob = true;
             }
         }
 
-        info("Quote code : " . $quote->code . ' Skip book policy document job '. $skipBookPolicyDocumentJob ? "Yes": "No");
-        if (!$skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+        info('Quote code : '.$quote->code.' Skip book policy document job '.$skipBookPolicyDocumentJob ? 'Yes' : 'No');
+        if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
@@ -2058,14 +2058,14 @@ class SageApiService
         if ($policyIssuanceAutomation) {
             $quoteType = $policyIssuanceAutomation->quote_type;
             $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
-            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider?->code);
 
-            /* If advisor is not assigned already than check that if the Policy Issuance exist for the Insurer and LOB and assign the Advisor */
-            if (! $quote->advisor_id && $insuranceProviderAutomation) {
-                info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor to quote');
+            /*if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
+            if ($insuranceProviderAutomation) {
+                info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
                 $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
             } else {
-                info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - advisor is already assigned to quote');
+                info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' Insurer : '.$insuranceProvider?->code.'automation class not found');
             }
         } else {
             info('Policy Book : Quote '.$quote?->code.' : policy issuance automation not found');
