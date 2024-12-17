@@ -587,7 +587,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
             // Here we need to dispatch document email
             $data = new \stdClass();
-            $data->model_type = quoteTypeCode::Travel;
+            $data->model_type = self::TYPE;
             $data->quote_id = $quote->id;
             SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
         }
