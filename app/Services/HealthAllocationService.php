@@ -27,6 +27,12 @@ class HealthAllocationService extends AllocationService
     public bool $isBuyLeadAdvisor = false;
     protected ?BuyLeadRequest $buyLeadRequest = null;
 
+    protected function resetProps(): void
+    {
+        $this->isBuyLeadAdvisor = false;
+        $this->buyLeadRequest = null;
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         $healthQuoteQuery = HealthQuote::where('uuid', $quoteId)
@@ -129,8 +135,7 @@ class HealthAllocationService extends AllocationService
     public function fetchAvailableAdvisor($leadTeam, $isReassignmentJob, HealthQuote $lead)
     {
         // Reset Buy Lead Advisor flag and Buy Lead Request object.
-        $this->isBuyLeadAdvisor = false;
-        $this->buyLeadRequest = null;
+        $this->resetProps();
 
         $advisor = null;
 
@@ -265,8 +270,7 @@ class HealthAllocationService extends AllocationService
             })->dispatch();
 
         // Reset Buy Lead Advisor flag and Buy Lead Request object.
-        $this->isBuyLeadAdvisor = false;
-        $this->buyLeadRequest = null;
+        $this->resetProps();
     }
 
     public function updateQuoteDetail($leadId)
