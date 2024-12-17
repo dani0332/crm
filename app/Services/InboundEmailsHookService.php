@@ -13,12 +13,12 @@ use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
+use App\Models\HomeQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
-use App\Models\HomeQuote;
 
 class InboundEmailsHookService extends BaseService
 {
