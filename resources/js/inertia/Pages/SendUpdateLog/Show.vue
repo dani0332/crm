@@ -270,10 +270,10 @@ onBeforeMount(() => {
           <x-form @submit="onUpdateLog">
             <x-divider class="my-4" />
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-y-4">
-                <div class="grid sm:grid-cols-2">
+              <dl class="grid md:grid-cols-2">
+                <div class="grid sm:grid-cols-2 mb-2">
                   <dt>
-                    <x-tooltip placement="left">
+                    <x-tooltip>
                       <label
                         class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                       >
@@ -288,7 +288,7 @@ onBeforeMount(() => {
                   </dt>
                   <dd>{{ sendUpdateLog.code }}</dd>
                 </div>
-                <div class="grid md:grid-cols-2 gap-y-4">
+                <div class="grid md:grid-cols-2">
                   <dt class="font-bold">NOTES</dt>
                   <dd>
                     <x-textarea
@@ -296,13 +296,15 @@ onBeforeMount(() => {
                       size="xs"
                       :disabled="!state.edit"
                       maxlength="250"
+                      class="h-7"
+                      rows="1"
                     />
                     <p class="text-xs text-right" v-if="state.edit">
                       {{ sendUpdateForm.notes.length }} / 250
                     </p>
                   </dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
+                <div class="grid sm:grid-cols-2 mb-2 h-10">
                   <template
                     v-if="
                       props.sendUpdateLog.category.code !==
@@ -312,7 +314,7 @@ onBeforeMount(() => {
                     "
                   >
                     <dt>
-                      <x-tooltip placement="left">
+                      <x-tooltip>
                         <label
                           class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                         >
@@ -329,9 +331,9 @@ onBeforeMount(() => {
                     <dd>{{ transactionType || '' }}</dd>
                   </template>
                 </div>
-                <div class="grid md:grid-cols-2 gap-y-4">
+                <div class="grid md:grid-cols-2 mb-2">
                   <dt>
-                    <x-tooltip placement="left">
+                    <x-tooltip>
                       <label
                         class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                       >
@@ -346,8 +348,9 @@ onBeforeMount(() => {
                   </dt>
                   <dd>{{ sendUpdateLog.display_status }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2"
-                   v-if="
+                <div class="grid sm:grid-cols-2 mb-2">
+                  <template
+                    v-if="
                     sendUpdateLog.category.code !==
                       props.sendUpdateStatusEnum.CI &&
                     sendUpdateLog.category.code !==
@@ -357,12 +360,11 @@ onBeforeMount(() => {
                     sendUpdateLog.category.code !==
                       props.sendUpdateStatusEnum.CPD
                   "
-                >
-                  <template>
+                  >
                     <dt>
-                      <x-tooltip placement="left">
+                      <x-tooltip>
                         <label
-                          class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                            class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                         >
                           SUB TYPE
                         </label>
@@ -383,7 +385,7 @@ onBeforeMount(() => {
                   </template>
                 </div>
                 <div
-                  class="grid sm:grid-cols-2"
+                    class="grid sm:grid-cols-2 mb-2 md:ml-10"
                   v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car"
                 >
                   <template
@@ -478,6 +480,7 @@ onBeforeMount(() => {
               <template v-if="!state.edit">
                 <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                   <x-button
+                    class="focus:ring-2 focus:ring-black"
                     size="sm"
                     @click="onEdit"
                     :disabled="props.isEditDisabledForQueuedBooking"
@@ -498,13 +501,14 @@ onBeforeMount(() => {
                   size="sm"
                   color="orange"
                   @click="onCancel"
-                  class="mr-3"
+                  class="mr-3 focus:ring-2 focus:ring-black"
                   :loading="sendUpdateForm.processing"
                   :disabled="sendUpdateForm.processing"
                 >
                   Cancel
                 </x-button>
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   color="primary"
                   type="submit"
