@@ -381,24 +381,6 @@ onBeforeMount(() => {
                       />
                     </dd>
                   </template>
-                  <template
-                    v-else-if="
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CPU &&
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CPD
-                    "
-                  >
-                    <!-- <dt class="font-bold text-right mr-10">Reason</dt>
-                  <dd>
-                    <x-select
-                      size="xs"
-                      :disabled="!state.edit"
-                      v-model="sendUpdateForm.change_reason"
-                      :options="changeReasonOptions"
-                    />
-                  </dd> -->
-                  </template>
                 </div>
                 <div
                   class="grid sm:grid-cols-2"
