@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\LeadSourceEnum;
@@ -46,7 +47,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class CentralService
+class CentralService extends BaseService
 {
     use GenericQueriesAllLobs, TeamHierarchyTrait;
 
@@ -186,17 +187,38 @@ class CentralService
         return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes, $quoteBatch) {
             foreach ($leadsIds as $leadId) {
                 $getQuoteLead = $model['parent']::findOrfail($leadId);
+
+                $oldAssignmentType = $getQuoteLead->assignment_type;
+                $isReassignment = $getQuoteLead->advisor_id != null ? true : false;
+                $previousAdvisorId = $getQuoteLead->advisor_id;
+
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
+                $getQuoteLead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
                 $getQuoteLead->quote_batch_id = $quoteBatch->id;
                 $getQuoteLead->save();
 
                 $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes)) ?
                     'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
 
+                $childRecord = $model['child']::where($parentFieldName, $getQuoteLead->id)->first();
+                $oldAdvisorAssignedDate = $childRecord?->advisor_assigned_date ?? null;
+
                 $model['child']::updateOrCreate(
                     [$parentFieldName => $getQuoteLead->id],
                     ['advisor_assigned_by_id' => auth()->user()->id, 'advisor_assigned_date' => Carbon::now()]
                 );
+
+                $quoteTypeId = $getQuoteLead?->quote_type_id ?? QuoteTypes::tryFrom(ucfirst(request('quoteType')))?->id();
+
+                if ($quoteTypeId) {
+                    $this->upsertManualAllocationCount($getQuoteLead->advisor_id, $getQuoteLead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteTypeId);
+
+                    $this->addOrUpdateQuoteViewCount($getQuoteLead, $quoteTypeId, $getQuoteLead->advisor_id);
+                }
+
+                $getQuoteLead->auto_assigned = false;
+
+                $getQuoteLead->save();
             }
         });
     }
