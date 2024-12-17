@@ -266,6 +266,16 @@ const isCOEOrCOE_NFI = computed(() => {
 const isCISCOrCISC_NFI = computed(() => {
   return [props.sendUpdateStatusEnum.CISC, props.sendUpdateStatusEnum.CISC_NFI].includes(props.sendUpdateLog?.option?.code);
 });
+
+const endorsementNumberValidation = event => {
+  const charCode = event.charCode || event.keyCode;
+  const char = String.fromCharCode(charCode);
+  const regex = /^[a-zA-Z0-9\\|\/-]$/;
+
+  if (!regex.test(char)) {
+    event.preventDefault();
+  }
+};
 </script>
 
 <template>
@@ -505,6 +515,7 @@ const isCISCOrCISC_NFI = computed(() => {
                         :disabled="!state.edit"
                         placeholder="Enter Endorsement Number"
                         maxlength="23"
+                        @keypress="endorsementNumberValidation"
                     />
                   </dd>
                 </div>
