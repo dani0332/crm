@@ -43,7 +43,8 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     supervisor \
     nodejs \
-    yarn
+    yarn \
+    ghostscript
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
 RUN docker-php-ext-install -j$(nproc) gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb

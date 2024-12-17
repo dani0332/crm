@@ -395,13 +395,23 @@
 
     if($isRequestFromSendUpdateLogPage){
         $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
-    } else if($quoteTypeName == QuoteTypeShortCode::BUS) {
-        $entity = $quote?->quoteRequestEntityMapping?->entity;
-    }
+        $subTotal =  $proformaPaymentRequest->price_vat_applicable;
+        $vat =  $proformaPaymentRequest->price_vat;
+        $totalAmount =   $subTotal + $vat;
 
-    $subTotal = $proformaPaymentRequest->price_vat_applicable;
-    $vat = $proformaPaymentRequest->price_vat;
-    $totalAmount = $subTotal + $vat;
+    }else{
+        $entity = $quote?->quoteRequestEntityMapping?->entity;
+        if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
+            $carQuoteDetails = $quote->carQuoteRequestDetail;
+            $subTotal =  $carQuoteDetails->actual_premium;
+            $vat =  $carQuoteDetails->premium_vat;
+            $totalAmount =  $subTotal + $vat;
+        }else{
+            $subTotal =  $proformaPaymentRequest->price_vat_applicable;
+            $vat =  $proformaPaymentRequest->price_vat;
+            $totalAmount =  $subTotal + $vat;
+        }
+    }
 
 @endphp
 
