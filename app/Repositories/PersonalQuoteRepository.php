@@ -164,7 +164,7 @@ class PersonalQuoteRepository extends BaseRepository
 
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
                     WatermarkDocumentsJob::dispatch(
-                        $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
+                        $quoteDocument->id, $data['quote_uuid'], $documentType->id
                     );
                 } else {
                     info('Watermkark job not dispatched - Ref: '.$quote->code);

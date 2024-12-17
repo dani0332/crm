@@ -70,19 +70,24 @@ class LookupService extends BaseService
         return InsuranceProvider::select('id', 'text')->orderBy('text', 'asc')->get();
     }
 
-    public function getLeadStatuses()
+    public function getLeadStatuses($extraExcludeStatuses = [], $removeFromExclude = [])
     {
+        $generalExcludeStatus = [
+            QuoteStatusEnum::Draft,
+            QuoteStatusEnum::Cancelled,
+            QuoteStatusEnum::AMLScreeningCleared,
+            QuoteStatusEnum::AMLScreeningFailed,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicyInvoiced,
+            QuoteStatusEnum::Issued,
+        ];
+
+        $excludeStatuses = array_merge($generalExcludeStatus, $extraExcludeStatuses);
+        $excludeStatus = $removeFromExclude ? array_diff($excludeStatuses, $removeFromExclude) : $excludeStatuses;
+
         return QuoteStatus::select('id', 'text')
-            ->whereNotIn('id', [
-                QuoteStatusEnum::AMLScreeningCleared,
-                QuoteStatusEnum::Draft,
-                QuoteStatusEnum::Cancelled,
-                QuoteStatusEnum::AMLScreeningFailed,
-                QuoteStatusEnum::TransactionDeclined,
-                QuoteStatusEnum::PolicyIssued,
-                QuoteStatusEnum::PolicyInvoiced,
-                QuoteStatusEnum::Issued,
-            ])
+            ->whereNotIn('id', $excludeStatus)
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
             ->get();
@@ -209,5 +214,12 @@ class LookupService extends BaseService
     public function getHomeLookUpData()
     {
         return Capi::request('/api/v1-get-home-models', 'post');
+    }
+
+    public function getSendUpdateCategories()
+    {
+        $parentTypes = Lookup::where('code', LookupsEnum::SEND_UPDATE_CODE)->pluck('id');
+
+        return Lookup::whereIn('parent_id', $parentTypes)->get();
     }
 }
