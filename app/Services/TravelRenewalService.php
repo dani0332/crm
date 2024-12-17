@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -13,39 +14,38 @@ use App\Jobs\TravelRenewalLeadCreationJob;
 use App\Models\RenewalBatch;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
-use App\Enums\ApplicationStorageEnums;
 
 class TravelRenewalService extends BaseService
 {
     public function getTravelRenewalLeads()
     {
         $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_RENEWALS_DAYS_THRESHOLD);
-        $startDate  = Carbon::now()->subDays((int)$renewalDaysThreshold);
-        info(self::class . " - Travel Renewal Leads processing started with Start Date: {$startDate} | Time: " . now());
+        $startDate = Carbon::now()->subDays((int) $renewalDaysThreshold);
+        info(self::class." - Travel Renewal Leads processing started with Start Date: {$startDate} | Time: ".now());
         TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
             QuoteStatusEnum::PolicyBooked,
         ])
-        ->whereIn('payment_status_id', [
+            ->whereIn('payment_status_id', [
                 PaymentStatusEnum::CAPTURED,
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
                 PaymentStatusEnum::CREDIT_APPROVED,
-        ])
-        ->where('direction_code', TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
-        ->whereDate('start_date', $startDate)
-        ->chunkById(100, function ($quotes) {
+            ])
+            ->where('direction_code', TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
+            ->whereDate('start_date', $startDate)
+            ->chunkById(100, function ($quotes) {
                 $quoteCount = $quotes->count();
-                info(self::class . " - Total quotes in current chunk: {$quoteCount} | Time: " . now());
+                info(self::class." - Total quotes in current chunk: {$quoteCount} | Time: ".now());
                 if ($quoteCount > 0) {
-                    info(self::class . " - processing travel renewals quotes in chunk: {$quoteCount} | Time: " . now());
+                    info(self::class." - processing travel renewals quotes in chunk: {$quoteCount} | Time: ".now());
                     $this->processTravelRenewalQuotes($quotes);
                 } else {
-                    info(self::class . ' - No quotes in chunk. | Time: ' . now());
+                    info(self::class.' - No quotes in chunk. | Time: '.now());
                 }
-        });
+            });
 
-        info(self::class . ' Travel Renewal Leads processing completed | Time: ' . now());
+        info(self::class.' Travel Renewal Leads processing completed | Time: '.now());
     }
 
     public function processTravelRenewalQuotes($quotes)
@@ -54,21 +54,23 @@ class TravelRenewalService extends BaseService
             try {
                 // Check if the quote is a duplicate
                 if ($this->isDuplicateQuote($quote)) {
-                    info(self::class . " - Duplicate quote detected. Skipping processing for Quote Ref-ID:  {$quote->uuid} | Time: " . now());
+                    info(self::class." - Duplicate quote detected. Skipping processing for Quote Ref-ID:  {$quote->uuid} | Time: ".now());
+
                     continue; // Skip processing this quote
                 }
-                info(self::class . " - Processing quote with Ref-ID: {$quote->uuid} | Time: ". now());
+                info(self::class." - Processing quote with Ref-ID: {$quote->uuid} | Time: ".now());
                 $this->storeTravelRenewalQuote($quote);
             } catch (\Exception $e) {
                 // Log the exception or handle it as needed
-                info(self::class . " - Error processing quote Ref-ID: {$quote->uuid} : Error: {$e->getMessage()}  Line: {$e->getLine()} | Time: " . now());
+                info(self::class." - Error processing quote Ref-ID: {$quote->uuid} : Error: {$e->getMessage()}  Line: {$e->getLine()} | Time: ".now());
                 throw $e;
             }
         }
     }
     public function isDuplicateQuote($quote)
     {
-        info(self::class . ' - Checking for duplicate quote with Ref-ID: ' . $quote->uuid . '| Time: ' . now());
+        info(self::class.' - Checking for duplicate quote with Ref-ID: '.$quote->uuid.'| Time: '.now());
+
         return TravelQuote::where('previous_quote_id', $quote->id)->exists();
     }
     public function storeTravelRenewalQuote($quote)
@@ -87,7 +89,7 @@ class TravelRenewalService extends BaseService
         $batch = $this->getRenewalBatch($generatedBatchNumber, $newPolicyExpiryDate);
 
         $customer = app(CustomerService::getCustomerByEmail($quote->customer_email));
-        info(self::class . " Processing renewal for old quote. Ref-ID: {$quote->uuid}. Initiating renewal process with updated policy details. | Time:" . now());
+        info(self::class." Processing renewal for old quote. Ref-ID: {$quote->uuid}. Initiating renewal process with updated policy details. | Time:".now());
         $destinationIds = collect($quote->TravelDestinations)->pluck('destination_id')->toArray();
         if (! empty($destinationIds)) {
             $travelQuotePayload = (object) [
@@ -119,9 +121,9 @@ class TravelRenewalService extends BaseService
                 'tripStarted' => false,
             ];
             TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
-            info(self::class . " - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid} | Time:" . now());
+            info(self::class." - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid} | Time:".now());
         } else {
-            info(self::class . " - TravelRenewalService No destination found for Ref-ID: {$quote->uuid} | Time:" . now());
+            info(self::class." - TravelRenewalService No destination found for Ref-ID: {$quote->uuid} | Time:".now());
         }
     }
 
@@ -154,7 +156,7 @@ class TravelRenewalService extends BaseService
                 'uaeResident' => $member->uae_resident,
                 'passport' => $member->passport,
                 'emiratesIdNumber' => $member->emirates_id_number,
-                'primary' => app(CustomerService::class)->getPrimaryCustomerById($primaryMemberId)
+                'primary' => app(CustomerService::class)->getPrimaryCustomerById($primaryMemberId),
             ];
         });
     }
@@ -163,10 +165,10 @@ class TravelRenewalService extends BaseService
     {
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
-        info(self::class . " - TravelRenewalService Travel quote successfully saved. Ref-ID: {$response->quoteUID} | Time:" . now());
-        info(self::class . " -  Lead allocation process initiated for Ref-ID: {$response->quoteUID} | Time:" . now());
+        info(self::class." - TravelRenewalService Travel quote successfully saved. Ref-ID: {$response->quoteUID} | Time:".now());
+        info(self::class." -  Lead allocation process initiated for Ref-ID: {$response->quoteUID} | Time:".now());
         $this->leadAllocation($response->quoteUID);
-        info(self::class . " -  Lead allocation completed for Ref-ID: {$response->quoteUID} - | Time: " . now());
+        info(self::class." -  Lead allocation completed for Ref-ID: {$response->quoteUID} - | Time: ".now());
     }
 
     public function GenerateBatchNumber($expiryDate)
@@ -175,7 +177,8 @@ class TravelRenewalService extends BaseService
         $currentDate = Carbon::now();
         // Calculate the number of weeks between the current date and the expiry date
         $weeksUntilExpiry = $currentDate->diffInWeeks($expiryDate);
-        return strtoupper('W-' . (int) $weeksUntilExpiry);
+
+        return strtoupper('W-'.(int) $weeksUntilExpiry);
     }
 
     public function getRenewalBatch($batchName, $newPolicyExpiryDate)
@@ -183,6 +186,7 @@ class TravelRenewalService extends BaseService
         $expiryDate = Carbon::parse($newPolicyExpiryDate);
         $startDate = $expiryDate->startOfMonth()->toDateString();  // Start of the expiry month
         $endDate = $expiryDate->endOfMonth()->toDateString();      // End of the expiry month
+
         return RenewalBatch::firstOrCreate(
             [
                 'name' => $batchName,
@@ -196,28 +200,27 @@ class TravelRenewalService extends BaseService
         );
     }
 
-
     public function leadAllocation($quoteUID)
     {
-        info(self::class . " - Processing Travel record for Quote Allocation with Ref-ID: {$quoteUID} | Time: " . now());
+        info(self::class." - Processing Travel record for Quote Allocation with Ref-ID: {$quoteUID} | Time: ".now());
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         $lead = TravelQuote::where('uuid', $quoteUID)->first();
         if ($lead) {
-            info(self::class . " - Lead found for Quote UID: {$quoteUID} | Time: " . now());
+            info(self::class." - Lead found for Quote UID: {$quoteUID} | Time: ".now());
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->isPaid() ? $teamId : false;
-            info(self::class . " - Current Team ID: " . ($currentTeamId ? $currentTeamId : 'Not applicable') . " | Time: " . now());
+            info(self::class.' - Current Team ID: '.($currentTeamId ? $currentTeamId : 'Not applicable').' | Time: '.now());
 
             $response = QuoteTypes::TRAVEL->allocate($quoteUID, $currentTeamId);
             if ($response) {
-                info(self::class . ' - TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob  Ref-ID: ' . $quoteUID . ' | Time: ' . now());
+                info(self::class.' - TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob  Ref-ID: '.$quoteUID.' | Time: '.now());
                 SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
             } else {
-                info(self::class . " - Allocation failed for Quote UID: {$quoteUID} | Time: " . now());
+                info(self::class." - Allocation failed for Quote UID: {$quoteUID} | Time: ".now());
             }
         } else {
-            info(self::class . " - No lead found for Quote UID: {$quoteUID} | Time: " . now());
+            info(self::class." - No lead found for Quote UID: {$quoteUID} | Time: ".now());
         }
     }
 }

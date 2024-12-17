@@ -43,13 +43,15 @@ class SendOCBTravelRenewalIntroEmailJob implements ShouldQueue
         }
         info(self::class." - Lead found for uuid: {$this->quoteUuid}");
 
-            if (Str::startsWith($lead->code, 'TRA-CAR-')) {
-                info(self::class." - The Lead is Car Lead so Skipping Initial OCB Email for uuid: {$lead->uuid} | Time: ".now());
-                return false;
-            } elseif (empty($lead->advisor_id)) {
-                info(self::class." - The Lead is not assigned to any advisor so Skipping Initial OCB Email for uuid: {$lead->uuid} | Time: ".now());
-                return false;
-            }
+        if (Str::startsWith($lead->code, 'TRA-CAR-')) {
+            info(self::class." - The Lead is Car Lead so Skipping Initial OCB Email for uuid: {$lead->uuid} | Time: ".now());
+
+            return false;
+        } elseif (empty($lead->advisor_id)) {
+            info(self::class." - The Lead is not assigned to any advisor so Skipping Initial OCB Email for uuid: {$lead->uuid} | Time: ".now());
+
+            return false;
+        }
 
         return true;
     }
