@@ -131,7 +131,7 @@ class InslyDetailRepository extends BaseRepository
         }
 
         $advisorName = $policy['policy']['renewer_person'] ?? null;
-        if ($advisorName == null){
+        if ($advisorName == null) {
             $advisorName = $policy['quote']['broker'] ?? null;
         }
         $appUrl = config('constants.APP_URL');
