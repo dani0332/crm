@@ -37,7 +37,7 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessDataCleanUpCommand::class,
         Commands\TravelRenewalLeads::class,
         SageProcessesMarkFailedCommand::class,
-        Commands\InstantChatDataMigration::class,
+        Commands\CorplineDataMigration::class,
     ];
 
     /**

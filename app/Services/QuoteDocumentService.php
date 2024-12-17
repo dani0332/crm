@@ -117,7 +117,7 @@ class QuoteDocumentService extends BaseService
      * @param  $uuid
      * @return \Illuminate\Http\JsonResponse
      */
-    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $tempKycFile = null)
+    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false)
     {
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
@@ -152,7 +152,6 @@ class QuoteDocumentService extends BaseService
                 if (! $uploaded) {
                     return false;
                 }
-                // $fileOrBase64 = $tempKycFile;
             } elseif ($isKyc) {
                 if (isset($data['pdf_name'])) {
                     $originalName = $data['pdf_name'];
@@ -171,7 +170,6 @@ class QuoteDocumentService extends BaseService
                 if (! $uploaded) {
                     return false;
                 }
-                // $fileOrBase64 = $tempKycFile;
             } else {
                 $originalName = sanitizeFileName($fileOrBase64->getClientOriginalName());
 
@@ -457,6 +455,7 @@ class QuoteDocumentService extends BaseService
         if (! file_exists(storage_path('/temp'))) {
             mkdir(storage_path('/temp'), 0775, true);
         }
+        $docName = time().'_'.$docName;
 
         $outputFile = $outputPath = storage_path('temp/'.$docName);
 
@@ -656,9 +655,15 @@ class QuoteDocumentService extends BaseService
         if ($insuranceProviderId) {
             $skipWatermark = in_array($insuranceProviderId, $ips);
         } else {
-            $skipWatermark = in_array($quote->insurance_provider_id, $ips);
+            $insuranceProviderId = $quote->insurance_provider_id;
+            if ($insuranceProviderId == null && $quote->plan) {
+                $insuranceProviderId = $quote->plan->provider_id;
+            }
+            if ($insuranceProviderId == null) {
+                return false;
+            }
+            $skipWatermark = in_array($insuranceProviderId, $ips);
         }
-
         if (! $skipWatermark && in_array($documentType->code, WatermarkDocTypesEnum::asArray())) {
             return true;
         }
