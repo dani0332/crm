@@ -42,6 +42,13 @@ return [
             'visibility' => 'public',
         ],
 
+        'temp' => [
+            'driver' => 'local',
+            'root' => storage_path('/temp'),
+            'url' => env('APP_URL').'/storage',
+            'visibility' => 'public',
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -64,44 +71,24 @@ return [
             // 'visibility' => 'public',
             'bucket_endpoint' => true, //add this
         ],
-        'azure' => [
-            'driver' => 'azure',
-            'name' => env('AZURE_STORAGE_NAME'),
-            'key' => env('AZURE_STORAGE_KEY'),
-            'container' => env('AZURE_STORAGE_CONTAINER'),
-            'url' => env('AZURE_STORAGE_URL'),
-            'prefix' => null,
-        ],
-
         // RYU Container for Azure
         'azureForRyu' => [
-            'driver' => 'azure',
-            'name' => env('AZURE_RYU_STORAGE_NAME'),
-            'key' => env('AZURE_RYU_STORAGE_KEY'),
+            'driver' => 'azure-storage-blob',
+            'connection_string' => 'DefaultEndpointsProtocol=https;AccountName='.env('AZURE_RYU_STORAGE_NAME').';AccountKey='.env('AZURE_RYU_STORAGE_KEY').';EndpointSuffix=core.windows.net',
             'container' => env('AZURE_RYU_STORAGE_CONTAINER'),
             'url' => env('AZURE_RYU_STORAGE_URL'),
             'prefix' => null,
         ],
-
         'azureIM' => [
-            'driver' => 'azure',
-            'name' => env('AZURE_IM_STORAGE_NAME'),
-            'key' => env('AZURE_IM_STORAGE_KEY'),
+            'driver' => 'azure-storage-blob',
+            'connection_string' => 'DefaultEndpointsProtocol=https;AccountName='.env('AZURE_IM_STORAGE_NAME').';AccountKey='.env('AZURE_IM_STORAGE_KEY').';EndpointSuffix=core.windows.net',
             'container' => env('AZURE_IM_STORAGE_CONTAINER'),
             'url' => env('AZURE_IM_STORAGE_URL'),
             'prefix' => null,
         ],
-        // 'azureForRenewals' => [
-        //     'driver'    => 'azure',
-        //     'name'      => env('AZURE_STORAGE_NAME'),
-        //     'key'       => env('AZURE_STORAGE_KEY'),
-        //     'container' => env('AZURE_RENEWALS_STORAGE_CONTAINER'),
-        //     'url'       => env('AZURE_STORAGE_URL'),
-        //     'prefix'    => null,
-        // ],
-        'pdmigrations' => [
+        'instantchat' => [
             'driver' => 'local',
-            'root' => storage_path('PDMigrations'),
+            'root' => storage_path('InstantChat'),
         ],
     ],
 

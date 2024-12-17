@@ -15,7 +15,6 @@ class SaleDetailReportExport extends BaseReportsExport
             'Transactions',
             'Policy Start Date',
             'Payment Due Date',
-            'Source',
             'Team',
             'Price (VAT applicable)',
             'Total VAT',
@@ -43,6 +42,8 @@ class SaleDetailReportExport extends BaseReportsExport
             'Commission Percentage',
             'Transaction Type',
             'Lead Source',
+            'Booking Date',
+            'Sage Receipt ID',
         ];
     }
 
@@ -55,7 +56,6 @@ class SaleDetailReportExport extends BaseReportsExport
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ?? 'N/A',
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
-            $quote->source ?? 'N/A',
             $quote->team ?? 'N/A',
             $this->resolveNumberFormat($quote->price_vat_applicable ?? 0),
             $this->resolveNumberFormat($quote->vat ?? 0),
@@ -83,6 +83,8 @@ class SaleDetailReportExport extends BaseReportsExport
             $quote->commmission_percentage ?? 'N/A',
             $quote->transaction_type ?? 'N/A',
             $quote->source ?? 'N/A',
+            $quote->policy_booking_date ?? 'N/A',
+            $quote->sage_reciept_id ?? 'N/A',
         ];
     }
 

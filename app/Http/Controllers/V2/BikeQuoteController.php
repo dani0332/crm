@@ -13,6 +13,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -48,17 +49,18 @@ use App\Services\CRUDService;
 use App\Services\EmailStatusService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
-use App\Traits\GenericQueriesAllLobs;
+use App\Traits\CentralTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class BikeQuoteController extends Controller
 {
-    use GenericQueriesAllLobs;
+    use CentralTrait;
 
     private $bikeQuoteService;
 
@@ -76,10 +78,12 @@ class BikeQuoteController extends Controller
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
+            'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
             'authorizedDays' => intval($authorizedDays->value),
         ]);
@@ -148,7 +152,11 @@ class BikeQuoteController extends Controller
         })->values();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Bike);
-
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            })->values();
+        }
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
@@ -193,8 +201,7 @@ class BikeQuoteController extends Controller
         $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
         $carPlanFeaturesCodeEnum = CarPlanFeaturesCode::asArray();
         $carPlanAddonsCodeEnum = CarPlanAddonsCode::asArray();
-        $ecomBikeInsuranceQuoteUrl = config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL');
-        $planURL = $ecomBikeInsuranceQuoteUrl.$quote->uuid;
+        $planURL = $this->getEcomQuoteLink(QuoteTypes::BIKE, $uuid);
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);

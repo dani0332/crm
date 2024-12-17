@@ -24,7 +24,6 @@ use App\Services\SIBService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
@@ -39,6 +38,7 @@ class QuoteDocumentController extends Controller
     protected $customerService;
     protected $userService;
     protected $exportDocumentService;
+    protected $applicationStorageService;
 
     public function __construct(
         CRUDService $crudService,
@@ -236,7 +236,7 @@ class QuoteDocumentController extends Controller
             $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->where('is_active', 1)->first();
 
             if ($documentType && $documentType->send_to_customer == 1) {
-                $quoteDocumentUrls[] = $azureStorageUrl.$azureStorageContainer.'/'.$quoteDocument->doc_url;
+                $quoteDocumentUrls[] = $azureStorageUrl.$azureStorageContainer.'/'.$quoteDocument->watermarked_doc_url ?? $quoteDocument->doc_url;
             }
         }
 
@@ -277,8 +277,6 @@ class QuoteDocumentController extends Controller
             return redirect()->back()->with('message', 'Document not found');
         }
         $document->delete();
-
-        // return response()->json(['message' => 'Document has been deleted.']);
     }
 
     /**

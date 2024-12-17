@@ -8,45 +8,40 @@
   ],
   "license": "MIT",
   "require": {
-    "php": "^8.1",
-    "arielmejiadev/larapex-charts": "^6.0",
+    "php": "^8.2",
+    "azure-oss/storage-blob-laravel": "^1.0",
     "baopham/dynamodb": "^6.4",
     "barryvdh/laravel-dompdf": "^2.0",
     "bensampo/laravel-enum": "^v6.6.3",
-    "beyondcode/laravel-websockets": "^1.14",
     "doctrine/dbal": "^3.3",
     "guzzlehttp/guzzle": "^7.4",
     "hidehalo/nanoid-php": "^1.1",
-    "illuminate/contracts": "^10.0",
-    "illuminate/support": "^10.0",
-    "inertiajs/inertia-laravel": "^0.6.9",
-    "laravel/framework": "^10.0",
-    "laravel/horizon": "^5.10",
-    "laravel/jetstream": "^2.3",
-    "laravel/legacy-factories": "^1.1",
-    "laravel/sanctum": "^3.2",
+    "illuminate/contracts": "^11.0",
+    "illuminate/support": "^11.0",
+    "inertiajs/inertia-laravel": "^1.0",
+    "intervention/image": "^3.7",
+    "jjaffeux/postmark-inbound-php": ">=3.0",
+    "laravel/framework": "^11.0",
+    "laravel/horizon": "^5.29",
+    "laravel/sanctum": "^4.0",
     "laravel/socialite": "^5.2",
-    "laravel/telescope": "^4.14",
+    "laravel/telescope": "^5.0",
     "laravel/tinker": "^2.5",
-    "laravelcollective/html": "^6.2",
     "league/flysystem-aws-s3-v3": "^3.0",
-    "livewire/livewire": "^2.0",
     "maatwebsite/excel": "^3.1",
-    "matthewbdaly/laravel-azure-storage": "^2.0.8",
-    "mongodb/laravel-mongodb": "^4.0",
+    "mongodb/laravel-mongodb": "^5.1",
     "owen-it/laravel-auditing": "^13.0",
     "parsecsv/php-parsecsv": "^1.3",
+    "phpoffice/phpword": "^1.2",
     "predis/predis": "^2.2",
     "pusher/pusher-php-server": "^7.2",
-    "rappasoft/laravel-livewire-tables": "^2.8",
-    "sammyjo20/laravel-haystack": "^2.0.0",
-    "sentry/sentry-laravel": "^3.2",
-    "spatie/laravel-fractal": "^6.0.3",
+    "sammyjo20/laravel-haystack": "^2.2.0",
+    "sentry/sentry-laravel": "^4.4.1",
+    "setasign/fpdf": "^1.8",
+    "setasign/fpdi": "^2.6",
     "spatie/laravel-navigation": "^1.2",
-    "spatie/laravel-permission": "^5.11.0",
-    "tightenco/ziggy": "^2.0",
-    "yajra/laravel-datatables-oracle": "^10.8",
-    "jjaffeux/postmark-inbound-php": ">=3.0"
+    "spatie/laravel-permission": "^6.4.0",
+    "tightenco/ziggy": "^2.0"
   },
   "require-dev": {
     "spatie/laravel-ignition": "^2.3",
@@ -55,8 +50,8 @@
     "laravel/sail": "^1.6",
     "laravel/ui": "^4.2.2",
     "mockery/mockery": "^1.4.2",
-    "nunomaduro/collision": "^6.1",
-    "phpunit/phpunit": "^9.3.3"
+    "nunomaduro/collision": "^8.1",
+    "phpunit/phpunit": "^11.1.2"
   },
   "autoload": {
     "files": [
@@ -81,11 +76,11 @@
     "post-root-package-install": [
       "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
     ],
-    "post-create-project-cmd": [
-      "@php artisan key:generate --ansi"
-    ],
     "post-update-cmd": [
       "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+    ],
+    "post-create-project-cmd": [
+      "@php artisan key:generate --ansi"
     ],
     "serve": "composer install && doppler run -- php artisan serve",
     "pint:fix": "vendor/bin/pint"

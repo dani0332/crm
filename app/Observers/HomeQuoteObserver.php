@@ -4,14 +4,19 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\HomeQuote;
+use App\Repositories\PaymentRepository;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class HomeQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
+    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
     public function updating(HomeQuote $quote): void
     {
@@ -22,12 +27,14 @@ class HomeQuoteObserver
 
     /**
      * Handle the HomeQuote "updated" event.
+     *
+     * - Any changes that adds business logic should be enclosed in try-catch block or executed in queue.
      */
     public function updated(HomeQuote $homeQuote): void
     {
         $dirty = $homeQuote->getDirty();
         if (
-            $homeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $homeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             HomeQuote::withoutEvents(function () use ($homeQuote) {
@@ -36,14 +43,28 @@ class HomeQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $homeQuote->transaction_approved_at];
         }
 
+        if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($homeQuote->quote_status_id)) {
+            HomeQuote::withoutEvents(function () use ($homeQuote) {
+                $homeQuote->update(['stale_at' => null]);
+            });
+            $dirty = [...$dirty, 'stale_at' => $homeQuote->stale_at];
+        }
+
         $this->syncQuote($homeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $homeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($homeQuote->uuid);
+            try {
+                $this->updatePersonalQuote($homeQuote->uuid, QuoteTypeId::Home, $dirty);
+            } catch (Exception $e) {
+                Log::error('HomeQuoteObserver - update personal quote failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $homeQuote->uuid,
+                ]);
+            }
         }
 
         if (
-            $homeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($homeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Home, 'quoteUID' => $homeQuote->uuid]);
@@ -52,6 +73,15 @@ class HomeQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $homeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $homeQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($homeQuote, $payment, QuoteTypes::HOME->value);
+
         }
     }
 }

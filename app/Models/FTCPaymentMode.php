@@ -36,9 +36,4 @@ class FTCPaymentMode extends BaseModel
     {
         return [];
     }
-
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
 }

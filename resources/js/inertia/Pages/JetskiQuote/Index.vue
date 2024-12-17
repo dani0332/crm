@@ -1,10 +1,12 @@
 <script setup>
+import { ref } from 'vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   quoteType: {
     type: String,
     default: 'jetski',
@@ -12,10 +14,16 @@ defineProps({
   authorizedDays: Number,
 });
 const notification = useNotifications('toast');
+const cleanObj = obj => useCleanObj(obj);
 const page = usePage();
 const loader = reactive({
   table: false,
   export: false,
+});
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
 });
 
 let availableFilters = {
@@ -27,6 +35,7 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
+  renewal_batch_id: [],
   previous_quote_policy_number: '',
   previous_quote_policy_number_text: '',
   is_ecommerce: '',
@@ -34,6 +43,8 @@ let availableFilters = {
   page: 1,
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  insurer_tax_number: '',
+  insurer_commmission_invoice_number: '',
 };
 
 const filters = reactive(availableFilters);
@@ -66,9 +77,10 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
+    serverOptions.value.page = 1;
     router.visit(route('jetski-quotes-list'), {
       method: 'get',
-      data: filters,
+      data: { ...filters, ...serverOptions.value },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -113,6 +125,13 @@ const advisorOptionsFilter = computed(() => {
   }));
 });
 
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(renewalBatch => ({
+    value: renewalBatch.id,
+    label: renewalBatch.name,
+  }));
+});
+
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
@@ -126,6 +145,23 @@ onMounted(() => {
   setQueryStringFilters();
   if (hasRole(rolesEnum.JetskiManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
+  }
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
   }
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
@@ -156,13 +192,30 @@ const tableHeader = [
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch_model' },
 ];
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'jetski');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Jetski'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 watch(
@@ -232,6 +285,14 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -323,12 +384,10 @@ const validateDateRange = () => {
           />
         </x-field>
         <x-field label="Renewal Batch">
-          <x-input
-            v-model="filters.renewal_batch"
-            type="search"
-            name="renewal_batch"
-            class="w-full"
+          <ComboBox
+            v-model="filters.renewal_batch_id"
             placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
           />
         </x-field>
         <x-field label="Lead Status">
@@ -397,6 +456,26 @@ const validateDateRange = () => {
             class="w-full"
           />
         </x-field>
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_number"
+          type="text"
+          name="insurer_tax_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commmission_invoice_number"
+          type="text"
+          name="insurer_commmission_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -406,6 +485,7 @@ const validateDateRange = () => {
             color="emerald"
             @click.prevent="onDataExport"
             class="justify-self-start"
+            :loading="exportLoader"
           >
             Export
           </x-button>
@@ -442,6 +522,7 @@ const validateDateRange = () => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
@@ -501,6 +582,11 @@ const validateDateRange = () => {
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-renewal_batch_model="item">
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
       </template>
     </DataTable>
 

@@ -56,6 +56,7 @@ const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -146,30 +147,32 @@ const formatAmount = amount => {
   });
 };
 
-// use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
-const binAsInsurerCommissionTaxInvoiceNumber = () => {
-  let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
+const isNonSelfBillingEnabledForInsuranceProvider = computed(() => {
   let insuranceProvider = page.props.quote?.insurance_provider;
   if (!insuranceProvider) {
     // If insurance_provider is not available, use insurance_provider_details
     insuranceProvider = page.props.quote?.insurance_provider_details;
+    // If insurance_provider_details is not available, use insurer from payment
+    if (!insuranceProvider) {
+      insuranceProvider = props.payments[0]?.insurance_provider;
+    }
   }
-  let insuranceProviderCode = insuranceProvider?.code;
-  let allowedInsuranceProvider = [
-    insuranceProviderCodeEnum.AAIC,
-    insuranceProviderCodeEnum.ALNC,
-    insuranceProviderCodeEnum.OALLIANZ,
-    insuranceProviderCodeEnum.CIG,
-    insuranceProviderCodeEnum.FPIL,
-    insuranceProviderCodeEnum.MTL,
-    insuranceProviderCodeEnum.NHICD,
-    insuranceProviderCodeEnum.ZILL,
-  ];
-  if (allowedInsuranceProvider.includes(insuranceProviderCode)) {
+
+  return insuranceProvider?.non_self_billing == 1;
+});
+// use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
+const binAsInsurerCommissionTaxInvoiceNumber = () => {
+  console.log(
+    'page.props.bookPolicyDetails',
+    isNonSelfBillingEnabledForInsuranceProvider.value,
+  );
+  let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
+  if (isNonSelfBillingEnabledForInsuranceProvider.value) {
     return brokerInvoiceNo;
   }
   return '';
 };
+
 const bpForm = useForm({
   parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
   booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) || '',
@@ -180,8 +183,7 @@ const bpForm = useForm({
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
   insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
   insurer_commmission_invoice_number:
-    page.props?.payments[0]?.insurer_commmission_invoice_number ||
-    binAsInsurerCommissionTaxInvoiceNumber(),
+    page.props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_vat_not_applicable:
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
@@ -339,13 +341,6 @@ const calculateCommission = () => {
         title: 'Total Price is zero for this Policy!',
         position: 'top',
       });
-      /*bpForm.commission_vat_applicable = '';
-      bpForm.commission_vat_not_applicable = '';
-      notification.error({
-        title:
-          'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
-        position: 'top',
-      });*/
     }
   } else {
     bpForm.commission_percentage = 0;
@@ -353,15 +348,76 @@ const calculateCommission = () => {
     bpForm.total_commission = 0;
   }
 };
+let isLifeLead = page.props.quoteType == quoteTypeCodeEnum.Life;
+let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
+
+const commissionVatNotApplicableTooltip = computed(() => {
+  let toolTip = null;
+  if (bpForm.commission_vat_applicable > 0) {
+    if (isLifeLead) {
+      toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
+    } else if (isBusinessLead) {
+      let insuranceBusinessType =
+        page.props.quote?.business_type_of_insurance_id;
+      let allowedBusinessTypes = [
+        quoteBusinessTypeIdEnum.MARINE_CARGO_INDIVIDUAL_SHIPMENT,
+        quoteBusinessTypeIdEnum.MARINE_HULL,
+        quoteBusinessTypeIdEnum.MARINE_CARGO_OPEN_COVER,
+        quoteBusinessTypeIdEnum.GROUP_LIFE,
+      ];
+      if (allowedBusinessTypes.includes(insuranceBusinessType)) {
+        toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
+      }
+    }
+  }
+
+  return toolTip;
+});
+const commissionVatApplicableTooltip = computed(() => {
+  let toolTip = null;
+  if (bpForm.commission_vat_not_applicable > 0) {
+    if (isLifeLead) {
+      toolTip =
+        productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE_FILLED;
+    } else if (isBusinessLead) {
+      let insuranceBusinessType =
+        page.props.quote?.business_type_of_insurance_id;
+      let allowedBusinessTypes = [
+        quoteBusinessTypeIdEnum.MARINE_CARGO_INDIVIDUAL_SHIPMENT,
+        quoteBusinessTypeIdEnum.MARINE_HULL,
+        quoteBusinessTypeIdEnum.MARINE_CARGO_OPEN_COVER,
+        quoteBusinessTypeIdEnum.GROUP_LIFE,
+      ];
+      if (allowedBusinessTypes.includes(insuranceBusinessType)) {
+        toolTip =
+          productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE_FILLED;
+      }
+    }
+  }
+  return toolTip;
+});
 
 const disableCommissionVatNotApplicable = computed(() => {
-  // Disable Commission vat nor applicable for all LOBs
+  if (isLifeLead) {
+    return !bp.isEditing || bpForm.commission_vat_applicable > 0;
+  } else if (isBusinessLead) {
+    let insuranceBusinessType = page.props.quote?.business_type_of_insurance_id;
+    let allowedBusinessTypes = [
+      quoteBusinessTypeIdEnum.MARINE_CARGO_INDIVIDUAL_SHIPMENT,
+      quoteBusinessTypeIdEnum.MARINE_HULL,
+      quoteBusinessTypeIdEnum.MARINE_CARGO_OPEN_COVER,
+      quoteBusinessTypeIdEnum.GROUP_LIFE,
+    ];
+    if (allowedBusinessTypes.includes(insuranceBusinessType)) {
+      return !bp.isEditing || bpForm.commission_vat_applicable > 0;
+    }
+  }
   return true;
 });
 
 const disableCommissionVatApplicable = computed(() => {
-  // Enable Commission vat nor applicable for all LOBs
-  return !bp.isEditing;
+  // Enable Commission vat not applicable for all LOBs or when commission vat not applicable is  empty
+  return !bp.isEditing || bpForm.commission_vat_not_applicable > 0;
 });
 const showSendAndBookPolicyButtonBlock = computed(() => {
   const { quote_status_id } = props.quote;
@@ -754,7 +810,9 @@ onMounted(() => {
                     <template #tooltip>
                       <span class="custom-tooltip-content">
                         {{
-                          productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                          isNonSelfBillingEnabledForInsuranceProvider
+                            ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                            : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
                         }}
                       </span>
                     </template>
@@ -763,7 +821,7 @@ onMounted(() => {
                 <dd>
                   <x-input
                     v-model="bpForm.insurer_commmission_invoice_number"
-                    placeholder="Insurer Tax Invoice Number"
+                    placeholder="Insurer Commission Tax Invoice Number"
                     class="w-full"
                     :disabled="!bp.isEditing"
                     :rules="[isRequired]"
@@ -803,13 +861,32 @@ onMounted(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input
-                    v-model="bpForm.commission_vat_not_applicable"
-                    @change="calculateCommission"
-                    placeholder="Commission VAT NOT APPLICABLE"
-                    class="w-full"
-                    :disabled="disableCommissionVatNotApplicable"
-                  />
+                  <template v-if="commissionVatNotApplicableTooltip">
+                    <x-tooltip class="w-full">
+                      <x-input
+                        v-model="bpForm.commission_vat_not_applicable"
+                        @change="calculateCommission"
+                        placeholder="Commission VAT NOT APPLICABLE"
+                        class="w-full"
+                        :disabled="disableCommissionVatNotApplicable"
+                      />
+
+                      <template #tooltip>
+                        <span class="custom-tooltip-content">{{
+                          commissionVatNotApplicableTooltip
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </template>
+                  <template v-else>
+                    <x-input
+                      v-model="bpForm.commission_vat_not_applicable"
+                      @change="calculateCommission"
+                      placeholder="Commission VAT NOT APPLICABLE"
+                      class="w-full"
+                      :disabled="disableCommissionVatNotApplicable"
+                    />
+                  </template>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -845,13 +922,32 @@ onMounted(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input
-                    v-model="bpForm.commission_vat_applicable"
-                    @change="calculateCommission"
-                    placeholder="Commission VAT APPLICABLE"
-                    class="w-full"
-                    :disabled="disableCommissionVatApplicable"
-                  />
+                  <template v-if="commissionVatApplicableTooltip">
+                    <x-tooltip class="w-full">
+                      <x-input
+                        v-model="bpForm.commission_vat_applicable"
+                        @change="calculateCommission"
+                        placeholder="Commission VAT APPLICABLE"
+                        class="w-full"
+                        :disabled="disableCommissionVatApplicable"
+                      />
+
+                      <template #tooltip>
+                        <span class="custom-tooltip-content">{{
+                          commissionVatApplicableTooltip
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </template>
+                  <template v-else>
+                    <x-input
+                      v-model="bpForm.commission_vat_applicable"
+                      @change="calculateCommission"
+                      placeholder="Commission VAT APPLICABLE"
+                      class="w-full"
+                      :disabled="disableCommissionVatApplicable"
+                    />
+                  </template>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -938,7 +1034,11 @@ onMounted(() => {
                               <td>{{ item.code }}</td>
                               <td>
                                 {{
-                                  formatAmount(item.commission_vat_applicable)
+                                  formatAmount(
+                                    item.commission_vat_applicable != 0
+                                      ? item.commission_vat_applicable
+                                      : item.commission_vat_not_applicable,
+                                  )
                                 }}
                               </td>
                               <td>{{ formatAmount(item.commission_vat) }}</td>

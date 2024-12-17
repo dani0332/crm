@@ -8,7 +8,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\CallBackNotifications;
 use App\Models\Activities;
-use App\Models\ActivityNotificationLogs;
 use App\Models\PersonalQuote;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
@@ -135,6 +134,8 @@ class ActivitiesService extends BaseService
         $activity->updated_at = Carbon::now();
         $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->source = LeadSourceEnum::IMCRM;
+        $activity->user_id = auth()->user()->id;
+        $activity->reminders_sent = 0;
         $activity->save();
 
         return $activity;
@@ -280,13 +281,8 @@ class ActivitiesService extends BaseService
         $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->source = LeadSourceEnum::INSTANT_ALFRED;
         $activity->activity_type = $activityType ? strtoupper($activityType) : null;
-        if ($activity->save()) {
-            ActivityNotificationLogs::create([
-                'activity_id' => $activity->id,
-                'advisor_id' => $activity->assignee_id,
-                'notification_type' => strtoupper($activity->activity_type),
-            ]);
-        }
+        $activity->reminders_sent = 1;
+        $activity->save();
 
         return $activity;
     }
@@ -301,14 +297,13 @@ class ActivitiesService extends BaseService
 
         $userId = auth()->user()->id;
 
-        $query = DB::table('activity_notification_logs')
-            ->join('activities', 'activities.id', '=', 'activity_notification_logs.activity_id')
+        $query = DB::table('activities')
             ->selectRaw('
-            SUM(CASE WHEN notification_type = ? THEN 1 ELSE 0 END) as pendingCallback,
-            SUM(CASE WHEN notification_type = ? THEN 1 ELSE 0 END) as pendingWhatsapp
+            SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingCallback,
+            SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingWhatsapp
         ', [ActivityTypeEnum::CALL_BACK, ActivityTypeEnum::WHATS_APP])
             ->where('activities.status', 0)
-            ->where('activity_notification_logs.advisor_id', $userId)
+            ->where('activities.assignee_id', $userId)
             ->first();
 
         return [

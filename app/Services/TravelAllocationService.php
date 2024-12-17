@@ -23,12 +23,24 @@ class TravelAllocationService extends AllocationService
         return TravelQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
+            ->where(function ($query) {
+                $query->sicFlowDisabled()
+                    ->orWhere(function ($subQuery) {
+                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                    });
+            })
             ->first();
     }
 
     public function fetchAvailableAdvisor($isReassignmentJob = false, $teamId = null, $quoteUUID = null)
     {
         Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$quoteUUID}");
+
+        $quote = $this->fetchLead($quoteUUID);
+        if ($quote) {
+            $isSIC = $quote->isSIC(QuoteTypes::TRAVEL);
+        }
+
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
@@ -40,7 +52,7 @@ class TravelAllocationService extends AllocationService
 
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quoteUUID}");
-            $eligibleUser = $this->getAdvisorByStatus($status, $teamId);
+            $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $isSIC);
 
             if ($eligibleUser) {
                 info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$quoteUUID}");
@@ -52,15 +64,17 @@ class TravelAllocationService extends AllocationService
         return null;
     }
 
-    public function getAdvisorByStatus($status, $teamId = null)
+    public function getAdvisorByStatus($status, $teamId = null, $isSIC = false)
     {
-        return User::select('users.id as user_id')
+        $user = User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->where('users.status', $status)
             ->where(function ($query) {
-                $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', '=', -1);
+                // Apply allocation count and max capacity conditions.
+                $query->whereRaw('la.allocation_count < la.max_capacity')
+                    ->orWhere('la.max_capacity', -1);
             })
             ->when($teamId, function ($q) use ($teamId) {
                 $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
@@ -74,11 +88,13 @@ class TravelAllocationService extends AllocationService
             ->whereIn('r.name', [RolesEnum::TravelAdvisor])
             ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
             ->where('users.is_active', true)
-            ->when($teamId, function ($q) {
+            ->when($isSIC, function ($q) {
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
-            ->orderBy('la.last_allocated', 'asc')
-            ->first();
+            ->orderBy('la.last_allocated', 'asc');
+        info(self::class." - getAdvisorByStatus query: {$user->toSql()}, bindings: ".json_encode($user->getBindings()));
+
+        return $user->first();
     }
 
     public function assignLead(TravelQuote $lead, User $advisor, $assignmentType)

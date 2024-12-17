@@ -94,6 +94,7 @@ defineProps({
   paymentDocument: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
+  customerAddressData: Object,
   amlStatusName: String,
 });
 const page = usePage();
@@ -332,6 +333,9 @@ const availablePlansTable = reactive({
   ],
 });
 
+const lazyEmbeddedProducts = ref([]);
+const lazyEmbeddedProductsLoading = ref(false);
+
 /*
 // comment for now, will be used in later after confirmation
 watch(availablePlansTable, (newPlans) =>  {
@@ -430,6 +434,25 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       availablePlansTable.data = res.data;
+
+      loadEmbeddedProducts();
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+const loadEmbeddedProducts = async () => {
+  let url = `/embedded/get-by-quote?quote_id=${page.props.record.id}&quote_type_id=${page.props.quoteTypeId}`;
+  let data = {
+    jsonData: true,
+  };
+  lazyEmbeddedProductsLoading.value = true;
+  axios
+    .get(url, data)
+    .then(res => {
+      lazyEmbeddedProducts.value = res.data;
+      lazyEmbeddedProductsLoading.value = false;
     })
     .catch(err => {
       console.log(err);
@@ -535,6 +558,9 @@ const leadStatusOptions = computed(() => {
 });
 
 const leadStatusDisabled = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
   return (
     page.props.record.quote_status_id ==
       page.props.quoteStatusEnum.TransactionApproved ||
@@ -1311,7 +1337,6 @@ onMounted(() => {
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
-  // setLeadStatuses();
 });
 
 //activities
@@ -1567,6 +1592,53 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.premium = '';
   isAddUpdate.value = true;
 };
+
+const fullAddress = computed(() => {
+  const address = page.props?.customerAddressData;
+
+  if (!address) {
+    return null; // Return null if customerAddressData is null or undefined
+  }
+
+  const {
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  } = address;
+
+  const parts = [
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  ];
+
+  // Check if all parts are null or undefined
+  const allPartsAreNull = parts.every(part => part == null);
+
+  if (allPartsAreNull) {
+    return null;
+  }
+
+  // Filter out null or undefined parts and join the rest with comma and space
+  return parts.filter(part => part).join(', ');
+});
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
 </script>
 
 <template>
@@ -2157,12 +2229,31 @@ const onAddUpdate = () => {
                   <dd>{{ record.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
                   <dd>{{ record.nationality_id_text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ record.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
@@ -2225,6 +2316,21 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
                   <dd>{{ record.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
@@ -2547,8 +2653,7 @@ const onAddUpdate = () => {
                     "
                     :error="leadStatusForm.errors.notes"
                     :disabled="
-                      record.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
+                      allowStatusUpdate ||
                       isCarLostStatus(record.quote_status_id) ||
                       lockLeadSectionsDetails.lead_status
                     "
@@ -2740,7 +2845,7 @@ const onAddUpdate = () => {
               color="emerald"
               size="sm"
               :disabled="
-                record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                allowStatusUpdate ||
                 (!carLostChangeStatus && !allowQuoteLogAction) ||
                 isDisabled
               "
@@ -2978,68 +3083,70 @@ const onAddUpdate = () => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div v-if="!hasRole(rolesEnum.PA)" class="flex mb-4 justify-end">
-            <x-tooltip
-              v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
-            >
-              <x-button
-                class="ml-2 mr-2"
-                :disabled="disableFollowUp"
-                size="sm"
-                color="rose"
-                @click="showfollowup = !showfollowup"
-                v-if="readOnlyMode.isDisable === true"
+          <div class="flex mb-4 justify-end">
+            <template v-if="!hasRole(rolesEnum.PA)">
+              <x-tooltip
+                v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
               >
-                Pause Follow-up to customer
-              </x-button>
-              <template #tooltip>
-                <span
-                  >When Activated, The button temporarily suspends the automatic
-                  sending of follow-up emails to clients</span
+                <x-button
+                  class="ml-2 mr-2"
+                  :disabled="disableFollowUp"
+                  size="sm"
+                  color="rose"
+                  @click="showfollowup = !showfollowup"
+                  v-if="readOnlyMode.isDisable === true"
                 >
-              </template>
-            </x-tooltip>
-            <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                  Pause Follow-up to customer
+                </x-button>
+                <template #tooltip>
+                  <span
+                    >When Activated, The button temporarily suspends the
+                    automatic sending of follow-up emails to clients</span
+                  >
+                </template>
+              </x-tooltip>
+              <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                <x-button
+                  @click.prevent="onTogglePlans(false)"
+                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Show
+                </x-button>
+                <x-button
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Hide
+                </x-button>
+              </x-button-group>
               <x-button
-                @click.prevent="onTogglePlans(false)"
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                color="emerald"
+                class="ml-2 mr-2"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
                 :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-                :loading="toggleLoader"
-                v-if="readOnlyMode.isDisable === true"
               >
-                Show
+                Download PDF
               </x-button>
               <x-button
-                @click.prevent="onTogglePlans(true)"
-                :loading="toggleLoader"
+                @click.prevent="modals.sendConfirm = true"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                :disabled="
+                  record.advisor_id != $page.props.auth.user.id ||
+                  page.props.linkedQuoteDetails.childLeadsCount > 0
+                "
                 v-if="readOnlyMode.isDisable === true"
               >
-                Hide
+                Send OCB Email to Customer
               </x-button>
-            </x-button-group>
-            <x-button
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              color="emerald"
-              class="ml-2 mr-2"
-              @click.prevent="onExportPlans"
-              :loading="exportLoader"
-              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            >
-              Download PDF
-            </x-button>
-            <x-button
-              @click.prevent="modals.sendConfirm = true"
-              size="sm"
-              color="orange"
-              class="mr-2"
-              :disabled="
-                record.advisor_id != $page.props.auth.user.id ||
-                page.props.linkedQuoteDetails.childLeadsCount > 0
-              "
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Send OCB Email to Customer
-            </x-button>
+            </template>
 
             <AddPlanButtonTemplate v-slot="{ isDisabled }">
               <x-button
@@ -3076,18 +3183,20 @@ const onAddUpdate = () => {
               :isDisabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             />
 
-            <x-button
-              @click.prevent="copyLink"
-              size="sm"
-              color="emerald"
-              v-if="
-                typeof availablePlansTable.data !== 'string' &&
-                availablePlansTable.data.length > 0
-              "
-              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            >
-              Copy Link
-            </x-button>
+            <template v-if="!hasRole(rolesEnum.PA)">
+              <x-button
+                @click.prevent="copyLink"
+                size="sm"
+                color="emerald"
+                v-if="
+                  typeof availablePlansTable.data !== 'string' &&
+                  availablePlansTable.data.length > 0
+                "
+                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+              >
+                Copy Link
+              </x-button>
+            </template>
           </div>
           <DataTable
             table-class-name="compact"
@@ -3398,6 +3507,7 @@ const onAddUpdate = () => {
         :source="page.props.record.source"
         :followUpId="followUpId"
         :kyoEndPoint="kyoEndPoint"
+        :quoteUuid="page.props.record.uuid"
       />
 
       <x-modal
@@ -3625,12 +3735,14 @@ const onAddUpdate = () => {
     </div>
 
     <EmbeddedProducts
-      :data="embeddedProducts"
+      :data="lazyEmbeddedProducts || []"
       :link="record.uuid"
       :code="record.code"
       :quote="record"
       :modelType="quoteType"
       :expanded="sectionExpanded"
+      :isEpLoading="lazyEmbeddedProductsLoading"
+      :key="lazyEmbeddedProductsLoading"
     />
 
     <PolicyDetail
@@ -3875,7 +3987,12 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
@@ -4033,6 +4150,7 @@ const onAddUpdate = () => {
     />
   </div>
   <AuditLogs
+    :quoteType="quoteType"
     :type="modelClass"
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"

@@ -6,6 +6,8 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
@@ -237,6 +239,7 @@ class RenewalBatchReportService extends BaseService
             ->select('name', 'start_date', 'end_date', 'id');
 
         $batches = $batches->orderBy('id')
+            ->where('quote_type_id', QuoteTypes::CAR->id())
             ->get()
             ->keyBy('name')
             ->map(function ($batch) {
@@ -310,7 +313,7 @@ class RenewalBatchReportService extends BaseService
         /**
          * get batches
          */
-        $renewalBatches = RenewalBatch::select('name');
+        $renewalBatches = RenewalBatch::select('name')->where('quote_type_id', QuoteTypeId::Car);
 
         // date filter
         if (isset($filters->reportDate)) {
@@ -318,7 +321,8 @@ class RenewalBatchReportService extends BaseService
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->dateFilter($reportDateEnd, false)
+                ->dateFilter($reportDateEnd, true)
+                ->where('quote_type_id', QuoteTypeId::Car)
                 ->orderByDesc('end_date')
                 ->pluck('name', 'id')
                 ->toArray();
@@ -516,7 +520,7 @@ class RenewalBatchReportService extends BaseService
         /**
          * get batches
          */
-        $renewalBatches = RenewalBatch::select('name');
+        $renewalBatches = RenewalBatch::select('name')->where('quote_type_id', QuoteTypeId::Car);
         $renewalBatches = $renewalBatches->pluck('name')->toArray();
 
         // date filter
@@ -525,7 +529,8 @@ class RenewalBatchReportService extends BaseService
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->dateFilter($reportDateEnd, false)
+                ->where('quote_type_id', QuoteTypeId::Car)
+                ->dateFilter($reportDateEnd, true)
                 ->orderByDesc('end_date')
                 ->pluck('name', 'id')
                 ->toArray();
@@ -689,14 +694,16 @@ class RenewalBatchReportService extends BaseService
 
         $defaultBatchRange = RenewalBatch::query()
             ->select('name', 'start_date', 'end_date', 'id')
+            ->where('quote_type_id', QuoteTypeId::Car)
             ->dateFilter()
             ->orderByDesc('end_date')
             ->get();
 
         if (empty($defaultBatchRange)) {
-            $lastBatch = RenewalBatch::select('end_date')->orderByDesc('end_date')->first();
+            $lastBatch = RenewalBatch::select('end_date')->where('quote_type_id', QuoteTypeId::Car)->orderByDesc('end_date')->first();
             $defaultBatchRange = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
+                ->where('quote_type_id', QuoteTypeId::Car)
                 ->dateFilter($lastBatch->end_date)
                 ->orderByDesc('end_date')
                 ->get();
@@ -950,7 +957,7 @@ class RenewalBatchReportService extends BaseService
                                 (car_quote_request.quote_status_id IN (:retentionStatuses) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date >= ":m2ReleaseDate") OR
                                 (car_quote_request.quote_status_id IN (:transactionApproved) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date < ":m2ReleaseDate")
                             ) AND car_quote_request.advisor_id IN (:segmentAdvisors)
-                            THEN 1 ELSE 0 END) AS :as',
+                            THEN 1 ELSE 0 END) AS ":as"',
                         $this->getRetentionRenewedBindings($reportDateEnd, [
                             ':segmentAdvisors' => $segmentAdvisorsIdString,
                             ':as' => "{$renewedAsColumn}_for_{$batchName}",
@@ -1055,5 +1062,28 @@ class RenewalBatchReportService extends BaseService
             $authUserIsAdvisor,
         ];
 
+    }
+
+    public function getAllNonMotorBatches()
+    {
+        $renewalBatches = RenewalBatch::select('id', 'name', 'start_date', 'end_date')->whereNull('quote_type_id');
+        $renewalBatches->orderBy('id');
+        $renewalBatches = $renewalBatches->get()
+            ->map(function ($batch) {
+                // Get the date display format from the configuration
+                $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+                // Format the start and end dates of the batch
+                $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
+                $end_date = Carbon::parse($batch->end_date)->format($dateFormat);
+
+                // Return an associative array with the batch 'name' and 'id'
+                return [
+                    'id' => $batch->id,
+                    'name' => $batch->name.'-('.$start_date.' to '.$end_date.')',
+                ];
+            })
+            ->toArray();
+
+        return $renewalBatches;
     }
 }

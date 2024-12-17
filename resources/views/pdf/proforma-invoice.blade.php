@@ -399,7 +399,7 @@
         $totalAmount =   $subTotal + $vat;
 
     }else{
-
+        $entity = $quote?->quoteRequestEntityMapping?->entity;
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
             $carQuoteDetails = $quote->carQuoteRequestDetail;
             $subTotal =  $carQuoteDetails->actual_premium;
@@ -410,10 +410,6 @@
             $vat =  $proformaPaymentRequest->price_vat;
             $totalAmount =  $subTotal + $vat;
         }
-        if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
-            $entity = $quote?->quoteRequestEntityMapping?->entity;
-        }
-
     }
 
 @endphp

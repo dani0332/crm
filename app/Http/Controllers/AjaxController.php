@@ -28,14 +28,14 @@ use App\Repositories\LookupRepository;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\QuoteDocumentService;
-use App\Traits\GenericQueriesAllLobs;
+use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use PDF;
 
 class AjaxController extends Controller
 {
-    use GenericQueriesAllLobs;
+    use CentralTrait;
 
     protected $quoteDocumentService;
 
@@ -222,7 +222,7 @@ class AjaxController extends Controller
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
+            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false);
 
             if ($document) {
                 CustomerDetail::updateOrCreate(
@@ -334,7 +334,8 @@ class AjaxController extends Controller
             $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
+
+            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false);
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
             if ($document) {
                 Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([

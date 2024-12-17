@@ -8,11 +8,11 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\FollowupStartedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
-use App\Http\Resources\CarQuoteResource;
 use App\Models\CarQuote;
 use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;
 use App\Services\QuoteStatusService;
+use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
 {
@@ -26,7 +26,6 @@ class CarQuoteController extends Controller
         )->filter()
             ->simplePaginate();
 
-        //return CarQuoteResource::collection($quotes);
         return response()->json($quotes);
     }
 
@@ -93,4 +92,14 @@ class CarQuoteController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function updatePauseAndResumeCounters(Request $request)
+    {
+
+        $validatedData = $request->validate([
+            'quote_uuid' => 'required|string',
+            'action' => 'required|string|in:pause,resume',
+        ]);
+
+        return app(CarQuoteService::class)->pauseAndResumeFollowUpCounters($validatedData);
+    }
 }

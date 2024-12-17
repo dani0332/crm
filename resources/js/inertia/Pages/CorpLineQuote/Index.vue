@@ -4,6 +4,7 @@ defineProps({
   dropdownSource: Object,
   session: Object,
   isManualAllocationAllowed: Boolean,
+  renewalBatches: Array,
   totalCount: {
     type: Number,
     default: 0,
@@ -13,6 +14,7 @@ defineProps({
 
 const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const canExport = ref(false);
 const notification = useNotifications('toast');
@@ -55,8 +57,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: new Date() || '',
-  created_at_end: new Date() || '',
+  created_at_start: new Date().toISOString() || '',
+  created_at_end: new Date().toISOString() || '',
   quote_status_id: [],
   advisor_id: [],
   business_type_of_insurance_id: [],
@@ -72,6 +74,10 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_date: null,
+  advisor_assigned_date: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
 });
 
 watch(
@@ -101,6 +107,13 @@ const advisorOptions = computed(() => {
   return page.props.dropdownSource.advisor_id.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
+  }));
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
   }));
 });
 
@@ -161,7 +174,13 @@ const tableHeader = ref([
     value: 'previous_quote_policy_number',
     is_active: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
 ]);
 
 const setIntialState = () => {
@@ -180,12 +199,15 @@ const setIntialState = () => {
     page: 1,
     previous_quote_policy_number: '',
     renewal_batch: '',
+    renewal_batches: [],
     is_renewal: '',
     payment_status: [],
     is_cold: false,
     is_stale: false,
     policy_expiry_date: '',
     policy_expiry_date_end: '',
+    last_modified_date: null,
+    advisor_assigned_date: '',
   });
   filtersCount.value = 0;
 };
@@ -303,6 +325,7 @@ function displayNotification() {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   let diff = calculateDaysDifference(
     filters.created_at_start,
@@ -329,7 +352,17 @@ const onDataExport = () => {
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Business'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function setQueryStringFilters() {
@@ -474,6 +507,13 @@ const validateDateRange = () => {
 };
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+watch(() => {
+  if (filters.company_name) {
+    filters.created_at_start = '';
+    filters.created_at_end = '';
+  }
+});
 </script>
 
 <template>
@@ -625,7 +665,9 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name ||
+              filters.advisor_assigned_date
                 ? []
                 : [isRequired]
             "
@@ -641,7 +683,9 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name ||
+              filters.advisor_assigned_date
                 ? []
                 : [isRequired]
             "
@@ -696,14 +740,13 @@ const formatDate = dateString =>
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
-          label="Renewal Batch"
-          class="w-full"
-          placeholder="Search by Renewal Batch"
-        />
+        <x-field label="Renewal Batch">
+          <ComboBox
+            v-model="filters.renewal_batches"
+            placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
+          />
+        </x-field>
         <x-select
           v-model="filters.is_renewal"
           label="Renewal"
@@ -732,6 +775,41 @@ const formatDate = dateString =>
           multi-calendars
           multi-calendars-solo
         />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.CorplineManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -741,6 +819,7 @@ const formatDate = dateString =>
             color="emerald"
             @click.prevent="onDataExport"
             class="justify-self-start"
+            :loading="exportLoader"
           >
             Export
           </x-button>

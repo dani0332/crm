@@ -21,7 +21,7 @@ class TransactionReportService extends ManagementReport
     public function getReportData(Request $request)
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::TRANSACTION;
-        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::TRANSACTION_PAYMENTS;
+        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::APPROVED_TRANSACTIONS;
 
         if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
             $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
@@ -87,6 +87,8 @@ class TransactionReportService extends ManagementReport
                 'qs.text as quote_status',
                 'p.commmission_percentage',
                 'personal_quotes.source',
+                'personal_quotes.policy_booking_date',
+                'ps.sage_reciept_id',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -140,6 +142,7 @@ class TransactionReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
         });
     }
 
@@ -154,7 +157,7 @@ class TransactionReportService extends ManagementReport
         return [
             'paymentDueDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::TRANSACTION,
-            'reportType' => ManagementReportTypeEnum::TRANSACTION_PAYMENTS,
+            'reportType' => ManagementReportTypeEnum::APPROVED_TRANSACTIONS,
         ];
     }
 }

@@ -106,8 +106,16 @@ class SaleSummaryReportService extends ManagementReport
             $query->addSelect('quote_type.code as line_of_business');
         }
 
-        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+        if ($request['reportType'] == ManagementReportTypeEnum::APPROVED_TRANSACTIONS) {
             $query->joinSub($distinctPaymentSplits, 'ps', function ($join) {
+                $join->on('p.code', '=', 'ps.code');
+            });
+        } elseif ($request['reportType'] == ManagementReportTypeEnum::PAID_TRANSACTIONS) {
+            $PaymentSplits = DB::table('payment_splits as dps')
+                ->selectRaw('dps.code, dps.verified_at')
+                ->groupBy('dps.code');
+            $this->getDateFilter($PaymentSplits, $request, 'verified_at', 'paymentDate');
+            $query->joinSub($PaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
             });
         }
@@ -176,7 +184,8 @@ class SaleSummaryReportService extends ManagementReport
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('((
                     sum(IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ))) +
-                    sum(IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ))) - sum(IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 ))) as total_endorsement_amount'),
+                    sum(IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ))) -
+                    sum(IFNULL( IF(ps.discount_value IS NULL OR ps.discount_value = 0, send_update_logs.discount, ps.discount_value) , 0 ))) as total_endorsement_amount'),
                 DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_vat_applicable, 0) ELSE 0 END) as commission_vat_applicable'),
             )
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
@@ -305,11 +314,20 @@ class SaleSummaryReportService extends ManagementReport
             $reversalQuery->addSelect('quote_type.code as line_of_business');
         }
 
-        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+        if ($request['reportType'] == ManagementReportTypeEnum::APPROVED_TRANSACTIONS) {
             $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
             });
+        } elseif ($request['reportType'] == ManagementReportTypeEnum::PAID_TRANSACTIONS) {
+            $PaymentSplits = DB::table('payment_splits as dps')
+                ->selectRaw('dps.code, dps.verified_at')
+                ->groupBy('dps.code');
+            $this->getDateFilter($PaymentSplits, $request, 'verified_at', 'paymentDate');
+            $reversalQuery->leftJoinSub($PaymentSplits, 'ps', function ($join) {
+                $join->on('p.code', '=', 'ps.code');
+            });
         }
+
         $reversalQuery = $this->applyFilters($reversalQuery, $request, true, true);
         $endorsementsQuery = $query->unionAll($reversalQuery);
 

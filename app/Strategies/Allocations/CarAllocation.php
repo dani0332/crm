@@ -3,9 +3,12 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
 
@@ -45,9 +48,14 @@ class CarAllocation implements Allocation
                 $response = $this->processTier($lead, $tier, $evaluateTierOnly);
             } else {
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+
+                $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
                 $response = AllocationFactory::createResponse(0, 'Tier not found', Response::HTTP_NOT_FOUND);
             }
         } catch (\Throwable $th) {
+            $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
             $message = $th->getMessage() ?? '';
             info('exception occurred in car lead allocation with error : '.$message);
             info('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
@@ -101,8 +109,14 @@ class CarAllocation implements Allocation
         if ($advisorId && $advisorId != 0) {
             $this->assignLead($lead, $advisorId, $tier);
 
+            if ($lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+                app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($lead, $advisorId);
+            }
+
             return AllocationFactory::createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
         } else {
+            $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
             info('Advisor not found. Skipping for now.');
             $this->updateLeadTier($lead, $tier);
 

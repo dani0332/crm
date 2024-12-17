@@ -2,9 +2,10 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "dev": "yarn && vite",
-        "prod": "yarn && vite build",
-        "lint": "prettier . --write"
+        "dev": "doppler run -- yarn && vite",
+        "prod": "yarn && vite build && vite build --config vite-worker.config.js",
+        "lint": "prettier . --write",
+        "worker:watch": "WATCH_WORKER=true vite build --config vite-worker.config.js"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.1.4",
@@ -22,7 +23,7 @@
     },
     "dependencies": {
         "@headlessui/vue": "1.7.18",
-        "@indielayer/ui": "1.9.3",
+        "@indielayer/ui": "^1.10.0",
         "@inertiajs/vue3": "^1.2.0",
         "@vueuse/core": "^11.1.0",
         "@vueuse/integrations": "^11.1.0",

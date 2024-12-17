@@ -27,6 +27,7 @@ use MongoDB\BSON\UTCDateTime;
 class InslyDetailRepository extends BaseRepository
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
+
     public function model()
     {
         return InslyDetail::class;
@@ -106,7 +107,25 @@ class InslyDetailRepository extends BaseRepository
 
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempEmail = 'vitara@inbox.ru';
+        $tempPolicyId = 66495910;
+        if ($tempPolicyId == $data['policy_oid']) {
+            $email = $tempEmail;
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
+        if (empty($email)) {
+            return [
+                'status' => 400,
+                'message' => 'Customer email not found.',
+                'data' => '',
+            ];
+        }
+
         $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
+
         if ($inslyPolicyIssueDate) {
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
@@ -343,7 +362,16 @@ class InslyDetailRepository extends BaseRepository
         $dataArr = [];
         $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
+
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempEmail = 'vitara@inbox.ru';
+        $tempPolicyId = 66495910;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }
+        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
@@ -589,6 +617,10 @@ class InslyDetailRepository extends BaseRepository
         $maskedData = array_map(function ($item) use ($type) {
             $item = trim($item);
             if ($type === 'email') {
+                if (! isValidEmail($item)) {
+                    return $item;
+                }
+
                 [$localPart, $domainPart] = explode('@', $item);
                 $halfLength = ceil(strlen($localPart) / 2);
                 $maskedLocalPart = substr($localPart, 0, $halfLength).str_repeat('*', strlen($localPart) - $halfLength);

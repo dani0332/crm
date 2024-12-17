@@ -109,10 +109,7 @@ const checkCaption = (whatsapp_request, UserAudio) => {
     show-header
     @update:modelValue="$emit('update:showChatLogs', $event)"
   >
-    <template #header>
-      Ref ID: {{ chatMessages.id }} - Created At:
-      {{ chatMessages.created_at.split(' ')[0] }}
-    </template>
+    <template #header> Ref ID: {{ chatMessages.id }} </template>
     <template #default>
       <div>
         <x-field label="Message Source" required>
@@ -163,13 +160,15 @@ const checkCaption = (whatsapp_request, UserAudio) => {
             <div class="chat-header">
               {{ customerName ?? message.role }}
               <span
-                v-if="message.channel"
+                v-if="message.channel && typeof message.channel === 'string'"
                 class="py-[4px] rounded-md px-4 text-white ml-2 text-xs capitalize"
-                :class="
-                  message.channel.toLowerCase() == 'website'
-                    ? 'bg-sky-400'
-                    : 'bg-emerald-400'
-                "
+                :class="{
+                  'bg-sky-400': message.channel.toLowerCase() === 'website',
+                  'bg-orange-600': message.channel.toLowerCase() === 'email',
+                  'bg-emerald-400':
+                    message.channel.toLowerCase() !== 'website' &&
+                    message.channel.toLowerCase() !== 'email',
+                }"
                 >{{ message.channel.toLowerCase() }}</span
               >
             </div>
@@ -204,7 +203,7 @@ const checkCaption = (whatsapp_request, UserAudio) => {
             </div>
 
             <div class="chat-footer opacity-50 text-right">
-              {{ message.created_at.split(' ')[1] }}
+              {{ message.created_at }}
             </div>
           </div>
           <div class="chat chat-end" v-else>
@@ -222,7 +221,7 @@ const checkCaption = (whatsapp_request, UserAudio) => {
               <SanitizeHtml :html="renderMarkdown(message.msg)" />
             </div>
             <div class="chat-footer opacity-50">
-              {{ message.created_at.split(' ')[1] }}
+              {{ message.created_at }}
             </div>
           </div>
         </div>

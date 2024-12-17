@@ -34,7 +34,7 @@ class BookPolicyRequest extends FormRequest
             'transaction_payment_status' => 'nullable',
             'broker_invoice_number' => 'nullable',
             'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|numeric|between:0,9999999.99',
-            'commission_vat_applicable' => 'required|numeric|between:0,9999999.99',
+            'commission_vat_applicable' => 'required_without:commission_vat_not_applicable|nullable|numeric|between:0,9999999.99',
             'total_commission' => 'nullable|numeric|between:0,9999999.99',
             'invoice_description' => 'required|max:60',
             'vat_on_commission' => 'nullable|numeric|between:0,9999999.99',
@@ -56,11 +56,22 @@ class BookPolicyRequest extends FormRequest
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 
+            $isDuplicateOrCIRLead = ! empty($quoteModel->parent_duplicate_quote_id);
+            $payment = Payment::where('code', $quoteModel->code)->mainLeadPayment()->select(['id', 'code'])->first();
+
+            if ($isDuplicateOrCIRLead && empty($payment)) {
+                $payment = Payment::where([
+                    'paymentable_id' => $quoteModel->id,
+                    'paymentable_type' => $quoteModel->getMorphClass(),
+                ])->mainLeadPayment()->select(['id', 'code'])->first();
+            }
+
+            if (! $payment) {
+                $validator->errors()->add('error', 'Payment record not found');
+            }
+
             $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')
-                ->where(function ($query) use ($quoteModel) {
-                    $query->where('paymentable_id', '!=', request()->quote_id)
-                        ->where('paymentable_type', '!=', $quoteModel::class);
-                })
+                ->whereNot('code', $payment->code)
                 ->where('insurer_tax_number', request()->insurer_tax_invoice_number)
                 ->select('insurer_tax_number')->first();
 
@@ -69,10 +80,7 @@ class BookPolicyRequest extends FormRequest
             }
 
             $isInsurerComTaxNumberExists = Payment::whereNotNull('insurer_commmission_invoice_number')
-                ->where(function ($query) use ($quoteModel) {
-                    $query->where('paymentable_id', '!=', request()->quote_id)
-                        ->where('paymentable_type', '!=', $quoteModel::class);
-                })
+                ->whereNot('code', $payment->code)
                 ->where('insurer_commmission_invoice_number', request()->insurer_commmission_invoice_number)
                 ->select('insurer_commmission_invoice_number')->first();
 

@@ -2,6 +2,7 @@
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -12,9 +13,12 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
+use App\Models\CarQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
+use App\Models\EmbeddedTransaction;
 use App\Models\HealthQuote;
+use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
@@ -25,6 +29,8 @@ use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -167,7 +173,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 
     $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
     $nameSpace = 'App\\Models\\';
-    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+    $modelType = (checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
     if (! class_exists($modelType)) {
         return false;
@@ -455,27 +461,6 @@ function generateRouteNames($prefix)
     ];
 }
 
-if (! function_exists('newUi')) {
-    function newUi(): array
-    {
-        return [
-            quoteTypeCode::Health,
-            quoteTypeCode::Car,
-            quoteTypeCode::Travel,
-            quoteTypeCode::Home,
-            quoteTypeCode::Life,
-            quoteTypeCode::Pet,
-            quoteTypeCode::CORPLINE,
-            quoteTypeCode::Business,
-            quoteTypeCode::Cycle,
-            quoteTypeCode::Bike,
-            quoteTypeCode::Yacht,
-            quoteTypeCode::Jetski,
-            quoteTypeCode::Aml,
-        ];
-    }
-}
-
 if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
@@ -493,7 +478,7 @@ if (! function_exists('createCdnUrl')) {
 if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
-        return ['im.automation4@gmail.com', 'muhammad.abdullah@insurancemarket.ae'];
+        return ['qa_automation@myalfred.com'];
     }
 }
 
@@ -811,15 +796,56 @@ if (! function_exists('strToFloat')) {
 if (! function_exists('getCardViewRequestFilters')) {
     function getCardViewRequestFilters($partialQuery, Request $request, $modelType)
     {
-        if ($modelType == HealthQuote::class && ! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+        // Mapping model types to relationships and column names
+        $modelTypeMappings = [
+            HealthQuote::class => [
+                'relation' => 'healthQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+            HomeQuote::class => [
+                'relation' => 'homeQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+            PersonalQuote::class => [
+                'relation' => 'quoteDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+            BusinessQuote::class => [
+                'relation' => 'businessQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+        ];
 
-            $partialQuery->whereHas('healthQuoteRequestDetail', function ($query) use ($dateFrom, $dateTo) {
-                $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
-            });
+        if (array_key_exists($modelType, $modelTypeMappings)) {
+            $mapping = $modelTypeMappings[$modelType];
+
+            // Handle HealthQuote type filtering
+            if (! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
+                $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
+                $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+
+                // Dynamically applying filter for the model type
+                $partialQuery->whereHas($mapping['relation'], function ($query) use ($dateFrom, $dateTo, $mapping) {
+                    $query->whereBetween($mapping['column'], [$dateFrom, $dateTo]);
+                });
+            }
+
+            // Handle HomeQuote type filtering
+            if (! empty($request->advisor_assigned_date)) {
+                $dateArray = $request['advisor_assigned_date'];
+
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+
+                // Dynamically applying filter for the model type
+                $partialQuery->whereHas($mapping['relation'], function ($query) use ($dateFrom, $dateTo, $mapping) {
+                    $query->whereBetween($mapping['column'], [$dateFrom, $dateTo]);
+                });
+            }
+
             $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
+
         if (isset($request->code) && $request->code != '') {
             $partialQuery->where('code', $request->code);
         }
@@ -900,6 +926,14 @@ if (! function_exists('getCardViewRequestFilters')) {
             if ($request->is_renewal == quoteTypeCode::noText) {
                 $partialQuery->whereNull('previous_quote_policy_number');
             }
+        }
+
+        if ($request->has('last_modified_date') && $request->filled('last_modified_date')) {
+            $dateArray = $request['last_modified_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $partialQuery->whereBetween('updated_at', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->advisors) && ! empty($request->advisors)) {
@@ -1256,6 +1290,131 @@ if (! function_exists('getLookupsEnum')) {
     }
 }
 
+if (! function_exists('getCourierQuote')) {
+    function getCourierQuote($quote, $quoteTypeId, $quoteStatuses = [])
+    {
+        try {
+            $quoteModel = get_class($quote);
+            $model = app($quoteModel);
+            $table = $model->getTable();
+
+            $quote = $model::addSelect([
+                "{$table}.id as quote_id",
+                "{$table}.uuid as quote_uuid",
+                "{$table}.created_at as quote_created_at",
+                "{$table}.policy_number as insurance_policy_number",
+                'payments.code as ep_ref_id',
+                'payments.captured_at as payment_captured_at',
+                'customer.first_name as client_first_name',
+                'customer.last_name as client_last_name',
+                'customer.email as client_email',
+                'customer.mobile_no as client_phone_number',
+                'customer_addresses.type as courier_address_type',
+                'customer_addresses.office_number as courier_address_office_number',
+                'customer_addresses.floor_number as courier_address_floor_number',
+                'customer_addresses.building_name as courier_address_building_name',
+                'customer_addresses.street as courier_address_street',
+                'customer_addresses.area as courier_address_area',
+                'customer_addresses.city as courier_address_city',
+                'customer_addresses.landmark as courier_address_landmark',
+            ])
+                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel]), function ($q) use ($table, $quoteTypeId) {
+                    $q->addSelect([
+                        'emirates.code as emirate_code',
+                        'emirates.text as emirate_text',
+                    ])
+                        ->leftJoin('emirates', 'emirates.id', '=', match ($quoteTypeId) {
+                            QuoteTypeId::Health => "{$table}.emirate_of_your_visa_id",
+                            default => "{$table}.emirate_of_registration_id"
+                        });
+                })
+                ->when(! empty($quoteStatuses) && is_array($quoteStatuses), function ($q) use ($table, $quoteStatuses) {
+                    $q->whereIn("{$table}.quote_status_id", $quoteStatuses);
+                })
+                ->leftJoin('customer_addresses', function (JoinClause $join) use ($table, $quoteTypeId) {
+                    $join->on('customer_addresses.quote_uuid', '=', "{$table}.uuid")
+                        ->where('customer_addresses.quote_type_id', $quoteTypeId);
+                })
+                ->join('customer', 'customer.id', '=', "{$table}.customer_id")
+                ->join('embedded_transactions', function (JoinClause $join) use ($table, $quoteModel) {
+                    $join->on('embedded_transactions.quote_request_id', '=', "{$table}.id")
+                        ->where('embedded_transactions.quote_request_type', $quoteModel)
+                        ->join('payments', function (JoinClause $subJoin) {
+                            $subJoin->on('payments.paymentable_id', '=', 'embedded_transactions.id')
+                                ->where('payments.paymentable_type', EmbeddedTransaction::class);
+                        })
+                        ->join('embedded_product_options', function (JoinClause $subJoin) {
+                            $subJoin->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
+                                ->join('embedded_products', function (JoinClause $sub) {
+                                    $sub->on('embedded_products.id', '=', 'embedded_product_options.embedded_product_id')
+                                        ->where('embedded_products.short_code', EmbeddedProductEnum::COURIER);
+                                });
+                        });
+                })
+                ->find($quote->id);
+
+            if ($quote) {
+                $quoteType = QuoteTypes::getName($quoteTypeId);
+
+                $whatsappConsent = false;
+                $quoteAdditionalDetail = QuoteAdditionalDetail::where('quote_uuid', $quote->quote_uuid)->where(function ($q) use ($quoteType) {
+                    $q->where('quote_type_id', (int) $quoteType?->id());
+                    $q->orWhere('quote_type_id', $quoteType?->id());
+                })->first();
+
+                if ($quoteAdditionalDetail) {
+                    $whatsappConsent = isset($quoteAdditionalDetail->flags['whatsapp_consent']) ? $quoteAdditionalDetail->flags['whatsapp_consent'] : false;
+                }
+
+                return [
+                    'quote' => [
+                        'id' => $quote->quote_id,
+                        'uuid' => $quote->quote_uuid,
+                        'created_at' => $quote->quote_created_at,
+                        'policy_number' => strtolower($quote->insurance_policy_number) === 'null' ? null : $quote->insurance_policy_number,
+                        'quote_type_id' => $quoteType?->id(),
+                        'line_of_business' => $quoteType?->value,
+                        'link' => $quoteType?->url($quote->quote_uuid),
+                    ],
+                    'payment' => [
+                        'ref_id' => $quote->ep_ref_id,
+                        'captured_at' => $quote->payment_captured_at,
+                    ],
+                    'customer' => [
+                        'name' => trim("{$quote->client_first_name} {$quote->client_last_name}"),
+                        'first_name' => $quote->client_first_name,
+                        'last_name' => $quote->client_last_name,
+                        'email' => $quote->client_email,
+                        'phone_number' => $quote->client_phone_number,
+                        'is_whatsapp_enabled' => $whatsappConsent,
+                    ],
+                    'emirate' => [
+                        'name' => $quote->emirate_text ?? null,
+                        'code' => $quote->emirate_code ?? null,
+                    ],
+                    'with_address' => (bool) $quote->courier_address_type,
+                    'courier_address' => [
+                        'type' => $quote->courier_address_type,
+                        'office_number' => $quote->courier_address_office_number,
+                        'floor_number' => $quote->courier_address_floor_number,
+                        'building_name' => $quote->courier_address_building_name,
+                        'street' => $quote->courier_address_street,
+                        'area' => $quote->courier_address_area,
+                        'city' => $quote->courier_address_city,
+                        'landmark' => $quote->courier_address_landmark,
+                    ],
+                ];
+            }
+
+            return null;
+        } catch (Exception $e) {
+            Log::error('getCourierQuote: Error retrieving quote: '.$e->getMessage());
+
+            return null;
+        }
+    }
+}
+
 if (! function_exists('isVatApplied')) {
     function isVatApplied($modelType): bool
     {
@@ -1306,6 +1465,26 @@ if (! function_exists('isLeadSic')) {
         }
     }
 }
+
+if (! function_exists('getCarQuoteByUuid')) {
+    function getCarQuoteByUuid(string $uuid): ?CarQuote
+    {
+        try {
+            // Fetch the CarQuote model using the provided UUID
+            return CarQuote::where('uuid', $uuid)->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            // Log if the CarQuote was not found
+            Log::warning("CarQuote not found for UUID: {$uuid}");
+
+            return null;
+        } catch (Exception $e) {
+            // Log any other unexpected errors
+            Log::error("Error retrieving CarQuote for UUID: {$uuid}. Error: {$e->getMessage()}");
+
+            return null;
+        }
+    }
+}
 if (! function_exists('getWhatsappConsent')) {
     function getWhatsappConsent(QuoteTypes $quoteType, string $uuid): bool
     {
@@ -1320,5 +1499,53 @@ if (! function_exists('getWhatsappConsent')) {
         }
 
         return $whatsappConsent;
+    }
+}
+
+if (! function_exists('isNonSelfBillingEnabledForInsuranceProvider')) {
+    function isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider): bool
+    {
+        return $insuranceProvider?->non_self_billing == 1;
+    }
+}
+
+if (! function_exists('getInsuranceProvider')) {
+    function getInsuranceProvider($payment, $quoteType, $quote = null)
+    {
+        $insuranceProvider = null;
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+
+        //        Reminder:: Add Commercial vehicle logic for fetch correct provider
+        if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+
+            $quoteDetails = $payment->paymentable; // For Main Lead
+
+            if (empty($quoteDetails) && isset($quote->personal_quote_id) && $quote?->personal_quote_id) { // For Endorsements
+                $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
+                $quoteDetails = CarQuote::where('uuid', $personalQuote?->uuid)->first();
+            }
+
+            if (! empty($quoteDetails)) {
+                $quoteDetails->fill(['full_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name]);
+                $isCommercialVehicle = app(\App\Services\LeadAllocationService::class)->isCommercialVehicles($quoteDetails);
+                $vehicleType = \App\Models\VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
+
+                if ($isCommercialVehicle || ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD && $vehicleType == strtoupper(QuoteTypes::BIKE->value))) {
+                    return $payment?->insuranceProvider;
+                }
+            }
+        }
+
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($quoteType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment?->insuranceProvider;
+        }
+
+        return $insuranceProvider;
     }
 }

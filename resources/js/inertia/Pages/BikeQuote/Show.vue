@@ -5,7 +5,6 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import LazyBookingDetails from '../SendUpdateLog/Partials/BookingDetails.vue';
 
 defineProps({
   quote: Object,
@@ -799,6 +798,12 @@ const fetchUpdatedQuote = async () => {
               <dd>{{ quote?.dob }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+              <dd>
+                {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMIRATES ID NUMBER</dt>
               <dd>
                 <x-input
@@ -1294,6 +1299,15 @@ const fetchUpdatedQuote = async () => {
       :insurance-providers="insuranceProviders"
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="record.uuid"
+      :code="record.code"
+      :quote="record"
+      :modelType="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <PolicyDetail

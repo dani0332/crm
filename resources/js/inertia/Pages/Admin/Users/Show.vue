@@ -5,6 +5,7 @@ const props = defineProps({
   teamName: String,
   subTeamName: String,
   additionalTeamNames: String,
+  departments: String,
   managerName: String,
   productName: String,
   userAdvisors: Array,
@@ -165,8 +166,26 @@ function onSubmit(isValid) {
           <dd>{{ subTeamName ?? 'N/A' }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Department</dt>
-          <dd>{{ user?.department?.name ?? 'N/A' }}</dd>
+          <dt class="font-medium">DEPARTMENT</dt>
+          <dd>
+            <x-tag size="sm" color="success" class="text-xs">
+              {{ user?.department?.name ?? 'N/A' }}
+            </x-tag>
+          </dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">DEPARTMENTS VISIBILITY</dt>
+          <dd class="break-words flex flex-wrap gap-1">
+            <x-tag
+              size="sm"
+              color="success"
+              v-for="department in departments.split(',')"
+              :key="department"
+              class="text-xs"
+            >
+              {{ department.trim() }}
+            </x-tag>
+          </dd>
         </div>
 
         <div class="grid sm:grid-cols-2">
@@ -316,5 +335,6 @@ function onSubmit(isValid) {
     :url="'\\auditable'"
     :type="'App\\Models\\User'"
     :id="$page.props.user.id"
+    :quoteType="'User'"
   />
 </template>
