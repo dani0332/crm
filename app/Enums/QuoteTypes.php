@@ -6,17 +6,41 @@ use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\BikeQuote;
+use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\HomeQuote;
+use App\Models\HomeQuoteRequestDetail;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
+use App\Models\LifeQuoteRequestDetail;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
+use App\Models\PetQuoteRequestDetail;
 use App\Models\TravelQuote;
+use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
+use App\Models\YachtQuoteRequestDetail;
+use App\Services\BikeAllocationService;
+use App\Services\CarAllocationService;
+use App\Services\HealthAllocationService;
+use App\Services\TravelAllocationService;
+use App\Strategies\Allocations\BikeAllocation;
+use App\Strategies\Allocations\CarAllocation;
+use App\Strategies\Allocations\CorplineAllocation;
+use App\Strategies\Allocations\CycleAllocation;
+use App\Strategies\Allocations\HealthAllocation;
+use App\Strategies\Allocations\HomeAllocation;
+use App\Strategies\Allocations\LifeAllocation;
+use App\Strategies\Allocations\PetAllocation;
+use App\Strategies\Allocations\TravelAllocation;
+use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 
@@ -64,6 +88,7 @@ enum QuoteTypes: string
             default => null,
         };
     }
+
     public static function getName($value)
     {
         $types = [
@@ -120,6 +145,29 @@ enum QuoteTypes: string
             self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
             self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             default => new PersonalQuote,
+        };
+    }
+
+    public function isPersonalQuote()
+    {
+        return $this->model() instanceof PersonalQuote;
+    }
+
+    public function detailModel(): Model
+    {
+        return match ($this) {
+            self::CAR => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new CarQuoteRequestDetail,
+            self::HOME => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new HomeQuoteRequestDetail,
+            self::HEALTH => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new HealthQuoteRequestDetail,
+            self::LIFE => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new LifeQuoteRequestDetail,
+            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new BusinessQuoteRequestDetail,
+            self::BIKE => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new BikeQuoteRequestDetail,
+            self::YACHT => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new YachtQuoteRequestDetail,
+            self::TRAVEL => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new TravelQuoteRequestDetail,
+            self::PET => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new PetQuoteRequestDetail,
+            self::CYCLE => new PersonalQuoteDetail,
+            self::JETSKI => new PersonalQuoteDetail,
+            default => new PersonalQuoteDetail,
         };
     }
 
@@ -203,6 +251,46 @@ enum QuoteTypes: string
 
         return match ($this) {
             self::TRAVEL,self::CAR,self::HEALTH => "{$this->ecomUrl()}{$uuid}".($queryParamsStr ? "?{$queryParamsStr}" : ''),
+        };
+    }
+
+    public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false)
+    {
+        $allocationService = match ($this) {
+            self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
+            self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
+            self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
+            self::TRAVEL => new TravelAllocation(new TravelAllocationService, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::CYCLE => new CycleAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::YACHT => new YachtAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::PET => new PetAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::LIFE => new LifeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::CORPLINE => new CorplineAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::HOME => new HomeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            default => null,
+        };
+
+        if ($allocationService) {
+            return $allocationService->executeSteps();
+        }
+
+        return $allocationService;
+    }
+
+    public function advisorRoles()
+    {
+        return match ($this) {
+            self::CAR => [RolesEnum::CarAdvisor],
+            self::HEALTH => [RolesEnum::HealthAdvisor, RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor],
+            self::BIKE => [RolesEnum::BikeAdvisor],
+            self::TRAVEL => [RolesEnum::TravelAdvisor],
+            self::CYCLE => [RolesEnum::CycleAdvisor],
+            self::YACHT => [RolesEnum::YachtAdvisor],
+            self::PET => [RolesEnum::PetAdvisor],
+            self::LIFE => [RolesEnum::LifeAdvisor],
+            self::CORPLINE => [RolesEnum::CorpLineAdvisor],
+            self::HOME => [RolesEnum::HomeAdvisor],
+            default => [],
         };
     }
 
