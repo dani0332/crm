@@ -45,6 +45,7 @@ class HomeEmailService extends BaseService
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'refID' => $lead->code,
+            'automatedFlowExecuted' => empty($lead->automated_flow_executed_at) ? true : false,
             'uuid' => $lead->uuid,
             'customerFullName' => "{$lead->first_name} {$lead->last_name}",
             'customerName' => "{$lead->first_name} {$lead->last_name}",
