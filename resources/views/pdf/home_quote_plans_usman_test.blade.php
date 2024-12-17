@@ -20,8 +20,8 @@
         body {
             line-height: 1;
             font-family: "DejaVu Sans", sans-serif;
-            margin: 0;
-            padding: 0;
+
+
         }
 
 
@@ -71,21 +71,28 @@
 
         table {
             min-width: 1220px;
-            /* width: 1220px; */
+            width: 1220px;
             text-indent: 0;
             border-color: #bfbfbf;
             max-width: 1220px;
-            /* margin: 7px 12px auto; */
+            margin: 7px 12px auto;
             border-spacing: 0;
             border-radius: 10px;
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 120px;
-            /* Add space to prevent overlap */
         }
 
         tbody {
             margin-bottom: 130px;
+        }
+
+        .header {
+            background: #1d83bc;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            padding: 8px 10px;
+            width: 100%;
+            height: 57px;
+            max-height: 57px;
         }
 
         .header .logo {
@@ -104,12 +111,8 @@
 
         .header h3 {
             float: right;
-            /* text-align: right; */
+            text-align: right;
             padding-right: 18px;
-            margin: 0;
-            padding-top: 20px;
-            text-align: center;
-            font-size: 18px;
         }
 
         tbody>tr>td {
@@ -244,7 +247,6 @@
             font-size: 10px;
             font-weight: bold;
             border-radius: 4px;
-            display: inline-block;
         }
 
         .btn-buy:hover {
@@ -273,15 +275,13 @@
             bottom: 0px;
             left: 0px;
             right: 0px;
-            /* padding: 0px; */
+            padding: 0px;
             margin: 80px 0 0 0;
             background-color: #1d83bc;
             color: black;
             text-align: center;
             height: 145px;
             /* z-index: 1500; */
-            padding: 10px;
-            width: 100%;
         }
 
         table.tbl-footer {
@@ -337,21 +337,22 @@
         }
 
         .header {
-            font-size: 19px;
-            /* height: 60px; */
-            /* max-height: 60px; */
             background: #1d83bc;
             color: #ffffff;
-            /* font-size: 16px; */
+            font-size: 19px;
             text-align: center;
             padding: 8px 10px;
             width: 100%;
-            height: 57px;
-            max-height: 57px;
+            height: 60px;
+            max-height: 60px;
+        }
+
+        header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
+            height: 60px;
             /* z-index: 1000;  */
         }
 
@@ -369,6 +370,12 @@
             height: 50px;
         }
 
+        .header h3 {
+            float: right;
+            text-align: right;
+            padding-right: 18px;
+        }
+
         .text-blue {
             color: #1d83bc;
         }
@@ -377,18 +384,6 @@
             width: 100%;
             height: 100%;
             z-index: 9999;
-        }
-
-        table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-
-        main {
-            margin-top: 120px;
-            /* Push main content down */
-            padding: 20px;
         }
 
         .content {}
