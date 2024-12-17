@@ -576,7 +576,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function allocateLead($quote)
     {
-        $uuid =$quote->uuid;
+        $uuid = $quote->uuid;
         info(self::class.' fn:'.__FUNCTION__.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
@@ -586,9 +586,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
             SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
             // Here we need to dispatch document email
-            $data = new \stdClass();
+            $data = new \stdClass;
             $data->model_type = self::TYPE;
             $data->quote_id = $quote->id;
+            info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' - Dispatching SendBookPolicyDocumentsJob');
             SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
         }
     }

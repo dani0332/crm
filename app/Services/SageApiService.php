@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
@@ -672,7 +673,7 @@ class SageApiService
         $skipBookPolicyDocumentJob = false;
         if ($quoteTypeId === QuoteTypeId::Travel) {
             $quote->load('policyIssuance');
-            if ($quote->policyIssuance) {
+            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && !$quote->advisor_id) {
                 $skipBookPolicyDocumentJob = true;
             }
         }
@@ -1972,7 +1973,11 @@ class SageApiService
             QuoteStatusLog::create($quoteLogData);
         }
 
-        $this->assignAdvisor($quote, $quoteTypeId);
+        if(in_array($quote->quote_status_id , [QuoteStatusEnum::PolicyBooked,QuoteStatusEnum::POLICY_BOOKING_FAILED ])){
+            info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.' start assignAdvisor Quote Status ID : ' . $quote->quote_status_id);
+            $this->assignAdvisor($quote, $quoteTypeId);
+        }
+
     }
 
     public function createSageProcess($quote, $sageRequest, $request)
