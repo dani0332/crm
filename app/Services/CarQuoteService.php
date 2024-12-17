@@ -50,10 +50,10 @@ class CarQuoteService extends BaseService
     use TeamHierarchyTrait;
 
     public function __construct(HttpRequestService $httpService,
-    LeadAllocationService $leadAllocationService,
-    SendEmailCustomerService $sendEmailCustomerService,
-    ApplicationStorageService $applicationStorageService,
-    ActivitiesService $activityService)
+        LeadAllocationService $leadAllocationService,
+        SendEmailCustomerService $sendEmailCustomerService,
+        ApplicationStorageService $applicationStorageService,
+        ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;

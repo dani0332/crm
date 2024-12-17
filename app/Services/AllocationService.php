@@ -136,7 +136,6 @@ class AllocationService extends BaseService
         }
     }
 
-
     public function getTodayCounts($userId)
     {
         $allocationCount = LeadAllocation::where('user_id', $userId)->select('auto_assignment_count', 'manual_assignment_count', 'max_capacity')

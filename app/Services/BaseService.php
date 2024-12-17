@@ -410,7 +410,6 @@ class BaseService
         }
     }
 
-
     public function upsertQuoteDetail($leadId, $quoteModel, $keyColumn)
     {
         return $quoteModel::updateOrCreate(
