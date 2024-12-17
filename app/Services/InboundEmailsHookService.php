@@ -18,6 +18,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
+use App\Models\HomeQuote;
 
 class InboundEmailsHookService extends BaseService
 {
@@ -213,6 +214,9 @@ class InboundEmailsHookService extends BaseService
                     break;
                 case QuoteTypes::HEALTH->id():
                     $quote = HealthQuote::where('id', $emailStatusData->quote_id)->first();
+                    break;
+                case QuoteTypes::HOME->id():
+                    $quote = HomeQuote::where('id', $emailStatusData->quote_id)->first();
                     break;
                 default:
                     $quote = null;
