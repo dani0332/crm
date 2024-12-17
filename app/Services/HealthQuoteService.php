@@ -52,16 +52,14 @@ class HealthQuoteService extends BaseService
 {
     protected $query;
     protected $leadAllocationService;
-    protected $allocationService;
     protected $httpService;
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, AllocationService $allocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
-        $this->allocationService = $allocationService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
             //'hqr.prefill_plan_id',
@@ -190,6 +188,7 @@ class HealthQuoteService extends BaseService
             'hqr.insly_migrated',
             'hqr.sic_advisor_requested',
             'hqr.aml_status',
+            'hqr.insurance_provider_id'
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -1310,7 +1309,7 @@ class HealthQuoteService extends BaseService
             $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
-            $this->allocationService->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
+            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
         }
     }
 

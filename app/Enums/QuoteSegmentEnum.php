@@ -25,6 +25,8 @@ enum QuoteSegmentEnum: string
     {
         return match ($this) {
             self::SIC => 'SIC',
+            self::SIC_REVIVAL => 'SIC Revival',
+            self::NON_SIC => 'Non-SIC',
         };
     }
 }

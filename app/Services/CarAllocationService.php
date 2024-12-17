@@ -468,9 +468,10 @@ class CarAllocationService extends AllocationService
             ->where('rule_type', RuleTypeEnum::CAR_MAKE_MODEL)
             ->where('rules.is_active', 1)
             ->groupBy('rule_details.rule_id')
-            ->select(
-                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-            )->get();
+            ->select([
+                'rules.name AS ruleName',
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers'),
+            ])->get();
     }
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
@@ -494,6 +495,17 @@ class CarAllocationService extends AllocationService
                 // If the lead source is SAP, get eligible users for SAP leads.
                 info('SAP lead found, so filtering eligible users for SAP lead');
                 $finalEligibleUserIds = $this->getEligibleUserForSAPLead($ruleUserIds);
+            }
+
+            // if finalEligibleUserIds count is zero then it means all rule users are unavailable
+            if (count($finalEligibleUserIds) == 0) {
+                //  check if the found rule is commercial rule
+                if ($rules->first()->ruleName == 'Commercial') {
+                    info('All rule users are unavailable, so checking for commercial rule users regardless of availability.');
+                    // if commercial then we need to assign lead to one of the $ruleUserIds based on max cap
+                    // and other allocation criteria like round robin
+                    $finalEligibleUserIds = $this->fetchUsersOnAllocationCriteria($ruleUserIds, $teamId);
+                }
             }
 
             info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
@@ -733,5 +745,25 @@ class CarAllocationService extends AllocationService
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->orderBy('last_allocated')
             ->pluck('user_id')->toArray();
+    }
+
+    public function fetchUsersOnAllocationCriteria($ruleUserIds, $teamId)
+    {
+        $excludedUserIds = $this->getExcludedUserIds($teamId);
+
+        // Create a query to fetch lead allocations with their associated users.
+        return LeadAllocation::with('leadAllocationUser')
+            ->where(function ($query) {
+                // Apply allocation count and max capacity conditions.
+                $query->whereRaw('allocation_count < max_capacity')
+                    ->orWhere('max_capacity', -1);
+            })
+            ->whereIn('user_id', $ruleUserIds)
+            ->whereNotIn('user_id', $excludedUserIds)
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->orderBy('last_allocated')
+            ->get()
+            ->pluck('user_id')
+            ->toArray();
     }
 }

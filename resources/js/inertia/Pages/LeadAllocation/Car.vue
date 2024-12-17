@@ -54,38 +54,14 @@ const confirmModal = reactive({
   loader: false,
 });
 
-const statusModal = reactive({
-  show: false,
-  loader: false,
-  data: {
-    id: 0,
-    userId: 0,
-    reason: 1,
-    loader: false,
-  },
-});
+const statusModal = getStatusModal();
 
 const loaders = reactive({
   submit: false,
   table: false,
 });
 
-const statusText = statusId => {
-  switch (parseInt(statusId)) {
-    case 1:
-      return 'Online';
-    case 2:
-      return 'Offline';
-    case 3:
-      return 'Unavailable';
-    case 4:
-      return 'Sick';
-    case 5:
-      return 'On leave';
-    default:
-      return 'Unavailable';
-  }
-};
+const statusText = statusId => resolveUserStatusText(statusId);
 
 const tableHeader = ref([
   { text: 'Name', value: 'userName', sortable: true },

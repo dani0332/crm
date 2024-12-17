@@ -54,16 +54,7 @@ const leadData = ref([
   },
 ]);
 
-const statusModal = reactive({
-  show: false,
-  loader: false,
-  data: {
-    id: 0,
-    userId: 0,
-    reason: 1,
-    loader: false,
-  },
-});
+const statusModal = getStatusModal();
 
 const confirmModal = reactive({
   show: false,
@@ -82,14 +73,7 @@ const isBlCapChanged = computed(() => {
   return leadData?.value.some(item => item.BlCapEdit);
 });
 
-const statusText = statusId =>
-  ({
-    1: 'Online',
-    2: 'Offline',
-    3: 'Unavailable',
-    4: 'Sick',
-    5: 'On leave',
-  })[parseInt(statusId)] || 'Unavailable';
+const statusText = statusId => resolveUserStatusText(statusId);
 
 const currentRow = (id, type = 'mormal') => {
   const row = leadData?.value.find(item => item.id === id);

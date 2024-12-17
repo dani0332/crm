@@ -5,6 +5,7 @@ use App\Enums\PermissionsEnum;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
@@ -72,6 +73,7 @@ use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SearchController;
 use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
@@ -124,10 +126,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::post('get-lob-raw-data', [RawQueryController::class, 'show'])->name('getRawData');
 
-    Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
+    Route::get('instant-alfred/index', [AlfredChatController::class, 'index'])->name('instant-alfred.index');
 
-    Route::post('get-alfred-chat', [AlfredChatController::class, 'index']);
-    Route::post('get-alfred-chat-by-date', [AlfredChatController::class, 'getChatByDate'])->name('getChatByDate');
+    Route::post('instant-alfred/chats', [AlfredChatController::class, 'chats']);
+    Route::get('instant-alfred/export', [AlfredChatController::class, 'exportChat'])->name('exportChatData');
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
@@ -323,6 +325,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::resource('travel-lead-allocation', TravelLeadAllocationController::class);
+    Route::get('allocation-dashboard/{quoteType}', [V2LeadAllocationController::class, 'index'])->name('lead-allocation-dashboard');
     Route::post('/travel-lead-allocation/update-hard-stop', [TravelLeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
@@ -672,6 +675,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Sending NB Car Followups
     Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
+
+    Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
+    Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 });
 
 Route::get('/add-batch-number', function () {

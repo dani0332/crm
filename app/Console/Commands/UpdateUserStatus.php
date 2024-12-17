@@ -4,12 +4,14 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\ActivityAlertEmailJob;
 use App\Jobs\ReAssignBikeLeadsJob;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
+use App\Jobs\ReAssignLeads;
 use App\Models\ApplicationStorage;
 use App\Models\Sessions;
 use App\Models\Team;
@@ -106,6 +108,15 @@ class UpdateUserStatus extends Command
                             info('System triggered bike reassignment job for user : '.$session->user->name);
                             ReAssignBikeLeadsJob::dispatch(new BikeAllocationService, $userId);
                         }
+
+                        // Disabled Leads Auto Re Assignment for below Types as this is not needed at the moment
+                        // foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {
+                        //     $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
+                        //     if ($this->userHaveProduct($userId, $team->id)) {
+                        //         info("user belongs to {$quoteType->value} so dispatching {$quoteType->value} reassignment job");
+                        //         ReAssignLeads::dispatch($quoteType, $userId);
+                        //     }
+                        // }
                     }
                 } else {
                     if ($newStatus == UserStatusEnum::OFFLINE && $subtime > $lastActivity) {

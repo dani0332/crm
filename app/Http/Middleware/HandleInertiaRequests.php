@@ -237,6 +237,42 @@ class HandleInertiaRequests extends Middleware
                         'Travel',
                         route('travel-lead-allocation.index'),
                         fn ($s) => $s->attributes(['icon' => 'travel'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD),
+                        'Life',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::LIFE]),
+                        fn ($s) => $s->attributes(['icon' => 'life'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD),
+                        'Home',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::HOME]),
+                        fn ($s) => $s->attributes(['icon' => 'home'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD),
+                        'Pet',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::PET]),
+                        fn ($s) => $s->attributes(['icon' => 'pet'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD),
+                        'Corpline',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CORPLINE]),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD),
+                        'Cycle',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYCLE]),
+                        fn ($s) => $s->attributes(['icon' => 'cycle'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD),
+                        'Yacht',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::YACHT]),
+                        fn ($s) => $s->attributes(['icon' => 'yacht'])
                     );
             });
         }
@@ -261,6 +297,10 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', route('activities.index'));
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
+            $nav = $nav->add('Search', route('search-leads'));
         }
 
         /* personal quotes section */
@@ -606,7 +646,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
-            $nav = $nav->add('InstantAlfred Chat Logs', route('instant-alfred.logs'));
+            $nav = $nav->add('InstantAlfred Chat Logs', route('instant-alfred.index'));
         }
 
         return $nav;

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
+use App\Jobs\ReAssignLeads;
 use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
@@ -139,6 +141,7 @@ class LeadAllocationController extends Controller
     {
         $updateLogString = '----- Update done successfully to change the';
         $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
+        $quoteTypeId = in_array(request('quoteType'), [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
         foreach ($request->all() as $item) {
             if ($quoteTypeId) {
                 $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('quote_type_id', $quoteTypeId)->where('id', $item['id'])->first();
@@ -157,6 +160,14 @@ class LeadAllocationController extends Controller
                                 info('user belong to health so dispatching health reassignment job');
                                 dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), $item['userId']));
                             }
+
+                            foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {
+                                $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
+                                if ($this->userHaveProduct($item['userId'], $team?->id)) {
+                                    info("user belongs to {$quoteType->value} so dispatching {$quoteType->value} reassignment job");
+                                    ReAssignLeads::dispatch($quoteType, $item['userId']);
+                                }
+                            }
                         }
 
                         $user = User::where('id', $item['userId'])->first();
@@ -172,7 +183,7 @@ class LeadAllocationController extends Controller
                         $leadAllocationUser->is_available = $item['is_available'];
                     }
 
-                    if ($quoteTypeId && isset($item['max_cap'])) {
+                    if (isset($item['max_cap'])) {
                         $updateLogString = $updateLogString.' max_cap to : '.$item['max_cap'];
                         if ($item['type'] === 'buy-lead') {
                             $leadAllocationUser->buy_lead_max_capacity = (int) $item['max_cap'];
@@ -194,23 +205,28 @@ class LeadAllocationController extends Controller
     {
         if (isset($request->max_cap)) {
             $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
+            $quoteTypeId = in_array(request('quoteType'), [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
             foreach ($request->max_cap as $item) {
-                if ($item['userId'] && $item['maxCap']) {
-                    if ($quoteTypeId) {
-                        $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('quote_type_id', $quoteTypeId)->where('user_id', $item['userId'])->first();
+                if ($item['userId'] && $item['maxCap'] && $quoteTypeId) {
+                    $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('quote_type_id', $quoteTypeId)->where('user_id', $item['userId'])->first();
 
-                        if ($leadAllocationObj) {
-                            if ($request->type === 'buy-lead') {
-                                $leadAllocationObj->buy_lead_max_capacity = (int) $item['maxCap'];
-                            } else {
-                                $leadAllocationObj->max_capacity = (int) $item['maxCap'];
-                            }
-                            $leadAllocationObj->save();
-                            info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
+                    if ($leadAllocationObj) {
+                        if ($request->type === 'buy-lead') {
+                            $leadAllocationObj->buy_lead_max_capacity = (int) $item['maxCap'];
+                        } else {
+                            $leadAllocationObj->max_capacity = (int) $item['maxCap'];
                         }
+                        $leadAllocationObj->save();
+                        info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
+                    } else {
+                        info('No LeadAllocation record found for user : '.$item['userId']);
                     }
                 }
             }
+
+            return response()->json([
+                'message' => 'Max Capacity Updated Successfully.',
+            ], 200);
         } else {
             return back()->with('info', 'Please select at least one item.');
         }

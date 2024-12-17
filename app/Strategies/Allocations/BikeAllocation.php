@@ -4,7 +4,6 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
-use App\Factories\AllocationFactory;
 use App\Models\Tier;
 use App\Services\BikeAllocationService;
 use Illuminate\Database\Eloquent\Collection;
@@ -14,32 +13,34 @@ class BikeAllocation implements Allocation
 {
     private $bikeAllocationService;
     private $allocationId;
+    private bool $overrideAdvisorId = false;
 
-    public function __construct(BikeAllocationService $bikeAllocationService, $allocationId)
+    public function __construct(BikeAllocationService $bikeAllocationService, $allocationId, bool $overrideAdvisorId = false)
     {
         $this->bikeAllocationService = $bikeAllocationService;
         $this->allocationId = $allocationId;
+        $this->overrideAdvisorId = $overrideAdvisorId;
     }
 
-    public function executeSteps($overrideAdvisorId = false)
+    public function executeSteps()
     {
-        $response = AllocationFactory::createResponse(0, '', Response::HTTP_INTERNAL_SERVER_ERROR);
+        $response = $this->bikeAllocationService->createResponse(0, '', Response::HTTP_INTERNAL_SERVER_ERROR);
 
         try {
             info('Bike Allocation Started.');
 
             // Fetch the lead to process
-            $lead = $this->fetchLead($overrideAdvisorId);
+            $lead = $this->fetchLead();
 
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId.' in BIKE allocation');
 
-                $response = AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+                $response = $this->bikeAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 if ($lead->isAllocationInProgress()) {
                     info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
 
-                    return AllocationFactory::createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
+                    return $this->bikeAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
                 }
 
                 $lead->startAllocation();
@@ -61,24 +62,24 @@ class BikeAllocation implements Allocation
                     if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
                         info('Advisor is same as previous advisor. Skipping for now.');
                         $lead->endAllocation();
-                        $response = AllocationFactory::createResponse($advisorId, 'Advisor is same as previous advisor. Skipping for now', Response::HTTP_OK);
+                        $response = $this->bikeAllocationService->createResponse($advisorId, 'Advisor is same as previous advisor. Skipping for now', Response::HTTP_OK);
                     } elseif ($advisorId && $advisorId != 0) {
                         $this->assignLead($lead, $advisorId, $tier);
                         $lead->endAllocation();
-                        $response = AllocationFactory::createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
+                        $response = $this->bikeAllocationService->createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
                     } else {
                         $this->bikeAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::BIKE);
 
                         info('Advisor not found. Skipping for now.');
                         // Update the lead's tier information
                         $this->updateLeadTier($lead, $tier);
-                        $response = AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
+                        $response = $this->bikeAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                     }
                 } else {
                     // Log that tier was not found for the lead and skip processing
                     info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
                     $lead->endAllocation();
-                    $response = AllocationFactory::createResponse(0, 'Tier not found', Response::HTTP_UNPROCESSABLE_ENTITY);
+                    $response = $this->bikeAllocationService->createResponse(0, 'Tier not found', Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
             }
             info('Bike Allocation Ended.');
@@ -88,15 +89,15 @@ class BikeAllocation implements Allocation
             $message = $th->getMessage() ?? '';
             info('exception occurred in bike lead allocation with error : '.$message);
             info('exception occurred in bike lead allocation with error stack as  : '.$th->getTraceAsString());
-            $response = AllocationFactory::createResponse(0, 'exception occurred in bike lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            $response = $this->bikeAllocationService->createResponse(0, 'exception occurred in bike lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return $response;
     }
 
-    protected function fetchLead($overrideAdvisorId): mixed
+    protected function fetchLead(): mixed
     {
-        return $this->bikeAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
+        return $this->bikeAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId);
     }
 
     protected function getTier($tierId)

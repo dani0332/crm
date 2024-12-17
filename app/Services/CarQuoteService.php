@@ -45,19 +45,21 @@ class CarQuoteService extends BaseService
     protected $sendEmailCustomerService;
     protected $applicationStorageService;
     protected $activityService;
-    protected $allocationService;
 
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService, AllocationService $allocationService)
+    public function __construct(HttpRequestService $httpService,
+    LeadAllocationService $leadAllocationService,
+    SendEmailCustomerService $sendEmailCustomerService,
+    ApplicationStorageService $applicationStorageService,
+    ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->activityService = $activityService;
-        $this->allocationService = $allocationService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
@@ -1872,7 +1874,7 @@ class CarQuoteService extends BaseService
             $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
-            $this->allocationService->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
+            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
         }
     }
 
