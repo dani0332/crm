@@ -504,6 +504,7 @@ const isCISCOrCISC_NFI = computed(() => {
                         size="xs"
                         :disabled="!state.edit"
                         placeholder="Enter Endorsement Number"
+                        maxlength="23"
                     />
                   </dd>
                 </div>
