@@ -29,30 +29,13 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  isAutoAllocationWorking: {
-    type: Number,
-    default: 0,
-  },
-  isFIFO: {
-    type: Number,
-    default: 0,
-  },
 });
 
-const canManage = ref(props.isAutoAllocationWorking === 1 ? true : false);
-const pickupSequence = ref(props.isFIFO === 1 ? true : false);
 const autoRefresh = ref(true);
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
-
-const confirmModal = reactive({
-  show: false,
-  title: '',
-  type: 1,
-  status: 1,
-  loader: false,
-});
+const notification = useToast();
 
 const statusModal = getStatusModal();
 
@@ -64,16 +47,17 @@ const loaders = reactive({
 const statusText = statusId => resolveUserStatusText(statusId);
 
 const tableHeader = ref([
-  { text: 'Name', value: 'userName', sortable: true },
-  { text: 'Tiers', value: 'tiers', width: '240' },
-  { text: 'Quads', value: 'quads', sortable: true },
-  { text: 'Tot. Assigned', value: 'allocationCount', sortable: true },
-  { text: 'M. Assigned', value: 'manualAllocationCount', sortable: true },
-  { text: 'A. Assigned', value: 'autoAllocationCount', sortable: true },
-  { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
+  { text: 'Name', value: 'userName', width: '240' },
+  { text: 'Teams', value: 'teamNames', sortable: true },
+  {
+    text: 'Total Assigned Leads',
+    value: 'allocationCount',
+    sortable: true,
+  },
+  { text: 'Last Allocations', value: 'lastAllocation', sortable: true },
+  { text: 'Max Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
-  { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
-  { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
+  { text: 'Reset Cap', value: 'reset_cap', width: '100' },
 ]);
 
 const leadData = ref([
@@ -117,60 +101,8 @@ const isCapChanged = computed(() => {
   return leadData?.value.some(item => item.capEdit);
 });
 
-const onConfirmClose = event => {
-  if (!event) {
-    if (confirmModal.type === 1) {
-      canManage.value = !canManage.value;
-    } else if (confirmModal.type === 2) {
-      pickupSequence.value = !pickupSequence.value;
-    }
-
-    confirmModal.show = false;
-  }
-};
-
-const toggleOption = (value, type) => {
-  confirmModal.type = type;
-  confirmModal.status = value ? 1 : 0;
-  confirmModal.title =
-    type === 1 ? 'Car Lead Allocation' : 'CAR LEAD PICKUP FIFO';
-  confirmModal.show = true;
-};
-
-const onUpdateConfirm = async () => {
-  confirmModal.loader = true;
-  const url =
-    confirmModal.type === 1
-      ? '/lead-allocation/toggle-car-lead-allocation-job-status'
-      : '/lead-allocation/toggle-car-lead-fetch-sequence';
-  await axios
-    .post(url)
-    .then(res => {
-      router.reload({
-        preserveScroll: true,
-        preserveState: true,
-      });
-    })
-    .finally(() => {
-      confirmModal.loader = false;
-      confirmModal.show = false;
-    });
-};
-
-const onToggleStatus = (status, id, userId) => {
-  statusModal.data.id = id;
-  statusModal.data.userId = userId;
-  if (status) {
-    statusModal.data.reason = 1;
-    onStatusSubmit();
-  } else {
-    statusModal.data.reason = 3;
-    statusModal.show = true;
-  }
-};
-
 const onStatusModalClose = event => {
-  const item = leadData.value.find(item => item.id === statusModal.data.id);
+  const item = leadData?.value.find(item => item.id === statusModal?.data.id);
   if (!event) {
     item.reset = true;
     setTimeout(() => {
@@ -207,11 +139,23 @@ const onStatusSubmit = async () => {
     });
 };
 
-const onToggleResetCap = async (active, userId, leadId) => {
+const onToggleStatus = (status, id, userId) => {
+  statusModal.data.id = id;
+  statusModal.data.userId = userId;
+  if (status) {
+    statusModal.data.reason = 1;
+    onStatusSubmit();
+  } else {
+    statusModal.data.reason = 3;
+    statusModal.show = true;
+  }
+};
+
+const onToggleResetCap = async (active, userId, leadAllocationId) => {
   loaders.table = true;
   await axios
     .post('/lead-allocation/toggle-reset-cap', {
-      leadId,
+      leadId: leadAllocationId,
       userId,
       resetCap: active,
     })
@@ -219,6 +163,14 @@ const onToggleResetCap = async (active, userId, leadId) => {
       loaders.table = false;
     });
 };
+
+async function fetchData() {
+  await router.reload({
+    replace: true,
+    preserveScroll: true,
+    preserveState: true,
+  });
+}
 
 const onSubmitChanges = async () => {
   loaders.submit = true;
@@ -232,8 +184,13 @@ const onSubmitChanges = async () => {
     });
   await axios
     .post(`/lead-allocation/${page.props.quoteType}/update-cap`, { max_cap })
-    .then(() => {
-      router.get('/lead-allocation/car', {
+    .then(response => {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+
+      router.get(route('lead-allocation-dashboard', page.props.quoteType), {
         replace: true,
         preserveScroll: true,
         preserveState: true,
@@ -243,14 +200,6 @@ const onSubmitChanges = async () => {
       loaders.submit = false;
     });
 };
-
-async function fetchData() {
-  await router.reload({
-    replace: true,
-    preserveScroll: true,
-    preserveState: true,
-  });
-}
 
 const { pause, resume } = useTimeoutPoll(fetchData, 90000);
 
@@ -272,16 +221,7 @@ watch(
   () => refreshGrid.value,
   () => {
     setTimeout(() => {
-      // router.reload({
-      //   replace: false,
-      //   preserveScroll: true,
-      //   preserveState: true,
-      // });
-      router.get('/lead-allocation/car', {
-        only: ['data'],
-        preserveScroll: true,
-        preserveState: true,
-      });
+      fetchData();
     }, 1500);
   },
 );
@@ -309,38 +249,11 @@ onMounted(() => {
 
 <template>
   <div>
-    <Head title="Car Lead Allocation" />
+    <UserStatus />
+
+    <Head :title="quoteType + ' Lead Allocation'" />
     <div class="flex justify-between items-center">
-      <div
-        class="flex gap-1"
-        v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-      >
-        <h2 class="text-lg font-semibold">Car Lead Allocation Management</h2>
-        <x-toggle
-          v-model="canManage"
-          color="emerald"
-          size="lg"
-          @update:model-value="toggleOption($event, 1)"
-        />
-      </div>
-      <div
-        class="flex gap-1"
-        v-if="
-          hasAnyRole([
-            rolesEnum.Admin,
-            rolesEnum.LeadPool,
-            rolesEnum.Engineering,
-          ])
-        "
-      >
-        <h2 class="text-lg font-semibold">Pickup Sequence : FIFO</h2>
-        <x-toggle
-          v-model="pickupSequence"
-          color="emerald"
-          size="lg"
-          @update:model-value="toggleOption($event, 2)"
-        />
-      </div>
+      <div></div>
       <div
         class="flex gap-1"
         v-if="
@@ -360,18 +273,22 @@ onMounted(() => {
     <div class="grid grid-cols-2 md:grid-cols-4 gap-5 my-6">
       <div class="labox border-green-500">
         <h3>Team</h3>
-        <p>Car</p>
+        <p>{{ quoteType }}</p>
       </div>
       <div class="labox border-primary-500">
         <h3>Assigned Lead Count</h3>
         <p>{{ props.totalAssignedLeadCount }}</p>
       </div>
-      <div class="labox border-yellow-500">
+      <div class="labox border-purple-500">
         <h3>Available / UnAvailable</h3>
         <p>{{ props.availableUsers }} / {{ props.unAvailableUsers }}</p>
       </div>
       <div class="labox border-yellow-500">
-        <h3>Total UnAssigned Leads</h3>
+        <h3>Total Advisors</h3>
+        <p>{{ data.length }}</p>
+      </div>
+      <div class="labox border-red-500">
+        <h3>Unassigned Leads Count</h3>
         <p>{{ props.todayTotalUnAssignedLeadCount }}</p>
       </div>
 
@@ -393,7 +310,6 @@ onMounted(() => {
     </div>
 
     <DataTable
-      id="car-lead-allocation"
       table-class-name="compact"
       :headers="tableHeader"
       :items="props.data || []"
@@ -404,18 +320,6 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
-      <template #item-tiers="{ tiers }">
-        <div class="relative">
-          <x-tooltip placement="top">
-            <p
-              class="truncate w-60 underline decoration-dotted decoration-primary-600"
-            >
-              {{ tiers }}
-            </p>
-            <template #tooltip> {{ tiers }} </template>
-          </x-tooltip>
-        </div>
-      </template>
       <template #item-maxCapacity="{ maxCapacity, id }">
         <div v-if="!currentRow(id)" @click="editCap(id)">
           {{ maxCapacity }}
@@ -458,7 +362,6 @@ onMounted(() => {
               ])
             "
             :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
-            :disabled="!canManage"
             :id="id"
             :loading="leadData.find(item => item.id === id)?.loading"
             :refresh="leadData.find(item => item.id === id)?.reset"
@@ -509,29 +412,6 @@ onMounted(() => {
             @click="onStatusSubmit"
           >
             Submit
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-
-    <x-modal
-      v-model="confirmModal.show"
-      title="Status Change"
-      show-close
-      backdrop
-      @update:model-value="onConfirmClose($event)"
-    >
-      <p>
-        Are you sure you want to change
-        <strong>{{ confirmModal.title }}</strong> status?
-      </p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="onConfirmClose(false)">
-            Cancel
-          </x-button>
-          <x-button size="sm" color="primary" @click.prevent="onUpdateConfirm">
-            Yes, confirmed!
           </x-button>
         </div>
       </template>
