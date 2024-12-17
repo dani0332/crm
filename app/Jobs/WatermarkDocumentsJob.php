@@ -19,17 +19,15 @@ class WatermarkDocumentsJob implements ShouldQueue
     public $timeout = 120; // 2 minutes
     public $tries = 3;
     private $quoteDocumentId;
-    private $tempFilePath;
     private $uuid;
     private $documentTypeId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteDocumentId, $tempFilePath, $uuid, $documentTypeId)
+    public function __construct($quoteDocumentId, $uuid, $documentTypeId)
     {
         $this->quoteDocumentId = $quoteDocumentId;
-        $this->tempFilePath = $tempFilePath;
         $this->uuid = $uuid;
         $this->documentTypeId = $documentTypeId;
     }
