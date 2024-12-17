@@ -39,7 +39,7 @@ class WatermarkDocumentsJob implements ShouldQueue
      */
     public function handle()
     {
-        info('watermark job started');
+        info('watermark job started for '.$this->uuid);
         $quoteDocument = QuoteDocument::find($this->quoteDocumentId);
         $documentType = DocumentType::find($this->documentTypeId);
 
@@ -70,6 +70,6 @@ class WatermarkDocumentsJob implements ShouldQueue
             'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
             'watermarked_doc_url' => $watermarkData['watermarked_doc_url'] ?? null,
         ]);
-        info('watermark job completed');
+        info('watermark job completed for '.$this->uuid);
     }
 }

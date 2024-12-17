@@ -482,7 +482,7 @@ class QuoteDocumentService extends BaseService
             $templateId = $pdf->importPage($pageNo);
             $size = $pdf->getTemplateSize($templateId);
 
-            Log::info('Page size: '.json_encode($size));
+            // Log::info('Page size: '.json_encode($size));
 
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
             // Add watermark
