@@ -299,4 +299,14 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->child()->exists();
     }
+
+    public function isAdult()
+    {
+        return $this->customerMembers->where('age', '<', 65)->count() > 0;
+    }
+
+    public function isSenior()
+    {
+        return $this->customerMembers->where('age', '>=', 65)->count() > 0;
+    }
 }
