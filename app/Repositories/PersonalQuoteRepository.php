@@ -15,9 +15,9 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\GetWatermarkPropertyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +26,6 @@ use Illuminate\Support\Facades\DB;
 class PersonalQuoteRepository extends BaseRepository
 {
     use GenericQueriesAllLobs;
-    use GetWatermarkPropertyTrait;
 
     public function model()
     {
@@ -109,7 +108,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $quote = $this->getQuoteObject($quoteType ?? '', $id);
             }
 
-            $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType, $insuranceProviderId);
+            $isWaterMarkQualifyDoc = app(QuoteDocumentService::class)->getWatermarkProperty($quote, $documentType, $insuranceProviderId);
 
             $originalName = sanitizeFileName($file->getClientOriginalName());
             $docName = preg_replace('/\s+/', '', $originalName);
@@ -138,7 +137,9 @@ class PersonalQuoteRepository extends BaseRepository
             // info('Document array prepared for creation', $document);
 
             try {
-                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, $isWaterMarkQualifyDoc, $data, $docName) {
+                $quoteDocument = null;
+
+                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, &$quoteDocument) {
 
                     $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
                     $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
@@ -159,12 +160,15 @@ class PersonalQuoteRepository extends BaseRepository
 
                     $quoteDocument = $quote->documents()->create($document);
                     info('Document uploaded - Ref: '.$quote->code);
-                    if ($isWaterMarkQualifyDoc) {
-                        WatermarkDocumentsJob::dispatch(
-                            $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
-                        );
-                    }
                 });
+
+                if ($isWaterMarkQualifyDoc && $quoteDocument) {
+                    WatermarkDocumentsJob::dispatch(
+                        $quoteDocument->id, $data['quote_uuid'], $documentType->id
+                    );
+                } else {
+                    info('Watermkark job not dispatched - Ref: '.$quote->code);
+                }
 
                 if (! $insuranceProviderId && request()->is_send_update) {
                     info('Insurance Provider not found - Ref: '.$quote->code);
