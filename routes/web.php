@@ -1,7 +1,9 @@
 <?php
 
 use App\Enums\EnvEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
@@ -75,7 +77,9 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Models\CarQuote;
 use App\Services\AddBatchForNonMotors;
+use App\Services\SplitPaymentService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -668,3 +672,4 @@ Route::get('/add-batch-number', function () {
 //     }
 
 // });
+Route::get('/receipt-generate', [CentralController::class, 'manualReceiptGeneration']);

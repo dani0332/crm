@@ -8,6 +8,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
@@ -52,11 +53,14 @@ use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\HomeQuote;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
@@ -615,5 +619,259 @@ class CentralController extends Controller
         $zip->close();
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    public function manualReceiptGeneration(Request $request)
+    {
+        info('Manual Receipt Generation Started for Car Leads');
+        $carLeadsCode = [ 
+            "CAR-UUERY39K",
+            "CAR-8D2Z3LGD",
+            "CAR-RJ7M4LWY",
+            "Car-ELPMZM6L",
+            "CAR-X929XQK8",
+            "CAR-FDXNL6NL",
+            "CAR-GUBKU2YJ",
+            "CAR-NE4ATGHJ",
+            "CAR-P7EM3LC8",
+            "CAR-NXFPCDJV",
+            "CAR-27XARWA5",
+            "CAR-EHBY8WMU",
+            "CAR-65QW3N85",
+            "CAR-A9DK9U8A",
+            "CAR-96UFTDQT",
+            "Car-BFMREYVQ",
+            "Car-K7PDQM2C",
+            "CAR-SSSMJNHX",
+            "Car-86MDQN6G",
+            "CAR-D5F5LP4S",
+            "CAR-NV7X2EF5",
+            "Car-6UVF37RQ",
+            "CAR-YYWB84WK",
+            "CAR-TZWKBFEY",
+            "CAR-3EQ7L7L2",
+            "Car-DYUS8X49",
+            "Car-2JRLZSFK",
+            "CAR-4LLF5R4H",
+            "CAR-WNF42JWK",
+            "CAR-56JB2HU8",
+            "CAR-5Z5799HG",
+            "CAR-4XSGTVBL",
+            "CAR-LRK35NFC",
+            "Car-WFZJ75A7",
+            "CAR-2JPYZUB8",
+            "CAR-DTX42TWH",
+            "CAR-BZX5U2W3",
+            "Car-FH4EBXE9",
+            "CAR-4VFF9MCA",
+            "CAR-M9UXXZTQ",
+            "CAR-G78X3FKG",
+            "Car-H7PP4YXN",
+            "CAR-CEQF6QCD",
+            "Car-PR5MTJ3X",
+            "Car-AKUHLBCM",
+            "CAR-FRRTV889",
+            "CAR-RXJ4XKC4",
+            "Car-BHQXBB3B",
+            "CAR-WPDPNPHL",
+            "CAR-2B5YGR5R",
+            "CAR-TWFRQUF2",
+            "CAR-W3BUENNC",
+            "CAR-E3XAT4RN",
+            "Car-DQP5AB8B",
+            "CAR-5CXWFQCZ",
+            "CAR-TCS9KL28",
+            "CAR-ADXYTDWJ",
+            "CAR-THM3D3AS",
+            "Car-WBEHJ7WZ",
+            "CAR-NMZNFK22",
+            "CAR-5SJHDAYA",
+            "CAR-HWDM5WAY",
+            "CAR-Z22TSD8C",
+            "CAR-VCXGWKAJ",
+            "CAR-PSHEN55Y",
+            "CAR-XB79SPC7",
+            "CAR-THBA5MAZ",
+            "CAR-PCEF7EX7",
+            "CAR-2ACERA47",
+            "CAR-8LA8K8BL",
+            "CAR-RS4ALLSB",
+            "CAR-SGX5ES4T",
+            "CAR-UG3T3XCM",
+            "CAR-B42GCGWS",
+            "CAR-WRTNLCD3",
+            "CAR-LHCXGD5J",
+            "CAR-SZPP3ST2",
+            "CAR-FTR8FXPM",
+            "CAR-W5C4QPRF",
+            "CAR-G3VS3E62",
+            "CAR-NGKJMJ22",
+            "CAR-HVS937SY",
+            "CAR-CSJ2AJWW",
+            "CAR-ZPJE9AZT",
+            "CAR-CJ7XDTS2",
+            "Car-Q2VML99M",
+            "Car-33H58KCJ",
+            "CAR-2WC4N6PW",
+            "CAR-DFSZ4KCV",
+            "CAR-ZJSELQMP",
+            "CAR-J6J6RKHB",
+            "CAR-EACW3LTX",
+            "CAR-F2GEUQGH",
+            "CAR-27D82VW3",
+            "CAR-2Y2PFTE3",
+            "CAR-S8U7X9NZ",
+            "CAR-7TGYCW5F",
+            "CAR-QGZG3QCH",
+            "CAR-CF5U3VUQ",
+            "CAR-QD5V7YPZ",
+            "CAR-JYWN834R",
+            "CAR-LGXA4G7U",
+            "CAR-YUS3NNYP",
+            "CAR-SGRZBFTK",
+            "CAR-CG73ZU8D",
+            "CAR-N7MSVWVY",
+            "CAR-DEV92F32",
+            "CAR-TR5R6EDJ",
+            "CAR-CYS9RENJ",
+            "CAR-E3TNBHLM",
+            "CAR-RNVBLEN5",
+            "CAR-2EJMDJF5",
+            "CAR-9L9GFCLA",
+            "CAR-6FAEVSH9",
+            "CAR-8D9NXWMZ",
+            "CAR-F5RUWW3G",
+            "CAR-ATC8UGMU",
+            "CAR-JTZRYNJF",
+            "CAR-JFYRRJDL",
+            "CAR-X8WFNDS4",
+            "CAR-7TGMWWF7",
+            "CAR-35CQBCW2",
+            "CAR-LAWTDPYA",
+            "CAR-QAKWUNY8",
+            "CAR-QY4K8KA9",
+            "CAR-22ADWBVJ",
+            "CAR-8EY8QUTL",
+            "CAR-84QXYVVX",
+            "CAR-AUQE7WPG",
+            "CAR-GLLP7BBY",
+            "CAR-FWWLA9SS",
+            "CAR-Q7WQQLWW",
+            "CAR-HJVXX54H",
+            "CAR-XJ52KNRA",
+            "CAR-3Q9C8BUA",
+            "CAR-R6M7GDRW",
+            "CAR-YWUSA4K7",
+            "CAR-WRSN5DB7",
+            "CAR-ZCSQYRTE",
+            "CAR-HN2CYGBX",
+            "CAR-ET73AGWJ",
+            "CAR-CKV4GPN2",
+            "CAR-65RQ7BNS",
+            "CAR-RS56ZM9D",
+            "CAR-ZHVMALLS",
+            "CAR-83XWYNPF",
+            "CAR-VYVSNLT8",
+            "CAR-4N7MXXRZ",
+            "CAR-86RMB938",
+            "CAR-73FRATK5",
+            "CAR-6FRSPHNS",
+            "CAR-V4MYELF7",
+            "CAR-X2D5CDGJ",
+            "CAR-UHBMDHM4",
+            "CAR-X3YN7DB3",
+            "CAR-9K2NH6JH",
+            "CAR-C7DTAZU7",
+            "CAR-RV5AZBGW",
+            "CAR-7TDWWSKH",
+            "CAR-WZP4Q692",
+            "CAR-K98DJPK7",
+            "CAR-JPGUGG6B",
+            "CAR-V94VG992",
+            "CAR-F897ABVA",
+            "CAR-LZVBER87",
+            "CAR-DSGV6FHX",
+            "CAR-S2PFEFCF",
+            "CAR-4YJBCUNM",
+            "CAR-HJS5RA6T",
+            "CAR-F3EPSEPP",
+            "CAR-PW36NPW4",
+            "CAR-ZWM65NYG",
+            "CAR-AT7X6LDX",
+            "CAR-RG8GDT9V",
+            "CAR-X6U5LNHW",
+            "CAR-2X5W6WSB",
+            "CAR-AURZM842",
+            "CAR-5LEF2HQW",
+            "CAR-H6TC7H75",
+            "CAR-2VUFZ2SJ",
+            "CAR-VMG3XGPU",
+            "CAR-NVWC6MMP",
+            "CAR-C4525JX7",
+            "CAR-DWBQCEX2",
+            "CAR-S5TFF4WB",
+            "CAR-CQNUC4L4",
+            "CAR-36QGJL6H",
+            "CAR-F7FX2BV5",
+            "CAR-QSM8KA5D",
+            "CAR-J2J8YG9X",
+            "CAR-UDHHC7HY",
+            "CAR-LVJFSTBT",
+            "CAR-X47Q9Y26"
+        ];
+        $carLeadsCode = [
+            "CAR-769SZ46R", "CAR-FK5WM4BN", "CAR-5RY29V4T", "CAR-X35CLH7T", "CAR-SLFYQH3V", "CAR-XVVB7DT2", "CAR-9H7FFM34", "CAR-MWX77VVJ"
+        ];
+        $carLeads = CarQuote::whereIn('code', $carLeadsCode)->with('payments.paymentSplits.documents');
+
+        $carLeads->chunk(25, function ($quotes) {
+            foreach ($quotes as $quote) {
+                $this->processLeads($quote, $quote->code);
+            }
+        });
+
+        info('Manual Receipt Generation Started for Home Leads');
+        $homeLeadsCode = [
+            "HOM-FXHZYECK",
+            "HOM-8QYZP37G",
+            "HOM-SXU7D6ZK",
+            "HOM-KF3H6YQB",
+            "HOM-36QMJ2GA",
+        ];
+
+        $homeLeads = HomeQuote::whereIn('code', $homeLeadsCode)->with('payments.paymentSplits.documents');
+
+        foreach ($homeLeads as $quote){
+            $this->processLeads($quote);  
+        }
+
+        info('Manual Receipt Generation Started for Business Leads');
+        $businessLeadsCode = [
+            "BUS-HASZRWP5"
+        ];
+        $businessLeads = BusinessQuote::whereIn('code', $businessLeadsCode)->with('payments.paymentSplits.documents');
+
+        foreach ($businessLeads as $quote){
+            $this->processLeads($quote);  
+        }
+        
+        echo "process finished";
+    }
+
+    private function processLeads($quote){
+        if ($quote){
+            info("Processing Quote Code: {$quote->code}");
+            $paymentSplits = $quote->payments->first()->paymentSplits;
+            foreach ($paymentSplits as $paymentSplit){
+                if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])){
+                    if (count($paymentSplit->documents) > 0){
+                        info("Document exists for Payment code {$paymentSplit->code}");
+                        continue;
+                    }
+                    app(SplitPaymentService::class)->createReceipt(quoteTypeCode::Car, $quote->id, $paymentSplit);
+                    info("Document generated for Payment Code {$paymentSplit->code}");
+                }
+            }
+        }
     }
 }
