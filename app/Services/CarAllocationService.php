@@ -69,7 +69,6 @@ class CarAllocationService extends AllocationService
         if (! $overrideAdvisorId) {
             $carQuoteQuery->whereNull('advisor_id');
         }
-
         return $carQuoteQuery->first();
     }
 
@@ -261,7 +260,7 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId, $lead)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
         info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
@@ -277,6 +276,19 @@ class CarAllocationService extends AllocationService
             }
             info('TeamID is: '.$teamId.' and available users for this team are: '.json_encode($teamUserIds));
             $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
+        }
+
+        // get rules for the lead
+        $rules = $this->getRules($lead);
+
+        // if any rule is not found then we should not consider advisors which are part of the rule
+        if (count($rules) == 0) {
+            
+            $ruleUserIds = $this->getRuleUsers();
+            
+            info('No rule found against this lead ('.$lead->uuid.'), so filtering rule users: '.json_encode($ruleUserIds));
+
+            $tierUserIds = array_diff($tierUserIds->toArray(), $ruleUserIds);
         }
 
         // Define the order in which user statuses should be considered.
