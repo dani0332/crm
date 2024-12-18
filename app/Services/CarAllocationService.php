@@ -69,6 +69,7 @@ class CarAllocationService extends AllocationService
         if (! $overrideAdvisorId) {
             $carQuoteQuery->whereNull('advisor_id');
         }
+
         return $carQuoteQuery->first();
     }
 
@@ -285,7 +286,8 @@ class CarAllocationService extends AllocationService
     private function fetchTierUserIds($tierId, $advisorId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
-        info("Users against Tier ID {$tierId}: " . json_encode($tierUserIds->toArray()));
+        info("Users against Tier ID {$tierId}: ".json_encode($tierUserIds->toArray()));
+
         return $tierUserIds;
     }
 
@@ -300,7 +302,8 @@ class CarAllocationService extends AllocationService
             ->pluck('user_id')
             ->toArray();
 
-        info("Team ID {$teamId} available users: " . json_encode($teamUserIds));
+        info("Team ID {$teamId} available users: ".json_encode($teamUserIds));
+
         return array_intersect($tierUserIds->toArray(), $teamUserIds);
     }
 
@@ -310,7 +313,8 @@ class CarAllocationService extends AllocationService
 
         if ($rules->isEmpty()) {
             $ruleUserIds = $this->getRuleUsers();
-            info("No rules found for lead ({$lead->uuid}), excluding rule users: " . json_encode($ruleUserIds));
+            info("No rules found for lead ({$lead->uuid}), excluding rule users: ".json_encode($ruleUserIds));
+
             return array_diff($tierUserIds->toArray(), $ruleUserIds);
         }
 
@@ -329,7 +333,7 @@ class CarAllocationService extends AllocationService
                 return $eligibleUsers->toArray();
             }
 
-            info("No users found with status: " . UserStatusEnum::getUserStatusText($status));
+            info('No users found with status: '.UserStatusEnum::getUserStatusText($status));
         }
 
         return [];
@@ -342,7 +346,7 @@ class CarAllocationService extends AllocationService
             UserStatusEnum::OFFLINE,
         ];
 
-        if (!$isReassignmentJob) {
+        if (! $isReassignmentJob) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
