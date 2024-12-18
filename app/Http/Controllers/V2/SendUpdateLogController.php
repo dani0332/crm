@@ -243,6 +243,7 @@ class SendUpdateLogController extends Controller
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
             'isSentOrBooked' => $isSentOrBooked,
+            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog),
         ]);
     }
 

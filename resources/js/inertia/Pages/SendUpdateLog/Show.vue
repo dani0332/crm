@@ -41,6 +41,7 @@ const props = defineProps({
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
   isSentOrBooked: Boolean,
+  disableMainBtn: String,
 });
 
 const page = usePage();
@@ -670,6 +671,7 @@ const isEndorsementNumberRequired = computed(() => {
       @update-error-status="handleErrorStatusUpdate"
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
       :is-comm-vat-not-app-enabled="props.isCommVatNotAppEnabled"
+      :disable-main-btn="props.disableMainBtn"
     />
 
     <AuditLogs

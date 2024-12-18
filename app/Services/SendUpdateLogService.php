@@ -1509,4 +1509,21 @@ class SendUpdateLogService
         ];
     }
 
+    /*
+     * This method is used to check if the main button should be disabled or not, for Tap Payment integration.
+     * @param $sendUpdateLog - Send Update Log
+     * @return string
+     */
+    public function disableMainBtn($sendUpdateLog): string
+    {
+        if (in_array($sendUpdateLog->category?->code, [
+            SendUpdateLogStatusEnum::EF,
+            SendUpdateLogStatusEnum::CI,
+            SendUpdateLogStatusEnum::CIR,
+        ]) && empty($sendUpdateLog->endorsement_number)) {
+            return 'Endorsement Number is required before proceeding.';
+        }
+
+        return '';
+    }
 }
