@@ -808,7 +808,7 @@ class EmbeddedProductRepository extends BaseRepository
             ],
         ];
         $paymentGatewayEndpoint = $data['payment_gateway_id'] == PaymentGatewayIdEnum::TAP_PAYMENT_GATEWAY ? 'tap' : 'checkout';
-        info('Payment code: '.$data['uuid'].'Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/cancel', 'post', $planData);
 
         return $response;
