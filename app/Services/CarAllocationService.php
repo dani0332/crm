@@ -315,7 +315,7 @@ class CarAllocationService extends AllocationService
             $ruleUserIds = $this->getRuleUsers();
             info("No rules found for lead ({$lead->uuid}), excluding rule users: ".json_encode($ruleUserIds));
 
-            return array_diff($tierUserIds->toArray(), $ruleUserIds);
+            return array_diff($tierUserIds, $ruleUserIds);
         }
 
         return $tierUserIds;
