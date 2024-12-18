@@ -28,7 +28,6 @@
         div,
         span,
         table,
-        tbody,
         tfoot,
         thead,
         tr,
@@ -80,7 +79,6 @@
             border-radius: 10px;
             width: 100%;
             border-collapse: collapse;
-            margin-top: 120px;
             /* Add space to prevent overlap */
         }
 
@@ -386,7 +384,6 @@
         }
 
         main {
-            margin-top: 120px;
             /* Push main content down */
             padding: 20px;
         }
@@ -646,9 +643,9 @@
     {{-- PDF Page Inner Content --}}
     <main>
         <table>
-            <caption class="text-sm text-right" style="padding: 10px;">Your home insurance referance ID is <span
-                    class="text-blue">HOM : 12ERTYWE</span></caption>
             <thead>
+                <caption class="text-sm text-right" style="padding: 10px;">Your home insurance referance ID is <span
+                        class="text-blue">HOM : 12ERTYWE</span></caption>
                 <tr>
                     <th class="alfred" id="alfred-th" rowspan="2">
                         <img src="{{ public_path('images/home-alfred.png') }}" />
@@ -930,6 +927,7 @@
             </div>
         </table>
     </footer>
+
     {{-- Last Page --}}
     <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}" class="full-page-image" />
 </body>
