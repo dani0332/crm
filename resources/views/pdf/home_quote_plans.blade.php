@@ -639,6 +639,12 @@
             </div>
             <h3>Your Tailor Made <br />Home Insurance Comparison Table</h3>
         </div>
+    </header>
+
+
+
+    {{-- PDF Page Inner Content --}}
+    <main>
         <table>
             <caption class="text-sm text-right" style="padding: 10px;">Your home insurance referance ID is <span
                     class="text-blue">HOM : 12ERTYWE</span></caption>
@@ -736,14 +742,6 @@
                     @endforeach
                 </tr>
             </thead>
-        </table>
-    </header>
-
-
-
-    {{-- PDF Page Inner Content --}}
-    <main>
-        <table>
             <tbody>
                 @php $featCount = 0 @endphp
                 @foreach ($features as $feature)
