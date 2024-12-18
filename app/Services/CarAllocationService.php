@@ -261,25 +261,87 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId, $lead)
     {
-        $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
-        info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
+        // Get initial tier users
+        $tierUserIds = $this->fetchTierUserIds($tierId, $advisorId);
+        $tierUserIds = $this->applyRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
-        $tierUserIds = $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
-
+        // Apply team filter if a team ID is provided
         if ($teamId) {
-            $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
-            if ($teamUserIds->count() > 0) {
-                $teamUserIds = $teamUserIds->pluck('user_id')->toArray();
-            } else {
-                $teamUserIds = [];
-            }
-            info('TeamID is: '.$teamId.' and available users for this team are: '.json_encode($teamUserIds));
-            $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
+            $tierUserIds = $this->filterUsersByTeam($tierUserIds, $teamId);
         }
 
-        // Define the order in which user statuses should be considered.
+        // Apply rule-based exclusions if no rules exist for the lead
+        $tierUserIds = $this->applyRuleExclusions($tierUserIds, $lead);
+
+        // Get eligible users by status in the defined order
+        $eligibleUsers = $this->fetchEligibleUsersByStatus($tierUserIds, $advisorId, $teamId, $isReassignmentJob);
+
+        return $eligibleUsers ?: [];
+    }
+
+    // Helper methods
+
+    private function fetchTierUserIds($tierId, $advisorId)
+    {
+        $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
+        info("Users against Tier ID {$tierId}: ".json_encode($tierUserIds->toArray()));
+
+        return $tierUserIds;
+    }
+
+    private function applyRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId)
+    {
+        return $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
+    }
+
+    private function filterUsersByTeam($tierUserIds, $teamId)
+    {
+        $teamUserIds = UserTeams::where('team_id', $teamId)
+            ->pluck('user_id')
+            ->toArray();
+
+        info("Team ID {$teamId} available users: ".json_encode($teamUserIds));
+
+        return array_intersect($tierUserIds->toArray(), $teamUserIds);
+    }
+
+    private function applyRuleExclusions($tierUserIds, $lead)
+    {
+        $rules = $this->getRules($lead);
+
+        if (empty($rules)) {
+            $ruleUserIds = $this->getRuleUsers();
+            info("No rules found for lead ({$lead->uuid}), excluding rule users: ".json_encode($ruleUserIds));
+
+            return array_diff($tierUserIds->toArray(), $ruleUserIds);
+        }
+
+        return $tierUserIds;
+    }
+
+    private function fetchEligibleUsersByStatus($tierUserIds, $advisorId, $teamId, $isReassignmentJob)
+    {
+        $statusOrder = $this->determineStatusOrder($isReassignmentJob);
+
+        foreach ($statusOrder as $status) {
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId, $teamId);
+
+            if (! empty($eligibleUsers)) {
+                info('Found users with status: '.UserStatusEnum::getUserStatusText($status));
+
+                return $eligibleUsers->toArray();
+            }
+
+            info('No users found with status: '.UserStatusEnum::getUserStatusText($status));
+        }
+
+        return [];
+    }
+
+    private function determineStatusOrder($isReassignmentJob)
+    {
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
@@ -289,22 +351,7 @@ class CarAllocationService extends AllocationService
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
-        // Iterate through user statuses in the specified order.
-        foreach ($statusOrder as $status) {
-            // Get eligible users with the specified status.
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId, $teamId);
-
-            // If eligible users are found, log the results and return them.
-            if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
-
-                return $eligibleUsers->toArray();
-            }
-            info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
-        }
-
-        // If no eligible users are found, return an empty array.
-        return [];
+        return $statusOrder;
     }
 
     public function updateTierBeforeEligibleUserIdentification($lead)

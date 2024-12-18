@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
+            PermissionsSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
             InsurerTaxInvoicePermissionsSeeder::class,
