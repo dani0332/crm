@@ -328,7 +328,7 @@ class CarAllocationService extends AllocationService
         foreach ($statusOrder as $status) {
             $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId, $teamId);
 
-            if (!empty($eligibleUsers) && $eligibleUsers->isNotEmpty()) {
+            if ($eligibleUsers->isNotEmpty()) {
                 info("Found users with status: " . UserStatusEnum::getUserStatusText($status));
                 return $eligibleUsers->toArray();
             }
