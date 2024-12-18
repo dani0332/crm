@@ -311,7 +311,7 @@ class CarAllocationService extends AllocationService
     {
         $rules = $this->getRules($lead);
 
-        if (empty($rules)) {
+        if ($rules->isEmpty()) {
             $ruleUserIds = $this->getRuleUsers();
             info("No rules found for lead ({$lead->uuid}), excluding rule users: ".json_encode($ruleUserIds));
 
@@ -328,9 +328,8 @@ class CarAllocationService extends AllocationService
         foreach ($statusOrder as $status) {
             $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId, $teamId);
 
-            if (! empty($eligibleUsers)) {
-                info('Found users with status: '.UserStatusEnum::getUserStatusText($status));
-
+            if ($eligibleUsers->isNotEmpty()) {
+                info("Found users with status: " . UserStatusEnum::getUserStatusText($status));
                 return $eligibleUsers->toArray();
             }
 
