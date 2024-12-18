@@ -36,6 +36,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Enums\RuleEnum;
 use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 
 class CarAllocationService extends AllocationService
 {
@@ -95,7 +96,7 @@ class CarAllocationService extends AllocationService
 
             $carValue = 0;
             if($carLead->registration_type == CarRegistrationType::COMPANY) {
-                if(!$carLead->is_commercial){
+                if($carLead->vehicle_use == CarVehicleUse::PRIVATE) {
                     if (! empty($axaValuation)) {
                         $firstAxaValuation = reset($axaValuation); // Get the first element of the array
                         $carValue = $firstAxaValuation->carValue;
@@ -403,10 +404,11 @@ class CarAllocationService extends AllocationService
                 ($commercialCarMake && $commercialCarModel)
             ) {
                 if($lead->registration_type == CarRegistrationType::COMPANY) {
-
+                    info('Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: '.$lead->uuid);
                     return $this->getRulesForVehicleUse($lead);
                 }
                 else {
+                    info('Lead is not registered as a company, applying commercial rules for lead with Ref-ID: '.$lead->uuid);
                     return $this->getCommercialRule($lead);
                 }
             }
@@ -448,18 +450,19 @@ class CarAllocationService extends AllocationService
     }
     public function getRulesForVehicleUse($lead)
     {
-        if(!$lead->is_commercial) {
+        if ($lead->vehicle_use  == CarVehicleUse::PRIVATE) {
+            info( self::class." - Lead is not commercial, applying private use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
             return $this->getCompanyUsageRules($lead, RuleEnum::PRIVATE_USE->value);
-        }
-        else {
-            return $this->getCommercialRule($lead,RuleEnum::COMMERCIAL_USE->value);
+        } else {
+            info(self::class." - Lead is commercial, applying commercial use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+            return $this->getCommercialRule($lead, RuleEnum::COMMERCIAL_USE->value);
         }
     }
 
     private function getCompanyUsageRules($lead,$ruleName=null)
     {
         if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_QUOTE ) {
-            info("Quote found for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} |  Time: ".now());
+            info(self::class." - Applying rule: {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} | Time: ".now());
             return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->join('users', 'users.id', 'rule_users.user_id')
@@ -472,7 +475,7 @@ class CarAllocationService extends AllocationService
             )->get();
         }
         else {
-            info("No rule found for {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} Time: ".now());
+            info(self::class." -No rule found for {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} Time: ".now());
         }
 
         return [];

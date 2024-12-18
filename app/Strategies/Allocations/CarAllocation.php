@@ -11,6 +11,8 @@ use App\Services\CarAllocationService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
+use App\Enums\CarRegistrationType;
+use App\Enums\TiersEnum;
 
 class CarAllocation implements Allocation
 {
@@ -43,6 +45,14 @@ class CarAllocation implements Allocation
             }
 
             $tier = $this->determineTier($lead);
+
+            if ($tier->name == TiersEnum::TIER_R && $lead->registration_type == CarRegistrationType::COMPANY) {
+                info(self::class." - Lead is Tier R and from Company Webform. Skipping allocation for Ref-ID: {$lead->uuid} | Time: ".now());
+
+                $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
+                return AllocationFactory::createResponse(0, 'Lead is Tier R and from Company Webform. Skipping allocation.', Response::HTTP_OK);
+            }
 
             if ($tier) {
                 $response = $this->processTier($lead, $tier, $evaluateTierOnly);
