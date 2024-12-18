@@ -234,9 +234,12 @@ class EmbeddedProductRepository extends BaseRepository
 
     private function canCancelPayment($transaction, $quoteTypeId)
     {
-        if ($transaction && $transaction->payments->first()) {
-            $payment = $transaction->payments->first();
-            if ($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
+        if ($transaction) {
+            $payment = $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::TRAVEL
+                ? $transaction->travelAnnualPayments
+                : $transaction->payments->first();
+
+            if ($payment && $payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
 
                 if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
                     return CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->count() == 0;
@@ -711,18 +714,22 @@ class EmbeddedProductRepository extends BaseRepository
         $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
         $type = QuoteType::where('code', $data['modelType'])->first();
 
-        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest'])->where('quote_request_id', $data['quote_id'])
+        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest', 'travelAnnualPayments', 'product.embeddedProduct'])->where('quote_request_id', $data['quote_id'])
             ->where('quote_type_id', $type->id)
             ->where('is_selected', true)
             ->whereIn('product_id', $embeddedProductOptionsIds)
             ->get();
 
         if ($embededTransaction->isNotEmpty()) {
-            if (! empty($embededTransaction[0]['payments'][0])) {
-                $transaction = $embededTransaction[0];
-                $payment = $transaction['payments'][0];
-                $paymentStatus = $payment['payment_status_id'];
 
+            $transaction = $embededTransaction->first();
+            $payment = $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::TRAVEL
+                ? $transaction->travelAnnualPayments
+                : $transaction->payments->first();
+
+            if (! empty($payment)) {
+                
+                $paymentStatus = $payment['payment_status_id'];
                 $maxAmount = 0;
                 $errorMessage = 'Cancel amount should not exceeded from transaction amount';
                 if (in_array($paymentStatus, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])) {
