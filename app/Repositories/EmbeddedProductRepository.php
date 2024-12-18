@@ -728,7 +728,7 @@ class EmbeddedProductRepository extends BaseRepository
                 : $transaction->payments->first();
 
             if (! empty($payment)) {
-                
+
                 $paymentStatus = $payment['payment_status_id'];
                 $maxAmount = 0;
                 $errorMessage = 'Cancel amount should not exceeded from transaction amount';
