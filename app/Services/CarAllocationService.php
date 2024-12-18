@@ -304,7 +304,7 @@ class CarAllocationService extends AllocationService
 
         info("Team ID {$teamId} available users: ".json_encode($teamUserIds));
 
-        return array_intersect($tierUserIds->toArray(), $teamUserIds);
+        return array_intersect(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $teamUserIds);
     }
 
     private function applyRuleExclusions($tierUserIds, $lead)
@@ -315,7 +315,7 @@ class CarAllocationService extends AllocationService
             $ruleUserIds = $this->getRuleUsers();
             info("No rules found for lead ({$lead->uuid}), excluding rule users: ".json_encode($ruleUserIds));
 
-            return array_diff($tierUserIds, $ruleUserIds);
+            return array_diff(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $ruleUserIds);
         }
 
         return $tierUserIds;
