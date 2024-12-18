@@ -276,6 +276,14 @@ const endorsementNumberValidation = event => {
     event.preventDefault();
   }
 };
+
+const isEndorsementRequired = computed(() => {
+  return [
+    props.sendUpdateStatusEnum.EF,
+    props.sendUpdateStatusEnum.CI,
+    props.sendUpdateStatusEnum.CIR,
+  ].includes(props.sendUpdateLog.category.code);
+});
 </script>
 
 <template>
@@ -510,9 +518,10 @@ const endorsementNumberValidation = event => {
                   </dt>
                   <dd>
                     <x-input
+                        :rules="isEndorsementRequired ? [isRequired] : []"
                         v-model="sendUpdateForm.endorsement_number"
                         size="xs"
-                        :disabled="!state.edit"
+                        :disabled="!state.edit || isUpdateBooked"
                         placeholder="Enter Endorsement Number"
                         maxlength="23"
                         @keypress="endorsementNumberValidation"
