@@ -405,7 +405,7 @@ const isEndorsementRequired = computed(() => {
                     <dd>
                       <x-select
                         size="xs"
-                        :disabled="!state.edit"
+                        :disabled="!state.edit || isUpdateBooked"
                         v-model="sendUpdateForm.option_id"
                         :options="updateLogOptions"
                       />
