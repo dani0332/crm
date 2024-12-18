@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -743,6 +744,8 @@ class EmbeddedProductRepository extends BaseRepository
                         ->delete();
 
                     $paymentSplit = PaymentSplits::where('code', $transaction->code)->orderBy('sr_no', 'desc')->first();
+                    $payment = $paymentSplit->payment;
+                    $data['payment_gateway_id'] = $payment->payment_gateway_id;
                     $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
                     PaymentAction::create([
                         'payment_code' => $transaction->code,
@@ -804,8 +807,9 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
             ],
         ];
-
-        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+        $paymentGatewayEndpoint = $data['payment_gateway_id'] == PaymentGatewayIdEnum::TAP_PAYMENT_GATEWAY ? 'tap' : 'checkout';
+        info('Payment code: '.$data['uuid'].'Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/cancel', 'post', $planData);
 
         return $response;
     }
