@@ -101,13 +101,12 @@
         }
 
         .header h3 {
-            float: right;
-            /* text-align: right; */
-            padding-right: 18px;
             margin: 0;
             padding-top: 20px;
-            text-align: center;
             font-size: 18px;
+            float: right;
+            text-align: right;
+            padding-right: 18px;
         }
 
         tbody>tr>td {
@@ -132,9 +131,9 @@
         td>p,
         th>p {
             padding: 4px;
-            font-size: 14px !important;
+            font-size: 12px !important;
             text-align: center;
-            /* font-weight: normal; */
+            font-weight: normal;
         }
 
         .text-left {
@@ -195,6 +194,7 @@
         }
 
         .quote-info {
+            /* font-weight: bold; */
             text-align: right;
             vertical-align: bottom;
             margin-top: -1px;
@@ -203,7 +203,7 @@
             text-align: left;
             padding: 8px;
             max-width: 100%;
-            font-weight: bold;
+            font-weight: normal;
         }
 
         .info h5 {
@@ -242,7 +242,6 @@
             font-size: 10px;
             font-weight: bold;
             border-radius: 4px;
-            display: inline-block;
         }
 
         .btn-buy:hover {
@@ -267,19 +266,20 @@
         }
 
         footer {
-            position: fixed;
+            /* padding: 10px; */
+            width: 100%;
             bottom: 0px;
             left: 0px;
             right: 0px;
-            /* padding: 0px; */
+            padding: 0px;
             margin: 80px 0 0 0;
             background-color: #1d83bc;
             color: black;
             text-align: center;
+            position: fixed;
+            bottom: 0px;
             height: 145px;
-            /* z-index: 1500; */
-            padding: 10px;
-            width: 100%;
+            z-index: 1500;
         }
 
         table.tbl-footer {
@@ -335,22 +335,20 @@
         }
 
         .header {
-            font-size: 19px;
-            /* height: 60px; */
-            /* max-height: 60px; */
-            background: #1d83bc;
-            color: #ffffff;
-            /* font-size: 16px; */
-            text-align: center;
-            padding: 8px 10px;
-            width: 100%;
-            height: 57px;
-            max-height: 57px;
+            right: 0;
+            /* z-index: 1000;  */
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            /* z-index: 1000;  */
+            display: block;
+            background: #1d83bc;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            padding: 8px 10px;
+            width: 100%;
+            height: 60px;
+            max-height: 60px;
         }
 
         .header .logo {
