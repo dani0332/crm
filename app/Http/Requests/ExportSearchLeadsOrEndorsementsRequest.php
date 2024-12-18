@@ -36,7 +36,13 @@ class ExportSearchLeadsOrEndorsementsRequest extends FormRequest
             'date_range' => 'nullable|array',
             'quote_status' => 'nullable|array',
             'payment_status' => 'nullable|array',
-            'line_of_business' => 'nullable|array',
+            'line_of_business' => ['nullable', function ($attribute, $value, $fail) {
+                if (! is_null($value)) {
+                    if (! is_array($value) && ! is_string($value)) {
+                        $fail($attribute.' must be either a string or an array');
+                    }
+                }
+            }],
             'business_insurance_type' => 'nullable|array',
             'currently_insured_with' => 'nullable|array',
             'department' => 'nullable|array',
