@@ -88,7 +88,8 @@ class TravelRenewalService extends BaseService
         $generatedBatchNumber = $this->generateBatchNumber($newPolicyExpiryDate);
         $batch = $this->getRenewalBatch($generatedBatchNumber, $newPolicyExpiryDate);
 
-        $customer = app(CustomerService::getCustomerByEmail($quote->customer_email));
+        $customerService = app(CustomerService::class);
+        $customer = $customerService->getCustomerByEmail($quote->customer_email);
         info(self::class." Processing renewal for old quote. Ref-ID: {$quote->uuid}. Initiating renewal process with updated policy details. | Time:".now());
         $destinationIds = collect($quote->TravelDestinations)->pluck('destination_id')->toArray();
         if (! empty($destinationIds)) {
