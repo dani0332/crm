@@ -206,7 +206,7 @@ trait QuoteModelTrait
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
     {
         $q->where(function ($sq) {
-            $sq->where('sic_advisor_requested', 1)->orWhere('payment_status_id', PaymentStatusEnum::AUTHORISED);
+            $sq->where('sic_advisor_requested', 1)->orWhereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
         });
     }
 
