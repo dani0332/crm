@@ -259,9 +259,33 @@
             background-color: #d7fbd0;
         }
 
-        .text-heading {
+        /* .text-heading {
             color: #ffffff;
             background-color: #1d83bc;
+        } */
+
+        /* .text-heading {
+            color: #ffffff;
+            background-image: url('{{ public_path('images/new-heading-title-bg-image.png') }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: auto;
+            display: inline-block;
+            width: 100%;
+        } */
+
+        .text-heading {
+            color: #ffffff;
+            background-image: url('{{ public_path('images/new-heading-title-bg-image.png') }}');
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 50px;
+            width: 100%;
+            display: table-cell;
+            padding: 0;
+            margin: 0;
         }
 
         .heading-desc {
@@ -405,6 +429,13 @@
             text-align: right;
             font-weight: bold;
         }
+
+        td,
+        th {
+            width: auto;
+            /* Ensures cells take up the necessary space */
+        }
+
 
         .content {}
     </style>
@@ -766,7 +797,8 @@
                                         $buyNowText = $buyNow;
                                     }
                                 @endphp
-                                <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">{{ $buyNowText }} .AED
+                                <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">{{ $buyNowText }}
+                                    .AED
                                     400</a>
                                 @if ($plans[$planId]->discountPremium)
                                 @else
