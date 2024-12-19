@@ -420,17 +420,18 @@ class SplitPaymentService
         info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' create receipt called from job '.($isFromJob ? 'true' : 'false'));
 
         try {
-            $quote = $this->getQuoteObject($modelType, $quoteId);
-            $quote->load(['customer', 'advisor']);
+            
+            if ($send_update_id > 0) {
+                $quote = SendUpdateLog::find($send_update_id);
+            } else {
+                $quote = $this->getQuoteObject($modelType, $quoteId);
+                $quote->load(['customer', 'advisor']);
+            }
             $data = $this->prepareReceiptData($quote, $splitPayment, $modelType);
-
             $documentType = $this->getDocumentType($modelType);
             $data['document_type_code'] = $documentType;
             $data['quote_uuid'] = $quote->uuid;
-            if ($send_update_id > 0) {
-                $quote = SendUpdateLog::find($send_update_id);
-            }
-
+            
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
@@ -464,7 +465,6 @@ class SplitPaymentService
         if ($splitPayment->captured_at != null) {
             $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->captured_at));
         }
-
         $data['insurance_company'] = $this->getInsuranceCompany($quote, $modelType);
         info('Insurance company for '.$quote->code.' is '.$data['insurance_company']);
         $splitPayment->load(['payment', 'paymentMethod']);
@@ -511,30 +511,24 @@ class SplitPaymentService
         $quote->load(['payments', 'insuranceProvider']);
         $payment = $quote->payments()->first();
         if ($modelType === QuoteTypes::CAR->value) {
+            $payment->load(['carPlan']);
+            $planName = optional($payment->carPlan)->text;
             $isCommercialVehicle = app(LeadAllocationService::class)->isCommercialVehicles($quote);
-            if ($isCommercialVehicle) {
+            if ($isCommercialVehicle || empty($planName)) {
                 return $quote->insuranceProvider->text;
             }
-            $payment->load(['carPlan']);
-
             return $payment->carPlan->text;
         }
         switch ($modelType) {
             case QuoteTypes::HEALTH->value:
                 $payment->load(['healthPlan']);
-
                 return $payment->healthPlan->text;
-
             case QuoteTypes::BIKE->value:
                 $payment->load(['bikePlan']);
-
                 return $payment->bikePlan->text;
-
             case QuoteTypes::TRAVEL->value:
                 $payment->load(['travelPlan']);
-
                 return $payment->travelPlan->text;
-
             default:
                 return $quote->insuranceProvider->text;
         }
