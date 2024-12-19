@@ -17,6 +17,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -120,6 +121,7 @@ class HandleInertiaRequests extends Middleware
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
+            'policyIssuanceEnum' => PolicyIssuanceEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
             'kycEnums' => Kyc::asArray(),

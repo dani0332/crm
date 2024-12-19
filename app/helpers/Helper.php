@@ -534,6 +534,9 @@ if (! function_exists('getBase64FileInfo')) {
 if (! function_exists('sanitizeFileName')) {
     function sanitizeFileName($fileName)
     {
+        // Remove any Unicode control characters, including non-breaking spaces
+        $fileName = preg_replace('/[\x{00}-\x{1F}\x{7F}\x{A0}]/u', '', $fileName);
+
         // Remove any Unicode control characters
         $fileName = preg_replace('/[[:cntrl:]]/', '', $fileName);
 
@@ -1537,7 +1540,7 @@ if (! function_exists('getInsuranceProvider')) {
             }
         }
 
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes) && isset($payment)) {
             $planRelationName = strtolower($quoteType).'Plan';
             $payment->load($planRelationName);
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
@@ -1562,5 +1565,14 @@ if (! function_exists('getInsuranceProvider')) {
         {
             return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
         }
+    }
+}
+
+if (! function_exists('isCHSAdvisor')) {
+    function isCHSAdvisor($userId)
+    {
+        $user = User::select('id')->chs()->first();
+
+        return $user?->id == $userId;
     }
 }

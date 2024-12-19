@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
@@ -23,6 +24,7 @@ use App\Models\SageApiLog;
 use App\Models\SageProcess;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
@@ -510,6 +512,7 @@ class SageApiService
 
         // check sage is enabled or not
         if (! isSageEnabled()) {
+            info('Policy Book : postBookPolicyToSage : Sage is not enabled');
             $returnMessage['message'] = 'Sage is not enabled';
 
             return $returnMessage;
@@ -534,6 +537,8 @@ class SageApiService
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
         $isTotalPriceZero = $payment->total_price == 0;
         if (! $isPaymentMethodCreditApproved && $isTotalPriceZero && $isPaymentFrequencyUpfront) {
+            info('Policy Book : postBookPolicyToSage : Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!');
+
             return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!'];
         }
 
@@ -549,10 +554,14 @@ class SageApiService
         /* Check Sage Vendor ID, GL Account ID, Insurer Customer ID, and Sage Customer ID*/
         $checkRequiredSageIds = $this->checkRequiredSageIds($sageRequest);
         if (! $checkRequiredSageIds['status']) {
+            info('Policy Book : postBookPolicyToSage : '.$checkRequiredSageIds['message']);
+
             return $checkRequiredSageIds;
         }
 
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            info('Policy Book : postBookPolicyToSage : Policy has been already booked!');
+
             return ['status' => true, 'message' => 'Policy has been already booked!'];
         }
 
@@ -585,6 +594,7 @@ class SageApiService
 
         if (! empty($missingFields)) {
             $message = implode(', ', $missingFields).' not found.';
+            info('Policy Book : postBookPolicyToSage : '.$message);
 
             return ['status' => false, 'message' => $message];
         }
@@ -661,8 +671,16 @@ class SageApiService
         } else {
             info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
+        $skipBookPolicyDocumentJob = false;
+        if ($quoteTypeId === QuoteTypeId::Travel) {
+            $quote->load('policyIssuance');
+            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
+                $skipBookPolicyDocumentJob = true;
+            }
+        }
 
-        if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+        info('Quote code : '.$quote->code.' Skip book policy document job '.$skipBookPolicyDocumentJob ? 'Yes' : 'No');
+        if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
@@ -1955,6 +1973,12 @@ class SageApiService
         } else {
             QuoteStatusLog::create($quoteLogData);
         }
+
+        if (in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED])) {
+            info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.' start assignAdvisor Quote Status ID : '.$quote->quote_status_id);
+            $this->assignAdvisor($quote, $quoteTypeId);
+        }
+
     }
 
     public function createSageProcess($quote, $sageRequest, $request)
@@ -2035,4 +2059,30 @@ class SageApiService
             info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command is already running, skipping execution.');
         }
     }
+
+    public function assignAdvisor($quote, $quoteTypeId)
+    {
+        info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - start');
+
+        $policyIssuanceAutomation = $quote?->policyIssuance;
+
+        if ($policyIssuanceAutomation) {
+            $quoteType = $policyIssuanceAutomation->quote_type;
+            $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider?->code);
+
+            /*if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
+            if ($insuranceProviderAutomation) {
+                info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
+                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
+            } else {
+                info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' Insurer : '.$insuranceProvider?->code.'automation class not found');
+            }
+        } else {
+            info('Policy Book : Quote '.$quote?->code.' : policy issuance automation not found');
+        }
+
+        info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - end');
+    }
+
 }

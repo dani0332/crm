@@ -10,7 +10,6 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
@@ -552,7 +551,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                                 [
                                     'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
                                     'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                                ]
+                                ],
                             );
                         }
                     } else {
@@ -568,7 +567,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             [
                                 'captured_amount' => $masterCapturedAmount,
                                 'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                            ]
+                            ],
                         );
                     }
                 }
@@ -675,10 +674,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         if ($totalPaidPayments == $payment->total_payments && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)) {
             info('Master payment code: '.$payment->code.' All payments are captured. Updating Payment status to CAPTURED');
-            $payment->update(['payment_status_id' => PaymentStatusEnum::CAPTURED]);
+            $payment->update(
+                ['payment_status_id' => PaymentStatusEnum::CAPTURED],
+            );
         } elseif ($totalPaidPayments > 0) {
             info('Master payment code: '.$payment->code.' Some payments are captured. Updating Payment status to PARTIAL_CAPTURED');
-            $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]);
+            $payment->update(
+                ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED],
+            );
         } else {
             //verify credit approved status
             $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
@@ -687,10 +690,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             info('Master payment code: '.$payment->code.' Total credit approved payments: '.$totalCreditPayments);
             if ($totalCreditPayments > 0) {
                 info('Master payment code: '.$payment->code.' Updating payment status to CREDIT_APPROVED');
-                $payment->update(['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]);
+                $payment->update(
+                    ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED],
+                );
             } else {
                 info('Master payment code: '.$payment->code.' Updating payment status to NEW');
-                $payment->update(['payment_status_id' => PaymentStatusEnum::NEW]);
+                $payment->update(
+                    ['payment_status_id' => PaymentStatusEnum::NEW],
+                );
             }
         }
     }
@@ -840,17 +847,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
     public function generateInvoiceDescription($payment, $quoteType, $record): string
     {
-        $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
-            $planRelationName = strtolower($quoteType).'Plan';
-            $payment->load($planRelationName);
-            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
-        }
-
-        if (! $insuranceProvider) {
-            $insuranceProvider = $payment?->insuranceProvider;
-        }
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
         $insuranceProviderCode = $insuranceProvider?->code;
 
@@ -922,5 +919,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         return $personalCount;
+    }
+
+    public function fetchMainQuotePayment($quote)
+    {
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = $this->where('code', $quote->code)->mainLeadPayment()->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = $this->where([
+                'paymentable_id' => $quote->id, 'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->first();
+        }
+
+        return $payment;
     }
 }

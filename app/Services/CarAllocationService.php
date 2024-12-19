@@ -304,18 +304,18 @@ class CarAllocationService extends AllocationService
 
         info("Team ID {$teamId} available users: ".json_encode($teamUserIds));
 
-        return array_intersect($tierUserIds->toArray(), $teamUserIds);
+        return array_intersect(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $teamUserIds);
     }
 
     private function applyRuleExclusions($tierUserIds, $lead)
     {
         $rules = $this->getRules($lead);
 
-        if (empty($rules)) {
+        if ($rules->isEmpty()) {
             $ruleUserIds = $this->getRuleUsers();
             info("No rules found for lead ({$lead->uuid}), excluding rule users: ".json_encode($ruleUserIds));
 
-            return array_diff($tierUserIds->toArray(), $ruleUserIds);
+            return array_diff(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $ruleUserIds);
         }
 
         return $tierUserIds;
@@ -328,7 +328,7 @@ class CarAllocationService extends AllocationService
         foreach ($statusOrder as $status) {
             $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId, $teamId);
 
-            if (! empty($eligibleUsers)) {
+            if ($eligibleUsers->isNotEmpty()) {
                 info('Found users with status: '.UserStatusEnum::getUserStatusText($status));
 
                 return $eligibleUsers->toArray();
