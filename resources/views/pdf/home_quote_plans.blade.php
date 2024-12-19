@@ -420,6 +420,32 @@
             /* Ensures cells take up the necessary space */
         }
 
+        .header {
+            color: #ffffff;
+            font-size: 19px;
+            text-align: center;
+            padding: 8px 10px;
+            width: 100%;
+            height: 60px;
+            max-height: 60px;
+            background-image: url('{{ public_path('images/new-header-bg-image.png') }}');
+            background-size: cover;
+            /* Ensures the image covers the entire header area */
+            background-position: center;
+            /* Centers the image */
+            background-repeat: no-repeat;
+            /* Prevents the image from repeating */
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            /* z-index: 1000; */
+        }
+
 
         .content {}
     </style>
@@ -683,7 +709,7 @@
     <header>
         <div class="header">
             <div class="logo">
-                <img class="im-logo" src="{{ getIMLogo(true) }}" alt="logo" />
+                <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo" />
             </div>
             <h3>Your Tailor Made <br />Home Insurance Comparison Table</h3>
         </div>
