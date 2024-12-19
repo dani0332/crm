@@ -71,6 +71,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\AllocationService;
+use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
@@ -418,6 +419,7 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
+                'quoteStatusEnums' => QuoteStatusEnum::asArray()
             ]);
         }
 
@@ -777,6 +779,7 @@ class CRUDController extends Controller
 
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
+            $insurerAMLStatus = app(AMLService::class)->getInsurerAMLScreeningDetails(QuoteTypeId::Car, $record);
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record',
@@ -868,6 +871,7 @@ class CRUDController extends Controller
                 'paymentDocument',
                 'customerAddressData',
                 'amlStatusName',
+                'insurerAMLStatus',
             ]));
         }
 
@@ -1286,6 +1290,7 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'customerAddressData' => $customerAddressData,
                 'courierQuoteStatus' => $courierQuoteStatus,
+                'quoteStatusEnums' => QuoteStatusEnum::asArray()
             ]);
         }
 

@@ -23,6 +23,7 @@ use App\Http\Requests\AMLRequest;
 use App\Http\Requests\UpdateAMLCustomerDetailRequest;
 use App\Http\Requests\UpdateAMLEntityDetailRequest;
 use App\Jobs\BridgerAMLJob;
+use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
 use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
@@ -240,11 +241,11 @@ class AMLController extends Controller
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $aml->orWhereNull('decision');
             })->whereNull('screenshot');
-        $kycLogs = $amlRecordFetch->orderBy('created_at', 'asc')->get()
-            ->filter(function ($item) {
-                return ! isset(json_decode($item->results, true)['screening_type']);
-            })
-            ->values();
+        $kycLogs = $amlRecordFetch->orderBy('created_at', 'asc')->get();
+        //            ->filter(function ($item) {
+        //                return ! isset(json_decode($item->results, true)['screening_type']);
+        //            })
+        //            ->values();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 
@@ -411,6 +412,7 @@ class AMLController extends Controller
             }
 
             session()->put('amlResponseCheck', []);
+            //            session()->put('insurerAMLScreeningResponseCheck', []);
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
@@ -594,15 +596,10 @@ class AMLController extends Controller
     private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType)
     {
         foreach ($membersDetails as $memberDetail) {
-            BridgerAMLJob::dispatchSync(
-                $bridgerAPIToken,
-                $memberDetail,
-                $quoteDetails,
-                $quoteTypeId,
-                $customerType,
-                auth()->user()->email
-            );
+            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, auth()->user()->email);
+            InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $quoteDetails, $customerType, $memberDetail);
         }
+
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
             $quoteTypeIds = [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Corpline];
             QuoteStatusLog::create([
@@ -623,9 +620,6 @@ class AMLController extends Controller
             // this event only working for travel lob
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 $this->stopHapexReminder($quoteDetails);
-                //TODO:: Question: Need to send quote type because GIG screening is for MOTOR and HOME also? confirm with Daniyal bhai
-                app(AMLService::class)->amlScreeningGIG($quoteDetails, $quoteTypeId, $customerType, $membersDetails);
-
             }
             info('AML Screening Bridger - Potential Matches not Found, Quote Status changed to AML Screening Cleared');
         } else {
@@ -647,6 +641,8 @@ class AMLController extends Controller
             }
             info('AML Screening Bridger - Potential Matches Found, Quote Status changed to AML Screening Failed');
         }
+
+        //        app(AMLService::class)->updateInsurerScreeningDecision($quoteDetails);
         session()->forget('amlResponseCheck');
     }
 

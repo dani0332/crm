@@ -1,4 +1,6 @@
 <script setup>
+import QuoteStatus from '@/inertia/Pages/PersonalQuote/Partials/QuoteStatus.vue';
+
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -8,6 +10,7 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  quoteStatusEnums: Array
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -60,6 +63,7 @@ const quoteForm = useForm({
   trim: props.quote?.trim || null,
   additional_notes: props.quote?.additional_notes || '',
   car_model_id: props.quote?.car_model_id || null,
+  chassis_number: props.quote?.chassis_number || '',
   year_of_manufacture: props.quote?.year_of_manufacture || null,
   emirate_of_registration_id: props.quote?.emirate_of_registration_id || null,
   car_type_insurance_id: props.quote?.car_type_insurance_id || null,
@@ -266,6 +270,27 @@ const floorLabel = computed(() => {
 const isCourierStatusPending = computed(() => {
   return quoteForm.courierQuoteStatus !== 'Pending';
 });
+
+const chassisNumberDisabled = computed(() => {
+    let disallowedStatus = [props.quoteStatusEnums.PolicySentToCustomer, props.quoteStatusEnums.PolicyBooked];
+    return disallowedStatus.includes(props?.quote?.quote_status_id);
+});
+
+const chassisNumberValidate = event => {
+    const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
+    const lengthValid = quoteForm.chassis_number.length >= 8 && quoteForm.chassis_number.length <= 17;
+    const isAlphanumeric = regex.test(quoteForm.chassis_number);
+
+    if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
+        event.preventDefault();
+        // isko daikhna hai error remove na ho jab tak set na ho field
+        notification.error({
+            title: 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
+            position: 'top',
+        });
+    }
+};
+
 </script>
 
 <template>
@@ -518,6 +543,17 @@ const isCourierStatusPending = computed(() => {
             :error="quoteForm.errors.cylinder"
             @keypress="cylinderValidation"
           />
+        </x-field>
+
+        <x-field label="CHASSIS NUMBER">
+            <x-input
+                :disabled="chassisNumberDisabled"
+                v-model="quoteForm.chassis_number"
+                class="w-full"
+                type="number"
+                placeholder="Enter Chassis Number"
+                @blur="chassisNumberValidate"
+            />
         </x-field>
 
         <x-field label="TRIM">
