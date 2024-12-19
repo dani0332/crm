@@ -215,6 +215,11 @@ class Payment extends Model implements Auditable
         return $this->payment_status_id == PaymentStatusEnum::AUTHORISED;
     }
 
+    public function isPaid()
+    {
+        return $this->payment_status_id == PaymentStatusEnum::PAID;
+    }
+
     public function sendUpdateLog()
     {
         return $this->belongsTo(SendUpdateLog::class, 'send_update_log_id', 'id');
