@@ -277,7 +277,7 @@ class CarAllocationService extends AllocationService
         $this->resetProps();
 
         $tierUserIds = $this->getTierUserIds($tier->id, $advisorId);
-        info(self::class."::getEligibleUserForAllocation - Users against tierID {$tier->id} for lead {$lead->uuid} are: ".json_encode($tierUserIds->toArray()));
+        info(self::class."::getEligibleUserForAllocation - Users against tierID {$tier->id} and tier name: {$tier->name} for lead {$lead->uuid} are: ".json_encode($tierUserIds->toArray()));
 
         $tierUserIds = $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
