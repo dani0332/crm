@@ -516,19 +516,23 @@ class SplitPaymentService
                 return $quote->insuranceProvider->text;
             }
             $payment->load(['carPlan']);
+
             return $payment->carPlan->text;
         }
         switch ($modelType) {
             case QuoteTypes::HEALTH->value:
                 $payment->load(['healthPlan']);
+
                 return $payment->healthPlan->text;
 
             case QuoteTypes::BIKE->value:
                 $payment->load(['bikePlan']);
+
                 return $payment->bikePlan->text;
 
             case QuoteTypes::TRAVEL->value:
                 $payment->load(['travelPlan']);
+
                 return $payment->travelPlan->text;
 
             default:
