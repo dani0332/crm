@@ -752,7 +752,7 @@
                     @foreach ($planIds as $planId)
                         <th style="border: solid 1px #bfbfbf; text-align: center;">
                             <p class="text-center" style="font-size: 14px">
-                                {{ $plans[$planId]->planName ?? '' }}
+                                {{ $plans[$planId]->name ?? '' }}
                             </p>
                         </th>
                     @endforeach
