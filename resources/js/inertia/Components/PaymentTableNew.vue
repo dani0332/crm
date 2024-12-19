@@ -155,6 +155,15 @@ const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
+const showLackingPayment = () => {
+  if (is_lacking_payment.value){
+      notification.error({
+        title: 'Action Needed: Please revise payment details to reflect plan changes.',
+        position: 'top',
+      }, 50000);
+    }
+}
+
 // Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
@@ -2927,6 +2936,7 @@ onMounted(() => {
   if (props.sendUpdate?.plan_id) {
     fetchPlans();
   }
+  showLackingPayment()
 });
 
 const getPlanName = computed(() => {
@@ -3100,6 +3110,13 @@ const isPaidEditable = ref(
     page.props?.isPaidEditable ||
     false,
 );
+
+watch(
+  () => is_lacking_payment.value,
+  (newVal, oldValue) => {
+    showLackingPayment()
+  },
+)
 
 watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
