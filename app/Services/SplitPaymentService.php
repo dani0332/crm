@@ -422,13 +422,11 @@ class SplitPaymentService
         try {
             $quote = $this->getQuoteObject($modelType, $quoteId);
             $quote->load(['customer', 'advisor']);
-            
             $data = $this->prepareReceiptData($quote, $splitPayment, $modelType);
 
             $documentType = $this->getDocumentType($modelType);
             $data['document_type_code'] = $documentType;
             $data['quote_uuid'] = $quote->uuid;
-            
             if ($send_update_id > 0) {
                 $quote = SendUpdateLog::find($send_update_id);
             }
