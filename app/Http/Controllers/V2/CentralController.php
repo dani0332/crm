@@ -624,7 +624,7 @@ class CentralController extends Controller
     public function manualReceiptGeneration(Request $request)
     {
         info('Manual Receipt Generation Started for Car Leads');
-        $carLeadsCode = [ 
+        $carLeadsCodes = [ 
             "CAR-UUERY39K",
             "CAR-8D2Z3LGD",
             "CAR-RJ7M4LWY",
@@ -819,19 +819,18 @@ class CentralController extends Controller
             "CAR-LVJFSTBT",
             "CAR-X47Q9Y26"
         ];
-        $carLeadsCode = [
-            "CAR-769SZ46R", "CAR-FK5WM4BN", "CAR-5RY29V4T", "CAR-X35CLH7T", "CAR-SLFYQH3V", "CAR-XVVB7DT2", "CAR-9H7FFM34", "CAR-MWX77VVJ"
-        ];
-        $carLeads = CarQuote::whereIn('code', $carLeadsCode)->with('payments.paymentSplits.documents');
 
-        $carLeads->chunk(25, function ($quotes) {
-            foreach ($quotes as $quote) {
-                $this->processLeads($quote, $quote->code);
-            }
-        });
+        $counter = 0;
+        foreach ($carLeadsCodes as $carLeadsCode) {
+            $carLeads = CarQuote::whereIn('code', $carLeadsCode)->with('payments.paymentSplits.documents')->first();
+            $this->processLeads($carLeads);
+            $counter++;
+            info("Manual Receipt Generation Processed {$counter} Car Leads");
+        }
 
+        $counter = 0;
         info('Manual Receipt Generation Started for Home Leads');
-        $homeLeadsCode = [
+        $homeLeadsCodes = [
             "HOM-FXHZYECK",
             "HOM-8QYZP37G",
             "HOM-SXU7D6ZK",
@@ -839,20 +838,21 @@ class CentralController extends Controller
             "HOM-36QMJ2GA",
         ];
 
-        $homeLeads = HomeQuote::whereIn('code', $homeLeadsCode)->with('payments.paymentSplits.documents');
-
-        foreach ($homeLeads as $quote){
-            $this->processLeads($quote);  
+        foreach ($homeLeadsCodes as $homeLeadsCode){
+            $homeLeads = HomeQuote::whereIn('code', $homeLeadsCode)->with('payments.paymentSplits.documents')->first();
+            $this->processLeads($homeLeads);
+            $counter++;
+            info("Manual Receipt Generation Processed {$counter} Home Leads");  
         }
 
         info('Manual Receipt Generation Started for Business Leads');
-        $businessLeadsCode = [
+        $businessLeadsCodes = [
             "BUS-HASZRWP5"
         ];
-        $businessLeads = BusinessQuote::whereIn('code', $businessLeadsCode)->with('payments.paymentSplits.documents');
 
-        foreach ($businessLeads as $quote){
-            $this->processLeads($quote);  
+        foreach ($businessLeadsCodes as $businessLeadsCode){
+            $businessLead = BusinessQuote::where('code', $businessLeadsCode)->with('payments.paymentSplits.documents')->first();
+            $this->processLeads($businessLead);  
         }
         
         echo "process finished";

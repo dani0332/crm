@@ -508,115 +508,35 @@ class SplitPaymentService
         }
     }
 
-    private function getInsuranceCompanyOld($quote, $modelType)
-    {
-        $quote->load(['payments', 'insuranceProvider']);
-        $payment = $quote->payments()->first();
-
-        if (!$payment) {
-            return '';
-        }
-
-        // Handle CAR model type
-        if ($modelType === QuoteTypes::CAR->value) {
-            $isCommercialVehicle = app(LeadAllocationService::class)->isCommercialVehicles($quote);
-
-            if ($isCommercialVehicle) {
-                return optional($quote->insuranceProvider)->text ?? '';
-            }
-
-            $payment->load(['carPlan']);
-            return optional($payment->carPlan)->text ?? '';
-        }
-
-        switch ($modelType) {
-            case QuoteTypes::HEALTH->value:
-                $payment->load(['healthPlan']);
-                return optional($payment->healthPlan)->text ?? '';
-
-            case QuoteTypes::BIKE->value:
-                $payment->load(['bikePlan']);
-                return optional($payment->bikePlan)->text ?? '';
-
-            case QuoteTypes::TRAVEL->value:
-                $payment->load(['travelPlan']);
-                return optional($payment->travelPlan)->text ?? '';
-
-            default:
-                return optional($quote->insuranceProvider)->text ?? '';
-        }
-    }
-
     private function getInsuranceCompany($quote, $modelType)
     {
         $quote->load(['payments', 'insuranceProvider']);
         $payment = $quote->payments()->first();
-    
-        if (!$payment) {
-            info('No payment record found for quote code: ' . $quote->code);
-            return 'No payment record found';
-        }
-    
         if ($modelType === QuoteTypes::CAR->value) {
             $isCommercialVehicle = app(LeadAllocationService::class)->isCommercialVehicles($quote);
-    
             if ($isCommercialVehicle) {
-                $insuranceProviderText = optional($quote->insuranceProvider)->text;
-                if (!$insuranceProviderText) {
-                    info('No insurance provider found for quote code: ' . $quote->code);
-                    return 'No insurance provider found';
-                }
-                return $insuranceProviderText;
+                return $quote->insuranceProvider->text;
             }
-    
             $payment->load(['carPlan']);
-            $carPlanText = optional($payment->carPlan)->text;
-            if (!$carPlanText) {
-                info('No car plan found for payment code: ' . $payment->code);
-                return 'No car plan found';
-            }
-            return $carPlanText;
+            return $payment->carPlan->text;
         }
-    
-        // Handle other model types
         switch ($modelType) {
             case QuoteTypes::HEALTH->value:
                 $payment->load(['healthPlan']);
-                $healthPlanText = optional($payment->healthPlan)->text;
-                if (!$healthPlanText) {
-                    info('No health plan found for payment code: ' . $payment->code);
-                    return 'No health plan found';
-                }
-                return $healthPlanText;
-    
+                return $payment->healthPlan->text;
+
             case QuoteTypes::BIKE->value:
                 $payment->load(['bikePlan']);
-                $bikePlanText = optional($payment->bikePlan)->text;
-                if (!$bikePlanText) {
-                    info('No bike plan found for payment code: ' . $payment->code);
-                    return 'No bike plan found';
-                }
-                return $bikePlanText;
-    
+                return $payment->bikePlan->text;
+
             case QuoteTypes::TRAVEL->value:
                 $payment->load(['travelPlan']);
-                $travelPlanText = optional($payment->travelPlan)->text;
-                if (!$travelPlanText) {
-                    info('No travel plan found for payment code: ' . $payment->code);
-                    return 'No travel plan found';
-                }
-                return $travelPlanText;
-    
+                return $payment->travelPlan->text;
+
             default:
-                $insuranceProviderText = optional($quote->insuranceProvider)->text;
-                if (!$insuranceProviderText) {
-                    info('No insurance provider found for quote code: ' . $quote->code);
-                    return 'No insurance provider found';
-                }
-                return $insuranceProviderText;
+                return $quote->insuranceProvider->text;
         }
     }
-    
 
     private function getTypeOfInsurance($quote, $modelType)
     {
