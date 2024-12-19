@@ -230,13 +230,11 @@ trait QuoteModelTrait
             QuoteTypeId::Travel => 'travel_quote_request',
         ];
 
-        if ($request->hasAny($applicableFilters) && $request->has('line_of_business')) {
-            if (isset($quoteTypes[$request->line_of_business])) {
-                $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
-                    $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
-                    $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
-                });
-            }
+        if ($request->hasAny($applicableFilters) && $request->has('line_of_business') && isset($quoteTypes[$request->line_of_business])) {
+            $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
+                $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
+                $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
+            });
         }
     }
 }
