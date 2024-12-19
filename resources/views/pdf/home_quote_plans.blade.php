@@ -446,6 +446,7 @@
                 continue;
             }
 
+            // Loop over benefits to safely decode
             foreach ($benefits as $benefit) {
                 $quotePlan->{$benefit} = [];
                 if (isset($quotePlan->benefits->{$benefit})) {
@@ -456,52 +457,69 @@
                     );
                 }
             }
-            $quotePlan->exclusion = json_decode(
-                collect($quotePlan->benefits->exclusion)
-                    ->keyBy('code')
-                    ->toJson(),
-            );
-            $quotePlan->inclusion = json_decode(
-                collect($quotePlan->benefits->inclusion)
-                    ->keyBy('code')
-                    ->toJson(),
-            );
-            $quotePlan->content = json_decode(
-                collect($quotePlan->benefits->content)
-                    ->keyBy('code')
-                    ->toJson(),
-            );
-            $quotePlan->personalBelonging = json_decode(
-                collect($quotePlan->benefits->personalBelonging)
-                    ->keyBy('code')
-                    ->toJson(),
-            );
-            $quotePlan->additionalCover = json_decode(
-                collect($quotePlan->benefits->additionalCover)
-                    ->keyBy('code')
-                    ->toJson(),
-            );
-            $quotePlan->building = json_decode(
-                collect($quotePlan->benefits->building)
-                    ->keyBy('code')
-                    ->toJson(),
-            );
+
+            // Check if 'exclusion', 'inclusion', 'content', 'personalBelonging', and 'additionalCover' exist before decoding
+            $quotePlan->exclusion = isset($quotePlan->benefits->exclusion)
+                ? json_decode(
+                    collect($quotePlan->benefits->exclusion)
+                        ->keyBy('code')
+                        ->toJson(),
+                )
+                : [];
+
+            $quotePlan->inclusion = isset($quotePlan->benefits->inclusion)
+                ? json_decode(
+                    collect($quotePlan->benefits->inclusion)
+                        ->keyBy('code')
+                        ->toJson(),
+                )
+                : [];
+
+            $quotePlan->content = isset($quotePlan->benefits->content)
+                ? json_decode(
+                    collect($quotePlan->benefits->content)
+                        ->keyBy('code')
+                        ->toJson(),
+                )
+                : [];
+
+            $quotePlan->personalBelonging = isset($quotePlan->benefits->personalBelonging)
+                ? json_decode(
+                    collect($quotePlan->benefits->personalBelonging)
+                        ->keyBy('code')
+                        ->toJson(),
+                )
+                : [];
+
+            $quotePlan->additionalCover = isset($quotePlan->benefits->additionalCover)
+                ? json_decode(
+                    collect($quotePlan->benefits->additionalCover)
+                        ->keyBy('code')
+                        ->toJson(),
+                )
+                : [];
+
+            $quotePlan->building = isset($quotePlan->benefits->building)
+                ? json_decode(
+                    collect($quotePlan->benefits->building)
+                        ->keyBy('code')
+                        ->toJson(),
+                )
+                : [];
 
             $discountPremium = $vat = [];
 
             // Discount Premium and VAT new Implementation
-
             $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
 
             foreach ($quotePlan->benefits as &$benefit) {
                 $benefit = (object) $benefit;
-                //set default value to excluded
+                // set default value to excluded
                 $benefit->value = 'Excluded';
 
-                //set default values
+                // set default values
                 $benefit->price = 0;
                 $benefit->vat = 0;
-                // $plans[$quotePlan->id] = $quotePlan;
             }
         }
 
