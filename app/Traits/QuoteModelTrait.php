@@ -145,6 +145,11 @@ trait QuoteModelTrait
     public function markLeadAllocationFailed()
     {
         if ($this->lead_allocation_failed_at) {
+            self::withoutEvents(function () {
+                $this->update([
+                    'lead_allocation_started_at' => null,
+                ]);
+            });
             return; // Already marked as failed
         }
 
@@ -159,6 +164,11 @@ trait QuoteModelTrait
     public function markLeadAllocationPassed()
     {
         if (! $this->lead_allocation_failed_at || ! $this->advisor_id) {
+            self::withoutEvents(function () {
+                $this->update([
+                    'lead_allocation_started_at' => null,
+                ]);
+            });
             return; // Already marked as passed or advisor not assigned
         }
 
