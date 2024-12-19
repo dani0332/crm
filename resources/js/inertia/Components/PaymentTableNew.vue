@@ -3098,7 +3098,7 @@ onMounted(() => {
   // setLeadStatuses();
 });
 
-let is_lacking_payment = ref(
+const is_lacking_payment = ref(
   page.props?.bookPolicyDetails?.isLackingOfPayment ||
     page.props?.bookingDetails?.isLackingOfPayment ||
     false,
@@ -3113,8 +3113,10 @@ const isPaidEditable = ref(
 
 watch(
   () => is_lacking_payment.value,
-  (newVal, oldValue) => {
-    showLackingPayment()
+  newVal => {
+    if (newVal ) {
+      showLackingPayment()
+    }
   },
 )
 
