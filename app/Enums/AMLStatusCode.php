@@ -18,7 +18,6 @@ final class AMLStatusCode extends Enum
     const InsurerAMLScreeningCleared = 'CLEARED';
     const InsurerAMLScreeningFailed = 'FAILED';
 
-
     public static function getName($value)
     {
         $statuses = [

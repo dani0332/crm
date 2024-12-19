@@ -419,7 +419,7 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
-                'quoteStatusEnums' => QuoteStatusEnum::asArray()
+                'quoteStatusEnums' => QuoteStatusEnum::asArray(),
             ]);
         }
 
@@ -1290,7 +1290,7 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'customerAddressData' => $customerAddressData,
                 'courierQuoteStatus' => $courierQuoteStatus,
-                'quoteStatusEnums' => QuoteStatusEnum::asArray()
+                'quoteStatusEnums' => QuoteStatusEnum::asArray(),
             ]);
         }
 

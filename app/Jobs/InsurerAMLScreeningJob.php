@@ -15,9 +15,6 @@ class InsurerAMLScreeningJob implements ShouldQueue
     public string $customerType;
     public array $memberDetails;
 
-
-
-
     /**
      * Create a new job instance.
      */
