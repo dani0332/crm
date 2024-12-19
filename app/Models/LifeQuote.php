@@ -175,6 +175,11 @@ class LifeQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function quoteDetail()
+    {
+        return $this->hasOne(LifeQuoteRequestDetail::class);
+    }
+
     public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');

@@ -7,7 +7,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
-use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
@@ -163,22 +162,28 @@ class ApiService
 
             return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
         } else {
+            info('------ SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
+
             $quoteTypeId = QuoteTypeId::Car;
             if ($request->has('quoteTypeId')) {
                 $quoteTypeId = $request->quoteTypeId;
             }
             $quoteType = QuoteTypes::getName($quoteTypeId);
             if (! $quoteType) {
+                info("Invalid Quote Type ID {$quoteTypeId} for uuid : {$request->quoteUuid}");
+
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
             }
 
             if (! $quoteType?->model()->where('uuid', $request->quoteUuid)->exists()) {
-                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+                info("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
+
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found');
             }
 
             $ocbEmailJob = $quoteType?->ocbEmailJob();
             if ($ocbEmailJob) {
-                info("------ SIC workflow trigger request received for lead : {$request->quoteUuid} ------");
+                info("------ Going to Trigger Workflow for lead : {$request->quoteUuid} ------");
                 dispatch(new $ocbEmailJob($request->quoteUuid, null, true));
                 info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
 
@@ -210,12 +215,12 @@ class ApiService
      */
     private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false)
     {
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
-        if (is_null($allocationStrategy)) {
+        $responsePayload = QuoteTypes::getName($allocationType)->allocate(uuid: $allocationId, teamId: $teamId, overrideAdvisorId: $overrideAdvisorId, tierOnly: $tierOnly);
+        if (is_null($responsePayload)) {
             info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
         }
-        $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId, $teamId, $tierOnly);
+
         $status = $responsePayload['status'];
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
