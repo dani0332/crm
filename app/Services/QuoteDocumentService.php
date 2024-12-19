@@ -690,7 +690,6 @@ class QuoteDocumentService extends BaseService
 
     /**
      * filter any kind of special encoding on url function
-     *
      */
     private function encodeUrl($url)
     {
@@ -705,7 +704,7 @@ class QuoteDocumentService extends BaseService
         $encodedFileName = urlencode($fileName);
 
         // Reconstruct the full URL
-        $encodedUrl = $basePath . $encodedFileName;
+        $encodedUrl = $basePath.$encodedFileName;
 
         return $encodedUrl;
     }
