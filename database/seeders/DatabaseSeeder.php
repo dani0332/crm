@@ -21,9 +21,9 @@ class DatabaseSeeder extends Seeder
             PermissionsSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
-            InsurerTaxInvoicePermissionsSeeder::class,
+            /*InsurerTaxInvoicePermissionsSeeder::class,
             SendUpdatePermission::class,
-            GenericPermissionSeeder::class,
+            GenericPermissionSeeder::class,*/
             SendUpdateAdditionalSubType::class,
             PermissionsSeeder::class,
             AllianceNationalitySeeder::class,
