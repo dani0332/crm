@@ -63,6 +63,8 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             if (! $lead->health_team_type) {
                 info('No health team found against lead : '.$lead->uuid);
 
+                $lead->endAllocation();
+
                 continue;
             }
 
@@ -70,6 +72,8 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 
             if (! $advisor) {
                 info('No advisors found against lead : '.$lead->uuid);
+
+                $lead->endAllocation();
 
                 continue;
             }

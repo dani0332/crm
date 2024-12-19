@@ -236,7 +236,7 @@ trait QuoteModelTrait
 
     public function isAllocationInProgress(): bool
     {
-        return $this->lead_allocation_started_at !== null;
+        return !empty($this->lead_allocation_started_at) && !is_null($this->lead_allocation_started_at);
     }
 
     public function endAllocation()
