@@ -7,10 +7,13 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\UserManager;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
 
 class UserRepository extends BaseRepository
 {
+    use TeamHierarchyTrait;
     public function model()
     {
         return User::class;
@@ -98,5 +101,25 @@ class UserRepository extends BaseRepository
                 $q->whereIn('team_id', $teams->pluck('id')->toArray());
             }
         })->first();
+    }
+
+    public function fetchAdvisorsList()
+    {
+        $usersByTeamProduct = $this->usersByTeamProduct();
+        if (! auth()->user()->hasAnyRole([
+            RolesEnum::SeniorManagement,
+            RolesEnum::Admin,
+            RolesEnum::Engineering,
+        ])) {
+            $usersReportToLoggedInUser = UserManager::where('manager_id', auth()->id())
+                ->whereIn('user_id', $usersByTeamProduct)->pluck('user_id')->toArray();
+        }
+
+        return User::whereIn('id', $usersByTeamProduct)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
     }
 }
