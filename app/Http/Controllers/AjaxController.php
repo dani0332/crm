@@ -24,6 +24,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\QuoteMemberDetail;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Repositories\LookupRepository;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
@@ -421,5 +422,17 @@ class AjaxController extends Controller
             ->get();
 
         return response()->json($bikeModelDetail);
+    }
+
+    public function getBatchNamesByQuoteTypeId(Request $request)
+    {
+        $renewalBatch = RenewalBatch::orderBy('name')->select(['name as text']);
+        if ($request->quote_type_id == 1) {
+            $renewalBatch->where('quote_type_id', QuoteTypeId::Car);
+        } elseif ($request->quote_type_id < 0) {
+            $renewalBatch->where('quote_type_id', '<>', QuoteTypeId::Car)->orWhereNull('quote_type_id');
+        }
+
+        return response()->json($renewalBatch->groupBy('name')->get()); // laravel automatically converts to JSON
     }
 }
