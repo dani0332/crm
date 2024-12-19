@@ -462,7 +462,9 @@ class QuoteDocumentService extends BaseService
         $outputFile = $outputPath = storage_path('temp/'.$docName);
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
-        $fileContent = file_get_contents($azureFilePath);
+
+        $encodedUrl = $this->encodeUrl($azureFilePath);
+        $fileContent = file_get_contents($encodedUrl);
 
         $tempFilePath = storage_path('temp/temp_'.$docName);
         file_put_contents($tempFilePath, $fileContent);
@@ -521,7 +523,9 @@ class QuoteDocumentService extends BaseService
         }
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
-        $fileContent = file_get_contents($azureFilePath);
+
+        $encodedUrl = $this->encodeUrl($azureFilePath);
+        $fileContent = file_get_contents($encodedUrl);
 
         $manager = new ImageManager(new Driver);
 
@@ -594,7 +598,9 @@ class QuoteDocumentService extends BaseService
         }
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
-        $fileContent = file_get_contents($azureFilePath);
+
+        $encodedUrl = $this->encodeUrl($azureFilePath);
+        $fileContent = file_get_contents($encodedUrl);
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
@@ -672,5 +678,27 @@ class QuoteDocumentService extends BaseService
         }
 
         return false;
+    }
+
+    /**
+     * filter any kind of special encoding on url function
+     *
+     */
+    public function encodeUrl($url)
+    {
+        // Find the last slash to get the filename
+        $lastSlashPos = strrpos($url, '/');
+
+        // Split the URL into the path before the filename and the filename
+        $basePath = substr($url, 0, $lastSlashPos + 1);
+        $fileName = substr($url, $lastSlashPos + 1);
+
+        // Encode the filename to handle Arabic or special characters
+        $encodedFileName = urlencode($fileName);
+
+        // Reconstruct the full URL
+        $encodedUrl = $basePath . $encodedFileName;
+
+        return $encodedUrl;
     }
 }
