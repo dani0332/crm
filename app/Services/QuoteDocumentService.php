@@ -692,7 +692,7 @@ class QuoteDocumentService extends BaseService
      * filter any kind of special encoding on url function
      *
      */
-    public function encodeUrl($url)
+    private function encodeUrl($url)
     {
         // Find the last slash to get the filename
         $lastSlashPos = strrpos($url, '/');
