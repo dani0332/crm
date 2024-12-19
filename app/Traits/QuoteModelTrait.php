@@ -14,6 +14,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 
@@ -150,6 +151,7 @@ trait QuoteModelTrait
                     'lead_allocation_started_at' => null,
                 ]);
             });
+
             return; // Already marked as failed
         }
 
@@ -169,6 +171,7 @@ trait QuoteModelTrait
                     'lead_allocation_started_at' => null,
                 ]);
             });
+
             return; // Already marked as passed or advisor not assigned
         }
 
@@ -239,14 +242,10 @@ trait QuoteModelTrait
         });
     }
 
-    public function scopeAllocationNotInProgress($q)
-    {
-        $q->whereNull('lead_allocation_started_at');
-    }
-
     public function isAllocationInProgress(): bool
     {
-        return !empty($this->lead_allocation_started_at) && !is_null($this->lead_allocation_started_at);
+        // We will consider the lead to be in progress if attempted within 10 minutes of the last attempt
+        return ! empty($this->lead_allocation_started_at) && Carbon::parse($this->lead_allocation_started_at)->greaterThanOrEqualTo(now()->subMinutes(10));
     }
 
     public function endAllocation()

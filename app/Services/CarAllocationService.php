@@ -360,7 +360,7 @@ class CarAllocationService extends AllocationService
     {
         info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $tier->isValue());
-        info(self::class."::getBLAdvisorsByStatus - buy lead requested user ids are: ".json_encode($buyLeadRequestedUserIds));
+        info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
 
         $userIds = array_values(array_intersect(
             $buyLeadRequestedUserIds,
@@ -377,7 +377,7 @@ class CarAllocationService extends AllocationService
 
         $this->isBuyLeadAdvisor = $advisors->count() > 0;
 
-        $advisors->count() > 0 && info(self::class."::getBLAdvisorsByStatus - Buy Lead Advisors " . json_encode($advisors->pluck('user_id')->toArray()) . " found for uuid: {$lead->uuid}");
+        $advisors->count() > 0 && info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray())." found for uuid: {$lead->uuid}");
 
         return $advisors;
     }
