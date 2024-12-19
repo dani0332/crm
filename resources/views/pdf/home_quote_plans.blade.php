@@ -22,12 +22,15 @@
             font-family: "DejaVu Sans", sans-serif;
             margin: 0;
             padding: 0;
+
+
         }
 
 
         div,
         span,
         table,
+        tbody,
         tfoot,
         thead,
         tr,
@@ -70,7 +73,6 @@
 
         table {
             min-width: 1220px;
-            /* width: 1220px; */
             text-indent: 0;
             border-color: #bfbfbf;
             max-width: 1220px;
@@ -84,6 +86,17 @@
 
         tbody {
             margin-bottom: 130px;
+        }
+
+        .header {
+            background: #1d83bc;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            padding: 8px 10px;
+            width: 100%;
+            height: 57px;
+            max-height: 57px;
         }
 
         .header .logo {
@@ -158,7 +171,6 @@
 
         .bg-light-blue {
             border: 1px solid #bfbfbf;
-            background: #EFF6FF;
             padding: 1px 8px;
             color: #252525;
         }
@@ -194,11 +206,10 @@
         }
 
         .quote-info {
-            /* font-weight: bold; */
             text-align: right;
             vertical-align: bottom;
             margin-top: -1px;
-            background: #EFF6FF;
+            /* background: #EFF6FF; */
             font-size: 10px;
             text-align: left;
             padding: 8px;
@@ -266,8 +277,7 @@
         }
 
         footer {
-            /* padding: 10px; */
-            width: 100%;
+            position: fixed;
             bottom: 0px;
             left: 0px;
             right: 0px;
@@ -276,10 +286,8 @@
             background-color: #1d83bc;
             color: black;
             text-align: center;
-            position: fixed;
-            bottom: 0px;
             height: 145px;
-            z-index: 1500;
+            /* z-index: 1500; */
         }
 
         table.tbl-footer {
@@ -335,20 +343,23 @@
         }
 
         .header {
-            right: 0;
-            /* z-index: 1000;  */
-            position: fixed;
-            top: 0;
-            left: 0;
-            display: block;
             background: #1d83bc;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 19px;
             text-align: center;
             padding: 8px 10px;
             width: 100%;
             height: 60px;
             max-height: 60px;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            /* z-index: 1000;  */
         }
 
         .header .logo {
@@ -384,6 +395,15 @@
         main {
             /* Push main content down */
             padding: 20px;
+        }
+
+        .head-caption {
+            padding: 10px;
+            right: 5px !important;
+            top: 150px !important;
+            font-size: 14px;
+            text-align: right;
+            font-weight: bold;
         }
 
         .content {}
@@ -634,6 +654,7 @@
             </div>
             <h3>Your Tailor Made <br />Home Insurance Comparison Table</h3>
         </div>
+        <p class="head-caption">Your home insurance reference ID is <span class="text-blue">HOM : 12ERTYWE</span></p>
     </header>
 
 
@@ -642,8 +663,7 @@
     <main>
         <table>
             <thead>
-                <caption class="text-sm text-right" style="padding: 10px;">Your home insurance referance ID is <span
-                        class="text-blue">HOM : 12ERTYWE</span></caption>
+                <p style="margin-top:150px"></p>
                 <tr>
                     <th class="alfred" id="alfred-th" rowspan="2">
                         <img src="{{ public_path('images/home-alfred.png') }}" />
@@ -680,7 +700,7 @@
                 </tr>
                 {{-- buy now row --}}
                 <tr>
-                    <th class="bg-light-blue" style="width: 25% !important;">
+                    <th class="bg-light-blue" style="width: 25% !important; background-color: #DBEEFF !important">
                         <p class="quote-info">Home insurance comparison for: <b>{{ $quote->first_name }}
                                 {{ $quote->last_name }}</b></p>
                     </th>
@@ -728,7 +748,8 @@
                                         $buyNowText = $buyNow;
                                     }
                                 @endphp
-                                <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">{{ $buyNowText }}</a>
+                                <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">{{ $buyNowText }} .AED
+                                    400</a>
                                 @if ($plans[$planId]->discountPremium)
                                 @else
                                 @endif
@@ -736,6 +757,7 @@
                         </th>
                     @endforeach
                 </tr>
+                <p style="margin-bottom:50px"></p>
             </thead>
             <tbody>
                 @php $featCount = 0 @endphp
@@ -765,7 +787,7 @@
                     {{-- feature rows --}}
                     <?php $planIterate = 0; ?>
                     <tr class="<?php echo 'row_' . $featCount; ?> {{ $feature['row_class'] ?? '' }}">
-                        <td style="background-color: rgb(186 230 253)">
+                        <td style="background-color: #DBEEFF">
                             <p class="text-left font-bold">{{ @$feature['title'] }}</p>
                         </td>
                         @foreach ($planIds as $planId)
@@ -925,7 +947,6 @@
             </div>
         </table>
     </footer>
-
     {{-- Last Page --}}
     <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}" class="full-page-image" />
 </body>
