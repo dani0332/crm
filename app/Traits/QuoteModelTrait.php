@@ -77,7 +77,11 @@ trait QuoteModelTrait
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                });
+                })->whereNotIn("{$alias}.source", [
+                    LeadSourceEnum::REVIVAL,
+                    LeadSourceEnum::REVIVAL_REPLIED,
+                    LeadSourceEnum::REVIVAL_PAID,
+                ]);
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -122,7 +126,11 @@ trait QuoteModelTrait
         if ($not) {
             $q->whereNotIn("{$q->getModel()->getTable()}.uuid", $subQuery);
         } else {
-            $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery);
+            $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery)->whereNotIn("{$q->getModel()->getTable()}.source", [
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+            ]);
         }
     }
 
