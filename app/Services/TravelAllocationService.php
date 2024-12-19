@@ -23,6 +23,12 @@ class TravelAllocationService extends AllocationService
         return TravelQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
+            ->where(function ($query) {
+                $query->sicFlowDisabled()
+                    ->orWhere(function ($subQuery) {
+                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                    });
+            })
             ->first();
     }
 
