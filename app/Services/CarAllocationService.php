@@ -277,7 +277,7 @@ class CarAllocationService extends AllocationService
         $this->resetProps();
 
         $tierUserIds = $this->getTierUserIds($tier->id, $advisorId);
-        info('Users against tierID '.$tier->id.' are: '.json_encode($tierUserIds->toArray()));
+        info(self::class."::getEligibleUserForAllocation - Users against tierID {$tier->id} for lead {$lead->uuid} are: ".json_encode($tierUserIds->toArray()));
 
         $tierUserIds = $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
@@ -320,11 +320,11 @@ class CarAllocationService extends AllocationService
             $eligibleUsers = $this->{$findAdvisorFn}($lead, $status, $tier, $tierUserIds, $advisorId, $teamId);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+                info(self::class."::fetchAdvisors - Eligble Users found for lead {$lead->uuid} with the availability status of: ".UserStatusEnum::getUserStatusText($status));
 
                 return $eligibleUsers->toArray();
             }
-            info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+            info(self::class."::fetchAdvisors - No Users were found for lead {$lead->uuid} with the availability status of: ".UserStatusEnum::getUserStatusText($status));
         }
 
         return [];
@@ -360,6 +360,7 @@ class CarAllocationService extends AllocationService
     {
         info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $tier->isValue());
+        info(self::class."::getBLAdvisorsByStatus - buy lead requested user ids are: ".json_encode($buyLeadRequestedUserIds));
 
         $userIds = array_values(array_intersect(
             $buyLeadRequestedUserIds,
@@ -376,7 +377,7 @@ class CarAllocationService extends AllocationService
 
         $this->isBuyLeadAdvisor = $advisors->count() > 0;
 
-        $advisors->count() > 0 && info('Buy Lead Advisors found for uuid: '.$lead->uuid);
+        $advisors->count() > 0 && info(self::class."::getBLAdvisorsByStatus - Buy Lead Advisors " . json_encode($advisors->pluck('user_id')->toArray()) . " found for uuid: {$lead->uuid}");
 
         return $advisors;
     }
