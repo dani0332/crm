@@ -30,16 +30,15 @@ class RenewalBatchController extends Controller
     {
         $gridData = RenewalBatch::orderByDesc('id');
 
-        if($request->filled('quote_type_id') && $request->quote_type_id == 1){
-            $gridData->where('quote_type_id',QuoteTypeId::Car);
-        }else if ($request->quote_type_id < 0) {
-            $gridData->where('quote_type_id', '<>', QuoteTypeId::Car)->orWhereNull("quote_type_id");
+        if ($request->filled('quote_type_id') && $request->quote_type_id == 1) {
+            $gridData->where('quote_type_id', QuoteTypeId::Car);
+        } elseif ($request->quote_type_id < 0) {
+            $gridData->where('quote_type_id', '<>', QuoteTypeId::Car)->orWhereNull('quote_type_id');
         }
 
         if ($request->filled('name')) {
             $gridData->whereIn('name', $request->name);
         }
-
 
         return inertia('Admin/RenewalBatches/Index', [
             'batches' => $gridData->paginate(15),
