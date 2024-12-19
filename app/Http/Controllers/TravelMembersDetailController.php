@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypes;
 use App\Http\Requests\TravelMemberDetailRequest;
 use App\Models\CustomerMembers;
 use App\Models\TravelMemberDetail;
@@ -24,6 +25,8 @@ class TravelMembersDetailController extends Controller
         $quoteMemberDetails = $request->validated();
         $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->travel_quote_request_id);
         if ($quoteObject) {
+            $quoteMemberDetails = $this->fillFirstAndLastName($quoteMemberDetails, request()->quote_type);
+
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
 
             if ($request->customer_type == CustomerTypeEnum::Individual) {
@@ -50,6 +53,7 @@ class TravelMembersDetailController extends Controller
                 ]);
             }
 
+            unset($quoteMemberDetails['name']);
             unset($quoteMemberDetails['customer_id']);
             unset($quoteMemberDetails['travel_quote_request_id']);
 
@@ -99,6 +103,8 @@ class TravelMembersDetailController extends Controller
 
         if ($quoteObject) {
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
+
+            $quoteMemberDetails = $this->fillFirstAndLastName($quoteMemberDetails, request()->quote_type);
 
             if ($request->customer_type == CustomerTypeEnum::Individual) {
                 if (! in_array('travel_quote_request_id', $request->validated())) {
@@ -159,5 +165,19 @@ class TravelMembersDetailController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    /*
+     * // break first name and fill first name and last name
+     * */
+    private function fillFirstAndLastName($quoteMemberDetails, $quoteType)
+    {
+        if (ucwords($quoteType) == QuoteTypes::TRAVEL->value) {
+            $name = explode(' ', $quoteMemberDetails['name'], 2);
+            $quoteMemberDetails['first_name'] = $name[0];
+            $quoteMemberDetails['last_name'] = $name[1];
+        }
+
+        return $quoteMemberDetails;
     }
 }
