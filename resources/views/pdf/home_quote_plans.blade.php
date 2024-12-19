@@ -259,22 +259,6 @@
             background-color: #d7fbd0;
         }
 
-        /* .text-heading {
-            color: #ffffff;
-            background-color: #1d83bc;
-        } */
-
-        /* .text-heading {
-            color: #ffffff;
-            background-image: url('{{ public_path('images/new-heading-title-bg-image.png') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            height: auto;
-            display: inline-block;
-            width: 100%;
-        } */
-
         .text-heading {
             color: #ffffff;
             background-image: url('{{ public_path('images/new-heading-title-bg-image.png') }}');
