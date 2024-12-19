@@ -533,6 +533,9 @@ if (! function_exists('getBase64FileInfo')) {
 if (! function_exists('sanitizeFileName')) {
     function sanitizeFileName($fileName)
     {
+        // Remove any Unicode control characters, including non-breaking spaces
+        $fileName = preg_replace('/[\x{00}-\x{1F}\x{7F}\x{A0}]/u', '', $fileName);
+
         // Remove any Unicode control characters
         $fileName = preg_replace('/[[:cntrl:]]/', '', $fileName);
 

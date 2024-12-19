@@ -5,6 +5,7 @@ use App\Enums\PermissionsEnum;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
@@ -70,6 +71,7 @@ use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SearchController;
 use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
@@ -321,6 +323,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::resource('travel-lead-allocation', TravelLeadAllocationController::class);
+    Route::get('allocation-dashboard/{quoteType}', [V2LeadAllocationController::class, 'index'])->name('lead-allocation-dashboard');
     Route::post('/travel-lead-allocation/update-hard-stop', [TravelLeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
@@ -652,6 +655,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Sending NB Car Followups
     Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
+
+    Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
+    Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 });
 
 Route::get('/add-batch-number', function () {
