@@ -10,7 +10,7 @@ const props = defineProps({
     type: Object,
     default: {},
   },
-  quoteStatusEnums: Array
+  quoteStatusEnums: Array,
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -272,25 +272,30 @@ const isCourierStatusPending = computed(() => {
 });
 
 const chassisNumberDisabled = computed(() => {
-    let disallowedStatus = [props.quoteStatusEnums.PolicySentToCustomer, props.quoteStatusEnums.PolicyBooked];
-    return disallowedStatus.includes(props?.quote?.quote_status_id);
+  let disallowedStatus = [
+    props.quoteStatusEnums.PolicySentToCustomer,
+    props.quoteStatusEnums.PolicyBooked,
+  ];
+  return disallowedStatus.includes(props?.quote?.quote_status_id);
 });
 
 const chassisNumberValidate = event => {
-    const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
-    const lengthValid = quoteForm.chassis_number.length >= 8 && quoteForm.chassis_number.length <= 17;
-    const isAlphanumeric = regex.test(quoteForm.chassis_number);
+  const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
+  const lengthValid =
+    quoteForm.chassis_number.length >= 8 &&
+    quoteForm.chassis_number.length <= 17;
+  const isAlphanumeric = regex.test(quoteForm.chassis_number);
 
-    if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
-        event.preventDefault();
-        // isko daikhna hai error remove na ho jab tak set na ho field
-        notification.error({
-            title: 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
-            position: 'top',
-        });
-    }
+  if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
+    event.preventDefault();
+    // isko daikhna hai error remove na ho jab tak set na ho field
+    notification.error({
+      title:
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
+      position: 'top',
+    });
+  }
 };
-
 </script>
 
 <template>
@@ -546,14 +551,14 @@ const chassisNumberValidate = event => {
         </x-field>
 
         <x-field label="CHASSIS NUMBER">
-            <x-input
-                :disabled="chassisNumberDisabled"
-                v-model="quoteForm.chassis_number"
-                class="w-full"
-                type="number"
-                placeholder="Enter Chassis Number"
-                @blur="chassisNumberValidate"
-            />
+          <x-input
+            :disabled="chassisNumberDisabled"
+            v-model="quoteForm.chassis_number"
+            class="w-full"
+            type="number"
+            placeholder="Enter Chassis Number"
+            @blur="chassisNumberValidate"
+          />
         </x-field>
 
         <x-field label="TRIM">
