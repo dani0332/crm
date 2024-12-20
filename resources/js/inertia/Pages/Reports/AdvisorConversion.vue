@@ -816,7 +816,7 @@ const getAdvisorLabel = () => {
 };
 
 const carRegistrationTypes = [
-            { value: 'All', label: 'All' },
+            { value: '', label: 'All' },
             { value: 'personal', label: 'Personal' },
             { value: 'company', label: 'Company' },
           ];
@@ -828,7 +828,9 @@ const commericalOptions = [
 ];
 
 const CarVehicleUse =[
-
+    { value: '', label: 'All' },
+    { value: 'private', label: 'Private' },
+    { value: 'commercial', label: 'Commercial' },
 ]
 
 
@@ -983,13 +985,28 @@ const CarVehicleUse =[
             { value: 'false', label: 'No' },
           ]"
         />
+             <!-- v-if="canShow('isCommercial')" -->
+        <x-select
+        v-if="canShow('isCommercial')"
+        v-model="filters.registrationType"
+        label="Registration Type"
+        placeholder="Select any option"
+        :options="carRegistrationTypes"
+      />
         <x-select
           v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
-          label="Registration Type"
+          label="Commercial rule"
           placeholder="Select any option"
           :options="commericalOptions"
         />
+        <x-select
+        v-if="canShow('isCommercial')"
+        v-model="filters.vehicleUse"
+        label="Vehicle Use"
+        placeholder="Select any option"
+        :options="CarVehicleUse"
+      />
         <x-select
           v-if="canShow('insurance_type')"
           v-model="filters.insurance_type"

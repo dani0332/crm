@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PDF;
+use App\Enums\CarVehicleUse;
 
 class ReportsController extends Controller
 {
@@ -54,6 +55,7 @@ class ReportsController extends Controller
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
+
         return inertia('Reports/AdvisorConversion', [
             'reportData' => $advisorConversionReportService->getReportData($request),
             'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
