@@ -38,13 +38,12 @@ class WatermarkDocumentsJob implements ShouldQueue
     public function handle()
     {
         info('watermark job started for '.$this->uuid);
-        $quoteDocument = QuoteDocument::findOrFail($this->quoteDocumentId);
-        $documentType = DocumentType::findOrFail($this->documentTypeId);
+        $quoteDocument = QuoteDocument::find($this->quoteDocumentId);
+        $documentType = DocumentType::find($this->documentTypeId);
 
         // Ensure the quoteDocument and documentType exist
         if (! $quoteDocument || ! $documentType) {
-            Log::error('Document or DocumentType not found.');
-            info('Watermark job not completed job parameters: Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId);
+            Log::error('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
 
             return;
         }
