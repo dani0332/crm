@@ -345,6 +345,9 @@ class SendUpdateLogRepository extends BaseRepository
                 $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
+                if ($payment->discount_value && (empty($sendUpdate->discount) || $sendUpdate->discount == 0)) {
+                    $sendUpdate->update(['discount' => $payment->discount_value]);
+                }
             }
 
         } catch (\Exception $ex) {
