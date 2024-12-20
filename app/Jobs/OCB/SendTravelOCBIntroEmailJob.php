@@ -25,16 +25,18 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
     private $previousAdvisor;
     private $triggerSICWorkflow;
     private $handleZeroPlans;
+    private $forceSicWorkflow;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteUuid, $previousAdvisor = null, bool $triggerSICWorkflow = false, bool $handleZeroPlans = false)
+    public function __construct($quoteUuid, $previousAdvisor = null, bool $triggerSICWorkflow = false, bool $handleZeroPlans = false, bool $forceSicWorkflow = false)
     {
         $this->quoteUuid = $quoteUuid;
         $this->previousAdvisor = $previousAdvisor;
         $this->triggerSICWorkflow = $triggerSICWorkflow;
         $this->handleZeroPlans = $handleZeroPlans;
+        $this->forceSicWorkflow = $forceSicWorkflow;
     }
 
     private function verifyPreChecks($lead)
@@ -47,7 +49,7 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
 
         info(self::class." - Lead found for uuid: {$this->quoteUuid}");
 
-        $shouldSkip = $lead->sic_flow_enabled || Str::startsWith($lead->code, 'TRA-CAR-') || (empty($lead->advisor_id) && $lead->isMultiTrip());
+        $shouldSkip = ($lead->sic_flow_enabled && !$this->forceSicWorkflow) || Str::startsWith($lead->code, 'TRA-CAR-') || (empty($lead->advisor_id) && $lead->isMultiTrip());
 
         if ($shouldSkip) {
             if ($lead->sic_flow_enabled) {
@@ -76,7 +78,7 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
                 return;
             }
 
-            $responseCode = $travelEmailService->sendTravelOCBIntroEmail($lead, $this->previousAdvisor, $this->triggerSICWorkflow, $this->handleZeroPlans);
+            $responseCode = $travelEmailService->sendTravelOCBIntroEmail($lead, $this->previousAdvisor, $this->triggerSICWorkflow, $this->handleZeroPlans, $this->forceSicWorkflow);
             if (in_array($responseCode, [200, 201])) {
                 info(self::class." - OCB INTRO Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$this->quoteUuid}");
             } else {

@@ -175,19 +175,30 @@ class ApiService
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
             }
 
-            if (! $quoteType?->model()->where('uuid', $request->quoteUuid)->exists()) {
+            $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
+
+            if (!$lead) {
                 info("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
 
                 return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found');
             }
 
-            $ocbEmailJob = $quoteType?->ocbEmailJob();
-            if ($ocbEmailJob) {
-                info("------ Going to Trigger Workflow for lead : {$request->quoteUuid} ------");
-                dispatch(new $ocbEmailJob($request->quoteUuid, null, true));
-                info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
+            if($lead->sic_flow_enabled) {
+                info("SIC workflow is enabled on this lead already for uuid: {$lead->uuid}");
 
-                return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+                return apiResponse(null, Response::HTTP_OK, 'SIC workflow already enabled!');
+            } else {
+                $lead->sic_flow_enabled = true;
+                $lead->save();
+
+                $ocbEmailJob = $quoteType?->ocbEmailJob();
+                if ($ocbEmailJob) {
+                    info("------ Going to Trigger Workflow for lead : {$request->quoteUuid} ------");
+                    dispatch(new $ocbEmailJob($request->quoteUuid, null, true, forceSicWorkflow: true));
+                    info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
+
+                    return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+                }
             }
         }
 
@@ -257,6 +268,7 @@ class ApiService
             return apiResponse(null, Response::HTTP_OK, 'First OCB Email Skipped because it is a Multi Trip Lead!');
         }
 
+
         $ocbEmailJob = $quoteType?->ocbEmailJob();
 
         if (! $ocbEmailJob) {
@@ -266,7 +278,6 @@ class ApiService
         info("------ Handling First OCB email when 0 Plans : {$request->quoteUuid} ------");
         dispatch(new $ocbEmailJob($request->quoteUuid, null, handleZeroPlans: true));
         info("------ Triggered Job for First OCB email when 0 Plans : {$request->quoteUuid} ------");
-
         return apiResponse(null, Response::HTTP_OK, 'Email triggered successfully!');
     }
     public function sicReplyToILA($lead)
