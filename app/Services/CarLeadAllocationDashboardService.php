@@ -35,7 +35,7 @@ class CarLeadAllocationDashboardService extends BaseService
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
-                ->actveUser()
+                ->activeUser()
                 ->where('la.quote_type_id', QuoteTypes::CAR->id())
                 ->groupBy('users.name', 'users.id', 'la.id')
                 ->select(
@@ -77,8 +77,8 @@ class CarLeadAllocationDashboardService extends BaseService
         while ($endDate <= now()) {
             $currentWeek = $startDate->format('Y-m-d');
             $nextWeek = $startDate->addWeek(1)->addDay(1)->format('Y-m-d');
-            $batchString = 'Batch-'.$batchCount.'-('.$currentWeek.' to '.$nextWeek.')';
-            array_push($batchList, [$currentWeek.','.$nextWeek => $batchString]);
+            $batchString = 'Batch-' . $batchCount . '-(' . $currentWeek . ' to ' . $nextWeek . ')';
+            array_push($batchList, [$currentWeek . ',' . $nextWeek => $batchString]);
             $endDate = $startDate;
             $batchCount++;
         }

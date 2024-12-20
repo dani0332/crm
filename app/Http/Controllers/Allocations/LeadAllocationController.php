@@ -39,7 +39,7 @@ class LeadAllocationController extends Controller
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
 
-            $users = User::actveUser()
+            $users = User::activeUser()
                 ->select(
                     'users.id as userId',
                     'users.name as userName',
