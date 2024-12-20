@@ -561,7 +561,9 @@ trait GenericQueriesAllLobs
      */
     private function isLackingPayment($payment)
     {
-        if ($this->isSplitPaymentFullyPaid($payment)) return true;
+        if ($this->isSplitPaymentFullyPaid($payment)) {
+            return true;
+        }
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $discountValue = round($payment->discount_value, 2);
@@ -572,8 +574,10 @@ trait GenericQueriesAllLobs
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $discountValue), 2);
             info('Quote Code: '.$payment->code.' Checking Lacking Payment paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
+
             return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
+
         return true;
     }
 
