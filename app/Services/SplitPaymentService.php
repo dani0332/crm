@@ -1163,7 +1163,7 @@ class SplitPaymentService
             }
         }
     }
-    
+
     private function createPolicyIssuanceAutomation($quote, $quoteType, $payment)
     {
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);

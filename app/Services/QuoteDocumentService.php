@@ -672,6 +672,7 @@ class QuoteDocumentService extends BaseService
     {
         $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+
         return $quoteDocumentsCount == count($documentTypeCodes);
     }
 
