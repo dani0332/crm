@@ -175,19 +175,30 @@ class ApiService
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
             }
 
-            if (! $quoteType?->model()->where('uuid', $request->quoteUuid)->exists()) {
+            $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
+
+            if (! $lead) {
                 info("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
 
                 return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found');
             }
 
-            $ocbEmailJob = $quoteType?->ocbEmailJob();
-            if ($ocbEmailJob) {
-                info("------ Going to Trigger Workflow for lead : {$request->quoteUuid} ------");
-                dispatch(new $ocbEmailJob($request->quoteUuid, null, true));
-                info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
+            if ($lead->sic_flow_enabled) {
+                info("SIC workflow is enabled on this lead already for uuid: {$lead->uuid}");
 
-                return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+                return apiResponse(null, Response::HTTP_OK, 'SIC workflow already enabled!');
+            } else {
+                $lead->sic_flow_enabled = true;
+                $lead->save();
+
+                $ocbEmailJob = $quoteType?->ocbEmailJob();
+                if ($ocbEmailJob) {
+                    info("------ Going to Trigger Workflow for lead : {$request->quoteUuid} ------");
+                    dispatch(new $ocbEmailJob($request->quoteUuid, null, true, forceSicWorkflow: true));
+                    info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
+
+                    return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+                }
             }
         }
 
