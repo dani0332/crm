@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Http\Requests\UploadRateCoverageRequest;
 use App\Services\RateCoverageUploadService;
 
@@ -11,6 +12,9 @@ class RateCoverageUploadController extends Controller
 
     public function __construct(RateCoverageUploadService $rateCoverageUploadService)
     {
+        $this->middleware(['permission:'.PermissionsEnum::UPLOAD_HEALTH_RATES], ['only' => ['uploadRates', 'rateUploadCreate']]);
+        $this->middleware(['permission:'.PermissionsEnum::UPLOAD_HEALTH_COVERAGES], ['only' => ['uploadCoverages', 'coveragesUploadCreate']]);
+        $this->middleware(['permission:'.PermissionsEnum::UPLOAD_HEALTH_COVERAGES.'|'.PermissionsEnum::UPLOAD_HEALTH_RATES], ['only' => ['badRecords']]);
         $this->rateCoverageUploadService = $rateCoverageUploadService;
     }
 
