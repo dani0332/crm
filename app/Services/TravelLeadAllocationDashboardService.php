@@ -29,7 +29,7 @@ class TravelLeadAllocationDashboardService extends BaseService
             $users = User::join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
-                ->withActive()
+                ->actveUser()
                 ->where('teams.name', 'SIC 2.0 Unassisted')
                 ->where('quote_type_id', QuoteTypes::TRAVEL->id())
                 // subquery to exclude users with any kind of "manager" roles
