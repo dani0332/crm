@@ -215,14 +215,16 @@ class TravelEmailService extends BaseService
         return $emailData;
     }
 
-    private function triggerSICWorkflow(TravelQuote $lead, $emailData)
+    private function triggerSICWorkflow(TravelQuote $lead, $emailData, bool $forceSicWorkflow = false)
     {
-        if (! $lead->sic_flow_enabled) {
+        if (! $lead->sic_flow_enabled || $forceSicWorkflow) {
             $sicEventName = getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_ENABLE);
             if ($sicEventName) {
                 $apiResponse = SIBService::createWorkflowEvent($sicEventName, $lead, eventData: $emailData);
-                $lead->sic_flow_enabled = true;
-                $lead->save();
+                if (! $lead->sic_flow_enabled) {
+                    $lead->sic_flow_enabled = true;
+                    $lead->save();
+                }
                 info(self::class." - SIC workflow event triggered for lead: {$lead->uuid} and {$sicEventName}: {$lead->sic_flow_enabled}");
                 info(self::class." - SIC workflow response: {$apiResponse}");
             } else {
@@ -233,7 +235,7 @@ class TravelEmailService extends BaseService
         }
     }
 
-    public function sendTravelOCBIntroEmail(TravelQuote $lead, $previousAdvisorId, bool $triggerSICWorkFlow = false, bool $handleZeroPlans = false)
+    public function sendTravelOCBIntroEmail(TravelQuote $lead, $previousAdvisorId, bool $triggerSICWorkFlow = false, bool $handleZeroPlans = false, bool $forceSicWorkflow = false)
     {
         $plans = $this->getPlans($lead, $handleZeroPlans);
 
@@ -258,8 +260,8 @@ class TravelEmailService extends BaseService
         }
 
         // trigger SIC workflow
-        if ($triggerSICWorkFlow) {
-            $this->triggerSICWorkflow($lead, $emailData);
+        if ($triggerSICWorkFlow || $forceSicWorkflow) {
+            $this->triggerSICWorkflow($lead, $emailData, $forceSicWorkflow);
         }
 
         if ($lead->advisor_id) {
