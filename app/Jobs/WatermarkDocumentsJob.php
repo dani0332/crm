@@ -70,7 +70,7 @@ class WatermarkDocumentsJob implements ShouldQueue
         info('watermark job completed for '.$this->uuid);
     }
 
-    public function middleware(): array
+    public function middleware()
     {
         return [(new WithoutOverlapping($this->quoteDocumentId.$this->uuid.$this->documentTypeId))->dontRelease()];
     }
