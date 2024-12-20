@@ -12,7 +12,7 @@ const uploadForm = useForm({
 const badRatesModal = ref(false);
 const badRates = ref([]);
 const contactLoader = ref(false);
-const tableLoader = ref(false); 
+const tableLoader = ref(false);
 const page = usePage();
 
 const tableHeader = [
@@ -87,12 +87,12 @@ function onSubmit(isValid) {
         }
         contactLoader.value = false;
         uploadForm.setError(
-          error.response.data.error || error.response.data.errors.file_name?.[0],
+          error.response.data.error ||
+            error.response.data.errors.file_name?.[0],
         );
-        if(error.response.data.error) {
+        if (error.response.data.error) {
           notification.error({
-            title:
-              error.response.data.error,
+            title: error.response.data.error,
             position: 'top',
           });
         }
@@ -113,14 +113,18 @@ const formattedRates = computed(() => {
   return page.props?.rates.data.map(item => {
     return {
       ...item,
-      created_at: item.created_at ? dayjs(item.created_at).format('DD-MM-YYYY HH:mm:ss') : '',
-      updated_at: item.updated_at ? dayjs(item.updated_at).format('DD-MM-YYYY HH:mm:ss') : '',
+      created_at: item.created_at
+        ? dayjs(item.created_at).format('DD-MM-YYYY HH:mm:ss')
+        : '',
+      updated_at: item.updated_at
+        ? dayjs(item.updated_at).format('DD-MM-YYYY HH:mm:ss')
+        : '',
     };
   });
 });
 
 const showFailedRates = (id, badCount) => {
-  if(badCount == 0) {
+  if (badCount == 0) {
     badRates.value = [];
     badRatesModal.value = true;
     return;
@@ -130,7 +134,7 @@ const showFailedRates = (id, badCount) => {
     .get(`/rates-coverages/bad-records/${id}`)
     .then(response => {
       const data = response.data.data;
-      
+
       data.map((item, index) => {
         item.row_number = item.data?.row_number ?? '';
         item.is_northern = item.data?.is_northern ?? '';
@@ -200,11 +204,10 @@ const showFailedRates = (id, badCount) => {
             Please ensure all required columns data filled in the xlsx file.
           </li>
           <li>
-            Please ensure each Excel file (.xlsx) contains only one sheet (no multiple sheets within a single file).
+            Please ensure each Excel file (.xlsx) contains only one sheet (no
+            multiple sheets within a single file).
           </li>
-          <li>
-            Please use the unformatted (values only) data in the sheet.
-          </li>
+          <li>Please use the unformatted (values only) data in the sheet.</li>
         </ul>
       </x-alert>
       <div class="flex justify-end gap-3 my-4">
@@ -252,7 +255,6 @@ const showFailedRates = (id, badCount) => {
         hide-rows-per-page
         hide-footer
       >
-        
       </DataTable>
     </x-modal>
 

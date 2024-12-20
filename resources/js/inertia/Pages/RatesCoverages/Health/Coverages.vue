@@ -12,7 +12,7 @@ const uploadForm = useForm({
 const badCoveragesModal = ref(false);
 const badCoverages = ref([]);
 const contactLoader = ref(false);
-const tableLoader = ref(false); 
+const tableLoader = ref(false);
 const page = usePage();
 
 const tableHeader = [
@@ -90,10 +90,9 @@ function onSubmit(isValid) {
             error.response.data.errors.file_name?.[0] ||
             error.response.data.message,
         );
-        if(error.response.data.error) {
+        if (error.response.data.error) {
           notification.error({
-            title:
-              error.response.data.error,
+            title: error.response.data.error,
             position: 'top',
           });
         }
@@ -114,25 +113,29 @@ const formattedCoverages = computed(() => {
   return page.props?.coverages.data.map(item => {
     return {
       ...item,
-      created_at: item.created_at ? dayjs(item.created_at).format('DD-MM-YYYY HH:mm:ss') : '',
-      updated_at: item.updated_at ? dayjs(item.updated_at).format('DD-MM-YYYY HH:mm:ss') : '',
+      created_at: item.created_at
+        ? dayjs(item.created_at).format('DD-MM-YYYY HH:mm:ss')
+        : '',
+      updated_at: item.updated_at
+        ? dayjs(item.updated_at).format('DD-MM-YYYY HH:mm:ss')
+        : '',
     };
   });
 });
 
 const showFailedCoverages = (id, badCount) => {
-  if(badCount == 0) {
+  if (badCount == 0) {
     badCoverages.value = [];
     badCoveragesModal.value = true;
     return;
   }
-  
+
   tableLoader.value = true;
   axios
     .get(`/rates-coverages/bad-records/${id}`)
     .then(response => {
       const data = response.data.data;
-      
+
       data.map((item, index) => {
         item.row_number = item.data?.row_number ?? '';
         item.code = item.data?.code ?? '';
@@ -201,11 +204,10 @@ const showFailedCoverages = (id, badCount) => {
             Please ensure all required columns data filled in the xlsx file.
           </li>
           <li>
-            Please ensure each Excel file (.xlsx) contains only one sheet (no multiple sheets within a single file).
+            Please ensure each Excel file (.xlsx) contains only one sheet (no
+            multiple sheets within a single file).
           </li>
-          <li>
-            Please use the unformatted (values only) data in the sheet.
-          </li>
+          <li>Please use the unformatted (values only) data in the sheet.</li>
         </ul>
       </x-alert>
       <div class="flex justify-end gap-3 my-4">
@@ -253,7 +255,6 @@ const showFailedCoverages = (id, badCount) => {
         hide-rows-per-page
         hide-footer
       >
-        
       </DataTable>
     </x-modal>
 
