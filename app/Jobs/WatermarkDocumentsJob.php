@@ -19,18 +19,16 @@ class WatermarkDocumentsJob implements ShouldQueue
     public $timeout = 120; // 2 minutes
     public $tries = 3;
     private $quoteDocumentId;
-    private $tempFilePath;
-    private $data;
+    private $uuid;
     private $documentTypeId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteDocumentId, $tempFilePath, $data, $documentTypeId)
+    public function __construct($quoteDocumentId, $uuid, $documentTypeId)
     {
         $this->quoteDocumentId = $quoteDocumentId;
-        $this->tempFilePath = $tempFilePath;
-        $this->data = $data;
+        $this->uuid = $uuid;
         $this->documentTypeId = $documentTypeId;
     }
 
@@ -39,15 +37,13 @@ class WatermarkDocumentsJob implements ShouldQueue
      */
     public function handle()
     {
-        info('watermark job started');
+        info('watermark job started for '.$this->uuid);
         $quoteDocument = QuoteDocument::find($this->quoteDocumentId);
         $documentType = DocumentType::find($this->documentTypeId);
 
         // Ensure the quoteDocument and documentType exist
         if (! $quoteDocument || ! $documentType) {
-            Log::error('Document or DocumentType not found.');
-            info('Watermark job not completed, Document or DocumentType not found.
-             Job Parameters: Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId);
+            Log::error('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
 
             return;
         }
@@ -58,11 +54,11 @@ class WatermarkDocumentsJob implements ShouldQueue
         $docName = str_replace('original_', '', $quoteDocument->doc_name);
 
         if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') {
-            $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->data, $documentType);
+            $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
         } elseif (in_array($fileMimeType, ['image/jpeg', 'image/png', 'image/jpg'])) {
-            $watermarkData = $watermarkService->watermarkImage($quoteDocument->doc_url, $docName, $this->data, $documentType);
+            $watermarkData = $watermarkService->watermarkImage($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
         } elseif (in_array($fileMimeType, ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'])) {
-            $watermarkData = $watermarkService->watermarkWordDocs($quoteDocument->doc_url, $docName, $this->data, $documentType);
+            $watermarkData = $watermarkService->watermarkWordDocs($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
         }
 
         // Update the document with watermark data
@@ -70,6 +66,6 @@ class WatermarkDocumentsJob implements ShouldQueue
             'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
             'watermarked_doc_url' => $watermarkData['watermarked_doc_url'] ?? null,
         ]);
-        info('watermark job completed');
+        info('watermark job completed for '.$this->uuid);
     }
 }

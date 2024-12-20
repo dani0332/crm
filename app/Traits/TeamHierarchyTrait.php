@@ -214,4 +214,34 @@ trait TeamHierarchyTrait
     {
         return DB::table('user_departments')->where('user_id', $userId)->get();
     }
+
+    public function usersByTeamProduct()
+    {
+        $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->first();
+        if (! $product) {
+            return [];
+        }
+
+        $productTeams = Team::where('type', TeamTypeEnum::TEAM)
+            ->where('parent_team_id', $product->id)
+            ->where('is_active', 1)
+            ->pluck('id')
+            ->toArray();
+
+        $teamUserIds = UserTeams::whereIn('team_id', $productTeams)
+            ->pluck('user_id')
+            ->toArray();
+
+        $productUserIds = UserProducts::where('product_id', $product->id)
+            ->whereNotIn('user_id', $teamUserIds)
+            ->pluck('user_id')
+            ->toArray();
+
+        return array_unique(array_merge($teamUserIds, $productUserIds));
+    }
+
+    public function getAdvisorsByManagers(): array
+    {
+        return DB::table('user_manager')->where('manager_id', auth()->id())->pluck('user_id')->toArray() ?? [];
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\RolesEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -315,7 +316,7 @@ class User extends Authenticatable implements AuditableContract
      */
     public function scopeWithActive($query)
     {
-        return $query->where('is_active', 1);
+        return $query->where('users.is_active', 1);
     }
 
     /**
@@ -359,9 +360,19 @@ class User extends Authenticatable implements AuditableContract
     {
         return $this->hasMany(InslyAdvisor::class);
     }
+    
+    public function businessTypes()
+    {
+        return $this->belongsToMany(BusinessTypeOfInsurance::class, 'business_type_of_insurance_user', 'user_id', 'business_type_of_insurance_id');
+    }
 
     public function departments()
     {
         return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
+    }
+
+    public function scopeChs($query)
+    {
+        return $query->where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL);
     }
 }

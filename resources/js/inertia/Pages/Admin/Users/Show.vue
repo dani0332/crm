@@ -151,6 +151,23 @@ function onSubmit(isValid) {
           </dd>
         </div>
 
+        <div class="grid sm:grid-cols-2" v-if="user?.businessTypes?.length > 0">
+          <dt class="font-medium">Business Types</dt>
+          <dd class="break-words flex flex-wrap gap-1">
+            <template v-if="userRoles">
+              <x-tag
+                size="sm"
+                color="success"
+                v-for="type in user?.businessTypes"
+                :key="type"
+                class="text-xs"
+              >
+                {{ type }}
+              </x-tag>
+            </template>
+          </dd>
+        </div>
+
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">PRODUCTS</dt>
           <dd>{{ productName ?? 'N/A' }}</dd>

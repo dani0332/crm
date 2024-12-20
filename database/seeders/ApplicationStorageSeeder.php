@@ -15,7 +15,7 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-
+        $this->seedBirdWorkflowUrls();
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
             [
@@ -45,6 +45,29 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 1,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 1,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+
+    }
+
+    private function seedBirdWorkflowUrls()
+    {
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION],
             [
                 'value' => '24',
@@ -58,6 +81,17 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::PROCESS_CC_PAYMENTS_ENABLED],
             [
                 'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        $this->seedHomeAdvisors();
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/968e6273-9965-473b-a258-2a069c8fb7da/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -96,4 +130,47 @@ class ApplicationStorageSeeder extends Seeder
 
     }
 
+    private function seedHomeAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_VALUE_ADVISORS],
+            [
+                'value' => 'marialuisa.deguzman@insurancemarket.ae,virgilio.ocon@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_VOLUME_ADVISORS],
+            [
+                'value' => 'ghana.naeem@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/114f64e5-5a67-4110-bb66-7038f3f34c04/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH],
+            [
+                'value' => '0',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+    }
 }
