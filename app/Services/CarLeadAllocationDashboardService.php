@@ -77,8 +77,8 @@ class CarLeadAllocationDashboardService extends BaseService
         while ($endDate <= now()) {
             $currentWeek = $startDate->format('Y-m-d');
             $nextWeek = $startDate->addWeek(1)->addDay(1)->format('Y-m-d');
-            $batchString = 'Batch-' . $batchCount . '-(' . $currentWeek . ' to ' . $nextWeek . ')';
-            array_push($batchList, [$currentWeek . ',' . $nextWeek => $batchString]);
+            $batchString = 'Batch-'.$batchCount.'-('.$currentWeek.' to '.$nextWeek.')';
+            array_push($batchList, [$currentWeek.','.$nextWeek => $batchString]);
             $endDate = $startDate;
             $batchCount++;
         }
