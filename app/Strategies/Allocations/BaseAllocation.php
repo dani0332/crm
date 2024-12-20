@@ -99,7 +99,7 @@ abstract class BaseAllocation extends AllocationService
             })
             ->whereIn('r.name', $roles)
             ->where('la.quote_type_id', $this->getQuoteTypeId())
-            ->where('users.is_active', true)
+            ->actveUser()
             ->orderBy('la.last_allocated', 'asc');
     }
 

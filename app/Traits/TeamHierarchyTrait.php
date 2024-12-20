@@ -191,7 +191,7 @@ trait TeamHierarchyTrait
             ->select('users.id', 'users.name', 'ut.team_id as u_team_id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->where('users.is_active', 1)
+            ->actveUser()
             ->where('r.name', $role)
             ->get();
     }

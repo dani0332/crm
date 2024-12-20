@@ -57,6 +57,7 @@ class TravelLeadAllocationController extends Controller
             $leadAllocation = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($validated) {
                 $query->where('id', $validated['userId']);
             })
+                ->activeUser()
                 ->travelQuote()
                 ->first();
 
