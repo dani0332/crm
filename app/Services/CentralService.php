@@ -318,10 +318,6 @@ class CentralService extends BaseService
             $quote = $repository::where('code', $code)->firstOrFail();
 
             $quote->update($data->toArray());
-
-            // Will remove this once move to stage
-            // $this->updateQuotePayment($quote, $data->price_with_vat, $data->insurance_provider_id);
-
             $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id);
 
             return true;
