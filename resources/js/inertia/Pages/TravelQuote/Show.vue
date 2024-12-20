@@ -68,6 +68,7 @@ defineProps({
 const modelClass = 'App\\Models\\TravelQuote';
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
@@ -315,7 +316,9 @@ const emiratesOptions = computed(() => {
 const travelerForm = useForm({
   travel_quote_request_id: page.props.quote.id,
   quote_type: page.props.modelType,
-  first_name: null,
+  first_name: '',
+  last_name: '',
+  name: '',
   dob: '',
   nationality_id: null,
   relation_code: null,
@@ -389,10 +392,19 @@ const submitTraveler = isValid => {
     addTravelMember(isValid);
   }
 };
-
+const showErrors = errors => {
+  Object.keys(errors).forEach(function (key) {
+    notification.error({
+      title: errors[key],
+      position: 'top',
+      timeout: 10000,
+    });
+  });
+};
 const addTravelMember = isValid => {
   if (!isValid) return;
-  // '/travelers'
+
+  travelerForm.name = travelerForm.first_name;
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -405,10 +417,15 @@ const addTravelMember = isValid => {
       });
       onLoadAvailablePlansData();
     },
+    onError: errors => {
+      showErrors(errors);
+    },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
       travelerForm.first_name = '';
+      travelerForm.last_name = '';
+      travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
@@ -425,6 +442,8 @@ const addTravelMember = isValid => {
 const onAddTraveler = () => {
   travelerForm.reset();
   travelerForm.first_name = '';
+  travelerForm.last_name = '';
+  travelerForm.name = '';
   travelerForm.dob = '';
   travelerForm.nationality_id = '';
   travelerForm.relation_code = '';
@@ -442,6 +461,8 @@ const onEditTraveler = traveler => {
   travelerName.value = `Traveler ${traveler.index}`;
   travelerForm.id = traveler.id;
   travelerForm.first_name = traveler.first_name;
+  travelerForm.last_name = traveler.last_name;
+  travelerForm.name = traveler.first_name + ' ' + traveler.last_name ?? '';
   travelerForm.dob = traveler.dob;
   travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
@@ -454,10 +475,14 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
+  travelerForm.name = travelerForm.first_name;
   travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
       travelerForm.processing = true;
+    },
+    onError: errors => {
+      showErrors(errors);
     },
     onSuccess: () => {
       notification.success({
@@ -470,6 +495,8 @@ const editTraveler = isValid => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
       travelerForm.first_name = '';
+      travelerForm.last_name = '';
+      travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
@@ -1698,7 +1725,16 @@ const allowStatusUpdate = computed(() => {
                   <dd>{{ field?.value }}</dd>
                 </div>
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
-                <dd>{{ field?.value }}</dd>
+                <dd>
+                  {{
+                    field.title == 'Advisor'
+                      ? quote.api_issuance_status ==
+                        policyIssuanceEnum.POLICY_ISSUANCE_API_STATUS_YES_ID
+                        ? policyIssuanceEnum.API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL
+                        : field?.value
+                      : field?.value
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">AML STATUS</dt>
@@ -1955,6 +1991,14 @@ const allowStatusUpdate = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote.insurer_api_status }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.api_issuance_status }}</dd>
               </div>
             </dl>
           </div>
@@ -2476,6 +2520,7 @@ const allowStatusUpdate = computed(() => {
             label="Member Name*"
             placeholder="Member Name"
             :rules="[isRequired]"
+            :hasError="travelerForm.errors.first_name"
           />
           <ComboBox
             v-model="travelerForm.nationality_id"
