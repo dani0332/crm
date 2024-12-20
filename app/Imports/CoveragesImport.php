@@ -114,7 +114,7 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
                         }
                         $rowNumber = $failure->row();
                         $quoteData['row_number'] = $rowNumber;
-                        info('DATAAA', [$quoteData]);
+                        // info('DATAAA', [$quoteData]);
                         $failed[$failure->row()] = [
                             'rate_coverage_id' => $this->uploadCoverages->id,
                             'data' => $quoteData,
