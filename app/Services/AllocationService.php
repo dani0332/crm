@@ -53,7 +53,7 @@ class AllocationService
 
     public function getValuation($carModelDetailId, $yearOfManufacture)
     {
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-vehicle-value';
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-vehicle-value';
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
 
@@ -86,7 +86,7 @@ class AllocationService
     {
         try {
             $leadAllocation = LeadAllocation::latest();
-            info('Allocation Quote Type Id : '.$quoteTypeId);
+            info('Allocation Quote Type Id : ' . $quoteTypeId);
             if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
@@ -103,7 +103,7 @@ class AllocationService
 
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
         if (! empty($allocationRecord)) {
-            info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
+            info('Allocation Quote Type Id : ' . $allocationRecord->quote_type_id . '  Quote Type Id : ' . $quoteTypeId);
             $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
             $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
             $allocationRecord->updated_at = now();
@@ -155,13 +155,13 @@ class AllocationService
             return;
         }
 
-        info('Previous assignment type is : '.$previousAssignmentType);
+        info('Previous assignment type is : ' . $previousAssignmentType);
 
         //Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
         // Get the allocation record for the new advisor
-        info('adjust Allocation Quote Type Id : '.$quoteTypeId);
+        info('adjust Allocation Quote Type Id : ' . $quoteTypeId);
         $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor
@@ -249,7 +249,8 @@ class AllocationService
         return [
             'auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0,
             'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0,
-            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0];
+            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0
+        ];
     }
 
     public function getHealthTodaysCount($userId)
@@ -269,7 +270,8 @@ class AllocationService
         return [
             'auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0,
             'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0,
-            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0];
+            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0
+        ];
     }
 
     public function getYesterdayCounts($userId)
@@ -309,7 +311,12 @@ class AllocationService
         // Query to fetch unavailable advisors
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) {
-                $query->whereIn('status', [UserStatusEnum::UNAVAILABLE, UserStatusEnum::LEAVE, UserStatusEnum::SICK]);
+                $query->where('is_active', 1)
+                    ->whereIn('status', [
+                        UserStatusEnum::UNAVAILABLE,
+                        UserStatusEnum::LEAVE,
+                        UserStatusEnum::SICK,
+                    ]);
             })
             ->orderBy('last_allocated');
 
@@ -330,7 +337,6 @@ class AllocationService
             }
             $leadAllocation->save();
         }
-
     }
 
     public function leadAllocationFailed(string $uuid, QuoteTypes $quoteType)
@@ -365,7 +371,7 @@ class AllocationService
 
         // Check if current time is within reassignment window and master switch is ON
         $shouldProceed = now()->between($startTime, $endTime) && (config($allocationSwitchName) == 1);
-        info('Reassignment with current time check: '.$shouldProceed);
+        info('Reassignment with current time check: ' . $shouldProceed);
         // Fetch public holiday start and end
         $publicHolidayStart = $this->getAppStorageValueByKey(ApplicationStorageEnums::PUBLIC_HOLIDAY_START_DATE);
         $publicHolidayEnd = $this->getAppStorageValueByKey(ApplicationStorageEnums::PUBLIC_HOLIDAY_END_DATE);
@@ -378,7 +384,7 @@ class AllocationService
             // Ensure the current time is not within the public holiday period
             $shouldProceed = $shouldProceed && ! now()->between($publicHolidayStartDateTime, $publicHolidayEndDateTime);
         }
-        info('Reassignment with public holiday check: '.$shouldProceed);
+        info('Reassignment with public holiday check: ' . $shouldProceed);
 
         return $shouldProceed;
     }
