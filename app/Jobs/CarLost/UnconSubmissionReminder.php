@@ -58,7 +58,7 @@ class UnconSubmissionReminder implements ShouldQueue
             return true;
         }
 
-        info('UnconSubmissionReminder - Upcoming batch found: ' . $upcomingBatch->name . ' with deadline date: ' . $upcomingBatch->deadline->deadline_date);
+        info('UnconSubmissionReminder - Upcoming batch found: '.$upcomingBatch->name.' with deadline date: '.$upcomingBatch->deadline->deadline_date);
 
         //include next 3 more batches for information
         $nextBatches = RenewalBatch::whereHas('deadline', function ($q) use ($upcomingBatch) {
@@ -92,7 +92,7 @@ class UnconSubmissionReminder implements ShouldQueue
         $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::UNCON_RENEWALS_REMINDER_TEMPLATE)->value('value');
 
         foreach ($teamsGroups as $teams) {
-            info('UnconSubmissionReminder - Getting advisors for teams: ' . implode(',', $teams));
+            info('UnconSubmissionReminder - Getting advisors for teams: '.implode(',', $teams));
 
             $advisors = User::whereHas('teams', function ($q) use ($teams) {
                 $q->whereIn('name', $teams);
@@ -103,7 +103,7 @@ class UnconSubmissionReminder implements ShouldQueue
             }])->get();
 
             if (count($advisors) == 0) {
-                info('UnconSubmissionReminder - No advisors found for teams: ' . implode(',', $teams) . '. No need to send email');
+                info('UnconSubmissionReminder - No advisors found for teams: '.implode(',', $teams).'. No need to send email');
 
                 continue;
             }
@@ -129,6 +129,6 @@ class UnconSubmissionReminder implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        info('CL: ' . get_class() . ' FN: failed. Uncontactable submission reminder Job Failed. Error: ' . $exception->getMessage());
+        info('CL: '.get_class().' FN: failed. Uncontactable submission reminder Job Failed. Error: '.$exception->getMessage());
     }
 }
