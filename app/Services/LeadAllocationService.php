@@ -408,7 +408,7 @@ class LeadAllocationService extends BaseService
             ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
             ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
             ->join('lead_allocation as la', 'la.user_id', 'users.id')
-            ->actveUser()
+            ->activeUser()
             ->groupBy('users.name', 'users.id', 'la.id')
             ->select(
                 'users.id as userId',

@@ -147,7 +147,7 @@ class HealthAllocationService extends AllocationService
             })
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
             ->where('la.quote_type_id', QuoteTypes::HEALTH->id())
-            ->actveUser()
+            ->activeUser()
             ->where('t.name', $leadTeam)
             ->orderBy('la.last_allocated', 'asc')->first();
     }
