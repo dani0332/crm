@@ -197,12 +197,22 @@
 
         .alfred {
             text-align: right;
-            padding-right: 0;
-            vertical-align: bottom;
+            padding-right: 10px;
+            padding-bottom: 10px;
+            vertical-align: middle;
             border-left: none;
             border-top: none;
-            width: 400px;
-            min-width: 400px;
+            width: 250px;
+            min-width: 250px;
+            height: 250px;
+        }
+
+        .alfred img {
+            width: 100%;
+            max-width: 250px;
+            height: auto;
+            display: inline-block;
+            vertical-align: middle;
         }
 
         .quote-info {
@@ -748,47 +758,51 @@
                     @endforeach
                 </tr>
                 <tr>
-                    <!-- <th style="display: none;"></th>  -->
                     @foreach ($planIds as $planId)
                         <th style="border: solid 1px #bfbfbf; text-align: center;">
                             <p class="text-center" style="font-size: 14px">
-                                {{ $plans[$planId]->name ?? '' }}
+                                {{ $plans[$planId]->providerName ?? '' }}
                             </p>
                         </th>
                     @endforeach
                 </tr>
-                {{-- buy now row --}}
                 <tr>
                     <th class="bg-light-blue" style="width: 25% !important; background-color: #DBEEFF !important">
                         <p class="quote-info">Home insurance comparison for: <b>{{ $quote->first_name }}
                                 {{ $quote->last_name }}</b></p>
                     </th>
-                    <th>
-                        <p class="text-center" style="font-size: 14px">
-                            4000
-                        </p>
-                    </th>
+                    @foreach ($planIds as $planId)
+                        <th>
+                            <p class="text-center" style="font-size: 14px">
+                                {{ $plans[$planId]->name ?? '' }}
+                            </p>
+                        </th>
+                    @endforeach
 
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
                         <p class="quote-info">Gross Price</b></p>
                     </th>
-                    <th>
-                        <p class="text-center" style="font-size: 14px">
-                            4000
-                        </p>
-                    </th>
+                    @foreach ($planIds as $planId)
+                        <th>
+                            <p class="text-center" style="font-size: 14px">
+                                {{ $plans[$planId]->actualPremium ?? '' }}
+                            </p>
+                        </th>
+                    @endforeach
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
                         <p class="quote-info">Vat</b></p>
                     </th>
-                    <th>
-                        <p class="text-center" style="font-size: 14px">
-                            4000
-                        </p>
-                    </th>
+                    @foreach ($planIds as $planId)
+                        <th>
+                            <p class="text-center" style="font-size: 14px">
+                                {{ $plans[$planId]->vat ?? '' }}
+                            </p>
+                        </th>
+                    @endforeach
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
@@ -808,11 +822,7 @@
                                     }
                                 @endphp
                                 <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">{{ $buyNowText }}
-                                    .AED
-                                    400</a>
-                                @if ($plans[$planId]->discountPremium)
-                                @else
-                                @endif
+                                    {{ ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0) }}</a>
                             </p>
                         </th>
                     @endforeach
