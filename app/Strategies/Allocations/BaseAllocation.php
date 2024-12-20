@@ -36,11 +36,11 @@ abstract class BaseAllocation extends AllocationService
         ];
 
         try {
-            info(self::class." - executeSteps: Allocation Started for UUID : {$this->uuid}");
+            info(self::class . " - executeSteps: Allocation Started for UUID : {$this->uuid}");
             $this->resolveLead();
 
             if (! $this->lead) {
-                info(self::class." - executeSteps: Lead not found for : {$this->uuid}");
+                info(self::class . " - executeSteps: Lead not found for : {$this->uuid}");
                 $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 $advisor = $this->fetchAvailableAdvisor();
@@ -48,7 +48,7 @@ abstract class BaseAllocation extends AllocationService
                 if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
 
-                    info(self::class." - executeSteps: No advisor found against lead : {$this->lead->uuid}");
+                    info(self::class . " - executeSteps: No advisor found against lead : {$this->lead->uuid}");
 
                     $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
@@ -60,8 +60,8 @@ abstract class BaseAllocation extends AllocationService
             $this->leadAllocationFailed($this->uuid, $this->quoteType);
 
             $message = $th->getMessage() ?? '';
-            info('exception occurred in lead allocation with error : '.$message);
-            info('exception occurred in lead allocation with error stack as  : '.$th->getTraceAsString());
+            info('exception occurred in lead allocation with error : ' . $message);
+            info('exception occurred in lead allocation with error stack as  : ' . $th->getTraceAsString());
             $response = $this->createResponse(0, "exception occurred in lead allocation with error : {$message}", Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -76,7 +76,7 @@ abstract class BaseAllocation extends AllocationService
                 $q->where('quote_type_id', $this->quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
+            ->when(! $this->overrideAdvisorId, fn($q) => $q->whereNull('advisor_id'));
     }
 
     protected function resolveLead(): void
@@ -95,17 +95,17 @@ abstract class BaseAllocation extends AllocationService
                 $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
             })
             ->when($this->teamId, function ($q) {
-                $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $this->teamId));
+                $q->whereIn('users.id', fn($query) => $query->select('user_id')->from('user_team')->where('team_id', $this->teamId));
             })
             ->whereIn('r.name', $roles)
             ->where('la.quote_type_id', $this->getQuoteTypeId())
-            ->actveUser()
+            ->activeUser()
             ->orderBy('la.last_allocated', 'asc');
     }
 
     public function fetchAvailableAdvisor()
     {
-        info(self::class." - fetchAvailableAdvisor: {$this->isReAssignment} - {$this->teamId} - {$this->uuid}");
+        info(self::class . " - fetchAvailableAdvisor: {$this->isReAssignment} - {$this->teamId} - {$this->uuid}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -117,11 +117,11 @@ abstract class BaseAllocation extends AllocationService
         }
 
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$this->uuid}");
+            info(self::class . " - trying to get advisors with current status as {$status} for lead uuid: {$this->uuid}");
             $eligibleUser = $this->fetchAdvisor($status);
 
             if ($eligibleUser) {
-                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$this->uuid}");
+                info(self::class . " - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$this->uuid}");
 
                 return User::find($eligibleUser->user_id);
             }
@@ -135,7 +135,7 @@ abstract class BaseAllocation extends AllocationService
         DB::beginTransaction();
         try {
             $assignmentType = $this->isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED;
-            info(self::class." - assignLead: Going to Assign Advisor to Lead: {$this->lead->uuid}");
+            info(self::class . " - assignLead: Going to Assign Advisor to Lead: {$this->lead->uuid}");
             $previousAssignmentType = $this->lead->assignment_type;
             $previousUserId = $this->lead->advisor_id;
             $this->lead->advisor_id = $advisor->id;
@@ -144,12 +144,12 @@ abstract class BaseAllocation extends AllocationService
             $quoteBatch = QuoteBatches::latest()->first();
             $this->lead->quote_batch_id = $quoteBatch->id;
             $this->lead->save();
-            info(self::class." - Lead Id {$this->lead->uuid} assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
+            info(self::class . " - Lead Id {$this->lead->uuid} assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
 
             $previousAdvisorAssignedDate = $this->updateQuoteDetail($this->lead->id);
 
             if ($this->lead->source != LeadSourceEnum::REFERRAL) {
-                info(self::class.' - lead source is not referral so about to update allocation record');
+                info(self::class . ' - lead source is not referral so about to update allocation record');
                 if ($assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED) {
                     $this->addAllocationCounts($advisor->id, $this->getQuoteTypeId());
                 } else {
@@ -165,7 +165,7 @@ abstract class BaseAllocation extends AllocationService
 
     private function updateQuoteDetail()
     {
-        info(self::class." - about to update quote detail record for : {$this->lead->uuid}");
+        info(self::class . " - about to update quote detail record for : {$this->lead->uuid}");
 
         $oldAdvisorAssignedDate = $this->lead->quoteDetail?->advisor_assigned_date ?? '';
 
