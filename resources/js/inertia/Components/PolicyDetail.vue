@@ -391,18 +391,23 @@ const setQuotePlanInsurerNumber = () => {
     '';
 };
 const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
+  let disableEditPolicyDetails = false;
+
+  let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
+  console.table('policyIssuanceSteps', policyIssuanceSteps);
+  if (policyIssuanceSteps?.isPolicyAutomationEnabled) {
+    disableEditPolicyDetails = policyIssuanceSteps?.isEditPolicyDetailsDisabled;
+  }
+
   let isPolicyBookingFailed =
     page.props.quote.quote_status_id == quoteStatusEnum.POLICY_BOOKING_FAILED;
-  if (isPolicyBookingFailed) {
-    let hasBookingFailedEditPermission = can(
-      permissionsEnum.BOOKING_FAILED_EDIT,
-    );
-    if (!hasBookingFailedEditPermission) {
-      return true;
-    }
-    return false;
+  let hasBookingFailedEditPermission = can(permissionsEnum.BOOKING_FAILED_EDIT);
+
+  if (isPolicyBookingFailed && !hasBookingFailedEditPermission) {
+    disableEditPolicyDetails = true;
   }
-  return false;
+
+  return disableEditPolicyDetails;
 });
 
 const getMinPolicyExpiryDate = () => {

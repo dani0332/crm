@@ -53,7 +53,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
             // If a valid tier is found
             if ($tier) {
                 // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
+                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $lead);
 
                 // Find custom rules for the lead
                 $rules = $this->findRules($lead);
@@ -105,9 +105,9 @@ class ReAssignCarLeadsJob implements ShouldQueue
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId, $leadSource)
+    protected function findAvailableUsers($tierId, $leadSource, $lead)
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId, true, $leadSource, null);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId, true, $leadSource, null, $lead);
     }
 
     protected function findRules($lead)

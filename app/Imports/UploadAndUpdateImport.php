@@ -112,7 +112,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
         $columns = [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'nullable|max:255'],
-            'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'nullable|max:100'],
+            'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'nullable|max:20|regex:/^[0-9]+$/'],
             'quote_type' => ['index' => 3, 'title' => 'Insurance Type', 'rules' => 'required|required|max:4'],
             'insurer' => ['index' => 4, 'title' => 'Insurance Provider', 'rules' => 'required|max:100'],
             'product_type' => ['index' => 5, 'title' => 'Product Type', 'rules' => 'required|max:100'],

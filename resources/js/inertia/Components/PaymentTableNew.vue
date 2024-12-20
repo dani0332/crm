@@ -2292,7 +2292,8 @@ const addPayment = isValid => {
   data.payment.payment_splits = splitPayments;
 
   let declinedCustomReason = paymentMethodsForm.declined_custom_reason;
-  if (isCreditApprovalView.value === true) {
+
+  if (isCreditApprovalView.value === true && !isApproveNotChecked.value) {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -2328,7 +2329,7 @@ const addPayment = isValid => {
     return;
   }
 
-  if (paymentMethodsForm.status === 'view') {
+  if (paymentMethodsForm.status === 'view' && !isApproveNotChecked.value) {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -3682,6 +3683,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                                   ? editPaymentModal(item, 0, 0, 1)
                                   : alertCapture(item)
                               "
+                              :disabled="isApproveConfirmed"
                             >
                               Capture
                             </x-button>
@@ -3698,6 +3700,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                                   ? editPaymentModal(item, 0, 0, 2)
                                   : alertCapture(item)
                               "
+                              :disabled="isApproveConfirmed"
                             >
                               Approve
                             </x-button>
@@ -5678,6 +5681,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                       type="submit"
                       tabindex="0"
                       :loading="paymentMethodsForm.processing"
+                      :disabled="isApproveConfirmed"
                     >
                       <template v-if="isCreditApprovalView && isCreditCardView">
                         Capture

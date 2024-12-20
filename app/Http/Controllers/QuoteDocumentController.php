@@ -39,6 +39,7 @@ class QuoteDocumentController extends Controller
     protected $customerService;
     protected $userService;
     protected $exportDocumentService;
+    protected $applicationStorageService;
 
     public function __construct(
         CRUDService $crudService,
