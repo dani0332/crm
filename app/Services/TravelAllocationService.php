@@ -37,7 +37,7 @@ class TravelAllocationService extends AllocationService
     {
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
         if ($travelQuote->isParent() && $travelQuote->isAdult()) {
-            info(self::class . ":verifyFetchLeadPreChecks - {$quoteUUID} is parent lead so checking for Alliance Travel Automation");
+            info(self::class.":verifyFetchLeadPreChecks - {$quoteUUID} is parent lead so checking for Alliance Travel Automation");
             // Check if the lead is associated with the ALNC provider
             $payment = PaymentRepository::mainQuotePayment($travelQuote);
             $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
@@ -45,19 +45,19 @@ class TravelAllocationService extends AllocationService
 
             $isALNC = $insurerCode == InsuranceProvidersEnum::ALNC;
 
-            $isALNC && info(self::class . ":verifyFetchLeadPreChecks - {$quoteUUID} is Alliance so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
+            $isALNC && info(self::class.":verifyFetchLeadPreChecks - {$quoteUUID} is Alliance so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
 
             $isAutomationEnabled = (new PolicyIssuanceService)->init(self::TYPE, $insurerCode)?->isPolicyIssuanceAutomationEnabled();
-            info(self::class . " - verifyFetchLeadPreChecks: {$quoteUUID} - isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
+            info(self::class." - verifyFetchLeadPreChecks: {$quoteUUID} - isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
 
             if ($isALNC && $isAutomationEnabled && $travelQuote->isSingleTrip() && $travelQuote->isPaid()) {
                 if ($travelQuote->isAutomationCompleted() || $travelQuote->isBookingFailed()) {
-                    $travelQuote->isAutomationCompleted() && info(self::class . ":fetchLead - {$quoteUUID} is Alliance and automation is completed so proceed with allocation");
-                    $travelQuote->isBookingFailed() && info(self::class . ":fetchLead - {$quoteUUID} is Alliance and booking failed so proceed with allocation");
+                    $travelQuote->isAutomationCompleted() && info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is completed so proceed with allocation");
+                    $travelQuote->isBookingFailed() && info(self::class.":fetchLead - {$quoteUUID} is Alliance and booking failed so proceed with allocation");
                     $this->isCHSAdvisor = true;
                     $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
                 } else {
-                    info(self::class . ":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed so ignore fetch lead");
+                    info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed so ignore fetch lead");
 
                     return false;
                 }
@@ -73,7 +73,7 @@ class TravelAllocationService extends AllocationService
 
         // Return null if no record is found
         if (! $travelQuote) {
-            info(self::class . ' : ' . __FUNCTION__ . ' - Quote ID : ' . $quoteId . ' - lead not found.');
+            info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - lead not found.');
 
             return null;
         }
@@ -89,7 +89,7 @@ class TravelAllocationService extends AllocationService
                 QuoteStatusEnum::Duplicate,
                 QuoteStatusEnum::Lost,
             ])
-            ->when(! $overrideAdvisorId, fn($q) => $q->whereNull('advisor_id'))
+            ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
             ->where(function ($query) {
                 $query->sicFlowDisabled()
                     ->orWhere(function ($subQuery) {
@@ -104,13 +104,13 @@ class TravelAllocationService extends AllocationService
         $this->resetProps();
         $lead = TravelQuote::where('parent_id', $parentLead->id)->first();
         if ($lead) {
-            info(self::class . ":assignAvailableAdvisorToChild - Finding Advisor for Child Lead: {$lead->uuid} of parent lead: {$parentLead->uuid}");
+            info(self::class.":assignAvailableAdvisorToChild - Finding Advisor for Child Lead: {$lead->uuid} of parent lead: {$parentLead->uuid}");
             $advisor = $this->fetchAvailableAdvisor(false, getTeamId(TeamNameEnum::SIC_UNASSISTED), $lead->uuid, $lead);
             if (! $advisor) {
-                info(self::class . ":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid} of parent lead: {$parentLead->uuid}");
+                info(self::class.":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid} of parent lead: {$parentLead->uuid}");
                 $this->leadAllocationFailed($lead->uuid, QuoteTypes::TRAVEL);
             } else {
-                info(self::class . ":assignAvailableAdvisorToChild - Advisor found for Child Lead: {$lead->uuid} of parent lead: {$parentLead->uuid}");
+                info(self::class.":assignAvailableAdvisorToChild - Advisor found for Child Lead: {$lead->uuid} of parent lead: {$parentLead->uuid}");
                 $this->assignLead($lead, $advisor, AssignmentTypeEnum::SYSTEM_ASSIGNED);
             }
         }
@@ -118,7 +118,7 @@ class TravelAllocationService extends AllocationService
 
     public function fetchAvailableAdvisor($isReassignmentJob = false, $teamId = null, $quoteUUID = null, ?TravelQuote $lead = null)
     {
-        Log::info(self::class . " - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$quoteUUID}");
+        Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$quoteUUID}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -130,11 +130,11 @@ class TravelAllocationService extends AllocationService
         }
 
         foreach ($statusOrder as $status) {
-            info(self::class . " - trying to get advisors with current status as {$status} for lead uuid: {$quoteUUID}");
+            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quoteUUID}");
             $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $lead);
 
             if ($eligibleUser) {
-                info(self::class . " - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$quoteUUID}");
+                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$quoteUUID}");
 
                 return User::find($eligibleUser->user_id);
             }
@@ -146,7 +146,7 @@ class TravelAllocationService extends AllocationService
     public function getAdvisorByStatus($status, $teamId = null, ?TravelQuote $lead = null)
     {
         if ($this->isCHSAdvisor) {
-            info(self::class . " - getAdvisorByStatus: CHS Advisor is required for lead: {$lead->uuid}");
+            info(self::class." - getAdvisorByStatus: CHS Advisor is required for lead: {$lead->uuid}");
 
             return User::select('users.id as user_id')->chs()->first();
         }
@@ -162,12 +162,12 @@ class TravelAllocationService extends AllocationService
                     ->orWhere('la.max_capacity', -1);
             })
             ->when($teamId, function ($q) use ($teamId) {
-                $q->whereIn('users.id', fn($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
+                $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
             }, function ($q) {
                 // if no team provided then user must not be part of SIC Unassisted 2.0 Team
                 $sicUnassistedTeam = Team::where('name', TeamNameEnum::SIC_UNASSISTED)->first();
                 if ($sicUnassistedTeam) {
-                    $q->whereNotIn('users.id', fn($query) => $query->select('user_id')->from('user_team')->where('team_id', $sicUnassistedTeam->id));
+                    $q->whereNotIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $sicUnassistedTeam->id));
                 }
             })
             ->whereIn('r.name', [RolesEnum::TravelAdvisor])
@@ -177,14 +177,14 @@ class TravelAllocationService extends AllocationService
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
             ->orderBy('la.last_allocated', 'asc');
-        info(self::class . " - getAdvisorByStatus query: {$user->toSql()}, bindings: " . json_encode($user->getBindings()));
+        info(self::class." - getAdvisorByStatus query: {$user->toSql()}, bindings: ".json_encode($user->getBindings()));
 
         return $user->first();
     }
 
     public function assignLead(TravelQuote $lead, User $advisor, $assignmentType)
     {
-        info(self::class . " - assignLead: Going to Assign Advisor to Lead: {$lead->uuid}");
+        info(self::class." - assignLead: Going to Assign Advisor to Lead: {$lead->uuid}");
         $previousAssignmentType = $lead->assignment_type;
         $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
@@ -193,17 +193,17 @@ class TravelAllocationService extends AllocationService
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
-        info(self::class . " - Lead Id {$lead->uuid} assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
+        info(self::class." - Lead Id {$lead->uuid} assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
 
         if ($lead->source != LeadSourceEnum::REFERRAL) {
-            info(self::class . ' - lead source is not referral so about to update allocation record');
+            info(self::class.' - lead source is not referral so about to update allocation record');
             $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id, QuoteTypes::TRAVEL->id()) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::TRAVEL->id());
         }
 
         if ($this->isMixEnquiryWithAutomation) {
-            info(self::class . ":assignLead - Mix Enquiry with Automation so going to assign advisor to child lead for parent lead: {$lead->uuid}");
+            info(self::class.":assignLead - Mix Enquiry with Automation so going to assign advisor to child lead for parent lead: {$lead->uuid}");
             $this->assignAvailableAdvisorToChild(parentLead: $lead);
         }
         $this->resetProps();
@@ -211,7 +211,7 @@ class TravelAllocationService extends AllocationService
 
     public function updateQuoteDetail($leadId)
     {
-        info(self::class . " - about to update travel quote detail record for : {$leadId}");
+        info(self::class." - about to update travel quote detail record for : {$leadId}");
 
         $quoteDetail = TravelQuoteRequestDetail::where('travel_quote_request_id', $leadId)->first();
         $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date ?? '';
