@@ -49,7 +49,7 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
 
         info(self::class." - Lead found for uuid: {$this->quoteUuid}");
 
-        $shouldSkip = ($lead->sic_flow_enabled && !$this->forceSicWorkflow) || Str::startsWith($lead->code, 'TRA-CAR-') || (empty($lead->advisor_id) && $lead->isMultiTrip());
+        $shouldSkip = ($lead->sic_flow_enabled && ! $this->forceSicWorkflow) || Str::startsWith($lead->code, 'TRA-CAR-') || (empty($lead->advisor_id) && $lead->isMultiTrip());
 
         if ($shouldSkip) {
             if ($lead->sic_flow_enabled) {

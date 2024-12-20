@@ -221,7 +221,7 @@ class TravelEmailService extends BaseService
             $sicEventName = getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_ENABLE);
             if ($sicEventName) {
                 $apiResponse = SIBService::createWorkflowEvent($sicEventName, $lead, eventData: $emailData);
-                if(!$lead->sic_flow_enabled) {
+                if (! $lead->sic_flow_enabled) {
                     $lead->sic_flow_enabled = true;
                     $lead->save();
                 }
