@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ActivityTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
@@ -16,6 +17,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -102,6 +104,7 @@ class HandleInertiaRequests extends Middleware
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
+            'pusherCluster' => config('constants.VITE_PUSHER_APP_CLUSTER'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'vat' => ApplicationStorageEnums::VAT,
             'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
@@ -118,6 +121,7 @@ class HandleInertiaRequests extends Middleware
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
+            'policyIssuanceEnum' => PolicyIssuanceEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
             'kycEnums' => Kyc::asArray(),
@@ -126,6 +130,7 @@ class HandleInertiaRequests extends Middleware
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
+            'activityTypeEnum' => ActivityTypeEnum::asArray(),
         ];
     }
 
@@ -234,12 +239,52 @@ class HandleInertiaRequests extends Middleware
                         'Travel',
                         route('travel-lead-allocation.index'),
                         fn ($s) => $s->attributes(['icon' => 'travel'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD),
+                        'Life',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::LIFE]),
+                        fn ($s) => $s->attributes(['icon' => 'life'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD),
+                        'Home',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::HOME]),
+                        fn ($s) => $s->attributes(['icon' => 'home'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD),
+                        'Pet',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::PET]),
+                        fn ($s) => $s->attributes(['icon' => 'pet'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD),
+                        'Corpline',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CORPLINE]),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD),
+                        'Cycle',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CYCLE]),
+                        fn ($s) => $s->attributes(['icon' => 'cycle'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD),
+                        'Yacht',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::YACHT]),
+                        fn ($s) => $s->attributes(['icon' => 'yacht'])
                     );
             });
         }
 
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', route('activities.index'));
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_ALL_LEAD_LOB)) {
+            $nav = $nav->add('Search', route('search-leads'));
         }
 
         /* personal quotes section */
@@ -608,7 +653,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
-            $nav = $nav->add('InstantAlfred Chat Logs', route('instant-alfred.logs'));
+            $nav = $nav->add('InstantAlfred Chat Logs', route('instant-alfred.index'));
         }
 
         return $nav;

@@ -186,6 +186,7 @@ class HealthQuoteService extends BaseService
             'hqr.insly_migrated',
             'hqr.sic_advisor_requested',
             'hqr.aml_status',
+            'hqr.insurance_provider_id'
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -1310,60 +1311,6 @@ class HealthQuoteService extends BaseService
         }
     }
 
-    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
-    {
-        if ($advisorAllocationRecord === null || $lead === null) {
-            return;
-        }
-
-        // Determine if the lead was system-assigned or manually assigned
-        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
-
-        // Update allocation counts based on assignment type
-        if ($isSystemAssigned) {
-            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
-        } else {
-            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
-        }
-
-        // Increment the total allocation count and update timestamps
-        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
-        $advisorAllocationRecord->last_allocated = now()->timestamp;
-        $advisorAllocationRecord->updated_at = now();
-
-        // Save the updated allocation record
-        $advisorAllocationRecord->save();
-    }
-
-    private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
-    {
-        // Check if there is a previous advisor and the lead assignment date is today
-        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
-            if ($previousAdvisorAllocationRecord !== null) {
-                // Determine if the previous assignment was system-assigned
-                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
-
-                // Update allocation counts based on assignment type (if applicable)
-                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('deduct from auto assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('deduct from manual assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-                }
-
-                // Decrement the total allocation count (if it's greater than 0) and update timestamps
-                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
-                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
-                    $previousAdvisorAllocationRecord->updated_at = now();
-                }
-
-                // Save the updated allocation record
-                $previousAdvisorAllocationRecord->save();
-            }
-        }
-    }
-
     public function getEntityPlainByUUID($uuid)
     {
         return HealthQuote::where('uuid', $uuid)->first();
@@ -1933,8 +1880,9 @@ class HealthQuoteService extends BaseService
 
     public function exportRmLeads()
     {
-        $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d 00:00:00');
-        $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
+        $request = request();
+        [$startDate, $endDate] = $this->getTransactionApprovedDates($request);
+
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
         $healthTeam = $this->getProductByName(quoteTypeCode::Health);
 
@@ -1972,7 +1920,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->leftJoin('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
-            ->whereBetween('q.transaction_approved_at', [$startOfMonth, $endOfPreviousDay])
+            ->whereBetween('q.transaction_approved_at', [$startDate, $endDate])
             ->whereIn('u.id', function ($subQuery) use ($carTeam) {
                 $subQuery->select('u.id')
                     ->from('users as u')
@@ -1982,5 +1930,32 @@ class HealthQuoteService extends BaseService
             })
             ->groupBy('q.code', 'q.transaction_approved_at', 'u.name', 'u.email', 'qs.text', 'ps.text', 'q.created_at')
             ->orderBy('q.created_at', 'ASC');
+    }
+
+    private function getTransactionApprovedDates($request)
+    {
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH'); // Default format
+        if (isset($request->transaction_approved_dates)) {
+            $dates = $request->transaction_approved_dates;
+
+            // If the dates are a string, split it into an array
+            if (is_string($dates)) {
+                $dates = explode(',', $dates);
+            }
+
+            // Parse start and end dates if the array is valid
+            if (is_array($dates) && count($dates) === 2) {
+                $startDate = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
+                $endDate = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
+
+                return [$startDate, $endDate];
+            }
+        }
+
+        // Default to the current month's start and end of the previous day
+        $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d 00:00:00');
+        $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
+
+        return [$startOfMonth, $endOfPreviousDay];
     }
 }
