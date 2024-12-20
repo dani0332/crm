@@ -75,7 +75,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
         $item = DttRevival::where('uuid', $this->uuid)->where('is_active', 1)->first();
         if (! $item) {
-            info($this->logPrefix.'Revival Follow Up Not Active - UUID: '.$item->uuid);
+            info($this->logPrefix.'Revival Follow Up Not Active - UUID: '.$this->uuid);
 
             return false;
         }
