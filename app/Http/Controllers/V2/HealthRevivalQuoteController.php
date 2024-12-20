@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\HealthTeamType;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteTypeCode;
@@ -23,16 +24,19 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Services\ActivitiesService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 
 class HealthRevivalQuoteController extends Controller
 {
-    //
+    use GenericQueriesAllLobs;
 
     public function index()
     {
@@ -74,11 +78,6 @@ class HealthRevivalQuoteController extends Controller
         $payments = $paymentEntityModel->payments;
         $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
 
-        $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUpload(QuoteTypeId::Health);
-        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        $documentTypes = collect($documentTypes)->groupBy('category');
-
-        $paymentMethods = app(LookupService::class)->getPaymentMethods();
         $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocuments($quoteType, $record->id);
         $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
@@ -86,6 +85,9 @@ class HealthRevivalQuoteController extends Controller
 
             return $quoteDocument;
         });
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Health);
+
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         $activitiesData = app(ActivitiesService::class)->getActivityByLeadId($record->id, strtolower($quoteType));
         $activities = [];
@@ -134,9 +136,25 @@ class HealthRevivalQuoteController extends Controller
         $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
+        $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+        if ($isNewPaymentStructure) {
+            $paymentMethods = app(LookupService::class)->getPaymentMethods();
+        } else {
+            $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+            })->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->code,
+                    'label' => $paymentMethod->name,
+                ];
+            })->values();
+        }
+        $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
         return inertia('HealthRevivalQuote/Show', [
             'quote' => $record,
+            'quoteTypeId' => $quoteTypeId,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'genderOptions' => app(CRUDService::class)->getGenderOptions(),
             'leadStatuses' => array_values($leadStatuses->toArray()),
@@ -145,6 +163,7 @@ class HealthRevivalQuoteController extends Controller
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
             'quoteType' => QuoteTypes::HEALTH,
+            'isNewPaymentStructure' => $isNewPaymentStructure,
             'customerAdditionalContactsData' => $customerAdditionalContacts,
             'ecomDetails' => $ecomDetails,
             'payments' => $payments,
@@ -165,7 +184,11 @@ class HealthRevivalQuoteController extends Controller
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'cdnPath ' => $cdnPath,
+            'paymentDocument' => $paymentDocument,
+            'ecomHealthInsuranceQuoteUrl' => $ecomHealthInsuranceQuoteUrl,
+            'bookPolicyDetails' => $bookPolicyDetails,
         ]);
     }
 

@@ -4,7 +4,7 @@ import LazyCreatePlan from '../HealthQuote/Partials/CreatePlan.vue';
 import LazyAvailablePlan from '../HealthQuote/Partials/AvailablePlans.vue';
 const props = defineProps({
   quote: Object,
-  customerTypeEnum: Array,
+  customerTypeEnum: Object,
   genderOptions: Object,
   customerAdditionalContactsData: Array,
   memberCategories: Array,
@@ -14,13 +14,15 @@ const props = defineProps({
   leadStatuses: Array,
   quoteType: String,
   ecomDetails: Object,
+  sendPolicy: Boolean,
+  coPayment: Object,
   storageUrl: String,
   quoteType: String,
   paymentTooltipEnum: Object,
-  paymentStatusEnum: Array,
   quoteRequest: Object,
   documentTypes: Object,
   paymentMethods: Object,
+  isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   payments: Array,
   quoteDocuments: Array,
@@ -28,16 +30,24 @@ const props = defineProps({
   advisors: Array,
   insuranceProviders: Array,
   healthPlanTypes: Array,
-  quoteNotes: Array,
+  quoteNotes: Object,
   noteDocumentType: Array,
   allowedDuplicateLOB: Array,
   cdnPath: String,
+  lockLeadSectionsDetails: Object,
+  hashCollapsibleStatuses: Boolean,
+  ecomHealthInsuranceQuoteUrl: String,
+  bookPolicyDetails: Array,
+  paymentDocument: Array,
 });
 
 const page = usePage();
 
+const showPlans = ref(!props.hashCollapsibleStatuses);
+
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
+const { copy, copied } = useClipboard();
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const notification = useToast();
@@ -48,6 +58,17 @@ const rolesEnum = page.props.rolesEnum;
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MMM-YYYY').value : '-';
+
+const onCopyText = text => {
+  copy(text);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
+const isManualPlansCount = ref(0);
+
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
   assignLead = ref(null),
@@ -374,7 +395,22 @@ const selectedProviderPlan = ref({
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
   premium: page.props.ecomDetails.priceWithVAT,
+  planType: checkPlanType(page.props.quote.plan_type_id),
 });
+
+const handlePlanSelected = plan => {
+  //se.value = plan.id;
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
+  selectedProviderPlan.value.planType = plan.planType;
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
+  });
+};
 
 const onDocDelete = name => {
   modals.docConfirm = true;
@@ -544,6 +580,10 @@ const onMemberSubmit = isValid => {
   }
 };
 
+const onRecieveMembersDetailsReview = () => {
+  membersDetailsUpdated.value = false;
+};
+
 const onLeadStatus = () => {
   leadStatusForm.post(
     `/quotes/Health/${page.props.quote.id}/update-lead-status`,
@@ -677,8 +717,7 @@ const onLoadAvailablePlansData = async () => {
   let data = {
     jsonData: true,
   };
-  // let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
-  let url = `/quotes/health/available-plans/XJTZ3UJX`;
+  let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
   axios
     .post(url, data)
     .then(res => {
@@ -1159,6 +1198,30 @@ const onCreateDuplicate = isValid => {
     },
   });
 };
+
+// Only copied from health quote show not sure if it is needed
+const updateProfileDetails = isValid => {
+  if (!isValid) return;
+
+  customerProfileForm.post(route('update-customer-profile'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Customer profile details update Successfully',
+        position: 'top',
+      });
+    },
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
+    },
+  });
+};
+
 </script>
 
 <template>
@@ -2274,16 +2337,14 @@ const onCreateDuplicate = isValid => {
           @markPlanAsManual="onMarkPlanAsManual"
         />
 
-        <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
-          <template #header> Add Plan </template>
-          <LazyCreatePlan
-            :uuid="quote.uuid"
-            :members="membersDetail"
-            :genders="genderOptions"
-            @success="onCreatePlan"
-            @error="onPlanError"
-          />
-        </x-modal>
+        <LazyCreatePlan
+          v-model="modals.createPlan"
+          :uuid="quote.uuid"
+          :members="membersDetail"
+          :genders="genderOptions"
+          @success="onCreatePlan"
+          @error="onPlanError"
+        />
 
         <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
           <template #header> Filters </template>
@@ -2384,14 +2445,17 @@ const onCreateDuplicate = isValid => {
   <!-- payments -->
 
   <PaymentTableNew
+    v-if="isNewPaymentStructure"  
     quoteType="Health"
     :payments="payments"
-    :paymentDocument="
-      documentTypes.QUOTE.filter(
-        item =>
-          item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR',
-      )
-    "
+    :paymentDocument="paymentDocument"
+    :proformaPayment="
+        payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
     :quoteRequest="quoteRequest"
     :paymentStatusEnum="paymentStatusEnum"
     :paymentTooltipEnum="paymentTooltipEnum"
@@ -2402,6 +2466,10 @@ const onCreateDuplicate = isValid => {
     "
     :storageUrl="storageUrl"
     :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
+    :eCommercePriceWithLP="
+        ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
+      "
+    :bookPolicyDetails="bookPolicyDetails"
   />
 
   <!-- QuoteDocuments -->
