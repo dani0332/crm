@@ -239,7 +239,7 @@ class HealthQuoteService extends BaseService
                 ]);
                 $payment->orderBy('created_at');
             },
-            'plan'
+            'plan',
         ])->first();
     }
 
