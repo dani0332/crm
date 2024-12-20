@@ -86,12 +86,12 @@ class PaymentService extends BaseService
     }
 
     /**
-     * Set the total payment price when payment frequency is upfront and payment is paid
+     * Set the total payment price when payment frequency is upfront
      */
     private function setTotalAmount($payment)
     {
         info('Quote Code: '.$payment->code.' Updating TA frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
-        if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+        if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::NEW, PaymentStatusEnum::OVERDUE])) {
             $totalPrice = $payment->total_price;
             $discountValue = $payment->discount_value;
             $totalAmount = $totalPrice - $discountValue;
