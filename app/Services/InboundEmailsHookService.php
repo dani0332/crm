@@ -5,16 +5,15 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use App\Factories\AllocationFactory;
 use App\Jobs\EmailStatusEventJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
+use App\Models\HomeQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use Carbon\Carbon;
@@ -127,9 +126,10 @@ class InboundEmailsHookService extends BaseService
             return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
         }
 
-        info(self::class." - handleTravel: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
-        $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid);
-        $assignedAdvisorId = $allocationStrategy->executeSteps();
+        info(self::class." - handleTravel: Allocation Process Executing for lead: {$lead->uuid}");
+
+        $response = QuoteTypes::TRAVEL->allocate($lead->uuid);
+        $assignedAdvisorId = $response['advisorId'] ?? '';
         info(self::class." - handleTravel: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
@@ -239,6 +239,9 @@ class InboundEmailsHookService extends BaseService
                     break;
                 case QuoteTypes::HEALTH->id():
                     $quote = HealthQuote::where('id', $emailStatusData->quote_id)->first();
+                    break;
+                case QuoteTypes::HOME->id():
+                    $quote = HomeQuote::where('id', $emailStatusData->quote_id)->first();
                     break;
                 default:
                     $quote = null;

@@ -108,6 +108,10 @@ const removeSelected = item => {
   if (index != -1) {
     props.modelValue.splice(index, 1);
   }
+  emit(
+    'update:modelValue',
+    selectedValue?.value?.map(item => item.value) || [],
+  );
 };
 </script>
 
