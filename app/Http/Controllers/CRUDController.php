@@ -107,6 +107,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use App\Enums\CarRegistrationType;
 
 class CRUDController extends Controller
 {
@@ -413,6 +414,7 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
+            $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
 
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
@@ -453,7 +455,7 @@ class CRUDController extends Controller
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
-        if ($modelType == quoteTypeCode::Health || $modelType == quoteTypeCode::Car || $modelType == quoteTypeCode::Travel || $modelType == quoteTypeCode::Home) {
+        if ($modelType == quoteTypeCode::Health || $modelType == quoteTypeCode::Travel || $modelType == quoteTypeCode::Home) {
             $validateArray = [];
             $modelDetails[quoteTypeCode::Home]['totalLeadsCount'] = HomeQuoteRepository::getData(true, true);
             $modelDetails[quoteTypeCode::Health]['totalLeadsCount'] = HealthQuoteRepository::getData(true, true);
@@ -749,7 +751,13 @@ class CRUDController extends Controller
             $genericRequestEnum = GenericRequestEnum::asArray();
             $carPlanTypeEnum = CarPlanType::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
-            @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Car);
+            
+            if($quote->registration_type == CarRegistrationType::COMPANY) {
+                $quoteTypeId = QuoteTypeId::CompanyCar;
+            } else {
+                $quoteTypeId = QuoteTypeId::Car;
+            }
+            @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($quoteTypeId);
             $quoteDocuments = array_values($quoteDocuments->toArray());
             $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;
             $storageUrl = storageUrl();
@@ -777,6 +785,7 @@ class CRUDController extends Controller
 
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
+            $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record',
@@ -868,6 +877,7 @@ class CRUDController extends Controller
                 'paymentDocument',
                 'customerAddressData',
                 'amlStatusName',
+                'businessActivities',
             ]));
         }
 
@@ -1272,11 +1282,16 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
+            $dropdownSource['business_activities'] = $this->dropdownSourceService->getDropdownSource('business_activity');
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $courierQuoteResponse = app(MACRMService::class)->getCourierQuoteStatus($record->uuid, QuoteTypeId::Car);
             $courierQuoteStatus = isset($courierQuoteResponse['data']['status'])
                 ? $courierQuoteResponse['data']['status']
                 : 'Pending';
+
+            if ($record->registration_type == CarRegistrationType::COMPANY) {
+                $record->company_contact_name = $record->first_name . ' ' . $record->last_name;
+            }
 
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
@@ -2243,7 +2258,7 @@ class CRUDController extends Controller
      */
     private function getCarMakeDropdown()
     {
-        return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
+        return CarMake::select('id', 'text', 'code', 'is_commercial')->where('is_active', true)->get();
     }
 
     public function riskRatingDetails($quoteType, $uuid)

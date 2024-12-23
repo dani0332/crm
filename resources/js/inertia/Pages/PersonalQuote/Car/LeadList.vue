@@ -25,8 +25,8 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-const carRegistrationType = page.props.carRegistrationType;
-const carVehicleUse = page.props.carVehicleUse;
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 const quoteSegments = page.props.quoteSegments;
 const cleanObj = obj => useCleanObj(obj);
 const exportLoader = ref(false);
@@ -45,7 +45,7 @@ const tableHeader = [
   { text: 'REF-ID', value: 'code' },
   { text: 'BATCH', value: 'quote_batch_id_text' },
   { text: 'Vehicle Use', value: 'vehicle_use' },
-  { text: 'Company Name', value: 'company_name' },
+  { text: 'Company Name', value: 'quote_company_name' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
@@ -113,16 +113,6 @@ const assignmentTypeOptions = [
   { value: 4, label: 'Manual ReAssigned' },
 ];
 
-const registrationTypeOptions = [
-  { value: carRegistrationType.PERSONAL, label: 'Personal' },
-  { value: carRegistrationType.COMPANY, label: 'Company' },
-];
-
-const vehicleUseOptions = [
-  { value: carVehicleUse.PRIVATE, label: 'Private' },
-  { value: carVehicleUse.COMMERCIAL, label: 'Commercial' },
-];
-
 const filteredTableHeader = computed(() => {
   let filteredHeader = [...tableHeader];
   if (hasRole(rolesEnum.CarAdvisor)) {
@@ -131,7 +121,7 @@ const filteredTableHeader = computed(() => {
     );
   }
 
-  if (filters.registration_type === carRegistrationType.COMPANY) {
+  if (filters.registration_type === carRegistrationTypeEnum.COMPANY) {
     // If the registration type is "Company", exclude "First Name" and "Last Name" columns
     filteredHeader = filteredHeader.filter(
       column =>
@@ -165,6 +155,16 @@ const advisorOptions = computed(() => {
 
   return options;
 });
+
+const registrationTypeOptions = Object.values(carRegistrationTypeEnum).map(item => ({
+  value: item,
+  label: item,
+}));
+
+const vehicleUseOptions = Object.values(carVehicleUseEnum).map(item => ({
+  value: item,
+  label: item,
+}));
 
 const leadStatuses = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(status => ({
@@ -285,7 +285,7 @@ const filters = reactive({
   policy_expiry_date_end: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
-  registration_type: carRegistrationType.PERSONAL,
+  registration_type: carRegistrationTypeEnum.PERSONAL,
   vehicle_use: '',
   company_name: '',
 });
@@ -326,6 +326,14 @@ watch(
       canExportLeadsAndPlan.value = true;
     } else {
       canExportLeadsAndPlan.value = false;
+    }
+
+    if (filters.registration_type == carRegistrationTypeEnum.COMPANY) {
+      filters.first_name = '';
+      filters.last_name = '';
+    } else {
+      filters.vehicle_use = '';
+      filters.company_name = '';
     }
   },
   { deep: true, immediate: true },
@@ -624,7 +632,7 @@ const onExport = (url, isLoading = false) => {
           class="w-full"
         />
         <ComboBox
-          v-if="filters.registration_type == carRegistrationType.COMPANY"
+          v-if="filters.registration_type == carRegistrationTypeEnum.COMPANY"
           v-model="filters.vehicle_use"
           label="Vehicle use"
           name="vehicle_ue"
@@ -648,7 +656,7 @@ const onExport = (url, isLoading = false) => {
           :options="batchOptions"
         />
         <x-input
-          v-if="filters.registration_type == carRegistrationType.COMPANY"
+          v-if="filters.registration_type == carRegistrationTypeEnum.COMPANY"
           v-model="filters.company_name"
           type="search"
           name="company_name"
@@ -657,7 +665,7 @@ const onExport = (url, isLoading = false) => {
           placeholder="Search by Company Name"
         />
         <x-input
-          v-if="filters.registration_type == carRegistrationType.PERSONAL"
+          v-if="filters.registration_type == carRegistrationTypeEnum.PERSONAL"
           v-model="filters.first_name"
           type="search"
           name="first_name"
@@ -666,7 +674,7 @@ const onExport = (url, isLoading = false) => {
           placeholder="Search by First Name"
         />
         <x-input
-          v-if="filters.registration_type == carRegistrationType.PERSONAL"
+          v-if="filters.registration_type == carRegistrationTypeEnum.PERSONAL"
           v-model="filters.last_name"
           type="search"
           name="last_name"

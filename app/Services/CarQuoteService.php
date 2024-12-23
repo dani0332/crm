@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BirdFlowStatusEnum;
+use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use App\Enums\CarRegistrationType;
 
 class CarQuoteService extends BaseService
 {
@@ -188,6 +190,8 @@ class CarQuoteService extends BaseService
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
+                'c.first_name as customer_first_name',
+                'c.last_name as customer_last_name',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -213,6 +217,10 @@ class CarQuoteService extends BaseService
                 DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'cqr.insly_migrated',
                 'cqr.aml_status',
+                'cqr.registration_type',
+                'cqr.vehicle_use',
+                'cqr.company_name as quote_company_name',
+                'cqr.business_activity_id',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -323,16 +331,35 @@ class CarQuoteService extends BaseService
 
     public function saveCarQuote(Request $request)
     {
+        $registrationType = $request->registration_type ?? CarRegistrationType::PERSONAL;
+        $vehicleUse = $request->vehicle_use ?? null;
+        $firstName = $request->first_name ?? null;
+        $lastName = $request->last_name ?? null;
+
+        if ($registrationType == CarRegistrationType::COMPANY) {
+            if($vehicleUse == CarVehicleUse::PRIVATE) {
+                $name = explode(' ', $firstName);
+                $firstName = reset($name);
+                unset($name[0]);
+                $lastName = implode(' ', $name) ?? ' ';
+            } else {
+                $name = explode(' ', $request->company_contact_name);
+                $firstName = reset($name);
+                unset($name[0]);
+                $lastName = implode(' ', $name) ?? ' ';
+            }
+        }
+
         $dataArr = [
-            'firstName' => $request->first_name,
-            'lastName' => $request->last_name,
+            'firstName' => $firstName,
+            'lastName' => $lastName,
             'email' => $request->email,
             'address' => $request->address,
             'mobileNo' => $request->mobile_no,
-            'dob' => $request->dob,
-            'nationalityId' => $request->nationality_id,
-            'uaeLicenseHeldForId' => $request->uae_license_held_for_id,
-            'backHomeLicenseHeldForId' => $request->back_home_license_held_for_id,
+            'dob' => $request->dob ?? null,
+            'nationalityId' => $request->nationality_id ?? null,
+            'uaeLicenseHeldForId' => $request->uae_license_held_for_id ?? null,
+            'backHomeLicenseHeldForId' => $request->back_home_license_held_for_id ?? null,
             'yearOfManufacture' => $request->year_of_manufacture,
             'emirateOfRegistrationId' => $request->emirate_of_registration_id,
             'carTypeInsuranceId' => $request->car_type_insurance_id,
@@ -351,6 +378,13 @@ class CarQuoteService extends BaseService
             'currentlyInsuredWith' => $request->currently_insured_with,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
+            "registrationType" => $registrationType,
+            "vehicleUse" => $vehicleUse,
+            "companyName" => $request->company_name ?? null,
+            "pointOfContactName" => $request->company_contact_name ?? null,
+            "pointOfContactEmail" => $request->email,
+            "pointOfContactPhoneNumber" => $request->mobile_no,
+            "businessActivityId" => $request->business_activity_id ?? null,
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -370,24 +404,47 @@ class CarQuoteService extends BaseService
         $oldBodyType = $carQuote->vehicle_type_id;
         info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
 
-        if ($request->first_name) {
-            $carQuote->first_name = $request->first_name;
+        $registrationType = $request->registration_type;
+        $vehicleUse = $request->vehicle_use ?? null;
+        $carQuote->registration_type = $registrationType;
+        $carQuote->vehicle_use = $vehicleUse;
+        $carQuote->business_activity_id = $request->business_activity_id ?? null;
+        $carQuote->company_name = $request->company_name ?? null;
+
+        if ($request->company_contact_name) {
+            $name = explode(' ', $request->company_contact_name);
+            $companyFirstName = reset($name);
+            unset($name[0]);
+            $companyLastName = implode(' ', $name) ?? ' ';
+            $carQuote->customer->update([
+                'first_name' => $companyFirstName,
+                'last_name' => $companyLastName,
+            ]);
         }
-        if ($request->last_name) {
-            $carQuote->last_name = $request->last_name;
+
+        $firstName = $request->first_name ?? null;
+        $lastName = $request->last_name ?? null;
+        if ($registrationType == CarRegistrationType::COMPANY) {
+            if($vehicleUse == CarVehicleUse::PRIVATE) {
+                $name = explode(' ', $firstName);
+                $firstName = reset($name);
+                unset($name[0]);
+                $lastName = implode(' ', $name) ?? ' ';
+            } else {
+                $name = explode(' ', $request->company_name);
+                $firstName = reset($name);
+                unset($name[0]);
+                $lastName = implode(' ', $name) ?? ' ';
+            }
         }
-        if ($request->dob) {
-            $carQuote->dob = $request->dob;
-        }
-        if ($request->nationality_id) {
-            $carQuote->nationality_id = $request->nationality_id;
-        }
-        if ($request->uae_license_held_for_id) {
-            $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
-        }
-        if ($request->back_home_license_held_for_id) {
-            $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
-        }
+
+        $carQuote->first_name = $firstName;
+        $carQuote->last_name = $lastName;
+        $carQuote->dob = $request->dob ?? null;
+        $carQuote->nationality_id = $request->nationality_id ?? null;
+        $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id ?? null;
+        $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id ?? null;
+        
         if ($request->year_of_manufacture) {
             $carQuote->year_of_manufacture = $request->year_of_manufacture;
         }
@@ -1019,6 +1076,12 @@ class CarQuoteService extends BaseService
                     $this->query->whereIn('cqr.tier_id', $request[$item]);
                 } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('qb.id', $request[$item]);
+                } elseif ($item == 'registration_type' && !empty($request[$item])) {
+                    $this->query->where('cqr.registration_type', $request[$item]);
+                } elseif ($item == 'vehicle_use' && is_array($request[$item]) && !empty($request[$item])) {
+                    $this->query->whereIn('cqr.vehicle_use', $request[$item]);
+                } elseif ($item == 'company_name' && !empty($request[$item])) {
+                    $this->query->where('cqr.company_name', $request[$item]);
                 } else {
                     $searchedValue = preg_match("/\b".'Yes'."\b/i", $request[$item]) || preg_match("/\b".'No'."\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                     if ($item == 'policy_number') {
@@ -1198,7 +1261,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'policy_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads', 'assignment_type'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'policy_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads', 'assignment_type', 'registration_type', 'vehicle_use', 'company_name'];
 
         return $searchProperties;
     }
@@ -1769,14 +1832,9 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function getValidationArray(): array
+    public function getValidationArray($request): array
     {
-        return [
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'dob' => 'required',
-            'nationality_id' => 'required',
-            'uae_license_held_for_id' => 'required',
+        $validationArray = [
             'back_home_license_held_for_id' => 'nullable',
             'year_of_manufacture' => 'required',
             'emirate_of_registration_id' => 'required',
@@ -1790,7 +1848,37 @@ class CarQuoteService extends BaseService
             'car_make_id' => 'required', // ID
             'car_model_id' => 'required', // ID
             'currently_insured_with' => 'required|string',
+            'registration_type' => 'required',
         ];
+
+        if ($request->registration_type == CarRegistrationType::COMPANY) {
+            $validationArray = array_merge($validationArray, [
+                'vehicle_use' => 'required|string',
+                'company_name' => 'required|string',
+                'company_contact_name' => 'required|string',
+                'business_activity_id' => 'required',
+            ]);
+
+            if ($request->vehicle_use == CarVehicleUse::PRIVATE ) {
+                $validationArray = array_merge($validationArray, [
+                    'first_name' => 'required|string|between:1,20',
+                    'dob' => 'required',
+                    'nationality_id' => 'required',
+                    'uae_license_held_for_id' => 'required',
+                ]);
+            }
+        } else {
+            $validationArray = array_merge($validationArray, [
+                'first_name' => 'required|string|between:1,20',
+                'last_name' => 'required|string|between:1,50',
+                'dob' => 'required',
+                'nationality_id' => 'required',
+                'uae_license_held_for_id' => 'required',
+            ]);
+        }
+
+
+        return $validationArray;
     }
 
     /**

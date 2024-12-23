@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             CallBackNotificationDataMigrationSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
+            QuoteTypeTableSeeder::class,
         ]);
     }
 }

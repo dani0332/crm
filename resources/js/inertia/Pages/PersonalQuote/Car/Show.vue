@@ -96,6 +96,7 @@ defineProps({
   lockLeadSectionsDetails: Object,
   customerAddressData: Object,
   amlStatusName: String,
+  businessActivities: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1843,6 +1844,10 @@ const allowStatusUpdate = computed(() => {
                 <div>{{ record.code }}</div>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">REGISTRATION TYPE</dt>
+                <dd>{{ quote.registration_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
               </div>
@@ -1854,13 +1859,17 @@ const allowStatusUpdate = computed(() => {
                 <dt class="font-medium">BATCH</dt>
                 <dd>{{ record.quote_batch_id_text }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="record.registration_type == page.props.carRegistrationType.PERSONAL" class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER AGE</dt>
                 <dd>{{ record.customer_age }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LEAD SOURCE</dt>
                 <dd>{{ record.source }}</dd>
+              </div>
+              <div v-if="record.registration_type == page.props.carRegistrationType.COMPANY" class="grid sm:grid-cols-2">
+                <dt class="font-medium">Vehicle use</dt>
+                <dd>{{ record.vehicle_use }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CAR MAKE</dt>
@@ -2092,6 +2101,44 @@ const allowStatusUpdate = computed(() => {
               >
             </x-tooltip>
             <LeadEditBtnReuseTemplate v-else />
+          </div>
+        </template>
+      </Collapsible>
+    </div>
+
+    <div v-if="record.registration_type == page.props.carRegistrationType.COMPANY && record.vehicle_use == page.props.carVehicleUse.PRIVATE" 
+    class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Driver Details</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4 mb-3" />
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Name</dt>
+                <dd>{{ record.first_name }} {{ record.last_name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">NATIONALITY</dt>
+                <dd>{{ record.nationality_id_text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">DATE OF BIRTH</dt>
+                <dd>{{ record.dob }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UAE LICENSE HELD FOR</dt>
+                <dd>{{ record.uae_license_held_for_id_text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
+                <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
+              </div>
+            </dl>
           </div>
         </template>
       </Collapsible>
@@ -2404,6 +2451,10 @@ const allowStatusUpdate = computed(() => {
                       class="w-full"
                     />
                   </dd>
+                </div>
+                <div v-if="record.registration_type == page.props.carRegistrationType.COMPANY" class="grid sm:grid-cols-2">
+                  <dt class="font-medium">BUSINESS ACTIVITY</dt>
+                  <dd>{{ businessActivities.filter(i => i.id == record.business_activity_id )[0]?.name }}</dd>
                 </div>
               </dl>
               <div

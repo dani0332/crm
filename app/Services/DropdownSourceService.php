@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Models\BusinessActivity;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarAddOn;
 use App\Models\CarMake;
@@ -339,6 +340,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'line_of_business':
                 $data = Team::where('is_active', true)->get();
+                break;
+            case 'business_activity':
+                $data = BusinessActivity::active()->get();
                 break;
             default:
                 break;
