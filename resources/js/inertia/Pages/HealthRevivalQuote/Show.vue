@@ -69,7 +69,6 @@ const onCopyText = text => {
 };
 const isManualPlansCount = ref(0);
 
-
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
   assignLead = ref(null),
   memberActionEdit = ref(false),
@@ -1221,7 +1220,6 @@ const updateProfileDetails = isValid => {
     },
   });
 };
-
 </script>
 
 <template>
@@ -2445,17 +2443,17 @@ const updateProfileDetails = isValid => {
   <!-- payments -->
 
   <PaymentTableNew
-    v-if="isNewPaymentStructure"  
+    v-if="isNewPaymentStructure"
     quoteType="Health"
     :payments="payments"
     :paymentDocument="paymentDocument"
     :proformaPayment="
-        payments.find(
-          item =>
-            item.payment_methods_code ===
-            page.props.paymentMethodsEnum.ProformaPaymentRequest,
-        )
-      "
+      payments.find(
+        item =>
+          item.payment_methods_code ===
+          page.props.paymentMethodsEnum.ProformaPaymentRequest,
+      )
+    "
     :quoteRequest="quoteRequest"
     :paymentStatusEnum="paymentStatusEnum"
     :paymentTooltipEnum="paymentTooltipEnum"
@@ -2467,8 +2465,8 @@ const updateProfileDetails = isValid => {
     :storageUrl="storageUrl"
     :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
     :eCommercePriceWithLP="
-        ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
-      "
+      ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
+    "
     :bookPolicyDetails="bookPolicyDetails"
   />
 
