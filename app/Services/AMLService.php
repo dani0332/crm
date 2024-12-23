@@ -618,7 +618,7 @@ class AMLService
             ->where('id', $quoteDetails->customer_id)
             ->first();
         $customerDetails->fill(['customer_name' => $customerDetails->insured_first_name.($customerDetails->insured_last_name == 'NULL' || $customerDetails->insured_last_name == null ? '' : ' '.$customerDetails->insured_last_name)]);
-        $screeningType = defined(constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code)) ?? '';
+        $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
         try {
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', [
                 'quoteUID' => $quoteDetails->uuid,
