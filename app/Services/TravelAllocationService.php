@@ -104,7 +104,6 @@ class TravelAllocationService extends AllocationService
         $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
-        $lead->quote_updated_at = now();
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
