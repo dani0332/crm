@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
@@ -25,18 +26,20 @@ class TravelAllocationService extends AllocationService
     public const TYPE = quoteTypeCode::Travel;
 
     public bool $isCHSAdvisor = false;
+    public bool $isSICAdvisor = false;
     public bool $isMixEnquiryWithAutomation = false;
 
     public function resetProps()
     {
         $this->isCHSAdvisor = false;
+        $this->isSICAdvisor = false;
         $this->isMixEnquiryWithAutomation = false;
     }
 
     private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, $quoteUUID)
     {
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
-        if ($travelQuote->isParent() && $travelQuote->isAdult()) {
+        if (getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE) == '1' && $travelQuote->isParent() && $travelQuote->isAdult()) {
             info(self::class.":verifyFetchLeadPreChecks - {$quoteUUID} is parent lead so checking for Alliance Travel Automation");
             // Check if the lead is associated with the ALNC provider
             $payment = PaymentRepository::mainQuotePayment($travelQuote);
@@ -57,7 +60,15 @@ class TravelAllocationService extends AllocationService
                     $this->isCHSAdvisor = true;
                     $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
                 } else {
-                    info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed so ignore fetch lead");
+                    if (! $travelQuote->isAutomationCompleted()) {
+                        info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed so check fail cases");
+                        if ($travelQuote->isPolicyIssuanceFailed()) {
+                            info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation");
+                            $this->isSICAdvisor = true;
+
+                            return true;
+                        }
+                    }
 
                     return false;
                 }
@@ -149,6 +160,12 @@ class TravelAllocationService extends AllocationService
             info(self::class." - getAdvisorByStatus: CHS Advisor is required for lead: {$lead->uuid}");
 
             return User::select('users.id as user_id')->chs()->first();
+        }
+
+        if ($this->isSICAdvisor) {
+            info(self::class." - getAdvisorByStatus: SIC Advisor is required for lead: {$lead->uuid}");
+
+            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
 
         $user = User::select('users.id as user_id')
