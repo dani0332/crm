@@ -403,7 +403,7 @@ class CustomerService extends BaseService
 
     public function getPrimaryCustomerById($id ,$memberId=null)
     {
-        $customer = Customer::find($id);
+        $customer = CustomerMembers::find($id);
         return $customer && $customer->id == $memberId;
     }
 }
