@@ -226,36 +226,21 @@ class User extends Authenticatable implements AuditableContract
     public function hasMyLeadAccess()
     {
         return Auth::user()->hasAnyRole([
-            RolesEnum::Admin,
-            RolesEnum::BusinessAdvisor,
-            RolesEnum::HealthAdvisor,
-            RolesEnum::HomeAdvisor,
-            RolesEnum::LifeAdvisor,
-            RolesEnum::TravelAdvisor,
-            RolesEnum::GMAdvisor,
-            RolesEnum::RMAdvisor,
-            RolesEnum::CorpLineAdvisor,
-            RolesEnum::EBPAdvisor,
-            RolesEnum::HealthRenewalAdvisor,
-            RolesEnum::TravelAdvisor,
-            RolesEnum::HealthRenewalAdvisor,
+            RolesEnum::Admin, RolesEnum::BusinessAdvisor, RolesEnum::HealthAdvisor, RolesEnum::HomeAdvisor,
+            RolesEnum::LifeAdvisor, RolesEnum::TravelAdvisor, RolesEnum::GMAdvisor, RolesEnum::RMAdvisor, RolesEnum::CorpLineAdvisor,
+            RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor,
+            RolesEnum::TravelAdvisor, RolesEnum::HealthRenewalAdvisor,
             RolesEnum::LifeRenewalAdvisor,
-            RolesEnum::HomeRenewalAdvisor,
-            RolesEnum::GMRenewalAdvisor,
+            RolesEnum::HomeRenewalAdvisor, RolesEnum::GMRenewalAdvisor,
             RolesEnum::CorpLineRenewalAdvisor,
-            RolesEnum::PetRenewalAdvisor,
-            RolesEnum::CarRenewalAdvisor,
-            RolesEnum::PetAdvisor,
+            RolesEnum::PetRenewalAdvisor, RolesEnum::CarRenewalAdvisor, RolesEnum::PetAdvisor,
         ]);
     }
 
     public function hasPolicyIssuanceAccess()
     {
         return Auth::user()->hasAnyRole([
-            RolesEnum::Advisor,
-            RolesEnum::PA,
-            RolesEnum::Payment,
-            RolesEnum::Invoicing,
+            RolesEnum::Advisor, RolesEnum::PA, RolesEnum::Payment, RolesEnum::Invoicing,
             RolesEnum::ProductionApprovalManager,
         ]);
     }
@@ -356,11 +341,13 @@ class User extends Authenticatable implements AuditableContract
     public function sessions()
     {
         return $this->hasMany(Sessions::class);
+
     }
 
     public function products()
     {
         return $this->hasMany(UserProducts::class);
+
     }
 
     public function department()
