@@ -688,13 +688,16 @@ class SagePayloadFactory
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchRecordType' => 'CA',
+            'BankCode' => SageEnum::BANK_CODE,
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $request->sage_customer_number,
+                    'BankCode' => SageEnum::BANK_CODE,
                     'BankReceiptAmount' => roundNumber(floatval($request->collection_amount)),
                     'CheckReceiptNumber' => $request->checkDetails,
-                    'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code),
+                    /*'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code),*/
+                    'PaymentCode' => SageEnum::PAYMENT_CODE,
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [
                         [
