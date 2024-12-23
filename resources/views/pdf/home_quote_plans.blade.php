@@ -733,8 +733,8 @@
     <main>
         <table class="main-table">
             <thead>
-                {{-- <p style="margin-top:150px"></p> --}}
-                <tr style="margin-top:150px">
+                <p style="margin-top:150px"></p>
+                <tr>
                     <th class="alfred" id="alfred-th" rowspan="2">
                         <img src="{{ public_path('images/home-alfred.png') }}" />
                     </th>
@@ -805,7 +805,7 @@
                         </th>
                     @endforeach
                 </tr>
-                <tr style="margin-bottom:50px">
+                <tr>
                     <th class="bg-light-blue">
                         <p class="quote-info">Total Price (wtih VAT)
                         </p>
@@ -830,7 +830,7 @@
                     @endforeach
                 </tr>
                 <br>
-                {{-- <p style="margin-bottom:50px"></p> --}}
+                <p style="margin-bottom:50px"></p>
             </thead>
             <tbody>
                 @php $featCount = 0 @endphp
