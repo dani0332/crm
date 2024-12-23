@@ -1880,6 +1880,10 @@ const allowStatusUpdate = computed(() => {
                 <dd>{{ record.cylinder }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">CHASSIS NUMBER</dt>
+                  <dd>{{ record.chassis_number }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRIM</dt>
                 <dd>{{ record.car_model_detail_id_text }}</dd>
               </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
@@ -240,12 +241,8 @@ class AMLController extends Controller
             ->where(function ($aml) {
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $aml->orWhereNull('decision');
-            })->whereNull('screenshot');
+            })->whereNull('screenshot')->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'asc')->get();
-        //            ->filter(function ($item) {
-        //                return ! isset(json_decode($item->results, true)['screening_type']);
-        //            })
-        //            ->values();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 
@@ -412,7 +409,18 @@ class AMLController extends Controller
             }
 
             session()->put('amlResponseCheck', []);
-            //            session()->put('insurerAMLScreeningResponseCheck', []);
+            $insurerAMLScreeningResponse = [];
+            if (in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id()]) && $AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
+                session()->put('insurerAMLScreeningResponse');
+                //                app(AMLService::class)->amlScreeningGIG($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual);
+                InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual);
+                $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
+                $insurerAMLScreeningResponse = [
+                    'status' => $getInsurerScreeningResponse['status'],
+                    'message' => $getInsurerScreeningResponse['message'],
+                ];
+                session()->forget('insurerAMLScreeningResponse');
+            }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
@@ -435,7 +443,9 @@ class AMLController extends Controller
                 }
 
                 if (empty($getMemberOrUBODetails->toArray())) {
-                    return redirect()->back()->with('success', 'AML Screening Completed');
+                    info('AML Screening Bridger - No Member Found, AML Screening Cleared - Ref-ID: '.$quoteRequestId);
+
+                    return redirect()->back()->with('success', 'AML Screening Completed')->with('info', $insurerAMLScreeningResponse);
                 }
 
                 $bridgerInsightService = new BridgerInsightService;
@@ -503,7 +513,7 @@ class AMLController extends Controller
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
             }
 
-            return redirect()->back();
+            return redirect()->back()->with('insurerScreeningResponse', $insurerAMLScreeningResponse);
         }
 
         return redirect()->back()->with('error', 'Something went wrong');
@@ -597,7 +607,6 @@ class AMLController extends Controller
     {
         foreach ($membersDetails as $memberDetail) {
             BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, auth()->user()->email);
-            InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $quoteDetails, $customerType, $memberDetail);
         }
 
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
@@ -642,7 +651,6 @@ class AMLController extends Controller
             info('AML Screening Bridger - Potential Matches Found, Quote Status changed to AML Screening Failed');
         }
 
-        //        app(AMLService::class)->updateInsurerScreeningDecision($quoteDetails);
         session()->forget('amlResponseCheck');
     }
 

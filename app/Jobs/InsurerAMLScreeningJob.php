@@ -13,17 +13,15 @@ class InsurerAMLScreeningJob implements ShouldQueue
     public string|int $quoteTypeID;
     public object $quoteDetails;
     public string $customerType;
-    public array $memberDetails;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteTypeID, $quoteDetails, $customerType, $memberDetails)
+    public function __construct($quoteTypeID, $quoteDetails, $customerType)
     {
         $this->quoteTypeID = $quoteTypeID;
         $this->quoteDetails = $quoteDetails;
         $this->customerType = $customerType;
-        $this->memberDetails = $memberDetails;
     }
 
     /**
@@ -31,16 +29,8 @@ class InsurerAMLScreeningJob implements ShouldQueue
      */
     public function handle(AMLService $amlService): void
     {
-        try {
-            info('Insurer AML Screening Job Started. Ref-ID: '.$this->quoteDetails['code']);
-            $amlService->amlScreeningGIG(
-                $this->quoteTypeID,
-                $this->quoteDetails,
-                $this->customerType,
-                $this->memberDetails,
-            );
-        } catch (\Exception $exception) {
-            info('Insurer AML Screening Job Failed. Ref-ID: '.$this->quoteDetails['code'].' - Error: '.$exception->getMessage());
-        }
+        info('Insurer AML Screening Job Started. Ref-ID: '.$this->quoteDetails['code']);
+        $amlService->amlScreeningGIG($this->quoteTypeID, $this->quoteDetails, $this->customerType);
+        info('Insurer AML Screening Job Ended. Ref-ID: '.$this->quoteDetails['code']);
     }
 }

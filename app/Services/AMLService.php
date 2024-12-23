@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
@@ -16,6 +18,7 @@ use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
@@ -27,6 +30,7 @@ use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
+use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
@@ -541,33 +545,59 @@ class AMLService
 
     public function getInsurerAMLScreeningDetails($quoteTypeId, $quoteRequest)
     {
-        if (empty($quoteRequest->insurance_provider_id) || $quoteRequest->insurance_provider_id !== InsuranceProvidersEnum::AXA) {
+        if (! in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id()])) {
             return AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningNA);
         }
 
-        $insurerAMLStatusCheck = [];
-        $insurerScreenings = AML::where([
-            'screening_type' => InsuranceProvidersEnum::AXA,
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequest->id,
-        ])->get();
+        $quoteMorphClass = $quoteTypeId == QuoteTypeId::Car ? CarQuote::class : TravelQuote::class;
+        $paymentDetails = Payment::with('insuranceProvider')->where([
+            'paymentable_type' => $quoteMorphClass,
+            'paymentable_id' => $quoteRequest->id,
+        ])->first();
 
-        foreach ($insurerScreenings as $insurerScreening) {
-            $insurerScreening->results = json_decode($insurerScreening->results);
-            $insurerAMLStatusCheck[] = $insurerScreening->results->status == AMLStatusCode::AMLScreeningCleared;
+        $insuranceProviderCode = $paymentDetails?->insuranceProvider?->code;
+        if ($insuranceProviderCode !== InsuranceProvidersEnum::AXA) {
+            return AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningNA);
         }
 
-        return in_array(true, $insurerAMLStatusCheck) ? AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed);
+        $insurerScreening = AML::where([
+            'screening_type' => AMLScreeningTypeEnum::INSURER_AXA,
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequest->id,
+        ])->latest()->first();
+
+        if ($insurerScreening) {
+            $screeningResult = json_decode($insurerScreening->results)->status;
+
+            return AMLStatusCode::getName($screeningResult);
+        }
 
         return AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningNA);
     }
 
-    public function amlScreeningGIG($quoteTypeId, $quoteDetails, $customerType, $membersDetails)
+    public function amlScreeningGIG($quoteTypeId, $quoteDetails, $customerType)
     {
         $paymentDetails = Payment::with('insuranceProvider')->where([
             'paymentable_type' => $quoteDetails->getMorphClass(),
             'paymentable_id' => $quoteDetails->id,
         ])->first();
+        $chassisNumber = '';
+
+        if (in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id()])) {
+            $detailsReference = [
+                QuoteTypes::CAR->id() => [
+                    'model' => CarQuoteRequestDetail::class,
+                    'foreignKey' => 'car_quote_request_id',
+                ],
+                QuoteTypes::TRAVEL->id() => [
+                    'model' => TravelQuoteRequestDetail::class,
+                    'foreignKey' => 'travel_quote_id',
+                ],
+            ];
+
+            $requestQuoteDetails = $detailsReference[$quoteTypeId]['model']::where($detailsReference[$quoteTypeId]['foreignKey'], $quoteDetails->id)->first();
+            $chassisNumber = $requestQuoteDetails?->chassis_number;
+        }
 
         if ($paymentDetails?->insuranceProvider?->code !== InsuranceProvidersEnum::AXA) {
             info('fn:amlScreeningGIG - Insurance provider not found. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
@@ -584,74 +614,70 @@ class AMLService
         }
 
         info('fn:amlScreeningGIG - Payment Method is CREDIT CARD and Payment Status is AUTHORIZED- Ref-ID: '.$quoteDetails->code);
-
+        $customerDetails = Customer::select(['emirates_id_number', 'emirates_id_expiry_date', 'insured_first_name', 'insured_last_name', 'code'])
+            ->where('id', $quoteDetails->customer_id)
+            ->first();
+        $customerDetails->fill(['customer_name' => $customerDetails->insured_first_name.($customerDetails->insured_last_name == 'NULL' || $customerDetails->insured_last_name == null ? '' : ' '.$customerDetails->insured_last_name)]);
+        $screeningType = defined(constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code)) ?? '';
         try {
-            $emirateDetails = Customer::select(['emirates_id_number', 'emirates_id_expiry_date'])
-                ->where('id', $quoteDetails->customer_id)
-                ->first();
-
-            $customerOrEntityName = $customerType == CustomerTypeEnum::Individual ?
-                $membersDetails['first_name'].(($membersDetails['last_name'] == 'NULL' || $membersDetails['last_name'] == null) ? '' : ' '.$membersDetails['last_name']) :
-                $membersDetails['company_name'];
-
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', [
-                'quoteUID' => 'BALHYJ9E', //$quoteDetails->uuid,
+                'quoteUID' => $quoteDetails->uuid,
                 'quoteTypeId' => $quoteTypeId,
                 'emirateDetails' => [
-                    'emirateId' => '784198914235313', //$emirateDetails->emirates_id_number,
-                    'expiryDate' => '2024-12-25', //$emirateDetails->emirates_id_expiry_date,
+                    'emirateId' => $customerDetails->emirates_id_number,
+                    'expiryDate' => $customerDetails->emirates_id_expiry_date,
                 ],
-                'passportNumber' => '', // optional
-                'chassisNumber' => $quoteDetails->chassis_number ?? '',
+                'passportNumber' => '',
+                'chassisNumber' => $chassisNumber ?? '',
             ]);
 
             info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
-            $screeningResponse['screening_type'] = InsuranceProvidersEnum::AXA;
-            //        session()->push('insurerAMLScreeningResponseCheck', $response['status'] == AMLStatusCode::AMLScreeningCleared);
-
-            $kycLogDetails = [
-                'quote_request_id' => $quoteDetails->id,
-                'quote_type_id' => $quoteTypeId,
-                'results' => AMLStatusCode::AMLScreeningCleared ? json_encode($screeningResponse) : json_encode(['status' => AMLStatusCode::AMLScreeningFailed]),
-                'results_found' => $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared ? 0 : 1,
-                'created_at' => Carbon::now(),
-                'input' => $customerOrEntityName,
-                'search_type' => $customerType,
-                'customer_code' => $membersDetails['code'],
-            ];
-
-            if ($screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared) {
-                info('fn:amlScreeningGIG - GIG AML Screening Cleared - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
-                $kycLogDetails['match_found'] = 0;
-                $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
-            } else {
-                info('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
-                $kycLogDetails['match_found'] = 1;
-                $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
-            }
-
-            KycLog::insert($kycLogDetails);
-            info('fn:amlScreeningGIG - AML Screening GIG Potential Matches inserted into kyc_logs table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
-
-            return true;
+            $screeningResponse['screening_type'] = $screeningType;
+            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse);
 
         } catch (Exception $exception) {
             info('fn:amlScreeningGIG - GIG Screening failed - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Error: '.$exception->getMessage());
+            $screeningResponse = ['status' => AMLStatusCode::AMLPending, 'message' => $exception->getMessage(), 'screening_type' => $screeningType];
+            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse);
 
             return false;
         }
     }
 
-    //    public function updateInsurerScreeningDecision($quoteDetails): void
-    //    {
-    //        if (! empty(session()->get('insurerAMLScreeningResponseCheck')) && ! in_array(true, session()->get('insurerAMLScreeningResponseCheck'))) {
-    //            $quoteDetails->update([
-    //                'insurer_aml_status' => AMLStatusCode::AMLScreeningCleared,
-    //            ]);
-    //        } else {
-    //            $quoteDetails->update([
-    //                'insurer_aml_status' => AMLStatusCode::AMLScreeningFailed,
-    //            ]);
-    //        }
-    //    }
+    private function updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse)
+    {
+        info('fn:updateInsurerKYCLogs - GIG AML Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
+        session()->push('insurerAMLScreeningResponse', $screeningResponse);
+        $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;
+        $kycLogDetails = [
+            'quote_request_id' => $quoteDetails->id,
+            'results' => json_encode($screeningResponse),
+            'results_found' => (bool) $isScreeningCleared,
+            'created_at' => Carbon::now(),
+            'quote_type_id' => $quoteTypeId,
+            'input' => $customerDetails->customer_name ?? '',
+            'screening_type' => $screeningResponse['screening_type'],
+            'search_type' => $customerType,
+            'customer_code' => $customerDetails->code ?? '',
+        ];
+
+        if ($isScreeningCleared) {
+            info('fn:amlScreeningGIG - GIG AML Screening Cleared - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
+            $kycLogDetails['match_found'] = 0;
+            $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
+        } else {
+            if ($screeningResponse['status'] == AMLStatusCode::AMLPending) {
+                info('fn:amlScreeningGIG - GIG AML Screening Pending - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
+                $kycLogDetails['match_found'] = 0;
+                $kycLogDetails['decision'] = AMLDecisionStatusEnum::UNKNOWN;
+            } else {
+                info('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
+                $kycLogDetails['match_found'] = 1;
+                $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
+            }
+        }
+
+        KycLog::insert($kycLogDetails);
+        info('fn:amlScreeningGIG - AML Screening GIG Potential Matches inserted into kyc_logs table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+    }
 }

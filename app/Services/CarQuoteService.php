@@ -213,6 +213,7 @@ class CarQuoteService extends BaseService
                 DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'cqr.insly_migrated',
                 'cqr.aml_status',
+                'cqrd.chassis_number',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -351,6 +352,7 @@ class CarQuoteService extends BaseService
             'currentlyInsuredWith' => $request->currently_insured_with,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
+            'chassisNumber' => $request->chassis_number,
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -461,11 +463,17 @@ class CarQuoteService extends BaseService
             $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
         }
 
+        if($request->chassis_number) {
+            $carQuote->chassis_number = $request->chassis_number;
+        }
+
         $carQuote->updated_by = auth()->user()->email;
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
         if ($deleteValuationResponse) {
             $carQuote->save();
+
+            // TODO:: Reminder update plan premium API call here only for GIG Screening Case
 
             $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';
             // update embedded products list

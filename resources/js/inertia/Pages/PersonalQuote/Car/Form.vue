@@ -283,7 +283,7 @@ const chassisNumberValidate = event => {
 
     if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
         event.preventDefault();
-        // isko daikhna hai error remove na ho jab tak set na ho field
+        // TODO:: isko daikhna hai error remove na ho jab tak set na ho field
         notification.error({
             title: 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
             position: 'top',
@@ -545,16 +545,40 @@ const chassisNumberValidate = event => {
           />
         </x-field>
 
-        <x-field label="CHASSIS NUMBER">
-            <x-input
-                :disabled="chassisNumberDisabled"
-                v-model="quoteForm.chassis_number"
-                class="w-full"
-                type="number"
-                placeholder="Enter Chassis Number"
-                @blur="chassisNumberValidate"
-            />
-        </x-field>
+          <div>
+              <template v-if="chassisNumberDisabled">
+                  <x-tooltip placement="bottom">
+                      <label
+                          class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+                      >
+                          CHASSIS NUMBER
+                      </label>
+                      <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Cancellation from Inception and Reissuance' </template>
+                  </x-tooltip>
+                  <x-input
+                      :disabled="chassisNumberDisabled"
+                      v-model="quoteForm.chassis_number"
+                      class="w-full"
+                      type="text"
+                      placeholder="Enter Chassis Number"
+                      @blur="chassisNumberValidate"
+                      :error="quoteForm.errors.chassis_number"
+                  />
+              </template>
+              <template v-else>
+                  <x-field label="CHASSIS NUMBER">
+                      <x-input
+                          v-model="quoteForm.chassis_number"
+                          class="w-full"
+                          type="text"
+                          placeholder="Enter Chassis Number"
+                          @blur="chassisNumberValidate"
+                          :error="quoteForm.errors.chassis_number"
+                      />
+                  </x-field>
+
+              </template>
+          </div>
 
         <x-field label="TRIM">
           <ComboBox
