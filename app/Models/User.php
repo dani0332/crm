@@ -313,7 +313,7 @@ class User extends Authenticatable implements AuditableContract
     /**
      * @return mixed
      */
-    public function scopeWithActive($query)
+    public function scopeActiveUser($query)
     {
         return $query->where('users.is_active', 1);
     }

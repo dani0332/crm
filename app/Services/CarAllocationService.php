@@ -393,6 +393,7 @@ class CarAllocationService extends AllocationService
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
             ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->activeUser()
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -700,13 +701,12 @@ class CarAllocationService extends AllocationService
     public function getEligibleUserForSAPLead($ruleUserIds): array
     {
         // Create a query to fetch lead allocations with their associated users.
-        $sapUserIds = LeadAllocation::with('leadAllocationUser')
+        return LeadAllocation::with('leadAllocationUser')
+            ->activeUser()
             ->whereIn('user_id', $ruleUserIds) // it will be the rule user ids for SAP rule only
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->orderBy('last_allocated')
             ->pluck('user_id')->toArray();
-
-        return $sapUserIds;
     }
 
     public function fetchUsersOnAllocationCriteria($ruleUserIds, $teamId)
@@ -723,6 +723,7 @@ class CarAllocationService extends AllocationService
             ->whereIn('user_id', $ruleUserIds)
             ->whereNotIn('user_id', $excludedUserIds)
             ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->activeUser()
             ->orderBy('last_allocated')
             ->get()
             ->pluck('user_id')

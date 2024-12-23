@@ -193,7 +193,6 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->assignment_type = $lead->advisor == null ? AssignmentTypeEnum::MANUAL_ASSIGNED : AssignmentTypeEnum::MANUAL_REASSIGNED;
                 $lead->advisor_id = $advisorId;
-                $lead->quote_updated_at = now();
 
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
@@ -407,7 +406,7 @@ class LeadAllocationService extends BaseService
             ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
             ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
             ->join('lead_allocation as la', 'la.user_id', 'users.id')
-            ->where('users.is_active', 1)
+            ->activeUser()
             ->groupBy('users.name', 'users.id', 'la.id')
             ->select(
                 'users.id as userId',

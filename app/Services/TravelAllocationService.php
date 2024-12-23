@@ -87,7 +87,7 @@ class TravelAllocationService extends AllocationService
             })
             ->whereIn('r.name', [RolesEnum::TravelAdvisor])
             ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
-            ->where('users.is_active', true)
+            ->activeUser()
             ->when($isSIC, function ($q) {
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
@@ -104,7 +104,6 @@ class TravelAllocationService extends AllocationService
         $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
-        $lead->quote_updated_at = now();
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
