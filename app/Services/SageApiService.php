@@ -392,7 +392,7 @@ class SageApiService
                 }
 
                 if ($reverseSageRequestType == SageEnum::SRT_CREATE_AR_DISC_INV) {
-                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL && $isOnlyDiscountReversal) {
+                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL) {
                         // Create AR Discount Invoice (Reversal)
                         $extraDetails['is_reversal_discount'] = true;
                         $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
