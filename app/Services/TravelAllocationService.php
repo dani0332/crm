@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
@@ -36,7 +37,7 @@ class TravelAllocationService extends AllocationService
     private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, $quoteUUID)
     {
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
-        if ($travelQuote->isParent() && $travelQuote->isAdult()) {
+        if (getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE) == '1' && $travelQuote->isParent() && $travelQuote->isAdult()) {
             info(self::class.":verifyFetchLeadPreChecks - {$quoteUUID} is parent lead so checking for Alliance Travel Automation");
             // Check if the lead is associated with the ALNC provider
             $payment = PaymentRepository::mainQuotePayment($travelQuote);
