@@ -294,6 +294,11 @@
             border: none;
         }
 
+        th.provider-name {
+            padding: 0;
+            margin: 0;
+        }
+
         footer {
             position: fixed;
             bottom: 0px;
@@ -304,20 +309,14 @@
             background-color: #1d83bc;
             color: black;
             text-align: center;
-            height: 145px;
-            /* z-index: 1500; */
+            height: 160px;
         }
 
         table.tbl-footer {
-            padding: 18px 12px;
+            padding: 7px 30px;
             margin: 0;
             width: 100%;
             border: none;
-        }
-
-        th.provider-name {
-            padding: 0;
-            margin: 0;
         }
 
         table.tbl-footer tr td,
@@ -333,6 +332,12 @@
 
         .text-right {
             text-align: right;
+        }
+
+        table.tbl-footer tr td {
+            padding: 0;
+            margin: 0;
+            width: auto;
         }
 
         .full-page-image {
@@ -412,7 +417,7 @@
 
         main {
             /* Push main content down */
-            padding: 20px;
+            padding: 40px;
         }
 
         .head-caption {
@@ -440,11 +445,8 @@
             max-height: 60px;
             background-image: url('{{ public_path('images/new-header-bg-image.png') }}');
             background-size: cover;
-            /* Ensures the image covers the entire header area */
             background-position: center;
-            /* Centers the image */
             background-repeat: no-repeat;
-            /* Prevents the image from repeating */
         }
 
         header {
@@ -455,7 +457,6 @@
             height: 60px;
             /* z-index: 1000; */
         }
-
 
         .content {}
     </style>
@@ -730,10 +731,10 @@
 
     {{-- PDF Page Inner Content --}}
     <main>
-        <table>
+        <table class="main-table">
             <thead>
-                <p style="margin-top:150px"></p>
-                <tr>
+                {{-- <p style="margin-top:150px"></p> --}}
+                <tr style="margin-top:150px">
                     <th class="alfred" id="alfred-th" rowspan="2">
                         <img src="{{ public_path('images/home-alfred.png') }}" />
                     </th>
@@ -804,7 +805,7 @@
                         </th>
                     @endforeach
                 </tr>
-                <tr>
+                <tr style="margin-bottom:50px">
                     <th class="bg-light-blue">
                         <p class="quote-info">Total Price (wtih VAT)
                         </p>
@@ -822,12 +823,14 @@
                                     }
                                 @endphp
                                 <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">{{ $buyNowText }}
-                                    {{ ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0) }}</a>
+                                    <br> <small>AED</small>
+                                    <strong>{{ ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0) }}</strong></a>
                             </p>
                         </th>
                     @endforeach
                 </tr>
-                <p style="margin-bottom:50px"></p>
+                <br>
+                {{-- <p style="margin-bottom:50px"></p> --}}
             </thead>
             <tbody>
                 @php $featCount = 0 @endphp
@@ -978,45 +981,36 @@
     {{-- PDF Page Footer --}}
     <footer>
         <table class="tbl-footer">
-            {{-- <div style="float: left;">
-                <img style="height: 110px; border-radius: 50%;"
-                    src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
-                    alt="advisor">
-            </div>
-            <div style="float: left; margin-left: 10px; margin-top: 10px">
-                @if (isset($quote->advisor->name) && !empty($quote->advisor->name))
-                    <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
-                @endif
-                @if (isset($quote->advisor->email) && !empty($quote->advisor->email))
-                    <p class="text-left text-white text-xl">Email: <a class="text-white"
-                            href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
-                @endif
-                @if (isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no))
-                    <p class="text-left text-white text-xl mar">Mobile number:
-                        {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white"
-                            style="margin-top:3px"><img style="height:20px;"
-                                src="{{ public_path('images/whatsapp-small.png') }}" alt="advisor phone"></span></p>
-                @endif
-                @if (isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
-                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white"
-                            href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
-                @endif
+            <tr>
+                <td colspan="2" class="text-center">
+                    <h4>InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC</h4>
+                </td>
+            </tr>
+            <tr>
+                <td class="text-left">UAE Central Bank Registration number 85</td>
+                <td class="text-right">27th Floor, Control Tower, Motor City</td>
+            </tr>
+            <tr>
+                <td class="text-left">Registered member of the Emirates Insurance Association</td>
+                <td class="text-right">Dubai, United Arab Emirates, P.O Box 26423</td>
+            </tr>
+            <tr>
+                <td class="text-left">Department of Economy & Tourism in Dubai Trade License number 238534</td>
+                <td class="text-right">Tel: <a href="tel:+800253733">800 ALFRED (800-253-733)</a> </td>
+            </tr>
+            <tr>
+                <td class="text-left">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai
+                    Health Authority</td>
+                <td class="text-right"> <a href="https://insurancemarket.ae">www.insurancemarket.ae</a> </td>
+            </tr>
+            <tr>
+                <td class="text-left">Registered member of Insurance Business Group under the Dubai Chamber of Commerce
+                    and Industry</td>
+            </tr>
 
-            </div> --}}
-            <div>
-                <h4 class="text-right text-white">InsuranceMarket.ae</h4>
-                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">Happiness Center:
-                        800 ALFRED (800-253-733)</a></p>
-                <p class="text-right text-white text-xl"><a class="text-white"
-                        href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
-                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai,</p>
-                <p class="text-right text-white text-xl">United Arab Emirates, PO Box 26423 <a
-                        class="text-white text-underline"
-                        href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">(map)</a>
-                </p>
-            </div>
         </table>
     </footer>
+
     {{-- Last Page --}}
     <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}" class="full-page-image" />
 </body>
