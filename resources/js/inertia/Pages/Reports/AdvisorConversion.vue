@@ -29,7 +29,8 @@ const isDirty = ref(false);
 const isMounted = ref(false);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const toast = useToast();
-
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 const {
   currentPageFirstIndex,
   currentPageLastIndex,
@@ -235,6 +236,8 @@ const getFiltersObject = () => {
     insurance_for: '',
     travel_coverage: '',
     segment_filter: 'all',
+    registration_type:'',
+    vehicle_use:'',
   };
 };
 
@@ -815,11 +818,22 @@ const getAdvisorLabel = () => {
   return label;
 };
 
-const carRegistrationTypes = [
-            { value: '', label: 'All' },
-            { value: 'personal', label: 'Personal' },
-            { value: 'company', label: 'Company' },
-          ];
+const registrationTypeOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carRegistrationTypeEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
+
+const vehicleUseOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carVehicleUseEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
 
 const commericalOptions = [
             { value: 'All', label: 'All' },
@@ -827,11 +841,11 @@ const commericalOptions = [
             { value: false, label: 'No' },
 ];
 
-const CarVehicleUse =[
-    { value: '', label: 'All' },
-    { value: 'private', label: 'Private' },
-    { value: 'commercial', label: 'Commercial' },
-]
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === 'company';
+});
+
 
 
 </script>
@@ -988,11 +1002,12 @@ const CarVehicleUse =[
              <!-- v-if="canShow('isCommercial')" -->
         <x-select
         v-if="canShow('isCommercial')"
-        v-model="filters.registrationType"
+        v-model="filters.registration_type"
         label="Registration Type"
         placeholder="Select any option"
-        :options="carRegistrationTypes"
-      />
+        :options="registrationTypeOptions"
+
+          />
         <x-select
           v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
@@ -1001,11 +1016,11 @@ const CarVehicleUse =[
           :options="commericalOptions"
         />
         <x-select
-        v-if="canShow('isCommercial')"
-        v-model="filters.vehicleUse"
+        v-if="isVehicleUseDisabled"
+        v-model="filters.vehicle_use"
         label="Vehicle Use"
         placeholder="Select any option"
-        :options="CarVehicleUse"
+        :options="vehicleUseOptions"
       />
         <x-select
           v-if="canShow('insurance_type')"

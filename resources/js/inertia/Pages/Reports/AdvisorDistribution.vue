@@ -22,6 +22,8 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const tableHeader = ref([]);
 const canShowFooterColumn = ref([]);
 const toast = useToast();
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 
 const params = useUrlSearchParams('history');
 const filters = reactive({
@@ -554,6 +556,30 @@ const travelCoverageOptions = computed(() => {
 
   return [];
 });
+
+const registrationTypeOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carRegistrationTypeEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
+
+const vehicleUseOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carVehicleUseEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === 'company';
+});
+
+
 </script>
 
 <template>
