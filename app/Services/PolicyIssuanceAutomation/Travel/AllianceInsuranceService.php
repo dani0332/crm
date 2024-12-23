@@ -589,7 +589,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 $data = new \stdClass;
                 $data->model_type = self::TYPE;
                 $data->quote_id = $quote->id;
-                info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' - Dispatching SendBookPolicyDocumentsJob');
+                info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' - Dispatching SendBookPolicyDocumentsJob advisor id '. $quote->advisor_id);
                 SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
             }
 
