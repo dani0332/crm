@@ -378,11 +378,10 @@ class CarAllocationService extends AllocationService
         $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
 
         // Create a query to fetch lead allocations with their associated users.
-        $query = LeadAllocation::with('leadAllocationUser')
-            ->whereHas('leadAllocationUser', function ($query) use ($status) {
-                // Filter by advisor status.
-                $query->where('status', $status);
-            })
+        $query = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
+            // Filter by advisor status.
+            $query->where('status', $status);
+        })
             ->where(function ($query) {
                 // Apply allocation count and max capacity conditions.
                 $query->whereRaw('allocation_count < max_capacity')
@@ -393,6 +392,7 @@ class CarAllocationService extends AllocationService
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
             ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->activeUser()
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -714,17 +714,16 @@ class CarAllocationService extends AllocationService
         $excludedUserIds = $this->getExcludedUserIds($teamId);
 
         // Create a query to fetch lead allocations with their associated users.
-        return LeadAllocation::with('leadAllocationUser')
-            ->where(function ($query) {
-                // Apply allocation count and max capacity conditions.
-                $query->whereRaw('allocation_count < max_capacity')
-                    ->orWhere('max_capacity', -1);
-            })
+        return LeadAllocation::where(function ($query) {
+            // Apply allocation count and max capacity conditions.
+            $query->whereRaw('allocation_count < max_capacity')
+                ->orWhere('max_capacity', -1);
+        })
             ->whereIn('user_id', $ruleUserIds)
             ->whereNotIn('user_id', $excludedUserIds)
             ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->activeUser()
             ->orderBy('last_allocated')
-            ->get()
             ->pluck('user_id')
             ->toArray();
     }
