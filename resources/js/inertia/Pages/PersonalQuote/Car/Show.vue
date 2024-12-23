@@ -1852,8 +1852,8 @@ const allowStatusUpdate = computed(() => {
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURER AML STATUS</dt>
-                  <dd>{{ insurerAMLStatus ?? 'N/A' }}</dd>
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ insurerAMLStatus ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BATCH</dt>

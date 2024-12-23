@@ -10,7 +10,7 @@ const props = defineProps({
     type: Object,
     default: {},
   },
-  quoteStatusEnums: Array
+  quoteStatusEnums: Array,
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -272,14 +272,19 @@ const isCourierStatusPending = computed(() => {
 });
 
 const chassisNumberDisabled = computed(() => {
-    let disallowedStatus = [props.quoteStatusEnums.PolicySentToCustomer, props.quoteStatusEnums.PolicyBooked];
-    return disallowedStatus.includes(props?.quote?.quote_status_id);
+  let disallowedStatus = [
+    props.quoteStatusEnums.PolicySentToCustomer,
+    props.quoteStatusEnums.PolicyBooked,
+  ];
+  return disallowedStatus.includes(props?.quote?.quote_status_id);
 });
 
 const chassisNumberValidate = event => {
-    const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
-    const lengthValid = quoteForm.chassis_number.length >= 8 && quoteForm.chassis_number.length <= 17;
-    const isAlphanumeric = regex.test(quoteForm.chassis_number);
+  const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
+  const lengthValid =
+    quoteForm.chassis_number.length >= 8 &&
+    quoteForm.chassis_number.length <= 17;
+  const isAlphanumeric = regex.test(quoteForm.chassis_number);
 
     if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
         event.preventDefault();
@@ -290,7 +295,6 @@ const chassisNumberValidate = event => {
         });
     }
 };
-
 </script>
 
 <template>
