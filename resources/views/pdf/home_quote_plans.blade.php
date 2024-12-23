@@ -62,6 +62,8 @@
         }
 
         table.tbl-dec {
+            margin: auto;
+            padding: auto;
             border: none;
             font-size: 3px;
         }
@@ -72,10 +74,10 @@
         }
 
         table {
-            min-width: 1220px;
+            min-width: 1150px;
             text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 1220px;
+            max-width: 1200px;
             /* margin: 7px 12px auto; */
             border-spacing: 0;
             border-radius: 10px;
