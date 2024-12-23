@@ -132,7 +132,7 @@
             border: 1px solid #bfbfbf;
         }
 
-        thead>tr>th:first-child {
+        /* thead>tr>th:first-child {
             max-width: 30%;
         }
 
@@ -141,7 +141,7 @@
             width: 400px;
             min-width: 400px;
             max-width: 400px;
-        }
+        } */
 
         td>p,
         th>p {
@@ -951,33 +951,26 @@
                             href="{{ $websitURL . '/home-insurance/quote/' . $quote->uuid }}">View all quotes</a>
                     </td>
                 </tr>
+
+                <p style="margin-bottom: 50px"></p>
             </tbody>
         </table>
 
-        <table class="tbl-dec" style="padding-top: 40px;">
-            <tbody>
-                <tr>
-                    <td>
-                        <span class="text-sm"><b>MATERIAL INFORMATION DECLARATION</b></span>
-                        <p class="text-left text-xs">All quotes provided are indications only and based on the initial
-                            information you have provided: as such, they are subject to change in line with any
-                            revisions to that information that you declare to us during the application and/or
-                            underwriting process. Note that quotes also include all mandatory fees, taxes or charges as
-                            stipulated by the UAE Government and/or relevant authorities.</p>
-                        <span class="text-sm"><b>DISCLAIMER</b></span>
-                        <p class="text-left text-xs">
-                            Whilst we try to ensure the currency and accuracy of the details in the comparison table,
-                            there may occasion where there are differences in the covers provided. In such cases, the
-                            covers detailed in the insurer's policy wordings and schedules will supersede the details
-                            provided by us.<br /><br />
-                            To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>,
-                            please refer to the <a class="text-black"
-                                href="{{ $websitURL . '/home-insurance/quote/' . $quote->uuid }}"><b>quote</b></a>.
-                        </p>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="disclaimer-container" style="width: 100%; padding: 10px; box-sizing: border-box;">
+            <span class="section-title"
+                style="font-weight: bold; font-size: 16px; display: block; margin-bottom: 10px;">Disclaimer and
+                material information</span>
+            <p class="section-text" style="font-size: 9px; line-height: 1.5; width: 100%; margin: 0;">
+                All quotes provided are indicative and based on the information you have supplied. While we
+                strive for accuracy in our comparison tables, discrepancies may occur. In such instances, the
+                terms detailed in the insurer's policy wordings and schedules will take precedence over the
+                details provided by us. For the full text of the disclaimer and material information, please
+                refer to the quote. Policy wordings and schedules will prevail. Additionally, your final price
+                may be adjusted following the insurer's review of your risk profile after payment. We recommend
+                reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
+            </p>
+        </div>
+
     </main>
 
     {{-- PDF Page Footer --}}
