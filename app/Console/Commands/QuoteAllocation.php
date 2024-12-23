@@ -177,7 +177,6 @@ class QuoteAllocation extends Command
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->jobNotInProgress()
             ->where(function ($q) {
                 $q->leadAllocationFailed()
                     ->orSicFlowDisabled()
