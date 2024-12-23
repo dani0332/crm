@@ -156,7 +156,7 @@ const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
 const initialAmount = ref(0);
 
 const showLackingPayment = () => {
-  if (is_lacking_payment.value) {
+  if (is_lacking_payment.value && props.payments.length > 0) {
     notification.error(
       {
         title:
