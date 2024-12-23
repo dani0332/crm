@@ -144,7 +144,6 @@ class TravelAllocationService extends AllocationService
         // Retrieve the most recent TravelQuote for the given customer with an assigned advisor
         return TravelQuote::query()
             ->where('customer_id', $customer_id)
-            ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereNotNull('advisor_id')
             ->latest('created_at')
             ->first();
