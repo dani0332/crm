@@ -158,7 +158,7 @@ class TravelRenewalService extends BaseService
                 'uaeResident' => $member->uae_resident,
                 'passport' => $member->passport,
                 'emiratesIdNumber' => $member->emirates_id_number,
-                'primary' => app(CustomerService::class)->getPrimaryCustomerById($primaryMemberId),
+                'primary' => app(CustomerService::class)->getPrimaryCustomerById($primaryMemberId ,$member->id),
             ];
         });
     }
