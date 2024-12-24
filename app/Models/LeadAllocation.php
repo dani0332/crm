@@ -65,6 +65,8 @@ class LeadAllocation extends Model implements AuditableContract
 
     public function scopeActiveUser($query)
     {
-        return $query->join('users', 'users.id', '=', 'lead_allocation.user_id')->where('users.is_active', 1);
+        $query->whereHas('leadAllocationUser', function ($q) {
+            $q->where('is_active', 1);
+        });
     }
 }
