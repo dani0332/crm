@@ -106,7 +106,7 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
                 'index' => 2,
                 'title' => 'Customer Mobile',
                 'rules' => [
-                    'required', 'max:100', 'regex:/^[0-9]+$/',
+                    'required', 'max:100',
                     function ($attribute, $value, $onFailure) {
                         if ($value == 0 || $value == '0') {
                             $onFailure('The '.$attribute.' cannot be 0.');

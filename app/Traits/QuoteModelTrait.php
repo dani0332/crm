@@ -82,7 +82,11 @@ trait QuoteModelTrait
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                });
+                })->whereNotIn("{$alias}.source", [
+                    LeadSourceEnum::REVIVAL,
+                    LeadSourceEnum::REVIVAL_REPLIED,
+                    LeadSourceEnum::REVIVAL_PAID,
+                ]);
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -127,7 +131,11 @@ trait QuoteModelTrait
         if ($not) {
             $q->whereNotIn("{$q->getModel()->getTable()}.uuid", $subQuery);
         } else {
-            $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery);
+            $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery)->whereNotIn("{$q->getModel()->getTable()}.source", [
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+            ]);
         }
     }
 
@@ -206,7 +214,7 @@ trait QuoteModelTrait
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
     {
         $q->where(function ($sq) {
-            $sq->where('sic_advisor_requested', 1)->orWhere('payment_status_id', PaymentStatusEnum::AUTHORISED);
+            $sq->where('sic_advisor_requested', 1)->orWhereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
         });
     }
 
@@ -227,13 +235,11 @@ trait QuoteModelTrait
             QuoteTypeId::Travel => 'travel_quote_request',
         ];
 
-        if ($request->hasAny($applicableFilters) && $request->has('line_of_business')) {
-            if (isset($quoteTypes[$request->line_of_business])) {
-                $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
-                    $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
-                    $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
-                });
-            }
+        if ($request->hasAny($applicableFilters) && $request->has('line_of_business') && isset($quoteTypes[$request->line_of_business])) {
+            $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
+                $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
+                $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
+            });
         }
     }
 }

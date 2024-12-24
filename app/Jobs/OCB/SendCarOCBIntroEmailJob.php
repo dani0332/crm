@@ -36,17 +36,19 @@ class SendCarOCBIntroEmailJob implements ShouldQueue
     private $triggerSICWorkflow;
     private $triggerOnlyWorkflow;
     private $handleZeroPlans;
+    private $forceSicWorkflow;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteUuid, $previousAdvisor, $triggerSICWorkflow = false, $triggerOnlyWorkflow = false, $handleZeroPlans = false)
+    public function __construct($quoteUuid, $previousAdvisor, $triggerSICWorkflow = false, $triggerOnlyWorkflow = false, $handleZeroPlans = false, bool $forceSicWorkflow = false)
     {
         $this->quoteUuid = $quoteUuid;
         $this->previousAdvisor = $previousAdvisor;
         $this->triggerSICWorkflow = $triggerSICWorkflow;
         $this->triggerOnlyWorkflow = $triggerOnlyWorkflow;
         $this->handleZeroPlans = $handleZeroPlans;
+        $this->forceSicWorkflow = $forceSicWorkflow;
     }
 
     /**
