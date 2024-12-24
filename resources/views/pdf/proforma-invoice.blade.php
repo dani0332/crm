@@ -368,6 +368,8 @@
 
 @php
     use App\Enums\ApplicationStorageEnums;
+    use App\Models\CustomerAddress;
+    use App\Services\CustomerAddressService;
     use App\Enums\PaymentCollectionTypeEnum;
     use App\Enums\PaymentStatusEnum;
     use App\Enums\QuoteTypeShortCode;
@@ -387,6 +389,11 @@
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->collection_date)->format($dateFormat);
     $customer = $quote->customer;
     $customerName =  ucwords($customer->insured_first_name .' '. $customer->insured_last_name);
+    $quoteAddress = CustomerAddress::where([
+        'quote_uuid' => $quote->uuid,
+        'customer_id' => $quote->customer_id,
+    ])->first();
+    $customerAddress = isset($quoteAddress) ? app(CustomerAddressService::class)->fetchFullAddress($quoteAddress) : '';
     $customerDetail =  $customer->detail;
     $vat = 0;
     $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
@@ -586,8 +593,9 @@
                         {{ $entity->company_address ?? '' }} </br>
                     @elseif($customerName && !empty($customerName))
                         {{ $customerName }} </br>
+                        {{ $quote->address ?: $customerAddress }}
                     @else
-                        {{ $customerDetail->employer_company_name ?? '' }}
+                        {{ $customerDetail->employer_company_name ?? '' }} </br>
                         {{ $quote->address ?? '' }}
                     @endif
                 </td>
