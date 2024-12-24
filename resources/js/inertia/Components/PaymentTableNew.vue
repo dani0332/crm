@@ -2737,7 +2737,7 @@ const shouldProcessUpdate = (payment) => {
   return hasPayments && isTotalPriceMatching && (isAmlAndKycComplete || isTravelQuote || shouldSendUpdate);
 }
 
-const getValidStatuses = () => {
+const getValidStatuses = (paymentSplitRec) => {
   const validStatuses = [
     props.paymentStatusEnum.AUTHORISED,
     props.paymentStatusEnum.PAID,
@@ -2748,7 +2748,7 @@ const getValidStatuses = () => {
 
 const validateUpfrontCapture = (paymentRecord) =>{
   let paymentSplitRec = paymentRecord.payment_splits[0];
-  if (paymentSplitRec.payment_method.code === 'CC') return getValidStatuses();
+  if (paymentSplitRec.payment_method.code === 'CC') return getValidStatuses(paymentSplitRec);
   const isIPPending= paymentSplitRec.payment_method.code === 'IP' && paymentSplitRec.payment_status_id === props.paymentStatusEnum.PENDING;
   const isCAPayment= paymentSplitRec.payment_method.code === 'CA' && paymentSplitRec.payment_status_id === props.paymentStatusEnum.CREDIT_APPROVED;
   const isPaidPayment= paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID;
@@ -2812,7 +2812,7 @@ const validateNonUpfrontAndSplitCapture = (paymentRecord) => {
   ) {
     return true;
   }
-  return getValidStatuses();
+  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
 }
 
 const getCaptureValidation = computed(() => {
