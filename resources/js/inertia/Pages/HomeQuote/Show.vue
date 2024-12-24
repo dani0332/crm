@@ -799,12 +799,12 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
           Duplicate Lead
         </x-button>
 
-        <Link :href="route('home.index')" preserve-scroll>
+        <Link :href="route('home-quotes-list')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Home List </x-button>
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('home.edit', quote.uuid)">
+          <Link v-if="!isDisabled" :href="route('home-quotes-edit', quote.uuid)">
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"

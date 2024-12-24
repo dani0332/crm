@@ -447,7 +447,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
-        // Route::resource('home', CRUDController::class);
+        Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');

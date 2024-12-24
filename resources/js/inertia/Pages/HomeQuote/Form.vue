@@ -386,7 +386,7 @@ const personalBelongingsInAEDOptions = computed(() => {
       <div class="space-x-4">
         <Link
           v-if="$page.props?.quote?.uuid"
-          :href="route('home.show', $page.props?.quote?.uuid)"
+          :href="route('home-quotes-show', $page.props?.quote?.uuid)"
         >
           <x-button size="sm" tag="div"> Cancel </x-button>
         </Link>
