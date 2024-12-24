@@ -1,7 +1,18 @@
 <script setup>
+const notification = useNotifications('toast');
+
 const props = defineProps({
   plan: Object,
+  quote: Object,
+  access: Object,
+  quoteType: String,
+  extraDetails: {
+    type: Object,
+    default: {},
+  },
 });
+
+const emit = defineEmits(['onLoadAvailablePlansData']);
 
 const listQuotePlansMembers = computed(() => {
   return props.plan.listQuotePlansMembers.map((item, index) => {
@@ -12,12 +23,106 @@ const listQuotePlansMembers = computed(() => {
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
   { index: 0, label: 'General Info' },
-  { index: 1, label: 'Members' },
-  { index: 2, label: 'Inclusions' },
-  { index: 3, label: 'Exclusions' },
-  { index: 4, label: 'COVID-19 Cover' },
-  { index: 5, label: 'Policy Details' },
+  { index: 1, label: 'Addons' },
+  { index: 2, label: 'Members' },
+  { index: 3, label: 'Inclusions' },
+  { index: 4, label: 'Exclusions' },
+  { index: 5, label: 'COVID-19 Cover' },
+  { index: 6, label: 'Policy Details' },
 ]);
+
+const planForm = useForm({
+  travel_quote_uuid: props.quote.uuid,
+  travel_plan_id: props.plan.id,
+  actual_premium: props.plan.actualPremium,
+  discounted_premium: props.plan.discountPremium,
+  premium_vat: props.vat ? props.vat : 0,
+  addons: props.plan.addons,
+  is_create: 0,
+  current_url: usePage().url,
+});
+
+const totalPremiumWithVat = computed(() => {
+  let addonVat = 0;
+  props.plan.addons.forEach(addon => {
+    addon.addonOptions.forEach(option => {
+      if (option.isSelected && option.price != 0) {
+        addonVat += parseInt(option.price) + option.vat;
+      }
+    });
+  });
+  return props.plan.discountPremium + addonVat + props.plan.vat;
+});
+
+const validateAddons = addons => {
+  const excludedAddons = ['myAlfred', 'fastTrackClaim'];
+  for (let addon of addons) {
+    for (let option of addon.addonOptions) {
+      if (
+        option.isSelected === true &&
+        parseInt(option.price ?? 0) === 0 &&
+        !excludedAddons.includes(addon.code)
+      ) {
+        notification.error({
+          title: 'Addon price must be greater than 0',
+          position: 'top',
+        });
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
+const onUpdatePlan = () => {
+  let addons = [];
+  let tempAddons = planForm.addons;
+
+  //Validate addons
+  if (!validateAddons(tempAddons)) {
+    return;
+  }
+
+  tempAddons.forEach(addon => {
+    addon.addonOptions.forEach(option => {
+      addons.push({
+        addonId: addon.id,
+        addonOptionId: option.id,
+        price: parseInt(option.price ?? 0),
+        vat: option.vat,
+        isSelected: option.isSelected,
+      });
+    });
+  });
+  planForm
+    .transform(data => ({
+      ...data,
+      addons,
+    }))
+    .post('/travel-plan-manual-update-process', {
+      preserveScroll: true,
+      preserveState: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Plan has been updated',
+          position: 'top',
+        });
+        emit('onLoadAvailablePlansData', {
+          plan: props.plan,
+          quoteType: props.quoteType,
+          extraDetails: props.extraDetails,
+        });
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
+    });
+};
 </script>
 
 <template>
@@ -69,7 +174,57 @@ const tabs = ref([
               <dt class="font-medium">Discount Price</dt>
               <dd>{{ props.plan.discountPremium }}</dd>
             </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Insurer Quote Number</dt>
+              <dd>{{ props.plan.insurerQuoteNo }}</dd>
+            </div>
           </dl>
+        </TabPanel>
+
+        <TabPanel>
+          <div class="p-4">
+            <template v-for="addon in planForm.addons" :key="addon">
+              <template v-for="option in addon.addonOptions" :key="option">
+                <div class="flex my-2">
+                  <span class="w-60">{{ addon.text }}</span>
+                  <span class="w-60">{{ option.value }}</span>
+                  <x-input
+                    class="w-20 mr-10"
+                    :value="option.price"
+                    :disabled="!option.isSelected"
+                    size="sm"
+                    v-model="option.price"
+                    type="number"
+                  />
+                  <x-toggle
+                    v-model="option.isSelected"
+                    color="success"
+                    class="mt-2"
+                  />
+                </div>
+              </template>
+            </template>
+            <x-divider class="mb-3 mt-3" />
+            <div class="grid sm:grid-cols-4">
+              <dt class="font-bold">Total Premium with VAT:</dt>
+              <dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
+            </div>
+            <div class="flex justify-end">
+              <x-button
+                v-if="
+                  access.travelManagerCanEdit || access.travelAdvisorCanEdit
+                "
+                color="primary"
+                class="mt-5"
+                size="sm"
+                :disabled="!planForm.isDirty"
+                @click.prevent="onUpdatePlan"
+                :loading="planForm.processing"
+              >
+                Update
+              </x-button>
+            </div>
+          </div>
         </TabPanel>
 
         <TabPanel>

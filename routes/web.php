@@ -2,13 +2,13 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
-use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
@@ -29,6 +29,7 @@ use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\QuoteExportLogController;
+use App\Http\Controllers\RateCoverageUploadController;
 use App\Http\Controllers\RawQueryController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
@@ -72,6 +73,7 @@ use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\QuoteSyncController;
+use App\Http\Controllers\V2\SearchController;
 use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
@@ -96,7 +98,11 @@ Route::get('/', function () {
     return redirect('login');
 });
 
-if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV') == EnvEnum::UAT || config('constants.APP_ENV') == EnvEnum::DEVELOPMENT) {
+/* Auth Routes */
+Route::get('login', [AuthController::class, 'login'])->name('login');
+Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+
+if (config('constants.APP_ENV') != EnvEnum::PRODUCTION) {
     Route::middleware('throttle:50,10')->group(function () {
         Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
         Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
@@ -120,10 +126,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::post('get-lob-raw-data', [RawQueryController::class, 'show'])->name('getRawData');
 
-    Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
+    Route::get('instant-alfred/index', [AlfredChatController::class, 'index'])->name('instant-alfred.index');
 
-    Route::post('get-alfred-chat', [AlfredChatController::class, 'index']);
-    Route::post('get-alfred-chat-by-date', [AlfredChatController::class, 'getChatByDate'])->name('getChatByDate');
+    Route::post('instant-alfred/chats', [AlfredChatController::class, 'chats']);
+    Route::get('instant-alfred/export', [AlfredChatController::class, 'exportChat'])->name('exportChatData');
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
@@ -133,6 +139,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/reports/fetch-advisors-by-lob', [ReportsController::class, 'fetchAdvisorsListByLob']);
     Route::post('/reports/fetch-subteams-by-team', [ReportsController::class, 'fetchSubTeamListByTeam']);
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
+    Route::post('/reports/fetch-advisors-by-department', [ReportsController::class, 'fetchAdvisorListByDepartment']);
     Route::post('/reports/fetch-advisor-by-sub-team', [ReportsController::class, 'fetchAdvisorListBySubTeam']);
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport'])->name('advisor-conversion-report-view');
@@ -171,24 +178,18 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/total-premium', [ReportsController::class, 'totalPremiumLeadsSaleReport'])->name('total-premium-leads-sales-report');
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
-        if (in_array(quoteTypeCode::Pet, newUi())) {
-            Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
-            Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
-        }
-        if (in_array(quoteTypeCode::Bike, newUi())) {
-            Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
-        }
-        if (in_array(quoteTypeCode::Cycle, newUi())) {
-            Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
-            Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
-        }
-        if (in_array(quoteTypeCode::Yacht, newUi())) {
-            Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
-            Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
-        }
-        if (in_array(quoteTypeCode::Jetski, newUi())) {
-            Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
-        }
+        Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
+        Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
+
+        Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
+
+        Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
+        Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
+
+        Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
+        Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
+
+        Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
         Route::group(['prefix' => 'quotes/'], function () {
             Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
@@ -198,10 +199,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
         });
 
-        if (in_array(quoteTypeCode::Life, newUi())) {
-            Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
-            Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
-        }
+        Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
+        Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
@@ -211,16 +210,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-sold', [CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
-        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction'); //->middleware(SetReadDbConnection::class)->name('data-extraction');
-        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->name('export-car-pua-updates'); //->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
-        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->name('export-rm-leads'); //->middleware(SetReadDbConnection::class)->name('export-rm-leads');
+        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
+        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
+        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
         Route::delete('delete-quote-notes/{id}', [CentralController::class, 'deleteQuoteNotes'])->name('delete-quote-notes');
-        Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-plan-detail');
-        Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-leads-detail-with-email-mobile');
-        Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-makes-models');
+        Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-plan-detail');
+        Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-leads-detail-with-email-mobile');
+        Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-makes-models');
 
         Route::group(['prefix' => 'renewals'], function () {
             Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals'])->name('renewals-upload-create');
@@ -228,7 +227,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
-            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export');
+            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->middleware(SetReadDbConnection::class)->name('renewal-search-export');
         });
     });
 
@@ -326,6 +325,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::resource('travel-lead-allocation', TravelLeadAllocationController::class);
+    Route::get('allocation-dashboard/{quoteType}', [V2LeadAllocationController::class, 'index'])->name('lead-allocation-dashboard');
     Route::post('/travel-lead-allocation/update-hard-stop', [TravelLeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
@@ -365,6 +365,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
         Route::get('uploaded-leads/{id}/validation-passed/quote-redirect/{leadId}', [RenewalsUploadController::class, 'viewQuoteRedirect'])->name('viewQuoteRedirect');
         Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
+    });
+
+    Route::group(['prefix' => 'rates-coverages'], function () {
+        Route::get('coverages', [RateCoverageUploadController::class, 'uploadCoverages'])->name('upload-coverages');
+        Route::post('upload-coverages', [RateCoverageUploadController::class, 'coveragesUploadCreate'])->name('upload-coverages-create');
+        Route::get('rates', [RateCoverageUploadController::class, 'uploadRates'])->name('upload-rates');
+        Route::post('upload-rates', [RateCoverageUploadController::class, 'rateUploadCreate'])->name('upload-rates-create');
+        Route::get('/bad-records/{id}', [RateCoverageUploadController::class, 'badRecords'])->name('bad-records');
     });
 
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
@@ -416,10 +424,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::group(['prefix' => 'quote-sync'], function () {
-            // Route::middleware('readonly_db')->group(function () {
-            Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
-            Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
-            // });
+            Route::middleware('readonly_db')->group(function () {
+                Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
+                Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
+            });
             Route::get('/edit/{quoteSync}', [QuoteSyncController::class, 'edit'])->name('admin.quotesync.edit');
             Route::put('/update/{quoteSync}', [QuoteSyncController::class, 'update'])->name('admin.quotesync.update');
             Route::post('/sync-stuck-entries', [QuoteSyncController::class, 'addStuckEntriesForSyncing'])->name('admin.quotesync.sync-stuck-entries');
@@ -439,14 +447,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
-        if (in_array(quoteTypeCode::Business, newUi())) {
-            Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
-            Route::resource('business', BusinessQuoteController::class);
-        }
+
+        Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
+        Route::resource('business', BusinessQuoteController::class);
+
         Route::resource('travel', CRUDController::class);
-        if (! in_array(quoteTypeCode::Pet, newUi())) {
-            Route::resource('pet', CRUDController::class);
-        }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
@@ -486,19 +491,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('{quoteType}/risk-rating-details/{quoteId}', [CRUDController::class, 'riskRatingDetails'])->name('risk-rating-details');
         Route::post('{quoteType}/{quoteUuId}/send-ocb', [CentralController::class, 'sendOCBEmail'])->name('sendOCBEmail');
 
-        if (! in_array(quoteTypeCode::Life, newUi())) {
-            Route::resource('life', CRUDController::class);
-        }
-
-        if (in_array(quoteTypeCode::Travel, newUi()) || in_array(quoteTypeCode::Life, newUi())) {
-            Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('travel.cards');
-            Route::get('travel-expired-upload', [TravelController::class, 'uploadRenewals'])->name('travel.expired.upload');
-            Route::post('travel-upload-create', [TravelController::class, 'renewalsUploadCreate'])->name('travel.upload-create');
-            Route::resource('travel', TravelController::class);
-            Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
-        } else {
-            Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
-        }
+        Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('travel.cards');
+        Route::get('travel-expired-upload', [TravelController::class, 'uploadRenewals'])->name('travel.expired.upload');
+        Route::post('travel-upload-create', [TravelController::class, 'renewalsUploadCreate'])->name('travel.upload-create');
+        Route::resource('travel', TravelController::class);
+        Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
 
@@ -566,6 +563,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
+        Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
     });
     Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
 
@@ -589,12 +587,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {
-        if (in_array('Business', newUi())) {
-            Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
-            Route::resource('amt', V2AmtController::class);
-        } else {
-            Route::resource('amt', AMTController::class);
-        }
+        Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
+        Route::resource('amt', V2AmtController::class);
     });
 
     Route::group(['prefix' => 'discount'], function () {
@@ -621,7 +615,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
-    Route::get('sage-api-logs/{sectionId}', [AuditableController::class, 'sageApiLogs'])->name('sage.api.logs')->middleware('permission:'.PermissionsEnum::VIEW_SAGE_API_LOGS);
+    Route::get('sage-api-logs/{sectionId}', [SageApi::class, 'sageApiLogs'])->name('sage-api-logs')->middleware('permission:'.PermissionsEnum::VIEW_SAGE_API_LOGS);
+    Route::get('sage-api-logs/{sectionId}/latest-error', [SageApi::class, 'getLastSageError'])->name('sage-api-logs-latest-error');
 
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
@@ -652,6 +647,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/car-plan-manual-update-process', [CarQuoteController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
+    Route::post('/travel-plan-manual-update-process', [TravelController::class, 'travelPlanUpdateManualProcess']);
 
     // new route for health plan update process being used now
 
@@ -673,6 +669,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Sending NB Car Followups
     Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
+
+    Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
+    Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 });
 
 Route::get('/add-batch-number', function () {
@@ -681,10 +680,11 @@ Route::get('/add-batch-number', function () {
     echo 'Done';
 });
 
-Route::get('run-insly-email-fix', function () {
+//Migration Not Required For Now 21 Nov 24
+// Route::get('run-insly-email-fix', function () {
 
-    if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
-        Artisan::queue('InslyEmailFix:cron');
-    }
+//     if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {
+//         Artisan::queue('InslyEmailFix:cron');
+//     }
 
-});
+// });

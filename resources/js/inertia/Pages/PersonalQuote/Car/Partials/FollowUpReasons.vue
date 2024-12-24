@@ -5,6 +5,7 @@ const props = defineProps({
   source: String,
   followUpId: String,
   kyoEndPoint: String,
+  quoteUuid: String,
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -97,6 +98,7 @@ function onSubmit() {
             title: response.data.message,
             position: 'top',
           });
+          updatePauseCounter();
           emit('update:modelValue', response.data.success);
         }
       })
@@ -112,6 +114,27 @@ function onSubmit() {
   }
 }
 
+const updatePauseCounter = () => {
+  axios
+    .post('/api/v1/quotes/car/pause-resume-followup', {
+      quote_uuid: props.quoteUuid,
+      action: 'pause',
+    })
+    .then(response => {
+      if (response.data.success) {
+        notification.success({
+          title: 'success',
+          position: 'top',
+        });
+      }
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error! Unable to update pause counter',
+        position: 'top',
+      });
+    });
+};
 onMounted(() => getPauseReaons());
 </script>
 <template>

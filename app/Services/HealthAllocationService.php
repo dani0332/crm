@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
@@ -20,7 +19,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
@@ -149,7 +147,7 @@ class HealthAllocationService extends AllocationService
             })
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
             ->where('la.quote_type_id', QuoteTypes::HEALTH->id())
-            ->where('users.is_active', true)
+            ->activeUser()
             ->where('t.name', $leadTeam)
             ->orderBy('la.last_allocated', 'asc')->first();
     }
@@ -196,10 +194,6 @@ class HealthAllocationService extends AllocationService
 
     public function shouldProceed(): bool
     {
-        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
-        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
-        $shouldProceed = now()->between($start_time, $end_time) && ((int) config('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH') == 1);
-
-        return $shouldProceed;
+        return $this->shouldProceedWithReAllocation('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH');
     }
 }

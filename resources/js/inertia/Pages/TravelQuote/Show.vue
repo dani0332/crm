@@ -62,11 +62,13 @@ defineProps({
   travelDestinations: Object,
   isAmlClearedForQuote: Boolean,
   amlStatusName: String,
+  access: Object,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
@@ -314,7 +316,9 @@ const emiratesOptions = computed(() => {
 const travelerForm = useForm({
   travel_quote_request_id: page.props.quote.id,
   quote_type: page.props.modelType,
-  first_name: null,
+  first_name: '',
+  last_name: '',
+  name: '',
   dob: '',
   nationality_id: null,
   relation_code: null,
@@ -388,10 +392,19 @@ const submitTraveler = isValid => {
     addTravelMember(isValid);
   }
 };
-
+const showErrors = errors => {
+  Object.keys(errors).forEach(function (key) {
+    notification.error({
+      title: errors[key],
+      position: 'top',
+      timeout: 10000,
+    });
+  });
+};
 const addTravelMember = isValid => {
   if (!isValid) return;
-  // '/travelers'
+
+  travelerForm.name = travelerForm.first_name;
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -404,10 +417,15 @@ const addTravelMember = isValid => {
       });
       onLoadAvailablePlansData();
     },
+    onError: errors => {
+      showErrors(errors);
+    },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
       travelerForm.first_name = '';
+      travelerForm.last_name = '';
+      travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
@@ -424,6 +442,8 @@ const addTravelMember = isValid => {
 const onAddTraveler = () => {
   travelerForm.reset();
   travelerForm.first_name = '';
+  travelerForm.last_name = '';
+  travelerForm.name = '';
   travelerForm.dob = '';
   travelerForm.nationality_id = '';
   travelerForm.relation_code = '';
@@ -441,6 +461,8 @@ const onEditTraveler = traveler => {
   travelerName.value = `Traveler ${traveler.index}`;
   travelerForm.id = traveler.id;
   travelerForm.first_name = traveler.first_name;
+  travelerForm.last_name = traveler.last_name;
+  travelerForm.name = traveler.first_name + ' ' + traveler.last_name ?? '';
   travelerForm.dob = traveler.dob;
   travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
@@ -453,10 +475,14 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
+  travelerForm.name = travelerForm.first_name;
   travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
       travelerForm.processing = true;
+    },
+    onError: errors => {
+      showErrors(errors);
     },
     onSuccess: () => {
       notification.success({
@@ -469,6 +495,8 @@ const editTraveler = isValid => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
       travelerForm.first_name = '';
+      travelerForm.last_name = '';
+      travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
@@ -734,6 +762,89 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
+const selectedPlanType = ref(null);
+
+const updateSelectedPlan = async selectedPlanData => {
+  let data = {
+    plan_id: selectedPlanData.plan.id,
+  };
+
+  data.planType = selectedPlanData.extraDetails?.planType;
+  if (selectedPlanData.extraDetails?.selectedPlansIds.length > 0) {
+    for (
+      let i = 0;
+      i < selectedPlanData.extraDetails?.selectedPlansIds.length;
+      i++
+    ) {
+      if (
+        selectedPlanData.extraDetails?.planType == 'normalPlans' &&
+        selectedPlanData.extraDetails?.seniorPlansIds.includes(
+          selectedPlanData.extraDetails?.selectedPlansIds[i],
+        )
+      ) {
+        data.plan_id = selectedPlanData.plan.id;
+        data.selected_plan_id =
+          selectedPlanData.extraDetails?.selectedPlansIds[i];
+      }
+
+      if (
+        selectedPlanData.extraDetails?.planType == 'seniorPlans' &&
+        selectedPlanData.extraDetails?.normalPlansIds.includes(
+          selectedPlanData.extraDetails?.selectedPlansIds[i],
+        )
+      ) {
+        data.selected_plan_id = selectedPlanData.plan.id;
+        data.plan_id = selectedPlanData.extraDetails?.selectedPlansIds[i];
+      }
+    }
+  } else {
+    data.plan_id = selectedPlanData.plan.id;
+  }
+
+  axios
+    .post(
+      `/personal-quotes/${selectedPlanData.quoteType}/${page.props.quote.uuid}/update-selected-plan`,
+      data,
+    )
+    .then(res => {
+      let premium = 0;
+      if (res.data.plan.planProcessValue[0]) {
+        premium = res.data.plan.planProcessValue[0].totalPremium;
+      }
+      let selectedPlan = {
+        id: selectedPlanData.plan.id,
+        providerName: selectedPlanData.plan.providerName,
+        planName: selectedPlanData.plan.name,
+      };
+
+      if (res.data.plan.planProcessValue[0]) {
+        selectedPlan.premium = premium.toFixed(2);
+      }
+      handlePlanSelected(selectedPlan);
+    })
+    .catch(err => {
+      console.log(err);
+      isLoading.value = false;
+      notification.error({
+        title: err?.response?.data?.message ?? 'something went wrong',
+        position: 'top',
+      });
+    });
+};
+
+const onLoadAvailablePlansDataAndPlanDetails = async selectedPlanData => {
+  // In case of update made in selected plan, we need to call the update plan api to make the required changes according to selected plan
+  if (
+    selectedPlanData.extraDetails?.selectedPlansIds.includes(
+      parseInt(selectedPlanData.plan.id),
+    )
+  ) {
+    await updateSelectedPlan(selectedPlanData);
+  }
+  getPlanDetails(planDetails.value.id);
+  await onLoadAvailablePlansData();
+};
+
 const emailStatusesTable = reactive({
   isLoading: false,
   columns: [
@@ -797,16 +908,20 @@ const availablePlansTable = reactive({
       value: 'name',
     },
     {
+      text: 'Insurer Quote Number',
+      value: 'insurerQuoteId',
+    },
+    {
       text: 'Travel Type',
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
-      value: 'discountPremium',
+      text: 'Total Price',
+      value: 'premiumWithVat',
     },
     {
       text: 'Action',
@@ -827,16 +942,20 @@ const availableSeniorPlansTable = reactive({
       value: 'name',
     },
     {
+      text: 'Insurer Quote Number',
+      value: 'insurerQuoteId',
+    },
+    {
       text: 'Travel Type',
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
-      value: 'discountPremium',
+      text: 'Total Price',
+      value: 'premiumWithVat',
     },
     {
       text: 'Action',
@@ -1060,6 +1179,18 @@ const onCopyText = text => {
       title: 'Link copied to clipboard',
       position: 'top',
     });
+};
+
+const getAddonVat = item => {
+  let addonVat = 0;
+  item.addons.forEach(addon => {
+    addon.addonOptions.forEach(option => {
+      if (option.isSelected && option.price != 0) {
+        addonVat += parseInt(option.price) + option.vat;
+      }
+    });
+  });
+  return addonVat;
 };
 
 const isProfileUpdateAllow = computed(() => {
@@ -1360,6 +1491,15 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
 };
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
 </script>
 
 <template>
@@ -1585,7 +1725,16 @@ const onAddUpdate = () => {
                   <dd>{{ field?.value }}</dd>
                 </div>
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
-                <dd>{{ field?.value }}</dd>
+                <dd>
+                  {{
+                    field.title == 'Advisor'
+                      ? quote.api_issuance_status ==
+                        policyIssuanceEnum.POLICY_ISSUANCE_API_STATUS_YES_ID
+                        ? policyIssuanceEnum.API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL
+                        : field?.value
+                      : field?.value
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">AML STATUS</dt>
@@ -1842,6 +1991,14 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote.insurer_api_status }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.api_issuance_status }}</dd>
               </div>
             </dl>
           </div>
@@ -2363,6 +2520,7 @@ const onAddUpdate = () => {
             label="Member Name*"
             placeholder="Member Name"
             :rules="[isRequired]"
+            :hasError="travelerForm.errors.first_name"
           />
           <ComboBox
             v-model="travelerForm.nationality_id"
@@ -2501,9 +2659,7 @@ const onAddUpdate = () => {
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
                     :disabled="
-                      quote.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
-                      lockLeadSectionsDetails.lead_status
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Lead Status"
                     class="w-full"
@@ -2517,9 +2673,7 @@ const onAddUpdate = () => {
                     placeholder="Lead Notes"
                     class="w-full"
                     :disabled="
-                      quote.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
-                      lockLeadSectionsDetails.lead_status
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
                     "
                   />
                 </x-field>
@@ -2556,10 +2710,7 @@ const onAddUpdate = () => {
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                isDisabled
-              "
+              :disabled="allowStatusUpdate || isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Change Status
@@ -2893,10 +3044,15 @@ const onAddUpdate = () => {
               <template #item-name="item">
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
-              <template #item-discountPremium="item">
-                <span class="text-primary-600">
-                  {{ item.discountPremium + item.vat }}
-                </span>
+              <template #item-actualPremium="item">
+                {{ parseFloat(item.actualPremium).toFixed(2) }}
+              </template>
+              <template #item-premiumWithVat="item">
+                {{
+                  parseFloat(
+                    item.discountPremium + item.vat + getAddonVat(item),
+                  ).toFixed(2)
+                }}
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
@@ -2904,7 +3060,10 @@ const onAddUpdate = () => {
                     size="xs"
                     color="error"
                     outlined
-                    @click.prevent="getPlanDetails(item.id)"
+                    @click.prevent="
+                      selectedPlanType = 'normalPlans';
+                      getPlanDetails(item.id);
+                    "
                   >
                     View
                   </x-button>
@@ -2976,10 +3135,15 @@ const onAddUpdate = () => {
                     item.name
                   }}</span>
                 </template>
-                <template #item-discountPremium="item">
-                  <span class="text-primary-600">
-                    {{ item.discountPremium + item.vat }}
-                  </span>
+                <template #item-actualPremium="item">
+                  {{ parseFloat(item.actualPremium).toFixed(2) }}
+                </template>
+                <template #item-premiumWithVat="item">
+                  {{
+                    parseFloat(
+                      item.discountPremium + item.vat + getAddonVat(item),
+                    ).toFixed(2)
+                  }}
                 </template>
                 <template #item-action="item">
                   <div class="flex gap-2">
@@ -2987,7 +3151,10 @@ const onAddUpdate = () => {
                       size="xs"
                       color="error"
                       outlined
-                      @click.prevent="getPlanDetails(item.id)"
+                      @click.prevent="
+                        selectedPlanType = 'seniorPlans';
+                        getPlanDetails(item.id);
+                      "
                     >
                       View
                     </x-button>
@@ -3029,7 +3196,19 @@ const onAddUpdate = () => {
             show-close
             backdrop
           >
-            <LazyAvailablePlan :plan="planDetails" />
+            <LazyAvailablePlan
+              :plan="planDetails"
+              :quote="quote"
+              :quoteType="modelType"
+              :extraDetails="{
+                normalPlansIds: normalPlansIds.ids,
+                seniorPlansIds: seniorPlansIds.ids,
+                selectedPlansIds: selectedPlanIds,
+                planType: selectedPlanType,
+              }"
+              :access="access"
+              @onLoadAvailablePlansData="onLoadAvailablePlansDataAndPlanDetails"
+            />
           </x-modal>
         </template>
       </Collapsible>

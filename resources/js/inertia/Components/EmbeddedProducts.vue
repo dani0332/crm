@@ -201,7 +201,7 @@ const epTable = reactive({
       value: 'prices',
     },
     {
-      text: 'Last Updated Date',
+      text: 'Payment Captured date',
       value: 'updated_at',
     },
     {
@@ -239,27 +239,6 @@ const getBlog = file => useObjectUrl(file);
 const ppDoc = str => {
   const doc = JSON.parse(str);
   return doc[0]?.path !== '' ? usePage().props.cdnPath + doc[0]?.path : '';
-};
-const checkTransactionExist = item => {
-  for (let price of item.prices) {
-    for (let transaction of price.transactions) {
-      const paymentStatusDate = transaction.payment_status_date;
-      if (paymentStatusDate) {
-        var timeStart = new Date(paymentStatusDate);
-        var timeEnd = new Date();
-        var timeDifferenceInMiliseconds =
-          timeEnd.getTime() - timeStart.getTime();
-        if (
-          (transaction.payment_status_id == 6 ||
-            transaction.payment_status_id == 4) &&
-          timeDifferenceInMiliseconds <= 259200000
-        ) {
-          return false;
-        }
-      }
-    }
-  }
-  return true;
 };
 
 const { copy, copied } = useClipboard();
@@ -308,7 +287,11 @@ const toggleProduct = (ep, event) => {
   propsDataReactive.value?.forEach(item => {
     if (item.id === ep.embedded_product_id) {
       item.prices.forEach(price => {
-        if (price.id !== ep.id && price.transactions[0].is_selected !== false) {
+        if (
+          price.id !== ep.id &&
+          price.transactions.length > 0 &&
+          price.transactions[0].is_selected !== false
+        ) {
           price.transactions[0].is_selected = false;
           removeIdFromSelection.push(price.id);
         }
@@ -529,8 +512,27 @@ const onAddDocumentSubmit = event => {
             }}
           </template>
 
-          <template #item-updated_at="{ updated_at }">
-            {{ dateFormat(updated_at) }}
+          <template #item-updated_at="item">
+            <span
+              v-if="
+                getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                  ?.payment_status_id == paymentStatusEnum.CAPTURED
+              "
+            >
+              <span v-if="item.short_code == embeddedProductEnum.TRAVEL">
+                {{
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.travel_annual_payments?.captured_at
+                }}
+              </span>
+              <span v-else>
+                {{
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payments[0]?.captured_at
+                }}
+              </span>
+            </span>
+            <span v-else> - </span>
           </template>
 
           <template #item-actions="item">
@@ -573,7 +575,7 @@ const onAddDocumentSubmit = event => {
                 v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
                 size="xs"
                 color="#ff5e00"
-                :disabled="checkTransactionExist(item)"
+                :disabled="!item.can_cancel_payment"
                 @click.prevent="cancelPaymentForm(item)"
               >
                 Cancel Payments

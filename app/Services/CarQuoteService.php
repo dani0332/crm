@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -18,6 +20,8 @@ use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\CustomerAdditionalContact;
+use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
@@ -928,7 +932,6 @@ class CarQuoteService extends BaseService
             $dateFrom = $this->parseDate($request['policy_expiry_date'], true);
             $dateTo = $this->parseDate($request['policy_expiry_date_end'], false);
             $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
@@ -1865,62 +1868,6 @@ class CarQuoteService extends BaseService
         }
     }
 
-    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
-    {
-        if ($advisorAllocationRecord === null || $lead === null) {
-            return;
-        }
-
-        // Determine if the lead was system-assigned or manually assigned
-        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
-
-        // Update allocation counts based on assignment type
-        if ($isSystemAssigned) {
-            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
-        } else {
-            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
-        }
-
-        // Increment the total allocation count and update timestamps
-        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
-        $advisorAllocationRecord->last_allocated = now()->timestamp;
-        $advisorAllocationRecord->updated_at = now();
-
-        // Save the updated allocation record
-        $advisorAllocationRecord->save();
-    }
-
-    private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
-    {
-        // Check if there is a previous advisor and the lead assignment date is today
-        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
-            if ($previousAdvisorAllocationRecord !== null) {
-                // Determine if the previous assignment was system-assigned
-                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
-
-                info('Previous assignment type is : '.$isSystemAssigned);
-
-                // Update allocation counts based on assignment type (if applicable)
-                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('About to deduct from auto assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('About to deduct from manual assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-                }
-
-                // Decrement the total allocation count (if it's greater than 0) and update timestamps
-                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
-                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
-                    $previousAdvisorAllocationRecord->updated_at = now();
-                }
-
-                // Save the updated allocation record
-                $previousAdvisorAllocationRecord->save();
-            }
-        }
-    }
-
     public function getExportDataWithPlans(): Collection
     {
         $request = request();
@@ -2099,6 +2046,17 @@ class CarQuoteService extends BaseService
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
         $nonPUAAuthLead = DB::table('car_quote_request as q')
+            ->select(
+                'q.code as RefID',
+                'q.premium_authorized as premiumauthorized',
+                'q.payment_status_date as paymentauthdate',
+                DB::raw('qs.text as `leadstatus`'),
+                DB::raw("'AUTHORIZED' as `paymentstatus`"),
+                'q.source as source',
+                'cmk.text as make',
+                'cmd.text as model',
+                'u.email as assignedadvisoremail'
+            )
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
@@ -2123,9 +2081,14 @@ class CarQuoteService extends BaseService
                     ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
                     ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
             })
-            ->orderBy('q.paid_at', 'desc');
+            ->orderBy('q.paid_at', 'desc')
+            ->get();
 
         $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
+            ->select(
+                't.name as Team',
+                DB::raw('COUNT(*) as Total')
+            )
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
@@ -2141,10 +2104,10 @@ class CarQuoteService extends BaseService
                     ->whereNotNull('cqp.pua_premium')
                     ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
             })
-            ->groupBy('t.name');
+            ->groupBy('t.name')
+            ->get();
 
         return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
-
     }
 
     public function exportPUAAuthorized()
@@ -2152,6 +2115,17 @@ class CarQuoteService extends BaseService
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
 
         $puaAuthUpdate = DB::table('car_quote_plan_details as cqp')
+            ->select(
+                'q.code as RefID',
+                'q.premium_authorized as premiumauthorized',
+                'q.payment_status_date as paymentauthdate',
+                DB::raw('qs.text as `leadstatus`'),
+                DB::raw("'AUTHORIZED' as `paymentstatus`"),
+                'q.source as source',
+                'cmk.text as make',
+                'cmd.text as model',
+                'u.email as assignedadvisoremail'
+            )
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
@@ -2168,9 +2142,14 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
             ->where('t.parent_team_id', '=', $carTeam->id)
-            ->orderBy('q.paid_at', 'desc');
+            ->orderBy('q.paid_at', 'desc')
+            ->get();
 
         $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')
+            ->select(
+                't.name as Team',
+                DB::raw('COUNT(*) as Total')
+            )
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
@@ -2182,7 +2161,8 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
             ->where('t.parent_team_id', '=', $carTeam->id)
-            ->groupBy('t.name');
+            ->groupBy('t.name')
+            ->get();
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
@@ -2206,5 +2186,80 @@ class CarQuoteService extends BaseService
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
             ->whereColumn('cqp.plan_id', 'cqr.plan_id');
+    }
+
+    public function sendAddressNotificationToCustomer($lead, $address)
+    {
+        info('Checking for sending courier notification : '.$lead->uuid);
+
+        // Use a different variable name for the result of the query
+        $existingAddress = CustomerAddress::where([
+            'quote_uuid' => $lead->uuid,
+            'customer_id' => $lead->customer_id,
+        ])->first();
+
+        if (! $existingAddress) {
+            info('Sending address notification to customer for lead : '.$lead->uuid);
+            // only trigger bird flow if address is not already added
+            $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);
+        }
+    }
+
+    public function triggerBirdFlow($lead, $address, $actionType)
+    {
+        if ($lead->embeddedTransactions()->exists()) {
+            info('Checking for courier transaction for lead : '.$lead->uuid);
+            $courierEmbeddedTransaction = $lead->embeddedTransactions
+                ->filter(function ($transaction) {
+                    return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
+                });
+        }
+
+        if (
+            ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
+            in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
+        ) {
+            info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
+            $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
+            $address = app(CustomerAddressService::class)->fetchFormattedAddress($address);
+            $customerAdditionalContact = CustomerAdditionalContact::select('value')
+                ->firstWhere([
+                    ['customer_id', $lead->customer_id],
+                    ['key', 'alternate_mobile_no'],
+                ]);
+            $payload = [
+                'quoteUID' => $lead->uuid,
+                'quoteTypeId' => (int) QuoteTypes::CAR->id(),
+                'actionType' => $actionType,
+                'refId' => $embeddedTransactionRefId,
+                'address' => $address,
+                'alternateNumber' => $customerAdditionalContact->value ?? '',
+            ];
+            info('Payload for Bird Courier Flow : '.json_encode($payload));
+
+            Ken::request('/trigger-bird-courier-flow', 'post', $payload);
+        } else {
+            info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
+        }
+    }
+
+    public function pauseAndResumeFollowUpCounters($data)
+    {
+
+        $quote = CarQuote::where('uuid', $data['quote_uuid'])->first();
+
+        if (! $quote || ! $quote->carQuoteRequestDetail) {
+            return response()->json(['success' => false, 'message' => 'Quote or related details not found'], 200);
+        }
+
+        $field = $data['action'] === 'pause' ? 'followup_pause_count' : 'followup_resume_count';
+        $quote->carQuoteRequestDetail->updateOrCreate(
+            ['car_quote_request_id' => $quote->id],
+            [
+                $field => ($quote->carQuoteRequestDetail->$field ?? 0) + 1,
+            ]
+        );
+
+        return response()->json(['success' => true]);
     }
 }

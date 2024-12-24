@@ -17,6 +17,17 @@ class PermissionsSeeder extends Seeder
     {
         $this->paidLeads();
         $this->seedProcessTrackerPermissions();
+        $this->leadAllocationDashboards();
+    }
+
+    private function leadAllocationDashboards()
+    {
+        Permission::findOrCreate(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD, 'web');
+        Permission::findOrCreate(PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD, 'web');
+        Permission::findOrCreate(PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD, 'web');
+        Permission::findOrCreate(PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD, 'web');
+        Permission::findOrCreate(PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD, 'web');
+        Permission::findOrCreate(PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD, 'web');
     }
 
     private function paidLeads()
