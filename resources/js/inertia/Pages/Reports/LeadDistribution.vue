@@ -140,8 +140,9 @@ const vehicleUseOptions = [
 
 
 const isVehicleUseDisabled = computed(() => {
-  return filters.registration_type === 'company';
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
+
 </script>
 
 <template>
@@ -181,6 +182,14 @@ const isVehicleUseDisabled = computed(() => {
         :options="registrationTypeOptions"
 
           />
+
+          <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
         <x-select
           v-model="filters.isCommercial"
           label="Commercial Rule"
@@ -192,13 +201,7 @@ const isVehicleUseDisabled = computed(() => {
           ]"
         />
 
-    <x-select
-        v-if="isVehicleUseDisabled"
-        v-model="filters.vehicle_use"
-        label="Vehicle Use"
-        placeholder="Select any option"
-        :options="vehicleUseOptions"
-      />
+
 
         <ComboBox
           v-model="filters.assignmentTypes"

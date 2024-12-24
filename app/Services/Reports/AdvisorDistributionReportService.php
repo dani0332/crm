@@ -456,6 +456,7 @@ class AdvisorDistributionReportService extends BaseService
             $query->whereIn('car_quote_request.source', $filters->leadSources);
         }
         if (isset($filters->registration_type)  && $filters->registration_type != 'All') {
+
             $query->where('car_quote_request.registration_type', $filters->registration_type);
         }
         if (isset($filters->vehicle_use)  && $filters->vehicle_use != 'All') {

@@ -89,6 +89,8 @@ class ReportsController extends Controller
             'insurance_for' => $request->insurance_for,
             'travel_coverage' => $request->travel_coverage,
             'segment_filter' => $request->segment_filter,
+            'registration_type' => $request->registration_type,
+            'vehicle_use' => $request->vehicle_use,
         ];
 
         return $advisorConversionReportService->getAdvisorsAssignedLeads($filters);

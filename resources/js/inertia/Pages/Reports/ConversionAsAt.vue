@@ -36,6 +36,8 @@ const showTable = ref(true);
 let showUnassignedLeads = ref(false);
 let unassignedDate = ref([]);
 let initialAsAtDate = ref('');
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 
 const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
@@ -372,6 +374,28 @@ const minDate = computed(() => {
   return null;
 });
 
+const registrationTypeOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carRegistrationTypeEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
+
+const vehicleUseOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carVehicleUseEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
+
 onMounted(() => {
   unassignedDate = props.createdAtDate ?? [];
   checkAndAddExtraEmptyColumn();
@@ -453,6 +477,22 @@ onMounted(() => {
           ]"
           class="w-full"
           :single="true"
+        />
+        <x-select
+        v-model="filters.registration_type"
+          v-if="filters.lob == props.quoteTypeIdEnum.Car"
+        label="Registration Type"
+        placeholder="Select any option"
+        :options="registrationTypeOptions"
+
+          />
+
+        <x-select
+        v-if="isVehicleUseDisabled && filters.lob == props.quoteTypeIdEnum.Car"
+        v-model="filters.vehicle_use"
+        label="Vehicle Use"
+        placeholder="Select any option"
+        :options="vehicleUseOptions"
         />
         <ComboBox
           v-model="filters.includeUnassignedLeads"
