@@ -42,6 +42,8 @@ const filters = reactive({
   insurance_type: '',
   insurance_for: '',
   travel_coverage: '',
+  registration_type: 'All',
+  vehicle_use: 'All',
 });
 
 function onSubmit(isValid, isMounted = false) {
@@ -283,6 +285,7 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.insurance_for = '';
     filters.travel_coverage = '';
     filters.isCommercial = '';
+
     (filters.isEmbeddedProducts = ''), (filters.is_ecommerce = '');
     filters.tiers = [];
   } else {
@@ -682,15 +685,32 @@ const isVehicleUseDisabled = computed(() => {
           ]"
         />
         <x-select
+           v-if="canShow('isCommercial')"
+        v-model="filters.registration_type"
+        label="Registration Type"
+        placeholder="Select any option"
+        :options="registrationTypeOptions"
+
+          />
+
+        <x-select
           v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
-          label="Commercial"
+          label="Commercial Rule"
           placeholder="Select any option"
           :options="[
             { value: 'All', label: 'All' },
             { value: true, label: 'Yes' },
             { value: false, label: 'No' },
           ]"
+        />
+
+        <x-select
+        v-if="isVehicleUseDisabled"
+        v-model="filters.vehicle_use"
+        label="Vehicle Use"
+        placeholder="Select any option"
+        :options="vehicleUseOptions"
         />
 
         <ComboBox

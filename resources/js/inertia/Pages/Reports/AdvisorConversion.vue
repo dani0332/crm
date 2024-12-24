@@ -999,19 +999,17 @@ const isVehicleUseDisabled = computed(() => {
             { value: 'false', label: 'No' },
           ]"
         />
-             <!-- v-if="canShow('isCommercial')" -->
         <x-select
         v-if="canShow('isCommercial')"
         v-model="filters.registration_type"
         label="Registration Type"
         placeholder="Select any option"
         :options="registrationTypeOptions"
-
           />
         <x-select
           v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
-          label="Commercial rule"
+          label="Commercial Rule"
           placeholder="Select any option"
           :options="commericalOptions"
         />

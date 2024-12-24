@@ -11,6 +11,9 @@ const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
+
 
 const params = useUrlSearchParams('history');
 const tableHeader = [
@@ -51,6 +54,8 @@ const filters = reactive({
   isCommercial: 'All',
   segment_filter: 'all',
   sic_advisor_requested: 'All',
+  registration_type: 'All',
+  vehicle_use: 'All',
   page: 1,
 });
 
@@ -115,6 +120,28 @@ onMounted(() => {
 const calculateTotalSum = (data, key) => {
   return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
 };
+
+const registrationTypeOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carRegistrationTypeEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
+
+const vehicleUseOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carVehicleUseEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === 'company';
+});
 </script>
 
 <template>
@@ -148,8 +175,15 @@ const calculateTotalSum = (data, key) => {
           "
         />
         <x-select
+        v-model="filters.registration_type"
+        label="Registration Type"
+        placeholder="Select any option"
+        :options="registrationTypeOptions"
+
+          />
+        <x-select
           v-model="filters.isCommercial"
-          label="Commercial"
+          label="Commercial Rule"
           placeholder="Select any option"
           :options="[
             { value: 'All', label: 'All' },
@@ -157,6 +191,14 @@ const calculateTotalSum = (data, key) => {
             { value: false, label: 'No' },
           ]"
         />
+
+    <x-select
+        v-if="isVehicleUseDisabled"
+        v-model="filters.vehicle_use"
+        label="Vehicle Use"
+        placeholder="Select any option"
+        :options="vehicleUseOptions"
+      />
 
         <ComboBox
           v-model="filters.assignmentTypes"
