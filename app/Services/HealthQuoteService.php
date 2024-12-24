@@ -142,6 +142,9 @@ class HealthQuoteService extends BaseService
             'hqr.risk_score',
             'hqr.enquiry_count',
             'hqr.policy_booking_date',
+            'hqr.renewal_upload_plan_code',
+            'hqr.renewal_upload_copay_code',
+            'hqr.renewal_upload_payment_link',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping

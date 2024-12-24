@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\ProcessStatusCode;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -441,5 +442,22 @@ class RenewalsUploadController extends Controller
         $quotes = $this->renewalsUploadFileService->getExport($request);
 
         return $quotes;
+    }
+
+    public function updateNonMotorRenewals()
+    {
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
+
+        // Now Only allowed for Health
+        $lobs = [
+            quoteTypeCode::Health => QuoteTypeShortCode::HEA,
+        ];
+
+        return inertia('Renewals/NonMotorUploadUpdate', [
+            'lobs' => $lobs,
+            'azureStorageUrl' => $azureStorageUrl,
+            'azureStorageContainer' => $azureStorageContainer,
+        ]);
     }
 }

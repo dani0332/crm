@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteTypeShortCode;
 use App\Models\RenewalsUploadLeads;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -27,9 +28,10 @@ class RenewalsUploadRequest extends FormRequest
         $rules = [
             'file_name' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
             'renewals_upload_type' => 'required',
+            'lob' => 'nullable',
         ];
 
-        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update') {
+        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && request()->lob != QuoteTypeShortCode::HEA) {
             $rules['skip_plans'] = 'required';
             $rules['is_sic'] = 'required';
         }
