@@ -18,9 +18,9 @@ use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
-use App\Services\ProcessTracker\ProcessTrackerService;
 use App\Repositories\PaymentRepository;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\ProcessTracker\ProcessTrackerService;
 use Illuminate\Support\Facades\Log;
 
 class TravelAllocationService extends AllocationService
