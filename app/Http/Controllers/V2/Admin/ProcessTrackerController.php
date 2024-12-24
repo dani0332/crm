@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -16,6 +17,11 @@ use Illuminate\Support\Collection;
 
 class ProcessTrackerController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['permission:'.PermissionsEnum::VIEW_PROCESS_TRACKER], ['only' => ['index']]);
+    }
+
     public function index()
     {
         [$process, $results] = $this->getProcessData();

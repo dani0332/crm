@@ -435,7 +435,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::prefix('/process-tracker')->controller(ProcessTrackerController::class)->group(function () {
-            Route::get('/', 'index')->name('process-tracker.index')->can(PermissionsEnum::VIEW_PROCESS_TRACKER);
+            Route::get('/', 'index')->name('process-tracker.index');
         });
     });
 
