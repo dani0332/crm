@@ -463,10 +463,18 @@ const disableSendAndBookPolicyButton = computed(() => {
   let isPolicyStatusCancellationPending =
     props.quote.quote_status_id ==
     page.props.quoteStatusEnum.CancellationPending;
+  console.log(
+    'disableSendAndBookPolicyButton',
+    props.bookPolicyDetails,
+    !props.bookPolicyDetails?.sendButton,
+    !isPolicyStatusCancellationPending,
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value,
+    !can(permission),
+  );
   return (
     !props.bookPolicyDetails?.sendButton &&
     !isPolicyStatusCancellationPending &&
-    disableIfPolicyFailedAndNoBookingFailedEditPermission &&
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
     !can(permission)
   );
 });
@@ -480,28 +488,52 @@ const disableBookPolicyButton = computed(() => {
   );
 });
 
+let isPolicyBookingFailed =
+  props.quote.quote_status_id ==
+  page.props.quoteStatusEnum.POLICY_BOOKING_FAILED;
+
 const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
-  let isPolicyBookingFailed =
-    props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.POLICY_BOOKING_FAILED;
-  if (isPolicyBookingFailed) {
-    let hasBookingFailedEditPermission = can(
-      permissionsEnum.BOOKING_FAILED_EDIT,
-    );
-    if (!hasBookingFailedEditPermission) {
-      return true;
-    }
-    return false;
+  let disableEditBookingDetails = false;
+
+  let hasBookingFailedEditPermission = can(permissionsEnum.BOOKING_FAILED_EDIT);
+
+  let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
+  console.log(
+    '!isPolicyBookingFailed , !hasBookingFailedEditPermission',
+    !isPolicyBookingFailed,
+    !hasBookingFailedEditPermission,
+  );
+  if (
+    policyIssuanceSteps?.isPolicyAutomationEnabled &&
+    !isPolicyBookingFailed &&
+    !hasBookingFailedEditPermission
+  ) {
+    disableEditBookingDetails =
+      policyIssuanceSteps?.isEditBookingDetailsDisabled;
   }
-  return false;
+
+  if (isPolicyBookingFailed && !hasBookingFailedEditPermission) {
+    disableEditBookingDetails = true;
+  }
+
+  console.log(
+    'disableEditBookingDetails',
+    disableEditBookingDetails,
+    policyIssuanceSteps,
+  );
+  return disableEditBookingDetails;
 });
 
 const showBookingFailedAlert = () => {
   console.log(
     'showBookingFailedAlert',
-    disableIfPolicyFailedAndNoBookingFailedEditPermission.value,
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
+      isPolicyBookingFailed,
   );
-  if (disableIfPolicyFailedAndNoBookingFailedEditPermission.value) {
+  if (
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
+    isPolicyBookingFailed
+  ) {
     notification.error({
       title:
         'Policy Booking Failed! Please contact finance for correction of details',

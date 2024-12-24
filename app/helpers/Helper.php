@@ -1539,7 +1539,7 @@ if (! function_exists('getInsuranceProvider')) {
             }
         }
 
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes) && isset($payment)) {
             $planRelationName = strtolower($quoteType).'Plan';
             $payment->load($planRelationName);
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
@@ -1550,5 +1550,14 @@ if (! function_exists('getInsuranceProvider')) {
         }
 
         return $insuranceProvider;
+    }
+}
+
+if (! function_exists('isCHSAdvisor')) {
+    function isCHSAdvisor($userId)
+    {
+        $user = User::select('id')->chs()->first();
+
+        return $user?->id == $userId;
     }
 }
