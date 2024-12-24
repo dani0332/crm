@@ -120,7 +120,7 @@ class TravelRenewalService extends BaseService
                 'policyExpiryDate' => Carbon::parse($newPolicyExpiryDate)->format('Y-m-d'),
                 'coverageCode' => $quote->coverage_code,
                 'regionCoverForId' => $quote->region_cover_for_id,
-                'previousPolicyExpiryDate'=>$quote->policy_expiry_date,
+                'previousPolicyExpiryDate'=> $quote->policy_expiry_date,
                 'tripStarted' => false,
             ];
 
