@@ -9,7 +9,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
-use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
@@ -130,22 +129,6 @@ class InslyDetailRepository extends BaseRepository
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
 
-        $advisorName = $policy['policy']['renewer_person'] ?? null;
-        if ($advisorName == null) {
-            $advisorName = $policy['quote']['broker'] ?? null;
-        }
-        $appUrl = config('constants.APP_URL');
-
-        $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
-
-        if ($advisorId == null) {
-            return [
-                'status' => 400,
-                'message' => 'Advisor not found.',
-                'data' => '',
-            ];
-        }
-
         if (! empty($policy)) {
             $policyNumber = $policy['policy']['policy_no'];
             $coverage = $policy['policy']['coverage'];
@@ -229,7 +212,6 @@ class InslyDetailRepository extends BaseRepository
 
                 // create lead in case no record found
                 $payLoad = $this->prePareData($policy, $quoteType, $isPersonalQuote);
-                $payLoad['advisor_id'] = $advisorId;
                 info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
                 info('InslyLead - created Lead Id : '.json_encode($id));
