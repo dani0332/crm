@@ -287,12 +287,21 @@ class TravelQuote extends Model implements AuditableContract
 
     public function isAutomationCompleted()
     {
-        return $this->api_issuance_status_id === PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+        return $this->policyIssuance?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
     }
 
     public function isBookingFailed()
     {
         return $this->insurer_api_status_id === PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
+    }
+
+    public function isPolicyIssuanceFailed()
+    {
+        return in_array($this->insurer_api_status_id, [
+            PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+        ]);
     }
 
     public function hasChild()

@@ -192,7 +192,6 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->assignment_type = $lead->advisor == null ? AssignmentTypeEnum::MANUAL_ASSIGNED : AssignmentTypeEnum::MANUAL_REASSIGNED;
                 $lead->advisor_id = $advisorId;
-                $lead->quote_updated_at = now();
 
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
