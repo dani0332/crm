@@ -4,6 +4,7 @@ namespace App\Enums;
 
 use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
 use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
+use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
@@ -49,7 +50,7 @@ use Illuminate\Support\Facades\Route;
 
 enum QuoteTypes: string
 {
-    use Enumable;
+    use Enumable, QuoteTypable;
 
     case CAR = 'Car';
     case HOME = 'Home';
@@ -259,22 +260,13 @@ enum QuoteTypes: string
         };
     }
 
-    private function generateTrackerService(ProcessTrackerTypeEnum $processType, string $uuid, $teamId)
-    {
-        return (new ProcessTrackerService)->initQuoteProcess($processType, $this, $uuid)
-            ->addStep(
-                ProcessTrackerAllocationEnum::REQUEST_DETAILS,
-                ['teamId' => ($teamId ?: null), 'requestParams' => request()->all()],
-            );
-    }
-
     public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false)
     {
         $allocationService = match ($this) {
             self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
             self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
             self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
-            self::TRAVEL => new TravelAllocation(new TravelAllocationService, $this->generateTrackerService(ProcessTrackerTypeEnum::TRAVEL_ALLOCATION, $uuid, $teamId), $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::TRAVEL => new TravelAllocation(new TravelAllocationService, $this->getTracker(ProcessTrackerTypeEnum::TRAVEL_ALLOCATION, $uuid, $teamId), $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             self::CYCLE => new CycleAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::YACHT => new YachtAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::PET => new PetAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
