@@ -159,7 +159,6 @@ class HealthAllocationService extends AllocationService
         $isReassignment = $previousUserId != null;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
-        $lead->quote_updated_at = now();
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
