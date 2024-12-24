@@ -543,7 +543,7 @@ class RenewalsUploadService
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
                 //start file import
-                if($renewalsUploadLead->quote_type == QuoteTypeShortCode::HEA) {
+                if ($renewalsUploadLead->quote_type == QuoteTypeShortCode::HEA) {
                     $renewalsUpload = new UploadAndUpdateHealthImport($renewalsUploadLead);
                 } else {
                     $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
@@ -985,7 +985,7 @@ class RenewalsUploadService
 
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged) {
             $quoteTypeCode = array_key_exists('quote_type', $data) ? $data['quote_type'] : $renewalQuoteProcess->quote_type;
-            throw_if(!in_array($quoteTypeCode, [QuoteTypeShortCode::CAR, QuoteTypeShortCode::HEA]), 'Only Insurance Type Car and Health are allowed to update lead');
+            throw_if(! in_array($quoteTypeCode, [QuoteTypeShortCode::CAR, QuoteTypeShortCode::HEA]), 'Only Insurance Type Car and Health are allowed to update lead');
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
@@ -1004,14 +1004,14 @@ class RenewalsUploadService
             $newAdvisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $advisorId = $quote->advisor_id == null ? $newAdvisorId : $quote->advisor_id;
             $carModel = null;
-            if($quoteTypeCode == QuoteTypeShortCode::CAR) {
+            if ($quoteTypeCode == QuoteTypeShortCode::CAR) {
                 $carMake = $this->renewalsAddonService->getCarMake($data['make']);
                 $carModel = $this->renewalsAddonService->getCarModel($data['model'], $carMake);
                 $previousAdvisor = $this->renewalsAddonService->getUser($data['previous_advisor']);
                 $claimHistory = $this->getClaimHistory($data['claim_history']);
                 $nationality = Nationality::where('text', $data['nationality'])->first();
                 $emirate = Emirate::where('text', $data['registration_location'])->first();
-                $uaeLicenseHeldFor = UAELicenseHeldFor::where('text', $data['driving_experience'])->first();   
+                $uaeLicenseHeldFor = UAELicenseHeldFor::where('text', $data['driving_experience'])->first();
             }
 
             info($logPrefix.' fetched options from DB');
@@ -1045,7 +1045,7 @@ class RenewalsUploadService
                 'additional_notes' => $data['notes'],
             ]);
 
-            if($quoteTypeCode == QuoteTypeShortCode::CAR) {
+            if ($quoteTypeCode == QuoteTypeShortCode::CAR) {
                 $quoteData['dob'] = (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null;
                 $quoteData['car_type_insurance_id'] = $carTypeOfInsurance->id ?? null;
                 $quoteData['claim_history_id'] = $claimHistory->id ?? null;
@@ -1064,7 +1064,7 @@ class RenewalsUploadService
                 $quoteData['has_ncd_supporting_documents'] = $data['nc_letter'];
             }
 
-            if($quoteTypeCode == QuoteTypeShortCode::HEA) {
+            if ($quoteTypeCode == QuoteTypeShortCode::HEA) {
                 $quoteData['previous_quote_policy_premium'] = $data['previous_policy_premium'];
                 $quoteData['renewal_upload_plan_code'] = $data['plan_code'];
                 $quoteData['renewal_upload_copay_code'] = $data['copay'];
@@ -1077,7 +1077,7 @@ class RenewalsUploadService
             if (! $renewalUploadLead->skip_plans) {
                 $quoteData['quote_updated_at'] = Carbon::now();
             }
-            if($quoteTypeCode == QuoteTypeShortCode::CAR) {
+            if ($quoteTypeCode == QuoteTypeShortCode::CAR) {
                 if (! empty($carModel) && ($carModelDetail = CarModelDetail::active()
                     ->where('is_default', 1)
                     ->where('car_model_id', $carModel->id)
@@ -1109,7 +1109,7 @@ class RenewalsUploadService
             }
 
             info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
-           
+
             $quote->update($quoteData);
 
             // Create Members for Health Quote
@@ -1125,7 +1125,7 @@ class RenewalsUploadService
                     'Dependent parent' => 2,
                     'Dependent sibling or Other relatives' => 2,
                     'Employee with salary AED 4000 and below' => 1,
-                    'Employee with salary above AED 4000' => 2
+                    'Employee with salary above AED 4000' => 2,
                 ];
 
                 $memberDobs = explode('|', $data['member_dob']);
@@ -1145,7 +1145,7 @@ class RenewalsUploadService
                         'gender' => $memberGenders[$index],
                         'nationalityId' => $nationalities->where('text', $memberNationalities[$index])->first()->id ?? null,
                         'memberCategoryId' => $memberCategories->where('text', $memberCategoriesText[$index])->first()->id ?? null,
-                        'salaryBandId' => array_key_exists($memberCategoriesText[$index], $memberCategorySalaryMapping) ? $memberCategorySalaryMapping[$memberCategoriesText[$index]]:1 ,
+                        'salaryBandId' => array_key_exists($memberCategoriesText[$index], $memberCategorySalaryMapping) ? $memberCategorySalaryMapping[$memberCategoriesText[$index]] : 1,
                         'dob' => Carbon::parse($this->formatDate($dob))->toDateString(),
                         'relationCode' => '',
                     ];
@@ -1168,10 +1168,10 @@ class RenewalsUploadService
                         ['salary_band_id', $memberDetails['salaryBandId']],
                     ])->exists();
 
-                    if($memberExists) {
+                    if ($memberExists) {
                         continue;
                     }
-        
+
                     $dataArray = [
                         'quoteUID' => $quote->uuid,
                         'memberDetails' => [$memberDetails],
@@ -1732,11 +1732,11 @@ class RenewalsUploadService
                     }
                 }
 
-                if($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HEA) {
+                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HEA) {
                     if ($leadData->member_nationality) {
                         $memberNationalities = explode('|', $leadData->member_nationality);
                         foreach ($memberNationalities as $memberNationality) {
-                            if(! Nationality::where('text', $memberNationality)->first()) {
+                            if (! Nationality::where('text', $memberNationality)->first()) {
                                 $leadValidationErrors->push('Invalid Nationality Text');
                                 break;
                             }
@@ -1766,23 +1766,22 @@ class RenewalsUploadService
                     if ($leadData->member_category) {
                         $memberCategories = explode('|', $leadData->member_category);
                         foreach ($memberCategories as $memberCategory) {
-                            if(! MemberCategory::where('text', $memberCategory)->first()) {
+                            if (! MemberCategory::where('text', $memberCategory)->first()) {
                                 $leadValidationErrors->push('Invalid Member Category');
                                 break;
                             }
                         }
                     }
-                    if($leadData->member_emirate_of_visa) {
+                    if ($leadData->member_emirate_of_visa) {
                         $memberEmirates = explode('|', $leadData->member_emirate_of_visa);
                         foreach ($memberEmirates as $memberEmirate) {
-                            if(! Emirate::where('text', $memberEmirate)->first()) {
+                            if (! Emirate::where('text', $memberEmirate)->first()) {
                                 $leadValidationErrors->push('Invalid Emirate of Visa');
                                 break;
                             }
                         }
                     }
-                } 
-                else {
+                } else {
                     switch (strtoupper($lead->quote_type)) {
                         case QuoteTypeShortCode::CAR:
                             if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {

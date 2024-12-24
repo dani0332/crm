@@ -120,7 +120,7 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
                     if (! $this->validateDate($dob)) {
                         $onFailure('Invalid value provided for '.$attribute);
                         break;
-                    }   
+                    }
                 }
             }]],
             'member_nationality' => ['index' => 11, 'title' => "Customer's Nationality", 'rules' => ['required', 'max:300']],
@@ -166,7 +166,7 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
                     }
                 }
 
-                if (!empty($failed)) {
+                if (! empty($failed)) {
                     RenewalQuoteProcess::insert($failed);
                 }
             },
