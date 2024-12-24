@@ -85,7 +85,7 @@ class HomeQuoteRepository extends BaseRepository
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->when(request()->filled('advisors'), fn ($q) => $q->whereIn('advisor_id', (array) request('advisors')))
+            ->when(request()->filled('advisors'), fn($q) => $q->whereIn('advisor_id', (array) request('advisors')))
             ->when(request()->has('is_renewal'), function ($query) {
                 if (request('is_renewal') === quoteTypeCode::yesText) {
                     $query->whereNotNull('previous_quote_policy_number');
@@ -101,8 +101,8 @@ class HomeQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
-                fn ($q) => $q->count(),
-                fn ($query) => $query->when($forExport, fn ($q) => $q->get(), fn ($q) => $q->simplePaginate())
+                fn($q) => $q->count(),
+                fn($query) => $query->when($forExport, fn($q) => $q->get(), fn($q) => $q->simplePaginate())
             );
     }
 
@@ -156,11 +156,11 @@ class HomeQuoteRepository extends BaseRepository
 
         $quoteData = $baseQuoteData;
 
-        info('Home Quote Create :'.json_encode($quoteData));
+        info('Home Quote Create :' . json_encode($quoteData));
 
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 
-        info('Home Quote Create Response :'.json_encode($response));
+        info('Home Quote Create Response :' . json_encode($response));
 
         // if (isset($response->quoteUID)) {
         //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);
@@ -216,12 +216,12 @@ class HomeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable().'.*',
+                $this->getTable() . '.*',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                    WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
+                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
                 as customer_type'),
             ])
             ->firstOrFail();
@@ -316,7 +316,7 @@ class HomeQuoteRepository extends BaseRepository
             'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -337,33 +337,73 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::HOME->value) . '-quote', 'post', $dataArr);
     }
 
     public function fetchUpdate($uuid, $data)
     {
+        dd($uuid, $data);
         return DB::transaction(function () use ($uuid, $data) {
-            $quote = $this->byQuoteTypeId(QuoteTypes::HOME->id())->where('uuid', $uuid)->firstOrFail();
+            try {
+                // Find the quote by UUID or fail if not found
+                $quote = $this->byQuoteTypeId(QuoteTypes::HOME->id())
+                    ->where('uuid', $uuid)
+                    ->firstOrFail();
 
-            //check the columns to be updated in personal quotes.
-            $quoteData = Arr::only($data, (new PersonalQuote)->allowedColumns());
+                // Prepare the data for the PersonalQuote update
+                $personalQuoteColumns = (new PersonalQuote)->allowedColumns();
+                $quoteData = Arr::only($data, $personalQuoteColumns);
+                $quoteData['updated_by_id'] = auth()->user()->id;
 
-            $quoteData['updated_by_id'] = auth()->user()->id;
-            $quote->update($quoteData);
+                // Update PersonalQuote data
+                $quote->update($quoteData);
 
-            // allowed columns for home quote
-            $homeAllowedColumns = ['iam_possesion_type_id', 'ilivein_accommodation_type_id', 'address', 'has_contents', 'has_building', 'has_personal_belongings', 'contents_aed', 'building_aed', 'personal_belongings_aed', 'have_claimed_losses', 'is_property_rented_holiday_home', 'sub_area_id'];
+                // Mapping frontend fields to backend column names
+                $fieldMapping = [
+                    'iam_possesion_type_id' => 'possession_type_id',
+                    'ilivein_accommodation_type_id' => 'accommodation_type_id',
+                    'address' => 'address',
+                    'has_contents' => 'has_contents',
+                    'has_building' => 'has_building',
+                    'has_personal_belongings' => 'has_personal_belongings',
+                    'contents_aed' => 'contents_value_id',
+                    'building_aed' => 'building_value',
+                    'personal_belongings_aed' => 'personal_belongings_value_id',
+                    'have_claimed_losses' => 'has_claimed_losses',
+                    'is_property_rented_holiday_home' => 'is_property_rented_holiday_home',
+                    'sub_area_id' => 'sub_area_id'
+                ];
 
-            // check the columns to be updated in home quote request.
-            if ($quote->homeQuote) {
-                $quote->homeQuote()->update(Arr::only($data, $homeAllowedColumns));
-            } else {
-                $quote->homeQuote()->create(Arr::only($data, $homeAllowedColumns));
+                // Map the data to database columns
+                $mappedData = [];
+                foreach ($fieldMapping as $frontendField => $dbField) {
+                    // Ensure we only add data that exists in the request
+                    if (array_key_exists($frontendField, $data)) {
+                        $mappedData[$dbField] = $data[$frontendField];
+                    }
+                }
+
+                // Update or create the homeQuote relationship
+                if ($quote->homeQuote) {
+                    $quote->homeQuote()->update($mappedData);
+                } else {
+                    $quote->homeQuote()->create($mappedData);
+                }
+
+                // Return the updated quote
+                return $quote;
+            } catch (\Exception $e) {
+                // Log error and rethrow for transaction rollback
+                info("Failed to update quote with UUID: {$uuid}", [
+                    'error' => $e->getMessage(),
+                    'data' => $data
+                ]);
+                throw $e; // Re-throw exception to trigger transaction rollback
             }
-
-            return $quote;
         });
     }
+
+
 
     public function fetchCardsView(Request $request)
     {

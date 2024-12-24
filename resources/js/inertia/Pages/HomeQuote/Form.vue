@@ -16,6 +16,22 @@ const showBuildingField = ref(false);
 const showContentsField = ref(false);
 const showPersonalBelongingsField = ref(false);
 
+const contentsAED = computed(
+  () => props.quote?.home_quote?.contents_value_id || null,
+);
+const buildingAED = computed(
+  () => props.quote?.home_quote?.building_value || null,
+);
+const personalBelongingsAED = computed(
+  () => props.quote?.home_quote?.personal_belongings_value_id || null,
+);
+
+console.log(
+  'contentsAED: ',
+  contentsAED.value,
+  props.quote?.home_quote?.contents_value_id,
+);
+
 console.log('PROPS: ', page.props);
 
 const quoteForm = useForm({
@@ -25,27 +41,30 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || null,
   email: props.quote?.email || null,
   mobile_no: props.quote?.mobile_no || null,
-  iam_possesion_type_id: props.quote?.home_quote?.iam_possesion_type_id || null,
+  iam_possesion_type_id: props.quote?.home_quote?.possession_type_id || null,
   ilivein_accommodation_type_id:
-    props.quote?.home_quote?.ilivein_accommodation_type_id || null,
-  has_contents: props.quote?.home_quote?.has_contents || null,
-  has_building: props.quote?.home_quote?.has_building || null,
+    props.quote?.home_quote?.accommodation_type_id || null,
+  has_contents: !!props.quote?.home_quote?.contents_value_id || null,
+  has_building: !!props.quote?.home_quote?.building_value || null,
   has_personal_belongings:
-    props.quote?.home_quote?.has_personal_belongings || null,
-  contents_aed: props.quote?.home_quote?.contents_aed || null,
-  building_aed: props.quote?.home_quote?.building_aed || null,
-  personal_belongings_aed:
-    props.quote?.home_quote?.personal_belongings_aed || null,
+    !!props.quote?.home_quote?.personal_belongings_value_id || null,
+  contents_aed: contentsAED.value,
+  building_aed: buildingAED.value,
+  personal_belongings_aed: personalBelongingsAED.value,
   sub_area_id: props.quote?.home_quote?.sub_area_id || null,
   is_property_rented_holiday_home:
     props.quote?.home_quote?.is_property_rented_holiday_home || null,
-  type_of_coverage_you_need:
-    props.quote?.home_quote?.type_of_coverage_you_need || null,
+  type_of_coverage_you_need: props.quote?.home_quote?.coverage_type_id || null,
   have_claimed_losses:
-    props.quote?.home_quote?.have_claimed_losses !== undefined
-      ? String(props.quote.home_quote.have_claimed_losses)
+    props.quote?.home_quote?.has_claimed_losses !== undefined
+      ? String(props.quote.home_quote.has_claimed_losses)
       : null,
 });
+
+console.log('quoteForm.contents_aed:', quoteForm.contents_aed);
+
+console.log('quoteForm:', quoteForm);
+
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
@@ -209,18 +228,15 @@ const typeOfCoverageYouNeedOptions = computed(() => {
 
 const handleCoverageChange = () => {
   console.log('Coverage changed:', quoteForm.type_of_coverage_you_need);
-  // Reset all AED fields visibility to false
+
+  // Reset field visibility to false
   showBuildingField.value = false;
   showContentsField.value = false;
   showPersonalBelongingsField.value = false;
 
-  // Reset AED fields to null for safety
-  if (!showBuildingField.value) quoteForm.building_aed = null;
-  if (!showContentsField.value) quoteForm.contents_aed = null;
-  if (!showPersonalBelongingsField.value)
-    quoteForm.personal_belongings_aed = null;
+  console.log('showContentsField.value:', showContentsField.value);
 
-  //   Update field visibility based on the selected coverage
+  // Determine the selected coverage type
   const selectedCoverage = coverageTypes.length
     ? coverageTypes.find(
         coverage => coverage.id === quoteForm.type_of_coverage_you_need,
@@ -229,6 +245,7 @@ const handleCoverageChange = () => {
 
   if (!selectedCoverage) return;
 
+  // Set field visibility based on the selected coverage type
   switch (selectedCoverage.id) {
     case 1: // Building only
       showBuildingField.value = true;
@@ -240,7 +257,7 @@ const handleCoverageChange = () => {
       showBuildingField.value = true;
       showContentsField.value = true;
       break;
-    case 4: // Building, Contents and Personal Belongings
+    case 4: // Building, Contents, and Personal Belongings
       showBuildingField.value = true;
       showContentsField.value = true;
       showPersonalBelongingsField.value = true;
@@ -251,15 +268,54 @@ const handleCoverageChange = () => {
       break;
   }
 
-  // Reset AED values for fields that are not visible
-  if (!showBuildingField.value) quoteForm.building_aed = null;
-  if (!showContentsField.value) quoteForm.contents_aed = null;
-  if (!showPersonalBelongingsField.value)
-    quoteForm.personal_belongings_aed = null;
+  console.log('showContentsField.value:', showContentsField.value);
+
+  // Reset AED fields only if the field is not visible and not in edit mode
+  if (!isEdit.value) {
+    if (!showBuildingField.value) quoteForm.building_aed = null;
+    if (!showContentsField.value) quoteForm.contents_aed = null;
+    if (!showPersonalBelongingsField.value)
+      quoteForm.personal_belongings_aed = null;
+  } else {
+    // For edit mode, preserve initial values from the database
+    if (buildingAED.value && showBuildingField.value) {
+      quoteForm.building_aed = buildingAED.value;
+    } else {
+      quoteForm.building_aed = null;
+    }
+    if (contentsAED.value && showContentsField.value) {
+      quoteForm.contents_aed = contentsAED.value;
+    } else {
+      quoteForm.contents_aed = null;
+    }
+    if (personalBelongingsAED.value && showPersonalBelongingsField.value) {
+      quoteForm.personal_belongings_aed = personalBelongingsAED.value;
+    } else {
+      quoteForm.personal_belongings_aed = null;
+    }
+  }
+
+  console.log('showContentsField.value:', showContentsField.value);
+  console.log('Final values:');
+  console.log('quoteForm.building_aed:', quoteForm.building_aed);
+  console.log('quoteForm.contents_aed:', quoteForm.contents_aed);
+  console.log(
+    'quoteForm.personal_belongings_aed:',
+    quoteForm.personal_belongings_aed,
+  );
 };
 
 const setCoverageBasedOnBooleans = () => {
-  if (props.quote?.home_quote?.iam_possesion_type_id) {
+  if (props.quote?.home_quote?.possession_type_id) {
+    console.log('Setting coverage based on booleans...');
+
+    if (props.quote?.home_quote) {
+      props.quote.home_quote.has_building = quoteForm.has_building;
+      props.quote.home_quote.has_contents = quoteForm.has_contents;
+      props.quote.home_quote.has_personal_belongings =
+        quoteForm.has_personal_belongings;
+    }
+
     const { has_building, has_contents, has_personal_belongings } =
       props.quote?.home_quote || {};
 
@@ -295,6 +351,13 @@ const isMatchingCoverage = (
   has_contents,
   has_personal_belongings,
 ) => {
+  console.log(
+    'isMatchingCoverage:',
+    coverage,
+    has_building,
+    has_contents,
+    has_personal_belongings,
+  );
   switch (coverage.id) {
     case 1: // Building only
       return has_building && !has_contents && !has_personal_belongings;
@@ -314,7 +377,7 @@ const isMatchingCoverage = (
 watch(
   () => quoteForm.iam_possesion_type_id,
   newVal => {
-    console.log('iam_possesion_type_id:', newVal);
+    console.log('in watcher iam_possesion_type_id:', newVal);
     setCoverageBasedOnBooleans();
   },
   { immediate: true },
@@ -359,6 +422,8 @@ const typeOfOwnerOccupancyOptions = computed(() => {
 });
 
 const contentValueInAEDOptions = computed(() => {
+  // assign quoteForm.contents_aed to contentsAED.value
+  quoteForm.contents_aed = contentsAED.value;
   return page.props?.lookUpData?.contentValues?.length
     ? page.props.lookUpData.contentValues.map(item => ({
         value: item.id,
@@ -367,6 +432,8 @@ const contentValueInAEDOptions = computed(() => {
     : [];
 });
 const personalBelongingsInAEDOptions = computed(() => {
+  // assign quoteForm.personal_belongings_aed to personalBelongingsAED.value
+  quoteForm.personal_belongings_aed = personalBelongingsAED.value;
   return page.props?.lookUpData?.personalBelongingValues?.length
     ? page.props.lookUpData.personalBelongingValues.map(item => ({
         value: item.id,
