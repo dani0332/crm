@@ -267,7 +267,7 @@ trait GenericQueriesAllLobs
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
-                $isAllRequiredDocumentUploaded = app(QuoteDocumentService::class)->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record);
+                $isAllRequiredDocumentUploaded = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $quoteType, $record);
                 $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
                 if ($isAllRequiredDocumentUploaded) {
                     $bookPolicyDetails['sendButton'] = true;

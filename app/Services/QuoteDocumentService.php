@@ -668,7 +668,7 @@ class QuoteDocumentService extends BaseService
      *
      * @return bool
      */
-    public function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType, $record)
+    public function areDocsUploaded($quoteDocuments, $quoteType, $record)
     {
         $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
