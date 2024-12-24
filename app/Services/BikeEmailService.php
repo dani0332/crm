@@ -230,16 +230,16 @@ class BikeEmailService extends BaseService
             info('Zero Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 492 : 626);
 
             // No plans with available ratings, send a specific email template
-            return $lead->tier_id == $tierR->id ? 492 : 626;
+            return $lead->tier_id == $tierR->id ? 492 : 723;
         } elseif (count($plans) == 1) {
             info('One Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 492 : 627);
 
-            return $lead->tier_id == $tierR->id ? 492 : 627;
+            return $lead->tier_id == $tierR->id ? 492 : 724;
         } else {
             // Plans with available ratings exist, send a different email template
             info('Multiple Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 491 : 628);
 
-            return $lead->tier_id == $tierR->id ? 491 : 628;
+            return $lead->tier_id == $tierR->id ? 491 : 725;
         }
     }
 

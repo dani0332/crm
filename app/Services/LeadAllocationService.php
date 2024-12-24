@@ -147,7 +147,6 @@ class LeadAllocationService extends BaseService
             $leadAllocation->save();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-
         }
     }
 
@@ -196,7 +195,6 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->assignment_type = $lead->advisor == null ? AssignmentTypeEnum::MANUAL_ASSIGNED : AssignmentTypeEnum::MANUAL_REASSIGNED;
                 $lead->advisor_id = $advisorId;
-                $lead->quote_updated_at = now();
 
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
@@ -209,8 +207,10 @@ class LeadAllocationService extends BaseService
                 Haystack::build()
                     ->addJob(new GetQuotePlansJob($lead))
                     ->then(function () use ($lead) {
-                        if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-                            && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                        if (
+                            in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                            && $lead->quote_status_id == QuoteStatusEnum::Qualified
+                        ) {
                             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
                         }
                     })->dispatch();
@@ -410,7 +410,7 @@ class LeadAllocationService extends BaseService
             ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
             ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
             ->join('lead_allocation as la', 'la.user_id', 'users.id')
-            ->where('users.is_active', 1)
+            ->activeUser()
             ->groupBy('users.name', 'users.id', 'la.id')
             ->select(
                 'users.id as userId',
@@ -804,7 +804,8 @@ class LeadAllocationService extends BaseService
 
         // checking all the possible null/empty values from request
         if (($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '')
-            && $carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::Comprehensive) {
+            && $carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::Comprehensive
+        ) {
             info('Car value is : '.$carLead->car_value.' , so select tier which can handle null value');
 
             $tiers->where('can_handle_null_value', 1); // filter on tier to get the tier which can handle null value leads.

@@ -17,6 +17,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -120,6 +121,7 @@ class HandleInertiaRequests extends Middleware
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
+            'policyIssuanceEnum' => PolicyIssuanceEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
             'kycEnums' => Kyc::asArray(),
@@ -388,7 +390,37 @@ class HandleInertiaRequests extends Middleware
                     );
             });
         }
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::UPLOAD_HEALTH_RATES,
+            PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+        ])) {
+            $nav = $nav->add('Upload Rates & Coverages', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::UPLOAD_HEALTH_RATES,
+                            PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+                        ]),
+                        'Health',
+                        route('upload-rates'),
+                        fn ($s) => $s
+                            ->attributes(['icon' => 'health'])
+                            ->addIf(
+                                auth()->user()->hasPermissionTo(PermissionsEnum::UPLOAD_HEALTH_COVERAGES),
+                                'Coverages',
+                                route('upload-coverages'),
+                                fn ($s) => $s->attributes(['icon' => 'health'])
+                            )
+                            ->addIf(
+                                auth()->user()->hasPermissionTo(PermissionsEnum::UPLOAD_HEALTH_RATES),
+                                'Rates',
+                                route('upload-rates'),
+                                fn ($s) => $s->attributes(['icon' => 'health'])
+                            ),
 
+                    );
+            });
+        }
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,

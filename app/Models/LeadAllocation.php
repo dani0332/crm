@@ -62,4 +62,9 @@ class LeadAllocation extends Model implements AuditableContract
         $this->updated_at = now();
         $this->save();
     }
+
+    public function scopeActiveUser($query)
+    {
+        return $query->join('users', 'users.id', '=', 'lead_allocation.user_id')->where('users.is_active', 1);
+    }
 }

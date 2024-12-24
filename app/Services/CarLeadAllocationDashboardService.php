@@ -35,7 +35,7 @@ class CarLeadAllocationDashboardService extends BaseService
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
-                ->where('users.is_active', 1)
+                ->activeUser()
                 ->where('la.quote_type_id', QuoteTypes::CAR->id())
                 ->groupBy('users.name', 'users.id', 'la.id')
                 ->select(
