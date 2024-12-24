@@ -1265,8 +1265,6 @@ class HealthQuoteService extends BaseService
             // update existing record of quote view count if exists and reset count to zero
             $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Health, $userId);
 
-            $lead->quote_updated_at = now();
-
             $lead->quote_batch_id = $quoteBatch->id;
 
             $lead->save();
@@ -1803,7 +1801,6 @@ class HealthQuoteService extends BaseService
     {
         info('inside the check for manual assignment QA');
         $lead->advisor_id = $userId;
-        $lead->quote_updated_at = now();
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
