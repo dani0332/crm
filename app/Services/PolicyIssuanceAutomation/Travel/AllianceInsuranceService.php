@@ -584,12 +584,15 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         if ($response) {
             info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
             SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
-            // Here we need to dispatch document email
-            $data = new \stdClass;
-            $data->model_type = self::TYPE;
-            $data->quote_id = $quote->id;
-            info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' - Dispatching SendBookPolicyDocumentsJob');
-            SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
+            if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+                // Here we need to dispatch document email
+                $data = new \stdClass;
+                $data->model_type = self::TYPE;
+                $data->quote_id = $quote->id;
+                info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' - Dispatching SendBookPolicyDocumentsJob advisor id '.$quote->advisor_id);
+                SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
+            }
+
         }
     }
 
