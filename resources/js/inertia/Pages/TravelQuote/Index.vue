@@ -1,9 +1,12 @@
 <script setup>
+import { ref } from 'vue';
+
 defineProps({
   quotes: Object,
   dropdownSource: Object,
   permissions: Object,
   advisors: Object,
+  renewalBatches: Array,
   authorizedDays: Number,
 });
 
@@ -55,7 +58,7 @@ const filters = reactive({
   direction_code: '',
   coverage_code: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   payment_due_date: '',
   booking_date: '',
   segment_filter: '',
@@ -67,6 +70,7 @@ const filters = reactive({
   advisor_assigned_date: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  insurer_api_status_id: '',
 });
 
 const loader = reactive({
@@ -119,7 +123,7 @@ const tableHeader = [
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Renewal Batch', value: 'renewal_batch_text' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -127,6 +131,14 @@ const paymentStatusOptions = computed(() => {
     return {
       value: item.id,
       label: item.text,
+    };
+  });
+});
+const insurerApiStatus = computed(() => {
+  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
     };
   });
 });
@@ -145,6 +157,13 @@ const advisorsOptions = computed(() => {
       label: 'UnAssigned',
     },
   ];
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
 });
 
 const leadsStatusOptions = computed(() => {
@@ -268,7 +287,7 @@ function setQueryFilters() {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
-
+const exportLoader = ref(false);
 const onDataExport = () => {
   filters.created_at_start = useDateFormat(
     filters.created_at_start,
@@ -286,7 +305,13 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Travel'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
@@ -626,13 +651,11 @@ watch(
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+        <ComboBox
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
         />
         <DatePicker
           v-model="filters.payment_due_date"
@@ -706,6 +729,13 @@ watch(
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <ComboBox
+          label="INSURER API STATUS"
+          v-model="filters.insurer_api_status_id"
+          placeholder="Select Status"
+          :options="insurerApiStatus"
+          class="w-full"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -713,6 +743,7 @@ watch(
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >
@@ -876,6 +907,11 @@ watch(
                     : ''
           }}
         </div>
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p>
+          {{ item.renewal_batch_text }}
+        </p>
       </template>
     </DataTable>
 

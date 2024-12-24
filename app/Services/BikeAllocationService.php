@@ -292,6 +292,7 @@ class BikeAllocationService extends AllocationService
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
             ->where('quote_type_id', QuoteTypes::BIKE->id())
+            ->activeUser()
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -560,11 +561,7 @@ class BikeAllocationService extends AllocationService
 
     public function shouldProceed(): bool
     {
-        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
-        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
-        $shouldProceed = now()->between($start_time, $end_time) && ((int) config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 1);
-
-        return $shouldProceed;
+        return $this->shouldProceedWithReAllocation('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
     }
 
     public function isLeadReassigned($lead)

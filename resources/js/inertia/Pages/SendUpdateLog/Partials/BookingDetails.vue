@@ -136,6 +136,8 @@ const checkSectionToEdit = () => {
   const additionalInvoiceTypes = [
     sendUpdateStatusEnum.ACB,
     sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
   ];
 
   if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
@@ -163,7 +165,9 @@ const checkSectionToEdit = () => {
     additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)
   ) {
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB &&
+      [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
+        props.sendUpdateLog?.option?.code,
+      ) &&
       !props.uploadedDocuments.includes('SUTAXINVRB')
     ) {
       notification.error({
@@ -174,7 +178,9 @@ const checkSectionToEdit = () => {
     }
 
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB &&
+      [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
+        props.sendUpdateLog?.option?.code,
+      ) &&
       !props.uploadedDocuments.includes('SUTAXINV')
     ) {
       notification.error({
@@ -349,9 +355,17 @@ const calculatePriceDetailsForATIB = () => {
 
 const calculateCommission = () => {
   ignoreCheckDiscount.value = false;
-  if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
+  if (
+    [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
+      props.sendUpdateLog?.option?.code,
+    )
+  ) {
     calculateCommisionDetailsForACB();
-  } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
+  } else if (
+    [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
+      props.sendUpdateLog?.option?.code,
+    )
+  ) {
     calculatePriceDetailsForATIB();
   } else {
     if (
@@ -1084,6 +1098,9 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.ED,
     sendUpdateStatusEnum.ATIB,
     sendUpdateStatusEnum.ACB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
+    sendUpdateStatusEnum.ATCRN_CRNRBB,
   ];
 
   return (
@@ -1591,6 +1608,7 @@ watch(
           <template v-if="!state.reversalSectionEdit">
             <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 @click="onReversalEdit"
                 :disabled="props.isEditDisabledForQueuedBooking"
@@ -1604,10 +1622,18 @@ watch(
                 </span>
               </template>
             </x-tooltip>
-            <x-button v-else size="sm" @click="onReversalEdit"> Edit </x-button>
+            <x-button
+              v-else
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              @click="onReversalEdit"
+            >
+              Edit
+            </x-button>
           </template>
           <template v-else>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="orange"
               @click="state.reversalSectionEdit = false"
@@ -1617,6 +1643,7 @@ watch(
               Cancel
             </x-button>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="primary"
               :loading="loader.selectInvoice"
@@ -1690,9 +1717,12 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2 pb-1.5"
               >
@@ -1780,7 +1810,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1833,7 +1866,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1867,9 +1903,12 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1896,7 +1935,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1937,9 +1979,12 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -1965,7 +2010,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2010,7 +2058,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2036,7 +2087,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2096,7 +2150,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2123,7 +2180,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2189,7 +2249,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2220,7 +2283,10 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
@@ -2261,6 +2327,7 @@ watch(
             <template v-if="!state.isEdit">
               <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   @click="checkSectionToEdit"
                   :disabled="props.isEditDisabledForQueuedBooking"
@@ -2274,13 +2341,19 @@ watch(
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="checkSectionToEdit">
+              <x-button
+                v-else
+                class="focus:ring-2 focus:ring-black"
+                size="sm"
+                @click="checkSectionToEdit"
+              >
                 Edit
               </x-button>
 
               <template v-if="isLackingPayment">
                 <x-tooltip>
                   <x-button
+                    class="focus:ring-2 focus:ring-black"
                     size="sm"
                     color="orange"
                     v-if="props.updateBtn"
@@ -2300,6 +2373,7 @@ watch(
               </template>
               <template v-else>
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   color="orange"
                   v-if="props.updateBtn"
@@ -2313,6 +2387,7 @@ watch(
             </template>
             <template v-else>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="orange"
                 @click="onCancel"
@@ -2322,6 +2397,7 @@ watch(
                 Cancel
               </x-button>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="#0CA789"
                 type="submit"
@@ -2338,6 +2414,7 @@ watch(
 
     <sendUpdateCustConfirmBtnTemp>
       <x-button
+        class="focus:ring-2 focus:ring-black"
         size="sm"
         color="error"
         @click.prevent="submitToCustomer"
@@ -2350,6 +2427,7 @@ watch(
 
     <x-modal
       v-model="modals.sendConfirm"
+      size="md"
       title="Send Update"
       show-close
       backdrop
@@ -2368,8 +2446,9 @@ watch(
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
       />
       <template #actions>
-        <div class="text-right space-x-4">
+        <div class="flex gap-4 justify-end">
           <x-button
+            class="focus:ring-2 focus:ring-black"
             size="sm"
             ghost
             :disabled="isLoading"
@@ -2377,15 +2456,17 @@ watch(
           >
             Cancel
           </x-button>
-          <template v-if="!modals.isConfirmed">
-            <x-tooltip placement="left">
-              <SendUpdateCustReuseBtnTemp />
-              <template #tooltip>
-                Please select the checkbox to proceed
-              </template>
-            </x-tooltip>
-          </template>
-          <SendUpdateCustReuseBtnTemp v-else />
+          <div>
+            <template v-if="!modals.isConfirmed">
+              <x-tooltip placement="right">
+                <SendUpdateCustReuseBtnTemp />
+                <template #tooltip>
+                  Please select the checkbox to proceed
+                </template>
+              </x-tooltip>
+            </template>
+            <SendUpdateCustReuseBtnTemp v-else />
+          </div>
         </div>
       </template>
     </x-modal>
@@ -2405,6 +2486,7 @@ watch(
             Go Back
           </x-button>
           <x-button
+            class="focus:ring-2 focus:ring-black"
             size="sm"
             color="error"
             :loading="isSendUpdateWithEmail ? isLoading : loader.sendUpdate"
@@ -2422,6 +2504,7 @@ watch(
 
     <sendUpdateConfirmBtnTemp>
       <x-button
+        class="focus:ring-2 focus:ring-black"
         size="sm"
         color="error"
         :disabled="!confirmationCheck"
@@ -2444,7 +2527,7 @@ watch(
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
       />
       <template #actions>
-        <div class="text-right space-x-4">
+        <div class="flex gap-4 justify-end">
           <x-button
             size="sm"
             ghost
@@ -2453,15 +2536,17 @@ watch(
           >
             Cancel
           </x-button>
-          <template v-if="!confirmationCheck">
-            <x-tooltip placement="left">
-              <SendUpdateReuseBtnTemp />
-              <template #tooltip>
-                Please select the checkbox to proceed
-              </template>
-            </x-tooltip>
-          </template>
-          <SendUpdateReuseBtnTemp v-else />
+          <div>
+            <template v-if="!confirmationCheck">
+              <x-tooltip placement="left">
+                <SendUpdateReuseBtnTemp />
+                <template #tooltip>
+                  Please select the checkbox to proceed
+                </template>
+              </x-tooltip>
+            </template>
+            <SendUpdateReuseBtnTemp v-else />
+          </div>
         </div>
       </template>
     </x-modal>

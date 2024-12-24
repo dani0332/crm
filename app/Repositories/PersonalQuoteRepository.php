@@ -8,14 +8,13 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Enums\WatermarkDocTypesEnum;
 use App\Facades\Capi;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
-use App\Services\CRUDService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -90,7 +89,7 @@ class PersonalQuoteRepository extends BaseRepository
 
             info('fn: fetchUploadDocument called');
             $quoteType = '';
-            $quoteDocumentService = app(QuoteDocumentService::class);
+            $insuranceProviderId = null;
 
             $query = DocumentTypeRepository::where('code', $data['document_type_code']);
             if (request()->quote_type_id) {
@@ -102,30 +101,21 @@ class PersonalQuoteRepository extends BaseRepository
 
             $documentType = $query->first();
 
-            $isWaterMarkQualifyDoc = in_array($documentType->code, WatermarkDocTypesEnum::asArray());
-
             if (request()->is_send_update) {
                 $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+                [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
             } else {
                 $quote = $this->getQuoteObject($quoteType ?? '', $id);
             }
 
-            $originalName = $file->getClientOriginalName();
-            $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+            $isWaterMarkQualifyDoc = app(QuoteDocumentService::class)->getWatermarkProperty($quote, $documentType, $insuranceProviderId);
+
+            $originalName = sanitizeFileName($file->getClientOriginalName());
+            $docName = preg_replace('/\s+/', '', $originalName);
             $fileMimeType = $file->getClientMimeType();
             //upload file to azure
             $fileNameAzure = uniqid().'_'.$quote->uuid.'_original_'.$docName;
             $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
-
-            // ================== temporary disabling watermarking ==================
-            // watermark only for pdf files
-            // if (($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') && $isWaterMarkQualifyDoc) {
-            //     $watermarkData = $quoteDocumentService->watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-            // } elseif (($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') && $isWaterMarkQualifyDoc) {
-            //     $watermarkData = $quoteDocumentService->watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-            // } elseif (($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') && $isWaterMarkQualifyDoc) {
-            //     $watermarkData = $quoteDocumentService->watermarkWordDocs($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-            // }
 
             //generate unique uuid
             $docUuid = uniqid();
@@ -136,10 +126,8 @@ class PersonalQuoteRepository extends BaseRepository
             // This data will store in quote documents table
             $document = [
                 'doc_name' => 'original_'.$docName,
-                // 'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
                 'original_name' => $originalName,
                 'doc_url' => $filePathAzure,
-                // 'watermarked_doc_url' => $watermarkData['watermarked_doc_url'] ?? null,
                 'doc_mime_type' => $fileMimeType,
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentType->text,
@@ -149,11 +137,9 @@ class PersonalQuoteRepository extends BaseRepository
             // info('Document array prepared for creation', $document);
 
             try {
-                $insuranceProviderId = null;
-                if (request()->is_send_update) {
-                    [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
-                }
-                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId) {
+                $quoteDocument = null;
+
+                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId, &$quoteDocument) {
 
                     $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
                     $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
@@ -172,9 +158,17 @@ class PersonalQuoteRepository extends BaseRepository
                         }
                     }
 
-                    $quote->documents()->create($document);
+                    $quoteDocument = $quote->documents()->create($document);
                     info('Document uploaded - Ref: '.$quote->code);
                 });
+
+                if ($isWaterMarkQualifyDoc && $quoteDocument) {
+                    WatermarkDocumentsJob::dispatch(
+                        $quoteDocument->id, $data['quote_uuid'], $documentType->id
+                    )->afterCommit();
+                } else {
+                    info('Watermkark job not dispatched - Ref: '.$quote->code);
+                }
 
                 if (! $insuranceProviderId && request()->is_send_update) {
                     info('Insurance Provider not found - Ref: '.$quote->code);

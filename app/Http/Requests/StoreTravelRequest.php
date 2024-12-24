@@ -55,6 +55,9 @@ class StoreTravelRequest extends FormRequest
                 $rules[$key.'.*.gender'][] = 'required_if:has_arrived_uae,0';
                 $rules[$key.'.*.gender'][] = 'required_if:has_arrived_destination,0';
             }
+            if ($key == 'departure_country_id') {
+                $rule = ['required_if:has_arrived_uae,1'];
+            }
 
             $rules[$key] = $rule;
         }

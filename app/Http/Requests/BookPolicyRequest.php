@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -52,18 +53,27 @@ class BookPolicyRequest extends FormRequest
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
 
+            $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->model_type);
+            if ($lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] && $lockStatusOfPolicyIssuanceSteps['isEditBookingDetailsDisabled']) {
+                $validator->errors()->add('value', 'Policy Booking is scheduled! You are not allowed to edit booking details');
+            }
+
             if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 
             $isDuplicateOrCIRLead = ! empty($quoteModel->parent_duplicate_quote_id);
-            $payment = Payment::where('code', $quoteModel->code)->mainLeadPayment()->first();
+            $payment = Payment::where('code', $quoteModel->code)->mainLeadPayment()->select(['id', 'code'])->first();
 
             if ($isDuplicateOrCIRLead && empty($payment)) {
                 $payment = Payment::where([
                     'paymentable_id' => $quoteModel->id,
                     'paymentable_type' => $quoteModel->getMorphClass(),
-                ])->mainLeadPayment()->first();
+                ])->mainLeadPayment()->select(['id', 'code'])->first();
+            }
+
+            if (! $payment) {
+                $validator->errors()->add('error', 'Payment record not found');
             }
 
             $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')

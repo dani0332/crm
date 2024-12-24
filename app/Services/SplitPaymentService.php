@@ -6,12 +6,15 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -29,14 +32,13 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
-use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\CentralTrait;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -437,12 +439,15 @@ class SplitPaymentService
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            // Create a temporary file and write the PDF content to it
-            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
-
-            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true, $tempFile);
+            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true);
         } catch (\Exception $ex) {
-            info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' Payment Reciept - ERROR:'.$ex->getMessage());
+            $errorMessage = 'Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' Payment Reciept - ERROR:'.$ex->getMessage();
+            info($errorMessage);
+            if ($isFromJob && $splitPayment->id > 0) {
+                CcPaymentProcess::where('payment_splits_id', $splitPayment->id)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $errorMessage]);
+                info('Payment Process Job failed for Split Payment ID: '.$splitPayment->id.' with error: '.$errorMessage);
+                $this->handleAutomationError($quote, $modelType, $splitPayment->payment);
+            }
         }
     }
 
@@ -542,6 +547,9 @@ class SplitPaymentService
     public function generateSplitPaymentLink($request)
     {
         $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
+        if (! $splitPayment) {
+            return response()->json(['success' => false]);
+        }
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
         $quoteId = $request->quoteId;
@@ -684,6 +692,7 @@ class SplitPaymentService
 
                     if ($isFromJob) {
                         CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $sageMessage]);
+                        $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
 
                         return;
                     } else {
@@ -696,7 +705,15 @@ class SplitPaymentService
 
             if (! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])) {
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-                $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
+                $capturePaymentResponse = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
+                if ($capturePaymentResponse->getStatusCode() != 200) {
+                    $data = json_decode($capturePaymentResponse->getContent(), true);
+                    $this->handleCapturePaymentError($data[0] ?? '', $isFromJob, $paymentSplit->id, $paymentSplit->code);
+                    if ($isFromJob) {
+                        $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
+                    }
+                }
+                //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
             }
 
             $existingReceipts = QuoteDocument::where(['payment_split_id' => $splitPaymentId, 'document_type_text' => DocumentTypeEnum::RECEIPT])->get();
@@ -705,16 +722,28 @@ class SplitPaymentService
             }
         }
 
-        if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
+        if (! $paymentSplit->payment->is_approved &&
+            (! $isFromJob ||
+                ($isFromJob && $modelType == QuoteTypes::TRAVEL->value && $paymentSplit->payment->insuranceProvider->code == InsuranceProvidersEnum::ALNC)
+            )
+        ) {
 
             $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
-                    $paymentSplit->verified_by = Auth::user()->id;
+                    $paymentSplit->verified_by = Auth::user()->id ?? null;
                 }
-                $paymentSplit->collection_amount = $amountCollected;
-                $paymentSplit->save();
+
                 $parentPayment = $paymentSplit->payment;
+
+                if (! isset($paymentSplit->collection_amount)) {
+                    $paymentSplit->collection_amount = $amountCollected;
+                    $paymentSplit->save();
+
+                    $parentPayment->captured_amount += $amountCollected;
+                    $parentPayment->save();
+                }
+
                 info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Payment Split verified and collection amount updated');
 
                 /* Create payment receipt for broker */
@@ -724,8 +753,7 @@ class SplitPaymentService
                 ) {
                     $this->createReceipt($modelType, $quoteId, $paymentSplit, $sendUpdateId, $isFromJob);
                 }
-                $parentPayment->captured_amount = ($parentPayment->captured_amount + $amountCollected);
-                $parentPayment->save();
+
                 info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Parent payment captured amount updated');
 
                 if ($parentPayment->send_update_log_id) {
@@ -744,9 +772,15 @@ class SplitPaymentService
                 info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Failed to approve split payment');
                 if ($isFromJob) {
                     CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $retryResponse['message']]);
+                    $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
                 } else {
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
                 }
+            } else {
+                if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policu schedule for automation
+                    $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
+                }
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
             }
 
         } elseif ($isFromJob) {
@@ -754,10 +788,18 @@ class SplitPaymentService
         }
     }
 
+    private function handleCapturePaymentError($error, $isFromJob, $splitPaymentId, $quoteCode)
+    {
+        if ($isFromJob && $splitPaymentId > 0) {
+            CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $error]);
+            info('Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' with error: '.$error);
+        }
+        Log::error('Error in handleCreditCardPayment for Quote Code: '.$quoteCode.': '.$error);
+    }
+
     // function to process the master payment approve
     public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0, $paymentCode = '')
     {
-        $canCaptureEp = false;
         DB::beginTransaction();
         try {
             if ($sendUpdateId > 0) {
@@ -796,14 +838,15 @@ class SplitPaymentService
             $masterPayment->update([
                 'is_approved' => 1,
                 'payment_status_id' => $masterPaymentStatus,
-                'updated_by' => Auth::user()->id,
+                'updated_by' => Auth::user()->id ?? null,
             ]);
 
             info('Master payment code: '.$quoteModel->code.' Master payment approved with Payment Status: '.$masterPaymentStatus);
 
             $successMessage = 'Transaction approved';
             $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
-            if ($totalApproved == $quoteModel->payments()->count()) {
+            $totalPaymentsCount = $quoteModel->payments()->count();
+            if (($masterPayment->insuranceProvider->code == InsuranceProvidersEnum::ALNC && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
                 if ($sendUpdateId) {
                     app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
@@ -830,11 +873,13 @@ class SplitPaymentService
                     ]);
                 }
 
-                $canCaptureEp = true;
-
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $sendUpdateId) {
-                    if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
+                    $quoteStatusId = $quoteModel->quote_status_id;
+                    if ($masterPayment->insuranceProvider->code == InsuranceProvidersEnum::ALNC && $isFromJob && $totalApproved != $totalPaymentsCount) {
+                        $quoteStatusId = QuoteStatusEnum::PaymentPending;
+                    }
+                    if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel, $quoteStatusId)) {
                         $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
                         info('Master payment code: '.$quoteModel->code.' Duplicate lead created for Quote Code: '.$quoteModel->code.'-1');
                     }
@@ -850,19 +895,14 @@ class SplitPaymentService
                 info('Master payment code: '.$quoteModel->code.' Payment Process Job updated to SUCCESS');
             }
             DB::commit();
-        } catch (Exception $exception) {
-            $canCaptureEp = false;
+        } catch (\Exception $exception) {
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
                 info('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' with error: '.$exception->getMessage());
+                $this->handleAutomationError($quoteModel, $modelType, $masterPayment);
             }
             Log::error('Error in processMasterPaymentApprove for Quote Code: '.$quoteModel->code.': '.$exception->getMessage());
             DB::rollBack();
-        }
-
-        if ($canCaptureEp) {
-            EmbeddedProductRepository::capturePayment($quoteId, $modelType);
-            info('Master payment code: '.$quoteModel->code.' Captured EP and sent documents');
         }
 
         return $successMessage;
@@ -894,23 +934,34 @@ class SplitPaymentService
         $paymentSplits = $payment->paymentSplits;
         $commissionSplitSumWithoutLastSplit = 0;
         $commission = $payment->commission_vat_applicable ?: $payment->commission_vat_not_applicable;
-        foreach ($paymentSplits as $paymentSplit) {
-            $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
-            /*
-             to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
-             and then subtract that amount from the total commission without vat and use the result as commission for last commission split
-            */
-            if ($paymentSplit->sr_no == count($paymentSplits)) {
-                $commissionSplitAmount = (float) sprintf('%.2f',
-                    $commission - $commissionSplitSumWithoutLastSplit);
-            } else {
-                $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+        $maxRetries = 5;
+
+        $response = $this->handleWithDeadlockRetries(function () use ($payment, $paymentSplits, $commission, $commissionSplitSumWithoutLastSplit) {
+            foreach ($paymentSplits as $paymentSplit) {
+                $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
+                /* to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
+                 and then subtract that amount from the total commission without vat and use the result as commission for last commission split */
+                if ($paymentSplit->sr_no == count($paymentSplits)) {
+                    $commissionSplitAmount = (float) sprintf('%.2f',
+                        $commission - $commissionSplitSumWithoutLastSplit);
+                } else {
+                    $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+                }
+                $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
+                /* Add Vat on commission to the first Installment of commission */
+                $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
+                $paymentSplit->save();
             }
-            $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
-            /* Add Vat on commission to the first Installment of commission */
-            $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
-            $paymentSplit->save();
+        }, $maxRetries);
+
+        if (isset($response['status']) && in_array($response['status'], [GenericRequestEnum::FAILED, GenericRequestEnum::ERROR])) {
+            info(self::class.' : updateCommissionSchedule - Payment Code: '.$payment->code.' - Failed to update Commission Split Schedule with error: '.$response['message']);
+
+            return ['status' => false, 'message' => $response['message'] ?? 'Failed to update Commission Split Schedule.'];
         }
+        info(self::class.' : updateCommissionSchedule - Payment Code: '.$payment->code.' - Commission Split Schedule updated successfully');
+
+        return ['status' => true, 'message' => 'Commission Split Schedule updated successfully.'];
     }
 
     private function calculateCommissionSplit($payment, $paymentSplit)
@@ -1074,5 +1125,27 @@ class SplitPaymentService
         // Delete the payment split
         $paymentSplit->delete();
         info('Deleted Payment Split For Code: '.$paymentSplit->code.' Split Payment: '.$paymentSplit->id.'-'.$paymentSplit->sr_no);
+    }
+
+    private function createPolicyIssuanceAutomation($quote, $quoteType, $payment)
+    {
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+
+        if ($insuranceProvider) {
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+            if (isset($insuranceProviderAutomation) && ! isset($quote->insurer_api_status_id)) {
+                $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
+            }
+        }
+
+    }
+
+    private function handleAutomationError($quote, $quoteType, $payment)
+    {
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        if ($insuranceProvider) {
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+        }
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\LeadSourceEnum;
@@ -33,6 +35,7 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
+use App\Models\QuoteExportLog;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -46,7 +49,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class CentralService
+class CentralService extends BaseService
 {
     use GenericQueriesAllLobs, TeamHierarchyTrait;
 
@@ -136,9 +139,7 @@ class CentralService
                     return false;
                 }
 
-                $response = in_array(ucfirst($lob), newUi()) ?
-                    ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
-                    Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
+                $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
@@ -177,7 +178,7 @@ class CentralService
         }
 
         $leadsIds = array_map('intval', explode(',', $leadsIds));
-        $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+        $model = (in_array(ucfirst($request->modelType), $personalQuotes)) ?
             ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
             ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
 
@@ -188,17 +189,38 @@ class CentralService
         return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes, $quoteBatch) {
             foreach ($leadsIds as $leadId) {
                 $getQuoteLead = $model['parent']::findOrfail($leadId);
+
+                $oldAssignmentType = $getQuoteLead->assignment_type;
+                $isReassignment = $getQuoteLead->advisor_id != null ? true : false;
+                $previousAdvisorId = $getQuoteLead->advisor_id;
+
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
+                $getQuoteLead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
                 $getQuoteLead->quote_batch_id = $quoteBatch->id;
                 $getQuoteLead->save();
 
-                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes)) ?
                     'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
+
+                $childRecord = $model['child']::where($parentFieldName, $getQuoteLead->id)->first();
+                $oldAdvisorAssignedDate = $childRecord?->advisor_assigned_date ?? null;
 
                 $model['child']::updateOrCreate(
                     [$parentFieldName => $getQuoteLead->id],
                     ['advisor_assigned_by_id' => auth()->user()->id, 'advisor_assigned_date' => Carbon::now()]
                 );
+
+                $quoteTypeId = $getQuoteLead?->quote_type_id ?? QuoteTypes::tryFrom(ucfirst(request('quoteType')))?->id();
+
+                if ($quoteTypeId) {
+                    $this->upsertManualAllocationCount($getQuoteLead->advisor_id, $getQuoteLead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteTypeId);
+
+                    $this->addOrUpdateQuoteViewCount($getQuoteLead, $quoteTypeId, $getQuoteLead->advisor_id);
+                }
+
+                $getQuoteLead->auto_assigned = false;
+
+                $getQuoteLead->save();
             }
         });
     }
@@ -417,8 +439,11 @@ class CentralService
         }
 
         // Lock functionality check for Lead status Section
-        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined]);
-        if (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
+        $lockedForQuoteStatus = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED];
+        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, $lockedForQuoteStatus);
+        if (auth()->check() && auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+            in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked]) ? $lockFunctionalities['lead_status'] = true : $lockFunctionalities['lead_status'] = false;
+        } elseif (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
             $lockFunctionalities['lead_status'] = true;
         }
 
@@ -877,11 +902,13 @@ class CentralService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
-        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatus) {
+        $sendUpdateStatusArray = is_string($sendUpdateStatus) ? [$sendUpdateStatus] : $sendUpdateStatus;
+
+        $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatusArray) {
             $query->where('send_update_log_id', $sendUpdateId)
-                ->where(function ($query) use ($sendUpdateStatus) {
-                    $query->where('current_status', $sendUpdateStatus)
-                        ->orWhere('previous_status', $sendUpdateStatus);
+                ->where(function ($query) use ($sendUpdateStatusArray) {
+                    $query->whereIn('current_status', $sendUpdateStatusArray)
+                        ->orWhereIn('previous_status', $sendUpdateStatusArray);
                 });
         })->count();
 
@@ -910,5 +937,21 @@ class CentralService
         }
 
         return false;
+    }
+
+    public function generateExportLogs(): void
+    {
+        try {
+            $exportLogs = QuoteExportLog::create([
+                'type' => ExportLogsTypeEnum::SEARCH_MODULE,
+                'quote_type_id' => request()->quote_type_id ?? null,
+                'user_id' => auth()->id(),
+                'ip_address' => request()->ip(),
+                'url' => request()->fullUrl(),
+            ]);
+            info('fn: generateExportLogs export log created');
+        } catch (\Exception $e) {
+            info('fn: generateExportLogs error: '.$e->getMessage());
+        }
     }
 }
