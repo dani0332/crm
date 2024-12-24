@@ -128,7 +128,7 @@ class InslyDetailRepository extends BaseRepository
         if ($inslyPolicyIssueDate) {
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
-
+        $appUrl = config('constants.APP_URL');
         if (! empty($policy)) {
             $policyNumber = $policy['policy']['policy_no'];
             $coverage = $policy['policy']['coverage'];
