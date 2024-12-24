@@ -365,7 +365,6 @@ function calculateValuesAndHighlight() {
         // - parseInt(item.early_renewal_by_all_advisors) // tempory hidden don't remove
         100
       ).toFixed(2);
-
     } else {
       imRetention = (
         (parseInt(item.renewed) /
@@ -374,10 +373,17 @@ function calculateValuesAndHighlight() {
         100
       ).toFixed(2);
     }
-    rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(2);
-    overallRawRetention = (item.renewed_by_all_advisors && item.total_allocated_leads_by_all_advisors) ?
-      ((item.renewed_by_all_advisors / item.total_allocated_leads_by_all_advisors) * 100).toFixed(2) : 
-      rawRetention;
+    rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(
+      2,
+    );
+    overallRawRetention =
+      item.renewed_by_all_advisors && item.total_allocated_leads_by_all_advisors
+        ? (
+            (item.renewed_by_all_advisors /
+              item.total_allocated_leads_by_all_advisors) *
+            100
+          ).toFixed(2)
+        : rawRetention;
     imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
 
     let valueSegmentConversion = (
@@ -422,7 +428,8 @@ function calculateValuesAndHighlight() {
     item.imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
     item.monthlySum = monthlySum == 'NaN' ? '0.00' : monthlySum;
     item.rawRetention = rawRetention == 'NaN' ? '0.00' : rawRetention;
-    item.overallRawRetention = overallRawRetention == 'NaN' ? '0.00' : overallRawRetention;
+    item.overallRawRetention =
+      overallRawRetention == 'NaN' ? '0.00' : overallRawRetention;
     item.rowSpan = currentRowSpan;
 
     item.highlight =
@@ -445,7 +452,9 @@ function calculateValuesAndHighlight() {
       imRetention == 'NaN' ? parseFloat('0.00') : parseFloat(imRetention),
     );
     avgRawRetentionArr[monthName].push(
-      overallRawRetention == 'NaN' ? parseFloat('0.00') : parseFloat(overallRawRetention),
+      overallRawRetention == 'NaN'
+        ? parseFloat('0.00')
+        : parseFloat(overallRawRetention),
     );
 
     if (!page.props.filterOptions.isMCR) {
@@ -866,7 +875,8 @@ watch(
                 >
                   {{ item.advisorRetention }}%
                 </td>
-                <td class="x-table-cell px-3 py-4 align-middle"
+                <td
+                  class="x-table-cell px-3 py-4 align-middle"
                   v-if="hasRole(rolesEnum.CarAdvisor) != true"
                 >
                   {{ item.rawRetention }}%
