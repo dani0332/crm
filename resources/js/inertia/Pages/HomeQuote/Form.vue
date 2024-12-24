@@ -208,16 +208,22 @@ const typeOfCoverageYouNeedOptions = computed(() => {
 });
 
 const handleCoverageChange = () => {
+  console.log('Coverage changed:', quoteForm.type_of_coverage_you_need);
   // Reset all AED fields visibility to false
   showBuildingField.value = false;
   showContentsField.value = false;
   showPersonalBelongingsField.value = false;
 
+  // Reset AED fields to null for safety
+  if (!showBuildingField.value) quoteForm.building_aed = null;
+  if (!showContentsField.value) quoteForm.contents_aed = null;
+  if (!showPersonalBelongingsField.value)
+    quoteForm.personal_belongings_aed = null;
+
   //   Update field visibility based on the selected coverage
   const selectedCoverage = coverageTypes.length
     ? coverageTypes.find(
-        coverage =>
-        coverage.id === quoteForm.type_of_coverage_you_need,
+        coverage => coverage.id === quoteForm.type_of_coverage_you_need,
       )
     : null;
 
@@ -244,6 +250,12 @@ const handleCoverageChange = () => {
       showPersonalBelongingsField.value = true;
       break;
   }
+
+  // Reset AED values for fields that are not visible
+  if (!showBuildingField.value) quoteForm.building_aed = null;
+  if (!showContentsField.value) quoteForm.contents_aed = null;
+  if (!showPersonalBelongingsField.value)
+    quoteForm.personal_belongings_aed = null;
 };
 
 const setCoverageBasedOnBooleans = () => {
