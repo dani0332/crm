@@ -102,8 +102,8 @@ class AllocationService
     {
 
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
-        info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
         if (! empty($allocationRecord)) {
+            info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
             $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
             $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
             $allocationRecord->updated_at = now();
@@ -249,7 +249,8 @@ class AllocationService
         return [
             'auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0,
             'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0,
-            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0];
+            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0,
+        ];
     }
 
     public function getHealthTodaysCount($userId)
@@ -269,7 +270,8 @@ class AllocationService
         return [
             'auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0,
             'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0,
-            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0];
+            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0,
+        ];
     }
 
     public function getYesterdayCounts($userId)
@@ -309,7 +311,12 @@ class AllocationService
         // Query to fetch unavailable advisors
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) {
-                $query->whereIn('status', [UserStatusEnum::UNAVAILABLE, UserStatusEnum::LEAVE, UserStatusEnum::SICK]);
+                $query->where('is_active', 1)
+                    ->whereIn('status', [
+                        UserStatusEnum::UNAVAILABLE,
+                        UserStatusEnum::LEAVE,
+                        UserStatusEnum::SICK,
+                    ]);
             })
             ->orderBy('last_allocated');
 
@@ -330,7 +337,6 @@ class AllocationService
             }
             $leadAllocation->save();
         }
-
     }
 
     public function leadAllocationFailed(string $uuid, QuoteTypes $quoteType)
@@ -342,6 +348,21 @@ class AllocationService
         }
     }
 
+    public function createResponse(int $advisorId, string $message, int $status, ?int $tierId = null): array
+    {
+        $resp = [
+            'advisorId' => $advisorId,
+            'message' => $message,
+            'tierId' => $tierId,
+            'status' => $status,
+        ];
+
+        if (! $tierId) {
+            unset($resp['tierId']);
+        }
+
+        return $resp;
+    }
     public function shouldProceedWithReAllocation($allocationSwitchName)
     {
         // Fetch reassignment start and end times

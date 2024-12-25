@@ -147,7 +147,7 @@ class HealthAllocationService extends AllocationService
             })
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
             ->where('la.quote_type_id', QuoteTypes::HEALTH->id())
-            ->where('users.is_active', true)
+            ->activeUser()
             ->where('t.name', $leadTeam)
             ->orderBy('la.last_allocated', 'asc')->first();
     }
@@ -159,7 +159,6 @@ class HealthAllocationService extends AllocationService
         $isReassignment = $previousUserId != null;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
-        $lead->quote_updated_at = now();
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();

@@ -659,12 +659,38 @@ watch(mappedDestinationIds, newVal => {
         Add Traveler
       </x-button>
       <x-divider class="my-4" />
+      <div
+        class="grid mb-2"
+        v-if="
+          quoteForm.has_arrived_destination == 1 ||
+          quoteForm.has_arrived_uae == 1
+        "
+      >
+        <div
+          class="alert flex items-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+          role="alert"
+        >
+          <span class="text-sm text-red-500 dark:text-red-400 mt-1">
+            Select 'Yes' if you have already started your journey. Choose 'No'
+            if you are yet to begin travelling, even if you're at the airport.
+            (Note: Selecting 'Yes' means your trip has already started and thus
+            ineligible for travel insurance).
+          </span>
+        </div>
+      </div>
+
       <div class="flex justify-end gap-3 mb-4">
         <x-button
           size="md"
           color="emerald"
           type="submit"
-          v-if="!hasZeroValueForUAEResident"
+          v-if="
+            !hasZeroValueForUAEResident &
+            !(
+              quoteForm.has_arrived_destination == 1 ||
+              quoteForm.has_arrived_uae == 1
+            )
+          "
           :loading="quoteForm.processing"
         >
           {{ editMode ? 'Update' : 'Create' }}
