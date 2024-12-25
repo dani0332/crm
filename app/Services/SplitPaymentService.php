@@ -518,6 +518,7 @@ class SplitPaymentService
         }
         $quote->load(['payments.insuranceProvider']);
         $payment = $quote->payments()->first();
+
         return $payment->insuranceProvider->text;
     }
 
