@@ -100,7 +100,7 @@ class HomeQuoteRepository extends BaseRepository
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->when(request()->filled('advisors'), fn($q) => $q->whereIn('advisor_id', (array) request('advisors')))
+            ->when(request()->filled('advisors'), fn ($q) => $q->whereIn('advisor_id', (array) request('advisors')))
             ->when(request()->has('is_renewal'), function ($query) {
                 if (request('is_renewal') === quoteTypeCode::yesText) {
                     $query->whereNotNull('previous_quote_policy_number');
@@ -116,8 +116,8 @@ class HomeQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
-                fn($q) => $q->count(),
-                fn($query) => $query->when($forExport, fn($q) => $q->get(), fn($q) => $q->simplePaginate())
+                fn ($q) => $q->count(),
+                fn ($query) => $query->when($forExport, fn ($q) => $q->get(), fn ($q) => $q->simplePaginate())
             );
     }
 
@@ -171,11 +171,11 @@ class HomeQuoteRepository extends BaseRepository
 
         $quoteData = $baseQuoteData;
 
-        info('Home Quote Create :' . json_encode($quoteData));
+        info('Home Quote Create :'.json_encode($quoteData));
 
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 
-        info('Home Quote Create Response :' . json_encode($response));
+        info('Home Quote Create Response :'.json_encode($response));
 
         // if (isset($response->quoteUID)) {
         //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);
@@ -231,12 +231,12 @@ class HomeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable() . '.*',
+                $this->getTable().'.*',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
-                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
                 as customer_type'),
             ])
             ->firstOrFail();
@@ -331,7 +331,7 @@ class HomeQuoteRepository extends BaseRepository
             'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -352,7 +352,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::HOME->value) . '-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
     }
 
     public function fetchUpdate($uuid, $data)
@@ -385,7 +385,7 @@ class HomeQuoteRepository extends BaseRepository
                     'personal_belongings_aed' => 'personal_belongings_value_id',
                     'have_claimed_losses' => 'has_claimed_losses',
                     'is_property_rented_holiday_home' => 'is_property_rented_holiday_home',
-                    'sub_area_id' => 'sub_area_id'
+                    'sub_area_id' => 'sub_area_id',
                 ];
 
                 // Map the data to database columns
@@ -410,14 +410,12 @@ class HomeQuoteRepository extends BaseRepository
                 // Log error and rethrow for transaction rollback
                 info("Failed to update quote with UUID: {$uuid}", [
                     'error' => $e->getMessage(),
-                    'data' => $data
+                    'data' => $data,
                 ]);
                 throw $e; // Re-throw exception to trigger transaction rollback
             }
         });
     }
-
-
 
     public function fetchCardsView(Request $request)
     {
