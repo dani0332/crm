@@ -596,7 +596,14 @@ const rules = {
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="onEdit" class="focus:ring-2 focus:ring-black"> Edit </x-button>
+              <x-button
+                v-else
+                size="sm"
+                @click="onEdit"
+                class="focus:ring-2 focus:ring-black"
+              >
+                Edit
+              </x-button>
             </template>
             <template v-else>
               <x-button

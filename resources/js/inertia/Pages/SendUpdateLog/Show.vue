@@ -256,7 +256,9 @@ onBeforeMount(() => {
       <Collapsible expanded>
         <template #header>
           <div class="flex gap-2 w-100 flex-grow justify-between">
-            <h3 class="text-xs sm:text-lg font-semibold text-primary-800 capitalize">
+            <h3
+              class="text-xs sm:text-lg font-semibold text-primary-800 capitalize"
+            >
               {{ sendUpdateLog.category.text }}
             </h3>
             <Link :href="quoteLink">

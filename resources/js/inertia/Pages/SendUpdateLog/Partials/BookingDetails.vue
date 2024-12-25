@@ -2110,9 +2110,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-tooltip
-                    v-if="disableCommissionVatApplicable"
-                  >
+                  <x-tooltip v-if="disableCommissionVatApplicable">
                     <x-input
                       v-model="bookingDetailsForm.commission_vat_applicable"
                       class="!mb-0 w-full"
@@ -2200,9 +2198,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div v-if="props.isCommVatNotAppEnabled">
-                  <x-tooltip
-                    v-if="disableCommissionVatNotApplicable"
-                  >
+                  <x-tooltip v-if="disableCommissionVatNotApplicable">
                     <x-input
                       type="number"
                       v-model="bookingDetailsForm.commission_vat_not_applicable"
@@ -2352,21 +2348,21 @@ watch(
                 <div>
                   <x-tooltip>
                     <x-button
-                        class="focus:ring-2 focus:ring-black"
-                        size="sm"
-                        color="orange"
-                        v-if="props.updateBtn"
-                        :loading="loader.sendUpdateSectionBtn"
-                        @click="sendUpdateValidation"
-                        :disabled="sendUpdatePermissionCheck || isLackingPayment"
+                      class="focus:ring-2 focus:ring-black"
+                      size="sm"
+                      color="orange"
+                      v-if="props.updateBtn"
+                      :loading="loader.sendUpdateSectionBtn"
+                      @click="sendUpdateValidation"
+                      :disabled="sendUpdatePermissionCheck || isLackingPayment"
                     >
                       {{ props.updateBtn }}
                     </x-button>
                     <template #tooltip>
-                    <span>
-                      Action Needed: Please revise payment details to reflect
-                      plan changes.
-                    </span>
+                      <span>
+                        Action Needed: Please revise payment details to reflect
+                        plan changes.
+                      </span>
                     </template>
                   </x-tooltip>
                 </div>
@@ -2445,7 +2441,7 @@ watch(
         <x-checkbox v-model="modals.isConfirmed" />
         <div>
           I confirm and attest that all information recorded is correct.
-          <br>
+          <br />
           I confirm I am in compliance with the COC.
         </div>
       </x-label>

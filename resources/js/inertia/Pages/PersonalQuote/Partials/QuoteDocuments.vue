@@ -366,7 +366,12 @@ const getS3TempUrl = async docURL => {
               View Legacy policy
             </x-button>
           </Link>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange" class="focus:ring-2 focus:ring-black">
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="orange"
+            class="focus:ring-2 focus:ring-black"
+          >
             Upload Documents
           </x-button>
         </div>
