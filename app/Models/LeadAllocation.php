@@ -38,4 +38,11 @@ class LeadAllocation extends Model implements AuditableContract
     {
         return $query->where('quote_type_id', QuoteTypes::TRAVEL->id());
     }
+
+    public function scopeActiveUser($query)
+    {
+        $query->whereHas('leadAllocationUser', function ($q) {
+            $q->where('is_active', 1);
+        });
+    }
 }
