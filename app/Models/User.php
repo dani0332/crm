@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\RolesEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,8 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
-use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Jetstream\HasProfilePhoto;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
@@ -20,10 +19,8 @@ class User extends Authenticatable implements AuditableContract
 {
     use Auditable;
     use HasFactory;
-    use HasProfilePhoto;
     use HasRoles;
     use Notifiable;
-    use TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -56,15 +53,6 @@ class User extends Authenticatable implements AuditableContract
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-    ];
-
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var array
-     */
-    protected $appends = [
-        'profile_photo_url',
     ];
 
     public function getAuditables()
@@ -236,35 +224,39 @@ class User extends Authenticatable implements AuditableContract
         return Team::whereIn('id', $userTeamIds)->get()->pluck('name');
     }
 
-    public function processGetDSL($filters = [])
-    {
-        if (Auth::user()->hasAnyRole([RolesEnum::ProductionApprovalManager, RolesEnum::Advisor, RolesEnum::Admin])) {
-            return $this->getUserRoles();
-        }
-
-        return self::with(['usersroles' => function ($query) {
-            $query->where('name', 'admin');
-        }])->get();
-    }
-
     public function hasMyLeadAccess()
     {
         return Auth::user()->hasAnyRole([
-            RolesEnum::Admin, RolesEnum::BusinessAdvisor, RolesEnum::HealthAdvisor, RolesEnum::HomeAdvisor,
-            RolesEnum::LifeAdvisor, RolesEnum::TravelAdvisor, RolesEnum::GMAdvisor, RolesEnum::RMAdvisor, RolesEnum::CorpLineAdvisor,
-            RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor,
-            RolesEnum::TravelAdvisor, RolesEnum::HealthRenewalAdvisor,
+            RolesEnum::Admin,
+            RolesEnum::BusinessAdvisor,
+            RolesEnum::HealthAdvisor,
+            RolesEnum::HomeAdvisor,
+            RolesEnum::LifeAdvisor,
+            RolesEnum::TravelAdvisor,
+            RolesEnum::GMAdvisor,
+            RolesEnum::RMAdvisor,
+            RolesEnum::CorpLineAdvisor,
+            RolesEnum::EBPAdvisor,
+            RolesEnum::HealthRenewalAdvisor,
+            RolesEnum::TravelAdvisor,
+            RolesEnum::HealthRenewalAdvisor,
             RolesEnum::LifeRenewalAdvisor,
-            RolesEnum::HomeRenewalAdvisor, RolesEnum::GMRenewalAdvisor,
+            RolesEnum::HomeRenewalAdvisor,
+            RolesEnum::GMRenewalAdvisor,
             RolesEnum::CorpLineRenewalAdvisor,
-            RolesEnum::PetRenewalAdvisor, RolesEnum::CarRenewalAdvisor, RolesEnum::PetAdvisor,
+            RolesEnum::PetRenewalAdvisor,
+            RolesEnum::CarRenewalAdvisor,
+            RolesEnum::PetAdvisor,
         ]);
     }
 
     public function hasPolicyIssuanceAccess()
     {
         return Auth::user()->hasAnyRole([
-            RolesEnum::Advisor, RolesEnum::PA, RolesEnum::Payment, RolesEnum::Invoicing,
+            RolesEnum::Advisor,
+            RolesEnum::PA,
+            RolesEnum::Payment,
+            RolesEnum::Invoicing,
             RolesEnum::ProductionApprovalManager,
         ]);
     }
@@ -337,9 +329,9 @@ class User extends Authenticatable implements AuditableContract
     /**
      * @return mixed
      */
-    public function scopeWithActive($query)
+    public function scopeActiveUser($query)
     {
-        return $query->where('is_active', 1);
+        return $query->where('users.is_active', 1);
     }
 
     /**
@@ -365,13 +357,11 @@ class User extends Authenticatable implements AuditableContract
     public function sessions()
     {
         return $this->hasMany(Sessions::class);
-
     }
 
     public function products()
     {
         return $this->hasMany(UserProducts::class);
-
     }
 
     public function department()
@@ -379,8 +369,18 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsTo(Department::class)->select('id', 'name');
     }
 
+    public function businessTypes()
+    {
+        return $this->belongsToMany(BusinessTypeOfInsurance::class, 'business_type_of_insurance_user', 'user_id', 'business_type_of_insurance_id');
+    }
+
     public function departments()
     {
         return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
+    }
+
+    public function scopeChs($query)
+    {
+        return $query->where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL);
     }
 }

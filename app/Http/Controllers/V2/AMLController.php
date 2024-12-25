@@ -7,6 +7,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\LookupsEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -15,6 +16,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Exports\KycLogs;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -36,8 +38,6 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
-use App\Models\SanctionListDownloads;
-use App\Models\UAEAMLListUploads;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
@@ -49,7 +49,6 @@ use App\Services\QuoteStatusService;
 use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -65,6 +64,7 @@ class AMLController extends Controller
     public function __construct()
     {
         $this->middleware('permission:aml-list', ['only' => ['index']]);
+        $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
     }
 
     /**
@@ -155,6 +155,49 @@ class AMLController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'aml' => $quotes,
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        $query = AML::select([
+            'id',
+            'quote_request_id',
+            'quote_type_id',
+            'input',
+            'search_type',
+            'match_found',
+            'results_found',
+            'created_at',
+            'decision',
+        ])
+            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
+            ->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
+
+        $data = collect();
+
+        $query->chunk(1000, function ($chunk) use (&$data) {
+            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
+            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
+                $quoteType = QuoteTypes::getName($quoteTypeId);
+                $nameSpace = '\\App\\Models\\';
+                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
+
+                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
+                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
+                foreach ($quoteRequestData as $quoteRequest) {
+                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
+                    foreach ($amlData as $index => $value) {
+                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
+                        $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
+                    }
+                }
+            }
+            $data = $data->merge($chunk);
+        });
+
+        $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
+
+        return (new KycLogs($data))->download("AML Logs {$reportDateRange}");
     }
 
     /**
@@ -440,7 +483,7 @@ class AMLController extends Controller
                     ], ['entity_id' => $fetchEntity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
                 }
 
-                if (isset($AMLCheckRequest->company_name)) {
+                if (isset($AMLCheckRequest->company_name) && $quoteTypeId == QuoteTypeId::Business) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
                     $updateQuote->save();
                 }
@@ -457,67 +500,6 @@ class AMLController extends Controller
         }
 
         return redirect()->back()->with('error', 'Something went wrong');
-    }
-
-    public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, DataTables $datatables)
-    {
-        $url = env('AZURE_RYU_STORAGE_URL').env('AZURE_AML_HISTORY');
-
-        $sanctionListDownloads = $sanctionListDownloads->newQuery();
-
-        if ($request->file_name != '') {
-            $sanctionListDownloads = $sanctionListDownloads->where('file_name', 'like', '%'.$request->file_name.'%');
-        }
-        if ($request->is_processed == '0' || $request->is_processed == '1') {
-            $value = $request->is_processed == '1';
-            $sanctionListDownloads = $sanctionListDownloads->where('is_processed', $value);
-        }
-        $orderBy = $request->sortBy == '' ? 'created_at' : $request->sortBy;
-        $sortType = $request->sortType == '' ? 'DESC' : $request->sortType;
-
-        $sanctionListDownloads = $sanctionListDownloads->orderBy($orderBy, $sortType)->paginate(10);
-
-        return inertia('Aml/History', [
-            'sanctionListDownloads' => $sanctionListDownloads,
-            'url' => $url,
-        ]);
-
-        // return view('aml.history', compact('url'));
-    }
-
-    public function uaeSanctionListUpload(Request $request)
-    {
-        $this->validate($request, [
-            'file_name' => 'required|mimetypes:application/vnd.ms-excel,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
-        ]);
-
-        $getUAEUploadRecord = UAEAMLListUploads::where('id', '=', 1)->get()->first();
-
-        if ($getUAEUploadRecord == null) {
-            $newUAEUploadRecord = new UAEAMLListUploads([
-                'id' => 1,
-                'file_name' => '16-11-2021_UAESanctionlist.xls',
-                'is_updated' => false,
-            ]);
-            $newUAEUploadRecord->save();
-        }
-
-        $fileNameOriginal = $request->file_name->getClientOriginalName();
-        $fileNameAzure = date('d-m-Y').'_'.$fileNameOriginal;
-        $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRyu');
-
-        $newUpload = UAEAMLListUploads::where('id', '=', 1)->get()->first();
-        $newUpload->file_name = $fileNameAzure;
-        $newUpload->is_updated = true;
-        $newUpload->save();
-
-        return redirect('/kyc/aml/upload/uae')->with('success', 'UAE Sanction list uploaded successfully');
-    }
-
-    public function uploadUaeSanctionList()
-    {
-        return inertia('Aml/UploadUae');
-        // return view('aml.upload');
     }
 
     public function fetchEntity(Request $request)
@@ -657,6 +639,7 @@ class AMLController extends Controller
         }
         session()->forget('amlResponseCheck');
     }
+
     public function updateQuoteComment(Request $request)
     {
         $request->validate([
@@ -676,6 +659,7 @@ class AMLController extends Controller
 
         return response()->json(['message' => 'Comment added successfully', 'data' => $quoteModel]);
     }
+
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
@@ -721,6 +705,7 @@ class AMLController extends Controller
             ];
         });
     }
+
     public function sendHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));

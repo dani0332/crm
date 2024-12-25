@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -431,17 +432,6 @@ class LifeQuoteService extends BaseService
         return $query;
     }
 
-    public function updateChildRecord($id)
-    {
-        LifeQuoteRequestDetail::updateOrCreate(
-            ['life_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => auth()->id(),
-            ]
-        );
-    }
-
     public function fillModelProperties()
     {
         return [
@@ -618,10 +608,8 @@ class LifeQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::LIFE, LifeQuoteRequestDetail::class, 'life_quote_request_id');
         }
 
         return $result;

@@ -222,10 +222,7 @@ class AjaxController extends Controller
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            // Create a temporary file and write the PDF content to it
-            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
-
-            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false, $tempFile);
+            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false);
 
             if ($document) {
                 CustomerDetail::updateOrCreate(
@@ -338,10 +335,7 @@ class AjaxController extends Controller
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            // Create a temporary file and write the PDF content to it
-            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
-
-            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false, $tempFile);
+            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false);
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
             if ($document) {
                 Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
