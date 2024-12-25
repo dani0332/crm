@@ -130,7 +130,7 @@ class TravelAllocationService extends AllocationService
 
     public function fetchAvailableAdvisor($isReassignmentJob = false, $teamId = null, $quoteUUID = null, ?TravelQuote $lead = null)
     {
-        Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$quote->uuid}");
+        Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$lead->uuid}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -142,17 +142,17 @@ class TravelAllocationService extends AllocationService
         }
 
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quote->uuid}");
-            if ($quote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-                $previousAdvisorId = $this->getPreviousAdvisor($quote->customer_id)->advisor_id ?? null;
+            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$lead->uuid}");
+            if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+                $previousAdvisorId = $this->getPreviousAdvisor($lead->customer_id)->advisor_id ?? null;
                 $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
-                info("lead is renewal pervious advisor-ID:{$previousAdvisorId} lead uuid: {$quote->uuid} | Time: ".now());
+                info("lead is renewal pervious advisor-ID:{$previousAdvisorId} lead uuid: {$lead->uuid} | Time: ".now());
             }
             info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quoteUUID}");
             $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $lead, $previousAdvisorId ?? null);
 
             if ($eligibleUser) {
-                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$quote->uuid}");
+                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$lead->uuid}");
 
                 return User::find($eligibleUser->user_id);
             }
