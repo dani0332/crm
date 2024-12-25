@@ -320,4 +320,24 @@ enum QuoteTypes: string
         return $typesWithIds;
     }
 
+    public static function getQuoteTypeIdToClass($quoteType): string
+    {
+        switch ($quoteType) {
+            case self::getId(self::CAR):
+                return CarQuote::class;
+            case self::getId(self::HOME):
+                return HomeQuote::class;
+            case self::getId(self::HEALTH):
+                return HealthQuote::class;
+            case self::getId(self::LIFE):
+                return LifeQuote::class;
+            case self::getId(self::BUSINESS):
+                return BusinessQuote::class;
+            case self::getId(self::TRAVEL):
+                return TravelQuote::class;
+            default:
+                return PersonalQuote::class;
+        }
+    }
+
 }

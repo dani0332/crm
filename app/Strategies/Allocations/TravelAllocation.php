@@ -28,6 +28,8 @@ class TravelAllocation implements Allocation
 
     public function executeSteps()
     {
+        $this->travelAllocationService->resetProps();
+
         $response = [
             'advisorId' => 0,
             'message' => '',
@@ -64,6 +66,8 @@ class TravelAllocation implements Allocation
             $response = $this->travelAllocationService->createResponse(0, 'exception occurred in travel lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
+        $this->travelAllocationService->resetProps();
+
         return $response;
     }
 
@@ -72,9 +76,9 @@ class TravelAllocation implements Allocation
         return $this->travelAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId);
     }
 
-    private function fetchAvailableAdvisor($lead)
+    private function fetchAvailableAdvisor(TravelQuote $lead)
     {
-        return $this->travelAllocationService->fetchAvailableAdvisor($lead, $this->teamId, false);
+        return $this->travelAllocationService->fetchAvailableAdvisor(teamId: $this->teamId, quoteUUID: $this->allocationId, lead: $lead);
     }
 
     private function assignLead(TravelQuote $lead, User $advisor)

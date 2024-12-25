@@ -142,7 +142,7 @@ class CarAllocation implements Allocation
 
     protected function findAvailableUsers($tierId, $leadSource, $lead): array|Collection
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $this->teamId);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $this->teamId, $lead);
     }
 
     protected function findRules($lead)

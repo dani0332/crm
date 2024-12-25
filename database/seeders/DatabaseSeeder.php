@@ -18,9 +18,13 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
+            PermissionsSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
             TravelRenewalTeamSeeder::class,
+            SendUpdateAdditionalSubType::class,
+            PermissionsSeeder::class,
+            AllianceNationalitySeeder::class,
         ]);
     }
 }

@@ -27,4 +27,10 @@ final class QuoteDocumentsEnum extends Enum
 
     //Risk Score Document Type
     public const SCRDOC = 'SCRDOC';
+
+    //Travel Quote
+    public const TRAVEL_POLICY_SCHEDULE = 'CPS_TRVL';
+    public const TRAVEL_TAX_INVOICE = 'TI';
+    public const TRAVEL_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
+    public const TRAVEL_POLICY_CERTIFICATE = 'CPC';
 }
