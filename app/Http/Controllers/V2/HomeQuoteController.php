@@ -56,7 +56,7 @@ class HomeQuoteController extends Controller
         $response = HomeQuoteRepository::create($request->validated());
 
         if (! empty($response->errors) || ! empty($response->msg)) {
-            dd($response->errors, $response->msg);
+            info('Error creating home quote', ['errors' => $response->errors, 'msg' => $response->msg]);
             vAbort($response->msg);
         }
 
