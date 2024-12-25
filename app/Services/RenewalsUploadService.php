@@ -1035,7 +1035,7 @@ class RenewalsUploadService
 
             $this->updateCustomer($quote, $customerData);
 
-            $quoteData = $this->getNonEmptyValues([
+            $quoteData = [
                 'first_name' => $customerData['first_name'],
                 'last_name' => $customerData['last_name'],
                 'email' => $customerData['email'],
@@ -1043,7 +1043,7 @@ class RenewalsUploadService
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                 'advisor_id' => $advisorId,
                 'additional_notes' => $data['notes'],
-            ]);
+            ];
 
             if ($quoteTypeCode == QuoteTypeShortCode::CAR) {
                 $quoteData['dob'] = (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null;
@@ -1063,6 +1063,8 @@ class RenewalsUploadService
                 $quoteData['previous_advisor_id'] = ! empty($previousAdvisor) ? $previousAdvisor->name : '';
                 $quoteData['has_ncd_supporting_documents'] = $data['nc_letter'];
             }
+
+            $quoteData = $this->getNonEmptyValues($quoteData);
 
             if ($quoteTypeCode == QuoteTypeShortCode::HEA) {
                 $quoteData['previous_quote_policy_premium'] = $data['previous_policy_premium'];
