@@ -65,6 +65,7 @@ class TravelAllocationService extends AllocationService
                         if ($travelQuote->isPolicyIssuanceFailed()) {
                             info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation");
                             $this->isSICAdvisor = true;
+                            $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
 
                             return true;
                         }

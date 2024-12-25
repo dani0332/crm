@@ -424,17 +424,13 @@ class SplitPaymentService
         try {
             $quote = $this->getQuoteObject($modelType, $quoteId);
             $quote->load(['customer', 'advisor']);
-
-            $data = $this->prepareReceiptData($quote, $splitPayment, $modelType);
-
+            $data = $this->prepareReceiptData($quote, $splitPayment, $modelType, $send_update_id);
             $documentType = $this->getDocumentType($modelType);
             $data['document_type_code'] = $documentType;
             $data['quote_uuid'] = $quote->uuid;
-
             if ($send_update_id > 0) {
                 $quote = SendUpdateLog::find($send_update_id);
             }
-
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
@@ -451,7 +447,7 @@ class SplitPaymentService
         }
     }
 
-    private function prepareReceiptData($quote, $splitPayment, $modelType)
+    private function prepareReceiptData($quote, $splitPayment, $modelType, $send_update_id)
     {
         $data = [];
         $data['order_amount'] = number_format($splitPayment->collection_amount, 2, '.', ',');
@@ -474,9 +470,8 @@ class SplitPaymentService
         if ($splitPayment->captured_at != null) {
             $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->captured_at));
         }
-
-        $data['insurance_company'] = $this->getInsuranceCompany($quote, $modelType);
-
+        $data['insurance_company'] = $this->getInsuranceCompany($quote, $send_update_id);
+        info('Insurance company for '.$quote->code.' is '.$data['insurance_company']);
         $splitPayment->load(['payment', 'paymentMethod']);
         $data['payment_method'] = $splitPayment->paymentMethod->name;
         $data['remarks'] = $splitPayment->payment->notes;
@@ -516,21 +511,15 @@ class SplitPaymentService
         }
     }
 
-    private function getInsuranceCompany($quote, $modelType)
+    private function getInsuranceCompany($quote, $send_update_id)
     {
-        if (in_array($modelType, [QuoteTypes::BUSINESS->value, QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::HOME->value])) {
-            $quote->load(['insuranceProviderDetails']);
-
-            return $quote->insuranceProviderDetails->text;
-        } elseif (in_array($modelType, [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value])) {
-            $quote->load(['plan']);
-
-            return $quote->plan->text;
-        } else {
-            $quote->load(['insuranceProvider']);
-
-            return $quote->insuranceProvider->text;
+        if ($send_update_id > 0) {
+            $quote = SendUpdateLog::find($send_update_id);
         }
+        $quote->load(['payments.insuranceProvider']);
+        $payment = $quote->payments()->first();
+
+        return $payment->insuranceProvider->text;
     }
 
     private function getTypeOfInsurance($quote, $modelType)

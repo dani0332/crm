@@ -366,7 +366,12 @@ const getS3TempUrl = async docURL => {
               View Legacy policy
             </x-button>
           </Link>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="orange"
+            class="focus:ring-2 focus:ring-black"
+          >
             Upload Documents
           </x-button>
         </div>
@@ -419,6 +424,7 @@ const getS3TempUrl = async docURL => {
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
+                class="focus:ring-2 focus:ring-black"
               >
                 Delete
               </x-button>
