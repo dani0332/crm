@@ -76,6 +76,8 @@ class SendUpdateLogRepository extends BaseRepository
             ) {
                 @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true);
                 $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $plan_id);
+            } elseif ($quote->insly_id || $quote->insly_migrated) {
+                $insuranceProviderId = $quote?->insurance_provider_id ?? null;
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with

@@ -12,7 +12,10 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  isEditDisabledForQueuedBooking: Boolean,
+  insuranceProviderId: {
+    type: Number,
+    required: false,
+  },
 });
 
 const state = reactive({
@@ -31,7 +34,7 @@ const insuranceProvidersOptions = computed(() => {
 const providerDetailsForm = useForm({
   insurance_provider_id:
     props.sendUpdateLog?.insurance_provider_id ||
-    props.quote?.insurance_provider_id ||
+    props?.insuranceProviderId ||
     null,
   send_update_log_id: props.sendUpdateLog.id,
 });
@@ -107,26 +110,9 @@ const onCancel = () => {
         </div>
         <x-divider class="my-4 mt-10" />
         <div class="flex justify-end gap-2">
-          <template v-if="!state.isEdit">
-            <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
-              <x-button
-                size="sm"
-                @click="state.isEdit = true"
-                :disabled="props.isEditDisabledForQueuedBooking"
-              >
-                Edit
-              </x-button>
-              <template #tooltip>
-                <span class="custom-tooltip-content">
-                  No further action can be taken on Update Booking Queued or
-                  Failed status.
-                </span>
-              </template>
-            </x-tooltip>
-            <x-button v-else size="sm" @click="state.isEdit = true">
-              Edit
-            </x-button>
-          </template>
+          <x-button size="sm" @click="state.isEdit = true" v-if="!state.isEdit">
+            Edit
+          </x-button>
           <template v-else>
             <x-button
               size="sm"
@@ -135,16 +121,16 @@ const onCancel = () => {
               :loading="providerDetailsForm.processing"
               :disabled="providerDetailsForm.processing"
             >
-              Cancel</x-button
-            >
+              Cancel
+            </x-button>
             <x-button
               size="sm"
               color="primary"
               @click="onUpdate"
               :loading="providerDetailsForm.processing"
               :disabled="providerDetailsForm.processing"
-              >Update</x-button
-            >
+              >Update
+            </x-button>
           </template>
         </div>
       </template>
