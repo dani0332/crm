@@ -427,9 +427,11 @@ class AjaxController extends Controller
     public function getBatchNamesByQuoteTypeId(Request $request)
     {
         $renewalBatch = RenewalBatch::orderBy('name')->select(['name as text']);
-        if ($request->quote_type_id == 1) {
+        if (isset($request->quote_type_id) && $request->quote_type_id == QuoteTypeId::Car) {
+            /** Motor Selected */
             $renewalBatch->where('quote_type_id', QuoteTypeId::Car);
-        } elseif ($request->quote_type_id < 0) {
+        } elseif (isset($request->quote_type_id) && $request->quote_type_id != QuoteTypeId::Car) {
+            /** Non-Motor Selected */
             $renewalBatch->where('quote_type_id', '<>', QuoteTypeId::Car)->orWhereNull('quote_type_id');
         }
 
