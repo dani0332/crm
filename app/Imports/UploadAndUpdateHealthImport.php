@@ -153,17 +153,21 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
                             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
                             'quote_type' => QuoteTypeShortCode::HEA,
                             'policy_number' => $quoteData['policy_number'],
-                            'data' => $quoteData,
+                            'data' => json_encode(json_encode($quoteData)),
                             'status' => RenewalProcessStatuses::VALIDATION_FAILED,
                             'type' => RenewalsUploadType::UPDATE_LEADS,
+                            'created_at' => now(),
+                            'updated_at' => now(),
                         ];
 
                         $this->failedCount++;
                     }
 
+                    $validationErrors = [];
                     foreach ($failure->errors() as $error) {
-                        $failed[$failure->row()]['validation_errors'][] = $error;
+                        $validationErrors[] = $error;
                     }
+                    $failed[$failure->row()]['validation_errors'] = json_encode($validationErrors);
                 }
 
                 if (! empty($failed)) {

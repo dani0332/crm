@@ -12,6 +12,7 @@ use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
+use App\Exports\RenewalHealthUpdateFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
@@ -19,6 +20,7 @@ use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\CarQuote;
+use App\Models\HealthQuote;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
@@ -374,6 +376,9 @@ class RenewalsUploadController extends Controller
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
+        if($renewaUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+            return Excel::download(new RenewalHealthUpdateFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        }
         return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
     }
 
@@ -407,6 +412,14 @@ class RenewalsUploadController extends Controller
                 }
 
                 return redirect(config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid);
+                break;
+            case QuoteTypeShortCode::HEA:
+                $healthQuote = HealthQuote::where('previous_quote_policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
+                if (! $healthQuote) {
+                    return abort(404);
+                }
+
+                return redirect(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid);
                 break;
             default:
                 return abort(404);
