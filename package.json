@@ -3,8 +3,9 @@
     "private": true,
     "scripts": {
         "dev": "doppler run -- yarn && vite",
-        "prod": "yarn && vite build",
-        "lint": "prettier . --write"
+        "prod": "yarn && vite build && vite build --config vite-worker.config.js",
+        "lint": "prettier . --write",
+        "worker:watch": "WATCH_WORKER=true vite build --config vite-worker.config.js"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.1.4",
@@ -22,8 +23,8 @@
     },
     "dependencies": {
         "@headlessui/vue": "1.7.18",
-        "@indielayer/ui": "1.9.3",
-        "@inertiajs/vue3": "^1.2.0",
+        "@indielayer/ui": "^1.10.0",
+        "@inertiajs/vue3": "^2.0",
         "@vueuse/core": "^11.1.0",
         "@vueuse/integrations": "^11.1.0",
         "cypress-file-upload": "^5.0.8",
@@ -34,6 +35,7 @@
         "markdown-it": "^14.0.0",
         "md-editor-v3": "^2.11.2",
         "moment": "^2.30.1",
+        "nprogress": "^0.2.0",
         "pusher-js": "^8.3.0",
         "sanitize-html": "^2.13.0",
         "sortablejs": "^1.15.2",

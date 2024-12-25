@@ -1,10 +1,10 @@
 <script setup>
+import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
 
 defineProps({
   quote: Object,
   quoteDocuments: Object,
-  paymentStatusEnum: Object,
   documentTypes: Object,
   storageUrl: String,
   expanded: {
@@ -37,6 +37,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -186,9 +187,11 @@ onMounted(() => {
 
 const getS3TempUrl = async docURL => {
   try {
+    NProgress.start();
     const response = await axios.post('/quotes/documents/get-s3-temp-url', {
       docURL,
     });
+    NProgress.done();
     // Check if the request was successful and the response contains the URL
     if (response.status === 200 && response.data.url) {
       // Open the URL in a new tab
@@ -367,6 +370,12 @@ const getS3TempUrl = async docURL => {
           :value="index"
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
+          :key="index"
+          :disabled="
+            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
+            !quote.insurance_provider_id &&
+            !quote.plan_id
+          "
         >
           <div
             v-for="documentType in docType"

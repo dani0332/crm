@@ -8,6 +8,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -421,17 +422,6 @@ class HomeQuoteService extends BaseService
         return HomeQuote::orderBy('created_at', 'desc')->get();
     }
 
-    public function updateChildRecord($id)
-    {
-        HomeQuoteRequestDetail::updateOrCreate(
-            ['home_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
-    }
-
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('home_quote_request as hqr')
@@ -717,11 +707,8 @@ class HomeQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            // TODO: needs validation similar to Health
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::HOME, HomeQuoteRequestDetail::class, 'home_quote_request_id');
         }
 
         return $result;
@@ -755,4 +742,6 @@ class HomeQuoteService extends BaseService
 
         return 'true';
     }
+
+    public function sendHomeOCB() {}
 }

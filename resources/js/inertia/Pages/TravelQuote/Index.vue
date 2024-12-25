@@ -1,4 +1,6 @@
 <script setup>
+import { ref } from 'vue';
+
 defineProps({
   quotes: Object,
   dropdownSource: Object,
@@ -68,6 +70,7 @@ const filters = reactive({
   advisor_assigned_date: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  insurer_api_status_id: '',
 });
 
 const loader = reactive({
@@ -128,6 +131,14 @@ const paymentStatusOptions = computed(() => {
     return {
       value: item.id,
       label: item.text,
+    };
+  });
+});
+const insurerApiStatus = computed(() => {
+  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
     };
   });
 });
@@ -276,7 +287,7 @@ function setQueryFilters() {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
-
+const exportLoader = ref(false);
 const onDataExport = () => {
   filters.created_at_start = useDateFormat(
     filters.created_at_start,
@@ -294,7 +305,13 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Travel'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
@@ -712,6 +729,13 @@ watch(
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <ComboBox
+          label="INSURER API STATUS"
+          v-model="filters.insurer_api_status_id"
+          placeholder="Select Status"
+          :options="insurerApiStatus"
+          class="w-full"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -719,6 +743,7 @@ watch(
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >

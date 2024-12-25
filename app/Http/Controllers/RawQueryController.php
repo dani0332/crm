@@ -16,7 +16,7 @@ class RawQueryController extends Controller
     public function show(Request $request)
     {
         $nameSpace = 'App\\Models\\';
-        $modelType = (in_array(ucwords($request->modelType), newUi()) && checkPersonalQuotes(ucwords($request->modelType)))
+        $modelType = (checkPersonalQuotes(ucwords($request->modelType)))
          ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($request->modelType).'Quote';
 
         $fieldsMap = [

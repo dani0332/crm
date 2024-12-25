@@ -55,7 +55,6 @@ class CRUDService extends BaseService
     protected $lifeQuoteService;
     protected $homeQuoteService;
     protected $businessQuoteService;
-    protected $petQuoteService;
     protected $quoteTypes;
     protected $insuranceproviderService;
     protected $carplancoverageService;
@@ -76,7 +75,6 @@ class CRUDService extends BaseService
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
-        PetQuoteService $petQuoteService,
         InsuranceProviderService $insuranceproviderService,
         CarPlanService $carplanService,
         CarPlanCoverageService $carplancoverageService,
@@ -95,7 +93,6 @@ class CRUDService extends BaseService
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
-        $this->petQuoteService = $petQuoteService;
         $this->insuranceproviderService = $insuranceproviderService;
         $this->carplanService = $carplanService;
         $this->carplancoverageService = $carplancoverageService;
@@ -1139,10 +1136,7 @@ class CRUDService extends BaseService
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            // Create a temporary file and write the PDF content to it
-            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
-
-            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false, $tempFile);
+            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
         }
     }
 
