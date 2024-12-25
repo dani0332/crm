@@ -199,15 +199,15 @@ const maxLeadsOptions = computed(() => {
       <p class="text-red-500 font-bold">Note:</p>
       <ul class="list-disc px-5">
         <li>
-          Please click on the Submit button to initiate your Buy Leads request.
+          Please click on the submit button to initiate your buy leads request.
         </li>
         <li>
-          The total cost for the requested leads will be displayed once the "Buy
-          Leads" dropdown is selected.
+          The total cost for the requested leads will be displayed once the "buy
+          leads" dropdown is selected.
         </li>
         <li>
           There is no guarantee that you will receive the requested leads, as
-          the system will assign the leads accordingly once the Buy Lead request
+          the system will assign the leads accordingly once the buy lead request
           is submitted by the advisor.
         </li>
       </ul>
