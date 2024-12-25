@@ -60,7 +60,12 @@ class TravelAnnual extends EmbeddedProduct
             'travelQuote.quoteStatus',
             'travelQuote.advisor',
             'travelQuote.quoteRequestEntityMapping',
-        )->where('embedded_transactions.is_selected', true)
+        )
+            ->join('payments', function ($join) {
+                $join->on('embedded_transactions.code', '=', 'payments.code')
+                    ->where('payments.paymentable_type', '=', 'App\\Models\\TravelQuote');
+            })
+            ->where('embedded_transactions.is_selected', true)
             ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
@@ -68,7 +73,8 @@ class TravelAnnual extends EmbeddedProduct
             ->when(isset($filters['months']), function ($query) use ($filters) {
                 $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
                 $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
-                $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
+                $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
+
             })
             ->when(isset($filters['name']), function ($query) use ($filters) {
                 $name = $filters['name'];
@@ -88,7 +94,7 @@ class TravelAnnual extends EmbeddedProduct
                 $query->whereHas('travelQuote', function ($query) use ($filters) {
                     $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
                     $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
-                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
+                    $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
                 });
             });
 
@@ -96,7 +102,7 @@ class TravelAnnual extends EmbeddedProduct
         $sortOrder = 'desc';
         if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
             $sortableColumns = [
-                'payment_date' => 'embedded_transactions.paid_at',
+                'payment_date' => 'payments.captured_at',
                 'contribution_amount' => 'embedded_transactions.price_with_vat',
             ];
             $sortBy = $sortableColumns[$filters['sortBy']] ?? 'embedded_transactions.id';
@@ -149,7 +155,7 @@ class TravelAnnual extends EmbeddedProduct
             $item->id = $item->id;
             $item->ref_id = $item->code;
             $item->advisor_name = $advisorName;
-            $item->payment_date = isset($item->paid_at) ? Carbon::parse($item->paid_at)->format($dateFormat) : '';
+            $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
             $item->plan_start_date = $planStartDate;
             $item->plan_end_date = $planEndDate;
             $item->name = $firstName.' '.$lastName;
