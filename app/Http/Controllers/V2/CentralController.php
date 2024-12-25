@@ -861,7 +861,7 @@ class CentralController extends Controller
 
         $counter = 0;
         foreach ($carLeadsCodes as $carLeadsCode) {
-            $carLeads = CarQuote::whereIn('code', $carLeadsCode)->with('payments.paymentSplits.documents')->first();
+            $carLeads = CarQuote::where('code', $carLeadsCode)->with('payments.paymentSplits.documents')->first();
             $this->processLeads($carLeads);
             $counter++;
             info("Manual Receipt Generation Processed {$counter} Car Leads");
@@ -878,7 +878,7 @@ class CentralController extends Controller
         ];
 
         foreach ($homeLeadsCodes as $homeLeadsCode) {
-            $homeLeads = HomeQuote::whereIn('code', $homeLeadsCode)->with('payments.paymentSplits.documents')->first();
+            $homeLeads = HomeQuote::where('code', $homeLeadsCode)->with('payments.paymentSplits.documents')->first();
             $this->processLeads($homeLeads);
             $counter++;
             info("Manual Receipt Generation Processed {$counter} Home Leads");
