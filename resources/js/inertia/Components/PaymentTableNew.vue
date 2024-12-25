@@ -2722,53 +2722,72 @@ const uploadDocument = (doc, files, count) => {
 };
 
 // Will check if the payment is ready for capture
-const shouldProcessUpdate = (payment) => {
+const shouldProcessUpdate = payment => {
   const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
-  const calculatedTotal = Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
+  const calculatedTotal =
+    Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
   const hasPayments = props.payments.length > 0;
   const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
-  const isAmlCleared = props.quoteRequest.aml_status === page.props.amlStatusEnum.AMLScreeningCleared;
-  const isTransactionDeclined = props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined;
-  const isTransactionApproved = props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved;
+  const isAmlCleared =
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningCleared;
+  const isTransactionDeclined =
+    props.quoteRequest.quote_status_id ===
+    page.props.quoteStatusEnum.TransactionDeclined;
+  const isTransactionApproved =
+    props.quoteRequest.quote_status_id ===
+    page.props.quoteStatusEnum.TransactionApproved;
   const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
   const isTravelQuote = props.quoteType === 'Travel';
   const shouldSendUpdate = props.sendUpdate;
-  const isAmlOrTransactionApproved = isAmlCleared || isTransactionDeclined || isTransactionApproved
+  const isAmlOrTransactionApproved =
+    isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
-  return hasPayments && isTotalPriceMatching && (isAmlAndKycComplete || isTravelQuote || shouldSendUpdate);
-}
+  return (
+    hasPayments &&
+    isTotalPriceMatching &&
+    (isAmlAndKycComplete || isTravelQuote || shouldSendUpdate)
+  );
+};
 
-const getValidStatuses = (paymentSplitRec) => {
+const getValidStatuses = paymentSplitRec => {
   const validStatuses = [
     props.paymentStatusEnum.AUTHORISED,
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PARTIALLY_PAID,
   ];
   return validStatuses.includes(paymentSplitRec.payment_status_id);
-}
+};
 
-const validateUpfrontCapture = (paymentRecord) =>{
+const validateUpfrontCapture = paymentRecord => {
   let paymentSplitRec = paymentRecord.payment_splits[0];
-  if (paymentSplitRec.payment_method.code === 'CC') return getValidStatuses(paymentSplitRec);
-  const isIPPending= paymentSplitRec.payment_method.code === 'IP' && paymentSplitRec.payment_status_id === props.paymentStatusEnum.PENDING;
-  const isCAPayment= paymentSplitRec.payment_method.code === 'CA' && paymentSplitRec.payment_status_id === props.paymentStatusEnum.CREDIT_APPROVED;
-  const isPaidPayment= paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID;
-  return (isIPPending || isCAPayment || isPaidPayment);
-}
+  if (paymentSplitRec.payment_method.code === 'CC')
+    return getValidStatuses(paymentSplitRec);
+  const isIPPending =
+    paymentSplitRec.payment_method.code === 'IP' &&
+    paymentSplitRec.payment_status_id === props.paymentStatusEnum.PENDING;
+  const isCAPayment =
+    paymentSplitRec.payment_method.code === 'CA' &&
+    paymentSplitRec.payment_status_id ===
+      props.paymentStatusEnum.CREDIT_APPROVED;
+  const isPaidPayment =
+    paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID;
+  return isIPPending || isCAPayment || isPaidPayment;
+};
 
-const filterCCPayments = (payment) => {
+const filterCCPayments = payment => {
   return payment.payment_splits.filter(
     item => item.payment_method.code === 'CC',
   );
-}
+};
 
-const filterCAPayments = (payment) => {
+const filterCAPayments = payment => {
   return payment.payment_splits.filter(
     item => item.payment_status_id == props.paymentStatusEnum.CREDIT_APPROVED,
   );
-}
+};
 
-const validateSplitPaymentsCapture = (paymentRecord) => {
+const validateSplitPaymentsCapture = paymentRecord => {
   const paymentMethodCC = filterCCPayments(paymentRecord);
   const creditApprovedPayments = filterCAPayments(paymentRecord);
   if (paymentMethodCC.length > 0 && creditApprovedPayments.length == 0) {
@@ -2781,29 +2800,34 @@ const validateSplitPaymentsCapture = (paymentRecord) => {
     let ccPaymentStatus = paymentMethodCC.filter(
       item => item.payment_status_id === props.paymentStatusEnum.AUTHORISED,
     );
-    return totalSplitPayments == ccPaymentStatus.length + paidPaymentStatus.length;
+    return (
+      totalSplitPayments == ccPaymentStatus.length + paidPaymentStatus.length
+    );
   } else {
-    let ipPaymentStatus = paymentRecord.payment_splits.filter(item => 
-      item.payment_method.code === 'IP',
+    let ipPaymentStatus = paymentRecord.payment_splits.filter(
+      item => item.payment_method.code === 'IP',
     );
     if (ipPaymentStatus.length > 0) {
-      let ipPending = ipPaymentStatus.filter(item =>
-        item.payment_status_id === props.paymentStatusEnum.PENDING ||
-        item.payment_status_id === props.paymentStatusEnum.PAID,
+      let ipPending = ipPaymentStatus.filter(
+        item =>
+          item.payment_status_id === props.paymentStatusEnum.PENDING ||
+          item.payment_status_id === props.paymentStatusEnum.PAID,
       );
       return ipPending.length === ipPaymentStatus.length;
     } else {
-      if (verifyCreditApproved(paymentRecord))return true;
+      if (verifyCreditApproved(paymentRecord)) return true;
       let paidPaymentStatus = paymentRecord.payment_splits.filter(
         item => item.payment_status_id === props.paymentStatusEnum.PAID,
       );
       return paidPaymentStatus.length === paymentRecord.payment_splits.length;
     }
   }
-}
+};
 
-const validateNonUpfrontAndSplitCapture = (paymentRecord) => {
-  if (paymentRecord.payment_status_id === props.paymentStatusEnum.CREDIT_APPROVED) {
+const validateNonUpfrontAndSplitCapture = paymentRecord => {
+  if (
+    paymentRecord.payment_status_id === props.paymentStatusEnum.CREDIT_APPROVED
+  ) {
     if (verifyCreditApproved(paymentRecord)) return true;
   } else if (
     (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
@@ -2814,7 +2838,7 @@ const validateNonUpfrontAndSplitCapture = (paymentRecord) => {
     return true;
   }
   return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
-}
+};
 
 const getCaptureValidation = computed(() => {
   return payment => {
@@ -2823,7 +2847,9 @@ const getCaptureValidation = computed(() => {
       let paymentRecord = payment;
       if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
         return validateUpfrontCapture(paymentRecord);
-      } else if (paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS) {
+      } else if (
+        paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
+      ) {
         return validateSplitPaymentsCapture(paymentRecord);
       } else {
         return validateNonUpfrontAndSplitCapture(paymentRecord);
@@ -2858,7 +2884,7 @@ const alertCapture = payment => {
 const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
-      const paymentMethodCC = filterCCPayments(payment)
+      const paymentMethodCC = filterCCPayments(payment);
       return paymentMethodCC.length > 0 ? 'capture' : 'approve';
     }
     return;
