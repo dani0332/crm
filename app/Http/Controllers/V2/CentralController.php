@@ -621,6 +621,11 @@ class CentralController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
+    /**
+     * temp function to generate receipts for missing leads, will be removed in next deployment
+     * @param Request $request
+     * @return void
+     */
     public function manualReceiptGeneration(Request $request)
     {
         info('Manual Receipt Generation Started for Car Leads');
@@ -898,6 +903,7 @@ class CentralController extends Controller
 
         info('Manual Receipt Generation for Car Leads Completed');
     }
+
 
     private function processLeads($quote)
     {
