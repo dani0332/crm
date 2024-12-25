@@ -896,7 +896,7 @@ class CentralController extends Controller
             $this->processLeads($businessLead);
         }
 
-        echo 'process finished';
+        info('Manual Receipt Generation for Car Leads Completed');
     }
 
     private function processLeads($quote)
