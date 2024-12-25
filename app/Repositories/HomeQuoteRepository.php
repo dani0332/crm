@@ -357,7 +357,6 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
-        dd($uuid, $data);
         return DB::transaction(function () use ($uuid, $data) {
             try {
                 // Find the quote by UUID or fail if not found
