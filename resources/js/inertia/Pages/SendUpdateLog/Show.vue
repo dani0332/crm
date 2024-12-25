@@ -257,11 +257,13 @@ const isLegacyPolicy = computed(() => {
       <Collapsible expanded>
         <template #header>
           <div class="flex gap-2 w-100 flex-grow justify-between">
-            <h3 class="text-lg font-semibold text-primary-800 capitalize">
+            <h3
+              class="text-xs sm:text-lg font-semibold text-primary-800 capitalize"
+            >
               {{ sendUpdateLog.category.text }}
             </h3>
             <Link :href="quoteLink">
-              <x-button color="primary" size="sm" class="mr-5"
+              <x-button color="primary" size="sm" class="mr-5 text-xs"
                 >Go back to lead</x-button
               >
             </Link>
@@ -271,10 +273,10 @@ const isLegacyPolicy = computed(() => {
           <x-form @submit="onUpdateLog">
             <x-divider class="my-4" />
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-y-4">
-                <div class="grid sm:grid-cols-2">
+              <dl class="grid md:grid-cols-2">
+                <div class="grid sm:grid-cols-2 mb-2">
                   <dt>
-                    <x-tooltip placement="left">
+                    <x-tooltip>
                       <label
                         class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                       >
@@ -289,7 +291,7 @@ const isLegacyPolicy = computed(() => {
                   </dt>
                   <dd>{{ sendUpdateLog.code }}</dd>
                 </div>
-                <div class="grid md:grid-cols-2 gap-y-4">
+                <div class="grid md:grid-cols-2">
                   <dt class="font-bold">NOTES</dt>
                   <dd>
                     <x-textarea
@@ -297,13 +299,15 @@ const isLegacyPolicy = computed(() => {
                       size="xs"
                       :disabled="!state.edit"
                       maxlength="250"
+                      class="h-7"
+                      rows="1"
                     />
                     <p class="text-xs text-right" v-if="state.edit">
                       {{ sendUpdateForm.notes.length }} / 250
                     </p>
                   </dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
+                <div class="grid sm:grid-cols-2 mb-2 h-10">
                   <template
                     v-if="
                       props.sendUpdateLog.category.code !==
@@ -313,7 +317,7 @@ const isLegacyPolicy = computed(() => {
                     "
                   >
                     <dt>
-                      <x-tooltip placement="left">
+                      <x-tooltip>
                         <label
                           class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                         >
@@ -330,9 +334,9 @@ const isLegacyPolicy = computed(() => {
                     <dd>{{ transactionType || '' }}</dd>
                   </template>
                 </div>
-                <div class="grid md:grid-cols-2 gap-y-4">
+                <div class="grid md:grid-cols-2 mb-2">
                   <dt>
-                    <x-tooltip placement="left">
+                    <x-tooltip>
                       <label
                         class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                       >
@@ -347,7 +351,7 @@ const isLegacyPolicy = computed(() => {
                   </dt>
                   <dd>{{ sendUpdateLog.display_status }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
+                <div class="grid sm:grid-cols-2 mb-2">
                   <template
                     v-if="
                       sendUpdateLog.category.code !==
@@ -361,7 +365,7 @@ const isLegacyPolicy = computed(() => {
                     "
                   >
                     <dt>
-                      <x-tooltip placement="left">
+                      <x-tooltip>
                         <label
                           class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                         >
@@ -402,7 +406,7 @@ const isLegacyPolicy = computed(() => {
                   </template>
                 </div>
                 <div
-                  class="grid sm:grid-cols-2"
+                  class="grid sm:grid-cols-2 mb-2 md:ml-10"
                   v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car"
                 >
                   <template
@@ -497,6 +501,7 @@ const isLegacyPolicy = computed(() => {
               <template v-if="!state.edit">
                 <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                   <x-button
+                    class="focus:ring-2 focus:ring-black"
                     size="sm"
                     @click="onEdit"
                     :disabled="props.isEditDisabledForQueuedBooking"
@@ -517,13 +522,14 @@ const isLegacyPolicy = computed(() => {
                   size="sm"
                   color="orange"
                   @click="onCancel"
-                  class="mr-3"
+                  class="mr-3 focus:ring-2 focus:ring-black"
                   :loading="sendUpdateForm.processing"
                   :disabled="sendUpdateForm.processing"
                 >
                   Cancel
                 </x-button>
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   color="primary"
                   type="submit"

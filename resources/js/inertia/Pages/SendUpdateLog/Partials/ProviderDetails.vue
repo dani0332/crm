@@ -84,7 +84,7 @@ const onCancel = () => {
             <!-- Provider Name -->
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
