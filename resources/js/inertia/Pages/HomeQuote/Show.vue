@@ -754,15 +754,17 @@ const copyLink = () => {
 
 const getLookupValueText = (lookupKey, id, defaultValue = '') => {
   const lookUpData = page?.props?.quote?.lookUpData || {};
-  const lookupArray = Array.isArray(lookUpData[lookupKey]) ? lookUpData[lookupKey] : [];
+  const lookupArray = Array.isArray(lookUpData[lookupKey])
+    ? lookUpData[lookupKey]
+    : [];
   if (!lookUpData[lookupKey]) {
-    console.log(`Lookup key "${lookupKey}" not found in lookUpData or is not an array.`);
+    console.log(
+      `Lookup key "${lookupKey}" not found in lookUpData or is not an array.`,
+    );
   }
   const matchedValue = lookupArray.find(item => item.id === id);
   return matchedValue?.text || defaultValue;
 };
-
-
 </script>
 
 <template>
@@ -804,7 +806,10 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
         </Link>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('home-quotes-edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled"
+            :href="route('home-quotes-edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"
@@ -1087,7 +1092,10 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
                 <dt class="font-medium">CONTENTS AED</dt>
                 <dd>
                   {{
-                    getLookupValueText('contentValues', quote?.home_quote?.contents_value_id)
+                    getLookupValueText(
+                      'contentValues',
+                      quote?.home_quote?.contents_value_id,
+                    )
                   }}
                 </dd>
               </div>
@@ -1113,7 +1121,10 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
                 <dt class="font-medium">PERSONAL BELONGINGS AED</dt>
                 <dd>
                   {{
-                    getLookupValueText('personalBelongingValues', quote?.home_quote?.personal_belongings_value_id)
+                    getLookupValueText(
+                      'personalBelongingValues',
+                      quote?.home_quote?.personal_belongings_value_id,
+                    )
                   }}
                 </dd>
               </div>
@@ -1885,7 +1896,7 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
 
     <QuoteDocument
       :document-types="documentTypes"
-      :quote-documents="quoteDocuments || []"
+      :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :modelType="quoteType"
