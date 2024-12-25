@@ -68,10 +68,10 @@ class CarAllocationService extends AllocationService
                             });
                     });
             });
-
         if (! $overrideAdvisorId) {
             $carQuoteQuery->whereNull('advisor_id');
         }
+
 
         return $carQuoteQuery->first();
     }
@@ -394,6 +394,7 @@ class CarAllocationService extends AllocationService
             ->select('id')
             ->first();
 
+
         foreach ($commercialKeywords as $keyword) {
             if (
                 str_contains(
@@ -450,12 +451,13 @@ class CarAllocationService extends AllocationService
     }
     public function getRulesForVehicleUse($lead)
     {
+
         if ($lead->vehicle_use  == CarVehicleUse::PRIVATE) {
             info( self::class." - Lead is not commercial, applying private use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
             return $this->getCompanyUsageRules($lead, RuleEnum::PRIVATE_USE->value);
         } else {
             info(self::class." - Lead is commercial, applying commercial use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
-            return $this->getCommercialRule($lead, RuleEnum::COMMERCIAL_USE->value);
+            return $this->getCompanyUsageRules($lead, RuleEnum::COMMERCIAL_USE->value);
         }
     }
 

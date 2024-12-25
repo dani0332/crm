@@ -12,6 +12,8 @@ const loaders = reactive({
 });
 const notification = useToast();
 const page = usePage();
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 
 // const { isRequired } = useRules();
 
@@ -26,6 +28,8 @@ const filters = reactive({
   selectedAdvisor: '',
   userIds: [],
   statusId: [],
+  registration_type: 'All',
+  vehicle_use: 'All',
   page: 1,
 });
 
@@ -217,6 +221,9 @@ watch(
   newQuoteType => {
     if (newQuoteType) {
       onSubmit(true);
+      filters.registration_type = 'All';
+      filters.vehicle_use = 'All';
+
     }
   },
 );
@@ -228,6 +235,33 @@ onMounted(() => {
     filters.selectedAdvisor = data[0].value;
   }
 });
+
+const isCarLob = computed(() => {
+  return filters.quoteType === 'Car Insurance';
+});
+
+const registrationTypeOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carRegistrationTypeEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
+
+const vehicleUseOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carVehicleUseEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
+
 </script>
 <template>
   <Head title="Authorised Payment Report" />
@@ -251,6 +285,21 @@ onMounted(() => {
         label="Line of Business"
         placeholder="Select Line of Business"
         :options="quoteTypesOptions"
+      />
+
+    <x-select
+        v-if="isCarLob"
+        v-model="filters.registration_type"
+        label="Registration Type"
+        placeholder="Select any option"
+        :options="registrationTypeOptions"
+    />
+    <x-select
+        v-if="isCarLob && isVehicleUseDisabled"
+        v-model="filters.vehicle_use"
+        label="Vehicle Use"
+        placeholder="Select any option"
+        :options="vehicleUseOptions"
       />
       <div v-if="fieldDisable">
         <ComboBox
