@@ -623,7 +623,7 @@ class CentralController extends Controller
 
     /**
      * temp function to generate receipts for missing leads, will be removed in next deployment
-     * @param Request $request
+     *
      * @return void
      */
     public function manualReceiptGeneration(Request $request)
@@ -903,7 +903,6 @@ class CentralController extends Controller
 
         info('Manual Receipt Generation for Car Leads Completed');
     }
-
 
     private function processLeads($quote)
     {
