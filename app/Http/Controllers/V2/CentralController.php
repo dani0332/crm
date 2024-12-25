@@ -838,7 +838,25 @@ class CentralController extends Controller
             'CAR-9SS6YKPQ',
             'CAR-3VVWDEV8',
             'CAR-2UWSLE9Y',
-            'CAR-3VPFMZK5'
+            'CAR-3VPFMZK5',
+            'CAR-R9GE254P',
+            'CAR-93EX2JV3',
+            'CAR-PA2ZMVRC',
+            'CAR-BHPBEEDA',
+            'CAR-RR3W73W5',
+            'CAR-BXFQHMG6',
+            'CAR-TXM467CU',
+            'CAR-4L5WAF6K',
+            'CAR-95AFY95E',
+            'CAR-K47XXQSF',
+            'CAR-CUEPPFLH',
+            'CAR-PMKM2DZG',
+            'CAR-NGX2CMKX',
+            'CAR-E92QLUPH',
+            'CAR-SHDAZBRB',
+            'CAR-SERCTAGA',
+            'CAR-YWM22FYT',
+            'CAR-MGLV75AQ'
         ];
 
         $counter = 0;
