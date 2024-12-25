@@ -207,7 +207,8 @@ export const setQueryStringFilters = (params, filters) => {
 };
 
 export const saveQueryParams = () => {
-  let { component, url } = router.page;
+  const page = usePage();
+  let { component, url } = page;
   let routes = [
     'HealthQuote/Index',
     'PetQuote/Index',
@@ -225,12 +226,14 @@ export const saveQueryParams = () => {
 };
 
 export const removedSavedParams = () => {
-  let { component } = router.page;
+  const page = usePage();
+  let { component } = page;
   localStorage.removeItem(component);
 };
 
 export const getSavedQueryParams = () => {
-  let { component } = router.page;
+  const page = usePage();
+  let { component } = page;
   const savedParams = localStorage.getItem(component);
   if (savedParams) {
     let routerInfo = JSON.parse(savedParams);
