@@ -622,7 +622,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * @param  \App\Models\Payment  $payment  The payment object to update.
      * @return void
      */
-    private function updatePaymentStatusForUpFront($payment)
+    private function updateUpfrontStatus($payment)
     {
         if ($payment->frequency !== PaymentFrequency::UPFRONT) {
             return;
@@ -655,7 +655,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * @param  \App\Models\Payment  $payment  The payment object to update.
      * @return void
      */
-    private function updatePaymentStatusNonUpFront($payment)
+    private function updateNonUpfrontStatus($payment)
     {
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         $creditApprovalSplitsCount = $paymentSplits->where('payment_method', PaymentMethodsEnum::CreditApproval)->count();
@@ -663,15 +663,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         // Update payment method for credit approval payments when credit approval is present
         if (! empty($payment->credit_approval) && $paidOrAuthorisedSplits) {
-            $this->updatePaymentMethodForCreditApproval($payment);
+            $this->updateCreditApprovalMethod($payment);
         }
 
         if ($creditApprovalSplitsCount > 0) {
             // Update payment status for credit approval payments
-            $this->updatePaymentStatusForCreditApprovalSplits($payment, $paymentSplits, $creditApprovalSplitsCount);
+            $this->updateCreditApprovalStatus($payment, $paymentSplits, $creditApprovalSplitsCount);
         } else {
             // Update payment status for non-credit approval payments
-            $this->updatePaymentStatusForNonCreditApproval($payment, $paymentSplits);
+            $this->updateNonCreditStatus($payment, $paymentSplits);
         }
     }
 
@@ -688,7 +688,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         });
     }
 
-    private function updatePaymentMethodForCreditApproval($payment)
+    private function updateCreditApprovalMethod($payment)
     {
         info('Master payment code: '.$payment->code.' with credit approval & paid/authorised child payments');
         // Define the frequencies that should result in a PARTIAL_PAYMENT status
@@ -709,7 +709,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
     }
 
-    private function updatePaymentStatusForCreditApprovalSplits($payment, $paymentSplits, $creditApprovalSplitsCount)
+    private function updateCreditApprovalStatus($payment, $paymentSplits, $creditApprovalSplitsCount)
     {
         $totalSplitPaymentCount = $paymentSplits->count();
         $authorisedPaymentCount = $paymentSplits->where('payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
@@ -727,7 +727,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
     }
 
-    private function updatePaymentStatusForNonCreditApproval($payment, $paymentSplits)
+    private function updateNonCreditStatus($payment, $paymentSplits)
     {
         $totalPaidPayments = $this->getTotalPaidPayments($paymentSplits);
 
@@ -740,7 +740,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             info('Master payment code: '.$payment->code.' Some payments are captured. Updating Payment status to PARTIAL_CAPTURED');
             $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]);
         } else {
-            $this->updatePaymentStatusForNoPaidPayments($payment);
+            $this->updateStatusNoPaid($payment);
         }
     }
 
@@ -765,7 +765,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $count;
     }
 
-    private function updatePaymentStatusForNoPaidPayments($payment)
+    private function updateStatusNoPaid($payment)
     {
         $totalCreditPayments = $this->getTotalCreditPayments($payment);
         info('Master payment code: '.$payment->code.' Total credit approved payments: '.$totalCreditPayments);
@@ -783,9 +783,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         if ($payment) {
             if ($payment->frequency == 'upfront') {
-                $this->updatePaymentStatusForUpFront($payment);
+                $this->updateUpfrontStatus($payment);
             } else {
-                $this->updatePaymentStatusNonUpFront($payment);
+                $this->updateNonUpfrontStatus($payment);
             }
             info('Master payment code: '.$payment->code.' Updating lead status');
             app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
