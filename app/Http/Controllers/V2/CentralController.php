@@ -856,7 +856,9 @@ class CentralController extends Controller
             'CAR-SHDAZBRB',
             'CAR-SERCTAGA',
             'CAR-YWM22FYT',
-            'CAR-MGLV75AQ'
+            'CAR-MGLV75AQ',
+            'CAR-HLFMNYBH',
+            'CAR-HLFMNYBH'
         ];
 
         $counter = 0;
