@@ -20,6 +20,7 @@ use App\Repositories\UserRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HomeQuoteService;
+use App\Services\Reports\RenewalBatchReportService;
 use Illuminate\Http\Request;
 
 class HomeQuoteController extends Controller
@@ -32,12 +33,14 @@ class HomeQuoteController extends Controller
 
         $user = auth()->user();
         $isManualAllocationAllowed = $user->isAdmin() || $user->isManagerOrDeputy();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('HomeQuote/Index', [
             'quotes' => $homeQuotes,
             'leadStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'isManualAllocationAllowed' => $isManualAllocationAllowed,
+            'renewalBatches' => $renewalBatches,
         ]);
     }
 

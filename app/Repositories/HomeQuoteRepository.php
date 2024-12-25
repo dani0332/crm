@@ -81,6 +81,21 @@ class HomeQuoteRepository extends BaseRepository
                 'homeQuote',
                 'homeQuote.homeQuoteRequestDetail',
                 'homeQuote.homeQuoteRequestDetail.lostReason',
+                'payments' => function ($q) {
+                    $q->with([
+                        'paymentStatus',
+                        'personalPlan',
+                        'paymentMethod',
+                        'paymentStatusLogs',
+                        'insuranceProvider',
+                        'paymentable',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
+                        'paymentSplits.documents',
+                        'paymentSplits.processJob',
+                    ]);
+                },
             ])
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());

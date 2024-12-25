@@ -17,6 +17,8 @@ const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
 
+console.log('Home Quote Index Page', page.props.quotes);
+
 const loader = reactive({
   table: false,
   export: false,
@@ -701,26 +703,29 @@ const formatDate = dateString =>
         </Link>
       </template>
       <template #item-authorized_at="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ item.authorized_at }}
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ item?.payments[0]?.authorized_at }}
         </p>
       </template>
       <template #item-expiry_date="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ daysAgoFromAuthorizedDate(item.payments[0].authorized_at) }}
         </p>
       </template>
       <template
-        #item-previous_policy_expiry_date="{
-          previous_policy_expiry_date,
-          source,
-        }"
+        #item-previous_policy_expiry_date="item"
       >
         {{
-          source === 'Renewal_upload'
-            ? formatDate(previous_policy_expiry_date)
+          item?.source === 'Renewal_upload'
+            ? formatDate(item?.previous_policy_expiry_date)
             : ''
         }}
+      </template>
+      <template #item-quote_status_id_text="item">
+        {{ item?.quote_status?.text }}
+      </template>
+      <template #item-advisor_id_text="item">
+        {{ item?.advisor?.name }}
       </template>
       <template #item-renewal_batch_text="item">
         <p>
