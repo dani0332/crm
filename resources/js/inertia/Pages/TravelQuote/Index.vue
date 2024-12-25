@@ -70,6 +70,7 @@ const filters = reactive({
   advisor_assigned_date: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  insurer_api_status_id: '',
 });
 
 const loader = reactive({
@@ -130,6 +131,14 @@ const paymentStatusOptions = computed(() => {
     return {
       value: item.id,
       label: item.text,
+    };
+  });
+});
+const insurerApiStatus = computed(() => {
+  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
     };
   });
 });
@@ -719,6 +728,13 @@ watch(
           label="Insurer Commission Tax Invoice No"
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
+        />
+        <ComboBox
+          label="INSURER API STATUS"
+          v-model="filters.insurer_api_status_id"
+          placeholder="Select Status"
+          :options="insurerApiStatus"
+          class="w-full"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

@@ -15,7 +15,32 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->addReceiveNotificationsPermission();
+        try {
+            //permission for upload Health Rates and Coverages
+            $uploadHealthRatesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_RATES)->first();
+            if (! $uploadHealthRatesPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::UPLOAD_HEALTH_RATES,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            $uploadHealthCoveragesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_COVERAGES)->first();
+            if (! $uploadHealthCoveragesPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        } catch (\Throwable $th) {
+            info('RolePermission Seeder issue Error:'.$th->getMessage().' Line:'.$th->getLine());
+            throw $th;
+        }
+        // $this->addReceiveNotificationsPermission();
+        $this->searchModulePermissions();
     }
 
     private function addReceiveNotificationsPermission()
@@ -36,6 +61,28 @@ class RolePermissionSeeder extends Seeder
                 info("Permission {$receiveNotificationsPermission->name} assigned to role {$role->name}");
             } else {
                 info("Role {$role->name} already has permission {$receiveNotificationsPermission->name}");
+            }
+        }
+    }
+
+    private function searchModulePermissions(): void
+    {
+        // Add Search across all LOBs permission
+        $searchAcrossLOBsPermissions = [PermissionsEnum::SEARCH_ALL_LEAD_LOB, PermissionsEnum::DATA_EXTRACTION_SEARCH_ALL_LEADS];
+
+        foreach ($searchAcrossLOBsPermissions as $searchAcrossLOBsPermission) {
+            $permission = Permission::where('name', $searchAcrossLOBsPermission)->first();
+
+            if (! $permission) {
+                Permission::create([
+                    'name' => $searchAcrossLOBsPermission,
+                    'guard_name' => 'web',
+                ]);
+                $role = Role::where('name', RolesEnum::Admin)->first();
+
+                if (! $role->hasPermissionTo($searchAcrossLOBsPermission)) {
+                    $role->givePermissionTo($searchAcrossLOBsPermission);
+                }
             }
         }
     }

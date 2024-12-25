@@ -718,7 +718,7 @@ class CRUDController extends Controller
 
             [$allowQuoteLogAction, $carLostChangeStatus, $leadStatuses] = $this->carQuoteService->checkCarLostPermissions($record, $paymentEntityModel, $leadStatuses);
 
-            if (($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) && $leadStatuses != null) {
+            if (($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) && $leadStatuses != null && ! is_array($leadStatuses)) {
                 $leadStatuses = $leadStatuses->whereNotIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::EarlyRenewal])->all();
             }
 
@@ -1519,9 +1519,9 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $ignoreModelTypes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
+        $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
         if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
-            $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
+            $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
             $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();

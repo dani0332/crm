@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -16,11 +17,11 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
-use Auth;
 use Carbon\Carbon;
 use Config;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class BusinessQuoteService extends BaseService
@@ -188,17 +189,6 @@ class BusinessQuoteService extends BaseService
                 $payment->orderBy('created_at');
             },
         ])->first();
-    }
-
-    public function updateChildRecord($id)
-    {
-        BusinessQuoteRequestDetail::updateOrCreate(
-            ['business_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
     }
 
     public function getDetailEntity($id)
@@ -653,10 +643,8 @@ class BusinessQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::BUSINESS, BusinessQuoteRequestDetail::class, 'business_quote_request_id');
         }
 
         return $result;

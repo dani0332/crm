@@ -7,9 +7,9 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersIdEnum;
-use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
@@ -64,6 +64,16 @@ class QuoteAllocation extends Command
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeTravelAllocation(QuoteTypeId::Travel, $to, $chunkSize, $allocationStartDate);
+
+            // Disabled Auto Allocation for now as this feature is not needed at the moment
+            /*
+            $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::CYCLE, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
+            */
         } else {
             info('Quote Allocation Command is turned Off');
         }
@@ -112,8 +122,7 @@ class QuoteAllocation extends Command
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
 
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $currentTeamId);
-            $allocationStrategy->executeSteps();
+            QuoteTypes::CAR->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
             info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
         }
@@ -125,7 +134,7 @@ class QuoteAllocation extends Command
     {
         $processedRecords = 0;
         $leads = HealthQuote::whereNull('advisor_id')
-            ->select('uuid')
+            ->select('uuid', 'payment_status_id', 'sic_advisor_requested', 'quote_status_id', 'lead_allocation_failed_at', 'sic_flow_enabled')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
@@ -141,10 +150,18 @@ class QuoteAllocation extends Command
             })
             ->take($chunkSize);
 
+        info("For Health - leads fetch query is : {$leads->toRawSql()}");
+
         foreach ($leads->get() as $lead) {
-            info('Processing Health record for Quote Allocation with uuid: '.$lead->uuid);
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
-            $allocationStrategy->executeSteps();
+            info("Processing Health record for Quote Allocation with uuid: {$lead->uuid}", [
+                'uuid' => $lead->uuid,
+                'payment_status_id' => $lead->payment_status_id,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+            ]);
+            QuoteTypes::HEALTH->allocate(uuid: $lead->uuid);
             $processedRecords++;
             info('Processed Health record for Quote Allocation with uuid: '.$lead->uuid);
         }
@@ -155,8 +172,9 @@ class QuoteAllocation extends Command
     public function executeTravelAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
     {
         $processedRecords = 0;
-        $leads = TravelQuote::whereNull('advisor_id')
-            ->select('uuid', 'payment_status_id')
+        $leads = TravelQuote::with('parent')
+            ->whereNull('advisor_id')
+            ->select('uuid', 'payment_status_id', 'sic_advisor_requested', 'quote_status_id', 'lead_allocation_failed_at', 'sic_flow_enabled')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
@@ -169,17 +187,33 @@ class QuoteAllocation extends Command
             })
             ->take($chunkSize);
 
+        info("For Travel - leads fetch query is : {$leads->toRawSql()}");
+
         // Get the teamId once before the loop
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         foreach ($leads->get() as $lead) {
-            info('Processing Travel record for Quote Allocation with uuid: '.$lead->uuid);
+            // Skip the child leads if the parent lead does not have an advisor
+            if ($lead->isChild() && empty($lead->parent?->advisor_id)) {
+                info('Skipping Travel record for Quote Allocation with uuid: '.$lead->uuid.' as parent lead does not have an advisor');
+
+                continue;
+
+            }
+
+            info("Processing Travel record for Quote Allocation with uuid: {$lead->uuid}", [
+                'uuid' => $lead->uuid,
+                'payment_status_id' => $lead->payment_status_id,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+            ]);
 
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
 
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $currentTeamId);
-            $allocationStrategy->executeSteps();
+            QuoteTypes::TRAVEL->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
             info('Processed Travel record for Quote Allocation with uuid: '.$lead->uuid);
         }
@@ -187,10 +221,10 @@ class QuoteAllocation extends Command
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
 
-    private function logProcessedRecords($processedRecords, $quoteType)
+    private function logProcessedRecords($processedRecords, mixed $quoteType)
     {
         if ($processedRecords === 0) {
-            info('No records found for '.QuoteTypeId::getDescription($quoteType));
+            info('No records found for '.($quoteType instanceof QuoteTypes ? $quoteType->value : QuoteTypeId::getDescription($quoteType)));
         }
     }
 
@@ -220,10 +254,31 @@ class QuoteAllocation extends Command
                 continue;
             }
             info('Processing record for Bike Quote Allocation with uuid: '.$lead->uuid);
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
-            $allocationStrategy->executeSteps();
+            QuoteTypes::BIKE->allocate(uuid: $lead->uuid);
             $processedRecords++;
             info('Processed record for Bike Quote Allocation with uuid: '.$lead->uuid);
+        }
+        $this->logProcessedRecords($processedRecords, $quoteType);
+    }
+
+    private function executeAllocation(QuoteTypes $quoteType, $to, $chunkSize, $allocationStartDate)
+    {
+        $processedRecords = 0;
+        $leads = $quoteType->model()::whereNull('advisor_id')
+            ->select('uuid', 'payment_status_id')
+            ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->orderBy('created_at', 'desc')
+            ->when($quoteType->isPersonalQuote(), function ($q) use ($quoteType) {
+                $q->where('quote_type_id', $quoteType->id());
+            })
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->take($chunkSize);
+
+        foreach ($leads->get() as $lead) {
+            info("Processing record for Quote Allocation with uuid: {$lead->uuid} and Quote Type: {$quoteType->value}");
+            $quoteType->allocate(uuid: $lead->uuid);
+            $processedRecords++;
+            info("Processed record for Quote Allocation with uuid: {$lead->uuid} and Quote Type: {$quoteType->value}");
         }
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
