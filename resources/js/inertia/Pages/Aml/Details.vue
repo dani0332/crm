@@ -23,6 +23,8 @@ const props = defineProps({
   lookups: Object,
   cardHolderName: Object,
   amlStatusName: String,
+  quoteTypeIdEnum: Array,
+  quoteStatusEnums: Array,
 });
 
 const page = usePage();

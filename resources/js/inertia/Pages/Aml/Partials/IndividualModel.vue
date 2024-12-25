@@ -21,6 +21,7 @@ const props = defineProps({
   kycLogs: Array,
 });
 
+const page = usePage();
 const loader = ref({
   search: false,
 });
@@ -69,6 +70,13 @@ const customerAmlOnly = () => {
   validateCustomerFields.value = false;
   return true;
 };
+
+const gender = computed(() => {
+    return [
+        { value: 'M', label: 'Male'},
+        { value: 'F', label: 'Female'}
+    ];
+});
 
 const insuredFormDetails = useForm({
   customer_id: props.quoteDetails.customer_id,
@@ -120,6 +128,7 @@ const insuredFormDetails = useForm({
       : null),
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
+  chassis_number: props.quoteDetails?.car_quote_request_detail?.chassis_number ?? null,
 
   entity_id: props.entityDetails?.entity?.id,
   trade_license_no: props.entityDetails?.entity?.trade_license_no,
@@ -138,6 +147,16 @@ const rules = {
     return (
       pattern.test(v) || 'Special characters are not allowed in Insured Name'
     );
+  },
+
+  chassisNumberCheck: v => {
+      const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
+      const lengthValid =
+          v?.length >= 8 &&
+          v?.length <= 17;
+      const isAlphanumeric = regex.test(v);
+
+      return (lengthValid && isAlphanumeric) || 'The entered value does not meet the required length of 8 to 17 characters';
   },
 };
 
@@ -234,6 +253,7 @@ const insuredDetailsSubmit = isValid => {
       insuredFormDetails.nationality_id === null &&
       validateCustomerFields.value === false;
   }
+
   if (!isValid) return;
 
   if (
@@ -339,7 +359,183 @@ const linkEntity = () => {
     .finally(() => (entityDetailsFound.value = false));
 };
 
+const customerDetailsFound = ref(false);
+const customerDetailsSearch = reactive({
+    id_type: '',
+    id_number: '',
+});
+
+const submitCustomerSearch = () => {
+    if (customerDetailsSearch.id_type === '' || customerDetailsSearch.id_number === '') {
+        // TODO:: Need to proper validate before search request
+        // if (customerDetailsSearch.id_type === 'emiratesId') {
+        //     isEmirateIdRule(customerDetailsSearch.id_number);
+        // }
+
+        notification.error({
+            title: 'ID Type or ID Number is missing',
+            position: 'top',
+        });
+
+        return;
+    }
+
+    loader.value.search = true;
+    let url = `/kyc/aml-fetch-customer-details?id_type=${customerDetailsSearch.id_type}&id_number=${customerDetailsSearch.id_number}`;
+    axios
+        .get(url)
+        .then(res => {
+            if (res.data.status) {
+                let response = res.data.response;
+                customerDetailsFound.value = true;
+
+                insuredFormDetails.insured_first_name = response.insured_first_name;
+                insuredFormDetails.insured_last_name = response.insured_last_name;
+                insuredFormDetails.nationality_id = response.nationality_id;
+                insuredFormDetails.dob = response.dob;
+
+                notification.success({
+                    title: res.data.message,
+                    position: 'top',
+                });
+            } else {
+                notification.error({
+                    title: res.data.message,
+                    position: 'top',
+                });
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        })
+        .finally(() => (loader.value.search = false));
+};
+
+const linkCustomerDetails = () => {
+    linkLoader.value = true;
+    let ScreeningCustomerDetails = {
+        id_type: customerDetailsSearch.id_type,
+        id_number: customerDetailsSearch.id_number,
+        insured_first_name: insuredFormDetails.insured_first_name,
+        insured_last_name: insuredFormDetails.insured_last_name,
+        nationality: insuredFormDetails.nationality_id,
+        gender: insuredFormDetails.gender,
+        dob: insuredFormDetails.dob,
+    };
+    axios
+        .post(route('link-customer-details'), ScreeningCustomerDetails)
+        .then(res => {
+            if (res.data.status) {
+                let response = res.data.response;
+
+                insuredFormDetails.insured_first_name = response.insured_first_name;
+                insuredFormDetails.insured_last_name = response.insured_last_name;
+                insuredFormDetails.nationality_id = response.nationality_id;
+                insuredFormDetails.dob = response.dob;
+                insuredFormDetails.gender = response.gender;
+
+                notification.success({
+                    title: res.data.message,
+                    position: 'top',
+                });
+            }
+            linkLoader.value = false;
+        })
+        .catch(err => {
+            console.log(err);
+        })
+        .finally(() => (customerDetailsFound.value = false));
+};
+
+function clearCustomerDetails() {
+    insuredFormDetails.insured_first_name = '';
+    insuredFormDetails.insured_last_name = '';
+    insuredFormDetails.nationality_id = null;
+    insuredFormDetails.dob = null;
+    insuredFormDetails.gender = null;
+
+    customerDetailsFound.value = false;
+
+}
+
 const is_insured = ref(0);
+
+const isEmirateIdRule = (v) => {
+    const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
+    if (customerDetailsSearch.id_type === 'emiratesId') {
+        return pattern.test(v) || 'Enter the correct EID number format';
+    } else {
+        return true;
+    }
+};
+
+const documentIDTypeForScreening = computed(() => {
+    return props.lookups.id_type
+        ?.filter(docIDTypeScreening => ['emiratesId', 'passport'].includes(docIDTypeScreening.code))
+        ?.map(docIDTypeScreening => ({
+            value: docIDTypeScreening.code,
+            label: docIDTypeScreening.text,
+        }));
+});
+
+const applyScreeningIdNumMasking = () => {
+    let screeningIdNumber = customerDetailsSearch.id_number.replace(/\D/g, "");
+    if (screeningIdNumber?.length > 15) {
+        screeningIdNumber = screeningIdNumber.substring(0, 15); // Limit to 15 characters
+    }
+    if (screeningIdNumber?.length <= 3) {
+        screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{0,})/, "$1-$2");
+    } else if (screeningIdNumber?.length <= 7) {
+        screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{4})(\d{0,})/, "$1-$2-$3");
+    } else if (screeningIdNumber?.length <= 13) {
+        screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{4})(\d{7})(\d{0,})/, "$1-$2-$3-$4");
+    } else {
+        screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{4})(\d{7})(\d{1,})/, "$1-$2-$3-$4");
+    }
+
+    // Update the value
+    customerDetailsSearch.id_number = screeningIdNumber;
+};
+
+const validatePassportNumber = event => {
+    const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
+    const lengthValid =
+        customerDetailsSearch.id_number?.length >= 8 &&
+        customerDetailsSearch.id_number?.length <= 9;
+    const isAlphanumeric = regex.test(customerDetailsSearch.id_number);
+
+    if (customerDetailsSearch.id_number && (!lengthValid || !isAlphanumeric)) {
+        notification.error({
+            title: 'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.',
+            position: 'top',
+        });
+    }
+};
+
+
+
+const chassisNumberDisabled = computed(() => {
+    let disallowedStatus = [
+        page.props.quoteStatusEnums.PolicySentToCustomer,
+        page.props.quoteStatusEnums.PolicyBooked,
+    ];
+    return disallowedStatus.includes(props?.quoteDetails?.quote_status_id);
+});
+
+const chassisNumberValidate = event => {
+    const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
+    const lengthValid =
+        insuredFormDetails.chassis_number?.length >= 8 &&
+        insuredFormDetails.chassis_number?.length <= 17;
+    const isAlphanumeric = regex.test(insuredFormDetails.chassis_number);
+
+    if (insuredFormDetails.chassis_number && (!lengthValid || !isAlphanumeric)) {
+        notification.error({
+            title: 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
+            position: 'top',
+        });
+    }
+};
 
 watch(
   props.membersDetails,
@@ -348,6 +544,13 @@ watch(
   },
   { immediate: true },
 );
+
+onMounted(() => {
+    if (props.quoteType.id === page.props.quoteTypeIdEnum.Travel) {
+        customerDetailsSearch.id_type = (props.quoteDetails.direction_code === 'travelUaeInbound') ? 'passport' : 'emiratesId';
+    }
+});
+
 </script>
 
 <template>
@@ -367,7 +570,56 @@ watch(
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
+        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+          <x-field label="ID type">
+              <x-select
+                  v-model="customerDetailsSearch.id_type"
+                  :options="documentIDTypeForScreening"
+                  placeholder="ID type"
+              />
+          </x-field>
+          <x-field label="ID number">
+              <template v-if="customerDetailsSearch.id_type === 'emiratesId'">
+                  <x-input
+                      v-model="customerDetailsSearch.id_number"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="applyScreeningIdNumMasking"
+                  />
+              </template>
+              <template v-else>
+                  <x-input
+                      v-model="customerDetailsSearch.id_number"
+                      :placeholder="customerDetailsSearch.id_type === '' ? 'Enter ID Number' : 'Enter Passport Number'"
+                      @blur="validatePassportNumber"
+                  />
+              </template>
+
+          </x-field>
+          <template v-if="!customerDetailsFound">
+              <x-field>
+                  <x-button
+                      @click.prevent="submitCustomerSearch"
+                      size="sm"
+                      color="primary"
+                      :loading="loader.search"
+                  >
+                      Search
+                  </x-button>
+              </x-field>
+          </template>
+          <template v-else>
+              <div class="text-left space-x-4">
+                  <x-button size="sm" color="info" @click.prevent="clearCustomerDetails"> Cancel </x-button>
+                  <x-button
+                      size="sm"
+                      color="orange"
+                      @click.prevent="linkCustomerDetails"
+                      :loading="linkLoader"
+                  >
+                      Link
+                  </x-button>
+              </div>
+          </template>
           <x-field label="Insured First Name">
             <x-input
               v-model="insuredFormDetails.insured_first_name"
@@ -406,7 +658,15 @@ watch(
               :utc="true"
             />
           </x-field>
-          <div class="flex gap-5 mb-5 align-center">
+          <x-field label="Gender">
+              <x-select
+                  v-model="insuredFormDetails.screening_gender"
+                  :options="gender"
+                  placeholder="Gender"
+                  :rules="[isRequired]"
+              />
+          </x-field>
+          <div class="flex gap-5 align-center">
             <p>Is the insured the payer?</p>
             <x-form-group v-model="is_insured">
               <x-radio :value="1" label="Yes" />
@@ -416,6 +676,44 @@ watch(
         </dl>
 
         <x-divider class="mb-4 mt-1" />
+        <div v-if="quoteType.id === page.props.quoteTypeIdEnum.Car">
+            <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+                <h3 class="font-semibold text-primary-800 text-lg">Additional Vehicle Details</h3>
+            </div>
+
+            <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+                <template v-if="chassisNumberDisabled">
+                    <div>
+                        <x-tooltip placement="bottom">
+                            <label
+                                class="font-medium text-gray-700 text-sm underline decoration-dotted decoration-primary-600"
+                            >
+                                Chassis Number
+                            </label>
+                            <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Cancellation from Inception and Reissuance' </template>
+                        </x-tooltip>
+                        <x-input
+                            v-model="insuredFormDetails.chassis_number"
+                            placeholder="Chassis Number"
+                            type="text"
+                            class="w-full"
+                            :disabled="chassisNumberDisabled"
+                        />
+                    </div>
+                </template>
+                <x-field label="Chassis Number" required v-else>
+                    <x-input
+                        v-model="insuredFormDetails.chassis_number"
+                        :rules="[isRequired, rules.chassisNumberCheck]"
+                        placeholder="Chassis Number"
+                        type="text"
+                        class="w-full"
+                        @blur="chassisNumberValidate"
+                    />
+                </x-field>
+            </dl>
+            <x-divider class="mb-4 mt-1" />
+        </div>
 
         <MemberDetailsModel
           :quoteType="quoteType"

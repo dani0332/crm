@@ -288,13 +288,20 @@ const chassisNumberValidate = event => {
 
     if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
         event.preventDefault();
-        // TODO:: isko daikhna hai error remove na ho jab tak set na ho field
         notification.error({
             title: 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
             position: 'top',
         });
     }
 };
+
+const gender = computed(() => {
+    return [
+        { value: 'M', label: 'Male'},
+        { value: 'F', label: 'Female'}
+    ];
+});
+
 </script>
 
 <template>
@@ -482,6 +489,14 @@ const chassisNumberValidate = event => {
           />
         </x-field>
 
+        <x-field label="Gender">
+            <x-select
+                v-model="quoteForm.gender"
+                :options="gender"
+                placeholder="Gender"
+            />
+        </x-field>
+
         <x-field label="UAE LICENCE HELD FOR" required>
           <ComboBox
             v-model="quoteForm.uae_license_held_for_id"
@@ -580,7 +595,6 @@ const chassisNumberValidate = event => {
                           :error="quoteForm.errors.chassis_number"
                       />
                   </x-field>
-
               </template>
           </div>
 

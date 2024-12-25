@@ -1640,6 +1640,13 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
+
+function genderFormatForProfile(gender) {
+    if (!gender) return gender;
+
+    return (gender == 'M') ? 'Male' : 'Female';
+};
+
 </script>
 
 <template>
@@ -2206,7 +2213,7 @@ const allowStatusUpdate = computed(() => {
                       v-model="customerProfileForm.insured_first_name"
                       :rules="[isRequired]"
                       placeholder="INSURED FIRST NAME"
-                      class="w-full"
+                      class="!mb-0 w-full"
                       :disabled="
                         !isProfileUpdateAllow ||
                         linkedQuoteDetails.childLeadsCount > 0
@@ -2221,7 +2228,7 @@ const allowStatusUpdate = computed(() => {
                       v-model="customerProfileForm.insured_last_name"
                       :rules="[isRequired]"
                       placeholder="INSURED LAST NAME"
-                      class="w-full"
+                      class="!mb-0 w-full"
                       :disabled="
                         !isProfileUpdateAllow ||
                         linkedQuoteDetails.childLeadsCount > 0
@@ -2252,14 +2259,20 @@ const allowStatusUpdate = computed(() => {
                   </dt>
                   <dd>{{ fullAddress }}</dd>
                 </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">DATE OF BIRTH</dt>
+                      <dd>{{ record.dob }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">GENDER</dt>
+<!--                      genderFormatForProfile(record.gender)-->
+                      <dd></dd>
+                  </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
                   <dd>{{ record.nationality_id_text }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">DATE OF BIRTH</dt>
-                  <dd>{{ record.dob }}</dd>
-                </div>
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
                   <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
@@ -2271,7 +2284,7 @@ const allowStatusUpdate = computed(() => {
                       v-model="customerProfileForm.emirates_id_number"
                       :rules="[isRequired]"
                       placeholder="EMIRATES ID NUMBER"
-                      class="w-full"
+                      class="!mb-0 w-full"
                       :disabled="
                         !isProfileUpdateAllow ||
                         linkedQuoteDetails.childLeadsCount > 0
@@ -2291,6 +2304,7 @@ const allowStatusUpdate = computed(() => {
                         linkedQuoteDetails.childLeadsCount > 0
                       "
                       :min-date="new Date()"
+                      class="!mb-0"
                     />
                   </dd>
                 </div>

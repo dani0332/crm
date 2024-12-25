@@ -113,6 +113,7 @@ class AMLService
                 'carTypeInsurance',
                 'claimHistory',
                 'nationality',
+                'carQuoteRequestDetail',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
             $quoteRequestDetails = HomeQuote::with([
@@ -575,7 +576,7 @@ class AMLService
         return AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningNA);
     }
 
-    public function amlScreeningGIG($quoteTypeId, $quoteDetails, $customerType)
+    public function amlScreeningGIG($request, $quoteTypeId, $quoteDetails, $customerType)
     {
         $paymentDetails = Payment::with('insuranceProvider')->where([
             'paymentable_type' => $quoteDetails->getMorphClass(),
@@ -596,6 +597,15 @@ class AMLService
             ];
 
             $requestQuoteDetails = $detailsReference[$quoteTypeId]['model']::where($detailsReference[$quoteTypeId]['foreignKey'], $quoteDetails->id)->first();
+            if ($quoteTypeId == QuoteTypes::CAR->id()) {
+                $requestQuoteDetails->chassis_number = $request['chassis_number'];
+                if ($requestQuoteDetails->isDirty()) {
+                    $requestQuoteDetails->save();
+                    $requestQuoteDetails->refresh();
+                    // TODO:: Reminder need to call update premium API
+                }
+            }
+
             $chassisNumber = $requestQuoteDetails?->chassis_number;
         }
 

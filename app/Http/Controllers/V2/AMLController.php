@@ -18,6 +18,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\KycLogs;
+use App\Facades\Ken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -316,6 +317,8 @@ class AMLController extends Controller
             'lookups' => $lookups,
             'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->aml_status] ?? null,
             'cardHolderName' => $cardHolderName,
+            'quoteTypeIdEnum' => QuoteTypeId::asArray(),
+            'quoteStatusEnums' => QuoteStatusEnum::asArray(),
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -412,8 +415,7 @@ class AMLController extends Controller
             $insurerAMLScreeningResponse = [];
             if (in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id()]) && $AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 session()->put('insurerAMLScreeningResponse');
-                //                app(AMLService::class)->amlScreeningGIG($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual);
-                InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual);
+                InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
                 $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
                 $insurerAMLScreeningResponse = [
                     'status' => $getInsurerScreeningResponse['status'],
@@ -547,6 +549,36 @@ class AMLController extends Controller
         )->where('id', $request->entity_id)->first();
 
         return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity Linked Successfully']);
+    }
+
+    public function fetchCustomerDetails(Request $request)
+    {
+        // TODO:: Passport filtration is pending
+        $columnToFilter = $request->id_type == 'emiratesId' ? 'emirates_id_number' : 'passport';
+        $customerDetails = Customer::where($columnToFilter, $request->id_number)->first();
+
+        if ($customerDetails) {
+            return response()->json(['status' => true, 'response' => $customerDetails, 'message' => 'Customer found with the entered ID number']);
+        }
+
+        return response()->json(['status' => false, 'message' => 'No Customer found with the entered ID number']);
+    }
+
+    public function linkCustomerDetails(Request $request)
+    {
+        // TODO:: Passport filtration is pending
+        $columnToFilter = $request->id_type == 'emiratesId' ? 'emirates_id_number' : 'passport';
+        $customerDetails = Customer::where($columnToFilter, $request->id_number)->first();
+
+        $customerDetails->update([
+            'insured_first_name' => $request->insured_first_name,
+            'insured_last_name' => $request->insured_last,
+            'dob' => $request->dob,
+            'gender' => $request->gender,
+            'nationality_id' => $request->nationality_id,
+        ]);
+
+        return response()->json(['status' => true, 'response' => $customerDetails, 'message' => 'Customer Details Linked Successfully']);
     }
 
     public function sendBridgerResponse(Request $request)

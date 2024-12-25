@@ -95,7 +95,7 @@ quoteDetail();
 </script>
 <template>
   <div class="grid sm:grid-cols-2">
-    <dt class="font-medium">Risk Category</dt>
+    <dt class="font-medium">RISK CATEGORY</dt>
     <dd @click.prevent="riskRatingScore(quote)">
       {{
         quote.risk_score == null && modals.risk_score_override == null
