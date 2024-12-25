@@ -65,7 +65,7 @@ const updateSelectedPlan = () => {
   }
 
   if (props.quoteType.toLocaleLowerCase() == 'home') {
-    data.plan_id = props.plan.planId;
+    // handle home things if there are any
   }
 
   axios
