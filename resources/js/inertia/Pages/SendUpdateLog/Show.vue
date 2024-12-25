@@ -38,6 +38,7 @@ const props = defineProps({
   isPlanDetailAvailable: Boolean,
   quoteLink: String,
   isEditDisabledForQueuedBooking: Boolean,
+  insuranceProviderId: Number,
   isCommVatNotAppEnabled: Boolean,
   isSentOrBooked: Boolean,
 });
@@ -220,14 +221,6 @@ function handleErrorStatusUpdate(newStatus) {
   isAdditionalFieldError.value = newStatus;
 }
 
-const isLegacyPolicy = computed(() => {
-  return (
-    props.quote?.insly_migrated ||
-    props.realQuote?.insly_migrated ||
-    props.realQuote?.insly_id
-  );
-});
-
 const showBookingFailedAlert = () => {
   if (
     props.isEditDisabledForQueuedBooking &&
@@ -244,6 +237,14 @@ const showBookingFailedAlert = () => {
 
 onBeforeMount(() => {
   showBookingFailedAlert();
+});
+
+const isLegacyPolicy = computed(() => {
+  return (
+    props.quote?.insly_migrated ||
+    props.realQuote?.insly_migrated ||
+    props.realQuote?.insly_id
+  );
 });
 </script>
 
@@ -548,7 +549,7 @@ onBeforeMount(() => {
       v-if="isLegacyPolicy"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
-      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
+      :insurance-provider-id="props.insuranceProviderId"
     />
 
     <!-- Indicative additional price & Plan details comp -->
