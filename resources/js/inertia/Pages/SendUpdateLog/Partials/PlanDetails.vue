@@ -171,7 +171,7 @@ onMounted(() => {
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <x-tooltip v-if="!isPlanDetails" placement="left">
+          <x-tooltip v-if="!isPlanDetails">
             <label
               class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700"
             >
@@ -195,7 +195,7 @@ onMounted(() => {
             <!-- price VAT not applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -234,7 +234,7 @@ onMounted(() => {
                 "
               >
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -265,7 +265,7 @@ onMounted(() => {
             <!-- price VAT applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -310,7 +310,7 @@ onMounted(() => {
                 "
               >
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -341,7 +341,7 @@ onMounted(() => {
             <!-- Total price -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >

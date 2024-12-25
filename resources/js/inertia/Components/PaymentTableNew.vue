@@ -3373,6 +3373,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                 <x-tooltip>
                   <div v-if="readOnlyMode.isDisable === true">
                     <x-button
+                      class="focus:ring-2 focus:ring-black"
                       v-if="can(permissionEnum.PaymentsCreate)"
                       size="sm"
                       color="emerald"
