@@ -222,28 +222,28 @@ function handleErrorStatusUpdate(newStatus) {
 }
 
 const showBookingFailedAlert = () => {
-    if (
-        props.isEditDisabledForQueuedBooking &&
-        props.sendUpdateLog?.status ===
-        props.sendUpdateStatusEnum.UPDATE_BOOKING_FAILED
-    ) {
-        notification.error({
-            title: 'Endorsement Booking Failed! Please contact finance',
-            position: 'top',
-            timeout: 30000,
-        });
-    }
+  if (
+    props.isEditDisabledForQueuedBooking &&
+    props.sendUpdateLog?.status ===
+      props.sendUpdateStatusEnum.UPDATE_BOOKING_FAILED
+  ) {
+    notification.error({
+      title: 'Endorsement Booking Failed! Please contact finance',
+      position: 'top',
+      timeout: 30000,
+    });
+  }
 };
 
 onBeforeMount(() => {
-    showBookingFailedAlert();
+  showBookingFailedAlert();
 });
 
 const isLegacyPolicy = computed(() => {
   return (
-      props.quote?.insly_migrated ||
-      props.realQuote?.insly_migrated ||
-      props.realQuote?.insly_id
+    props.quote?.insly_migrated ||
+    props.realQuote?.insly_migrated ||
+    props.realQuote?.insly_id
   );
 });
 </script>
@@ -546,10 +546,10 @@ const isLegacyPolicy = computed(() => {
     </div>
 
     <LazyProviderDetails
-        v-if="isLegacyPolicy"
-        :sendUpdateLog="sendUpdateLog"
-        :insuranceProviders="props.insuranceProviders"
-        :insurance-provider-id="props.insuranceProviderId"
+      v-if="isLegacyPolicy"
+      :sendUpdateLog="sendUpdateLog"
+      :insuranceProviders="props.insuranceProviders"
+      :insurance-provider-id="props.insuranceProviderId"
     />
 
     <!-- Indicative additional price & Plan details comp -->

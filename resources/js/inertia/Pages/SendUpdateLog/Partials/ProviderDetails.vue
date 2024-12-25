@@ -15,7 +15,7 @@ const props = defineProps({
   insuranceProviderId: {
     type: Number,
     required: false,
-  }
+  },
 });
 
 const state = reactive({
@@ -34,7 +34,8 @@ const insuranceProvidersOptions = computed(() => {
 const providerDetailsForm = useForm({
   insurance_provider_id:
     props.sendUpdateLog?.insurance_provider_id ||
-    props?.insuranceProviderId || null,
+    props?.insuranceProviderId ||
+    null,
   send_update_log_id: props.sendUpdateLog.id,
 });
 
