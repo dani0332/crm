@@ -985,7 +985,7 @@ class RenewalBatchReportService extends BaseService
                                 (health_quote_request.quote_status_id IN (:transactionApproved) and health_quote_request.quote_status_date < ":m2ReleaseDate")
                             )
                             AND health_quote_request.advisor_id IN (:advisorId)
-                            THEN 1 ELSE 0 END) AS :as',
+                            THEN 1 ELSE 0 END) AS ":as"',
                         $this->getSuperRetentionRenewedBindings([
                             ':advisorId' => $segmentAdvisorsIdString,
                             ':as' => "{$renewedAsColumn}_for_{$batchName}",
