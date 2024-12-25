@@ -3348,7 +3348,14 @@ const onAddUpdate = () => {
               </template>
 
               <template
-                #item-providerName="{ providerName, isManualPlan, isHidden, id, copayCode, planCode }"
+                #item-providerName="{
+                  providerName,
+                  isManualPlan,
+                  isHidden,
+                  id,
+                  copayCode,
+                  planCode,
+                }"
               >
                 <p>
                   {{ providerName }}
@@ -3379,7 +3386,11 @@ const onAddUpdate = () => {
                     Currently Online
                   </x-tag>
                   <x-tag
-                    v-if="selectedProviderPlan.id == id && copayCode == quote.renewal_upload_copay_code && planCode == quote.renewal_upload_plan_code"
+                    v-if="
+                      selectedProviderPlan.id == id &&
+                      copayCode == quote.renewal_upload_copay_code &&
+                      planCode == quote.renewal_upload_plan_code
+                    "
                     size="xs"
                     class="mt-0.5 text-[10px] bg-red-500 text-white"
                   >

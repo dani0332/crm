@@ -1,96 +1,207 @@
 <script setup>
-  import { ref } from 'vue';
-	const notification = useToast();
-	const page = usePage();
-	const uploadForm = useForm({
-		csvFile: '',
-		lob: ''
-	});
-	let file = '';
-	let files = [];
-	defineProps({
-		azureStorageUrl: String,
-		azureStorageContainer: String,
-    lobs: Object,
-	});
+import { ref } from 'vue';
+const notification = useToast();
+const page = usePage();
+const uploadForm = useForm({
+  csvFile: '',
+  lob: '',
+});
+let file = '';
+let files = [];
+defineProps({
+  azureStorageUrl: String,
+  azureStorageContainer: String,
+  lobs: Object,
+});
 
-	let errors = {
-		type: '',
-		step: '',
-	};
-  const tableData = [
-    { id: 1, name: 'Customer Name', description: 'Customer Name', required: 'No', maxSize: 100 },
-    { id: 2, name: 'Customer Email', description: 'Customer Email', required: 'No', maxSize: 255 },
-    { id: 3, name: 'Customer Mobile', description: 'Customer Mobile Number', required: 'No', maxSize: 100 },
-    { id: 4, name: 'Plan', description: 'Insurer Plan Code', required: 'Yes', maxSize: 50 },
-    { id: 5, name: 'Previous Policy Number', description: 'Expiring policy number', required: 'Yes', maxSize: 50 },
-    { id: 6, name: 'Previous Policy Expiry Date', description: 'End date of the expiring policy - Format should be DD/MM/YYYY', required: 'Yes', maxSize: 10 },
-    { id: 7, name: 'Advisor Email', description: "Renewal advisor's email", required: 'No', maxSize: 100 },
-    { id: 8, name: 'Renewal Premium', description: 'Renewal Premium', required: 'No', maxSize: 150 },
-    { id: 9, name: 'Renewal Co-Pay', description: 'Renewal copay code', required: 'Yes', maxSize: 300 },
-    { id: 10, name: 'Member Names', description: 'Member Names', required: 'No', maxSize: 500 },
-    { id: 11, name: 'DOB', description: "Customer's DOB", required: 'Yes', maxSize: 100 },
-    { id: 12, name: 'Nationality', description: "Customer's Nationality", required: 'Yes', maxSize: 300 },
-    { id: 13, name: 'Gender', description: "Customer's Gender", required: 'Yes', maxSize: 50 },
-    { id: 14, name: 'Member Category', description: 'Member Category', required: 'Yes', maxSize: 300 },
-    { id: 15, name: 'Emirate of Visa', description: 'Emirate of visa specified in expiring policy', required: 'Yes', maxSize: 100 },
-    { id: 16, name: 'Payment Link', description: 'Payment link from insurer', required: 'No', maxSize: 400 },
-    { id: 17, name: 'Previous Policy Premium', description: 'Expiring premium', required: 'Yes', maxSize: 15 },
-    { id: 18, name: 'Notes', description: 'Any other information', required: 'No', maxSize: 500 },
-  ];
-	function handleFileUpload(event) {
-		files = event;
-		file = event[0].file;
-		uploadForm.csvFile = event[0];
-	}
-	function onSubmit(isValid) {
-		if (isValid) {
-			let formData = new FormData();
-			formData.append('file_name', file);
-			formData.append('lob', uploadForm.lob);
-			formData.append('renewals_upload_type', 'update');
-			axios
-				.post('/renewals/upload-update', formData, {
-					headers: {
-						'Content-Type': 'multipart/form-data',
-					},
-				})
-				.then(() => {
-					notification.success({
-						title: 'Uploaded renewals records has been stored',
-						position: 'top',
-					});
-					files = [];
-					uploadForm.setError([]);
-					uploadForm.errors.file_name = [];
-					uploadForm.errors.type = [];
-					uploadForm.csvFile = '';
-				})
-				.catch(function (error) {
-					uploadForm.setError(error.response.data.errors);
-          const title = error.response?.data?.message || 'Error while uploading . Please try again';
-					notification.error({
-						title: title,
-						position: 'top',
-					});
-					console.log('FAILURE!!');
-				});
-		}
-	}
+let errors = {
+  type: '',
+  step: '',
+};
+const tableData = [
+  {
+    id: 1,
+    name: 'Customer Name',
+    description: 'Customer Name',
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 2,
+    name: 'Customer Email',
+    description: 'Customer Email',
+    required: 'No',
+    maxSize: 255,
+  },
+  {
+    id: 3,
+    name: 'Customer Mobile',
+    description: 'Customer Mobile Number',
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 4,
+    name: 'Plan',
+    description: 'Insurer Plan Code',
+    required: 'Yes',
+    maxSize: 50,
+  },
+  {
+    id: 5,
+    name: 'Previous Policy Number',
+    description: 'Expiring policy number',
+    required: 'Yes',
+    maxSize: 50,
+  },
+  {
+    id: 6,
+    name: 'Previous Policy Expiry Date',
+    description:
+      'End date of the expiring policy - Format should be DD/MM/YYYY',
+    required: 'Yes',
+    maxSize: 10,
+  },
+  {
+    id: 7,
+    name: 'Advisor Email',
+    description: "Renewal advisor's email",
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 8,
+    name: 'Renewal Premium',
+    description: 'Renewal Premium',
+    required: 'No',
+    maxSize: 150,
+  },
+  {
+    id: 9,
+    name: 'Renewal Co-Pay',
+    description: 'Renewal copay code',
+    required: 'Yes',
+    maxSize: 300,
+  },
+  {
+    id: 10,
+    name: 'Member Names',
+    description: 'Member Names',
+    required: 'No',
+    maxSize: 500,
+  },
+  {
+    id: 11,
+    name: 'DOB',
+    description: "Customer's DOB",
+    required: 'Yes',
+    maxSize: 100,
+  },
+  {
+    id: 12,
+    name: 'Nationality',
+    description: "Customer's Nationality",
+    required: 'Yes',
+    maxSize: 300,
+  },
+  {
+    id: 13,
+    name: 'Gender',
+    description: "Customer's Gender",
+    required: 'Yes',
+    maxSize: 50,
+  },
+  {
+    id: 14,
+    name: 'Member Category',
+    description: 'Member Category',
+    required: 'Yes',
+    maxSize: 300,
+  },
+  {
+    id: 15,
+    name: 'Emirate of Visa',
+    description: 'Emirate of visa specified in expiring policy',
+    required: 'Yes',
+    maxSize: 100,
+  },
+  {
+    id: 16,
+    name: 'Payment Link',
+    description: 'Payment link from insurer',
+    required: 'No',
+    maxSize: 400,
+  },
+  {
+    id: 17,
+    name: 'Previous Policy Premium',
+    description: 'Expiring premium',
+    required: 'Yes',
+    maxSize: 15,
+  },
+  {
+    id: 18,
+    name: 'Notes',
+    description: 'Any other information',
+    required: 'No',
+    maxSize: 500,
+  },
+];
+function handleFileUpload(event) {
+  files = event;
+  file = event[0].file;
+  uploadForm.csvFile = event[0];
+}
+function onSubmit(isValid) {
+  if (isValid) {
+    let formData = new FormData();
+    formData.append('file_name', file);
+    formData.append('lob', uploadForm.lob);
+    formData.append('renewals_upload_type', 'update');
+    axios
+      .post('/renewals/upload-update', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then(() => {
+        notification.success({
+          title: 'Uploaded renewals records has been stored',
+          position: 'top',
+        });
+        files = [];
+        uploadForm.setError([]);
+        uploadForm.errors.file_name = [];
+        uploadForm.errors.type = [];
+        uploadForm.csvFile = '';
+      })
+      .catch(function (error) {
+        uploadForm.setError(error.response.data.errors);
+        const title =
+          error.response?.data?.message ||
+          'Error while uploading . Please try again';
+        notification.error({
+          title: title,
+          position: 'top',
+        });
+        console.log('FAILURE!!');
+      });
+  }
+}
 
-	const can = permission => useCan(permission);
+const can = permission => useCan(permission);
 
-  const quoteTypesOptions = computed(() => {
+const quoteTypesOptions = computed(() => {
   const quoteTypesOptions = [
     ...Object.keys(page.props.lobs).map(text => ({
-        label: text,
-        value: page.props.lobs[text]
-      })),
-    ];
-    return quoteTypesOptions;
-  });
-  
-  uploadForm.lob = page.props.lobs.Health;
+      label: text,
+      value: page.props.lobs[text],
+    })),
+  ];
+  return quoteTypesOptions;
+});
+
+uploadForm.lob = page.props.lobs.Health;
 </script>
 
 <template>
@@ -106,7 +217,7 @@
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-				<ComboBox
+        <ComboBox
           v-model="uploadForm.lob"
           label="Line of Business"
           placeholder="Select Line of Business"
