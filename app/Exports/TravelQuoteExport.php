@@ -25,7 +25,7 @@ class TravelQuoteExport
             'AML STATUS',
             'ADVISOR REQUESTED',
             'ADVISOR',
-            'ADVISOR REQUESTED DATE AND TIME',
+            'ADVISOR ASSIGNED DATE AND TIME',
             'CREATED DATE',
             'LAST MODIFIED DATE',
             'DOB',
