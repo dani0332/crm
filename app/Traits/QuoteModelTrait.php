@@ -96,7 +96,7 @@ trait QuoteModelTrait
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
                 });
             })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias, $quoteTypeId) {
-                $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
                         ->select('quote_uuid')
                         ->from('quote_tags')
