@@ -25,7 +25,7 @@ class PersonalQuoteObserver
 
     public function updating(PersonalQuote $quote): void
     {
-        info("PersonalQuoteObserver - Updating - Ref ID: {$quote->uuid} | Time: " . now());
+        info("PersonalQuoteObserver - Updating - Ref ID: {$quote->uuid} | Time: ".now());
         if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
             $quote->quote_status_date = now();
         }
@@ -38,7 +38,7 @@ class PersonalQuoteObserver
      */
     public function updated(PersonalQuote $personalQuote): void
     {
-        info("PersonalQuoteObserver - Updated - Ref ID: {$personalQuote->uuid} | Time: " . now());
+        info("PersonalQuoteObserver - Updated - Ref ID: {$personalQuote->uuid} | Time: ".now());
         $dirty = $personalQuote->getDirty();
         if (
             $personalQuote->isDirty('quote_status_id') &&
@@ -77,7 +77,7 @@ class PersonalQuoteObserver
                     event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
                 }
             } catch (Exception $e) {
-                Log::error('PersonalQuoteObserver Error: ' . $e->getMessage());
+                Log::error('PersonalQuoteObserver Error: '.$e->getMessage());
             }
         }
 
@@ -146,7 +146,7 @@ class PersonalQuoteObserver
     {
         return $personalQuote->quote_type_id === 2 &&
             $personalQuote->isDirty('advisor_id') &&
-            !empty($personalQuote->advisor_id) &&
+            ! empty($personalQuote->advisor_id) &&
             $personalQuote->advisor_id !== 0;
     }
 
@@ -155,9 +155,9 @@ class PersonalQuoteObserver
         $homeOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH)->first();
         if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
             app(HomeEmailService::class)->sendHomeOCBIntroEmail($personalQuote);
-            info("HomeQuoteObserver - Home OCB Automated Followups Switch is on - Ref ID: {$personalQuote->uuid} | Time: " . now());
+            info("HomeQuoteObserver - Home OCB Automated Followups Switch is on - Ref ID: {$personalQuote->uuid} | Time: ".now());
         } else {
-            info("HomeQuoteObserver - Home OCB Automated Followups Switch is off - Ref ID: {$personalQuote->uuid} | Time: " . now());
+            info("HomeQuoteObserver - Home OCB Automated Followups Switch is off - Ref ID: {$personalQuote->uuid} | Time: ".now());
         }
     }
 }

@@ -77,7 +77,7 @@ class HomeAllocation extends BaseAllocation
 
     public function isVolumeLead(): bool
     {
-        return $this->hasLowValueAssets() || !$this->isValueLocation();
+        return $this->hasLowValueAssets() || ! $this->isValueLocation();
     }
 
     private function hasHighValueAssets(): bool

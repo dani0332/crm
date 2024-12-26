@@ -16,22 +16,24 @@ class HomeEmailService extends BaseService
     public function sendHomeOCBIntroEmail($lead)
     {
         if (! $lead) {
-            info('sendHomeOCBIntroEmail - Lead not found | Time: ' . now());
+            info('sendHomeOCBIntroEmail - Lead not found | Time: '.now());
+
             return false;
         }
 
-        info("sendHomeOCBIntroEmail - Initiating process for Lead Ref ID: {$lead->uuid} | Time: " . now());
+        info("sendHomeOCBIntroEmail - Initiating process for Lead Ref ID: {$lead->uuid} | Time: ".now());
 
         // Fetch the advisor
         $advisor = User::find($lead->advisor_id);
         if (! $advisor) {
-            info("sendHomeOCBIntroEmail - Advisor not found for Lead Ref ID: {$lead->uuid} | Time: " . now());
+            info("sendHomeOCBIntroEmail - Advisor not found for Lead Ref ID: {$lead->uuid} | Time: ".now());
         }
 
         // Fetch home quote
         $homeQuote = $this->getHomeQuoteData($lead->uuid);
         if (! $homeQuote) {
-            info("sendHomeOCBIntroEmail - HomeQuote not found for Lead Ref ID: {$lead->uuid} | Time: " . now());
+            info("sendHomeOCBIntroEmail - HomeQuote not found for Lead Ref ID: {$lead->uuid} | Time: ".now());
+
             return false;
         }
 
@@ -50,7 +52,8 @@ class HomeEmailService extends BaseService
         )->first();
 
         if (! $homeAutomatedEvent) {
-            info("sendHomeOCBIntroEmail - Workflow configuration not found for Lead Ref ID: {$lead->uuid} | Time: " . now());
+            info("sendHomeOCBIntroEmail - Workflow configuration not found for Lead Ref ID: {$lead->uuid} | Time: ".now());
+
             return false;
         }
 
@@ -59,18 +62,18 @@ class HomeEmailService extends BaseService
 
             if (empty($homeQuote->automated_flow_executed_at)) {
                 $homeQuote->update(['automated_flow_executed_at' => now()]);
-                info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote ID: {$homeQuote->id} | Time: " . now());
+                info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote ID: {$homeQuote->id} | Time: ".now());
             }
 
-            info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: " . now());
+            info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: ".now());
+
             return $response;
         } catch (\Exception $e) {
-            info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} | Message: {$e->getMessage()} | Time: " . now());
+            info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} | Message: {$e->getMessage()} | Time: ".now());
+
             return false;
         }
     }
-
-
 
     public function buildEmailData($lead, $advisor, $workflowType, $homeQuote)
     {
@@ -87,7 +90,7 @@ class HomeEmailService extends BaseService
             'flowExecutedAt' => $lead->flow_executed_at ?? null,
 
             // Home quote-related data
-            'automatedFlowExecuted' => !empty($homeQuote?->automated_flow_executed_at),
+            'automatedFlowExecuted' => ! empty($homeQuote?->automated_flow_executed_at),
 
             // Advisor-related data
             'advisorId' => $advisor?->id,
@@ -103,7 +106,6 @@ class HomeEmailService extends BaseService
             'workflowType' => $workflowType,
         ];
     }
-
 
     public function getHomeQuoteData(string $uuid): ?HomeQuote
     {
