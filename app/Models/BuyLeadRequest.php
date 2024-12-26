@@ -10,6 +10,7 @@ class BuyLeadRequest extends Model
     protected $fillable = [
         'quote_type_id',
         'user_id',
+        'department_id',
         'requested_count',
         'allocated_count',
         'cost_per_lead',
