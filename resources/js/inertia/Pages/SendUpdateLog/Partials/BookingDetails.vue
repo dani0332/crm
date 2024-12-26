@@ -1171,7 +1171,7 @@ watch(
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div class="text-right"></div>
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="text-[#308BCA] text-sm font-bold underline decoration-dotted decoration-primary-700"
                   >
@@ -1200,7 +1200,7 @@ watch(
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1222,7 +1222,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1240,7 +1240,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1261,7 +1261,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1282,7 +1282,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1302,7 +1302,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1318,7 +1318,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1339,7 +1339,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1356,7 +1356,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1377,7 +1377,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1399,7 +1399,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1422,7 +1422,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1443,7 +1443,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1465,7 +1465,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1486,7 +1486,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1510,7 +1510,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1533,7 +1533,7 @@ watch(
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1555,7 +1555,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1581,7 +1581,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1676,7 +1676,7 @@ watch(
             <div class="grid md:grid-cols-2 gap-x-4 gap-y-2 py-4 items-center">
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1700,7 +1700,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1728,7 +1728,7 @@ watch(
                 class="grid sm:grid-cols-2 pb-1.5"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1747,7 +1747,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1768,7 +1768,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1795,7 +1795,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1819,7 +1819,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1846,7 +1846,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1875,7 +1875,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1914,7 +1914,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1944,7 +1944,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1990,7 +1990,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2019,7 +2019,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2067,7 +2067,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2096,7 +2096,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="pt-1 font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2111,10 +2111,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-tooltip
-                    placement="left"
-                    v-if="disableCommissionVatApplicable"
-                  >
+                  <x-tooltip v-if="disableCommissionVatApplicable">
                     <x-input
                       v-model="bookingDetailsForm.commission_vat_applicable"
                       class="!mb-0 w-full"
@@ -2159,7 +2156,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2189,7 +2186,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2202,10 +2199,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div v-if="props.isCommVatNotAppEnabled">
-                  <x-tooltip
-                    placement="left"
-                    v-if="disableCommissionVatNotApplicable"
-                  >
+                  <x-tooltip v-if="disableCommissionVatNotApplicable">
                     <x-input
                       type="number"
                       v-model="bookingDetailsForm.commission_vat_not_applicable"
@@ -2258,7 +2252,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2292,7 +2286,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2443,10 +2437,14 @@ watch(
       >
         {{ isStating }}
       </x-alert>
-      <x-checkbox
-        v-model="modals.isConfirmed"
-        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
-      />
+      <x-label class="flex items-center gap-2">
+        <x-checkbox v-model="modals.isConfirmed" />
+        <div>
+          I confirm and attest that all information recorded is correct.
+          <br />
+          I confirm I am in compliance with the COC.
+        </div>
+      </x-label>
       <template #actions>
         <div class="flex gap-4 justify-end">
           <x-button
@@ -2460,7 +2458,7 @@ watch(
           </x-button>
           <div>
             <template v-if="!modals.isConfirmed">
-              <x-tooltip placement="right">
+              <x-tooltip>
                 <SendUpdateCustReuseBtnTemp />
                 <template #tooltip>
                   Please select the checkbox to proceed
@@ -2540,7 +2538,7 @@ watch(
           </x-button>
           <div>
             <template v-if="!confirmationCheck">
-              <x-tooltip placement="left">
+              <x-tooltip>
                 <SendUpdateReuseBtnTemp />
                 <template #tooltip>
                   Please select the checkbox to proceed

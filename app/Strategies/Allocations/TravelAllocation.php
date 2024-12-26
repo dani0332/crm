@@ -28,6 +28,8 @@ class TravelAllocation implements Allocation
 
     public function executeSteps()
     {
+        $this->travelAllocationService->resetProps();
+
         $response = [
             'advisorId' => 0,
             'message' => '',
@@ -42,7 +44,15 @@ class TravelAllocation implements Allocation
                 info(self::class." - executeSteps: Lead not found for : {$this->allocationId}");
                 $response = $this->travelAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
-                $advisor = $this->fetchAvailableAdvisor();
+                if ($lead->isAllocationInProgress()) {
+                    info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                    return $this->travelAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
+                }
+
+                $lead->startAllocation();
+
+                $advisor = $this->fetchAvailableAdvisor($lead);
 
                 if (! $advisor) {
                     $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
@@ -52,6 +62,7 @@ class TravelAllocation implements Allocation
                     $response = $this->travelAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
                     $this->assignLead($lead, $advisor); // Assign the lead to the advisor
+                    $lead->endAllocation();
                     $response = $this->travelAllocationService->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
                 }
             }
@@ -64,6 +75,8 @@ class TravelAllocation implements Allocation
             $response = $this->travelAllocationService->createResponse(0, 'exception occurred in travel lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
+        $this->travelAllocationService->resetProps();
+
         return $response;
     }
 
@@ -72,9 +85,9 @@ class TravelAllocation implements Allocation
         return $this->travelAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId);
     }
 
-    private function fetchAvailableAdvisor()
+    private function fetchAvailableAdvisor(TravelQuote $lead)
     {
-        return $this->travelAllocationService->fetchAvailableAdvisor(teamId: $this->teamId, quoteUUID: $this->allocationId);
+        return $this->travelAllocationService->fetchAvailableAdvisor(teamId: $this->teamId, quoteUUID: $this->allocationId, lead: $lead);
     }
 
     private function assignLead(TravelQuote $lead, User $advisor)

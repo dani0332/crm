@@ -39,6 +39,7 @@ const props = defineProps({
   isPlanDetailAvailable: Boolean,
   quoteLink: String,
   isEditDisabledForQueuedBooking: Boolean,
+  insuranceProviderId: Number,
   isCommVatNotAppEnabled: Boolean,
   isSentOrBooked: Boolean,
   disableMainBtn: String,
@@ -223,14 +224,6 @@ function handleErrorStatusUpdate(newStatus) {
   isAdditionalFieldError.value = newStatus;
 }
 
-const isLegacyPolicy = computed(() => {
-  return (
-    props.quote?.insly_migrated ||
-    props.realQuote?.insly_migrated ||
-    props.realQuote?.insly_id
-  );
-});
-
 const showBookingFailedAlert = () => {
   if (
     props.isEditDisabledForQueuedBooking &&
@@ -285,6 +278,14 @@ const isEndorsementNumberRequired = computed(() => {
     props.sendUpdateStatusEnum.CIR,
   ].includes(props.sendUpdateLog.category.code);
 });
+
+const isLegacyPolicy = computed(() => {
+  return (
+    props.quote?.insly_migrated ||
+    props.realQuote?.insly_migrated ||
+    props.realQuote?.insly_id
+  );
+});
 </script>
 
 <template>
@@ -296,11 +297,13 @@ const isEndorsementNumberRequired = computed(() => {
       <Collapsible expanded>
         <template #header>
           <div class="flex gap-2 w-100 flex-grow justify-between">
-            <h3 class="text-lg font-semibold text-primary-800 capitalize">
+            <h3
+              class="text-xs sm:text-lg font-semibold text-primary-800 capitalize"
+            >
               {{ sendUpdateLog.category.text }}
             </h3>
             <Link :href="quoteLink">
-              <x-button color="primary" size="sm" class="mr-5"
+              <x-button color="primary" size="sm" class="mr-5 text-xs"
                 >Go back to lead</x-button
               >
             </Link>
@@ -583,7 +586,7 @@ const isEndorsementNumberRequired = computed(() => {
       v-if="isLegacyPolicy"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
-      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
+      :insurance-provider-id="props.insuranceProviderId"
     />
 
     <!-- Indicative additional price & Plan details comp -->

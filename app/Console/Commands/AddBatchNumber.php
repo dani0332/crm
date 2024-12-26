@@ -42,7 +42,7 @@ class AddBatchNumber extends Command
     {
         Log::info('Add Batch Command Started');
         try {
-            $lastBatch = QuoteBatches::orderBy('id', 'desc')->whereNull('quote_type_id')->first();
+            $lastBatch = QuoteBatches::orderBy('id', 'desc')->first();
             info('last batch : '.json_encode($lastBatch));
             if ($lastBatch == null) {
                 info('inside creating batches from scratch');
@@ -87,7 +87,7 @@ class AddBatchNumber extends Command
     private function generateBatchNumbers($startDate)
     {
         $batchArray = [];
-        $count = QuoteBatches::all()->whereNull('quote_type_id')->count() + 1;
+        $count = QuoteBatches::count() + 1;
         while ($startDate < now()) {
             $currentDate = $startDate->toDateString();
             $nextWeek = $startDate->addDays(6)->toDateString();
