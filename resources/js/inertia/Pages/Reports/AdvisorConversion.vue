@@ -236,8 +236,8 @@ const getFiltersObject = () => {
     insurance_for: '',
     travel_coverage: '',
     segment_filter: 'all',
-    registration_type:'',
-    vehicle_use:'',
+    registration_type: '',
+    vehicle_use: '',
   };
 };
 
@@ -998,13 +998,13 @@ const commercialOptions = computed(() => [
           ]"
         />
         <x-select
-        v-if="canShow('isCommercial')"
-        v-model="filters.registration_type"
-        label="Registration Type"
-        placeholder="Select any option"
-        :options="registrationTypeOptions"
-          />
-          <x-select
+          v-if="canShow('isCommercial')"
+          v-model="filters.registration_type"
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
+        />
+        <x-select
           v-if="isVehicleUseDisabled"
           v-model="filters.vehicle_use"
           label="Vehicle Use"
@@ -1072,24 +1072,23 @@ const commercialOptions = computed(() => [
           :single="true"
         />
         <x-tooltip placement="top" v-if="canShow('tiers')">
-
-            <template #tooltip > Select Tiers </template>
-            <ComboBox
-              :disabled="filters.lob === quoteTypeCodeEnum.Car"
-              :class="{
-                'opacity-50': filters.lob === quoteTypeCodeEnum.Car,
-              }"
-              v-model="filters.tiers"
-              label="Tiers"
-              placeholder="Search by Tiers"
-              :options="
-                Object.keys(filterOptions.tiers).map(key => ({
-                  value: key,
-                  label: filterOptions.tiers[key],
-                }))
-              "
-            />
-          </x-tooltip>
+          <template #tooltip> Select Tiers </template>
+          <ComboBox
+            :disabled="filters.lob === quoteTypeCodeEnum.Car"
+            :class="{
+              'opacity-50': filters.lob === quoteTypeCodeEnum.Car,
+            }"
+            v-model="filters.tiers"
+            label="Tiers"
+            placeholder="Search by Tiers"
+            :options="
+              Object.keys(filterOptions.tiers).map(key => ({
+                value: key,
+                label: filterOptions.tiers[key],
+              }))
+            "
+          />
+        </x-tooltip>
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">

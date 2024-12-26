@@ -478,20 +478,21 @@ onMounted(() => {
           :single="true"
         />
         <x-select
-        v-model="filters.registration_type"
+          v-model="filters.registration_type"
           v-if="filters.lob == props.quoteTypeIdEnum.Car"
-        label="Registration Type"
-        placeholder="Select any option"
-        :options="registrationTypeOptions"
-
-          />
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
+        />
 
         <x-select
-        v-if="isVehicleUseDisabled && filters.lob == props.quoteTypeIdEnum.Car"
-        v-model="filters.vehicle_use"
-        label="Vehicle Use"
-        placeholder="Select any option"
-        :options="vehicleUseOptions"
+          v-if="
+            isVehicleUseDisabled && filters.lob == props.quoteTypeIdEnum.Car
+          "
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
         />
         <ComboBox
           v-model="filters.includeUnassignedLeads"

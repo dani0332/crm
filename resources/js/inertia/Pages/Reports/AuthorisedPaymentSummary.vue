@@ -223,7 +223,6 @@ watch(
       onSubmit(true);
       filters.registration_type = 'All';
       filters.vehicle_use = 'All';
-
     }
   },
 );
@@ -259,7 +258,6 @@ const vehicleUseOptions = computed(() => [
 const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
-
 </script>
 <template>
   <Head title="Authorised Payment Report" />
@@ -285,14 +283,14 @@ const isVehicleUseDisabled = computed(() => {
         :options="quoteTypesOptions"
       />
 
-    <x-select
+      <x-select
         v-if="isCarLob"
         v-model="filters.registration_type"
         label="Registration Type"
         placeholder="Select any option"
         :options="registrationTypeOptions"
-    />
-    <x-select
+      />
+      <x-select
         v-if="isCarLob && isVehicleUseDisabled"
         v-model="filters.vehicle_use"
         label="Vehicle Use"
