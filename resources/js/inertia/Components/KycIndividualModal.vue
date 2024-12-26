@@ -164,9 +164,6 @@ const onKycSubmit = isValid => {
 
   if (confirm('Are you sure you want to create and save the document?')) {
     isLoading.value = true;
-    // if (kycForm.dob) {
-    //   kycForm.dob = kycForm.dob.split('T')[0];
-    // }
     axios
       .post(`/${props.modelType}/upload-individual-kycdoc`, kycForm)
       .then(response => {

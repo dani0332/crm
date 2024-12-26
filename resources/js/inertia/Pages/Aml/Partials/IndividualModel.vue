@@ -389,7 +389,6 @@ watch(
               placeholder="Date of Birth"
               class="w-full"
             />
-            <!-- :utc="true" -->
           </x-field>
           <div class="flex gap-5 mb-5 align-center">
             <p>Is the insured the payer?</p>
