@@ -562,25 +562,29 @@ const travelCoverageOptions = computed(() => {
   return [];
 });
 
-const registrationTypeOptions = computed(() => [
-  { value: 'All', label: 'All' },
-  ...Object.values(carRegistrationTypeEnum).map(item => ({
-    value: item,
-    label: item,
-  })),
-]);
+const registrationTypeOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carRegistrationTypeEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
 
-const vehicleUseOptions = computed(() => [
-  { value: 'All', label: 'All' },
-  ...Object.values(carVehicleUseEnum).map(item => ({
-    value: item,
-    label: item,
-  })),
-]);
+
+const vehicleUseOptions = [
+    { value: 'All', label: 'All' },
+    ...Object.values(carVehicleUseEnum).map(item => ({
+        value: item,
+        label: item,
+    })),
+];
+
 
 const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
+
+
 </script>
 
 <template>
@@ -683,19 +687,20 @@ const isVehicleUseDisabled = computed(() => {
           ]"
         />
         <x-select
-          v-if="canShow('isCommercial')"
-          v-model="filters.registration_type"
-          label="Registration Type"
-          placeholder="Select any option"
-          :options="registrationTypeOptions"
-        />
-        <x-select
+           v-if="canShow('isCommercial')"
+        v-model="filters.registration_type"
+        label="Registration Type"
+        placeholder="Select any option"
+        :options="registrationTypeOptions"
+
+          />
+          <x-select
           v-if="isVehicleUseDisabled"
           v-model="filters.vehicle_use"
           label="Vehicle Use"
           placeholder="Select any option"
           :options="vehicleUseOptions"
-        />
+          />
         <x-select
           v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
