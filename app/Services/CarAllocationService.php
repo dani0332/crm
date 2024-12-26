@@ -5,11 +5,14 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanType;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RuleEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
@@ -35,9 +38,6 @@ use App\Models\User;
 use App\Models\UserTeams;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Enums\RuleEnum;
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 
 class CarAllocationService extends AllocationService
 {
@@ -82,7 +82,6 @@ class CarAllocationService extends AllocationService
             $carQuoteQuery->whereNull('advisor_id');
         }
 
-
         return $carQuoteQuery->first();
     }
 
@@ -105,26 +104,22 @@ class CarAllocationService extends AllocationService
             });
 
             $carValue = 0;
-            if($carLead->registration_type == CarRegistrationType::COMPANY) {
-                if($carLead->vehicle_use == CarVehicleUse::PRIVATE) {
+            if ($carLead->registration_type == CarRegistrationType::COMPANY) {
+                if ($carLead->vehicle_use == CarVehicleUse::PRIVATE) {
                     if (! empty($axaValuation)) {
                         $firstAxaValuation = reset($axaValuation); // Get the first element of the array
                         $carValue = $firstAxaValuation->carValue;
                     }
-                }
-                else {
+                } else {
                     $carValue = $carLead->car_value;
                 }
 
-            }
-            else {
+            } else {
                 if (! empty($axaValuation)) {
                     $firstAxaValuation = reset($axaValuation); // Get the first element of the array
                     $carValue = $firstAxaValuation->carValue;
                 }
             }
-
-
 
             info('car value as per valuation engine for GIG is '.$carValue.' for lead : '.$carLead->uuid);
             $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
@@ -503,7 +498,6 @@ class CarAllocationService extends AllocationService
             ->select('id')
             ->first();
 
-
         foreach ($commercialKeywords as $keyword) {
             if (
                 str_contains(
@@ -562,38 +556,38 @@ class CarAllocationService extends AllocationService
     public function getRulesForVehicleUse($lead)
     {
 
-        if ($lead->vehicle_use  == CarVehicleUse::PRIVATE) {
-            info( self::class." - Lead is not commercial, applying private use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+        if ($lead->vehicle_use == CarVehicleUse::PRIVATE) {
+            info(self::class." - Lead is not commercial, applying private use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
             return $this->getCompanyUsageRules($lead, RuleEnum::PRIVATE_USE->value);
         } else {
             info(self::class." - Lead is commercial, applying commercial use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
             return $this->getCompanyUsageRules($lead, RuleEnum::COMMERCIAL_USE->value);
         }
     }
 
-    private function getCompanyUsageRules($lead,$ruleName=null)
+    private function getCompanyUsageRules($lead, $ruleName = null)
     {
         if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_CAR_QUOTE ) {
             info(self::class." - Applying rule: {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} | Time: ".now());
+
             return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
-            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-            ->join('users', 'users.id', 'rule_users.user_id')
-            ->where('rules.name', $ruleName)
-            ->where('rule_type', RuleTypeEnum::VEHICLE_USE)
-            ->where('rules.is_active', 1)
-            ->groupBy('rule_details.rule_id')
-            ->select(
-                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-            )->get();
-        }
-        else {
+                ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+                ->join('users', 'users.id', 'rule_users.user_id')
+                ->where('rules.name', $ruleName)
+                ->where('rule_type', RuleTypeEnum::VEHICLE_USE)
+                ->where('rules.is_active', 1)
+                ->groupBy('rule_details.rule_id')
+                ->select(
+                    DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+                )->get();
+        } else {
             info(self::class." -No rule found for {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} Time: ".now());
         }
 
         return [];
     }
-
-
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
     {

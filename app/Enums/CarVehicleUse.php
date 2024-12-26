@@ -8,5 +8,4 @@ final class CarVehicleUse extends Enum
 {
     public const PRIVATE = 'Private';
     public const COMMERCIAL = 'Commercial';
-
 }

@@ -3,10 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\RuleEnum;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Enums\RuleTypeEnum;
-use Illuminate\Support\Facades\DB;
 use App\Models\Rule;
 use App\Models\RuleType;
 

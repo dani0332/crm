@@ -3,13 +3,13 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\QuoteTypes;
+use App\Enums\TiersEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
-use App\Enums\CarRegistrationType;
-use App\Enums\TiersEnum;
 
 class CarAllocation implements Allocation
 {
