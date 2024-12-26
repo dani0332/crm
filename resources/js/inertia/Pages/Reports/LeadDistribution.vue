@@ -14,7 +14,6 @@ const quoteSegments = page.props.quoteSegments;
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
 
-
 const params = useUrlSearchParams('history');
 const tableHeader = [
   {
@@ -122,27 +121,24 @@ const calculateTotalSum = (data, key) => {
 };
 
 const registrationTypeOptions = [
-    { value: 'All', label: 'All' },
-    ...Object.values(carRegistrationTypeEnum).map(item => ({
-        value: item,
-        label: item,
-    })),
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
 ];
-
 
 const vehicleUseOptions = [
-    { value: 'All', label: 'All' },
-    ...Object.values(carVehicleUseEnum).map(item => ({
-        value: item,
-        label: item,
-    })),
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
 ];
-
 
 const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
-
 </script>
 
 <template>
@@ -176,14 +172,13 @@ const isVehicleUseDisabled = computed(() => {
           "
         />
         <x-select
-        v-model="filters.registration_type"
-        label="Registration Type"
-        placeholder="Select any option"
-        :options="registrationTypeOptions"
+          v-model="filters.registration_type"
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
+        />
 
-          />
-
-          <x-select
+        <x-select
           v-if="isVehicleUseDisabled"
           v-model="filters.vehicle_use"
           label="Vehicle Use"
@@ -200,8 +195,6 @@ const isVehicleUseDisabled = computed(() => {
             { value: false, label: 'No' },
           ]"
         />
-
-
 
         <ComboBox
           v-model="filters.assignmentTypes"

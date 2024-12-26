@@ -14,7 +14,6 @@ const quoteSegments = page.props.quoteSegments;
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
 
-
 const params = useUrlSearchParams('history');
 const tableHeader = [
   {
@@ -66,7 +65,7 @@ const filters = reactive({
   teams: [],
   segment_filter: 'all',
   isCommercial: 'All',
-  vehicle_use:'All',
+  vehicle_use: 'All',
   registration_type: 'All',
   page: 1,
 });
@@ -74,7 +73,6 @@ const filters = reactive({
 const calculateTotalSum = (data, key) => {
   return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
 };
-
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -129,19 +127,19 @@ function setQueryStringFilters() {
 }
 
 const registrationTypeOptions = [
-    { value: 'All', label: 'All' },
-    ...Object.values(carRegistrationTypeEnum).map(item => ({
-        value: item,
-        label: item,
-    })),
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
 ];
 
 const vehicleUseOptions = [
-    { value: 'All', label: 'All' },
-    ...Object.values(carVehicleUseEnum).map(item => ({
-        value: item,
-        label: item,
-    })),
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
 ];
 
 const isVehicleUseDisabled = computed(() => {
@@ -211,13 +209,12 @@ onMounted(() => {
           :max-limit="3"
         />
         <x-select
-        v-model="filters.registration_type"
-        label="Registration Type"
-        placeholder="Select any option"
-        :options="registrationTypeOptions"
-
-          />
-          <x-select
+          v-model="filters.registration_type"
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
+        />
+        <x-select
           v-if="isVehicleUseDisabled"
           v-model="filters.vehicle_use"
           label="Vehicle Use"
