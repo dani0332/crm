@@ -109,23 +109,13 @@ const updateSelectedPlan = () => {
         }
         emit('update:selectedPlanChanged', selectedPlan);
       } else {
-        if (props.quoteType.toLowerCase() == 'home') {
-          emit('update:selectedPlanChanged', {
-            id: props.plan.planId,
-            providerName: props.plan.providerName,
-            planName: props.plan.planName,
-            premium: premium.toFixed(2),
-            planType: props.plan.plan_type,
-          });
-        } else {
-          emit('update:selectedPlanChanged', {
+        emit('update:selectedPlanChanged', {
             id: props.plan.id,
             providerName: props.plan.providerName,
             planName: props.plan.name,
             premium: premium.toFixed(2),
             planType: props.plan.plan_type,
           });
-        }
       }
       notification.success({
         title: 'Selected plan updated',
