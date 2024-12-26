@@ -51,6 +51,7 @@ use Illuminate\Support\Carbon;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 use RuntimeException;
+use App\Models\TravelPlan;
 
 class TravelController extends Controller
 {
@@ -111,6 +112,9 @@ class TravelController extends Controller
                 'isManagerORDeputy' => $isManager,
             ],
             'authorizedDays' => intval($authorizedDays->value),
+            'amlStatuses' => AMLStatusCode::getStatuses(),
+            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),  
+            'travelPlans' => TravelPlan::all(),
         ]);
     }
 
