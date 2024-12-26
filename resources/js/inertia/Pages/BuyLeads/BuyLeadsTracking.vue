@@ -44,7 +44,7 @@ const onSubmit = isValid => {
 };
 
 const onExport = () => {
-  if (filters.quote_type && filters.date) {
+  if (filters.quote_type && filters.date && props.list.data?.length > 0) {
     window.location.href = route('buy-leads.request.tracking', {
       ...filters,
       export: true,
@@ -52,7 +52,9 @@ const onExport = () => {
   } else {
     notification.error({
       title:
-        'Select the Line of Business and Requested Date to download the PDF report.',
+        filters.quote_type && filters.date && props.list.data?.length === 0
+          ? 'No Data Found'
+          : 'Select the Line of Business and Requested Date to download the PDF report.',
       position: 'top',
     });
   }
