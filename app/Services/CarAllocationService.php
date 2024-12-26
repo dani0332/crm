@@ -507,12 +507,13 @@ class CarAllocationService extends AllocationService
                 ||
                 ($commercialCarMake && $commercialCarModel)
             ) {
-                if($lead->registration_type == CarRegistrationType::COMPANY) {
-                    info(self::class. "- Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: {$lead->uuid} | Time: " .now());
+                if ($lead->registration_type == CarRegistrationType::COMPANY) {
+                    info(self::class."- Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
                     return $this->getRulesForVehicleUse($lead);
-                }
-                else {
-                    info(self::class. "-Lead is not registered as a company, applying commercial rules for lead with Ref-ID:  {$lead->uuid} | Time: " .now());
+                } else {
+                    info(self::class."-Lead is not registered as a company, applying commercial rules for lead with Ref-ID:  {$lead->uuid} | Time: ".now());
+
                     return $this->getCommercialRule($lead);
                 }
             }
@@ -569,7 +570,7 @@ class CarAllocationService extends AllocationService
 
     private function getCompanyUsageRules($lead, $ruleName = null)
     {
-        if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_CAR_QUOTE ) {
+        if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_CAR_QUOTE) {
             info(self::class." - Applying rule: {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} | Time: ".now());
 
             return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')

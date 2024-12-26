@@ -18,22 +18,23 @@ class RuleNameSeeder extends Seeder
         $this->createRules();
         $this->createRuleType();
     }
-    public function createRules(){
+    public function createRules()
+    {
         try {
             $rules = [
                 [
-                'name' => RuleEnum::COMMERCIAL_USE,
-                'rule_type' => RuleTypeEnum::VEHICLE_USE,
+                    'name' => RuleEnum::COMMERCIAL_USE,
+                    'rule_type' => RuleTypeEnum::VEHICLE_USE,
                 ],
                 [
-                'name' => RuleEnum::PRIVATE_USE,
-                'rule_type' => RuleTypeEnum::VEHICLE_USE,
-                ]
+                    'name' => RuleEnum::PRIVATE_USE,
+                    'rule_type' => RuleTypeEnum::VEHICLE_USE,
+                ],
             ];
 
             foreach ($rules as $rule) {
 
-                $ruleRecord =  Rule::firstOrCreate(
+                $ruleRecord = Rule::firstOrCreate(
                     ['name' => $rule['name']],
                     [
                         'created_at' => now(),
@@ -42,35 +43,35 @@ class RuleNameSeeder extends Seeder
                     ],
                 );
 
-                if (!empty($ruleRecord)) {
-                $existingRule = DB::table('rule_details')->where('rule_id', $ruleRecord->id)->first();
-                if (empty($existingRule)) {
-                    DB::table('rule_details')->insert(
-                    ['rule_id' => $ruleRecord->id, 'created_at' => now(), 'updated_at' => now()]
-                    );
-                }
+                if (! empty($ruleRecord)) {
+                    $existingRule = DB::table('rule_details')->where('rule_id', $ruleRecord->id)->first();
+                    if (empty($existingRule)) {
+                        DB::table('rule_details')->insert(
+                            ['rule_id' => $ruleRecord->id, 'created_at' => now(), 'updated_at' => now()]
+                        );
+                    }
                 }
             }
-            info('Rule created successfully' . ' Company Car ILA' .' Time: ' . now());
+            info('Rule created successfully'.' Company Car ILA'.' Time: '.now());
         } catch (\Exception $e) {
-            info('Rule creation failed' . 'Company Car ILA' .' Time: ' . now());
-            info($e->getMessage(), $e->getTrace(),$e->getLine());
+            info('Rule creation failed'.'Company Car ILA'.' Time: '.now());
+            info($e->getMessage(), $e->getTrace(), $e->getLine());
         }
     }
     public function createRuleType()
     {
         try {
             RuleType::firstOrCreate(
-                ['name' =>RuleType::VEHICLE_USE],
+                ['name' => RuleType::VEHICLE_USE],
                 [
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],
             );
-            info('RuleType created successfully' . RuleType::VEHICLE_USE .' Time: ' . now());
+            info('RuleType created successfully'.RuleType::VEHICLE_USE.' Time: '.now());
         } catch (\Exception $e) {
-            info('RuleType creation failed' . RuleType::VEHICLE_USE .' Time: ' . now());
-            info($e->getMessage(), $e->getTrace(),$e->getLine());
+            info('RuleType creation failed'.RuleType::VEHICLE_USE.' Time: '.now());
+            info($e->getMessage(), $e->getTrace(), $e->getLine());
         }
 
     }
