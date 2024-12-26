@@ -1,7 +1,7 @@
 <script setup>
 import MemberDetailsModel from './MemberDetailsModel.vue';
-import UBODetailsModels from './UBODetailsModels.vue';
 import PayerDetails from './PayerDetails.vue';
+import UBODetailsModels from './UBODetailsModels.vue';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -388,8 +388,8 @@ watch(
               :rules="[isRequired]"
               placeholder="Date of Birth"
               class="w-full"
-              :utc="true"
             />
+            <!-- :utc="true" -->
           </x-field>
           <div class="flex gap-5 mb-5 align-center">
             <p>Is the insured the payer?</p>

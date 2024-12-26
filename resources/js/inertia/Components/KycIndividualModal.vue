@@ -73,13 +73,16 @@ const incomeSource = computed(() => {
   return null;
 });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
+
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
   first_name:
     props.quote?.customer.insured_first_name ?? props.quote.first_name,
   last_name: props.quote?.customer.insured_last_name ?? props.quote.last_name,
-  dob: convertDate(props.quote.dob) || '',
+  dob: dateFormat(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id ?? null,
   country_of_residence:
     props.customerDetails?.detail?.country_of_residence ?? 56,
@@ -161,6 +164,9 @@ const onKycSubmit = isValid => {
 
   if (confirm('Are you sure you want to create and save the document?')) {
     isLoading.value = true;
+    // if (kycForm.dob) {
+    //   kycForm.dob = kycForm.dob.split('T')[0];
+    // }
     axios
       .post(`/${props.modelType}/upload-individual-kycdoc`, kycForm)
       .then(response => {
