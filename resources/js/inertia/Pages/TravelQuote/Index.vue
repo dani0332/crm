@@ -78,7 +78,7 @@ const filters = reactive({
   insurer_api_status_id: '',
   amlStatus: [],
   insurance_provider_ids: [],
-  plan_name: '',
+  plan_name: [],
 });
 
 const loader = reactive({
@@ -802,7 +802,7 @@ watch(
           />
         </x-field>
         <x-field label="Plan Name">
-          <x-select
+          <ComboBox
             v-model="filters.plan_name"
             name="source"
             class="w-full"

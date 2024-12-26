@@ -508,9 +508,8 @@ class TravelQuoteService extends BaseService
             $this->query->whereIn('tqr.insurance_provider_id', $request->insurance_provider_ids);
         }
 
-        // dd($this->query->get());
         if ($request->has('plan_name') && $request->plan_name != '') {
-            $this->query->where('tqr.plan_id', $request->plan_name);
+            $this->query->whereIn('tqr.plan_id', $request->plan_name);
         }
         
         foreach ($searchProperties as $item) {
