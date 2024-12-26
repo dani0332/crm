@@ -285,7 +285,9 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">DATE OF BIRTH</dt>
-              <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
+              <dd>
+                {{ dateFormat(quoteRequest.dob.split('T')[0]) }}
+              </dd>
             </div>
           </template>
           <template v-if="quoteType.code == quoteTypeCodeEnum.Health">
