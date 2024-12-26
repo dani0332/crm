@@ -7,6 +7,7 @@ const props = defineProps({
 const { isRequired } = useRules();
 const notification = useToast();
 const params = useUrlSearchParams('history');
+const formatted = date => useDateFormat(date, 'YYYY-MM-DD HH:mm:ss').value;
 
 const tableHeader = reactive([
   { text: 'Ref-Id', value: 'ref_id' },
@@ -142,6 +143,11 @@ onMounted(() => {
         class="text-primary-500 hover:underline"
         :key="item.ref_id"
       />
+    </template>
+    <template #item-requested_date="{ requested_date }">
+      <span>
+        {{ requested_date ? formatted(requested_date) : 'N/A' }}
+      </span>
     </template>
   </DataTable>
   <Pagination
