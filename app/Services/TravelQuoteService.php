@@ -500,7 +500,7 @@ class TravelQuoteService extends BaseService
             $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
         }
 
-        if($request->has('amlStatus') && $request->amlStatus != '') {
+        if ($request->has('amlStatus') && $request->amlStatus != '') {
             $this->query->whereIn('tqr.aml_status', $request->amlStatus);
         }
 
@@ -511,7 +511,7 @@ class TravelQuoteService extends BaseService
         if ($request->has('plan_name') && $request->plan_name != '') {
             $this->query->whereIn('tqr.plan_id', $request->plan_name);
         }
-        
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {

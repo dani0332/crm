@@ -27,6 +27,7 @@ use App\Http\Requests\UpdateTravelRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\TravelPlan;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -51,7 +52,6 @@ use Illuminate\Support\Carbon;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 use RuntimeException;
-use App\Models\TravelPlan;
 
 class TravelController extends Controller
 {
@@ -113,7 +113,7 @@ class TravelController extends Controller
             ],
             'authorizedDays' => intval($authorizedDays->value),
             'amlStatuses' => AMLStatusCode::getStatuses(),
-            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),  
+            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),
             'travelPlans' => TravelPlan::all(),
         ]);
     }

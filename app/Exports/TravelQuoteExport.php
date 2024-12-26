@@ -2,9 +2,9 @@
 
 namespace App\Exports;
 
+use App\Enums\AMLStatusCode;
 use App\Repositories\TravelQuoteRepository;
 use App\Traits\ExcelExportable;
-use App\Enums\AMLStatusCode;
 
 class TravelQuoteExport
 {
@@ -48,7 +48,7 @@ class TravelQuoteExport
             'TRAVEL TYPE',
             'TRAVEL COVERAGE',
             'TRANSACTION APPROVED DATE',
-            'BOOKING DATE', 
+            'BOOKING DATE',
         ];
     }
 
@@ -62,7 +62,7 @@ class TravelQuoteExport
             AMLStatusCode::getName($quote->aml_status) ?? '',
             $quote->sic_advisor_requested == '0' ? 'No' : 'Yes',
             optional($quote->advisor)->name,
-            $quote->travelQuoteRequestDetail->advisor_assigned_date ??  '',
+            $quote->travelQuoteRequestDetail->advisor_assigned_date ?? '',
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             date(config('constants.datetime_format'), strtotime($quote->dob)),
