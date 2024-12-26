@@ -409,13 +409,13 @@ const isEndorsementNumberRequired = computed(() => {
                         :disabled="!state.edit || isUpdateBooked"
                         v-model="sendUpdateForm.option_id"
                         :options="updateLogOptions"
+                        class="w-3/4"
                       />
                     </dd>
                   </template>
                 </div>
                 <div
                   class="grid sm:grid-cols-2 mb-2"
-                  :class="(isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI) ? 'md:ml-10' : ''"
                   v-if="
                     props.quoteType === page.props.quoteTypeCodeEnum.Car &&
                     (isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI)
@@ -502,7 +502,6 @@ const isEndorsementNumberRequired = computed(() => {
                 </div>
                 <div
                     class="grid sm:grid-cols-2"
-                    :class="(!(isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI) && isEFOrEN) ? 'md:ml-10' : ''"
                     v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
                 >
                   <dt>
@@ -526,6 +525,7 @@ const isEndorsementNumberRequired = computed(() => {
                         placeholder="Enter Endorsement Number"
                         maxlength="23"
                         @keypress="endorsementNumberValidation"
+                        class="w-3/4"
                     />
                   </dd>
                 </div>
