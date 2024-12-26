@@ -709,10 +709,10 @@ class AdvisorConversionReportService extends BaseService
                         $sq->whereNull('car_quote_request.renewal_import_code');
                     });
             })
-            ->when(!empty($filters->registration_type) && $filters->registration_type != 'All', function ($q) use ($filters) {
-                $q->where('car_quote_request.registration_type','=', $filters->registration_type);
+            ->when(! empty($filters->registration_type) && $filters->registration_type != 'All', function ($q) use ($filters) {
+                $q->where('car_quote_request.registration_type', '=', $filters->registration_type);
             })
-            ->when(!empty($filters->vehicle_use) && $filters->vehicle_use != 'All', function ($q) use ($filters) {
+            ->when(! empty($filters->vehicle_use) && $filters->vehicle_use != 'All', function ($q) use ($filters) {
                 $q->where('car_quote_request.vehicle_use', $filters->vehicle_use);
             });
 

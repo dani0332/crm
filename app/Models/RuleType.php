@@ -11,7 +11,7 @@ class RuleType extends Model
 
     public const LEAD_SOURCE = 'lead source';
     public const CAR_MAKE_MODEL = 'car make and model';
-    public const  VEHICLE_USE = 'vehicle use';
+    public const VEHICLE_USE = 'vehicle use';
 
     /**
      * const @var array

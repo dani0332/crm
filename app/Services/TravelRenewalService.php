@@ -32,7 +32,7 @@ class TravelRenewalService extends BaseService
                 PaymentStatusEnum::PARTIAL_CAPTURED,
                 PaymentStatusEnum::CREDIT_APPROVED,
             ])
-            ->whereIn('coverage_code',[TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP,TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP]) //only for testing purpose
+            ->whereIn('coverage_code', [TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP]) //only for testing purpose
             ->where('direction_code', TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
             ->whereDate('start_date', $startDate)
             ->chunkById(100, function ($quotes) {
@@ -202,7 +202,7 @@ class TravelRenewalService extends BaseService
         );
     }
 
-public function leadAllocation($quoteUID)
+    public function leadAllocation($quoteUID)
     {
         info(self::class." - Processing Travel record for Quote Allocation with Ref-ID: {$quoteUID} | Time: ".now());
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);

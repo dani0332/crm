@@ -6,6 +6,8 @@ use App\Enums\ActivityTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -41,8 +43,6 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 
 class HandleInertiaRequests extends Middleware
 {

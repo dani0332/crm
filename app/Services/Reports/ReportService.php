@@ -674,11 +674,11 @@ class ReportService extends BaseService
             if (isset($request->statusId)) {
                 $query->whereIn('quote_status_id', $request->statusId);
             }
-            if(!empty($request->registration_type) && $request->registration_type != 'All' ) {
+            if (! empty($request->registration_type) && $request->registration_type != 'All') {
                 $query->where('registration_type', $request->registration_type);
             }
 
-            if (!empty($request->vehicle_use) && $request->vehicle_use != 'All') {
+            if (! empty($request->vehicle_use) && $request->vehicle_use != 'All') {
                 $query->where('vehicle_use', $request->vehicle_use);
             }
 
