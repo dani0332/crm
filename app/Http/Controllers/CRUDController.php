@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
@@ -297,6 +298,7 @@ class CRUDController extends Controller
                 'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Health),
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
                 'authorizedDays' => intval($authorizedDays->value),
+                'assignmentTypes' => AssignmentTypeEnum::withLabels(),
             ]);
         }
 
@@ -361,6 +363,7 @@ class CRUDController extends Controller
                 'isBetaUser' => $isBetaUser,
                 'teams' => $teams,
                 'authorizedDays' => intval($authorizedDays->value),
+                'assignmentTypes' => AssignmentTypeEnum::withLabels(),
             ]);
         }
 
