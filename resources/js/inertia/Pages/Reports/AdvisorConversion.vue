@@ -818,33 +818,31 @@ const getAdvisorLabel = () => {
   return label;
 };
 
-const registrationTypeOptions = [
+const registrationTypeOptions = computed(() => [
     { value: 'All', label: 'All' },
     ...Object.values(carRegistrationTypeEnum).map(item => ({
         value: item,
         label: item,
     })),
-];
+]);
 
-
-const vehicleUseOptions = [
+const vehicleUseOptions = computed(() => [
     { value: 'All', label: 'All' },
     ...Object.values(carVehicleUseEnum).map(item => ({
         value: item,
         label: item,
     })),
-];
-
-const commericalOptions = [
-            { value: 'All', label: 'All' },
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-];
-
+]);
 
 const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
+
+const commercialOptions = computed(() => [
+    { value: 'All', label: 'All' },
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' },
+]);
 
 
 

@@ -240,23 +240,21 @@ const isCarLob = computed(() => {
   return filters.quoteType === 'Car Insurance';
 });
 
-const registrationTypeOptions = [
+const registrationTypeOptions = computed(() => [
     { value: 'All', label: 'All' },
     ...Object.values(carRegistrationTypeEnum).map(item => ({
         value: item,
         label: item,
     })),
-];
+]);
 
-
-const vehicleUseOptions = [
+const vehicleUseOptions = computed(() => [
     { value: 'All', label: 'All' },
     ...Object.values(carVehicleUseEnum).map(item => ({
         value: item,
         label: item,
     })),
-];
-
+]);
 
 const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
