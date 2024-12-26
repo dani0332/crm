@@ -41,7 +41,8 @@ const dateFormat = date => {
 const allowEdit = computed(() => {
   if (
     (props.quote.renewal_batch === '' || props.quote.renewal_batch == null) &&
-    props.canAddBatchNumber == true
+    props.canAddBatchNumber == true &&
+    props.modelType == 'Car'
   )
     return true;
 
@@ -131,7 +132,7 @@ onMounted(() => {
             <div class="text-sm">
               <div class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                 <div class="grid sm:grid-cols-2">
-                  <div class="font-medium">Renewal Batch#</div>
+                  <div class="font-medium">Renewal Batch Number</div>
                   <div>{{ props?.quote?.renewal_batch }}</div>
                 </div>
 
@@ -185,13 +186,12 @@ onMounted(() => {
             class="flex justify-between gap-3 items-center"
             v-if="canAddBatchNumber"
           >
-            <x-field label="Renewal batch" required>
+             <x-field v-if="allowEdit" label="Renewal batch" required>
               <x-input
                 v-model="policyForm.renewal_batch"
                 type="tel"
                 class="w-full md:w-64"
                 :rules="[isRequired]"
-                :disabled="!allowEdit"
                 :error="policyForm.errors.renewal_batch"
               />
             </x-field>
