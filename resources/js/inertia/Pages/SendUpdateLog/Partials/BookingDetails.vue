@@ -2424,7 +2424,7 @@ watch(
     <x-modal
       v-model="modals.sendConfirm"
       size="md"
-      title="Send Update"
+      :title="props.updateBtn"
       show-close
       backdrop
     >
@@ -2518,14 +2518,18 @@ watch(
     <x-modal
       v-model="modals.attestRecord"
       size="md"
-      title="Send Update"
+      :title="props.updateBtn === sendUpdateStatusEnum.SU ? 'Book Update' : props.updateBtn"
       show-close
       backdrop
     >
-      <x-checkbox
-        v-model="confirmationCheck"
-        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
-      />
+      <x-label class="flex items-center gap-2">
+        <x-checkbox v-model="confirmationCheck" />
+        <div>
+          I confirm and attest that all information recorded is correct.
+          <br />
+          I confirm I am in compliance with the COC.
+        </div>
+      </x-label>
       <template #actions>
         <div class="flex gap-4 justify-end">
           <x-button
