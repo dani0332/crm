@@ -240,19 +240,19 @@ const isCarLob = computed(() => {
 });
 
 const registrationTypeOptions = computed(() => [
-    { value: 'All', label: 'All' },
-    ...Object.values(carRegistrationTypeEnum).map(item => ({
-        value: item,
-        label: item,
-    })),
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
 ]);
 
 const vehicleUseOptions = computed(() => [
-    { value: 'All', label: 'All' },
-    ...Object.values(carVehicleUseEnum).map(item => ({
-        value: item,
-        label: item,
-    })),
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
 ]);
 
 const isVehicleUseDisabled = computed(() => {
