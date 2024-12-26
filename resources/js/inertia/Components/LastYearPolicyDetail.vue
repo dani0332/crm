@@ -186,7 +186,7 @@ onMounted(() => {
             class="flex justify-between gap-3 items-center"
             v-if="canAddBatchNumber"
           >
-             <x-field v-if="allowEdit" label="Renewal batch" required>
+            <x-field v-if="allowEdit" label="Renewal batch" required>
               <x-input
                 v-model="policyForm.renewal_batch"
                 type="tel"
