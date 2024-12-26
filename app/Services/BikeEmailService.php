@@ -129,36 +129,13 @@ class BikeEmailService extends BaseService
             'vehicleName' => $this->getVehicleName($lead),
             'currentInsurer' => $lead->bikeQuote->currently_insured_with,
             'quoteLink' => $this->getEcomQuoteLink(QuoteTypes::BIKE, $lead->uuid),
-            'assignmentType' => $this->getAssignmentTypeText($lead->assignment_type),
+            'assignmentType' => getAssignmentTypeText($lead->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor),
         ];
 
         return $emailData;
-    }
-
-    private function getAssignmentTypeText($assignmentType)
-    {
-        $assignmentText = '';
-        switch ($assignmentType) {
-            case 1:
-                $assignmentText = 'System Assigned';
-                break;
-            case 2:
-                $assignmentText = 'System ReAssigned';
-                break;
-            case 3:
-                $assignmentText = 'Manual Assigned';
-                break;
-            case 4:
-                $assignmentText = 'Manual ReAssigned';
-                break;
-            default:
-                break;
-        }
-
-        return $assignmentText;
     }
 
     private function getPlanBenefits($plan)

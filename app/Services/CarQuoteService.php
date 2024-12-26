@@ -49,7 +49,11 @@ class CarQuoteService extends BaseService
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService)
+    public function __construct(HttpRequestService $httpService,
+        LeadAllocationService $leadAllocationService,
+        SendEmailCustomerService $sendEmailCustomerService,
+        ApplicationStorageService $applicationStorageService,
+        ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -181,7 +185,9 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 1 THEN "System Assigned"
                 WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
                 WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
-                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned"
+                WHEN cqr.assignment_type = 5 THEN "Bought Lead"
+                WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
                 'c.insured_first_name',
                 'c.insured_last_name',
@@ -1013,8 +1019,12 @@ class CarQuoteService extends BaseService
                     }
                 } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('cqr.quote_status_id', $request[$item]);
-                } elseif ($item == 'assignment_type' && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->where('cqr.assignment_type', $request[$item]);
+                } elseif ($item == 'assignment_type' && ! empty($request[$item])) {
+                    if (is_array($request[$item])) {
+                        $this->query->whereIn('cqr.assignment_type', $request[$item]);
+                    } elseif ($request[$item] !== 'all') {
+                        $this->query->where('cqr.assignment_type', $request[$item]);
+                    }
                 } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('cqr.tier_id', $request[$item]);
                 } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
@@ -1847,7 +1857,7 @@ class CarQuoteService extends BaseService
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
 
         //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD];
 
         // Get the allocation record for the new advisor
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
