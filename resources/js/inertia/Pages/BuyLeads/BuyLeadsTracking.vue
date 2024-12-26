@@ -13,7 +13,7 @@ const tableHeader = reactive([
   { text: 'Ref-Id', value: 'ref_id' },
   { text: 'Line Of Business', value: 'quote_type.code' },
   { text: 'Department', value: 'department' },
-  { text: 'Requested Date', value: 'requested_date' },
+  { text: 'Requested Date', value: 'created_at' },
   { text: 'Lead Cost', value: 'cost' },
 ]);
 
@@ -144,9 +144,9 @@ onMounted(() => {
         :key="item.ref_id"
       />
     </template>
-    <template #item-requested_date="{ requested_date }">
+    <template #item-created_at="{ created_at }">
       <span>
-        {{ requested_date ? formatted(requested_date) : 'N/A' }}
+        {{ created_at ? formatted(created_at) : 'N/A' }}
       </span>
     </template>
   </DataTable>
