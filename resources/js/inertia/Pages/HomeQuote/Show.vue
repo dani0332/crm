@@ -535,6 +535,10 @@ const availablePlansTable = reactive({
       value: 'name',
     },
     {
+      text: 'Insurer Quote No',
+      value: 'insurerQuoteNo',
+    },
+    {
       text: 'Price',
       value: 'actualPremium',
     },
@@ -1741,6 +1745,9 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
               </template>
               <template #item-name="item">
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
+              </template>
+              <template #item-insurerQuoteNo="item">
+                <span class="text-primary-600">{{ item.insurerQuoteNo }}</span>
               </template>
               <template #item-actualPremium="item">
                 <span class="text-primary-600">
