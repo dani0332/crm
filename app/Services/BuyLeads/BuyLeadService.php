@@ -67,12 +67,7 @@ class BuyLeadService
 
     public function findConfig(QuoteTypes $quoteType): ?BuyLeadConfiguration
     {
-        $userDepartmentIds = [
-            Auth::user()->department_id ?? 0,
-            ...(Auth::user()->departments?->pluck('id')?->toArray() ?? []),
-        ];
-
-        return BuyLeadConfiguration::where('quote_type_id', $quoteType->id())->whereIn('department_id', $userDepartmentIds)->first();
+        return BuyLeadConfiguration::where('quote_type_id', $quoteType->id())->where('department_id', Auth::user()->department_id ?? 0)->first();
     }
 
     public function findConfigCost(QuoteTypes $quoteType)
@@ -120,6 +115,7 @@ class BuyLeadService
             'cost_per_lead' => $cost,
             'request_type' => $requestType,
             'expires_at' => now()->endOfDay(),
+            'department_id' => Auth::user()->department_id,
         ]);
 
         return null;
@@ -144,7 +140,7 @@ class BuyLeadService
             ->with('quoteType:id,code')
             ->join('buy_lead_requests', 'buy_lead_requests.id', '=', 'buy_lead_request_logs.buy_lead_request_id')
             ->join('users', 'users.id', '=', 'buy_lead_requests.user_id')
-            ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
+            ->leftJoin('departments', 'buy_lead_requests.department_id', '=', 'departments.id')
             ->where('buy_lead_requests.user_id', Auth::id())
             ->where('buy_lead_request_logs.quote_type_id', $quoteType->id())
             ->whereBetween('buy_lead_request_logs.created_at', [$startDate->startOfDay(), $endDate->endOfDay()])
