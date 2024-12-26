@@ -514,11 +514,11 @@ class CarAllocationService extends AllocationService
                 ($commercialCarMake && $commercialCarModel)
             ) {
                 if($lead->registration_type == CarRegistrationType::COMPANY) {
-                    info('Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: '.$lead->uuid);
+                    info(self::class. "- Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: {$lead->uuid} | Time: " .now());
                     return $this->getRulesForVehicleUse($lead);
                 }
                 else {
-                    info('Lead is not registered as a company, applying commercial rules for lead with Ref-ID: '.$lead->uuid);
+                    info(self::class. "-Lead is not registered as a company, applying commercial rules for lead with Ref-ID:  {$lead->uuid} | Time: " .now());
                     return $this->getCommercialRule($lead);
                 }
             }
