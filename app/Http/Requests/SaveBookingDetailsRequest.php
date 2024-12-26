@@ -49,9 +49,6 @@ class SaveBookingDetailsRequest extends FormRequest
             'price_with_vat' => 'required|numeric',
             'broker_invoice_number' => 'sometimes',
             'transaction_payment_status' => 'required|string',
-            'commission_percentage' => 'required|numeric',
-            'vat_on_commission' => 'required|numeric',
-            'total_commission' => 'required|numeric',
             'reversal_invoice' => 'sometimes',
         ];
 
@@ -148,8 +145,8 @@ class SaveBookingDetailsRequest extends FormRequest
             if ($this->sendUpdate->category?->code == SendUpdateLogStatusEnum::CPD && ($insurerTaxInvoiceNumber || $insurerCommissionInvoiceNumber)) {
                 $payment = Payment::where('insurer_tax_number', request()->reversal_invoice)->first();
                 if (
-                    (($payment->insurer_tax_number.'-REV') == $insurerTaxInvoiceNumber) ||
-                    (($payment->insurer_commmission_invoice_number.'-REV') == $insurerCommissionInvoiceNumber)
+                    (($payment?->insurer_tax_number.'-REV') == $insurerTaxInvoiceNumber) ||
+                    (($payment?->insurer_commmission_invoice_number.'-REV') == $insurerCommissionInvoiceNumber)
                 ) {
                     $validator->errors()->add('error', 'Reversal Document Number should not be the same as the New Document Number.');
                 }

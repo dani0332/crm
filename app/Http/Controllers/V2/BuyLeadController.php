@@ -57,8 +57,6 @@ class BuyLeadController extends Controller
         $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
         [$startDate, $endDate] = request('date');
 
-        $data['list'] = ['data' => []];
-
         if ($quoteType && $startDate && $endDate) {
             if (request()->has('export')) {
                 return $this->buyLeadService->exportTrackingReportPDF($quoteType, Carbon::parse($startDate), Carbon::parse($endDate));
