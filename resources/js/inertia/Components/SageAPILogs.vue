@@ -142,6 +142,7 @@ onBeforeMount(() => {
   >
     <x-button
       v-if="isSageLogButtonEnable"
+      class="focus:ring-2 focus:ring-black"
       size="sm"
       color="primary"
       outlined
@@ -159,6 +160,7 @@ onBeforeMount(() => {
   <template v-else>
     <x-button
       v-if="isSageLogButtonEnable"
+      class="focus:ring-2 focus:ring-black"
       size="sm"
       color="primary"
       outlined
