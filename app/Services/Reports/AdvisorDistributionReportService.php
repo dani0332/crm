@@ -48,8 +48,12 @@ class AdvisorDistributionReportService extends BaseService
             $query = $this->applyFilters($query, $request->all());
         }
 
-        return $query->paginate(15)
-            ->withQueryString();
+        $query->when(
+            $request->assignmentType && strtolower($request->assignmentType) !== 'all',
+            fn ($q) => $q->where('assignment_type', $request->assignmentType)
+        );
+
+        return $query->paginate(15)->withQueryString();
     }
 
     private function getCarQuoteQuery()

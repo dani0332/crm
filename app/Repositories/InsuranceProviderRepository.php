@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\HealthRatingEligibility;
+use App\Models\InslyInsuranceProvider;
 use App\Models\InsuranceProvider;
 use Illuminate\Support\Facades\DB;
 
@@ -13,10 +14,11 @@ class InsuranceProviderRepository extends BaseRepository
         return InsuranceProvider::class;
     }
 
-    public function fetchGetList()
+    public function fetchGetList($orderBy = 'sort_order', $order = 'asc')
     {
-        return $this->withActive()->orderBy('sort_order')->get();
+        return $this->withActive()->orderBy($orderBy, $order)->get();
     }
+
     public function fetchByQuoteTypeMapping($quoteTypeId)
     {
         return DB::table('insurance_provider_quote_type')
@@ -83,5 +85,12 @@ class InsuranceProviderRepository extends BaseRepository
     public function fetchGetById($id)
     {
         return $this->where('id', $id)->firstOrFail();
+    }
+
+    public function fetchGetInslyProviderId($insurerName)
+    {
+        return InslyInsuranceProvider::select('insurance_provider_id')
+            ->where('insly_insurer_name', '=', $insurerName)
+            ->first()->insurance_provider_id ?? null;
     }
 }

@@ -7,14 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class ActivityNotificationLogs extends Model implements AuditableContract
+class RateCoverageUpload extends Model implements AuditableContract
 {
     use Auditable, HasFactory;
 
-    protected $table = 'activity_notification_logs';
-    protected $fillable = [
-        'activity_id',
-        'advisor_id',
-        'notification_type',
-    ];
+    protected $fillable = ['file_name', 'file_path', 'total_records', 'cannot_upload', 'good', 'status', 'type'];
 }

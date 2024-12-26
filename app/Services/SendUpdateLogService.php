@@ -788,7 +788,7 @@ class SendUpdateLogService
                 'policy_expiry_date' => $sendUpdateLog->expiry_date,
                 'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
                 'frequency' => PaymentFrequency::UPFRONT,
-                'insurance_provider_id' => ($checkInslyMigratedLead) ? $sendUpdateLog->insurance_provider_id : $payment->insurance_provider_id,
+                'insurance_provider_id' => ($checkInslyMigratedLead) ? $quote->insurance_provider_id : $payment->insurance_provider_id,
             ]);
 
             $splitPayments->first()->fill([
@@ -860,7 +860,7 @@ class SendUpdateLogService
             'price_vat_applicable' => abs($preparedDetailsForEndorsement['payment']->total_price),
             'price_with_vat' => abs($sendUpdateLog->price_with_vat),
             'insly_migrated' => $quoteDetails->insly_migrated,
-            'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+            'insurance_provider_id' => $preparedDetailsForEndorsement['payment']->insurance_provider_id, // TODO:: Need to verify this field
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
         ];
 
@@ -1014,7 +1014,7 @@ class SendUpdateLogService
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
                         'policy_expiry_date' => $sendUpdateLog->expiry_date,
-                        //                        'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
+                        // 'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
                     ]);
                 }
                 // Cases for Correct Policy Details End
@@ -1427,8 +1427,7 @@ class SendUpdateLogService
         $quote = app(getServiceObject($request->quoteType))->getEntityPlain($request->quoteRefId);
 
         if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD ||
-            ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option?->code == SendUpdateLogStatusEnum::PPE) ||
-            $request->inslyMigrated) {
+            ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option?->code == SendUpdateLogStatusEnum::PPE)) {
             $insuranceProviderId = $sendUpdate->insurance_provider_id;
             $planId = $sendUpdate->plan_id ?? null;
         } else {
@@ -1492,4 +1491,21 @@ class SendUpdateLogService
     {
         return app(CentralService::class)->commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId);
     }
+
+    public function sendUpdateStatuses(): array
+    {
+        return [
+            SendUpdateLogStatusEnum::NEW_REQUEST,
+            SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
+            SendUpdateLogStatusEnum::TRANSACTION_DECLINE,
+            SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+            SendUpdateLogStatusEnum::UPDATE_ISSUED,
+            SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
+            SendUpdateLogStatusEnum::UPDATE_BOOKED,
+
+        ];
+    }
+
 }

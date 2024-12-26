@@ -7,7 +7,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Http\Requests\ActivitiesRequest;
 use App\Models\Activities;
-use App\Models\ActivityNotificationLogs;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;

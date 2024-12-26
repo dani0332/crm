@@ -4,7 +4,7 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
-use App\Factories\AllocationFactory;
+use App\Models\HealthQuote;
 use App\Services\HealthAllocationService;
 use App\Services\HealthEmailService;
 use Carbon\Carbon;
@@ -16,33 +16,45 @@ class HealthAllocation implements Allocation
 {
     protected $healthAllocationService;
     protected $allocationId;
+    private bool $overrideAdvisorId = false;
 
-    public function __construct(HealthAllocationService $healthAllocationService, $allocationId)
+    public function __construct(HealthAllocationService $healthAllocationService, $allocationId, bool $overrideAdvisorId = false)
     {
         $this->healthAllocationService = $healthAllocationService;
         $this->allocationId = $allocationId;
+        $this->overrideAdvisorId = $overrideAdvisorId;
     }
 
-    public function executeSteps($overrideAdvisorId = false)
+    public function executeSteps()
     {
         try {
-            $lead = $this->fetchLead($overrideAdvisorId);
+            $lead = $this->fetchLead();
 
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
 
-                return AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+                return $this->healthAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
+
+            if ($lead->isAllocationInProgress()) {
+                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                return $this->healthAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
+            }
+
+            $lead->startAllocation();
 
             $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
                 info('No health team found against lead : '.$lead->uuid);
 
-                return AllocationFactory::createResponse(0, 'No health team found', Response::HTTP_NOT_FOUND);
+                $lead->endAllocation();
+
+                return $this->healthAllocationService->createResponse(0, 'No health team found', Response::HTTP_NOT_FOUND);
             }
 
-            $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
+            $advisor = $this->fetchAvailableAdvisor($lead->health_team_type, $lead);
 
             if (! $advisor) {
                 $this->healthAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::HEALTH);
@@ -54,12 +66,20 @@ class HealthAllocation implements Allocation
                     app(HealthEmailService::class)->initiateApplyNowEmail($lead);
                 }
 
-                return AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
+                return $this->healthAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
+            }
+
+            if ($advisor->id == $lead->advisor_id) {
+                info('Advisor is same as previous advisor. Skipping for now.');
+                $lead->endAllocation();
+
+                return $this->healthAllocationService->createResponse($advisor->id, 'Advisor is same as previous advisor. Skipping for now.', Response::HTTP_OK);
             }
 
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
+            $lead->endAllocation();
 
-            return AllocationFactory::createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
+            return $this->healthAllocationService->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
         } catch (\Throwable $th) {
             $this->healthAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::HEALTH);
 
@@ -67,13 +87,13 @@ class HealthAllocation implements Allocation
             info('exception occurred in health lead allocation with error : '.$message);
             info('exception occurred in health lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return AllocationFactory::createResponse(0, 'exception occurred in health lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->healthAllocationService->createResponse(0, 'exception occurred in health lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    private function fetchLead($overrideAdvisorId)
+    private function fetchLead()
     {
-        return $this->healthAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
+        return $this->healthAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId);
     }
 
     private function assignTeamBasedOnPrices($lead)
@@ -81,9 +101,9 @@ class HealthAllocation implements Allocation
         $this->healthAllocationService->assignTeamBasedOnPrices($lead);
     }
 
-    private function fetchAvailableAdvisor($leadTeam)
+    private function fetchAvailableAdvisor($leadTeam, HealthQuote $lead)
     {
-        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, false);
+        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, false, $lead);
     }
 
     private function assignLead($lead, $advisor)
