@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             SendUpdateAdditionalSubType::class,
             PermissionsSeeder::class,
             AllianceNationalitySeeder::class,
-            RuleNameSeeder::class
+            RuleNameSeeder::class,
         ]);
     }
 }
