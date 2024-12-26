@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -9,9 +10,11 @@ use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\EmailServices\HomeEmailService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +25,7 @@ class PersonalQuoteObserver
 
     public function updating(PersonalQuote $quote): void
     {
+        info("PersonalQuoteObserver - Updating - Ref ID: {$quote->uuid} | Time: " . now());
         if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
             $quote->quote_status_date = now();
         }
@@ -34,6 +38,7 @@ class PersonalQuoteObserver
      */
     public function updated(PersonalQuote $personalQuote): void
     {
+        info("PersonalQuoteObserver - Updated - Ref ID: {$personalQuote->uuid} | Time: " . now());
         $dirty = $personalQuote->getDirty();
         if (
             $personalQuote->isDirty('quote_status_id') &&
@@ -72,7 +77,7 @@ class PersonalQuoteObserver
                     event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
                 }
             } catch (Exception $e) {
-                Log::error('PersonalQuoteObserver Error: '.$e->getMessage());
+                Log::error('PersonalQuoteObserver Error: ' . $e->getMessage());
             }
         }
 
@@ -115,8 +120,10 @@ class PersonalQuoteObserver
             }
         }
 
-        if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($personalQuote->quote_status_id)
-            && in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
+        if (
+            isset($dirty['quote_status_id']) && $this->removeStaleFromLead($personalQuote->quote_status_id)
+            && in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht])
+        ) {
             PersonalQuote::withoutEvents(function () use ($personalQuote) {
                 $personalQuote->update(['stale_at' => null]);
             });
@@ -128,7 +135,29 @@ class PersonalQuoteObserver
         ) {
             $payment = $personalQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($personalQuote, $payment, QuoteTypes::PERSONAL->value);
+        }
 
+        if ($this->isEligibleForHomeIntroEmail($personalQuote)) {
+            $this->sendIntroOCBEmail($personalQuote);
+        }
+    }
+
+    private function isEligibleForHomeIntroEmail(PersonalQuote $personalQuote): bool
+    {
+        return $personalQuote->quote_type_id === 2 &&
+            $personalQuote->isDirty('advisor_id') &&
+            !empty($personalQuote->advisor_id) &&
+            $personalQuote->advisor_id !== 0;
+    }
+
+    public function sendIntroOCBEmail(PersonalQuote $personalQuote): void
+    {
+        $homeOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH)->first();
+        if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
+            app(HomeEmailService::class)->sendHomeOCBIntroEmail($personalQuote);
+            info("HomeQuoteObserver - Home OCB Automated Followups Switch is on - Ref ID: {$personalQuote->uuid} | Time: " . now());
+        } else {
+            info("HomeQuoteObserver - Home OCB Automated Followups Switch is off - Ref ID: {$personalQuote->uuid} | Time: " . now());
         }
     }
 }

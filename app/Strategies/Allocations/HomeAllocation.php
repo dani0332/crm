@@ -4,10 +4,15 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\RolesEnum;
+use App\Models\HomeQuote;
 use Illuminate\Support\Str;
 
 class HomeAllocation extends BaseAllocation
 {
+    private const CONTENTS_VALUE_THRESHOLD = 100000;
+    private const PERSONAL_BELONGINGS_VALUE_THRESHOLD = 100000;
+    private const BUILDING_VALUE_THRESHOLD = 5000000;
+
     protected function fetchAdvisor(int $onlineStatus)
     {
         $emails = [];
@@ -36,26 +41,56 @@ class HomeAllocation extends BaseAllocation
         });
     }
 
+    private function getHomeQuoteData(string $uuid): ?HomeQuote
+    {
+        return HomeQuote::with('subArea:id,description')
+            ->where('uuid', $uuid)
+            ->first();
+    }
+
+    private function matchesTargetLocations(string $address): bool
+    {
+        $targetKeywords = ['arabian ranches', 'palm jumeriah'];
+
+        foreach ($targetKeywords as $keyword) {
+            if (Str::contains($address, $keyword)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function isValueLocation(): bool
     {
-        $address = Str::lower($this->lead->address);
+        $homeQuote = $this->getHomeQuoteData($this->lead->uuid);
 
-        return Str::contains('arabian ranches', $address) || Str::contains('palm jumeriah', $address);
+        $address = Str::lower($homeQuote?->subArea?->description ?? '');
+
+        return $this->matchesTargetLocations($address);
     }
 
-    private function isValueLead(): bool
+    public function isValueLead(): bool
     {
-        return ($this->lead->has_contents && $this->lead->contents_aed > 100000) ||
-        ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed > 100000) ||
-        ($this->lead->has_building && $this->lead->building_aed > 5000000) ||
-        $this->isValueLocation();
+        return $this->hasHighValueAssets() || $this->isValueLocation();
     }
 
-    private function isVolumeLead(): bool
+    public function isVolumeLead(): bool
     {
-        return ($this->lead->has_contents && $this->lead->contents_aed < 100000) ||
-            ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed < 100000) ||
-            ($this->lead->has_building && $this->lead->building_aed < 5000000) ||
-            ! $this->isValueLocation();
+        return $this->hasLowValueAssets() || !$this->isValueLocation();
+    }
+
+    private function hasHighValueAssets(): bool
+    {
+        return ($this->lead->has_contents && $this->lead->contents_aed > self::CONTENTS_VALUE_THRESHOLD) ||
+            ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed > self::PERSONAL_BELONGINGS_VALUE_THRESHOLD) ||
+            ($this->lead->has_building && $this->lead->building_aed > self::BUILDING_VALUE_THRESHOLD);
+    }
+
+    private function hasLowValueAssets(): bool
+    {
+        return ($this->lead->has_contents && $this->lead->contents_aed < self::CONTENTS_VALUE_THRESHOLD) ||
+            ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed < self::PERSONAL_BELONGINGS_VALUE_THRESHOLD) ||
+            ($this->lead->has_building && $this->lead->building_aed < self::BUILDING_VALUE_THRESHOLD);
     }
 }

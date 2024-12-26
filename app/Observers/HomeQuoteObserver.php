@@ -23,6 +23,7 @@ class HomeQuoteObserver
 
     public function updating(HomeQuote $quote): void
     {
+        info("HomeQuoteObserver - Updating - Ref ID: {$quote->uuid} | Time: " . now());
         if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
             $quote->quote_status_date = now();
         }
@@ -35,17 +36,17 @@ class HomeQuoteObserver
      */
     public function updated(HomeQuote $homeQuote): void
     {
+        info("HomeQuoteObserver - Updated - Ref ID: {$homeQuote->uuid} | Time: " . now());
         $dirty = $homeQuote->getDirty();
 
         if (isset($dirty['advisor_id'])) {
             $homeOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH)->first();
             if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
                 app(HomeEmailService::class)->sendHomeOCBIntroEmail($homeQuote);
-                info("HomeQuoteObserver - Home OCB Automated Followups Switch is on - Ref ID: {$homeQuote->uuid} | Time: ".now());
+                info("HomeQuoteObserver - Home OCB Automated Followups Switch is on - Ref ID: {$homeQuote->uuid} | Time: " . now());
             } else {
-                info("HomeQuoteObserver - Home OCB Automated Followups Switch is off - Ref ID: {$homeQuote->uuid} | Time: ".now());
+                info("HomeQuoteObserver - Home OCB Automated Followups Switch is off - Ref ID: {$homeQuote->uuid} | Time: " . now());
             }
-
         }
         if (
             isset($dirty['quote_status_id']) &&
@@ -95,7 +96,6 @@ class HomeQuoteObserver
         ) {
             $payment = $homeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($homeQuote, $payment, QuoteTypes::HOME->value);
-
         }
     }
 }
