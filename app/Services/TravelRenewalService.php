@@ -16,6 +16,8 @@ use App\Models\TravelQuote;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Enums\RolesEnum;
+use App\Enums\AssignmentTypeEnum;
+use App\Services\AllocationService;
 
 class TravelRenewalService extends BaseService
 {
@@ -120,7 +122,7 @@ class TravelRenewalService extends BaseService
                 'isEcommerce' => $quote->is_ecommerce ?? null,
                 'startDate' => $policyStartDate,
                 'policyExpiryDate' => Carbon::parse($newPolicyExpiryDate)->format('Y-m-d'),
-                'coverageCode' => $quote->coverage_code,
+                'coverageCode' => $quote->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP : $quote->coverage_code ,
                 'regionCoverForId' => $quote->region_cover_for_id,
                 'previousPolicyExpiryDate'=> $quote->policy_expiry_date,
                 'tripStarted' => false,
@@ -136,6 +138,7 @@ class TravelRenewalService extends BaseService
     public function mapCustomerMembers($members, $primaryMemberId)
     {
         return collect($members)->map(function ($member) use ($primaryMemberId) {
+
             return [
                 'id' => $member->id,
                 'quoteType' => $member->quote_type,
@@ -159,7 +162,7 @@ class TravelRenewalService extends BaseService
                 'isThirdPartyPayer' => $member->is_third_party_payer,
                 'oldPrimaryMemberId' => $member->old_primary_member_id,
                 'deletedAt' => $member->deleted_at,
-                'uaeResident' => $member->uae_resident,
+                'uaeResident' => $member->uae_resident ,
                 'passport' => $member->passport,
                 'emiratesIdNumber' => $member->emirates_id_number,
                 'primary' => app(CustomerService::class)->getPrimaryCustomerById($primaryMemberId ,$member->id),
@@ -169,12 +172,17 @@ class TravelRenewalService extends BaseService
 
     public function createTravelRenewalLead($travelQuote)
     {
+        try {
+            $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
+            info(self::class." - TravelRenewalService Travel quote successfully saved. Ref-ID: {$response->quoteUID} | Time:".now());
+            info(self::class." -  Lead allocation process initiated for Ref-ID: {$response->quoteUID} | Time:".now());
+            $this->leadAllocation($response->quoteUID);
+            info(self::class." -  Lead allocation completed for Ref-ID: {$response->quoteUID} - | Time: ".now());
+        } catch (\Exception $e) {
+            info(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->quoteUID} | Time:".now());
+            throw $e;
+        }
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
-        info(self::class." - TravelRenewalService Travel quote successfully saved. Ref-ID: {$response->quoteUID} | Time:".now());
-        info(self::class." -  Lead allocation process initiated for Ref-ID: {$response->quoteUID} | Time:".now());
-        $this->leadAllocation($response->quoteUID);
-        info(self::class." -  Lead allocation completed for Ref-ID: {$response->quoteUID} - | Time: ".now());
     }
 
     public function GenerateBatchNumber($expiryDate)
@@ -216,20 +224,34 @@ class TravelRenewalService extends BaseService
             info(self::class." - Lead found for Quote UID: {$quoteUID} | Time: ".now());
 
 
-
-            $response = QuoteTypes::TRAVEL->allocate($quoteUID);
-            if ($response) {
+            $previousAdvisorId = $this->getPreviousAdvisor($lead->customer_id)->advisor_id ?? null;
+            info(self::class." Previous Advisor ID: {$previousAdvisorId} Ref:ID- {$quoteUID} | Time: ".now() );
+            $eligibleUser = $this->getTravelRenewalsAdvisor($previousAdvisorId);
+            info(self::class." - Eligible Advisor found for Quote UID: {$quoteUID} | Time: ".now());
+            if ($eligibleUser) {
+                $this->assignLead($lead, $eligibleUser->user_id, AssignmentTypeEnum::SYSTEM_ASSIGNED);
                 info(self::class.' - TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob  Ref-ID: '.$quoteUID.' | Time: '.now());
                 SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
             } else {
+                info(self::class." - No eligible advisor found for Quote UID: {$quoteUID} | Time: ".now());
                 info(self::class." - Allocation failed for Quote UID: {$quoteUID} | Time: ".now());
             }
+
         } else {
             info(self::class." - No lead found for Quote UID: {$quoteUID} | Time: ".now());
         }
     }
+    public function assignLead(TravelQuote $lead,$advisorId, $assignmentType)
+    {
 
-    public function getTravelRenewalsAdvisor()
+        $lead->advisor_id = $advisorId;
+        $lead->assignment_type = $assignmentType;
+        $lead->save();
+        info(self::class." - Lead assigned to Advisor: {$advisorId} | Time: ".now());
+        app(AllocationService::class)->addAllocationCounts($advisorId, QuoteTypes::TRAVEL->id());
+        info(self::class." - Allocation counts updated for Advisor: {$advisorId} | Time: ".now());
+    }
+    public function getTravelRenewalsAdvisor($previousAdvisorId=null)
     {
         $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
         $user = User::select('users.id as user_id')
@@ -241,9 +263,16 @@ class TravelRenewalService extends BaseService
         })
         ->whereIn('r.name', [RolesEnum::TravelAdvisor])
         ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
-        ->activeUser()
         ->orderBy('la.last_allocated', 'asc');
-
         return $user->first();
+    }
+    private function getPreviousAdvisor($customer_id = null)
+    {
+        // Retrieve the most recent TravelQuote for the given customer with an assigned advisor
+        return TravelQuote::query()
+            ->where('customer_id', $customer_id)
+            ->whereNotNull('advisor_id')
+            ->latest('created_at')
+            ->first();
     }
 }
