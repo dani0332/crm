@@ -204,8 +204,6 @@ class HomeQuoteService extends BaseService
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
-        \Log::debug('capi request');
-        \Log::debug($dataArr);
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
 
         if (isset($response->quoteUID)) {
@@ -494,8 +492,8 @@ class HomeQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'company_name' => 'input|text',
-            'company_address' => 'input|text',
+            'company_name' => 'input|text|max:250',
+            'company_address' => 'input|text|max:1000',
             'quote_status_id' => 'select|title|multiple',
             'advisor_id' => 'select|title|multiple',
             'created_at' => 'input|date|title|range',
