@@ -281,7 +281,7 @@ class QuoteDocumentService extends BaseService
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
                     // Match the exact text "Certificate of Insurance" only
-                    return preg_match('/^Certificate of Insurance$/', $document->original_name);
+                    return preg_match('/^Certificate of Insurance\s*$/', $document->original_name);
                 });
             }
 
