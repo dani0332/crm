@@ -44,7 +44,7 @@ const props = defineProps({
   paymentTooltipEnum: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-
+  emailStatuses: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -769,6 +769,21 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
   const matchedValue = lookupArray.find(item => item.id === id);
   return matchedValue?.text || defaultValue;
 };
+
+const emailTableColumns = reactive({
+  columns: [
+    { text: 'Id', value: 'id' },
+    { text: 'Email Subject', value: 'email_subject' },
+    { text: 'Email Address', value: 'email_address' },
+    { text: 'Status', value: 'email_status' },
+    { text: 'Reason', value: 'reason' },
+    { text: 'Template Id', value: 'template_id' },
+    { text: 'Customer Id', value: 'customer_id' },
+    { text: 'Created At', value: 'created_at' },
+    { text: 'Updated At', value: 'updated_at' },
+  ],
+});
+
 </script>
 
 <template>
@@ -1944,7 +1959,22 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
       :data="sendUpdateLogs"
       @onAddUpdate="onAddUpdate"
     />
-
+    <div class="p-4 rounded shadow mb-6 bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+        </div>
+        <DataTable
+          table-class-name="tablefixed compact"
+          :headers="emailTableColumns.columns"
+          :items="emailStatuses || []"
+          show-index
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+        </DataTable>
+      </div>
+      <x-divider class="my-4" />
     <QuoteActivities
       :can="can"
       :quote="quote"
