@@ -4,6 +4,7 @@ defineProps({
   filtersByLob: Object,
   filterOptions: Object,
   defaultFilters: Object,
+  assignmentTypes: Object,
 });
 const loaders = reactive({
   table: false,
@@ -40,6 +41,7 @@ const filters = reactive({
   insurance_type: '',
   insurance_for: '',
   travel_coverage: '',
+  assignmentType: 'All',
 });
 
 function onSubmit(isValid, isMounted = false) {
@@ -742,6 +744,18 @@ const travelCoverageOptions = computed(() => {
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
+          :single="true"
+        />
+
+        <ComboBox
+          v-if="
+            filters.lob === quoteTypeCodeEnum.Car ||
+            filters.lob === quoteTypeCodeEnum.Health
+          "
+          v-model="filters.assignmentType"
+          label="Assignment Type"
+          placeholder="Select any option"
+          :options="assignmentTypes"
           :single="true"
         />
       </div>

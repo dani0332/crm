@@ -18,17 +18,22 @@ final class AMLStatusCode extends Enum
     const InsurerAMLScreeningCleared = 'CLEARED';
     const InsurerAMLScreeningFailed = 'FAILED';
 
+    private static $statuses = [
+        'AML_PENDING' => 'AML Pending',
+        'AML_SCREENING_CLEARED' => 'AML Screening Cleared',
+        'AML_SCREENING_FAILED' => 'AML Screening Failed',
+        'N/A' => 'N/A',
+        'CLEARED' => 'Cleared',
+        'FAILED' => 'Failed',
+    ];
+
+    public static function getStatuses()
+    {
+        return self::$statuses;
+    }
     public static function getName($value)
     {
-        $statuses = [
-            'AML_PENDING' => 'AML Pending',
-            'AML_SCREENING_CLEARED' => 'AML Screening Cleared',
-            'AML_SCREENING_FAILED' => 'AML Screening Failed',
-            'N/A' => 'N/A',
-            'CLEARED' => 'Cleared',
-            'FAILED' => 'Failed',
-        ];
-
-        return $statuses[$value] ?? 'AML Pending';
+        return self::$statuses[$value] ?? 'AML Pending';
     }
+
 }

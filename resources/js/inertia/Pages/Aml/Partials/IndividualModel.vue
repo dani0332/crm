@@ -1,7 +1,7 @@
 <script setup>
 import MemberDetailsModel from './MemberDetailsModel.vue';
-import UBODetailsModels from './UBODetailsModels.vue';
 import PayerDetails from './PayerDetails.vue';
+import UBODetailsModels from './UBODetailsModels.vue';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -697,7 +697,6 @@ watch(() => {
               :rules="[isRequired]"
               placeholder="Date of Birth"
               class="w-full"
-              :utc="true"
             />
           </x-field>
           <x-field label="Gender" required>

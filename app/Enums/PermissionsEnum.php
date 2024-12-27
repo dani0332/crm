@@ -373,6 +373,8 @@ final class PermissionsEnum extends Enum
     public const TRAVEL_SIC_ALLOCATION = 'travel-sic-allocation';
     public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
     public const ReApprovePayments = 'reapprove-payment';
+    public const UPLOAD_HEALTH_RATES = 'upload-health-rates';
+    public const UPLOAD_HEALTH_COVERAGES = 'upload-health-coverages';
     public const EXPORT_RM_LEADS = 'export-rm-leads';
     public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
     public const CORPLINE_LEAD_ALLOCATION_DASHBOARD = 'corpline-lead-allocation-dashboard';
@@ -387,6 +389,7 @@ final class PermissionsEnum extends Enum
     public const SEND_UPDATE_EDIT_NOTES = 'send-update-edit-notes';
     public const DEPARTMENT_MANAGER = 'department-manager';
     public const ASSIGN_PAID_LEADS = 'assign-paid-leads';
+    public const BUY_LEADS = 'buy-leads';
     public const RECEIVE_NOTIFICATIONS = 'receive-notifications';
     public const SEARCH_ALL_LEAD_LOB = 'search-all-lead-lob';
     public const DATA_EXTRACTION_SEARCH_ALL_LEADS = 'data-extraction-search-all-leads';
