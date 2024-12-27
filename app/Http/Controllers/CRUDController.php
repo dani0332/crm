@@ -45,7 +45,6 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
-use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -519,8 +518,8 @@ class CRUDController extends Controller
         if ($request->has('chassis_number')) {
             $this->validate($request, [
                 'chassis_number' => 'string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/'],
-                [ 'chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm'
-            ]);
+                ['chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
+                ]);
         }
 
         $this->validate($request, $validateArray);

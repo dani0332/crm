@@ -59,8 +59,8 @@ class PetQuoteRepository extends BaseRepository
         ];
 
         // TODO:: Need to discuss with where we are going to save, DOB, Gender and Nationality
-//        $quoteData['dob'] = $data['dob'];
-//        $quoteData['nationalityId'] = $data['nationality_id'];
+        //        $quoteData['dob'] = $data['dob'];
+        //        $quoteData['nationalityId'] = $data['nationality_id'];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
 
@@ -93,7 +93,6 @@ class PetQuoteRepository extends BaseRepository
                 'dob' => $data['dob'] ?? null,
                 'nationality_id' => $data['nationality_id'] ?? null,
             ]);
-
 
             return $quote;
         });

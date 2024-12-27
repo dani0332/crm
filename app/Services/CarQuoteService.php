@@ -364,8 +364,7 @@ class CarQuoteService extends BaseService
         ];
 
         // TODO:: Need to discuss where would we save DOB, Nationality, and Gender
-//        'gender' => $request->gender ?? null
-
+        //        'gender' => $request->gender ?? null
 
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;

@@ -68,8 +68,7 @@ class BikeQuoteRepository extends BaseRepository
         ];
 
         // TODO:: Need to discuss where we are going to save gender
-//        'gender' => $data['gender'] ?? null,
-
+        //        'gender' => $data['gender'] ?? null,
 
         info('bikeQuote:'.json_encode($quoteData));
 

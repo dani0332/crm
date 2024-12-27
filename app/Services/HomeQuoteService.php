@@ -203,9 +203,8 @@ class HomeQuoteService extends BaseService
         }
 
         // TODO:: Need to discuss where we are going to save DOB, Gender, Nationality
-//        'dob' => $request->dob ?? null
-//        'gender' => $request->gender ?? null
-
+        //        'dob' => $request->dob ?? null
+        //        'gender' => $request->gender ?? null
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
 

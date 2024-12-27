@@ -55,9 +55,9 @@ class CycleQuoteRepository extends BaseRepository
         ];
 
         // TODO:: Need to discuss with where we are going to save, DOB, Gender and Nationality
-//        $quoteData['dob'] = $data['dob'];
-//        $quoteData['nationalityId'] = $data['nationality_id'];
-//        $quoteData['gender'] = $data['gender'];
+        //        $quoteData['dob'] = $data['dob'];
+        //        $quoteData['nationalityId'] = $data['nationality_id'];
+        //        $quoteData['gender'] = $data['gender'];
 
         info('cycleQuote:'.json_encode($quoteData));
 
