@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-import { formatDate } from '../../Composables/utilities.js';
 import EntityModel from './Partials/EntityModel.vue';
 import IndividualModel from './Partials/IndividualModel.vue';
 
@@ -285,7 +284,10 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">DATE OF BIRTH</dt>
-              <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
+              <dd>
+                {{ dateFormat(quoteRequest.dob) }}
+                <!-- {{ dateFormat(quoteRequest.dob) }} -->
+              </dd>
             </div>
           </template>
           <template v-if="quoteType.code == quoteTypeCodeEnum.Health">
