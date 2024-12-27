@@ -131,6 +131,17 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.nationality_id"
           />
         </x-field>
+        <x-field label="Gender">
+            <x-select
+                v-model="quoteForm.gender"
+                :options="[
+                  { value: 'Male', label: 'Male' },
+                  { value: 'Female', label: 'Female' },
+                ]"
+                class="w-full"
+                :error="quoteForm.errors.gender"
+            />
+        </x-field>
         <x-field label="Sum Insured Value">
           <x-input
             v-model="quoteForm.sum_insured_value"
@@ -224,17 +235,6 @@ function onSubmit(isValid) {
             "
             class="w-full"
             :error="quoteForm.errors.number_of_years_id"
-          />
-        </x-field>
-        <x-field label="Gender">
-          <x-select
-            v-model="quoteForm.gender"
-            :options="[
-              { value: 'Male', label: 'Male' },
-              { value: 'Female', label: 'Female' },
-            ]"
-            class="w-full"
-            :error="quoteForm.errors.gender"
           />
         </x-field>
         <x-field label="Smoker">

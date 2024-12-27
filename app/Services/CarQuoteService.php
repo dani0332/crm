@@ -20,6 +20,7 @@ use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
@@ -214,6 +215,7 @@ class CarQuoteService extends BaseService
                 'cqr.insly_migrated',
                 'cqr.aml_status',
                 'cqrd.chassis_number',
+                'c.gender',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -353,6 +355,7 @@ class CarQuoteService extends BaseService
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'chassisNumber' => $request->chassis_number,
+            'gender' => $request->gender ?? null
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -463,17 +466,24 @@ class CarQuoteService extends BaseService
             $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
         }
 
-        if($request->chassis_number) {
-            $carQuote->chassis_number = $request->chassis_number;
-        }
-
         $carQuote->updated_by = auth()->user()->email;
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
         if ($deleteValuationResponse) {
             $carQuote->save();
 
-            // TODO:: Reminder update plan premium API call here only for GIG Screening Case
+            $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
+            $carQuoteDetails->chassis_number = $request->chassis_number;
+            if ($carQuoteDetails->isDirty()) {
+                $carQuoteDetails->chassis_number = $request->chassis_number;
+                $carQuoteDetails->save();
+                // TODO:: Reminder update plan premium API call here only for GIG Screening Case
+            }
+
+            if (isset($request->gender)) {
+                $customer = Customer::where('id', $carQuote->customer_id)->first();
+                $customer->update(['gender' => $request->gender]);
+            }
 
             $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';
             // update embedded products list
@@ -1798,6 +1808,7 @@ class CarQuoteService extends BaseService
             'car_make_id' => 'required', // ID
             'car_model_id' => 'required', // ID
             'currently_insured_with' => 'required|string',
+            'chassis_number' => 'nullable|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/',
         ];
     }
 

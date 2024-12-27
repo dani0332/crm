@@ -44,6 +44,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -425,6 +426,7 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Home) {
             return inertia('HomeQuote/Form', [
+                'nationalities' => NationalityRepository::withActive()->get(),
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -520,6 +522,11 @@ class CRUDController extends Controller
 
         $this->validate($request, $validateArray);
         app(CustomerAddressService::class)->validateAddress($request);
+
+        if ($request->has('chassis_number') && $modelType == quoteTypeCode::Car) {
+            // TODO:: Reminder, Need to call update premium API here
+        }
+
         $record = $this->crudService->saveModelByType($modelType, $request);
 
         if ($record) {
@@ -1274,6 +1281,7 @@ class CRUDController extends Controller
             return inertia('HomeQuote/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
+                'nationalities' => NationalityRepository::withActive()->get(),
                 'dropdownSource' => $dropdownSource,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
@@ -1339,6 +1347,15 @@ class CRUDController extends Controller
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         $this->validate($request, $validateArray);
         app(CustomerAddressService::class)->validateAddress($request);
+
+        if ($modelType == quoteTypeCode::Car) {
+            $carQuoteWithDetails = CarQuote::with('carQuoteRequestDetail')->where('uuid', $id)->first();
+            $carQuoteWithDetails->chassis_number = $request->chassis_number;
+            if ($carQuoteWithDetails->isDirty()) {
+                // TODO:: Reminder, Need to call update premium API here
+            }
+        }
+
         $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
         // check if request addressObj is not empty then insert/update the address of user in customer address table

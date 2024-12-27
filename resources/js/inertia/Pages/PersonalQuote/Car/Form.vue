@@ -169,6 +169,10 @@ function onSubmit(isValid) {
     isEmptyField.value = false;
   }
 
+  if (chassisNumberValidate('blur')) {
+        isError.value = true;
+  }
+
   if (!isValid) return;
 
   quoteForm.clearErrors();
@@ -279,20 +283,28 @@ const chassisNumberDisabled = computed(() => {
   return disallowedStatus.includes(props?.quote?.quote_status_id);
 });
 
-const chassisNumberValidate = event => {
+const chassisNumberValidate = type => {
   const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
   const lengthValid =
     quoteForm.chassis_number.length >= 8 &&
     quoteForm.chassis_number.length <= 17;
   const isAlphanumeric = regex.test(quoteForm.chassis_number);
 
-    if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
-        event.preventDefault();
-        notification.error({
-            title: 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
-            position: 'top',
-        });
-    }
+  if (type === 'blur') {
+      if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
+          quoteForm.setError({
+              chassis_number: 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
+          });
+          return true;
+      } else {
+          quoteForm.clearErrors('chassis_number');
+          return false;
+      }
+  } else if (type === 'change') {
+      if (quoteForm.chassis_number && lengthValid && isAlphanumeric) {
+          quoteForm.clearErrors('chassis_number'); // Clear error only if validation passes
+      }
+  }
 };
 
 const gender = computed(() => {
@@ -580,8 +592,6 @@ const gender = computed(() => {
                       class="w-full"
                       type="text"
                       placeholder="Enter Chassis Number"
-                      @blur="chassisNumberValidate"
-                      :error="quoteForm.errors.chassis_number"
                   />
               </template>
               <template v-else>
@@ -591,7 +601,8 @@ const gender = computed(() => {
                           class="w-full"
                           type="text"
                           placeholder="Enter Chassis Number"
-                          @blur="chassisNumberValidate"
+                          @blur="chassisNumberValidate('blur')"
+                          @keypress="chassisNumberValidate('change')"
                           :error="quoteForm.errors.chassis_number"
                       />
                   </x-field>

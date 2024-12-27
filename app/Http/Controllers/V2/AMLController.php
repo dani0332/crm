@@ -31,6 +31,7 @@ use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
+use App\Models\CustomerDetail;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\KycLog;
@@ -515,7 +516,7 @@ class AMLController extends Controller
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
             }
 
-            return redirect()->back()->with('insurerScreeningResponse', $insurerAMLScreeningResponse);
+            return redirect()->back()->with('info', $insurerAMLScreeningResponse);
         }
 
         return redirect()->back()->with('error', 'Something went wrong');
@@ -553,9 +554,10 @@ class AMLController extends Controller
 
     public function fetchCustomerDetails(Request $request)
     {
-        // TODO:: Passport filtration is pending
-        $columnToFilter = $request->id_type == 'emiratesId' ? 'emirates_id_number' : 'passport';
-        $customerDetails = Customer::where($columnToFilter, $request->id_number)->first();
+        $customerDetails = CustomerDetail::with('customer')->where([
+            'id_type' => $request->id_type,
+            'id_number' => $request->id_number,
+        ])->first();
 
         if ($customerDetails) {
             return response()->json(['status' => true, 'response' => $customerDetails, 'message' => 'Customer found with the entered ID number']);
@@ -566,16 +568,15 @@ class AMLController extends Controller
 
     public function linkCustomerDetails(Request $request)
     {
-        // TODO:: Passport filtration is pending
-        $columnToFilter = $request->id_type == 'emiratesId' ? 'emirates_id_number' : 'passport';
-        $customerDetails = Customer::where($columnToFilter, $request->id_number)->first();
-
+        $getQuoteType = QuoteTypes::getName($request->quote_type_id)->name;
+        $quoteDetails = $this->getQuoteObjectBy($getQuoteType, $request->uuid, 'uuid');
+        $customerDetails = Customer::find($quoteDetails->customer_id);
         $customerDetails->update([
-            'insured_first_name' => $request->insured_first_name,
-            'insured_last_name' => $request->insured_last,
-            'dob' => $request->dob,
-            'gender' => $request->gender,
-            'nationality_id' => $request->nationality_id,
+            'insured_first_name' => $request->insured_first_name ?? null,
+            'insured_last_name' => $request->insured_last ?? null,
+            'dob' => $request->dob ?? null,
+            'gender' => $request->gender ?? null,
+            'nationality_id' => $request->nationality_id ?? null,
         ]);
 
         return response()->json(['status' => true, 'response' => $customerDetails, 'message' => 'Customer Details Linked Successfully']);

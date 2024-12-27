@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\Customer;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -127,6 +128,7 @@ class HomeQuoteService extends BaseService
             'hqr.policy_booking_date',
             'hqr.insly_migrated',
             'hqr.aml_status',
+            'c.gender'
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
@@ -195,6 +197,7 @@ class HomeQuoteService extends BaseService
             'source' => $sourceName,
             'isPropertyRentedHolidayHome' => $request->is_property_rented_holiday_home == 'on' ? true : false,
             'referenceUrl' => $appUrl,
+            'gender' => $request->gender ?? null
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -471,6 +474,13 @@ class HomeQuoteService extends BaseService
         $homeQuote->has_building = $request->has_building == 'on' ? true : false;
         $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ? true : false;
         $homeQuote->save();
+
+        $customerDetails = Customer::where('id', $homeQuote->customer_id)->first();
+        $customerDetails->update([
+            'nationality_id' => $request->nationality_id,
+            'gender' => $request->gender ?? null,
+            'dob' => $request->dob,
+        ]);
 
         if (isset($request->return_to_view)) {
             return redirect('quote/home/'.$id)->with('success', 'Home Quote has been updated');

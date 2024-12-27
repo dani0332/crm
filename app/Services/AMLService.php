@@ -578,11 +578,11 @@ class AMLService
 
     public function amlScreeningGIG($request, $quoteTypeId, $quoteDetails, $customerType)
     {
+        $chassisNumber = '';
         $paymentDetails = Payment::with('insuranceProvider')->where([
             'paymentable_type' => $quoteDetails->getMorphClass(),
             'paymentable_id' => $quoteDetails->id,
         ])->first();
-        $chassisNumber = '';
 
         if (in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id()])) {
             $detailsReference = [
@@ -604,9 +604,8 @@ class AMLService
                     $requestQuoteDetails->refresh();
                     // TODO:: Reminder need to call update premium API
                 }
+                $chassisNumber = $requestQuoteDetails?->chassis_number;
             }
-
-            $chassisNumber = $requestQuoteDetails?->chassis_number;
         }
 
         if ($paymentDetails?->insuranceProvider?->code !== InsuranceProvidersEnum::AXA) {

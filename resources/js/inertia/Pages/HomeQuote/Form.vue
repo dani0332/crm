@@ -6,6 +6,7 @@ const props = defineProps({
   dropdownSource: Object,
   homePossessionTypeEnum: Object,
   model: String,
+  nationalities: Object,
 });
 const page = usePage();
 const hasContentOrBuilding = ref(true);
@@ -29,6 +30,10 @@ const quoteForm = useForm({
   contents_aed: props.quote?.contents_aed || null,
   building_aed: props.quote?.building_aed || null,
   personal_belongings_aed: props.quote?.personal_belongings_aed || null,
+
+  dob: props.quote?.dob || null,
+  nationality_id: props.quote?.nationality_id || null,
+  gender: props.quote?.customer?.gender || null,
 });
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -69,6 +74,16 @@ function successResponse() {
 }
 function onSubmit(isValid) {
   if (quoteForm.has_contents || quoteForm.has_building) {
+    if (quoteForm.nationality_id == null) {
+        formFieldReq.nationality_id = true;
+    } else {
+        formFieldReq.nationality_id = false;
+    }
+    if (quoteForm.dob == null || quoteForm.dob === '') {
+        formFieldReq.dob = true;
+    } else {
+        formFieldReq.dob = false;
+    }
     if (isValid) {
       if (isEdit.value) {
         quoteForm
@@ -99,6 +114,21 @@ function onSubmit(isValid) {
     hasContentOrBuilding.value = false;
   }
 }
+
+const gender = computed(() => {
+    return [
+        { value: 'M', label: 'Male'},
+        { value: 'F', label: 'Female'}
+    ];
+});
+
+const isEmptyField = ref(false);
+const formFieldReq = reactive({
+    nationality: false,
+    dob: false,
+});
+
+
 </script>
 
 <template>
@@ -163,6 +193,34 @@ function onSubmit(isValid) {
             :error="quoteForm?.errors?.mobile_no"
           />
         </x-field>
+        <x-field label="DATE OF BIRTH" required>
+            <DatePicker
+                v-model="quoteForm.dob"
+                name="created_at_start"
+                :rules="[isRequired]"
+                :hasError="quoteForm.errors.dob || formFieldReq.dob"
+            />
+        </x-field>
+        <x-field label="NATIONALITY" required>
+            <ComboBox
+                v-model="quoteForm.nationality_id"
+                :single="true"
+                :options="
+                  nationalities.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                }))"
+                :hasError="isEmptyField || formFieldReq.nationality_id"
+                :error="quoteForm.errors.nationality_id"
+            />
+          </x-field>
+          <x-field label="Gender">
+              <x-select
+                  v-model="quoteForm.gender"
+                  :options="gender"
+                  placeholder="Gender"
+              />
+          </x-field>
         <x-field label="PRICE">
           <x-input v-model="quoteForm.premium" type="text" class="w-full" />
         </x-field>

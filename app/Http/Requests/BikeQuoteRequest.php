@@ -46,6 +46,7 @@ class BikeQuoteRequest extends FormRequest
             'currently_insured_with' => 'required',
             'cubic_capacity' => 'required',
             'asset_value' => 'nullable|numeric',
+            'gender' => 'nullable|string',
         ];
     }
 

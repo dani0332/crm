@@ -82,6 +82,7 @@ const quoteForm = useForm({
   bike_value_tier: props.bikeQuoteDetail?.bike_value_tier || null,
   currently_insured_with: props.quote?.currently_insured_with_id || null,
   cubic_capacity: props.bikeQuoteDetail?.cubic_capacity || null,
+  gender: props.quote?.customer?.gender || null,
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -202,6 +203,14 @@ const getModelDetails = onchange => {
       }
     });
 };
+
+const gender = computed(() => {
+    return [
+        { value: 'M', label: 'Male'},
+        { value: 'F', label: 'Female'}
+    ];
+});
+
 </script>
 
 <template>
@@ -281,6 +290,13 @@ const getModelDetails = onchange => {
             :hasError="isEmptyField || formFieldReq.nationality_id"
             :error="quoteForm.errors.nationality_id"
           />
+        </x-field>
+        <x-field label="Gender">
+            <x-select
+                v-model="quoteForm.gender"
+                :options="gender"
+                placeholder="Gender"
+            />
         </x-field>
         <x-field label="UAE LICENCE HELD FOR" required>
           <x-select
