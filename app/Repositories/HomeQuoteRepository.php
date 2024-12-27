@@ -39,6 +39,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use App\Services\EmailStatusService;
 
 class HomeQuoteRepository extends BaseRepository
 {
@@ -299,6 +300,7 @@ class HomeQuoteRepository extends BaseRepository
 
         $planURL = $this->getEcomQuoteLink(QuoteTypes::HOME, $quote->uuid);
         $allowedDuplicateLOB = app(CRUDService::class)->getAllowedDuplicateLOB('home', $quote->code);
+        $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Home, $quote->id);
 
         return [
             'documentTypes' => $documentTypes,
@@ -307,6 +309,7 @@ class HomeQuoteRepository extends BaseRepository
             'quoteType' => QuoteTypes::HOME,
             'quoteTypeId' => QuoteTypeId::Home,
             'quoteStatuses' => $quoteStatuses,
+            'emailStatuses' => $emailStatuses,
             'quote' => $quote,
             'activities' => $activities,
             'advisors' => UserRepository::getPersonalQuoteAdvisors(QuoteTypes::HOME->value),
