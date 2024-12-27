@@ -280,8 +280,8 @@ class QuoteDocumentService extends BaseService
             $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
-                    // Match the exact text "Certificate of Insurance" only
-                    return preg_match('/^Certificate of Insurance$/', $document->original_name);
+                    // Exclude documents that contain "Certificate of Insurance" followed by any text or space
+                    return ! preg_match('/^Certificate of Insurance\s+\S+/', $document->original_name);
                 });
             }
 
