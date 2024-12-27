@@ -17,7 +17,7 @@ enum QuoteSegmentEnum: string
             self::ALL => 'All',
             self::SIC => 'SIC leads',
             self::NON_SIC => 'Non SIC leads',
-            self::SIC_REVIVAL => 'SIC Revival',
+            self::SIC_REVIVAL => 'Revival',
         };
     }
 
@@ -25,7 +25,7 @@ enum QuoteSegmentEnum: string
     {
         return match ($this) {
             self::SIC => 'SIC',
-            self::SIC_REVIVAL => 'SIC Revival',
+            self::SIC_REVIVAL => 'Revival',
             self::NON_SIC => 'Non-SIC',
         };
     }
