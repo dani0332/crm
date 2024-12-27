@@ -1260,7 +1260,7 @@ const updateProfileDetails = isValid => {
           rolesEnum.EBPAdvisor,
           rolesEnum.HealthAdvisor,
           rolesEnum.RMAdvisor,
-        ])
+        ]) || hasRole(rolesEnum.SuperManagerLeadAllocation)
       "
       class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
     >
