@@ -659,7 +659,7 @@ class CentralController extends Controller
             'CAR-6LRTVRGM',
             'CAR-JWQ2LQJC',
             'CAR-B8XASCAD',
-            'CAR-75F7EN5N-1'
+            'CAR-75F7EN5N-1',
         ];
 
         $counter = 0;
@@ -704,13 +704,13 @@ class CentralController extends Controller
     {
         if ($quote) {
             info("Processing Quote Code: {$quote->code}");
-            if ($quote->payments->isNotEmpty()){
+            if ($quote->payments->isNotEmpty()) {
                 $paymentSplits = $quote->payments->first()->paymentSplits;
                 foreach ($paymentSplits as $paymentSplit) {
                     if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
                         if (count($paymentSplit->documents) > 0) {
                             info("Document exists for Payment code {$paymentSplit->code}");
-    
+
                             continue;
                         }
                         app(SplitPaymentService::class)->createReceipt(quoteTypeCode::Car, $quote->id, $paymentSplit);
