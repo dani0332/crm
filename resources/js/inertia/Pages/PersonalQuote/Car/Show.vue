@@ -4058,7 +4058,6 @@ const allowStatusUpdate = computed(() => {
               v-model="activityForm.description"
               :adjust-to-text="false"
               class="w-full"
-              :rules="[isRequired]"
             />
           </x-field>
           <x-field label="Assignee" required>
