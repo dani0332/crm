@@ -1254,7 +1254,7 @@ class SendUpdateLogService
 
     public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
     {
-        $this->updatePriceAndDiscount($sendUpdateLog, $payment);
+        app(CentralService::class)->synchronizePaymentInformation($sendUpdateLog, $payment);
     }
 
     public function updatePaymentTotalPrice($payment, $totalPrice): void
