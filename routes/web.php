@@ -704,5 +704,3 @@ Route::get('/add-batch-number', function () {
 //     }
 
 // });
-//todo: temp endpoint to be removed later
-Route::get('/receipt-generate', [CentralController::class, 'manualReceiptGeneration']);
