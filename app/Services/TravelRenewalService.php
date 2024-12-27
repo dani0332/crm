@@ -14,6 +14,8 @@ use App\Jobs\TravelRenewalLeadCreationJob;
 use App\Models\RenewalBatch;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Enums\RolesEnum;
 
 class TravelRenewalService extends BaseService
 {
@@ -207,16 +209,15 @@ class TravelRenewalService extends BaseService
     public function leadAllocation($quoteUID)
     {
         info(self::class." - Processing Travel record for Quote Allocation with Ref-ID: {$quoteUID} | Time: ".now());
-        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+
 
         $lead = TravelQuote::where('uuid', $quoteUID)->first();
         if ($lead) {
             info(self::class." - Lead found for Quote UID: {$quoteUID} | Time: ".now());
-            // Only apply teamId if the payment status is AUTHORIZED
-            $currentTeamId = $lead->isPaid() ? $teamId : false;
-            info(self::class.' - Current Team ID: '.($currentTeamId ? $currentTeamId : 'Not applicable').' | Time: '.now());
 
-            $response = QuoteTypes::TRAVEL->allocate($quoteUID, $currentTeamId);
+
+
+            $response = QuoteTypes::TRAVEL->allocate($quoteUID);
             if ($response) {
                 info(self::class.' - TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob  Ref-ID: '.$quoteUID.' | Time: '.now());
                 SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
@@ -226,5 +227,23 @@ class TravelRenewalService extends BaseService
         } else {
             info(self::class." - No lead found for Quote UID: {$quoteUID} | Time: ".now());
         }
+    }
+
+    public function getTravelRenewalsAdvisor()
+    {
+        $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
+        $user = User::select('users.id as user_id')
+        ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+        ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
+        ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+        ->when($teamId, function ($q) use ($teamId) {
+            $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
+        })
+        ->whereIn('r.name', [RolesEnum::TravelAdvisor])
+        ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
+        ->activeUser()
+        ->orderBy('la.last_allocated', 'asc');
+
+        return $user->first();
     }
 }
