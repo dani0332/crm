@@ -206,7 +206,7 @@ class QuoteDocumentService extends BaseService
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc) {
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id, $data['quote_uuid'], $documentType->id
-                );
+                )->afterCommit();
             } else {
                 info('Watermkark job not dispatched - Ref: '.$quote->code);
             }
@@ -277,7 +277,15 @@ class QuoteDocumentService extends BaseService
 
         if ($quote && $documentTypeCodes) {
             // Return documents filtered by document type codes if provided
-            return $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
+            if (ucfirst($quoteType) == quoteTypeCode::Travel) {
+                return $quoteDocument->filter(function ($document) {
+                    // Exclude documents that contain "Certificate of Insurance" followed by any text or space
+                    return ! preg_match('/^Certificate of Insurance\s+\S+/', $document->original_name);
+                });
+            }
+
+            return $quoteDocument;
         }
 
         // Return all documents associated with the quote if no specific document type codes are provided
@@ -462,7 +470,9 @@ class QuoteDocumentService extends BaseService
         $outputFile = $outputPath = storage_path('temp/'.$docName);
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
-        $fileContent = file_get_contents($azureFilePath);
+
+        $encodedUrl = $this->encodeUrl($azureFilePath);
+        $fileContent = file_get_contents($encodedUrl);
 
         $tempFilePath = storage_path('temp/temp_'.$docName);
         file_put_contents($tempFilePath, $fileContent);
@@ -521,7 +531,9 @@ class QuoteDocumentService extends BaseService
         }
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
-        $fileContent = file_get_contents($azureFilePath);
+
+        $encodedUrl = $this->encodeUrl($azureFilePath);
+        $fileContent = file_get_contents($encodedUrl);
 
         $manager = new ImageManager(new Driver);
 
@@ -594,7 +606,9 @@ class QuoteDocumentService extends BaseService
         }
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
-        $fileContent = file_get_contents($azureFilePath);
+
+        $encodedUrl = $this->encodeUrl($azureFilePath);
+        $fileContent = file_get_contents($encodedUrl);
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
@@ -649,8 +663,19 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
-     * verify if a document is watermark qualified function
+     * Check if all required documents are uploaded to enable send policy to customer & book policy button in book policy section
+     * Triggering from updateQuoteStatus & bookPolicyPayload
+     *
+     * @return bool
      */
+    public function areDocsUploaded($quoteDocuments, $quoteType, $record)
+    {
+        $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
+        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+
+        return $quoteDocumentsCount == count($documentTypeCodes);
+    }
+
     public function getWatermarkProperty($quote, $documentType, $insuranceProviderId = null): bool
     {
         $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
@@ -672,5 +697,26 @@ class QuoteDocumentService extends BaseService
         }
 
         return false;
+    }
+
+    /**
+     * filter any kind of special encoding on url function
+     */
+    private function encodeUrl($url)
+    {
+        // Find the last slash to get the filename
+        $lastSlashPos = strrpos($url, '/');
+
+        // Split the URL into the path before the filename and the filename
+        $basePath = substr($url, 0, $lastSlashPos + 1);
+        $fileName = substr($url, $lastSlashPos + 1);
+
+        // Encode the filename to handle Arabic or special characters
+        $encodedFileName = urlencode($fileName);
+
+        // Reconstruct the full URL
+        $encodedUrl = $basePath.$encodedFileName;
+
+        return $encodedUrl;
     }
 }

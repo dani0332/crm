@@ -11,6 +11,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -26,6 +27,7 @@ use App\Http\Requests\UpdateTravelRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\TravelPlan;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -37,6 +39,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -85,6 +88,7 @@ class TravelController extends Controller
     {
         $searchProperties = array_flip($this->genericModel->searchProperties);
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
+        $insurerApiStatus = PolicyIssuanceEnum::getInsurerAPIStatuses();
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
@@ -95,6 +99,7 @@ class TravelController extends Controller
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
+            'insurerApiStatus' => $insurerApiStatus,
             'dropdownSource' => $dropdownSource,
             'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
@@ -107,6 +112,9 @@ class TravelController extends Controller
                 'isManagerORDeputy' => $isManager,
             ],
             'authorizedDays' => intval($authorizedDays->value),
+            'amlStatuses' => AMLStatusCode::getStatuses(),
+            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),
+            'travelPlans' => TravelPlan::all(),
         ]);
     }
 
@@ -212,6 +220,9 @@ class TravelController extends Controller
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
+        if (isset($fields['advisor_id']) && ! empty($fields['advisor_id']) && isset($fields['advisor_id']['value']) && $fields['advisor_id']['value'] === 'Customer Happiness Centre') {
+            $fields['advisor_id']['value'] = 'Auto Issued';
+        }
         $travelDestinations = $this->travelQuoteService->getTravelDestinations($record->id);
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
@@ -241,6 +252,8 @@ class TravelController extends Controller
         $isAmlClearedForQuote = $record->aml_status === AMLStatusCode::AMLScreeningCleared;
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
         $access = $this->travelQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+
+        $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($record, self::TYPE);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -319,6 +332,7 @@ class TravelController extends Controller
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
             'access' => $access,
+            'lockStatusOfPolicyIssuanceSteps' => $lockStatusOfPolicyIssuanceSteps,
         ]);
     }
 
