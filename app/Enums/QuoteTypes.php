@@ -46,6 +46,8 @@ use Illuminate\Support\Facades\Route;
 
 enum QuoteTypes: string
 {
+    use Enumable;
+
     case CAR = 'Car';
     case HOME = 'Home';
     case HEALTH = 'Health';
@@ -318,6 +320,11 @@ enum QuoteTypes: string
         }
 
         return $typesWithIds;
+    }
+
+    public function refId(string $uuid)
+    {
+        return "{$this->shortCode()}{$uuid}";
     }
 
     public static function getQuoteTypeIdToClass($quoteType): string
