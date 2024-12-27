@@ -60,7 +60,7 @@ class LeadAllocationService extends BaseService
             $query = LeadAllocation::select([
                 'lead_allocation.id as id',
                 'lead_allocation.user_id as userId',
-                'lead_allocation.allocation_count',
+                DB::RAW('(lead_allocation.manual_assignment_count  + lead_allocation.auto_assignment_count) as allocation_count'),
                 'lead_allocation.max_capacity',
                 'lead_allocation.reset_cap',
                 'u.status as is_available',
@@ -68,6 +68,9 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.last_allocated',
                 't.name as teamName',
                 'u.name as userName',
+                'lead_allocation.buy_lead_max_capacity as BLMaxCapacity',
+                'lead_allocation.buy_lead_allocation_count as BLAllocationCount',
+                'lead_allocation.buy_lead_status as BLStatus',
             ])
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->join('user_team as ut', 'ut.user_id', '=', 'u.id')

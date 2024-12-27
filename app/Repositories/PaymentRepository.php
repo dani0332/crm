@@ -542,7 +542,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
 
-                //create sage reciept
+                //create sage receipt
                 $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
 
                 if ($isSageEnabled) {
