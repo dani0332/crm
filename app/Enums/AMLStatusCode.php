@@ -27,12 +27,6 @@ final class AMLStatusCode extends Enum
     }
     public static function getName($value)
     {
-        // $statuses = [
-        //     'AML_PENDING' => 'AML Pending',
-        //     'AML_SCREENING_CLEARED' => 'AML Screening Cleared',
-        //     'AML_SCREENING_FAILED' => 'AML Screening Failed',
-        // ];
-
         return self::$statuses[$value] ?? 'AML Pending';
     }
 
