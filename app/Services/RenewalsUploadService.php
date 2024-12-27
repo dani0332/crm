@@ -937,15 +937,15 @@ class RenewalsUploadService
         $leadValidationErrors = collect($renewalQuoteProcess->validation_errors);
         $isQuotePersonal = checkPersonalQuotes($quoteType->code);
 
-        $existingQuote = $isQuotePersonal ? 
+        $existingQuote = $isQuotePersonal ?
             $quoteObject->where('quote_type_id', $quoteType->id)->where('previous_quote_policy_number', $renewalQuoteProcess->policy_number)
-            ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
-            ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
-            ->first() : 
+                ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
+                ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
+                ->first() :
             $quoteObject->where('previous_quote_policy_number', $renewalQuoteProcess->policy_number)
-            ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
-            ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
-            ->first();
+                ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
+                ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
+                ->first();
 
         if ($existingQuote && $existingQuote != null) {
             $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
