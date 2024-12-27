@@ -65,8 +65,11 @@ class BikeQuoteRepository extends BaseRepository
             'additionalNotes' => $data['additional_notes'],
             'currentlyInsuredWithId' => $data['currently_insured_with'],
             'cubicCapacity' => $data['cubic_capacity'],
-            'gender' => $data['gender'] ?? null,
         ];
+
+        // TODO:: Need to discuss where we are going to save gender
+//        'gender' => $data['gender'] ?? null,
+
 
         info('bikeQuote:'.json_encode($quoteData));
 
@@ -95,6 +98,7 @@ class BikeQuoteRepository extends BaseRepository
                 Arr::only($data, (new BikeQuote)->allowedColumns())
             );
 
+            // TODO:: Need to discuss where we are going to update gender
             $quote->customer()->update(['gender' => $data['gender'] ?? null]);
 
             return $quote;

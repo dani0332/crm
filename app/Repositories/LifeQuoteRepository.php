@@ -46,6 +46,8 @@ class LifeQuoteRepository extends BaseRepository
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
+        // TODO:: Need to confirm the DOB, Nationality, and Gender should also be sync with customer?
+
         $response = Capi::request('/api/v1-save-life-quote', 'post', $lifeData);
 
         if (isset($response->quoteUID)) {
@@ -64,6 +66,7 @@ class LifeQuoteRepository extends BaseRepository
         $quoteData = Arr::only($data, [
             'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'sum_insured_value', 'nationality_id', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'premium', 'tenure_of_insurance_id', 'number_of_years_id', 'is_smoker', 'gender', 'others_info',
         ]);
+        // TODO:: Need to confirm the DOB, Nationality, and Gender should also be sync with customer?
         $quote->update($quoteData);
 
         return $quote;

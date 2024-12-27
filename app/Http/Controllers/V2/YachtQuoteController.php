@@ -88,7 +88,9 @@ class YachtQuoteController extends Controller
      */
     public function create()
     {
-        return inertia('YachtQuote/Form');
+        $data = YachtQuoteRepository::getFormOptions();
+
+        return inertia('YachtQuote/Form', $data);
     }
 
     /**
@@ -114,9 +116,12 @@ class YachtQuoteController extends Controller
      */
     public function edit($uuid)
     {
+        $data = YachtQuoteRepository::getFormOptions();
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('YachtQuote/Form', ['quote' => $quote]);
+        return inertia('YachtQuote/Form', array_merge($data, [
+            'quote' => $quote,
+        ]));
     }
 
     /**

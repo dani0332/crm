@@ -54,6 +54,11 @@ class CycleQuoteRepository extends BaseRepository
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
+        // TODO:: Need to discuss with where we are going to save, DOB, Gender and Nationality
+//        $quoteData['dob'] = $data['dob'];
+//        $quoteData['nationalityId'] = $data['nationality_id'];
+//        $quoteData['gender'] = $data['gender'];
+
         info('cycleQuote:'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
@@ -136,6 +141,13 @@ class CycleQuoteRepository extends BaseRepository
                 ['personal_quote_id' => $quote->id],
                 Arr::only($data, (new CycleQuote)->allowedColumns())
             );
+
+            // TODO:: Need to discuss where we are going to update, DOB, Gender and Nationality
+            $quote->customer()->update([
+                'dob' => $data['dob'] ?? null,
+                'nationality_id' => $data['nationality_id'] ?? null,
+                'gender' => $data['gender'] ?? null,
+            ]);
 
             return $quote;
         });

@@ -53,6 +53,11 @@ class YachtQuoteRepository extends BaseRepository
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
+        // TODO:: Need to discuss with where we are going to save, DOB, Gender and Nationality
+//        $quoteData['dob'] = $data['dob'];
+//        $quoteData['nationalityId'] = $data['nationality_id'];
+//        $quoteData['gender'] = $data['gender'];
+
         info('YachtQuote create data : '.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
@@ -76,8 +81,27 @@ class YachtQuoteRepository extends BaseRepository
                 Arr::only($data, (new YachtQuote)->allowedColumns())
             );
 
+            // TODO:: Need to discuss where we are going to update, DOB, Gender and Nationality
+            $quote->customer()->update([
+                'dob' => $data['dob'] ?? null,
+                'nationality_id' => $data['nationality_id'] ?? null,
+                'gender' => $data['gender'] ?? null,
+            ]);
+
             return $quote;
         });
+    }
+
+    /**
+     * get all dropdown options required for form.
+     *
+     * @return array
+     */
+    public function fetchGetFormOptions()
+    {
+        return [
+            'nationalities' => NationalityRepository::withActive()->get(),
+        ];
     }
 
     /**

@@ -34,6 +34,10 @@ class YachtQuoteRequest extends FormRequest
             'asset_value' => 'required|numeric',
             'use' => 'required|max:1000',
             'operator_experience' => 'required|max:1000',
+            // TODO:: Need to discuss below fields
+            'nationality_id' => 'nullable|int',
+            'dob' => 'nullable',
+            'gender' => 'nullable|string',
         ];
     }
 }

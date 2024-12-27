@@ -35,6 +35,10 @@ class CycleQuoteRequest extends FormRequest
             'accessories' => 'required',
             'has_accident' => 'required|boolean',
             'has_good_condition' => 'required|boolean',
+            // TODO:: Need to discuss below fields
+            'nationality_id' => 'nullable|int',
+            'dob' => 'nullable',
+            'gender' => 'nullable|string',
         ];
     }
 }

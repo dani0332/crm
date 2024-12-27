@@ -58,6 +58,10 @@ class PetQuoteRepository extends BaseRepository
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
+        // TODO:: Need to discuss with where we are going to save, DOB, Gender and Nationality
+//        $quoteData['dob'] = $data['dob'];
+//        $quoteData['nationalityId'] = $data['nationality_id'];
+
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
 
         if (isset($response->quoteUID)) {
@@ -83,6 +87,13 @@ class PetQuoteRepository extends BaseRepository
                 ['personal_quote_id' => $quote->id],
                 Arr::only($data, (new PetQuote)->allowedColumns())
             );
+
+            // TODO:: Need to discuss where we are going to update, DOB, Gender and Nationality
+            $quote->customer()->update([
+                'dob' => $data['dob'] ?? null,
+                'nationality_id' => $data['nationality_id'] ?? null,
+            ]);
+
 
             return $quote;
         });
@@ -224,6 +235,7 @@ class PetQuoteRepository extends BaseRepository
             'pet_types' => LookupRepository::where('key', LookupsEnum::PET_TYPES)->get(),
             'accomodation_types' => HomeAccomodationType::all(),
             'possession_types' => HomePossessionType::all(),
+            'nationalities' => NationalityRepository::withActive()->get(),
         ];
     }
 
