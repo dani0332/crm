@@ -3,9 +3,7 @@
 namespace App\Listeners;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
-use App\Jobs\SendFTCEmailJob;
 use App\Jobs\SendOCBIntroEmailForBikeJob;
 use App\Models\Customer;
 use App\Models\User;
@@ -44,11 +42,6 @@ class HandleBikeAdvisorUpdated
         info('inside handle Bike Update Advisor event listener');
 
         $lead = $event->lead;
-
-        if ($lead) {
-            info('about to dispatch SendFTCEmailJob for lead uuid : ' . $lead->uuid . ' and quote type : ' . QuoteTypes::BIKE);
-            SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::BIKE)->delay(now()->addSeconds(5));
-        }
 
         $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
         if (in_array($lead->source, $skippableSources)) {
