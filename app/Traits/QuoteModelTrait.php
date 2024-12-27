@@ -97,14 +97,8 @@ trait QuoteModelTrait
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
                 });
-            })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias, $quoteTypeId) {
-                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_tags.quote_type_id', $quoteTypeId);
-                })->whereIn("{$alias}.source", [
+            })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
+                $query->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
