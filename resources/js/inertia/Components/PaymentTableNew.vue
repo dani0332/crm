@@ -2872,7 +2872,7 @@ const getCaptureValidation = computed(() => {
   };
 });
 
-// verify if all credit payments are approved
+// verify if all credit payments are approved for capture
 const verifyCreditApproved = paymentRecord => {
   let caPaymentStatus = paymentRecord.payment_splits.filter(
     item => item.payment_method.code === 'CA',
