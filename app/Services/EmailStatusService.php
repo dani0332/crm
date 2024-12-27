@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
 
 class EmailStatusService extends BaseService
 {
@@ -43,6 +44,9 @@ class EmailStatusService extends BaseService
             case QuoteTypeId::Health:
                 $quote = HealthQuote::where('uuid', $request->uuid)->first();
                 break;
+            case QuoteTypeId::Home:
+                    $quote = PersonalQuote::where('uuid', $request->uuid)->first();
+                    break;
             default:
                 $quote = null;
                 break;
