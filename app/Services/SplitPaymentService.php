@@ -1002,7 +1002,7 @@ class SplitPaymentService
             $priceWithoutVat = $splitPaymentAmount;
         }
 
-        return [$priceWithoutVat, $vat];
+        return [round($priceWithoutVat, 2), round($vat, 2)];
     }
 
     // function to calculate the price vat for master payment
@@ -1114,6 +1114,43 @@ class SplitPaymentService
         // Delete the payment split
         $paymentSplit->delete();
         info('Deleted Payment Split For Code: '.$paymentSplit->code.' Split Payment: '.$paymentSplit->id.'-'.$paymentSplit->sr_no);
+    }
+
+    /**
+     * For each payment split, if the parent payment's frequency is UPFRONT and its status is PAID,
+     * the method updates the payment split's payment amount to match the parent payment's total amount and logs this update.
+     * If the collection amount is greater than or equal to the payment amount, the payment split's status is set to PAID, otherwise, it is set to PARTIALLY_PAID
+     * This method trigger when policy details section update
+     */
+    public function updateSplitPaymentStatusAndAmount($payment)
+    {
+        info('Quote Code: '.$payment->code.' fn: Updating child payment status');
+        $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
+        if (! $paymentSplits->isEmpty()) {
+            foreach ($paymentSplits as $paymentSplit) {
+                info('Quote Code: '.$payment->code.' Updating TA for Split Payment frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
+                if ($payment->frequency == PaymentFrequency::UPFRONT && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::NEW, PaymentStatusEnum::OVERDUE])) {
+                    info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
+                    if ($paymentSplit->payment_amount != $payment->total_amount) {
+                        $paymentSplit->payment_amount = $payment->total_amount;
+                    }
+                }
+                if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
+                    // Format both amounts to 2 decimal places
+                    $collectionAmount = round($paymentSplit->collection_amount, 2);
+                    $paymentAmount = round($paymentSplit->payment_amount, 2);
+
+                    if ($collectionAmount >= $paymentAmount) {
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                    } else {
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                    }
+                }
+                if ($paymentSplit->isDirty()) {
+                    $paymentSplit->save();
+                }
+            }
+        }
     }
 
     private function createPolicyIssuanceAutomation($quote, $quoteType, $payment)
