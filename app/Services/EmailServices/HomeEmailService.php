@@ -10,6 +10,7 @@ use App\Models\HomeQuote;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
+use App\Enums\QuoteStatusEnum;
 
 class HomeEmailService extends BaseService
 {
@@ -46,10 +47,7 @@ class HomeEmailService extends BaseService
         );
 
         // Fetch the automated workflow configuration
-        $homeAutomatedEvent = ApplicationStorage::where(
-            'key_name',
-            ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS
-        )->first();
+        $homeAutomatedEvent = ApplicationStorage::where('key_name',ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS)->first();
 
         if (! $homeAutomatedEvent) {
             info("sendHomeOCBIntroEmail - Workflow configuration not found for Lead Ref ID: {$lead->uuid} | Time: ".now());
@@ -61,13 +59,16 @@ class HomeEmailService extends BaseService
             $response = app(BirdService::class)->triggerWebHookRequest($homeAutomatedEvent->value, $emailData);
 
             if (empty($homeQuote->automated_flow_executed_at)) {
-                $homeQuote->update(['automated_flow_executed_at' => now()]);
+                $homeQuote->automated_flow_executed_at = now();
+                $homeQuote->save();
+                $lead->quote_status_id = QuoteStatusEnum::FollowedUp;
+                $lead->save();
                 info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote ID: {$homeQuote->id} | Time: ".now());
             }
 
             info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: ".now());
 
-            return $response;
+            return $response ?? null;
         } catch (\Exception $e) {
             info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} | Message: {$e->getMessage()} | Time: ".now());
 
