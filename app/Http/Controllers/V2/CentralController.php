@@ -8,7 +8,6 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
@@ -53,14 +52,11 @@ use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
-use App\Models\BusinessQuote;
-use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
-use App\Models\HomeQuote;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
@@ -623,105 +619,5 @@ class CentralController extends Controller
         $zip->close();
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
-    }
-
-    /**
-     * temp function to generate receipts for missing leads, will be removed in next deployment
-     *
-     * @return void
-     */
-    public function manualReceiptGeneration(Request $request)
-    {
-        info('Manual Receipt Generation Started for Car Leads');
-        $carLeadsCodes = [
-            'CAR-4L5WAF6K',
-            'CAR-95AFY95E',
-            'CAR-K47XXQSF',
-            'CAR-CUEPPFLH',
-            'CAR-PMKM2DZG',
-            'CAR-NGX2CMKX',
-            'CAR-E92QLUPH',
-            'CAR-SHDAZBRB',
-            'CAR-SERCTAGA',
-            'CAR-YWM22FYT',
-            'CAR-MGLV75AQ',
-            'CAR-HLFMNYBH',
-            'CAR-NSL3E6BJ',
-            'CAR-CY22J7QR',
-            'CAR-YKYEAXFX',
-            'CAR-PD2E5EBQ',
-            'CAR-HFCVL78L',
-            'CAR-9CSUXBW2',
-            'CAR-HM68NZGU',
-            'CAR-5CKN6JEW',
-            'CAR-HNCKRPBP',
-            'CAR-F8L5RJBW',
-            'CAR-ZYQ8NZJ2',
-            'CAR-NVSZ5W5N',
-            'CAR-BTXQAYE7',
-            'CAR-XJ2T262U',
-            'CAR-6LRTVRGM',
-            'CAR-JWQ2LQJC',
-            'CAR-B8XASCAD',
-            'CAR-75F7EN5N-1',
-        ];
-
-        $counter = 0;
-        foreach ($carLeadsCodes as $carLeadsCode) {
-            $carLeads = CarQuote::where('code', $carLeadsCode)->with('payments.paymentSplits.documents')->first();
-            $this->processLeads($carLeads);
-            $counter++;
-            info("Manual Receipt Generation Processed {$counter} Car Leads");
-        }
-
-        $counter = 0;
-        info('Manual Receipt Generation Started for Home Leads');
-        $homeLeadsCodes = [
-            'HOM-FXHZYECK',
-            'HOM-8QYZP37G',
-            'HOM-SXU7D6ZK',
-            'HOM-KF3H6YQB',
-            'HOM-36QMJ2GA',
-        ];
-
-        foreach ($homeLeadsCodes as $homeLeadsCode) {
-            $homeLeads = HomeQuote::where('code', $homeLeadsCode)->with('payments.paymentSplits.documents')->first();
-            $this->processLeads($homeLeads);
-            $counter++;
-            info("Manual Receipt Generation Processed {$counter} Home Leads");
-        }
-
-        info('Manual Receipt Generation Started for Business Leads');
-        $businessLeadsCodes = [
-            'BUS-HASZRWP5',
-        ];
-
-        foreach ($businessLeadsCodes as $businessLeadsCode) {
-            $businessLead = BusinessQuote::where('code', $businessLeadsCode)->with('payments.paymentSplits.documents')->first();
-            $this->processLeads($businessLead);
-        }
-
-        info('Manual Receipt Generation for Car Leads Completed');
-    }
-
-    private function processLeads($quote)
-    {
-        if ($quote) {
-            info("Processing Quote Code: {$quote->code}");
-            if ($quote->payments->isNotEmpty()) {
-                $paymentSplits = $quote->payments->first()->paymentSplits;
-                foreach ($paymentSplits as $paymentSplit) {
-                    if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
-                        if (count($paymentSplit->documents) > 0) {
-                            info("Document exists for Payment code {$paymentSplit->code}");
-
-                            continue;
-                        }
-                        app(SplitPaymentService::class)->createReceipt(quoteTypeCode::Car, $quote->id, $paymentSplit);
-                        info("Document generated for Payment Code {$paymentSplit->code}");
-                    }
-                }
-            }
-        }
     }
 }

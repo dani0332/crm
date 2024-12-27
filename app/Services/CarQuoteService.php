@@ -69,6 +69,8 @@ class CarQuoteService extends BaseService
                 DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
                 // 'cqr.email',
                 // 'cqr.mobile_no',
+                'cqr.company_name AS car_company_name',
+                'cqr.company_address AS car_company_address',
                 DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
                 'cqr.car_value',
                 'cqr.additional_notes',
@@ -335,6 +337,8 @@ class CarQuoteService extends BaseService
             'email' => $request->email,
             'address' => $request->address,
             'mobileNo' => $request->mobile_no,
+            'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
             'dob' => $request->dob,
             'nationalityId' => $request->nationality_id,
             'uaeLicenseHeldForId' => $request->uae_license_held_for_id,
@@ -384,6 +388,12 @@ class CarQuoteService extends BaseService
         }
         if ($request->dob) {
             $carQuote->dob = $request->dob;
+        }
+        if ($request->company_name) {
+            $carQuote->company_name = $request->company_name;
+        }
+        if ($request->company_address) {
+            $carQuote->company_address = $request->company_address;
         }
         if ($request->nationality_id) {
             $carQuote->nationality_id = $request->nationality_id;
@@ -636,6 +646,8 @@ class CarQuoteService extends BaseService
             'first_name' => 'input|text|required|ss:1',
             'last_name' => 'input|text|required|ss:2',
             'dob' => 'input|text|title|required',
+            'company_name' => 'input|text|max:250',
+            'company_address' => 'input|text|max:1000',
             'customer_age' => 'readonly|none',
             'mobile_no' => 'input|title|number|required|ss:4',
             'email' => 'input|email|required|ss:3',
