@@ -658,7 +658,8 @@ class CentralController extends Controller
             'CAR-XJ2T262U',
             'CAR-6LRTVRGM',
             'CAR-JWQ2LQJC',
-            'CAR-B8XASCAD'
+            'CAR-B8XASCAD',
+            'CAR-75F7EN5N-1'
         ];
 
         $counter = 0;
