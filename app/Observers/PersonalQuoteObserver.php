@@ -18,6 +18,8 @@ use App\Services\EmailServices\HomeEmailService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SendHomeOCBIntroEmailJob;
+use Carbon\Carbon;
 
 class PersonalQuoteObserver
 {
@@ -138,7 +140,10 @@ class PersonalQuoteObserver
         }
 
         if ($this->isEligibleForHomeIntroEmail($personalQuote)) {
-            $this->sendIntroOCBEmail($personalQuote);
+
+            info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: " . now());
+            SendHomeOCBIntroEmailJob::dispatch($personalQuote)->delay(Carbon::now()->addMinutes(1));
+            info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
         }
     }
 
@@ -150,14 +155,4 @@ class PersonalQuoteObserver
             $personalQuote->advisor_id !== 0;
     }
 
-    public function sendIntroOCBEmail(PersonalQuote $personalQuote): void
-    {
-        $homeOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH)->first();
-        if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
-            app(HomeEmailService::class)->sendHomeOCBIntroEmail($personalQuote);
-            info("HomeQuoteObserver - Home OCB Automated Followups Switch is on - Ref ID: {$personalQuote->uuid} | Time: ".now());
-        } else {
-            info("HomeQuoteObserver - Home OCB Automated Followups Switch is off - Ref ID: {$personalQuote->uuid} | Time: ".now());
-        }
-    }
 }
