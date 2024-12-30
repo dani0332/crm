@@ -205,6 +205,7 @@ class HealthAllocationService extends AllocationService
         info(self::class."::getAdvisorByStatus - trying to get advisors for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
 
         return $this->getAdvisorBaseQuery($status, $leadTeam)
+            ->where('la.normal_allocation_enabled', true)
             ->where(function ($query) {
                 $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', '=', -1);
             })

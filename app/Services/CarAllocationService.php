@@ -458,6 +458,7 @@ class CarAllocationService extends AllocationService
         info(self::class."::getAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
 
         return $this->getAdvisorBaseQuery($status, $tierUserIds, $advisorId, $teamId)
+            ->where('normal_allocation_enabled', true)
             ->where(function ($query) {
                 // Apply allocation count and max capacity conditions.
                 $query->whereRaw('allocation_count < max_capacity')->orWhere('max_capacity', -1);
