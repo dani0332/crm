@@ -72,6 +72,7 @@ class HealthAllocation implements Allocation
             if ($advisor->id == $lead->advisor_id) {
                 info('Advisor is same as previous advisor. Skipping for now.');
                 $lead->endAllocation();
+                $this->healthAllocationService->endBuyLeadProcessing();
 
                 return $this->healthAllocationService->createResponse($advisor->id, 'Advisor is same as previous advisor. Skipping for now.', Response::HTTP_OK);
             }
@@ -82,6 +83,7 @@ class HealthAllocation implements Allocation
             return $this->healthAllocationService->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
         } catch (\Throwable $th) {
             $this->healthAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::HEALTH);
+            $this->healthAllocationService->endBuyLeadProcessing();
 
             $message = $th->getMessage() ?? '';
             info('exception occurred in health lead allocation with error : '.$message);
@@ -114,6 +116,7 @@ class HealthAllocation implements Allocation
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
+            $this->healthAllocationService->endBuyLeadProcessing();
             Log::error($e->getMessage());
         }
     }

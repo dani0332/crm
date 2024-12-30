@@ -33,6 +33,14 @@ class HealthAllocationService extends AllocationService
         $this->buyLeadRequest = null;
     }
 
+    public function endBuyLeadProcessing(): void
+    {
+        if ($this->buyLeadRequest) {
+            $this->buyLeadRequest->completeProcessing();
+        }
+        $this->resetProps();
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         $healthQuoteQuery = HealthQuote::where('uuid', $quoteId)

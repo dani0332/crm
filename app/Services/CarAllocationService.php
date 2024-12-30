@@ -47,6 +47,14 @@ class CarAllocationService extends AllocationService
         $this->buyLeadRequest = null;
     }
 
+    public function endBuyLeadProcessing(): void
+    {
+        if ($this->buyLeadRequest) {
+            $this->buyLeadRequest->completeProcessing();
+        }
+        $this->resetProps();
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         // Check if Dubai Now exclusion should be applied
