@@ -65,10 +65,8 @@ class BikeQuoteRepository extends BaseRepository
             'additionalNotes' => $data['additional_notes'],
             'currentlyInsuredWithId' => $data['currently_insured_with'],
             'cubicCapacity' => $data['cubic_capacity'],
+            'gender' => $data['gender'] ?? null,
         ];
-
-        // TODO:: Need to discuss where we are going to save gender
-        //        'gender' => $data['gender'] ?? null,
 
         info('bikeQuote:'.json_encode($quoteData));
 
@@ -84,7 +82,7 @@ class BikeQuoteRepository extends BaseRepository
             $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id',
+                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
             ]);
 
             $quoteData['currently_insured_with_id'] = $data['currently_insured_with'];
@@ -97,8 +95,11 @@ class BikeQuoteRepository extends BaseRepository
                 Arr::only($data, (new BikeQuote)->allowedColumns())
             );
 
-            // TODO:: Need to discuss where we are going to update gender
-            $quote->customer()->update(['gender' => $data['gender'] ?? null]);
+            $quote->customer()->update([
+                'dob' => $data['dob'] ?? null,
+                'nationality_id' => $data['nationality_id'] ?? null,
+                'gender' => $data['gender'] ?? null]
+            );
 
             return $quote;
         });

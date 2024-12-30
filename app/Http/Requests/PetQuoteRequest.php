@@ -38,9 +38,9 @@ class PetQuoteRequest extends FormRequest
             'is_mixed_breed' => 'nullable',
             'has_injury' => 'nullable',
             'gender' => 'required|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
-            // TODO:: Need to discuss below fields
-            'nationality_id' => 'nullable|int',
-            'dob' => 'nullable',
+            'dob' => 'nullable|date_format:Y-m-d|before:today',
+            'customer_gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
+            'nationality_id' => 'nullable|exists:nationality,id',
         ];
     }
 }

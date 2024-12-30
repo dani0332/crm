@@ -197,14 +197,13 @@ class HomeQuoteService extends BaseService
             'source' => $sourceName,
             'isPropertyRentedHolidayHome' => $request->is_property_rented_holiday_home == 'on' ? true : false,
             'referenceUrl' => $appUrl,
+            'dob' => $request->dob ?? null,
+            'gender' => $request->gender ?? null,
         ];
+
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-
-        // TODO:: Need to discuss where we are going to save DOB, Gender, Nationality
-        //        'dob' => $request->dob ?? null
-        //        'gender' => $request->gender ?? null
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
 
@@ -476,11 +475,11 @@ class HomeQuoteService extends BaseService
         $homeQuote->policy_number = $request->policy_number;
         $homeQuote->has_building = $request->has_building == 'on' ? true : false;
         $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ? true : false;
+        $homeQuote->gender = $request->gender;
+        $homeQuote->dob = $request->dob;
         $homeQuote->save();
 
-        // TODO:: Need to discuss, where we are going to save DOB, Gender, Nationality
-        $customerDetails = Customer::where('id', $homeQuote->customer_id)->first();
-        $customerDetails->update([
+        Customer::where('id', $homeQuote->customer_id)->update([
             'nationality_id' => $request->nationality_id ?? null,
             'gender' => $request->gender ?? null,
             'dob' => $request->dob ?? null,

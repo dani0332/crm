@@ -206,8 +206,8 @@ const getModelDetails = onchange => {
 
 const gender = computed(() => {
     return [
-        { value: 'M', label: 'Male'},
-        { value: 'F', label: 'Female'}
+        { value: 'Male', label: 'Male'},
+        { value: 'Female', label: 'Female'}
     ];
 });
 

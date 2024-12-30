@@ -38,7 +38,7 @@ class PetQuoteRepository extends BaseRepository
             'lastName' => $request['last_name'],
             'email' => $request['email'],
             'mobileNo' => $request['mobile_no'],
-            'gender' => $request['gender'],
+            'gender' => $request['gender'], // Reminder:: this is pet's gender
             'microchipNo' => $request['microchip_no'],
             'petTypeId' => $request['pet_type_id'],
             'petAgeId' => $request['pet_age_id'],
@@ -56,11 +56,10 @@ class PetQuoteRepository extends BaseRepository
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'customerGender' => $request['customer_gender'], // Reminder:: this is customer gender
+            'dob' => $request['dob'],
+            'nationalityId' => $request['nationality_id'],
         ];
-
-        // TODO:: Need to discuss with where we are going to save, DOB, Gender and Nationality
-        //        $quoteData['dob'] = $data['dob'];
-        //        $quoteData['nationalityId'] = $data['nationality_id'];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
 
@@ -77,7 +76,7 @@ class PetQuoteRepository extends BaseRepository
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no',
+                'first_name', 'last_name', 'email', 'mobile_no', 'customer_gender', 'dob', 'nationality_id',
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;
@@ -88,9 +87,9 @@ class PetQuoteRepository extends BaseRepository
                 Arr::only($data, (new PetQuote)->allowedColumns())
             );
 
-            // TODO:: Need to discuss where we are going to update, DOB, Gender and Nationality
             $quote->customer()->update([
                 'dob' => $data['dob'] ?? null,
+                'gender' => $data['customer_gender'] ?? null,
                 'nationality_id' => $data['nationality_id'] ?? null,
             ]);
 

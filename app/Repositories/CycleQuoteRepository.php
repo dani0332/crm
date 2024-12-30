@@ -52,12 +52,10 @@ class CycleQuoteRepository extends BaseRepository
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'dob' => $data['dob'],
+            'gender' => $data['gender'],
+            'nationalityId' => $data['nationality_id'],
         ];
-
-        // TODO:: Need to discuss with where we are going to save, DOB, Gender and Nationality
-        //        $quoteData['dob'] = $data['dob'];
-        //        $quoteData['nationalityId'] = $data['nationality_id'];
-        //        $quoteData['gender'] = $data['gender'];
 
         info('cycleQuote:'.json_encode($quoteData));
 
@@ -132,7 +130,7 @@ class CycleQuoteRepository extends BaseRepository
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::CYCLE->id())->where('uuid', $uuid)->firstOrFail();
 
-            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'dob',  'asset_value']);
+            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'asset_value', 'gender', 'dob', 'nationality_id']);
             $quoteData['updated_by_id'] = Auth::user()->id;
 
             $quote->update($quoteData);
@@ -142,11 +140,10 @@ class CycleQuoteRepository extends BaseRepository
                 Arr::only($data, (new CycleQuote)->allowedColumns())
             );
 
-            // TODO:: Need to discuss where we are going to update, DOB, Gender and Nationality
             $quote->customer()->update([
                 'dob' => $data['dob'] ?? null,
-                'nationality_id' => $data['nationality_id'] ?? null,
                 'gender' => $data['gender'] ?? null,
+                'nationality_id' => $data['nationality_id'] ?? null,
             ]);
 
             return $quote;

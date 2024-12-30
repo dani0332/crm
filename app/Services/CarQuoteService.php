@@ -360,11 +360,9 @@ class CarQuoteService extends BaseService
             'currentlyInsuredWith' => $request->currently_insured_with,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
+            'gender' => $request->gender ?? null,
             'chassisNumber' => $request->chassis_number,
         ];
-
-        // TODO:: Need to discuss where would we save DOB, Nationality, and Gender
-        //        'gender' => $request->gender ?? null
 
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -443,6 +441,9 @@ class CarQuoteService extends BaseService
         if ($request->currently_insured_with) {
             $carQuote->currently_insured_with = $request->currently_insured_with;
         }
+        if ($request->gender) {
+            $carQuote->gender = $request->gender;
+        }
         $carQuote->quote_updated_at = Carbon::now();
         $carQuote->is_quote_locked = true;
         if ($request->trim) {
@@ -488,10 +489,8 @@ class CarQuoteService extends BaseService
                 // TODO:: Reminder update plan premium API call here only for GIG Screening Case
             }
 
-            // TODO:: Need to discuss, where we are going to update gender
             if (isset($request->gender)) {
-                $customer = Customer::where('id', $carQuote->customer_id)->first();
-                $customer->update(['gender' => $request->gender]);
+                Customer::where('id', $carQuote->customer_id)->update(['gender' => $request->gender]);
             }
 
             $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';

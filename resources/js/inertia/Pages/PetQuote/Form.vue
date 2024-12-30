@@ -26,8 +26,9 @@ const quoteForm = useForm({
   is_mixed_breed: props.quote ? props.quote?.pet_quote?.is_mixed_breed : null,
   has_injury: props.quote ? props.quote?.pet_quote?.has_injury : null,
   gender: props.quote?.pet_quote?.gender || '',
-    dob: props.quote?.dob || null,
-    nationality_id: props.quote?.nationality_id || null,
+  dob: props.quote?.dob || null,
+  nationality_id: props.quote?.nationality_id || null,
+  customer_gender: props.quote?.customer?.gender || '',
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -128,16 +129,14 @@ function onSubmit(isValid) {
                   placeholder="Nationality"
               />
           </x-field>
-          <x-field label="PET'S GENDER" required>
+          <x-field label="GENDER">
               <x-select
-                  v-model="quoteForm.gender"
-                  :rules="[isRequired]"
+                  v-model="quoteForm.customer_gender"
                   :options="[
-              { value: 'Male', label: 'Male' },
-              { value: 'Female', label: 'Female' },
-            ]"
+                      { value: 'Male', label: 'Male' },
+                      { value: 'Female', label: 'Female' },
+                    ]"
                   class="w-full"
-                  :error="quoteForm.errors.gender"
               />
           </x-field>
         <x-field label="TYPE OF PET" required>
@@ -232,6 +231,18 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.has_injury"
           />
         </x-field>
+          <x-field label="PET'S GENDER" required>
+              <x-select
+                  v-model="quoteForm.gender"
+                  :rules="[isRequired]"
+                  :options="[
+              { value: 'Male', label: 'Male' },
+              { value: 'Female', label: 'Female' },
+            ]"
+                  class="w-full"
+                  :error="quoteForm.errors.gender"
+              />
+          </x-field>
       </div>
 
       <x-divider class="my-4" />

@@ -73,8 +73,8 @@ const customerAmlOnly = () => {
 
 const gender = computed(() => {
     return [
-        { value: 'M', label: 'Male'},
-        { value: 'F', label: 'Female'}
+        { value: 'Male', label: 'Male'},
+        { value: 'Female', label: 'Female'}
     ];
 });
 
@@ -131,7 +131,7 @@ const insuredFormDetails = useForm({
       : null),
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
-  screening_gender: null,
+  screening_gender: props.quoteDetails?.customer?.gender ?? null,
   chassis_number: props.quoteDetails?.car_quote_request_detail?.chassis_number ?? null,
 
   entity_id: props.entityDetails?.entity?.id,
