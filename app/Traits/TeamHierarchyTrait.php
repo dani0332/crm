@@ -75,7 +75,7 @@ trait TeamHierarchyTrait
         $subTeams = Team::with('parent')->where('type', TeamTypeEnum::SUB_TEAM)->whereIn('parent_team_id', $teamIds)->where('is_active', 1)->select('id', 'name', 'parent_team_id')->orderBy('name', 'asc')->get();
 
         $subTeams->map(function ($subTeam) {
-            if($subTeam->parent) {
+            if ($subTeam->parent) {
                 $subTeam->name = "$subTeam->name ({$subTeam->parent?->name})";
             }
 
