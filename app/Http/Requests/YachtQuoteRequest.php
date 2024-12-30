@@ -29,6 +29,8 @@ class YachtQuoteRequest extends FormRequest
             'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required',
+            'company_name' => 'max:250',
+            'company_address' => 'max:1000',
             'boat_details' => 'required|max:1000',
             'engine_details' => 'required|max:2000',
             'claim_experience' => 'required|max:1000',

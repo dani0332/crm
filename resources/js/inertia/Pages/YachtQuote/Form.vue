@@ -11,6 +11,8 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  company_name: props.quote?.company_name || null,
+  company_address: props.quote?.company_address || null,
   boat_details: props.quote?.yacht_quote?.boat_details || '',
   engine_details: props.quote?.yacht_quote?.engine_details || '',
   claim_experience: props.quote?.yacht_quote?.claim_experience || '',
@@ -135,6 +137,22 @@ const gender = computed(() => {
                   v-model="quoteForm.gender"
                   :options="gender"
                   placeholder="Gender"
+              />
+          </x-field>
+          <x-field label="COMPANY NAME">
+              <x-input
+                  v-model="quoteForm.company_name"
+                  type="text"
+                  class="w-full"
+                  :error="quoteForm?.errors?.company_name"
+              />
+          </x-field>
+          <x-field label="COMPANY ADDRESS">
+              <x-input
+                  v-model="quoteForm.company_address"
+                  type="text"
+                  class="w-full"
+                  :error="quoteForm?.errors?.company_address"
               />
           </x-field>
         <x-field label="BOAT DETAILS" required>

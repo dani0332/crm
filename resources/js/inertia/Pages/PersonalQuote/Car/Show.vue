@@ -1855,6 +1855,14 @@ function genderFormatForProfile(gender) {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">COMPANY NAME</dt>
+                <dd>{{ quote.car_company_name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">COMPANY ADDRESS</dt>
+                <dd>{{ quote.car_company_address }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
@@ -4072,7 +4080,6 @@ function genderFormatForProfile(gender) {
               v-model="activityForm.description"
               :adjust-to-text="false"
               class="w-full"
-              :rules="[isRequired]"
             />
           </x-field>
           <x-field label="Assignee" required>

@@ -995,7 +995,7 @@ class CentralService extends BaseService
             info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
-                if (app(QuoteDocumentService::class)->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote)) {
+                if (app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,

@@ -504,6 +504,7 @@ class AMLController extends Controller
 
                 if (isset($AMLCheckRequest->company_name) && $quoteTypeId == QuoteTypeId::Business) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
+                    $updateQuote->company_address = $AMLCheckRequest->company_address;
                     $updateQuote->save();
                 }
 
