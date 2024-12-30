@@ -524,7 +524,7 @@ class InstantAlfredService extends BaseService
                     'role' => 1,
                     'msg' => 1,
                     'quote_id' => 1,
-                    'quote_type' => 1,
+                    'quote_type' => $request->quoteType,
                     'employee_flag' => '$who_chatted.is_employee',
                     'email' => '$who_chatted.email',
                     'user_system' => '$who_chatted.user_agent',
