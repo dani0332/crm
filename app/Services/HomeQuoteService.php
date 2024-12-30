@@ -1031,7 +1031,7 @@ class HomeQuoteService extends BaseService
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
 
-        $planIds = $data['plan_ids'];
+        $planIds = $data['plan_ids'] ?? [];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
@@ -1057,5 +1057,4 @@ class HomeQuoteService extends BaseService
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
 
-    public function sendHomeOCB() {}
 }
