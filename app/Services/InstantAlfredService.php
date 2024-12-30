@@ -299,8 +299,8 @@ class InstantAlfredService extends BaseService
                     $query->leftJoin('travel_plan as tp', 'tp.id', '=', 'pqr.plan_id');
                     $query->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id');
                     $query->leftJoin('travel_quote_plan_details as tqpd', function ($join) {
-                        $join->on('tqr.uuid', '=', 'tqpd.quote_uuid')
-                            ->whereColumn('tqr.plan_id', '=', 'tqpd.plan_id');
+                        $join->on('pqr.uuid', '=', 'tqpd.quote_uuid')
+                            ->whereColumn('pqr.plan_id', '=', 'tqpd.plan_id');
                     });
                     $query->addSelect([
                         'tp.text AS plan_id_text',
@@ -434,9 +434,10 @@ class InstantAlfredService extends BaseService
 
     public function generateChatConsolidateReport()
     {
-
+        
         $request = request();
-
+        
+        // dd($request->quoteType);
         $data = $this->processSqlChatFilters($request)->get();
 
         $data->chunk(1000)->each(function ($sqlBatch) use ($request) {
@@ -451,8 +452,8 @@ class InstantAlfredService extends BaseService
 
                 $relatedMongoRecord = $mongoResultsCollection->firstWhere('id', $sqlRecord->uuid);
 
+                $sqlRecord->quote_type = $request->quoteType;
                 if ($relatedMongoRecord) {
-                    $sqlRecord->quote_type = $relatedMongoRecord['quote_type'];
                     $sqlRecord->communication_channels = $relatedMongoRecord['communication_channels'];
                     $sqlRecord->customer_interactions = $relatedMongoRecord['customer_interactions'];
                     $sqlRecord->ai_interactions = $relatedMongoRecord['ai_interactions'];
