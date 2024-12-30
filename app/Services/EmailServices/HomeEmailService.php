@@ -11,6 +11,8 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Enums\QuoteStatusEnum;
+use App\Services\HomeQuoteService;
+use Illuminate\Support\Facades\Storage;
 
 class HomeEmailService extends BaseService
 {
@@ -105,6 +107,7 @@ class HomeEmailService extends BaseService
 
             // Workflow-related data
             'workflowType' => $workflowType,
+            // 'tempUrlPDF'=> $this->attachHomeOCBPDFToEmail($lead->uuid),
         ];
     }
 
@@ -114,4 +117,36 @@ class HomeEmailService extends BaseService
             ->where('uuid', $uuid)
             ->first();
     }
+
+    public function attachHomeOCBPDFToEmail($quoteUID)
+    {
+        try {
+            info( self::class." - attachHomeOCBPDFToEmail - Generating PDF for Quote UID: {$quoteUID} | Time: " . now());
+
+            // Generate the PDF
+            $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID]);
+            $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
+
+            info( self::class." - attachHomeOCBPDFToEmail - Storing PDF temporarily for Quote UID: {$quoteUID} | Time: " . now());
+
+            // Generate a unique temporary file path
+            $tempFilePath = 'temp/' . uniqid() . '.pdf';
+            Storage::disk()->put($tempFilePath, $pdfContent);
+
+            // Generate a publicly accessible URL for the file with expiration
+            $publicUrl = Storage::disk()->temporaryUrl($tempFilePath, now()->addMinutes(5));
+
+            // // Schedule file deletion after 5 minutes
+            // Storage::disk()->delete($tempFilePath, now()->addMinutes(5));
+
+            info(self::class." - attachHomeOCBPDFToEmail - Public URL generated for Quote UID: {$quoteUID} | Time: " . now());
+
+            return $publicUrl;
+        } catch (\Exception $e) {
+            // Log the error details
+            info(self::class." - Error: attachHomeOCBPDFToEmail - Error attaching PDF for Quote UID: {$quoteUID} | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()} | Time: " . now());
+            return false;
+        }
+    }
+
 }
