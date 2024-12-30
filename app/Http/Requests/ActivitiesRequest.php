@@ -25,7 +25,6 @@ class ActivitiesRequest extends FormRequest
     {
         return [
             'due_date' => 'required',
-            'description' => 'required',
             'title' => 'required',
         ];
     }
