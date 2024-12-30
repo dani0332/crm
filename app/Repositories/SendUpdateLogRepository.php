@@ -181,7 +181,9 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'status' => $status ?? $sendUpdate->status,
             ]);
-            $this->updatePayment($data);
+            if ($sendUpdate->payments[0]) {
+                app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $sendUpdate->payments[0]);
+            }
         } catch (\Exception $ex) {
             info('SendUpdate id: '.$data['id'].' '.$ex->getMessage());
             $result = (object) [
@@ -344,9 +346,12 @@ class SendUpdateLogRepository extends BaseRepository
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
-                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $payment);
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
+                if ($payment->discount_value && (empty($sendUpdate->discount) || $sendUpdate->discount == 0)) {
+                    $sendUpdate->update(['discount' => $payment->discount_value]);
+                }
             }
 
         } catch (\Exception $ex) {

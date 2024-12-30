@@ -663,8 +663,19 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
-     * verify if a document is watermark qualified function
+     * Check if all required documents are uploaded to enable send policy to customer & book policy button in book policy section
+     * Triggering from updateQuoteStatus & bookPolicyPayload
+     *
+     * @return bool
      */
+    public function areDocsUploaded($quoteDocuments, $quoteType, $record)
+    {
+        $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
+        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+
+        return $quoteDocumentsCount == count($documentTypeCodes);
+    }
+
     public function getWatermarkProperty($quote, $documentType, $insuranceProviderId = null): bool
     {
         $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();

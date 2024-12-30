@@ -72,6 +72,12 @@ const tableHeader = ref([
   { text: 'A. Assigned', value: 'autoAllocationCount', sortable: true },
   { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
+  {
+    text: 'Norm Allo.',
+    value: 'normalAllocationEnabled',
+    sortable: true,
+    width: '100',
+  },
   { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
   {
     text: 'BL Cap Limit',
@@ -88,6 +94,7 @@ const tableHeader = ref([
     tooltip:
       'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
   },
+  { text: 'BL Reset CAP', value: 'blResetCap', sortable: true, width: '100' },
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
 
@@ -270,6 +277,32 @@ const onToggleBlStatus = async (active, userId, leadId) => {
       leadId,
       userId,
       buyLeadStatus: active,
+    })
+    .finally(() => {
+      loaders.table = false;
+    });
+};
+
+const onToggleNormalAllocation = async (active, userId, laId) => {
+  loaders.table = true;
+  await axios
+    .post('/lead-allocation/toggle-normal-allocation', {
+      laId,
+      userId,
+      nlStatus: active,
+    })
+    .finally(() => {
+      loaders.table = false;
+    });
+};
+
+const onToggleBLResetCap = async (active, userId, laId) => {
+  loaders.table = true;
+  await axios
+    .post('/lead-allocation/toggle-bl-reset-cap', {
+      laId,
+      userId,
+      blResetCap: active,
     })
     .finally(() => {
       loaders.table = false;
@@ -600,6 +633,28 @@ onMounted(() => {
             :is-active="BLStatus"
             :id="id"
             @toggle="onToggleBlStatus($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
+      <template
+        #item-normalAllocationEnabled="{ normalAllocationEnabled, userId, id }"
+      >
+        <div class="text-center">
+          <ItemToggler
+            :is-active="normalAllocationEnabled"
+            :id="id"
+            @toggle="onToggleNormalAllocation($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
+      <template #item-blResetCap="{ blResetCap, userId, id }">
+        <div class="text-center">
+          <ItemToggler
+            :is-active="blResetCap"
+            :id="id"
+            @toggle="onToggleBLResetCap($event.active, userId, id)"
           />
         </div>
       </template>
