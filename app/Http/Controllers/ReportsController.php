@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
@@ -11,6 +12,7 @@ use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Factories\ManagementReportServiceFactory;
+use App\Models\Department;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
@@ -48,7 +50,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        // $this->middleware('readonly_db');
+        $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -107,6 +109,7 @@ class ReportsController extends Controller
             'filtersByLob' => $advisorDistributionReportService->getFiltersByLob(),
             'filterOptions' => $advisorDistributionReportService->getFilterOptions(),
             'defaultFilters' => $advisorDistributionReportService->getDefaultFilters(),
+            'assignmentTypes' => AssignmentTypeEnum::withLabels(),
         ]);
     }
 
@@ -242,6 +245,16 @@ class ReportsController extends Controller
             ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+    public function fetchAdvisorListByDepartment(Request $request)
+    {
+        return User::select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->where('department_id', $request->department_id)
             ->get()
             ->toArray();
     }
@@ -565,6 +578,13 @@ class ReportsController extends Controller
             'footerData' => $footerData,
             'productName' => $retentionReportService->getUserPorductName(),
             'retentionReportEnum' => RetentionReportEnum::asArray(),
+            'departments' => Department::where('is_active', true)->whereIn('id', Auth::user()->departments->pluck('id')->toArray())->get()
+                ->map(function ($department) {
+                    return [
+                        'value' => $department->id,
+                        'label' => $department->name,
+                    ];
+                })->toArray(),
         ]);
     }
 

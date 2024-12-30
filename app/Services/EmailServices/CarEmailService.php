@@ -33,7 +33,7 @@ class CarEmailService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false, $triggerOnlyWorkflow = false)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false, $triggerOnlyWorkflow = false, bool $forceSicWorkflow = false)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
@@ -59,13 +59,15 @@ class CarEmailService extends BaseService
         }
 
         // trigger SIC workflow
-        if ($triggerSICWorkFlow) {
-            if (! $lead->sic_flow_enabled) {
+        if ($triggerSICWorkFlow || $forceSicWorkflow) {
+            if (! $lead->sic_flow_enabled || $forceSicWorkflow) {
                 $sicEventName = ApplicationStorage::where('key_name', 'SIC_WORKFLOW_NAME')->first();
                 if ($sicEventName) {
                     $apiResponse = SIBService::createWorkflowEvent($sicEventName->value, $lead, [], $emailData);
-                    $lead->sic_flow_enabled = true;
-                    $lead->save();
+                    if (! $lead->sic_flow_enabled) {
+                        $lead->sic_flow_enabled = true;
+                        $lead->save();
+                    }
                     info('SIC workflow event triggered for lead: '.$lead->uuid.' and sic_flow_enabled: '.$lead->sic_flow_enabled);
                     info('SIC workflow response: '.$apiResponse);
                 } else {
@@ -326,7 +328,7 @@ class CarEmailService extends BaseService
 
     public function sendSICNotificationToAdvisor($lead, $user)
     {
-        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
+        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user, QuoteTypes::CAR->value);
     }
 
     public function sendNBMotorWorkFlow($lead)

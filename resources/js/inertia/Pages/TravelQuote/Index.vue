@@ -1,4 +1,6 @@
 <script setup>
+import { computed, ref } from 'vue';
+
 defineProps({
   quotes: Object,
   dropdownSource: Object,
@@ -6,7 +8,12 @@ defineProps({
   advisors: Object,
   renewalBatches: Array,
   authorizedDays: Number,
+  amlStatuses: Object,
+  insuranceProviders: Array,
+  travelPlans: Array,
 });
+
+let params = useUrlSearchParams('history');
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -68,6 +75,10 @@ const filters = reactive({
   advisor_assigned_date: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  insurer_api_status_id: '',
+  amlStatus: [],
+  insurance_provider_ids: [],
+  plan_name: [],
 });
 
 const loader = reactive({
@@ -92,11 +103,13 @@ const tableHeader = [
   { text: 'Travel Type', value: 'direction_code' },
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'AML Status', value: 'aml_status' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   {
     text: 'ADVISOR REQUESTED',
     value: 'sic_advisor_requested',
   },
+  { text: 'Advisor Assigned Date And Time', value: 'advisor_assigned_date' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {
@@ -107,6 +120,8 @@ const tableHeader = [
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
+  { text: 'Provider Name', value: 'travel_plan_provider_text' },
+  { text: 'Plan Name', value: 'plan_id_text' },
   { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'DESTINATION', value: 'destination_id_text' },
@@ -130,6 +145,49 @@ const paymentStatusOptions = computed(() => {
       label: item.text,
     };
   });
+});
+const insurerApiStatus = computed(() => {
+  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
+const computedAmlStatuses = computed(() => {
+  return Object.entries(page.props.amlStatuses).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
+const computedInsuranceProviders = computed(() => {
+  return page.props.insuranceProviders.map(item => {
+    return {
+      value: item.id,
+      label: item.text,
+    };
+  });
+});
+
+const computedTravelPlans = computed(() => {
+  if (
+    filters.insurance_provider_ids &&
+    filters.insurance_provider_ids.length > 0
+  ) {
+    return page.props.travelPlans
+      .filter(plan => filters.insurance_provider_ids.includes(plan.provider_id))
+      .map(item => {
+        return {
+          value: item.id,
+          label: item.text,
+        };
+      });
+  }
+  return [];
 });
 
 const advisorsOptions = computed(() => {
@@ -262,13 +320,13 @@ function onAssignLead(isValid) {
 }
 
 function setQueryFilters() {
-  let urlParams = new URLSearchParams(window.location.search);
-  for (const [key, value] of urlParams) {
-    if (key.includes('[')) {
-      let index = key.replace('[]', '');
-      filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
     } else {
-      filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
     }
   }
 }
@@ -276,7 +334,7 @@ function setQueryFilters() {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
-
+const exportLoader = ref(false);
 const onDataExport = () => {
   filters.created_at_start = useDateFormat(
     filters.created_at_start,
@@ -294,7 +352,13 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Travel'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
@@ -712,6 +776,40 @@ watch(
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <ComboBox
+          label="INSURER API STATUS"
+          v-model="filters.insurer_api_status_id"
+          placeholder="Select Status"
+          :options="insurerApiStatus"
+          class="w-full"
+        />
+        <x-field label="AML Status">
+          <ComboBox
+            v-model="filters.amlStatus"
+            name="source"
+            class="w-full"
+            placeholder="Search by AMLStatus"
+            :options="computedAmlStatuses"
+          />
+        </x-field>
+        <x-field label="Provider Name">
+          <ComboBox
+            v-model="filters.insurance_provider_ids"
+            name="source"
+            class="w-full"
+            placeholder="Search by Provider Name"
+            :options="computedInsuranceProviders"
+          />
+        </x-field>
+        <x-field label="Plan Name">
+          <ComboBox
+            v-model="filters.plan_name"
+            name="source"
+            class="w-full"
+            placeholder="Search by Plan Name"
+            :options="computedTravelPlans"
+          />
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -719,6 +817,7 @@ watch(
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >
@@ -887,6 +986,9 @@ watch(
         <p>
           {{ item.renewal_batch_text }}
         </p>
+      </template>
+      <template #item-aml_status="{ aml_status }">
+        <span>{{ aml_status?.replace(/_/g, ' ') }}</span>
       </template>
     </DataTable>
 

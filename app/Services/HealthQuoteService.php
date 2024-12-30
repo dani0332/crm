@@ -162,10 +162,12 @@ class HealthQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             DB::raw('(CASE
-            WHEN hqr.assignment_type = 1 THEN "System Assigned"
-            WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
-            WHEN hqr.assignment_type = 3 THEN "Manual Assigned"
-            WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                WHEN hqr.assignment_type = 1 THEN "System Assigned"
+                WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
+                WHEN hqr.assignment_type = 3 THEN "Manual Assigned"
+                WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned"
+                WHEN hqr.assignment_type = 5 THEN "Bought Lead"
+                WHEN hqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
             'ihp.code as plan_provider_code',
             'ihp.code as plan_provider_code',
             'hqr.health_plan_co_payment_id',
@@ -186,6 +188,7 @@ class HealthQuoteService extends BaseService
             'hqr.insly_migrated',
             'hqr.sic_advisor_requested',
             'hqr.aml_status',
+            'hqr.insurance_provider_id'
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -495,7 +498,7 @@ class HealthQuoteService extends BaseService
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
-        if (isset($request->assignment_type) && ! empty($request->assignment_type)) {
+        if (isset($request->assignment_type) && ! empty($request->assignment_type) && $request->assignment_type !== 'all') {
             $this->query->where('hqr.assignment_type', $request->assignment_type);
         }
         if (isset($request->first_name) && $request->first_name != '') {
@@ -1264,8 +1267,6 @@ class HealthQuoteService extends BaseService
             // update existing record of quote view count if exists and reset count to zero
             $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Health, $userId);
 
-            $lead->quote_updated_at = now();
-
             $lead->quote_batch_id = $quoteBatch->id;
 
             $lead->save();
@@ -1292,7 +1293,7 @@ class HealthQuoteService extends BaseService
         info('Previous assignment type is : '.$previousAssignmentType);
 
         //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD];
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
         // Get the allocation record for the new advisor
@@ -1307,60 +1308,6 @@ class HealthQuoteService extends BaseService
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
-        }
-    }
-
-    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
-    {
-        if ($advisorAllocationRecord === null || $lead === null) {
-            return;
-        }
-
-        // Determine if the lead was system-assigned or manually assigned
-        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
-
-        // Update allocation counts based on assignment type
-        if ($isSystemAssigned) {
-            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
-        } else {
-            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
-        }
-
-        // Increment the total allocation count and update timestamps
-        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
-        $advisorAllocationRecord->last_allocated = now()->timestamp;
-        $advisorAllocationRecord->updated_at = now();
-
-        // Save the updated allocation record
-        $advisorAllocationRecord->save();
-    }
-
-    private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
-    {
-        // Check if there is a previous advisor and the lead assignment date is today
-        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
-            if ($previousAdvisorAllocationRecord !== null) {
-                // Determine if the previous assignment was system-assigned
-                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
-
-                // Update allocation counts based on assignment type (if applicable)
-                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('deduct from auto assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('deduct from manual assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-                }
-
-                // Decrement the total allocation count (if it's greater than 0) and update timestamps
-                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
-                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
-                    $previousAdvisorAllocationRecord->updated_at = now();
-                }
-
-                // Save the updated allocation record
-                $previousAdvisorAllocationRecord->save();
-            }
         }
     }
 
@@ -1856,7 +1803,6 @@ class HealthQuoteService extends BaseService
     {
         info('inside the check for manual assignment QA');
         $lead->advisor_id = $userId;
-        $lead->quote_updated_at = now();
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
@@ -1933,8 +1879,9 @@ class HealthQuoteService extends BaseService
 
     public function exportRmLeads()
     {
-        $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d 00:00:00');
-        $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
+        $request = request();
+        [$startDate, $endDate] = $this->getTransactionApprovedDates($request);
+
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
         $healthTeam = $this->getProductByName(quoteTypeCode::Health);
 
@@ -1972,7 +1919,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->leftJoin('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
-            ->whereBetween('q.transaction_approved_at', [$startOfMonth, $endOfPreviousDay])
+            ->whereBetween('q.transaction_approved_at', [$startDate, $endDate])
             ->whereIn('u.id', function ($subQuery) use ($carTeam) {
                 $subQuery->select('u.id')
                     ->from('users as u')
@@ -1982,5 +1929,32 @@ class HealthQuoteService extends BaseService
             })
             ->groupBy('q.code', 'q.transaction_approved_at', 'u.name', 'u.email', 'qs.text', 'ps.text', 'q.created_at')
             ->orderBy('q.created_at', 'ASC');
+    }
+
+    private function getTransactionApprovedDates($request)
+    {
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH'); // Default format
+        if (isset($request->transaction_approved_dates)) {
+            $dates = $request->transaction_approved_dates;
+
+            // If the dates are a string, split it into an array
+            if (is_string($dates)) {
+                $dates = explode(',', $dates);
+            }
+
+            // Parse start and end dates if the array is valid
+            if (is_array($dates) && count($dates) === 2) {
+                $startDate = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
+                $endDate = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
+
+                return [$startDate, $endDate];
+            }
+        }
+
+        // Default to the current month's start and end of the previous day
+        $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d 00:00:00');
+        $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
+
+        return [$startOfMonth, $endOfPreviousDay];
     }
 }

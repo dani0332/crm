@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\LeadSourceEnum;
@@ -10,6 +12,7 @@ use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -33,6 +36,7 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
+use App\Models\QuoteExportLog;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -46,7 +50,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class CentralService
+class CentralService extends BaseService
 {
     use GenericQueriesAllLobs, TeamHierarchyTrait;
 
@@ -136,9 +140,7 @@ class CentralService
                     return false;
                 }
 
-                $response = in_array(ucfirst($lob), newUi()) ?
-                    ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
-                    Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
+                $response = ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob)));
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
@@ -177,7 +179,7 @@ class CentralService
         }
 
         $leadsIds = array_map('intval', explode(',', $leadsIds));
-        $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+        $model = (in_array(ucfirst($request->modelType), $personalQuotes)) ?
             ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
             ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
 
@@ -188,17 +190,38 @@ class CentralService
         return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes, $quoteBatch) {
             foreach ($leadsIds as $leadId) {
                 $getQuoteLead = $model['parent']::findOrfail($leadId);
+
+                $oldAssignmentType = $getQuoteLead->assignment_type;
+                $isReassignment = $getQuoteLead->advisor_id != null ? true : false;
+                $previousAdvisorId = $getQuoteLead->advisor_id;
+
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
+                $getQuoteLead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
                 $getQuoteLead->quote_batch_id = $quoteBatch->id;
                 $getQuoteLead->save();
 
-                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes)) ?
                     'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
+
+                $childRecord = $model['child']::where($parentFieldName, $getQuoteLead->id)->first();
+                $oldAdvisorAssignedDate = $childRecord?->advisor_assigned_date ?? null;
 
                 $model['child']::updateOrCreate(
                     [$parentFieldName => $getQuoteLead->id],
                     ['advisor_assigned_by_id' => auth()->user()->id, 'advisor_assigned_date' => Carbon::now()]
                 );
+
+                $quoteTypeId = $getQuoteLead?->quote_type_id ?? QuoteTypes::tryFrom(ucfirst(request('quoteType')))?->id();
+
+                if ($quoteTypeId) {
+                    $this->upsertManualAllocationCount($getQuoteLead->advisor_id, $getQuoteLead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteTypeId);
+
+                    $this->addOrUpdateQuoteViewCount($getQuoteLead, $quoteTypeId, $getQuoteLead->advisor_id);
+                }
+
+                $getQuoteLead->auto_assigned = false;
+
+                $getQuoteLead->save();
             }
         });
     }
@@ -295,8 +318,7 @@ class CentralService
             $quote = $repository::where('code', $code)->firstOrFail();
 
             $quote->update($data->toArray());
-
-            $this->updateQuotePayment($quote, $data->price_with_vat, $data->insurance_provider_id);
+            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id);
 
             return true;
         });
@@ -417,7 +439,8 @@ class CentralService
         }
 
         // Lock functionality check for Lead status Section
-        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined]);
+        $lockedForQuoteStatus = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED];
+        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, $lockedForQuoteStatus);
         if (auth()->check() && auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
             in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked]) ? $lockFunctionalities['lead_status'] = true : $lockFunctionalities['lead_status'] = false;
         } elseif (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
@@ -914,5 +937,73 @@ class CentralService
         }
 
         return false;
+    }
+
+    public function generateExportLogs(): void
+    {
+        try {
+            $exportLogs = QuoteExportLog::create([
+                'type' => ExportLogsTypeEnum::SEARCH_MODULE,
+                'quote_type_id' => request()->quote_type_id ?? null,
+                'user_id' => auth()->id(),
+                'ip_address' => request()->ip(),
+                'url' => request()->fullUrl(),
+            ]);
+            info('fn: generateExportLogs export log created');
+        } catch (\Exception $e) {
+            info('fn: generateExportLogs error: '.$e->getMessage());
+        }
+    }
+
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null)
+    {
+        info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
+        if (! $sendUpdatePayment) {
+            $payment = $quoteObject->payments()->mainLeadPayment()->first();
+        } else {
+            $payment = $sendUpdatePayment;
+        }
+        if ($payment) {
+            if ($insuranceProviderId) {
+                $payment->insurance_provider_id = $insuranceProviderId;
+            }
+            app(PaymentService::class)->processMasterPayment($payment, $quoteObject);
+            app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment);
+
+            return $this->isLackingPayment($payment);
+        }
+    }
+
+    /**
+     * Updates quote & policy issuance status, first will check if the quote's current status is not already set to 'Policy Sent to Customer'
+     * We check policy issuance status is not 'Policy Issued' & if afilled policy details & required documents are uploaded
+     * This will trigger once policy details section update or new document upload from upload document section
+     */
+    public function updateQuoteInformation($type, $id)
+    {
+        if ($type == 'send-update') {
+            return true;
+        }
+        if (request()->has('quote_type')) {
+            $type = request()->quote_type;
+        }
+
+        $quote = $this->getQuoteObject($type, $id);
+        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called');
+        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+            $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
+            info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
+            if ($isPolicyDetailsFilled) {
+                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
+                if (app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote)) {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                        'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+                        'policy_issuance_status_other' => '',
+                    ]);
+                }
+                info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
+            }
+        }
     }
 }

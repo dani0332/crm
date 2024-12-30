@@ -173,7 +173,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 
     $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
     $nameSpace = 'App\\Models\\';
-    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+    $modelType = (checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
     if (! class_exists($modelType)) {
         return false;
@@ -461,27 +461,6 @@ function generateRouteNames($prefix)
     ];
 }
 
-if (! function_exists('newUi')) {
-    function newUi(): array
-    {
-        return [
-            quoteTypeCode::Health,
-            quoteTypeCode::Car,
-            quoteTypeCode::Travel,
-            quoteTypeCode::Home,
-            quoteTypeCode::Life,
-            quoteTypeCode::Pet,
-            quoteTypeCode::CORPLINE,
-            quoteTypeCode::Business,
-            quoteTypeCode::Cycle,
-            quoteTypeCode::Bike,
-            quoteTypeCode::Yacht,
-            quoteTypeCode::Jetski,
-            quoteTypeCode::Aml,
-        ];
-    }
-}
-
 if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
@@ -499,7 +478,7 @@ if (! function_exists('createCdnUrl')) {
 if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
-        return ['im.automation4@gmail.com', 'muhammad.abdullah@insurancemarket.ae'];
+        return ['qa_automation@myalfred.com'];
     }
 }
 
@@ -554,6 +533,9 @@ if (! function_exists('getBase64FileInfo')) {
 if (! function_exists('sanitizeFileName')) {
     function sanitizeFileName($fileName)
     {
+        // Remove any Unicode control characters, including non-breaking spaces
+        $fileName = preg_replace('/[\x{00}-\x{1F}\x{7F}\x{A0}]/u', '', $fileName);
+
         // Remove any Unicode control characters
         $fileName = preg_replace('/[[:cntrl:]]/', '', $fileName);
 
@@ -1226,6 +1208,12 @@ if (! function_exists('getAssignmentTypeText')) {
             case 4:
                 $assignmentText = 'Manual ReAssigned';
                 break;
+            case 5:
+                $assignmentText = 'Bought Lead';
+                break;
+            case 6:
+                $assignmentText = 'ReAssigned as Bought Lead';
+                break;
             default:
                 break;
         }
@@ -1557,7 +1545,7 @@ if (! function_exists('getInsuranceProvider')) {
             }
         }
 
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes) && isset($payment)) {
             $planRelationName = strtolower($quoteType).'Plan';
             $payment->load($planRelationName);
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
@@ -1568,5 +1556,14 @@ if (! function_exists('getInsuranceProvider')) {
         }
 
         return $insuranceProvider;
+    }
+}
+
+if (! function_exists('isCHSAdvisor')) {
+    function isCHSAdvisor($userId)
+    {
+        $user = User::select('id')->chs()->first();
+
+        return $user?->id == $userId;
     }
 }

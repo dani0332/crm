@@ -48,7 +48,7 @@ class LeadsCountService
         foreach ($allowedQuoteTypes as $allowedQuoteType) {
             $quoteTypeEnum = $allowedQuoteType;
             $allowedQuoteType = strtolower($allowedQuoteType->name);
-            $modelType = (in_array(ucfirst($allowedQuoteType), newUi()) && checkPersonalQuotes(ucfirst($allowedQuoteType))) ? $nameSpace.'PersonalQuote' :
+            $modelType = (checkPersonalQuotes(ucfirst($allowedQuoteType))) ? $nameSpace.'PersonalQuote' :
                 ((strtoupper($allowedQuoteType) == QuoteTypes::CORPLINE->name) ? $nameSpace.ucwords(QuoteTypes::BUSINESS->name).'Quote' : $nameSpace.ucwords($allowedQuoteType).'Quote');
 
             if (! class_exists($modelType)) {

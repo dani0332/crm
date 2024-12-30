@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
@@ -841,6 +842,7 @@ class SendEmailCustomerService extends BaseService
                 ]],
                 'templateId' => (int) $emailData->emailTemplateId,
                 'params' => [
+                    'clientFirstName' => $emailData->clientFirstName,
                     'clientFullName' => $emailData->clientFullName,
                     'carQuoteId' => $emailData->code,
                     'currentInsurer' => $emailData->currentInsurer,
@@ -858,6 +860,7 @@ class SendEmailCustomerService extends BaseService
                         'mobileNo' => $emailData->advisorMobileNo,
                         'landLine' => $emailData->advisorLandlineNo,
                         'profilePicture' => $emailData->profilePicture,
+                        'isChsAdvisor' => $emailData->isChsAdvisor,
                     ],
                 ],
                 'tags' => [
@@ -916,7 +919,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendSICNotificationToAdvisor($lead, $user)
+    public function sendSICNotificationToAdvisor($lead, $user, $quoteType)
     {
         info('sendSICNotificationToAdvisor ---- Start');
 
@@ -925,12 +928,22 @@ class SendEmailCustomerService extends BaseService
 
             $subject = $subjectEnvTag.'CALL NOW! Customer with REF-ID '.$lead->code.' has requested for an advisor right now!';
 
+            $quoteTypeCode = strtolower($quoteType);
+
+            if ($quoteType == quoteTypeCode::Business) {
+                $path = "quotes/business/$lead->uuid";
+            } elseif (checkPersonalQuotes($quoteType)) {
+                $path = "personal-quotes/$quoteTypeCode/$lead->uuid";
+            } else {
+                $path = "quotes/$quoteTypeCode/$lead->uuid";
+            }
+
             $htmlContent = '<html>
             <head></head>
             <body>
               <p>Dear <b>'.$user->name.'</b>,</p>
               <p>
-                  A customer with REF-ID <a href="'.$this->appUrl.'/quotes/car/'.$lead->uuid.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
+                  A customer with REF-ID <a href="'.$this->appUrl.'/'.$path.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
               </p>
               <p>
                 Please call the customer urgently as they have requested for an advisor right now.
@@ -1369,7 +1382,7 @@ class SendEmailCustomerService extends BaseService
             'currentInsurer' => $currentInsurer ? $currentInsurer->text : null,
             'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.'/?assignAdvisor=true'),
-            'assignmentType' => $this->getAssignmentTypeText($healthQuote->assignment_type),
+            'assignmentType' => getAssignmentTypeText($healthQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor),
@@ -1386,29 +1399,6 @@ class SendEmailCustomerService extends BaseService
 
             return $this->buildCommonEmailData($lead, $advisor, $previousAdvisor, $request, $emailTemplateId);
         }
-    }
-
-    private function getAssignmentTypeText($assignmentType)
-    {
-        $assignmentText = '';
-        switch ($assignmentType) {
-            case 1:
-                $assignmentText = 'System Assigned';
-                break;
-            case 2:
-                $assignmentText = 'System ReAssigned';
-                break;
-            case 3:
-                $assignmentText = 'Manual Assigned';
-                break;
-            case 4:
-                $assignmentText = 'Manual ReAssigned';
-                break;
-            default:
-                break;
-        }
-
-        return $assignmentText;
     }
 
     private function getPlanBuyNowLink($plan, $uuid)

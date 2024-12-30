@@ -1170,7 +1170,7 @@ watch(
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div class="text-right"></div>
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="text-[#308BCA] text-sm font-bold underline decoration-dotted decoration-primary-700"
                   >
@@ -1199,7 +1199,7 @@ watch(
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1221,7 +1221,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1239,7 +1239,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1260,7 +1260,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1281,7 +1281,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1301,7 +1301,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1317,7 +1317,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1338,7 +1338,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1355,7 +1355,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1376,7 +1376,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1398,7 +1398,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1421,7 +1421,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1442,7 +1442,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1464,7 +1464,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1485,7 +1485,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1509,7 +1509,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1532,7 +1532,7 @@ watch(
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1554,7 +1554,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1580,7 +1580,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1608,6 +1608,7 @@ watch(
           <template v-if="!state.reversalSectionEdit">
             <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 @click="onReversalEdit"
                 :disabled="props.isEditDisabledForQueuedBooking"
@@ -1621,10 +1622,18 @@ watch(
                 </span>
               </template>
             </x-tooltip>
-            <x-button v-else size="sm" @click="onReversalEdit"> Edit </x-button>
+            <x-button
+              v-else
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              @click="onReversalEdit"
+            >
+              Edit
+            </x-button>
           </template>
           <template v-else>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="orange"
               @click="state.reversalSectionEdit = false"
@@ -1634,6 +1643,7 @@ watch(
               Cancel
             </x-button>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="primary"
               :loading="loader.selectInvoice"
@@ -1665,7 +1675,7 @@ watch(
             <div class="grid md:grid-cols-2 gap-x-4 gap-y-2 py-4 items-center">
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1689,7 +1699,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1717,7 +1727,7 @@ watch(
                 class="grid sm:grid-cols-2 pb-1.5"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1736,7 +1746,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1757,7 +1767,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1784,7 +1794,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1808,7 +1818,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1835,7 +1845,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1864,7 +1874,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1903,7 +1913,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1933,7 +1943,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1979,7 +1989,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2008,7 +2018,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2056,7 +2066,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2085,7 +2095,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="pt-1 font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2100,10 +2110,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-tooltip
-                    placement="left"
-                    v-if="disableCommissionVatApplicable"
-                  >
+                  <x-tooltip v-if="disableCommissionVatApplicable">
                     <x-input
                       v-model="bookingDetailsForm.commission_vat_applicable"
                       class="!mb-0 w-full"
@@ -2148,7 +2155,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2178,7 +2185,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2191,10 +2198,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div v-if="props.isCommVatNotAppEnabled">
-                  <x-tooltip
-                    placement="left"
-                    v-if="disableCommissionVatNotApplicable"
-                  >
+                  <x-tooltip v-if="disableCommissionVatNotApplicable">
                     <x-input
                       type="number"
                       v-model="bookingDetailsForm.commission_vat_not_applicable"
@@ -2247,7 +2251,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2281,7 +2285,7 @@ watch(
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2317,6 +2321,7 @@ watch(
             <template v-if="!state.isEdit">
               <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   @click="checkSectionToEdit"
                   :disabled="props.isEditDisabledForQueuedBooking"
@@ -2330,32 +2335,41 @@ watch(
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="checkSectionToEdit">
+              <x-button
+                v-else
+                class="focus:ring-2 focus:ring-black"
+                size="sm"
+                @click="checkSectionToEdit"
+              >
                 Edit
               </x-button>
 
               <template v-if="isLackingPayment">
-                <x-tooltip>
-                  <x-button
-                    size="sm"
-                    color="orange"
-                    v-if="props.updateBtn"
-                    :loading="loader.sendUpdateSectionBtn"
-                    @click="sendUpdateValidation"
-                    :disabled="sendUpdatePermissionCheck || isLackingPayment"
-                  >
-                    {{ props.updateBtn }}
-                  </x-button>
-                  <template #tooltip>
-                    <span class="custom-tooltip-content">
-                      Action Needed: Please revise payment details to reflect
-                      plan changes.
-                    </span>
-                  </template>
-                </x-tooltip>
+                <div>
+                  <x-tooltip>
+                    <x-button
+                      class="focus:ring-2 focus:ring-black"
+                      size="sm"
+                      color="orange"
+                      v-if="props.updateBtn"
+                      :loading="loader.sendUpdateSectionBtn"
+                      @click="sendUpdateValidation"
+                      :disabled="sendUpdatePermissionCheck || isLackingPayment"
+                    >
+                      {{ props.updateBtn }}
+                    </x-button>
+                    <template #tooltip>
+                      <span>
+                        Action Needed: Please revise payment details to reflect
+                        plan changes.
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </div>
               </template>
               <template v-else>
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   color="orange"
                   v-if="props.updateBtn"
@@ -2369,6 +2383,7 @@ watch(
             </template>
             <template v-else>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="orange"
                 @click="onCancel"
@@ -2378,6 +2393,7 @@ watch(
                 Cancel
               </x-button>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="#0CA789"
                 type="submit"
@@ -2394,6 +2410,7 @@ watch(
 
     <sendUpdateCustConfirmBtnTemp>
       <x-button
+        class="focus:ring-2 focus:ring-black"
         size="sm"
         color="error"
         @click.prevent="submitToCustomer"
@@ -2420,13 +2437,18 @@ watch(
       >
         {{ isStating }}
       </x-alert>
-      <x-checkbox
-        v-model="modals.isConfirmed"
-        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
-      />
+      <x-label class="flex items-center gap-2">
+        <x-checkbox v-model="modals.isConfirmed" />
+        <div>
+          I confirm and attest that all information recorded is correct.
+          <br />
+          I confirm I am in compliance with the COC.
+        </div>
+      </x-label>
       <template #actions>
         <div class="flex gap-4 justify-end">
           <x-button
+            class="focus:ring-2 focus:ring-black"
             size="sm"
             ghost
             :disabled="isLoading"
@@ -2436,7 +2458,7 @@ watch(
           </x-button>
           <div>
             <template v-if="!modals.isConfirmed">
-              <x-tooltip placement="right">
+              <x-tooltip>
                 <SendUpdateCustReuseBtnTemp />
                 <template #tooltip>
                   Please select the checkbox to proceed
@@ -2464,6 +2486,7 @@ watch(
             Go Back
           </x-button>
           <x-button
+            class="focus:ring-2 focus:ring-black"
             size="sm"
             color="error"
             :loading="isSendUpdateWithEmail ? isLoading : loader.sendUpdate"
@@ -2481,6 +2504,7 @@ watch(
 
     <sendUpdateConfirmBtnTemp>
       <x-button
+        class="focus:ring-2 focus:ring-black"
         size="sm"
         color="error"
         :disabled="!confirmationCheck"
@@ -2514,7 +2538,7 @@ watch(
           </x-button>
           <div>
             <template v-if="!confirmationCheck">
-              <x-tooltip placement="left">
+              <x-tooltip>
                 <SendUpdateReuseBtnTemp />
                 <template #tooltip>
                   Please select the checkbox to proceed
