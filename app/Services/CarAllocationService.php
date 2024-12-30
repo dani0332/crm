@@ -47,6 +47,14 @@ class CarAllocationService extends AllocationService
         $this->buyLeadRequest = null;
     }
 
+    public function endBuyLeadProcessing(): void
+    {
+        if ($this->buyLeadRequest) {
+            $this->buyLeadRequest->completeProcessing();
+        }
+        $this->resetProps();
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         // Check if Dubai Now exclusion should be applied
@@ -458,6 +466,7 @@ class CarAllocationService extends AllocationService
         info(self::class."::getAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
 
         return $this->getAdvisorBaseQuery($status, $tierUserIds, $advisorId, $teamId)
+            ->where('normal_allocation_enabled', true)
             ->where(function ($query) {
                 // Apply allocation count and max capacity conditions.
                 $query->whereRaw('allocation_count < max_capacity')->orWhere('max_capacity', -1);

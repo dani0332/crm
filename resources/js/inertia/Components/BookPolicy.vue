@@ -1452,7 +1452,7 @@ onMounted(() => {
     <x-modal
       v-model="modals.sendPolicyConfirm"
       size="lg"
-      title="Send Policy"
+      :title="props.bookPolicyDetails?.text"
       show-close
       backdrop
     >
