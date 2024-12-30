@@ -370,10 +370,15 @@ const resetDateFilters = filterName => {
 };
 
 [
-  'payment_due_date',
-  'booking_date',
+  'email',
+  'mobile_no',
+  'code',
   'created_at_start',
   'created_at_end',
+  'renewal_batch',
+  'previous_quote_policy_number',
+  'payment_due_date',
+  'booking_date',
 ].forEach(filterName => {
   watch(
     () => filters[filterName],
@@ -712,9 +717,7 @@ const formatDate = dateString =>
           {{ daysAgoFromAuthorizedDate(item.payments[0].authorized_at) }}
         </p>
       </template>
-      <template
-        #item-previous_policy_expiry_date="item"
-      >
+      <template #item-previous_policy_expiry_date="item">
         {{
           item?.source === 'Renewal_upload'
             ? formatDate(item?.previous_policy_expiry_date)

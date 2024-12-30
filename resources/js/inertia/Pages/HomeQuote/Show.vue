@@ -783,7 +783,6 @@ const emailTableColumns = reactive({
     { text: 'Updated At', value: 'updated_at' },
   ],
 });
-
 </script>
 
 <template>
@@ -1290,6 +1289,26 @@ const emailTableColumns = reactive({
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ADDRESS</dt>
+                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LOCATION AREA</dt>
+                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FLOOR AND VILLA/ APARTMENT NUMBER</dt>
+                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">VILLA/ BUILDING NAME</dt>
+                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
+                </div>
+
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">STREET NAME</dt>
                   <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
                 </div>
 
@@ -1960,21 +1979,21 @@ const emailTableColumns = reactive({
       @onAddUpdate="onAddUpdate"
     />
     <div class="p-4 rounded shadow mb-6 bg-white">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-        </div>
-        <DataTable
-          table-class-name="tablefixed compact"
-          :headers="emailTableColumns.columns"
-          :items="emailStatuses || []"
-          show-index
-          border-cell
-          hide-rows-per-page
-          hide-footer
-        >
-        </DataTable>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
       </div>
-      <x-divider class="my-4" />
+      <DataTable
+        table-class-name="tablefixed compact"
+        :headers="emailTableColumns.columns"
+        :items="emailStatuses || []"
+        show-index
+        border-cell
+        hide-rows-per-page
+        hide-footer
+      >
+      </DataTable>
+    </div>
+    <x-divider class="my-4" />
     <QuoteActivities
       :can="can"
       :quote="quote"

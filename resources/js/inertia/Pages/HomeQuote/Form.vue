@@ -59,6 +59,12 @@ const quoteForm = useForm({
     props.quote?.home_quote?.has_claimed_losses !== undefined
       ? String(props.quote.home_quote.has_claimed_losses)
       : null,
+  addressObj: {
+    villa_apartment_office_no:
+      page.props.customerAddressData?.office_number || null,
+    villa_building_name: page.props.customerAddressData?.building_name || null,
+    street_name: page.props.customerAddressData?.street || null,
+  },
 });
 
 console.log('quoteForm.contents_aed:', quoteForm.contents_aed);
@@ -514,6 +520,30 @@ const personalBelongingsInAEDOptions = computed(() => {
             class="w-full"
             :hasError="formFieldReq.sub_area_id"
             :error="quoteForm.errors.sub_area_id"
+          />
+        </x-field>
+
+        <x-field label="Floor and Villa/ Apartment number">
+          <x-input
+            type="text"
+            v-model="quoteForm.addressObj.villa_apartment_office_no"
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="Villa/ Building name">
+          <x-input
+            type="text"
+            v-model="quoteForm.addressObj.villa_building_name"
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="Street name">
+          <x-input
+            type="text"
+            v-model="quoteForm.addressObj.street_name"
+            class="w-full"
           />
         </x-field>
 

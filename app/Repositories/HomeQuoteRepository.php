@@ -57,70 +57,112 @@ class HomeQuoteRepository extends BaseRepository
         )->orderBy('created_at', 'desc');
     }
 
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false)
     {
-        // by default add the created_at check
-        $addCreatedDateCheck = ! (
-            // check if any of the filters are applied, only then don't add the created_at check
-            request()->filled('email') ||
-            request()->filled('mobile_no') ||
-            request()->filled('code') ||
-            request()->filled('created_at_start') ||
-            request()->filled('created_at_end') ||
-            request()->filled('renewal_batch') ||
-            request()->filled('previous_quote_policy_number') ||
-            request()->filled('payment_due_date') ||
-            request()->filled('booking_date')
-        );
+        // Fields to check for active filters
+        $filterFields = [
+            'email',
+            'mobile_no',
+            'code',
+            'created_at_start',
+            'created_at_end',
+            'renewal_batch',
+            'previous_quote_policy_number',
+            'payment_due_date',
+            'booking_date',
+        ];
+
+        // Determine if the created_at check should be added
+        $addCreatedDateCheck = !$this->hasActiveFilters($filterFields);
 
         return $this->byQuoteTypeCode(QuoteTypes::HOME)
-            ->with([
-                'quoteDetail.lostReason',
-                'quoteStatus',
-                'advisor',
-                'nationality',
-                'homeQuote',
-                'homeQuote.homeQuoteRequestDetail',
-                'homeQuote.homeQuoteRequestDetail.lostReason',
-                'payments' => function ($q) {
-                    $q->with([
-                        'paymentStatus',
-                        'personalPlan',
-                        'paymentMethod',
-                        'paymentStatusLogs',
-                        'insuranceProvider',
-                        'paymentable',
-                        'paymentSplits.paymentStatus',
-                        'paymentSplits.paymentMethod',
-                        'paymentSplits.verifiedByUser',
-                        'paymentSplits.documents',
-                        'paymentSplits.processJob',
-                    ]);
-                },
-            ])
+            ->with($this->getWithRelations())
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->when(request()->filled('advisors'), fn ($q) => $q->whereIn('advisor_id', (array) request('advisors')))
+            ->when(request()->filled('advisors'), function ($query) {
+                $query->whereIn('advisor_id', (array) request('advisors'));
+            })
             ->when(request()->has('is_renewal'), function ($query) {
-                if (request('is_renewal') === quoteTypeCode::yesText) {
-                    $query->whereNotNull('previous_quote_policy_number');
-                } elseif (request('is_renewal') === quoteTypeCode::noText) {
-                    $query->whereNull('previous_quote_policy_number');
-                }
+                $this->applyRenewalFilter($query);
             })
             ->when($addCreatedDateCheck, function ($query) {
                 $query->whereBetween('created_at', $this->getDateRange());
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filter(!$forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
-                fn ($q) => $q->count(),
-                fn ($query) => $query->when($forExport, fn ($q) => $q->get(), fn ($q) => $q->simplePaginate())
+                fn($query) => $query->count(),
+                fn($query) => $query->when($forExport, fn($query) => $query->get(), fn($query) => $query->simplePaginate())
             );
     }
+
+    /**
+     * Check if any of the specified filters are active.
+     *
+     * @param array $fields
+     * @return bool
+     */
+    private function hasActiveFilters(array $fields): bool
+    {
+        foreach ($fields as $field) {
+            if (request()->filled($field)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the eager load relationships for the query.
+     *
+     * @return array
+     */
+    private function getWithRelations(): array
+    {
+        return [
+            'quoteDetail.lostReason',
+            'quoteStatus',
+            'advisor',
+            'nationality',
+            'homeQuote',
+            'homeQuote.homeQuoteRequestDetail',
+            'homeQuote.homeQuoteRequestDetail.lostReason',
+            'payments' => function ($query) {
+                $query->with([
+                    'paymentStatus',
+                    'personalPlan',
+                    'paymentMethod',
+                    'paymentStatusLogs',
+                    'insuranceProvider',
+                    'paymentable',
+                    'paymentSplits.paymentStatus',
+                    'paymentSplits.paymentMethod',
+                    'paymentSplits.verifiedByUser',
+                    'paymentSplits.documents',
+                    'paymentSplits.processJob',
+                ]);
+            },
+        ];
+    }
+
+    /**
+     * Apply the renewal filter to the query.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return void
+     */
+    private function applyRenewalFilter($query): void
+    {
+        if (request('is_renewal') === quoteTypeCode::yesText) {
+            $query->whereNotNull('previous_quote_policy_number');
+        } elseif (request('is_renewal') === quoteTypeCode::noText) {
+            $query->whereNull('previous_quote_policy_number');
+        }
+    }
+
 
     public function fetchGetFormOptions()
     {
@@ -172,11 +214,11 @@ class HomeQuoteRepository extends BaseRepository
 
         $quoteData = $baseQuoteData;
 
-        info('Home Quote Create :'.json_encode($quoteData));
+        info('Home Quote Create :' . json_encode($quoteData));
 
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 
-        info('Home Quote Create Response :'.json_encode($response));
+        info('Home Quote Create Response :' . json_encode($response));
 
         // if (isset($response->quoteUID)) {
         //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);
@@ -232,12 +274,12 @@ class HomeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable().'.*',
+                $this->getTable() . '.*',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                    WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
+                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
                 as customer_type'),
             ])
             ->firstOrFail();
@@ -337,7 +379,7 @@ class HomeQuoteRepository extends BaseRepository
             'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -358,7 +400,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::HOME->value) . '-quote', 'post', $dataArr);
     }
 
     public function fetchUpdate($uuid, $data)
