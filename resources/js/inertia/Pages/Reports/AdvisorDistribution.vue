@@ -4,6 +4,7 @@ defineProps({
   filtersByLob: Object,
   filterOptions: Object,
   defaultFilters: Object,
+  assignmentTypes: Object,
 });
 const loaders = reactive({
   table: false,
@@ -35,10 +36,12 @@ const filters = reactive({
   isCommercial: 'All',
   isEmbeddedProducts: '',
   segment_filter: 'all',
+  sic_advisor_requested: 'All',
   page: 1,
   insurance_type: '',
   insurance_for: '',
   travel_coverage: '',
+  assignmentType: 'All',
 });
 
 function onSubmit(isValid, isMounted = false) {
@@ -724,6 +727,35 @@ const travelCoverageOptions = computed(() => {
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          :single="true"
+        />
+
+        <ComboBox
+          v-if="
+            filters.lob === quoteTypeCodeEnum.Car ||
+            filters.lob === quoteTypeCodeEnum.Health ||
+            filters.lob === quoteTypeCodeEnum.Travel
+          "
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          :single="true"
+        />
+
+        <ComboBox
+          v-if="
+            filters.lob === quoteTypeCodeEnum.Car ||
+            filters.lob === quoteTypeCodeEnum.Health
+          "
+          v-model="filters.assignmentType"
+          label="Assignment Type"
+          placeholder="Select any option"
+          :options="assignmentTypes"
           :single="true"
         />
       </div>

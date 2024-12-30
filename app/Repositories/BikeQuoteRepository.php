@@ -204,6 +204,7 @@ class BikeQuoteRepository extends BaseRepository
             'advisor',
             'paymentStatus',
             'payments',
+            'renewalBatchModel',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -211,8 +212,10 @@ class BikeQuoteRepository extends BaseRepository
             ->filter(! $forExport)
             ->withFakeLeadCriteria();
 
+        $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
-        $this->orderBy('personal_quotes.created_at', 'desc');
+
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }

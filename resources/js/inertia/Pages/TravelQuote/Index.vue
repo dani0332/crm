@@ -1,11 +1,19 @@
 <script setup>
+import { computed, ref } from 'vue';
+
 defineProps({
   quotes: Object,
   dropdownSource: Object,
   permissions: Object,
   advisors: Object,
+  renewalBatches: Array,
   authorizedDays: Number,
+  amlStatuses: Object,
+  insuranceProviders: Array,
+  travelPlans: Array,
 });
+
+let params = useUrlSearchParams('history');
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -26,10 +34,18 @@ const rules = {
 const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
+const cleanObj = obj => useCleanObj(obj);
 const quoteSegments = page.props.quoteSegments?.filter(
   segment => segment.value !== 'sic-revival',
 );
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
+});
 
 const filters = reactive({
   code: '',
@@ -47,13 +63,22 @@ const filters = reactive({
   direction_code: '',
   coverage_code: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   payment_due_date: '',
   booking_date: '',
   segment_filter: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  sic_advisor_requested: 'All',
   transaction_approved_dates: page.props.transaction_approved_dates || '',
+  last_modified_date: null,
+  advisor_assigned_date: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
+  insurer_api_status_id: '',
+  amlStatus: [],
+  insurance_provider_ids: [],
+  plan_name: [],
 });
 
 const loader = reactive({
@@ -78,7 +103,13 @@ const tableHeader = [
   { text: 'Travel Type', value: 'direction_code' },
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'AML Status', value: 'aml_status' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  {
+    text: 'ADVISOR REQUESTED',
+    value: 'sic_advisor_requested',
+  },
+  { text: 'Advisor Assigned Date ', value: 'advisor_assigned_date' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {
@@ -89,6 +120,8 @@ const tableHeader = [
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
+  { text: 'Provider Name', value: 'travel_plan_provider_text' },
+  { text: 'Plan Name', value: 'plan_id_text' },
   { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'DESTINATION', value: 'destination_id_text' },
@@ -97,7 +130,12 @@ const tableHeader = [
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch_text' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -107,6 +145,49 @@ const paymentStatusOptions = computed(() => {
       label: item.text,
     };
   });
+});
+const insurerApiStatus = computed(() => {
+  return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
+const computedAmlStatuses = computed(() => {
+  return Object.entries(page.props.amlStatuses).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+
+const computedInsuranceProviders = computed(() => {
+  return page.props.insuranceProviders.map(item => {
+    return {
+      value: item.id,
+      label: item.text,
+    };
+  });
+});
+
+const computedTravelPlans = computed(() => {
+  if (
+    filters.insurance_provider_ids &&
+    filters.insurance_provider_ids.length > 0
+  ) {
+    return page.props.travelPlans
+      .filter(plan => filters.insurance_provider_ids.includes(plan.provider_id))
+      .map(item => {
+        return {
+          value: item.id,
+          label: item.text,
+        };
+      });
+  }
+  return [];
 });
 
 const advisorsOptions = computed(() => {
@@ -123,6 +204,13 @@ const advisorsOptions = computed(() => {
       label: 'UnAssigned',
     },
   ];
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
 });
 
 const leadsStatusOptions = computed(() => {
@@ -156,10 +244,10 @@ function onSubmit(isValid) {
       delete filters[key];
     }
   }
-
+  serverOptions.value.page = 1;
   router.visit(route('travel.index'), {
     method: 'get',
-    data: filters,
+    data: { ...filters, ...serverOptions.value },
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -232,13 +320,13 @@ function onAssignLead(isValid) {
 }
 
 function setQueryFilters() {
-  let urlParams = new URLSearchParams(window.location.search);
-  for (const [key, value] of urlParams) {
-    if (key.includes('[')) {
-      let index = key.replace('[]', '');
-      filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
     } else {
-      filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
     }
   }
 }
@@ -246,7 +334,7 @@ function setQueryFilters() {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
-
+const exportLoader = ref(false);
 const onDataExport = () => {
   filters.created_at_start = useDateFormat(
     filters.created_at_start,
@@ -260,7 +348,17 @@ const onDataExport = () => {
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'travel');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Travel'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
@@ -323,6 +421,22 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   setQueryFilters();
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const resetDateFilters = filterName => {
@@ -381,6 +495,14 @@ const formatDate = date => {
   const parsedDate = new Date(`${year}-${month}-${day}`);
   return useDateFormat(parsedDate, 'DD-MMM-YYYY').value;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -576,13 +698,11 @@ const formatDate = date => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+        <ComboBox
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
         />
         <DatePicker
           v-model="filters.payment_due_date"
@@ -609,6 +729,87 @@ const formatDate = date => {
           class="w-full"
           :single="true"
         />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.TravelManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <ComboBox
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
+        <ComboBox
+          label="INSURER API STATUS"
+          v-model="filters.insurer_api_status_id"
+          placeholder="Select Status"
+          :options="insurerApiStatus"
+          class="w-full"
+        />
+        <x-field label="AML Status">
+          <ComboBox
+            v-model="filters.amlStatus"
+            name="source"
+            class="w-full"
+            placeholder="Search by AMLStatus"
+            :options="computedAmlStatuses"
+          />
+        </x-field>
+        <x-field label="Provider Name">
+          <ComboBox
+            v-model="filters.insurance_provider_ids"
+            name="source"
+            class="w-full"
+            placeholder="Search by Provider Name"
+            :options="computedInsuranceProviders"
+          />
+        </x-field>
+        <x-field label="Plan Name">
+          <ComboBox
+            v-model="filters.plan_name"
+            name="source"
+            class="w-full"
+            placeholder="Search by Plan Name"
+            :options="computedTravelPlans"
+          />
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -616,6 +817,7 @@ const formatDate = date => {
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >
@@ -679,6 +881,7 @@ const formatDate = date => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
@@ -722,7 +925,13 @@ const formatDate = date => {
             : ''
         }}
       </template>
-
+      <template #item-sic_advisor_requested="{ sic_advisor_requested }">
+        <div class="text-center">
+          <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
+            {{ sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
@@ -772,6 +981,14 @@ const formatDate = date => {
                     : ''
           }}
         </div>
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p>
+          {{ item.renewal_batch_text }}
+        </p>
+      </template>
+      <template #item-aml_status="{ aml_status }">
+        <span>{{ aml_status?.replace(/_/g, ' ') }}</span>
       </template>
     </DataTable>
 

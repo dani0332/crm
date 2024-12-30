@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Services\CarQuoteService;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -13,31 +12,23 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 {
     use Exportable;
 
-    protected $data;
+    protected $nonPUALeads;
+    protected $puaLeads;
 
     public function __construct()
     {
-        $this->data = app(CarQuoteService::class)->exportnonPUAAuthorized();
+        $this->nonPUALeads = app(CarQuoteService::class)->exportnonPUAAuthorized();
+        $this->puaLeads = app(CarQuoteService::class)->exportPUAAuthorized();
     }
 
     public function collection()
     {
-        $leads = $this->data[0]->select(
-            'q.code as RefID',
-            'q.premium_authorized as premiumauthorized',
-            'q.payment_status_date as paymentauthdate',
-            DB::raw('qs.text as `leadstatus`'),
-            DB::raw("'AUTHORIZED' as `paymentstatus`"),
-            'q.source as source',
-            'cmk.text as make',
-            'cmd.text as model',
-            'u.email as assignedadvisoremail'
-        )->distinct()->get();
+        $leads = $this->nonPUALeads[0];
 
-        $teamCounts = $this->data[1]->select(
-            't.name as Team',
-            DB::raw('COUNT(*) as Total')
-        )->distinct()->get();
+        $nonPUALeadCounts = $this->nonPUALeads[0]->count();
+        $puaLeadCounts = $this->puaLeads[0]->count();
+
+        $teamCounts = $this->nonPUALeads[1];
 
         $exportData = collect();
 
@@ -45,19 +36,29 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
             $exportData->push($lead);
         }
 
+        // ADD BlANK LINE
         if ($teamCounts->isNotEmpty()) {
             $exportData->push((object) [' ' => ' ']);
             $exportData->push((object) [' ' => ' ']);
             $exportData->push((object) [' ' => ' ']);
-            $exportData->push((object) ['Teams' => '']);
-            $exportData->push((object) ['Total' => '']);
-
         }
+
+        $exportData->push((object) [
+            'NonPUA' => 'PUA: ',
+            'Total' => $puaLeadCounts ?: '0',
+        ]);
+        $exportData->push((object) [
+            'NonPUA' => 'Non-PUA: ',
+            'Total' => $nonPUALeadCounts ?: '0',
+        ]);
+        // ADD BlANK LINE
+        $exportData->push((object) [' ' => ' ']);
+        $exportData->push((object) [' ' => ' ']);
 
         foreach ($teamCounts as $team) {
             $exportData->push((object) [
                 'Team' => $team->Team,
-                'Total' => $team->Total,
+                'Total' => $team->Total ?: '0',
             ]);
         }
 
@@ -93,15 +94,15 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
                 $quote->model,
                 $quote->assignedadvisoremail,
             ];
+        } elseif (isset($quote->NonPUA)) {
+            return [
+                $quote->NonPUA,
+                $quote->Total,
+            ];
         } elseif (isset($quote->Team)) {
             return [
                 $quote->Team,
                 $quote->Total ?? number_format(0),
-            ];
-        } elseif (isset($quote->{'Teams'})) {
-            return [
-                'Teams',
-                'Total Count',
             ];
         }
 

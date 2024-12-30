@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Models\GenericModel;
 use App\Models\QuoteViewCount;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -242,6 +245,7 @@ class BaseService
                 'is_cold' => $activity->is_cold,
                 'quote_status_id' => $activity->quote_status_id,
                 'quote_status' => $activity?->quoteStatus,
+                'user_id' => $activity?->user_id,
             ];
             array_push($activities, $updatedActivity);
         }
@@ -325,5 +329,134 @@ class BaseService
                 $quoteViewCount->increment('visit_count');
             }
         }
+    }
+
+    public function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes, bool $isBuyLead = false)
+    {
+        if ($advisorAllocationRecord === null || $lead === null) {
+            return;
+        }
+
+        // Determine if the lead was system-assigned or manually assigned
+        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
+
+        $advisorAllocationRecord->adjustAssignmentCounts($isBuyLead, $isSystemAssigned);
+    }
+
+    public function upsertManualAllocationCount($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId)
+    {
+        // Check if $lead or $newAdvisorId is not provided
+        if ($lead === null || $newAdvisorId === null) {
+            return;
+        }
+
+        info('Previous assignment type is : '.$previousAssignmentType);
+        //Constants for system assigned types
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+
+        // Get the allocation record for the new advisor
+        $newAdvisorAllocationRecord = app(LeadAllocationService::class)->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
+
+        // Update allocation counts for the new advisor only if its different from previous advisor
+
+        if ($newAdvisorId !== $previousAdvisorId) {
+            // Update allocation counts for the new advisor (if applicable)
+            $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
+        }
+
+        // Get the allocation record for the previous advisor (if applicable)
+        if ($previousAdvisorId !== null) {
+            $previousAdvisorAllocationRecord = app(LeadAllocationService::class)->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
+
+            // Update allocation counts for the previous advisor (if applicable)
+            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
+        }
+    }
+
+    public function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
+    {
+        // Check if there is a previous advisor and the lead assignment date is today
+        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay() && $previousAdvisorAllocationRecord !== null) {
+            // if someone's bought lead is re assigning then mark his buy_leas_status to disabled
+            if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD])) {
+                $previousAdvisorAllocationRecord->buy_lead_status = false;
+            }
+
+            // Determine if the previous assignment was system-assigned
+            $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
+
+            // Update allocation counts based on assignment type (if applicable)
+            if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
+                info('About to deduct from auto assignment count for previous advisor');
+                $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
+            } elseif (! $isSystemAssigned && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
+                info('About to deduct from manual assignment count for previous advisor');
+                $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
+            }
+
+            // Decrement the total allocation count (if it's greater than 0) and update timestamps
+            if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD])) {
+                if ($previousAdvisorAllocationRecord->buy_lead_allocation_count > 0) {
+                    $previousAdvisorAllocationRecord->buy_lead_allocation_count = $previousAdvisorAllocationRecord->buy_lead_allocation_count - 1;
+                    $previousAdvisorAllocationRecord->updated_at = now();
+                }
+            } elseif ($previousAdvisorAllocationRecord->allocation_count > 0) {
+                $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
+                $previousAdvisorAllocationRecord->updated_at = now();
+            }
+
+            // Save the updated allocation record
+            $previousAdvisorAllocationRecord->save();
+        }
+    }
+
+    public function upsertQuoteDetail($leadId, $quoteModel, $keyColumn)
+    {
+        return $quoteModel::updateOrCreate(
+            [$keyColumn => $leadId],
+            [
+                'advisor_assigned_date' => now(),
+                'advisor_assigned_by_id' => Auth::id(),
+            ]
+        );
+    }
+
+    public function updateDetailRecord($id, $detailModel, string $foreignKey)
+    {
+        $childRecord = $detailModel::where($foreignKey, $id)->first();
+        $oldAdvisorAssignedDate = $childRecord?->advisor_assigned_date ?? null;
+
+        $this->upsertQuoteDetail($id, $detailModel, $foreignKey);
+
+        return $oldAdvisorAssignedDate;
+    }
+
+    public function adjustAssignmentType($lead, $userId, $quoteBatch)
+    {
+        $oldAssignmentType = $lead->assignment_type;
+        $isReassignment = $lead->advisor_id != null ? true : false;
+        $previousAdvisorId = $lead->advisor_id;
+
+        $lead->advisor_id = $userId;
+        $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
+        $lead->quote_batch_id = $quoteBatch->id;
+        $lead->save();
+
+        return [$oldAssignmentType, $previousAdvisorId];
+    }
+
+    public function handleAssignment($lead, $userId, $quoteBatch, QuoteTypes $quoteType, $detailModel, $foreignKey)
+    {
+        [$oldAssignmentType, $previousAdvisorId] = $this->adjustAssignmentType($lead, $userId, $quoteBatch);
+
+        $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, $detailModel, $foreignKey);
+
+        info("Manual assignment done for lead : {$lead->uuid} and old advisor assigned date is : {$oldAdvisorAssignedDate}");
+
+        $this->upsertManualAllocationCount($lead->advisor_id, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType->id());
+
+        $this->addOrUpdateQuoteViewCount($lead, $quoteType->id(), $userId);
+
+        $lead->save();
     }
 }

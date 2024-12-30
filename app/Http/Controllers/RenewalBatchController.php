@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Http\Requests\RenewalBatchRequest;
 use App\Models\RenewalBatch;
 use App\Models\Slab;
@@ -27,10 +28,20 @@ class RenewalBatchController extends Controller
      */
     public function index(Request $request)
     {
-        $gridData = RenewalBatch::orderByDesc('id')->paginate(15);
+        $gridData = RenewalBatch::orderByDesc('id');
+
+        if ($request->filled('quote_type_id') && $request->quote_type_id == QuoteTypeId::Car) {
+            $gridData->where('quote_type_id', QuoteTypeId::Car);
+        } elseif ($request->filled('quote_type_id') && $request->quote_type_id != QuoteTypeId::Car) {
+            $gridData->where('quote_type_id', '<>', QuoteTypeId::Car)->orWhereNull('quote_type_id');
+        }
+
+        if ($request->filled('name')) {
+            $gridData->whereIn('name', $request->name);
+        }
 
         return inertia('Admin/RenewalBatches/Index', [
-            'batches' => $gridData,
+            'batches' => $gridData->paginate(15),
         ]);
 
     }
@@ -42,7 +53,7 @@ class RenewalBatchController extends Controller
      */
     public function create()
     {
-        $lastExistingBatch = RenewalBatch::orderByDesc('id')->first();
+        $lastExistingBatch = RenewalBatch::where('quote_type_id', QuoteTypeId::Car)->orderByDesc('id')->first();
         $params = $this->getProcessedBatchData($lastExistingBatch);
 
         $teams = $params['teams'];
@@ -73,21 +84,10 @@ class RenewalBatchController extends Controller
     {
 
         $attributes = $request->validated();
-
+        $attributes['quote_type_id'] = QuoteTypeId::Car;
         RenewalBatch::create($attributes);
 
         return redirect()->route('renewal-batches-list')->with('message', 'Renewal Batch Successfully created');
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
     }
 
     /**
@@ -140,17 +140,6 @@ class RenewalBatchController extends Controller
         $renewalBatch->update($attributes);
 
         return redirect()->route('renewal-batches-list')->with('message', 'Renewal Batch Successfully updated');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 
     /**

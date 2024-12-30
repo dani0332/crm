@@ -7,10 +7,13 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SICFollowupEmailJob;
+use App\Models\ApplicationStorage;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\BaseService;
+use App\Services\BirdService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -127,7 +130,7 @@ class TravelEmailService extends BaseService
         return $sortedFixtures->first()->text.' and much more...';
     }
 
-    private function buildCommonEmailData(TravelQuote $lead, $advisor, $previousAdvisor): object
+    private function buildCommonEmailData(TravelQuote $lead, $advisor, $previousAdvisor, $workflowType = null): object
     {
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
 
@@ -145,6 +148,8 @@ class TravelEmailService extends BaseService
             'advisorEmail' => (! empty($advisor?->email) ? $advisor?->email : ''),
             'advisorName' => (! empty($advisor?->name) ? $advisor?->name : ''),
             'travelQuoteId' => $lead->code,
+            'action' => $lead->insurer_api_email_action,
+            'imcrmLink' => QuoteTypes::TRAVEL->url($lead->uuid),
             'travelQuoteLink' => QuoteTypes::TRAVEL->quoteLink($lead->uuid, $isRevivalLead ? ['dla' => 'true'] : []), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => QuoteTypes::TRAVEL->quoteLink($lead->uuid, ['assignAdvisor' => 'true']),
             'assignmentType' => getAssignmentTypeText($lead->assignment_type),
@@ -153,6 +158,10 @@ class TravelEmailService extends BaseService
             'isReAssignment' => ! empty($previousAdvisor),
             'wfsBanner' => $emailCampaignBanner,
             'wfsBannerRedirectUrl' => $emailCampaignBannerRedirectUrl,
+            'workflowType' => $workflowType ?? null,
+            'quoteUUID' => $lead->uuid,
+            'refId' => $lead->code,
+            'refID' => $lead->code,
         ];
     }
 
@@ -215,14 +224,16 @@ class TravelEmailService extends BaseService
         return $emailData;
     }
 
-    private function triggerSICWorkflow(TravelQuote $lead, $emailData)
+    private function triggerSICWorkflow(TravelQuote $lead, $emailData, bool $forceSicWorkflow = false)
     {
-        if (! $lead->sic_flow_enabled) {
+        if (! $lead->sic_flow_enabled || $forceSicWorkflow) {
             $sicEventName = getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_ENABLE);
             if ($sicEventName) {
                 $apiResponse = SIBService::createWorkflowEvent($sicEventName, $lead, eventData: $emailData);
-                $lead->sic_flow_enabled = true;
-                $lead->save();
+                if (! $lead->sic_flow_enabled) {
+                    $lead->sic_flow_enabled = true;
+                    $lead->save();
+                }
                 info(self::class." - SIC workflow event triggered for lead: {$lead->uuid} and {$sicEventName}: {$lead->sic_flow_enabled}");
                 info(self::class." - SIC workflow response: {$apiResponse}");
             } else {
@@ -233,7 +244,7 @@ class TravelEmailService extends BaseService
         }
     }
 
-    public function sendTravelOCBIntroEmail(TravelQuote $lead, $previousAdvisorId, bool $triggerSICWorkFlow = false, bool $handleZeroPlans = false)
+    public function sendTravelOCBIntroEmail(TravelQuote $lead, $previousAdvisorId, bool $triggerSICWorkFlow = false, bool $handleZeroPlans = false, bool $forceSicWorkflow = false)
     {
         $plans = $this->getPlans($lead, $handleZeroPlans);
 
@@ -258,8 +269,8 @@ class TravelEmailService extends BaseService
         }
 
         // trigger SIC workflow
-        if ($triggerSICWorkFlow) {
-            $this->triggerSICWorkflow($lead, $emailData);
+        if ($triggerSICWorkFlow || $forceSicWorkflow) {
+            $this->triggerSICWorkflow($lead, $emailData, $forceSicWorkflow);
         }
 
         if ($lead->advisor_id) {
@@ -288,6 +299,24 @@ class TravelEmailService extends BaseService
 
     public function sendSICNotificationToAdvisor(TravelQuote $lead, User $user)
     {
-        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
+        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user, QuoteTypes::TRAVEL->value);
+    }
+
+    public function sendTravelAllianceFailedAllocationEmail($lead)
+    {
+        $advisor = User::where('id', $lead->advisor_id)->first();
+
+        $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION);
+        $travelEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL)->first();
+        if ($travelEvent) {
+            $response = app(BirdService::class)->triggerWebHookRequest($travelEvent->value, $emailData);
+            info("sendTravelAllianceFailedAllocationEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+
+            return $response->status_code;
+        } else {
+            info("sendTravelAllianceFailedAllocationEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+        }
+
+        return null;
     }
 }

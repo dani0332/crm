@@ -199,7 +199,7 @@ const onDeleteConfirmation = () => {
     preserveScroll: true,
     onSuccess: () => {
       modals.activityConfirm = false;
-      notification.error({
+      notification.success({
         title: 'Activity Deleted',
         position: 'top',
       });
@@ -470,6 +470,7 @@ onMounted(() => {
           </x-button>
 
           <x-button
+            v-if="item.user_id && item.user_id != null"
             size="xs"
             color="error"
             :disabled="item.status === 1"
@@ -510,8 +511,7 @@ onMounted(() => {
 
         <x-textarea
           v-model="activityForm.description"
-          label="Description*"
-          :rules="[rules.isRequired]"
+          label="Description"
           :adjust-to-text="false"
           class="w-full"
         />

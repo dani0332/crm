@@ -27,6 +27,11 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  isSentOrBooked: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 });
 
 const page = usePage();
@@ -361,7 +366,12 @@ const getS3TempUrl = async docURL => {
               View Legacy policy
             </x-button>
           </Link>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="orange"
+            class="focus:ring-2 focus:ring-black"
+          >
             Upload Documents
           </x-button>
         </div>
@@ -385,7 +395,7 @@ const getS3TempUrl = async docURL => {
             </a>
             <a
               v-else
-              :href="storageUrl + item.doc_url"
+              :href="storageUrl + (item.watermarked_doc_url ?? item.doc_url)"
               target="_blank"
               class="text-primary-600"
             >
@@ -397,11 +407,24 @@ const getS3TempUrl = async docURL => {
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
           >
             <div>
+              <x-tooltip placement="bottom" v-if="props.isSentOrBooked">
+                <x-button size="xs" color="error" outlined disabled>
+                  Delete
+                </x-button>
+                <template #tooltip>
+                  This request is now locked as the update has been booked. If
+                  changes are needed, go to 'Send Update', select 'Add Update',
+                  and choose 'Correction of Policy Upload'.
+                </template>
+              </x-tooltip>
+
               <x-button
+                v-else
                 size="xs"
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
+                class="focus:ring-2 focus:ring-black"
               >
                 Delete
               </x-button>
@@ -446,6 +469,11 @@ const getS3TempUrl = async docURL => {
           :value="index"
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
+          :key="index"
+          :disabled="
+            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
+            !quote.insurance_provider_id
+          "
         >
           <div
             v-for="documentType in docType"
@@ -499,7 +527,10 @@ const getS3TempUrl = async docURL => {
                     d => d.document_type_text == documentType.text,
                   )"
                   :key="quoteDocument.id"
-                  :href="storageUrl + quoteDocument.doc_url"
+                  :href="
+                    storageUrl +
+                    (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)
+                  "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
@@ -524,7 +555,10 @@ const getS3TempUrl = async docURL => {
                     d => d.document_type_code == documentType.code,
                   )"
                   :key="quoteDocument.id"
-                  :href="storageUrl + quoteDocument.doc_url"
+                  :href="
+                    storageUrl +
+                    (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)
+                  "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
@@ -540,6 +574,7 @@ const getS3TempUrl = async docURL => {
     <x-modal
       v-model="modals.docConfirm"
       title="Delete Document"
+      size="md"
       show-close
       backdrop
     >
@@ -576,6 +611,7 @@ const getS3TempUrl = async docURL => {
     <x-modal
       v-model="modals.sendConfirm"
       title="Send Update"
+      size="md"
       show-close
       backdrop
     >

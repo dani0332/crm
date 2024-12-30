@@ -44,6 +44,8 @@ class TransactionReportExport extends BaseReportsExport
             'Transaction Type',
             'Lead Status',
             'Lead Source',
+            'Booking Date',
+            'Sage Receipt ID',
         ];
     }
 
@@ -85,6 +87,8 @@ class TransactionReportExport extends BaseReportsExport
             $quote->transaction_type ?? 'N/A',
             $quote->quote_status ?? 'N/A',
             $quote->source ?? 'N/A',
+            $quote->policy_booking_date ?? 'N/A',
+            $quote->sage_reciept_id ?? 'N/A',
         ];
     }
 

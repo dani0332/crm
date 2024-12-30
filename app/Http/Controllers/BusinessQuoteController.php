@@ -44,6 +44,7 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -102,8 +103,9 @@ class BusinessQuoteController extends Controller
         $totalCount = 0;
         $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $authorizedDays = intval($paymentAuthorizedDays->value);
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays'));
+        return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays'));
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -218,6 +220,11 @@ class BusinessQuoteController extends Controller
         })->values();
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $quoteStatuses);
 
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            })->values();
+        }
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Business);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);

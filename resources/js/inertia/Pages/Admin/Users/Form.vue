@@ -5,15 +5,19 @@ const props = defineProps({
   teams: Array,
   subTeams: Array,
   departments: Array,
+  departmentIds: Array,
   user: Object,
   userRole: Object,
   selectedAdditionalTeams: Array,
   userProductIds: Array,
   userTeamIds: Array,
+  department_ids: Array,
   managers: Array,
   userManagerIds: Array,
   permissions: Array,
   userPermissions: Array,
+  businessTypes: Array,
+  userBusinessTypeIds: Array,
 });
 
 const page = usePage();
@@ -27,6 +31,7 @@ const departments = ref([]);
 const teams = ref([]);
 const managers = ref([]);
 const isError = ref(false);
+const showBusinessCategories = ref(false);
 
 const loader = reactive({
   table: false,
@@ -66,6 +71,8 @@ const userForm = useForm({
   calendar_link: props.user?.calendar_link ?? null,
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
   department_id: props.user?.department_id ?? null,
+  businessTypes: props?.userBusinessTypeIds ?? [],
+  department_ids: props.department_ids?.length > 0 ? props.department_ids : [],
 });
 
 const isAdvisor = computed(() => {
@@ -136,6 +143,21 @@ const loadTeamsByProduct = async e => {
     loader.teamLoader = false;
   }
 };
+const loadDepartmentsByTeam = async e => {
+  loader.departLoader = true;
+  try {
+    let response = await axios.post('/get-team-departments', {
+      teamIds: userForm.teams,
+    });
+    if (response.data.length > 0) {
+      departments.value = response.data;
+    }
+
+    loader.departLoader = false;
+  } catch (e) {
+    loader.departLoader = false;
+  }
+};
 
 const loadManagerByTeam = async () => {
   loader.managers = true;
@@ -203,10 +225,18 @@ function onSubmit(isValid) {
   }
 }
 
+const resolveBusinessCategoriesShowHide = selectedRoles => {
+  showBusinessCategories.value = selectedRoles.includes(
+    rolesEnum.CorpLineAdvisor,
+  );
+};
+
 const setInitialState = async () => {
   if (isEdit.value) {
+    resolveBusinessCategoriesShowHide(userForm.roles);
     await loadTeamsByProduct();
     await loadSubTeams();
+    await loadDepartmentsByTeam();
   }
 };
 
@@ -216,6 +246,7 @@ watch(
   () => userForm.teams,
   () => {
     loadSubTeams();
+    loadDepartmentsByTeam();
   },
   { deep: true },
 );
@@ -294,6 +325,19 @@ watch(
           :rules="[isRequired]"
           :hasError="validRole"
           autocomplete
+          @update:model-value="resolveBusinessCategoriesShowHide"
+        />
+      </x-field>
+      <x-field
+        label="Busineess Categories"
+        v-if="hasRole(rolesEnum.Admin) && showBusinessCategories"
+      >
+        <ComboBox
+          :multiple="true"
+          v-model="userForm.businessTypes"
+          :options="businessTypes"
+          class="w-full"
+          autocomplete
         />
       </x-field>
       <x-field label="PRODUCTS" required>
@@ -330,12 +374,21 @@ watch(
           :loading="loader.subTeamLoader"
         />
       </x-field>
-      <x-field label="Department">
+      <x-field label="DEPARTMENT">
         <ComboBox
           v-model="userForm.department_id"
           placeholder="Select Department"
           :options="computedDepartments"
           :single="true"
+        />
+      </x-field>
+      <x-field label="DEPARTMENTS VISIBILITY">
+        <ComboBox
+          v-model="userForm.department_ids"
+          :loading="loader.departLoader"
+          placeholder="Select Department"
+          :options="computedDepartments"
+          :multiple="true"
         />
       </x-field>
 

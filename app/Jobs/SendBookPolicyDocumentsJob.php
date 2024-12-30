@@ -2,9 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
 use App\Models\ApplicationStorage;
+use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\ActivitiesService;
@@ -79,7 +81,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         try {
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
             if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
-                $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
+                $coPaymentIds = null;
+                if ($modelType == quoteTypeCode::Health) {
+                    $coPaymentIds = HealthPlanCoPayment::where('health_plan_id', $quote->plan_id)->where('id', '!=', $quote->health_plan_co_payment_id)->pluck('id')->toArray();
+                }
+                $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote, $coPaymentIds);
             }
             // First Retrieve document types marked for sending to the customer, then fetch the corresponding uploaded documents
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
@@ -108,6 +114,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
+            $emailData->clientFirstName = $quote->first_name;
             $emailData->policy_number = $quote->policy_number;
             $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['policy_expiry_date']));
             $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));
@@ -121,6 +128,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->planName = $planName;
             $emailData->currentInsurer = '';
             $emailData->profilePicture = '';
+            $emailData->isChsAdvisor = false;
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
@@ -129,6 +137,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->advisorLandlineNo = $quote->advisor->landline_no;
                 $emailData->googleMeet = $quote->advisor->calendar_link;
                 $emailData->profilePicture = $quote->advisor->profile_photo_path;
+                if ($emailData->advisorEmail === PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL) {
+                    $emailData->isChsAdvisor = true;
+                }
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
                 if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {

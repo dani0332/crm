@@ -22,7 +22,7 @@ const isDirty = ref(false);
 
 const advisorOptions = ref(
   Object.keys(page.props.filterOptions.advisors).map(key => ({
-    value: key,
+    value: key.toString(),
     label: page.props.filterOptions.advisors[key],
   })),
 );
@@ -179,15 +179,21 @@ const cleanFilters = filters => {
         filters[key].length == 0) &&
       delete filters[key],
   );
+
   return filters;
 };
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+  for (const [key, value] of Object.entries(params)) {
+    const match = key.match(/(.+?)\[(\d+)\]/);
+    if (match) {
+      const baseKey = match[1];
+      if (!filters[baseKey]) {
+        filters[baseKey] = [];
+      }
+      filters[baseKey][match[2]] = value;
     } else {
-      filters[key] = params[key];
+      filters[key] = value;
     }
   }
 }
@@ -216,7 +222,7 @@ const onTeamChange = e => {
     .then(res => {
       if (res.data.advisors.length > 0) {
         advisorOptions.value = Object.keys(res.data.advisors).map(key => ({
-          value: res.data.advisors[key].id,
+          value: res.data.advisors[key].id.toString(),
           label: res.data.advisors[key].name,
         }));
       }
@@ -344,6 +350,7 @@ function calculateValuesAndHighlight() {
 
     let imRetention = 0.0;
     let rawRetention = 0.0;
+    let overallRawRetention = 0.0;
 
     if (
       item.total_allocated_leads_by_all_advisors != undefined ||
@@ -358,12 +365,6 @@ function calculateValuesAndHighlight() {
         // - parseInt(item.early_renewal_by_all_advisors) // tempory hidden don't remove
         100
       ).toFixed(2);
-
-      rawRetention = (
-        (item.renewed_by_all_advisors /
-          item.total_allocated_leads_by_all_advisors) *
-        100
-      ).toFixed(2);
     } else {
       imRetention = (
         (parseInt(item.renewed) /
@@ -371,12 +372,18 @@ function calculateValuesAndHighlight() {
         // - parseInt(item.early_renewal) // tempory hidden don't remove
         100
       ).toFixed(2);
-
-      rawRetention = (
-        (item.renewed / item.total_allocated_leads) *
-        100
-      ).toFixed(2);
     }
+    rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(
+      2,
+    );
+    overallRawRetention =
+      item.renewed_by_all_advisors && item.total_allocated_leads_by_all_advisors
+        ? (
+            (item.renewed_by_all_advisors /
+              item.total_allocated_leads_by_all_advisors) *
+            100
+          ).toFixed(2)
+        : rawRetention;
     imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
 
     let valueSegmentConversion = (
@@ -421,6 +428,8 @@ function calculateValuesAndHighlight() {
     item.imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
     item.monthlySum = monthlySum == 'NaN' ? '0.00' : monthlySum;
     item.rawRetention = rawRetention == 'NaN' ? '0.00' : rawRetention;
+    item.overallRawRetention =
+      overallRawRetention == 'NaN' ? '0.00' : overallRawRetention;
     item.rowSpan = currentRowSpan;
 
     item.highlight =
@@ -443,7 +452,9 @@ function calculateValuesAndHighlight() {
       imRetention == 'NaN' ? parseFloat('0.00') : parseFloat(imRetention),
     );
     avgRawRetentionArr[monthName].push(
-      rawRetention == 'NaN' ? parseFloat('0.00') : parseFloat(rawRetention),
+      overallRawRetention == 'NaN'
+        ? parseFloat('0.00')
+        : parseFloat(overallRawRetention),
     );
 
     if (!page.props.filterOptions.isMCR) {
@@ -550,12 +561,8 @@ onMounted(() => {
 
   setQueryStringFilters();
 
-  if (params['teams[]'] && params['teams[]'].length > 0) {
-    onTeamChange(params['teams[]']);
-  }
-
-  if (params['batchNo[]'] && typeof filters.batchNo === 'string') {
-    filters.batchNo = [params['batchNo[]']];
+  if (filters.teams && filters.teams.length > 0) {
+    onTeamChange(filters.teams);
   }
 
   calculateValuesAndHighlight();
@@ -798,6 +805,12 @@ watch(
                 </th>
                 <th
                   class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
+                  v-if="hasRole(rolesEnum.CarAdvisor) != true"
+                >
+                  Raw Retention
+                </th>
+                <th
+                  class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
                 >
                   Monthly Retention
                 </th>
@@ -863,6 +876,12 @@ watch(
                   {{ item.advisorRetention }}%
                 </td>
                 <td
+                  class="x-table-cell px-3 py-4 align-middle"
+                  v-if="hasRole(rolesEnum.CarAdvisor) != true"
+                >
+                  {{ item.rawRetention }}%
+                </td>
+                <td
                   v-if="item.rowSpan > 0"
                   class="x-table-cell px-3 py-4 align-middle text-center"
                   :rowspan="item.rowSpan"
@@ -917,7 +936,7 @@ watch(
                   class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
                   v-if="hasRole(rolesEnum.CarAdvisor) != true"
                 >
-                  Raw Retention
+                  Overall Raw Retention
                 </th>
               </tr>
             </thead>
@@ -983,7 +1002,7 @@ watch(
                   v-if="hasRole(rolesEnum.CarAdvisor) != true"
                   class="x-table-cell px-3 py-4 align-middle text-center"
                 >
-                  <p>{{ item.rawRetention }}%</p>
+                  <p>{{ item.overallRawRetention }}%</p>
                 </td>
               </tr>
             </tbody>

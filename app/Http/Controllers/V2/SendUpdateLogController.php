@@ -31,6 +31,7 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -113,6 +114,8 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        $isSentOrBooked = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            SendUpdateLogStatusEnum::UPDATE_BOOKED]) || in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED]);
 
         // we don't need to push this on production, need to remove this before production.
         if (! SendUpdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
@@ -142,7 +145,7 @@ class SendUpdateLogController extends Controller
 
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code ?? null;
-        $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode);
+        $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -151,6 +154,10 @@ class SendUpdateLogController extends Controller
             $quoteServiceFile = app(getServiceObject($quoteType));
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
+
+        $isCommVatNotAppEnabled = $this->sendUpdateLogService->commissionVatNotApplicableEnabled($quoteType, $realQuote?->business_type_of_insurance_id ?? null);
+
+        $parentText = $sendUpdateLog?->option?->code == SendUpdateLogStatusEnum::ATICB ? $realQuote?->transaction_type_text : $sendUpdateLog->category->parent->text;
 
         // the business_type_of_insurance_id is only on business quotes.
         $sendUpdateOptions = SendUpdateLogRepository::sendUpdateOptions($quoteTypeId, $sendUpdateLog->category_id, $sendUpdateLog->category->code, $realQuote->business_type_of_insurance_id ?? null);
@@ -166,8 +173,9 @@ class SendUpdateLogController extends Controller
                 $paymentInvoices = array_merge($paymentInvoices->toArray(), $sendUpdateLogInvoices->toArray());
             }
         }
-        $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments, true);
 
+        $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType);
+        $bookingDetails['broker_invoice_number'] = $sendUpdateLog->broker_invoice_number ?? null;
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
         // payment related work.
         $this->quoteDocumentService = app(QuoteDocumentService::class);
@@ -186,11 +194,12 @@ class SendUpdateLogController extends Controller
 
         $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog, $quoteType);
 
-        if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
-            $paymentEntityModel->load(['plan']);
-
+        if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health]) && ! $realQuote?->insly_id) {
+            $paymentEntityModel->load(['plan', 'plan.insuranceProvider']);
+            $insuranceProviderId = $paymentEntityModel?->plan?->insuranceProvider?->id;
         } else {
             checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
+            $insuranceProviderId = $realQuote?->insurance_provider_id ?? $realQuote?->insuranceProvider?->id ?? null;
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
@@ -203,7 +212,7 @@ class SendUpdateLogController extends Controller
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
-            'parentText' => $sendUpdateLog->category->parent->text,
+            'parentText' => $parentText,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
@@ -233,6 +242,9 @@ class SendUpdateLogController extends Controller
             'vatValue' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0,
             'isPaidEditable' => $this->isSplitPaymentFullyPaid($sendUpdatePayments->first()),
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
+            'insuranceProviderId' => $insuranceProviderId ?? null,
+            'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
+            'isSentOrBooked' => $isSentOrBooked,
         ]);
     }
 
@@ -415,7 +427,7 @@ class SendUpdateLogController extends Controller
         info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
         app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
 
-        app(SageApiService::class)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
+        (new SageApiService)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
         info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
 
         return response()->json(['message' => $endorsementResponse['message']], 200);

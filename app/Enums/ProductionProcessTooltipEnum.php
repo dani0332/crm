@@ -38,9 +38,12 @@ final class ProductionProcessTooltipEnum extends Enum
     const TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID = 'The invoice has received a portion of its total amount due. Please ensure that the remaining balance is collected promptly to prevent potential financial discrepancies.';
     const TRANSACTION_PAYMENT_STATUS_PAID = 'This insurer tax invoice has been settled in its entirety, with no outstanding amounts. Always review payments to guarantee the accuracy of this status.';
     const POLICY_DETAILS_LOCKED_TOOL_TIP = "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'";
+    const NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP = 'For non-self billing insurers, broker invoice number will automatically be used as insurer commission tax invoice number';
 
     // Manage payment section
     const PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED = 'This payment is currently standalone and hasn\'t been associated with any insurer tax invoices. It\'s essential to review and link it to its relevant invoice(s) for accurate accounting.';
     const PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED = 'This payment is connected to one or more insurer tax invoices, but there\'s a balance remaining. The unallocated portion should be connected to relevant invoices or accounted for.';
     const PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED = 'This payment is thoroughly associated with insurer tax invoices, ensuring that there are no outstanding amounts or pending links.';
+    const COMMISSION_VAT_APPLICABLE_FILLED = 'This option is disabled because Commission (VAT applicable) has already been entered';
+    const COMMISSION_VAT_NOT_APPLICABLE_FILLED = 'This option is disabled because Commission (VAT not applicable) has already been entered.';
 }

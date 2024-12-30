@@ -354,6 +354,7 @@ onUnmounted(() => (isActive.value = false));
       :yAxisTitle="'Lead Assign Count Summary Per Advisor'"
       :seriesName="'Leads Assigned'"
       :data="columnChartData"
+      :dataLabelsFormat="'{point.y:.2f}'"
     />
     <div class="mt-auto">
       <span class="text-xs">

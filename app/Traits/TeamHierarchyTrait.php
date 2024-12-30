@@ -3,8 +3,11 @@
 namespace App\Traits;
 
 use App\Enums\TeamTypeEnum;
+use App\Models\Department;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\UserProducts;
+use App\Models\UserTeams;
 use Illuminate\Support\Facades\DB;
 
 trait TeamHierarchyTrait
@@ -108,7 +111,12 @@ trait TeamHierarchyTrait
         $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $productName)->where('is_active', 1)->first();
         $productTeams = Team::where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $product->id)->where('is_active', 1)->get();
 
-        return User::whereIn('id', DB::table('user_team')->whereIn('team_id', $productTeams->pluck('id'))->pluck('user_id'))->where('is_active', 1)->get();
+        $teamUserIds = UserTeams::whereIn('team_id', $productTeams->pluck('id'))->pluck('user_id')->toArray();
+        $productUserIds = UserProducts::select('user_id')->where('product_id', $product->id)->whereNotIn('user_id', $teamUserIds)->pluck('user_id')->toArray();
+
+        return array_values(array_unique(
+            array_merge($teamUserIds, $productUserIds)
+        ));
     }
 
     public function getUserManagers($userId)
@@ -183,7 +191,7 @@ trait TeamHierarchyTrait
             ->select('users.id', 'users.name', 'ut.team_id as u_team_id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->where('users.is_active', 1)
+            ->activeUser()
             ->where('r.name', $role)
             ->get();
     }
@@ -193,5 +201,47 @@ trait TeamHierarchyTrait
         $user = User::with('products')->where('id', $userId)->first();
 
         return $user && $user->products->contains('product_id', $productId);
+    }
+
+    public function getDepartmentsByTeamIds($ids)
+    {
+        return Department::whereHas('teams', function ($query) use ($ids) {
+            $query->whereIn('team_id', $ids);
+        })->get();
+    }
+
+    public function getUserDepartments($userId)
+    {
+        return DB::table('user_departments')->where('user_id', $userId)->get();
+    }
+
+    public function usersByTeamProduct()
+    {
+        $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->first();
+        if (! $product) {
+            return [];
+        }
+
+        $productTeams = Team::where('type', TeamTypeEnum::TEAM)
+            ->where('parent_team_id', $product->id)
+            ->where('is_active', 1)
+            ->pluck('id')
+            ->toArray();
+
+        $teamUserIds = UserTeams::whereIn('team_id', $productTeams)
+            ->pluck('user_id')
+            ->toArray();
+
+        $productUserIds = UserProducts::where('product_id', $product->id)
+            ->whereNotIn('user_id', $teamUserIds)
+            ->pluck('user_id')
+            ->toArray();
+
+        return array_unique(array_merge($teamUserIds, $productUserIds));
+    }
+
+    public function getAdvisorsByManagers(): array
+    {
+        return DB::table('user_manager')->where('manager_id', auth()->id())->pluck('user_id')->toArray() ?? [];
     }
 }

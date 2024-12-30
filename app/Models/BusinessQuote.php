@@ -53,6 +53,12 @@ class BusinessQuote extends Model implements AuditableContract
             }
         });
     }
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
 
     public function getCreatedAtAttribute($table)
     {
@@ -156,4 +162,8 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->morphMany(SageApiLog::class, 'section');
     }
 
+    public function quoteDetail()
+    {
+        return $this->hasOne(BusinessQuoteRequestDetail::class);
+    }
 }

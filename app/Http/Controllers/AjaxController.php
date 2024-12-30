@@ -24,18 +24,19 @@ use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\QuoteMemberDetail;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Repositories\LookupRepository;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\QuoteDocumentService;
-use App\Traits\GenericQueriesAllLobs;
+use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use PDF;
 
 class AjaxController extends Controller
 {
-    use GenericQueriesAllLobs;
+    use CentralTrait;
 
     protected $quoteDocumentService;
 
@@ -222,7 +223,7 @@ class AjaxController extends Controller
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
+            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false);
 
             if ($document) {
                 CustomerDetail::updateOrCreate(
@@ -260,7 +261,7 @@ class AjaxController extends Controller
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];
-                $quote->dob = date('Y-m-d', strtotime($data['dob']));
+                $quote->dob = $data['dob'];
                 $quote->nationality_id = $data['nationality_id'];
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
@@ -334,7 +335,8 @@ class AjaxController extends Controller
             $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
+
+            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false);
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
             if ($document) {
                 Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
@@ -420,5 +422,19 @@ class AjaxController extends Controller
             ->get();
 
         return response()->json($bikeModelDetail);
+    }
+
+    public function getBatchNamesByQuoteTypeId(Request $request)
+    {
+        $renewalBatch = RenewalBatch::orderBy('name')->select(['name as text']);
+        if (isset($request->quote_type_id) && $request->quote_type_id == QuoteTypeId::Car) {
+            /** Motor Selected */
+            $renewalBatch->where('quote_type_id', QuoteTypeId::Car);
+        } elseif (isset($request->quote_type_id) && $request->quote_type_id != QuoteTypeId::Car) {
+            /** Non-Motor Selected */
+            $renewalBatch->where('quote_type_id', '<>', QuoteTypeId::Car)->orWhereNull('quote_type_id');
+        }
+
+        return response()->json($renewalBatch->groupBy('name')->get()); // laravel automatically converts to JSON
     }
 }

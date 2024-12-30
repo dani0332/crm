@@ -16,6 +16,7 @@ use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\BikeQuote;
+use App\Models\BrokerInvoiceNumber;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteType;
 use App\Models\CarAddOn;
@@ -41,6 +42,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogService
@@ -379,6 +381,7 @@ class SendUpdateLogService
                 'quote_status_id' => QuoteStatusEnum::NewLead,
                 'parent_duplicate_quote_id' => $quoteObject->code,
                 'quote_link' => implode('/', $explodeQuoteLink),
+                'renewal_batch' => $quoteObject->renewal_batch ?? null,
             ])->save();
 
             foreach ($getRelations as $relation => $relationObject) {
@@ -444,6 +447,9 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::ATCRNB,
+                SendUpdateLogStatusEnum::ATCRNB_RBB,
+                SendUpdateLogStatusEnum::ATCRN_CRNRBB,
             ])) {
                 return true;
             }
@@ -452,29 +458,46 @@ class SendUpdateLogService
         return false;
     }
 
-    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $payments, $isBrokerInvoiceShowOnly = false)
+    public function getEndorsementProviderDetails($sendUpdateLog): array
     {
-        if (! $sendUpdateLog->insurance_provider_id) {
-            if ($quote->insly_id || $quote->insly_migrated) {
-                $insuranceProviderId = empty($sendUpdateLog->insurance_provider_id) ? null : $sendUpdateLog->insurance_provider_id;
-            } else {
-                @[$insuranceProviderId, $planId] = $this->getProviderDetails($quote, QuoteTypes::getIdFromValue($quoteType), false);
-            }
-        } else {
+        $planId = null;
+        $quoteType = QuoteTypes::getName($sendUpdateLog->quote_type_id)->value;
+        $getQuoteDetails = $this->getQuoteObjectBy($quoteType, $sendUpdateLog->quote_uuid, 'uuid');
+        $payments = $this->getPayments($getQuoteDetails->id, $getQuoteDetails->uuid, QuoteTypes::getName($sendUpdateLog->quote_type_id)->value);
+
+        if ($sendUpdateLog?->category->code == SendUpdateLogStatusEnum::CPD || $payments->isEmpty()) {
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
+        } else {
+            if ($getQuoteDetails->insly_id || $getQuoteDetails->insly_migrated) {
+                if (empty($sendUpdateLog->insurance_provider_id)) {
+                    if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
+                        $getQuoteDetails->load('plan.insuranceProvider');
+                        $insuranceProviderId = $getQuoteDetails?->plan?->insuranceProvider?->id;
+                    } else {
+                        $insuranceProviderId = $getQuoteDetails?->insurance_provider_id;
+                    }
+                } else {
+                    $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
+                }
+            } elseif (! $payments->isEmpty()) {
+                $insuranceProviderId = $payments[0]->insurance_provider_id ?? null;
+                $planId = $payments[0]->plan_id ?? null;
+            } else {
+                @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id);
+            }
         }
 
+        return [$insuranceProviderId, $planId];
+    }
+
+    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType): array
+    {
+        [$insuranceProviderId, $planId] = $this->getEndorsementProviderDetails($sendUpdateLog);
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
-
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
+        $isNonSelfBillingEnabled = false;
         if ($insuranceProvider) {
-            $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider, $isBrokerInvoiceShowOnly);
-            if (! $brokerInvoiceNumber) {
-                info('fn: generateBrokerInvoiceNumber failed - BrokerInvoiceNumber not generated for Send Update uuid -> '.$sendUpdateLog->uuid);
-
-                return false;
-            }
-            info('fn: generateBrokerInvoiceNumber - BrokerInvoiceNumber: '.$brokerInvoiceNumber);
+            $isNonSelfBillingEnabled = $insuranceProvider?->non_self_billing;
         }
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
@@ -485,7 +508,7 @@ class SendUpdateLogService
             }
 
             if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
-                $invoiceDescription = 'E.'.$invoiceDescription;
+                $invoiceDescription = ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::ATICB) ? 'A.'.$invoiceDescription : 'E.'.$invoiceDescription;
             } elseif (in_array($sendUpdateLogCategory, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
                 $invoiceDescription = 'CI.'.$invoiceDescription;
             } elseif ($sendUpdateLogCategory == SendUpdateLogStatusEnum::CPD) {
@@ -498,9 +521,9 @@ class SendUpdateLogService
 
         $response = [
             'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format(config('constants.DATE_DISPLAY_FORMAT')) : null,
-            'broker_invoice_number' => $brokerInvoiceNumber ?? '',
             'invoice_description' => $invoiceDescription ?? '',
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
+            'is_non_self_billing_enabled' => $isNonSelfBillingEnabled,
         ];
 
         $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
@@ -550,11 +573,11 @@ class SendUpdateLogService
         $category = $sendUpdateLog->category->code;
         $option = $sendUpdateLog?->option?->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
+
         $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
-        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
-
+        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATICB])) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
@@ -570,7 +593,7 @@ class SendUpdateLogService
 
         if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::EF]) &&
             (($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled)) &&
-            ! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])
+            ! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATCRNB, SendUpdateLogStatusEnum::ATCRNB_RBB, SendUpdateLogStatusEnum::ATCRN_CRNRBB])
         ) {
             return SendUpdateLogStatusEnum::SNBU;
         }
@@ -579,6 +602,24 @@ class SendUpdateLogService
             ($isPolicyCertOrScheduleUploaded && ! $sendUpdateLog->is_booking_filled)
         ) {
             return SendUpdateLogStatusEnum::SUC;
+        }
+
+        if (in_array($option, [
+            SendUpdateLogStatusEnum::ATCRNB,
+            SendUpdateLogStatusEnum::ATCRNB_RBB,
+            SendUpdateLogStatusEnum::ATCRN_CRNRBB,
+        ]) && $sendUpdateLog->is_booking_filled) {
+            if ($option == SendUpdateLogStatusEnum::ATCRN_CRNRBB && $requiredDocumentsCheck == 0) {
+                return SendUpdateLogStatusEnum::SU;
+            }
+
+            if ($option == SendUpdateLogStatusEnum::ATCRNB && in_array(DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, $uploadedDocuments)) {
+                return SendUpdateLogStatusEnum::SU;
+            }
+
+            if ($option == SendUpdateLogStatusEnum::ATCRNB_RBB && in_array(DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER, $uploadedDocuments)) {
+                return SendUpdateLogStatusEnum::SU;
+            }
         }
 
         return '';
@@ -616,6 +657,9 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
+            SendUpdateLogStatusEnum::ATCRNB,
+            SendUpdateLogStatusEnum::ATCRNB_RBB,
+            SendUpdateLogStatusEnum::ATCRN_CRNRBB,
         ];
 
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
@@ -646,7 +690,7 @@ class SendUpdateLogService
             if ($insurerDetails !== null) {
                 $sendUpdatePaymentDetails = [
                     'invoice_description' => $insurerDetails['invoice_description'],
-                    'broker_invoice_number' => $insurerDetails['broker_invoice_number'],
+                    'broker_invoice_number' => $insurerDetails['broker_invoice_number'] ?? $sendUpdateLog->broker_invoice_number ?? null,
                 ];
             } else {
                 $sendUpdatePaymentDetails = [
@@ -695,7 +739,7 @@ class SendUpdateLogService
     {
         $paymentBeforeUpdate = Payment::where('send_update_log_id', $sendUpdateRequest->sendUpdateId)->first();
 
-        if (empty($sendUpdateLog->broker_invoice_number) && empty($sendUpdateLog->invoice_description)) {
+        if (empty($sendUpdateLog->invoice_description)) {
             $this->updateInsurerDetails($sendUpdateRequest, $sendUpdateLog);
         }
 
@@ -733,7 +777,7 @@ class SendUpdateLogService
                 'invoice_description' => $sendUpdateLog->invoice_description,
                 'insurer_invoice_date' => $sendUpdateLog->invoice_date,
                 'commission_vat' => abs($sendUpdateLog->vat_on_commission),
-                'total_price' => abs($sendUpdateLog->price_without_vat), // Need to verify this field
+                'total_price' => abs($sendUpdateLog->price_with_vat), // Reminder: AP CREDIT NOTE issue fix, Change price_with_vat instead of price_without_vat
                 'total_amount' => abs($sendUpdateLog->price_vat_applicable),
                 'commission' => abs($sendUpdateLog->total_commission),
                 'commission_vat_applicable' => abs($sendUpdateLog->commission_vat_applicable),
@@ -744,7 +788,7 @@ class SendUpdateLogService
                 'policy_expiry_date' => $sendUpdateLog->expiry_date,
                 'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
                 'frequency' => PaymentFrequency::UPFRONT,
-                'insurance_provider_id' => ($checkInslyMigratedLead) ? $sendUpdateLog->insurance_provider_id : $payment->insurance_provider_id,
+                'insurance_provider_id' => ($checkInslyMigratedLead) ? $quote->insurance_provider_id : $payment->insurance_provider_id,
             ]);
 
             $splitPayments->first()->fill([
@@ -812,11 +856,11 @@ class SendUpdateLogService
             'policy_expiry_date' => $sendUpdateLog->expiry_date,
             'policy_number' => $sendUpdateLog->policy_number,
             'transaction_type_id' => $quoteDetails->transaction_type_id,
-            'advisor_id' => $sendUpdateLog->advisor_id,
+            'advisor_id' => $quoteDetails?->advisor_id ?? null,
             'price_vat_applicable' => abs($preparedDetailsForEndorsement['payment']->total_price),
             'price_with_vat' => abs($sendUpdateLog->price_with_vat),
             'insly_migrated' => $quoteDetails->insly_migrated,
-            'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+            'insurance_provider_id' => $preparedDetailsForEndorsement['payment']->insurance_provider_id, // TODO:: Need to verify this field
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
         ];
 
@@ -970,7 +1014,7 @@ class SendUpdateLogService
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
                         'policy_expiry_date' => $sendUpdateLog->expiry_date,
-                        //                        'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
+                        // 'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
                     ]);
                 }
                 // Cases for Correct Policy Details End
@@ -996,7 +1040,7 @@ class SendUpdateLogService
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            logger()->error('Book Update - Error while moving updates to main lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
+            info('Book Update - Error while moving updates to main lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
             return ['status' => false, 'message' => 'Update not booked'];
         }
@@ -1086,6 +1130,7 @@ class SendUpdateLogService
         }
 
         $emailData = (object) [
+            'clientFirstName' => $quote->first_name,
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
             'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
             'carQuoteId' => $sendUpdateLog->code,
@@ -1157,6 +1202,9 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::ACB,
                 SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
+                SendUpdateLogStatusEnum::ATCRNB,
+                SendUpdateLogStatusEnum::ATCRNB_RBB,
+                SendUpdateLogStatusEnum::ATCRN_CRNRBB,
             ])) {
             return false;
         }
@@ -1164,7 +1212,7 @@ class SendUpdateLogService
         return true;
     }
 
-    public function getSendUpdateDocuments($category): array
+    public function getSendUpdateDocuments($category, $option): array
     {
         $documentTypesByCategory = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
 
@@ -1176,7 +1224,27 @@ class SendUpdateLogService
                         DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
                     ])
                 ) {
-                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
+                    $isRequired = true;
+                    if ($option == SendUpdateLogStatusEnum::ATCRNB && $documentType['code'] == DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER) {
+                        $isRequired = false;
+                    }
+                    if ($option == SendUpdateLogStatusEnum::ATCRNB_RBB && $documentType['code'] == DocumentTypeCode::SEND_UPDATE_TAX_INVOICE) {
+                        $isRequired = false;
+                    }
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) $isRequired;
+                } elseif (
+                    in_array($option, [
+                        SendUpdateLogStatusEnum::ATICB,
+                        SendUpdateLogStatusEnum::ATCRNB,
+                        SendUpdateLogStatusEnum::ATCRNB_RBB,
+                        SendUpdateLogStatusEnum::ATCRN_CRNRBB,
+                    ]) &&
+                    in_array($documentType['code'], [
+                        DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
+                        DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                    ])
+                ) {
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) false;
                 }
             }
         }
@@ -1186,12 +1254,12 @@ class SendUpdateLogService
 
     public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
     {
-        $this->updatePriceAndDiscount($sendUpdateLog, $payment);
+        app(CentralService::class)->synchronizePaymentInformation($sendUpdateLog, $payment);
     }
 
     public function updatePaymentTotalPrice($payment, $totalPrice): void
     {
-        info('Payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
+        info('Master payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
         $payment->total_price = $totalPrice;
     }
 
@@ -1216,61 +1284,120 @@ class SendUpdateLogService
         return $array;
     }
 
-    private function generateUniqueBrokerInvoiceNumber($insuranceProvider, $sendUpdateLog, $isBrokerInvoiceShowOnly = false)
+    public function generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProviderId = null, $updateReversalBIN = false): array
     {
-        $lastBrokerInvoiceNumber = SendUpdateLog::where('insurance_provider_id', $insuranceProvider->id)
-            ->whereNotNull('broker_invoice_number')
-            ->latest('id')
-            ->value('broker_invoice_number');
+        info('fn:generateBrokerInvoiceNumberForSU - SendUpdateLog - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        $response = ['status' => false, 'message' => ''];
+        $generateBrokerInvoice = true;
 
-        if ($lastBrokerInvoiceNumber) {
-            $value = (int) explode('.', $lastBrokerInvoiceNumber)[1];
-        } else {
-            $value = Payment::where('insurance_provider_id', $insuranceProvider->id)->count();
-        }
-        $brokerInvoiceNumber = $insuranceProvider->code.'.'.(++$value);
-
-        if ($isBrokerInvoiceShowOnly) {
-            return $brokerInvoiceNumber;
+        if (! empty($sendUpdateLog->broker_invoice_number) && ! $updateReversalBIN) {
+            info('SendUpdateLog - Broker Invoice Number already exists - BIN: '.$sendUpdateLog->broker_invoice_number.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            $generateBrokerInvoice = false;
+            $response['status'] = true;
         }
 
+        if ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD && ! empty($sendUpdateLog->reversal_broker_invoice_number)) {
+            info('SendUpdateLog - Reversal Broker Invoice Number already exists - BIN: '.$sendUpdateLog->notes.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            $generateBrokerInvoice = false;
+            $response['status'] = true;
+        }
+
+        if (! $insuranceProviderId) {
+            [$insuranceProviderId, $planId] = $this->getEndorsementProviderDetails($sendUpdateLog);
+        }
+
+        $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
+        if (! $insuranceProviderId) {
+            $generateBrokerInvoice = false;
+            $response['message'] = 'Insurance Provider not found for Send Update Log: '.$sendUpdateLog->uuid;
+            $response['status'] = true;
+        } elseif (! isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
+            info('InsuranceProvider - Non Self Billing Not Enabled - InsuranceProviderID: '.$insuranceProvider?->id.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            $response['message'] = 'Non Self Billing Not Enabled for Insurance Provider: '.$insuranceProvider->text;
+            $response['status'] = true;
+            // return $response;
+        }
+
+        $maxAttempts = 25;
         $attempts = 0;
+        $reversalLog = $updateReversalBIN ? 'Reversal ' : '';
 
-        while (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)
-            ->whereNot('uuid', $sendUpdateLog->uuid)
-            ->exists() && $attempts < 25) {
-            $brokerInvoiceNumber = $insuranceProvider->code.'.'.(++$value);
-            $attempts++;
-        }
+        try {
+            if ($generateBrokerInvoice) {
+                $currentDate = Carbon::now();
+                DB::transaction(function () use ($insuranceProvider, $updateReversalBIN, $currentDate, $reversalLog, $sendUpdateLog, &$response) {
+                    $invoiceBrokerSequence = BrokerInvoiceNumber::where([
+                        'insurance_provider_id' => $insuranceProvider->id,
+                        'date' => $currentDate->format('Y-m'),
+                    ])->lockForUpdate()->first();
 
-        if ($attempts >= 25) {
-            info('Send Update Log Broker Invoice Number generation failed, SendUpdateUuid -> '.$sendUpdateLog->uuid);
+                    if (! $invoiceBrokerSequence) {
+                        $invoiceBrokerSequence = BrokerInvoiceNumber::create([
+                            'insurance_provider_id' => $insuranceProvider->id,
+                            'date' => $currentDate->format('Y-m'),
+                            'sequence_number' => 1,
+                        ]);
+                    }
 
-            return false;
-        }
+                    info('InsuranceProvider - Non Self Billing Enabled - InsuranceProviderID: '.$insuranceProvider->id.' - SequenceNumber: '.$invoiceBrokerSequence->sequence_number.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    $brokerInvoiceNumber = 'AFIA/'.$insuranceProvider?->code.'/'.$currentDate->format('Y').'/'.$currentDate->format('m').'/'.$invoiceBrokerSequence->sequence_number;
+                    info('InsuranceProvider - '.$reversalLog.'Broker Invoice Number Generated - BIN: '.$brokerInvoiceNumber.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
-        return $brokerInvoiceNumber;
-    }
+                    $fieldForUpdate = $updateReversalBIN ? 'reversal_broker_invoice_number' : 'broker_invoice_number';
 
-    public function generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider, $isBrokerInvoiceShowOnly = false): string
-    {
-        if (empty($sendUpdateLog->broker_invoice_number)) {
-            $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider, $sendUpdateLog, $isBrokerInvoiceShowOnly);
-            if (! $brokerInvoiceNumber) {
-                info('fn: generateUniqueBrokerInvoiceNumber failed - BrokerInvoiceNumber not generated for Send Update uuid -> '.$sendUpdateLog->uuid);
+                    SendUpdateLog::withoutEvents(function () use ($sendUpdateLog, $fieldForUpdate, $brokerInvoiceNumber) {
+                        $sendUpdateLog->update([
+                            $fieldForUpdate => $brokerInvoiceNumber,
+                        ]);
+                    });
 
-                return false;
+                    $invoiceBrokerSequence->increment('sequence_number');
+                    info('InsuranceProvider - '.$reversalLog.'Broker Invoice Number Updated - BIN: '.$brokerInvoiceNumber.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+                    $response['status'] = true;
+                    $response['message'] = $reversalLog.'Broker Invoice Number Generated Successfully';
+                });
+
+                if ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD && ! $updateReversalBIN) {
+                    info('InsuranceProvider - Generating Reversal Broker Invoice Number - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    // Reminder:: commit this transaction because need to get incremented sequence number for reversal BIN with same insurer
+                    DB::afterCommit(function () use ($sendUpdateLog, $insuranceProvider) {
+                        $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProvider->id, true);
+                    });
+                }
             }
-        } else {
-            $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
-        }
 
-        return $brokerInvoiceNumber;
+            return $response;
+
+        } catch (Exception $exception) {
+            $attempts++;
+            $dbErrorCodes = [1213, 40001];
+            //            Error 1213: Deadlock found when trying to get lock; try restarting transaction
+            //            Error 40001: Serialization failure: Deadlock found when trying to get lock; try restarting transaction
+
+            if (in_array($exception->getCode(), $dbErrorCodes)) {
+                if ($attempts < $maxAttempts) {
+                    $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProviderId);
+                } else {
+                    info('InsuranceProvider - '.$reversalLog.'Broker Invoice Number Generation Failed - Max Attempts Reached - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+                    return ['status' => false, 'message' => $reversalLog.'Broker Invoice Number Generation Failed - Max Attempts Reached'];
+                }
+            } else {
+                info('InsuranceProvider - '.$reversalLog.'Broker Invoice Number Generation Failed - Exception: '.$exception->getMessage().' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+                return ['status' => false, 'message' => $reversalLog.'Broker Invoice Number Generation Failed'];
+            }
+        }
     }
 
-    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false, $isCommercial = false): array
+    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
     {
         $insuranceProviderId = $plan_id = null;
+        $isCommercial = false;
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $isCommercial = app(LeadAllocationService::class)->isCommercialVehicles($quote);
+        }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
             return [$insuranceProviderId, $plan_id];
@@ -1282,7 +1409,9 @@ class SendUpdateLogService
             $payment = $quoteModel->payments()->mainLeadPayment()->first();
 
             $planRelationName = strtolower($quoteType).'Plan';
-            $payment->load($planRelationName);
+            if ($payment) {
+                $payment->load($planRelationName);
+            }
             $insuranceProvider = $payment->{$planRelationName}?->insuranceProvider;
             $insuranceProviderId = $insuranceProvider->id ?? null;
             $plan_id = $quoteModel->plan?->id ?? null;
@@ -1298,15 +1427,14 @@ class SendUpdateLogService
         $quote = app(getServiceObject($request->quoteType))->getEntityPlain($request->quoteRefId);
 
         if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD ||
-            ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option?->code == SendUpdateLogStatusEnum::PPE) ||
-            $request->inslyMigrated) {
+            ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option?->code == SendUpdateLogStatusEnum::PPE)) {
             $insuranceProviderId = $sendUpdate->insurance_provider_id;
             $planId = $sendUpdate->plan_id ?? null;
         } else {
             @[$insuranceProviderId, $planId] = $this->getProviderDetails($quote, QuoteTypes::getIdFromValue($request->quoteType));
         }
 
-        $bookingDetails = $this->getInvoiceDescription($sendUpdate, $quote, $request->quoteType, $quote->payments()->mainLeadPayment()->first());
+        $bookingDetails = $this->getInvoiceDescription($sendUpdate, $quote, $request->quoteType);
 
         $bookingDetails = array_merge($bookingDetails, [
             'insurance_provider_id' => $insuranceProviderId,
@@ -1352,4 +1480,32 @@ class SendUpdateLogService
 
         return false;
     }
+
+    /**
+     * This method is used to check if the COMMISSION (VAT NOT APPLICABLE) is enabled or not.
+     *
+     * @param  $quoteType  - Life, Business etc.
+     * @param  $businessTypeOfInsuranceId  - Business type of insurance id, if quote type is Business.
+     */
+    public function commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId): bool
+    {
+        return app(CentralService::class)->commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId);
+    }
+
+    public function sendUpdateStatuses(): array
+    {
+        return [
+            SendUpdateLogStatusEnum::NEW_REQUEST,
+            SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
+            SendUpdateLogStatusEnum::TRANSACTION_DECLINE,
+            SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+            SendUpdateLogStatusEnum::UPDATE_ISSUED,
+            SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
+            SendUpdateLogStatusEnum::UPDATE_BOOKED,
+
+        ];
+    }
+
 }

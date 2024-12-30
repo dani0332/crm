@@ -64,9 +64,9 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
             'cqr.dob as dob',
             'cqr.car_value as carValue',
             'cqr.paid_at as paidAt',
-            'qt.name as PUAType',
+            'cqp.pua_type as PUAType',
             'cqr.created_at as createdAt',
-        )->distinct()->get();
+        )->get();
 
         $summary = collect([
             (object) ['PaymentStatus' => ' ', 'Count' => ' '],

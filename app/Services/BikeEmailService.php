@@ -51,7 +51,7 @@ class BikeEmailService extends BaseService
             }
         }
 
-        $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+        $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::BIKE);
 
         return $responseCode;
     }
@@ -124,41 +124,18 @@ class BikeEmailService extends BaseService
             'advisorEmail' => $advisor->email,
             'advisorName' => $advisor->name,
             'documentUrl' => $documentUrl ? [$documentUrl] : [],
-            'carQuoteId' => $bikeQuoteId,
+            'bikeQuoteId' => $bikeQuoteId,
             'yearOfManufacture' => $lead->bikeQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($lead),
             'currentInsurer' => $lead->bikeQuote->currently_insured_with,
             'quoteLink' => $this->getEcomQuoteLink(QuoteTypes::BIKE, $lead->uuid),
-            'assignmentType' => $this->getAssignmentTypeText($lead->assignment_type),
+            'assignmentType' => getAssignmentTypeText($lead->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor),
         ];
 
         return $emailData;
-    }
-
-    private function getAssignmentTypeText($assignmentType)
-    {
-        $assignmentText = '';
-        switch ($assignmentType) {
-            case 1:
-                $assignmentText = 'System Assigned';
-                break;
-            case 2:
-                $assignmentText = 'System ReAssigned';
-                break;
-            case 3:
-                $assignmentText = 'Manual Assigned';
-                break;
-            case 4:
-                $assignmentText = 'Manual ReAssigned';
-                break;
-            default:
-                break;
-        }
-
-        return $assignmentText;
     }
 
     private function getPlanBenefits($plan)
@@ -253,16 +230,16 @@ class BikeEmailService extends BaseService
             info('Zero Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 492 : 626);
 
             // No plans with available ratings, send a specific email template
-            return $lead->tier_id == $tierR->id ? 492 : 626;
+            return $lead->tier_id == $tierR->id ? 492 : 723;
         } elseif (count($plans) == 1) {
             info('One Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 492 : 627);
 
-            return $lead->tier_id == $tierR->id ? 492 : 627;
+            return $lead->tier_id == $tierR->id ? 492 : 724;
         } else {
             // Plans with available ratings exist, send a different email template
             info('Multiple Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 491 : 628);
 
-            return $lead->tier_id == $tierR->id ? 491 : 628;
+            return $lead->tier_id == $tierR->id ? 491 : 725;
         }
     }
 

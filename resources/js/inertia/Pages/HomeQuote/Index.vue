@@ -3,6 +3,7 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   isManualAllocationAllowed: Boolean,
   totalCount: {
     type: Number,
@@ -73,7 +74,13 @@ const tableHeader = ref([
     value: 'previous_quote_policy_number',
     is_active: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
 ]);
 
 const filters = reactive({
@@ -88,7 +95,7 @@ const filters = reactive({
   advisors: [],
   is_renewal: '',
   previous_quote_policy_number: '',
-  renewal_batch: '',
+  renewal_batches: [],
   payment_status: [],
   is_cold: false,
   is_stale: false,
@@ -96,6 +103,10 @@ const filters = reactive({
   policy_expiry_date_end: '',
   payment_due_date: '',
   booking_date: '',
+  last_modified_date: null,
+  advisor_assigned_date: null,
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
 });
 
 const canExport = ref(false);
@@ -128,10 +139,28 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+});
+
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Home'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function onSubmit(isValid) {
@@ -556,14 +585,13 @@ const formatDate = dateString =>
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
+        <ComboBox
+          v-model="filters.renewal_batches"
           label="Renewal Batch"
-          class="w-full"
           placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
         />
+
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -580,6 +608,41 @@ const formatDate = dateString =>
           multi-calendars
           multi-calendars-solo
         />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.HomeManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -587,6 +650,7 @@ const formatDate = dateString =>
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >
@@ -694,6 +758,11 @@ const formatDate = dateString =>
             ? formatDate(previous_policy_expiry_date)
             : ''
         }}
+      </template>
+      <template #item-renewal_batch_text="item">
+        <p>
+          {{ item.renewal_batch_text }}
+        </p>
       </template>
     </DataTable>
 

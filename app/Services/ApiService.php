@@ -7,11 +7,12 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
-use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
+use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
@@ -161,26 +162,43 @@ class ApiService
 
             return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
         } else {
+            info('------ SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
+
             $quoteTypeId = QuoteTypeId::Car;
             if ($request->has('quoteTypeId')) {
                 $quoteTypeId = $request->quoteTypeId;
             }
             $quoteType = QuoteTypes::getName($quoteTypeId);
             if (! $quoteType) {
+                info("Invalid Quote Type ID {$quoteTypeId} for uuid : {$request->quoteUuid}");
+
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
             }
 
-            if (! $quoteType?->model()->where('uuid', $request->quoteUuid)->exists()) {
-                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+            $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
+
+            if (! $lead) {
+                info("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
+
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found');
             }
 
-            $ocbEmailJob = $quoteType?->ocbEmailJob();
-            if ($ocbEmailJob) {
-                info("------ SIC workflow trigger request received for lead : {$request->quoteUuid} ------");
-                dispatch(new $ocbEmailJob($request->quoteUuid, null, true));
-                info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
+            if ($lead->sic_flow_enabled) {
+                info("SIC workflow is enabled on this lead already for uuid: {$lead->uuid}");
 
-                return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+                return apiResponse(null, Response::HTTP_OK, 'SIC workflow already enabled!');
+            } else {
+                $lead->sic_flow_enabled = true;
+                $lead->save();
+
+                $ocbEmailJob = $quoteType?->ocbEmailJob();
+                if ($ocbEmailJob) {
+                    info("------ Going to Trigger Workflow for lead : {$request->quoteUuid} ------");
+                    dispatch(new $ocbEmailJob($request->quoteUuid, null, true, forceSicWorkflow: true));
+                    info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
+
+                    return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+                }
             }
         }
 
@@ -208,12 +226,12 @@ class ApiService
      */
     private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false)
     {
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
-        if (is_null($allocationStrategy)) {
+        $responsePayload = QuoteTypes::getName($allocationType)->allocate(uuid: $allocationId, teamId: $teamId, overrideAdvisorId: $overrideAdvisorId, tierOnly: $tierOnly);
+        if (is_null($responsePayload)) {
             info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
         }
-        $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId, $teamId, $tierOnly);
+
         $status = $responsePayload['status'];
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
@@ -308,5 +326,41 @@ class ApiService
                 $this->processAssignLead($request);
             }
         }
+    }
+
+    public function sendHealthApplyNowEmail(SendHealthApplyNowEmailRequest $request)
+    {
+        $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
+
+        if (! $lead) {
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+        }
+
+        if (! $lead->isApplyNowEmailSent()) {
+            app(HealthEmailService::class)->initiateApplyNowEmail($lead);
+
+            return apiResponse(null, Response::HTTP_OK, 'Email Sent');
+        }
+
+        return apiResponse(null, Response::HTTP_OK, 'Email Already Sent!');
+    }
+
+    public function quoteUpdated($data)
+    {
+        $quoteType = QuoteTypes::getName($data['quoteTypeId']);
+        if (! $quoteType) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+        $model = $quoteType?->model();
+
+        $quote = $model::where('uuid', $data['quoteUUID'])->first();
+        if (! $quote) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+        }
+
+        // Sync Courier Quote with MACRM if Policy Issued
+        SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType?->id());
+
+        return apiResponse(null, message: 'ok');
     }
 }

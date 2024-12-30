@@ -73,13 +73,16 @@ const incomeSource = computed(() => {
   return null;
 });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
+
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
   first_name:
     props.quote?.customer.insured_first_name ?? props.quote.first_name,
   last_name: props.quote?.customer.insured_last_name ?? props.quote.last_name,
-  dob: convertDate(props.quote.dob) || '',
+  dob: dateFormat(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id ?? null,
   country_of_residence:
     props.customerDetails?.detail?.country_of_residence ?? 56,
@@ -389,8 +392,8 @@ onMounted(() => {
     <div class="grid md:grid-cols-2">
       <x-input
         v-model="kycForm.residential_address"
-        label="Resident Address"
-        placeholder="Resident Address"
+        label="RESIDENT ADDRESS"
+        placeholder="RESIDENT ADDRESS"
         :rules="[isRequired]"
       />
     </div>

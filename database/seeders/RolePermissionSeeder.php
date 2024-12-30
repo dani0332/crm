@@ -7,8 +7,6 @@ use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -18,91 +16,20 @@ class RolePermissionSeeder extends Seeder
     public function run(): void
     {
         try {
-            $exportRMLeadPermission = Permission::where('name', PermissionsEnum::EXPORT_RM_LEADS)->first();
-            if (! $exportRMLeadPermission) {
+            //permission for upload Health Rates and Coverages
+            $uploadHealthRatesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_RATES)->first();
+            if (! $uploadHealthRatesPermission) {
                 Permission::create([
-                    'name' => PermissionsEnum::EXPORT_RM_LEADS,
+                    'name' => PermissionsEnum::UPLOAD_HEALTH_RATES,
                     'guard_name' => 'web',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
-
-            $exportPUAUpdatePermission = Permission::where('name', PermissionsEnum::EXPORT_CAR_PUA_UPDATES)->first();
-            if (! $exportPUAUpdatePermission) {
+            $uploadHealthCoveragesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_COVERAGES)->first();
+            if (! $uploadHealthCoveragesPermission) {
                 Permission::create([
-                    'name' => PermissionsEnum::EXPORT_CAR_PUA_UPDATES,
-                    'guard_name' => 'web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $bookingFailedEditPermission = Permission::where('name', PermissionsEnum::BOOKING_FAILED_EDIT)->first();
-            if (! $bookingFailedEditPermission) {
-                Permission::create([
-                    'name' => PermissionsEnum::BOOKING_FAILED_EDIT,
-                    'guard_name' => 'web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $quoteRawData = Permission::where('name', PermissionsEnum::QUOTE_RAW_DATA)->first();
-            if (! $quoteRawData) {
-                Permission::create([
-                    'name' => PermissionsEnum::QUOTE_RAW_DATA,
-                    'guard_name' => 'web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $role = Role::where('name', RolesEnum::Engineering)->first();
-
-            if (! $role->hasPermissionTo($quoteRawData)) {
-                $role->givePermissionTo($quoteRawData);
-            }
-
-            $roles = Role::whereIn('name', [RolesEnum::Admin])->get();
-            $permission = Permission::firstOrCreate([
-                'name' => PermissionsEnum::SIC_HEALTH_CONFIG ?? 'sic-health-config',
-                'guard_name' => 'web',
-            ], [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            // Update permissions for each role
-            foreach ($roles as $role) {
-                // Check if the role already has the permission
-                $record = DB::table('role_has_permissions')
-                    ->where('role_id', $role->id)
-                    ->where('permission_id', $permission->id)
-                    ->first();
-
-                // If the permission is not assigned to the role, insert it
-                if (empty($record)) {
-                    DB::table('role_has_permissions')->insert([
-                        'role_id' => $role->id,
-                        'permission_id' => $permission->id,
-                    ]);
-                }
-            }
-
-            $paymentSummaryPermission = Permission::where('name', PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY)->first();
-            if (! $paymentSummaryPermission) {
-                Permission::create([
-                    'name' => PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY,
-                    'guard_name' => 'web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $migrateInslyLead = Permission::where('name', PermissionsEnum::MIGRATE_INSLY_LEAD)->first();
-            if (! $migrateInslyLead) {
-                Permission::create([
-                    'name' => PermissionsEnum::MIGRATE_INSLY_LEAD,
+                    'name' => PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
                     'guard_name' => 'web',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -112,45 +39,51 @@ class RolePermissionSeeder extends Seeder
             info('RolePermission Seeder issue Error:'.$th->getMessage().' Line:'.$th->getLine());
             throw $th;
         }
-        $this->addTravelSicAllocationPermission();
+        // $this->addReceiveNotificationsPermission();
+        $this->searchModulePermissions();
     }
 
-    public function addTravelSicAllocationPermission()
+    private function addReceiveNotificationsPermission()
     {
-        try {
-            $travelSicAllocationPermission = Permission::firstOrCreate(
-                ['name' => PermissionsEnum::TRAVEL_SIC_ALLOCATION],
-                ['guard_name' => 'web']
-            );
+        $roles = Role::whereIn('name', [RolesEnum::CarAdvisor, RolesEnum::TravelAdvisor, RolesEnum::HealthAdvisor, RolesEnum::PetAdvisor, RolesEnum::BikeAdvisor, RolesEnum::HomeAdvisor, RolesEnum::LifeAdvisor, RolesEnum::CycleAdvisor, RolesEnum::YachtAdvisor, RolesEnum::JetskiAdvisor, RolesEnum::BusinessAdvisor, RolesEnum::CorpLineAdvisor])->get();
+        $receiveNotificationsPermission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RECEIVE_NOTIFICATIONS ?? 'receive-notifications',
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-            if ($travelSicAllocationPermission->wasRecentlyCreated) {
-                Log::info('Permission created: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+        foreach ($roles as $role) {
+
+            if (! $role->hasPermissionTo($receiveNotificationsPermission)) {
+                $role->givePermissionTo($receiveNotificationsPermission);
+                info("Permission {$receiveNotificationsPermission->name} assigned to role {$role->name}");
             } else {
-                Log::info('Permission already exists: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+                info("Role {$role->name} already has permission {$receiveNotificationsPermission->name}");
             }
+        }
+    }
 
-            $roles = [RolesEnum::TravelManager, RolesEnum::LeadPool];
+    private function searchModulePermissions(): void
+    {
+        // Add Search across all LOBs permission
+        $searchAcrossLOBsPermissions = [PermissionsEnum::SEARCH_ALL_LEAD_LOB, PermissionsEnum::DATA_EXTRACTION_SEARCH_ALL_LEADS];
 
-            foreach ($roles as $roleName) {
-                $role = Role::where('name', $roleName)->first();
+        foreach ($searchAcrossLOBsPermissions as $searchAcrossLOBsPermission) {
+            $permission = Permission::where('name', $searchAcrossLOBsPermission)->first();
 
-                if (! $role) {
-                    Log::warning("Role not found: {$roleName}");
+            if (! $permission) {
+                Permission::create([
+                    'name' => $searchAcrossLOBsPermission,
+                    'guard_name' => 'web',
+                ]);
+                $role = Role::where('name', RolesEnum::Admin)->first();
 
-                    continue;
-                }
-
-                if (! $role->hasPermissionTo($travelSicAllocationPermission)) {
-                    $role->givePermissionTo($travelSicAllocationPermission);
-                    Log::info("Permission {$travelSicAllocationPermission->name} assigned to role {$roleName}");
-                } else {
-                    Log::info("Role {$roleName} already has permission {$travelSicAllocationPermission->name}");
+                if (! $role->hasPermissionTo($searchAcrossLOBsPermission)) {
+                    $role->givePermissionTo($searchAcrossLOBsPermission);
                 }
             }
-        } catch (\Exception $e) {
-            Log::error('Error while assigning permission: '.$e->getMessage(), [
-                'exception' => $e,
-            ]);
         }
     }
 }

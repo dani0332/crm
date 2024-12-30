@@ -72,6 +72,12 @@ const modals = reactive({
 });
 
 const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    if (props.quote.quote_status_id == quoteStatusEnum.PolicyBooked) {
+      return true;
+    }
+    return false;
+  }
   return (
     (props.quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
       props.quote.quote_status_id == quoteStatusEnum.Lost) ??
@@ -652,6 +658,14 @@ const onAddUpdate = () => {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">COMPANY NAME</dt>
+                <dd>{{ quote.home_company_name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">COMPANY ADDRESS</dt>
+                <dd>{{ quote.home_company_address }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
@@ -888,6 +902,10 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
@@ -1412,7 +1430,12 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
@@ -1548,6 +1571,7 @@ const onAddUpdate = () => {
     <AuditLogs
       :type="modelClass"
       :id="$page.props.quote.id"
+      :quoteType="$page.props.modelType"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />

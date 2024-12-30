@@ -26,7 +26,10 @@ Route::middleware(['basicAuth'])->group(function () {
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/evaluate-tier', [ApiController::class, 'evaluateTier'])->name('evaluateTier');
     Route::post('/imcrm/trigger-sic-workflow', [ApiController::class, 'triggerSICWorkflow'])->name('triggerSICWorkflow');
+    Route::post('/imcrm/analyze-health', [ApiController::class, 'analyseHealthData']);
+    Route::post('/imcrm/send-health-apply-now-email', [ApiController::class, 'sendHealthApplyNowEmail'])->name('sendHealthApplyNowEmail');
     // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
+    Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
@@ -41,6 +44,7 @@ Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteSta
 Route::prefix('v1')->group(function () {
 
     Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
+    Route::post('quotes/car/pause-resume-followup', [CarQuoteController::class, 'updatePauseAndResumeCounters']);
     Route::post('quotes/car/update-quote-status', [CarQuoteController::class, 'updateQuoteStatus']);
 
     Route::get('quotes/car/followup-leads', [CarQuoteController::class, 'getFollowupLeads']);

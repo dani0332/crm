@@ -17,6 +17,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
@@ -48,21 +49,33 @@ watch(
   { deep: true },
 );
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
 const leadsCount = ref(props.totalCount);
 const previousDate = getPreviousDate;
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.total-leads-count',
-);
+
+const channelName = `public.${page.props.appEnv}.total-leads-count`;
+const eventName = 'leads.count';
 
 const listen = () => {
-  channel.bind('leads.count', function (e) {
-    leadsCount.value = e.totalLeadsCount;
+  const worker = new SharedWorker('/build/workers/pusher.worker.js');
+
+  worker.port.addEventListener('message', e => {
+    leadsCount.value = e.data.totalLeadsCount;
+  });
+
+  worker.onerror = function (error) {
+    console.log(error.message);
+    worker.port.close();
+  };
+
+  worker.port.start();
+
+  //Subscribe to channel/event
+  worker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
   });
 };
 
@@ -108,6 +121,8 @@ const filters = reactive({
   is_stale: false,
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_Date: null,
+  advisor_assigned_date: null,
 });
 
 provide('filters', filters);
@@ -211,6 +226,8 @@ const setIntialState = () => {
     payment_status: [],
     is_cold: false,
     is_stale: false,
+    last_modified_date: null,
+    advisor_assigned_date: null,
   });
   filtersCount.value = 0;
 };
@@ -257,8 +274,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  channel.unbind('leads.count');
-  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+  //Unsubscribe to channel/event
+  worker.port.postMessage({
+    action: 'unsubscribe',
+    channel: channelName,
+    event: eventName,
+  });
 });
 
 watch(
@@ -452,6 +473,21 @@ const validateDateRange = () => {
             { value: 'No', label: 'No' },
           ]"
           class="w-full"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.CorplineManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

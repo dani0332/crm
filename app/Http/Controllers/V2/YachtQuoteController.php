@@ -8,6 +8,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -43,6 +44,7 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -62,6 +64,7 @@ class YachtQuoteController extends Controller
         $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
             return $value['id'] != QuoteStatusEnum::Lost;
         })->values();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         //PD Revert
         // $count = $personalQuotes->count();
@@ -74,6 +77,7 @@ class YachtQuoteController extends Controller
             'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'renewalBatches' => $renewalBatches,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : YachtQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),
         ]);
@@ -133,6 +137,11 @@ class YachtQuoteController extends Controller
         $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
             return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
         })->values();
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            })->values();
+        }
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy:id,name,email');
 

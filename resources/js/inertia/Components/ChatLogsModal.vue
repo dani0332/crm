@@ -109,10 +109,7 @@ const checkCaption = (whatsapp_request, UserAudio) => {
     show-header
     @update:modelValue="$emit('update:showChatLogs', $event)"
   >
-    <template #header>
-      Ref ID: {{ chatMessages.id }} - Created At:
-      {{ chatMessages.created_at.split(' ')[0] }}
-    </template>
+    <template #header> Ref ID: {{ chatMessages.id }} </template>
     <template #default>
       <div>
         <x-field label="Message Source" required>
@@ -206,7 +203,7 @@ const checkCaption = (whatsapp_request, UserAudio) => {
             </div>
 
             <div class="chat-footer opacity-50 text-right">
-              {{ message.created_at.split(' ')[1] }}
+              {{ message.created_at }}
             </div>
           </div>
           <div class="chat chat-end" v-else>
@@ -224,7 +221,7 @@ const checkCaption = (whatsapp_request, UserAudio) => {
               <SanitizeHtml :html="renderMarkdown(message.msg)" />
             </div>
             <div class="chat-footer opacity-50">
-              {{ message.created_at.split(' ')[1] }}
+              {{ message.created_at }}
             </div>
           </div>
         </div>

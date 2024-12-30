@@ -46,6 +46,8 @@ class EndorsementReportExport extends BaseReportsExport
             'Commission Percentage',
             'Transaction Type',
             'Lead Source',
+            'SU Status',
+            'Sage Receipt ID',
         ];
     }
 
@@ -89,6 +91,8 @@ class EndorsementReportExport extends BaseReportsExport
             $quote->commmission_percentage ?? 'N/A',
             $quote->transaction_type ?? 'N/A',
             $quote->source ?? 'N/A',
+            $quote->status ?? 'N/A',
+            $quote->sage_reciept_id ?? 'N/A',
         ];
     }
 

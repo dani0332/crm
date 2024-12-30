@@ -56,6 +56,12 @@ class HomeQuote extends Model implements AuditableContract
             }
         });
     }
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
 
     public function quoteStatus()
     {
@@ -147,5 +153,10 @@ class HomeQuote extends Model implements AuditableContract
     public function customerMembers()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
+    public function quoteDetail()
+    {
+        return $this->hasOne(HomeQuoteRequestDetail::class);
     }
 }

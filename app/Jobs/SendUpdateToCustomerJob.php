@@ -2,8 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Jobs\EP\SendEPJob;
 use App\Models\SendUpdateLog;
+use App\Services\CentralService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
@@ -54,11 +57,19 @@ class SendUpdateToCustomerJob implements ShouldQueue
 
                 if ($response == 201) {
                     info('job:SendUpdateToCustomerJob - Updating status to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER.' - SendUpdateCode: '.$sendUpdateLog->code);
+                    app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
                     $sendUpdateLog->update([
                         'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
                         'is_email_sent' => true,
                     ]);
                     $sendUpdateLog->refresh();
+
+                    if ($sendUpdateLog->category->code === SendUpdateLogStatusEnum::EN) {
+                        $quoteType = QuoteTypeId::getOptions()[$sendUpdateLog->quote_type_id];
+                        $quote = $this->getQuoteObject($quoteType, $sendUpdateLog->quote_uuid);
+                        SendEPJob::dispatch($quote->id, $quoteType, null, true);
+                    }
+
                 } else {
                     info('job:SendUpdateToCustomerJob - SendUpdateCode: '.$sendUpdateLog->uuid.' - Job failed - SendUpdateCode: '.$sendUpdateLog->code);
                 }
@@ -71,7 +82,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
             unset($this->payload['sageRequestPayload']);
             $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);
 
-            app(SageApiService::class)->scheduleSageProcesses($sageRequestPayload->insurerID);
+            (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);
             info('job:SendUpdateToCustomerJob - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
         }
 

@@ -77,6 +77,8 @@ class SaleDetailReportService extends ManagementReport
                 'p.insurer_commmission_invoice_number',
                 'l.text as transaction_type',
                 'p.commmission_percentage',
+                'personal_quotes.policy_booking_date',
+                'ps.sage_reciept_id',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -132,6 +134,7 @@ class SaleDetailReportService extends ManagementReport
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
         });
     }
 

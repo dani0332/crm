@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Services\CarQuoteService;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -22,22 +21,9 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 
     public function collection()
     {
-        $leads = $this->data[0]->select(
-            'q.code as RefID',
-            'q.premium_authorized as premiumauthorized',
-            'q.payment_status_date as paymentauthdate',
-            DB::raw('qs.text as `leadstatus`'),
-            DB::raw("'AUTHORIZED' as `paymentstatus`"),
-            'q.source as source',
-            'cmk.text as make',
-            'cmd.text as model',
-            'u.email as assignedadvisoremail'
-        )->distinct()->get();
+        $leads = $this->data[0];
 
-        $teamCounts = $this->data[1]->select(
-            't.name as Team',
-            DB::raw('COUNT(*) as Total')
-        )->distinct()->get();
+        $teamCounts = $this->data[1];
 
         $exportData = collect();
 

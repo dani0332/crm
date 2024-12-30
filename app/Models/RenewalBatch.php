@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuoteTypes;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -64,6 +65,7 @@ class RenewalBatch extends Model implements AuditableContract
         'end_date',
         'month',
         'year',
+        'quote_type_id',
     ];
 
     /**
@@ -162,4 +164,13 @@ class RenewalBatch extends Model implements AuditableContract
         });
     }
 
+    public function scopeNonMotor($q)
+    {
+        $q->whereNull('quote_type_id');
+    }
+
+    public function scopeMotor($q)
+    {
+        $q->where('quote_type_id', QuoteTypes::CAR->id());
+    }
 }

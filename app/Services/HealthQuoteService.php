@@ -10,6 +10,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -71,8 +72,8 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
             'hqr.last_name',
             'hqr.payment_status_id',
-            'hqr.email',
-            'hqr.mobile_no',
+            // 'hqr.email',
+            // 'hqr.mobile_no',
             'hqr.preference',
             'hqr.details',
             'hqr.source',
@@ -118,6 +119,7 @@ class HealthQuoteService extends BaseService
             'mc.text as member_category_id_text',
             'hqr.policy_expiry_date',
             'hqr.renewal_batch',
+            'rb.name as renewal_batch_text',
             'hqr.renewal_import_code',
             'hqr.previous_quote_policy_number',
             DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
@@ -150,6 +152,7 @@ class HealthQuoteService extends BaseService
             'c.insured_last_name',
             'c.emirates_id_number',
             'c.emirates_id_expiry_date',
+            'c.receive_marketing_updates',
             'qrem.entity_id',
             'ent.code as entity_code',
             'ent.trade_license_no',
@@ -159,10 +162,12 @@ class HealthQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             DB::raw('(CASE
-            WHEN hqr.assignment_type = 1 THEN "System Assigned"
-            WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
-            WHEN hqr.assignment_type = 3 THEN "Manual Assigned"
-            WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                WHEN hqr.assignment_type = 1 THEN "System Assigned"
+                WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
+                WHEN hqr.assignment_type = 3 THEN "Manual Assigned"
+                WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned"
+                WHEN hqr.assignment_type = 5 THEN "Bought Lead"
+                WHEN hqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
             'ihp.code as plan_provider_code',
             'ihp.code as plan_provider_code',
             'hqr.health_plan_co_payment_id',
@@ -181,7 +186,9 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.insly_migrated',
+            'hqr.sic_advisor_requested',
             'hqr.aml_status',
+            'hqr.insurance_provider_id'
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -203,6 +210,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
             ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id')
             ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
+            ->leftJoin('renewal_batches as rb', 'hqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
@@ -212,7 +220,7 @@ class HealthQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('hqr.uuid', $id)->first();
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
@@ -353,7 +361,9 @@ class HealthQuoteService extends BaseService
             $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
             $this->query->whereBetween('hqr.transaction_approved_at', [$startDate, $endDate]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates)) {
+        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date)
+        && ! isset($request->booking_date) && ! isset($request->renewal_batches)
+    && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
             $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
@@ -367,6 +377,14 @@ class HealthQuoteService extends BaseService
             $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
 
+        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
+            $dateArray = $request['last_modified_date'];
+
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('hqr.updated_at', [$dateFrom, $dateTo]);
+        }
+
         if (
             ! empty($request->created_at_start)
             && ! empty($request->created_at_end)
@@ -375,8 +393,10 @@ class HealthQuoteService extends BaseService
             && empty($request->mobile_no)
             && empty($request->payment_due_date)
             && empty($request->booking_date)
-            && empty($request->renewal_batch)
+            && empty($request->renewal_batches)
             && empty($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
         ) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
@@ -416,8 +436,8 @@ class HealthQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('hqr.renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
+            $this->query->whereIn('hqr.renewal_batch_id', $request->renewal_batches);
         }
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
@@ -427,11 +447,7 @@ class HealthQuoteService extends BaseService
         if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
         }
-        /*if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-        $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
-        $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-        $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }*/
+
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
@@ -482,7 +498,7 @@ class HealthQuoteService extends BaseService
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
-        if (isset($request->assignment_type) && ! empty($request->assignment_type)) {
+        if (isset($request->assignment_type) && ! empty($request->assignment_type) && $request->assignment_type !== 'all') {
             $this->query->where('hqr.assignment_type', $request->assignment_type);
         }
         if (isset($request->first_name) && $request->first_name != '') {
@@ -503,8 +519,8 @@ class HealthQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('hqr.renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
+            $this->query->whereIn('hqr.renewal_batch_id', $request->renewal_batches);
         }
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
@@ -518,6 +534,9 @@ class HealthQuoteService extends BaseService
             if ($request->is_renewal == quoteTypeCode::noText) {
                 $this->query->whereNull('hqr.previous_quote_policy_number');
             }
+        }
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
+            $this->query->where('hqr.sic_advisor_requested', $request->sic_advisor_requested);
         }
         if (isset($request->is_ecommerce)) {
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
@@ -537,6 +556,14 @@ class HealthQuoteService extends BaseService
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($subQueryCallback) {
                 $query->whereNotIn('hqr.uuid', $subQueryCallback);
             });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'hqr');
@@ -759,7 +786,7 @@ class HealthQuoteService extends BaseService
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
             'gender' => '|static|'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
-            'renewal_batch' => 'input|none',
+            'renewal_batches' => 'select|title|multiple',
             'renewal_import_code' => 'input|text',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
@@ -987,7 +1014,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1053,7 +1081,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1107,7 +1136,7 @@ class HealthQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }
@@ -1139,7 +1168,7 @@ class HealthQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            if ($this->isLeadTransactionApproved($lead)) {
+            if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
                 info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
                 array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
 
@@ -1159,7 +1188,7 @@ class HealthQuoteService extends BaseService
 
     public function assignHealthTeam($request, $lead): bool
     {
-        if ($this->isLeadTransactionApproved($lead)) {
+        if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
             info('Cannot assign Health Team as lead is in Transaction Approved state');
 
             return false;
@@ -1238,8 +1267,6 @@ class HealthQuoteService extends BaseService
             // update existing record of quote view count if exists and reset count to zero
             $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Health, $userId);
 
-            $lead->quote_updated_at = now();
-
             $lead->quote_batch_id = $quoteBatch->id;
 
             $lead->save();
@@ -1266,7 +1293,7 @@ class HealthQuoteService extends BaseService
         info('Previous assignment type is : '.$previousAssignmentType);
 
         //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD];
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
         // Get the allocation record for the new advisor
@@ -1281,60 +1308,6 @@ class HealthQuoteService extends BaseService
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
-        }
-    }
-
-    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
-    {
-        if ($advisorAllocationRecord === null || $lead === null) {
-            return;
-        }
-
-        // Determine if the lead was system-assigned or manually assigned
-        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
-
-        // Update allocation counts based on assignment type
-        if ($isSystemAssigned) {
-            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
-        } else {
-            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
-        }
-
-        // Increment the total allocation count and update timestamps
-        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
-        $advisorAllocationRecord->last_allocated = now()->timestamp;
-        $advisorAllocationRecord->updated_at = now();
-
-        // Save the updated allocation record
-        $advisorAllocationRecord->save();
-    }
-
-    private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
-    {
-        // Check if there is a previous advisor and the lead assignment date is today
-        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
-            if ($previousAdvisorAllocationRecord !== null) {
-                // Determine if the previous assignment was system-assigned
-                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
-
-                // Update allocation counts based on assignment type (if applicable)
-                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('deduct from auto assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('deduct from manual assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-                }
-
-                // Decrement the total allocation count (if it's greater than 0) and update timestamps
-                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
-                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
-                    $previousAdvisorAllocationRecord->updated_at = now();
-                }
-
-                // Save the updated allocation record
-                $previousAdvisorAllocationRecord->save();
-            }
         }
     }
 
@@ -1366,8 +1339,8 @@ class HealthQuoteService extends BaseService
                         if (isset($plan['ratesPerCopay'])) {
                             foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
                                 if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
-                                    $response['priceWithVAT'] = (float) $ratePerCopay['premium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
-                                    $response['priceWithLP'] = (float) $ratePerCopay['premium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
+                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
+                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
                                 }
                             }
                         }
@@ -1467,12 +1440,14 @@ class HealthQuoteService extends BaseService
                 if (isset($value['ratesPerCopay'])) {
                     foreach ($value['ratesPerCopay'] as $copay) {
                         if ((int) $copay['healthPlanCoPaymentId'] == (int) $copayId) {
-                            if (isset($loadingPrices[$key]) &&
+                            if (
+                                isset($loadingPrices[$key]) &&
                                 (int) $loadingPrices[$key]['memberId'] == $value['memberId']
                             ) {
                                 $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
                             }
-                            if (isset($manualPremiumPrices[$key]) &&
+                            if (
+                                isset($manualPremiumPrices[$key]) &&
                                 (int) $manualPremiumPrices[$key]['memberId'] == $value['memberId']
                                 && $manualPremiumPrices[$key]['premium'] != 0
                             ) {
@@ -1828,7 +1803,6 @@ class HealthQuoteService extends BaseService
     {
         info('inside the check for manual assignment QA');
         $lead->advisor_id = $userId;
-        $lead->quote_updated_at = now();
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
@@ -1905,8 +1879,9 @@ class HealthQuoteService extends BaseService
 
     public function exportRmLeads()
     {
-        $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d 00:00:00');
-        $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
+        $request = request();
+        [$startDate, $endDate] = $this->getTransactionApprovedDates($request);
+
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
         $healthTeam = $this->getProductByName(quoteTypeCode::Health);
 
@@ -1944,7 +1919,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->leftJoin('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
-            ->whereBetween('q.transaction_approved_at', [$startOfMonth, $endOfPreviousDay])
+            ->whereBetween('q.transaction_approved_at', [$startDate, $endDate])
             ->whereIn('u.id', function ($subQuery) use ($carTeam) {
                 $subQuery->select('u.id')
                     ->from('users as u')
@@ -1954,5 +1929,32 @@ class HealthQuoteService extends BaseService
             })
             ->groupBy('q.code', 'q.transaction_approved_at', 'u.name', 'u.email', 'qs.text', 'ps.text', 'q.created_at')
             ->orderBy('q.created_at', 'ASC');
+    }
+
+    private function getTransactionApprovedDates($request)
+    {
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH'); // Default format
+        if (isset($request->transaction_approved_dates)) {
+            $dates = $request->transaction_approved_dates;
+
+            // If the dates are a string, split it into an array
+            if (is_string($dates)) {
+                $dates = explode(',', $dates);
+            }
+
+            // Parse start and end dates if the array is valid
+            if (is_array($dates) && count($dates) === 2) {
+                $startDate = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
+                $endDate = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
+
+                return [$startDate, $endDate];
+            }
+        }
+
+        // Default to the current month's start and end of the previous day
+        $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d 00:00:00');
+        $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
+
+        return [$startOfMonth, $endOfPreviousDay];
     }
 }

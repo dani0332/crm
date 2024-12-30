@@ -26,6 +26,7 @@ use MongoDB\BSON\UTCDateTime;
 class InslyDetailRepository extends BaseRepository
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
+
     public function model()
     {
         return InslyDetail::class;
@@ -105,7 +106,25 @@ class InslyDetailRepository extends BaseRepository
 
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempEmail = 'vitara@inbox.ru';
+        $tempPolicyId = 66495910;
+        if ($tempPolicyId == $data['policy_oid']) {
+            $email = $tempEmail;
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
+        if (empty($email)) {
+            return [
+                'status' => 400,
+                'message' => 'Customer email not found.',
+                'data' => '',
+            ];
+        }
+
         $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
+
         if ($inslyPolicyIssueDate) {
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
@@ -331,13 +350,26 @@ class InslyDetailRepository extends BaseRepository
         $dataArr = [];
         $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
+
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempEmail = 'vitara@inbox.ru';
+        $tempPolicyId = 66495910;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }
+        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
         $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
-        // commented this because its value is null so no need to assign.
-        /* $dataArr['insurance_provider_id'] = null; */
+
+        if ($insurer = $policy['policy']['insurer'] ?? null) {
+            $insuranceProviderId = InsuranceProviderRepository::getInslyProviderId(trim($insurer));
+            $dataArr['insurance_provider_id'] = $insuranceProviderId;
+        }
+
         $dataArr['policy_issuance_date'] = now()->format('Y-m-d');
 
         $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;

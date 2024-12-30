@@ -1,10 +1,10 @@
 <script setup>
+import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
 
 defineProps({
   quote: Object,
   quoteDocuments: Object,
-  paymentStatusEnum: Object,
   documentTypes: Object,
   storageUrl: String,
   expanded: {
@@ -37,6 +37,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -73,7 +74,7 @@ const notification = useNotifications('toast');
 
 const docForm = reactive({
   quote_id: page.props.quote.id || null,
-  quote_uuid: page.props.quote.code || null,
+  quote_uuid: page.props.quote.uuid || null,
   quote_type_id: null,
   document_type_code: null,
   file: null,
@@ -95,6 +96,7 @@ const uploadFile = (doc, filesWithInfo) => {
   const url = '/personal-quotes/' + docForm.quote_id + '/documents';
   const formData = new FormData();
   formData.append('quote_id', docForm.quote_id);
+  formData.append('quote_uuid', docForm.quote_uuid);
   formData.append('quote_type_id', doc.quote_type_id);
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
@@ -185,9 +187,11 @@ onMounted(() => {
 
 const getS3TempUrl = async docURL => {
   try {
+    NProgress.start();
     const response = await axios.post('/quotes/documents/get-s3-temp-url', {
       docURL,
     });
+    NProgress.done();
     // Check if the request was successful and the response contains the URL
     if (response.status === 200 && response.data.url) {
       // Open the URL in a new tab
@@ -313,7 +317,7 @@ const getS3TempUrl = async docURL => {
 
             <a
               v-else
-              :href="storageUrl + encodeURIComponent(item.doc_url)"
+              :href="storageUrl + (item.watermarked_doc_url ?? item.doc_url)"
               target="_blank"
               class="text-primary-600"
             >
@@ -327,7 +331,7 @@ const getS3TempUrl = async docURL => {
             <div>
               <x-tooltip
                 placement="left"
-                v-if="bookPolicyDetails.isEnableUploadDocument === false"
+                v-if="bookPolicyDetails?.isEnableUploadDocument === false"
               >
                 <x-button size="xs" color="error" outlined disabled="true">
                   Delete
@@ -366,6 +370,12 @@ const getS3TempUrl = async docURL => {
           :value="index"
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
+          :key="index"
+          :disabled="
+            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
+            !quote.insurance_provider_id &&
+            !quote.plan_id
+          "
         >
           <div
             v-for="documentType in docType"
@@ -435,7 +445,10 @@ const getS3TempUrl = async docURL => {
                 </a>
                 <a
                   v-else
-                  :href="storageUrl + encodeURIComponent(quoteDocument.doc_url)"
+                  :href="
+                    storageUrl +
+                    (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)
+                  "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
