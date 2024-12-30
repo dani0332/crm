@@ -20,9 +20,9 @@ const quoteForm = useForm({
   use: props.quote?.yacht_quote?.use || '',
   operator_experience: props.quote?.yacht_quote?.operator_experience || '',
 
-    dob: props.quote?.dob || null,
-    nationality_id: props.quote?.nationality_id || null,
-    gender: props.quote?.customer?.gender || null,
+  dob: props.quote?.dob || null,
+  nationality_id: props.quote?.nationality_id || null,
+  gender: props.quote?.customer?.gender || null,
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -46,12 +46,11 @@ function onSubmit(isValid) {
 }
 
 const gender = computed(() => {
-    return [
-        { value: 'M', label: 'Male'},
-        { value: 'F', label: 'Female'}
-    ];
+  return [
+    { value: 'M', label: 'Male' },
+    { value: 'F', label: 'Female' },
+  ];
 });
-
 </script>
 
 <template>
@@ -114,47 +113,45 @@ const gender = computed(() => {
             :error="quoteForm.errors.mobile_no"
           />
         </x-field>
-          <x-field label="DATE OF BIRTH">
-              <DatePicker
-                  v-model="quoteForm.dob"
-                  name="created_at_start"
-              />
-          </x-field>
-          <x-field label="NATIONALITY">
-              <ComboBox
-                  v-model="quoteForm.nationality_id"
-                  :single="true"
-                  :options="
-                nationalities.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))"
-                placeholder="Nationality"
-              />
-          </x-field>
-          <x-field label="Gender">
-              <x-select
-                  v-model="quoteForm.gender"
-                  :options="gender"
-                  placeholder="Gender"
-              />
-          </x-field>
-          <x-field label="COMPANY NAME">
-              <x-input
-                  v-model="quoteForm.company_name"
-                  type="text"
-                  class="w-full"
-                  :error="quoteForm?.errors?.company_name"
-              />
-          </x-field>
-          <x-field label="COMPANY ADDRESS">
-              <x-input
-                  v-model="quoteForm.company_address"
-                  type="text"
-                  class="w-full"
-                  :error="quoteForm?.errors?.company_address"
-              />
-          </x-field>
+        <x-field label="DATE OF BIRTH">
+          <DatePicker v-model="quoteForm.dob" name="created_at_start" />
+        </x-field>
+        <x-field label="NATIONALITY">
+          <ComboBox
+            v-model="quoteForm.nationality_id"
+            :single="true"
+            :options="
+              nationalities.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            placeholder="Nationality"
+          />
+        </x-field>
+        <x-field label="Gender">
+          <x-select
+            v-model="quoteForm.gender"
+            :options="gender"
+            placeholder="Gender"
+          />
+        </x-field>
+        <x-field label="COMPANY NAME">
+          <x-input
+            v-model="quoteForm.company_name"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_name"
+          />
+        </x-field>
+        <x-field label="COMPANY ADDRESS">
+          <x-input
+            v-model="quoteForm.company_address"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_address"
+          />
+        </x-field>
         <x-field label="BOAT DETAILS" required>
           <x-input
             v-model="quoteForm.boat_details"

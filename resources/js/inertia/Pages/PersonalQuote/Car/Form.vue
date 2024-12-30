@@ -172,7 +172,7 @@ function onSubmit(isValid) {
   }
 
   if (chassisNumberValidate('blur')) {
-        isError.value = true;
+    isError.value = true;
   }
 
   if (!isValid) return;
@@ -293,29 +293,29 @@ const chassisNumberValidate = type => {
   const isAlphanumeric = regex.test(quoteForm.chassis_number);
 
   if (type === 'blur') {
-      if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
-          quoteForm.setError({
-              chassis_number: 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
-          });
-          return true;
-      } else {
-          quoteForm.clearErrors('chassis_number');
-          return false;
-      }
+    if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
+      quoteForm.setError({
+        chassis_number:
+          'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
+      });
+      return true;
+    } else {
+      quoteForm.clearErrors('chassis_number');
+      return false;
+    }
   } else if (type === 'change') {
-      if (quoteForm.chassis_number && lengthValid && isAlphanumeric) {
-          quoteForm.clearErrors('chassis_number'); // Clear error only if validation passes
-      }
+    if (quoteForm.chassis_number && lengthValid && isAlphanumeric) {
+      quoteForm.clearErrors('chassis_number'); // Clear error only if validation passes
+    }
   }
 };
 
 const gender = computed(() => {
-    return [
-        { value: 'M', label: 'Male'},
-        { value: 'F', label: 'Female'}
-    ];
+  return [
+    { value: 'M', label: 'Male' },
+    { value: 'F', label: 'Female' },
+  ];
 });
-
 </script>
 
 <template>
@@ -522,11 +522,11 @@ const gender = computed(() => {
         </x-field>
 
         <x-field label="Gender">
-            <x-select
-                v-model="quoteForm.gender"
-                :options="gender"
-                placeholder="Gender"
-            />
+          <x-select
+            v-model="quoteForm.gender"
+            :options="gender"
+            placeholder="Gender"
+          />
         </x-field>
 
         <x-field label="UAE LICENCE HELD FOR" required>
@@ -596,38 +596,42 @@ const gender = computed(() => {
           />
         </x-field>
 
-          <div>
-              <template v-if="chassisNumberDisabled">
-                  <x-tooltip placement="bottom">
-                      <label
-                          class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
-                      >
-                          CHASSIS NUMBER
-                      </label>
-                      <template #tooltip> This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Cancellation from Inception and Reissuance' </template>
-                  </x-tooltip>
-                  <x-input
-                      :disabled="chassisNumberDisabled"
-                      v-model="quoteForm.chassis_number"
-                      class="w-full"
-                      type="text"
-                      placeholder="Enter Chassis Number"
-                  />
+        <div>
+          <template v-if="chassisNumberDisabled">
+            <x-tooltip placement="bottom">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+              >
+                CHASSIS NUMBER
+              </label>
+              <template #tooltip>
+                This lead is now locked as the policy has been booked. If
+                changes are needed, go to 'Send Update', select 'Add Update',
+                and choose 'Cancellation from Inception and Reissuance'
               </template>
-              <template v-else>
-                  <x-field label="CHASSIS NUMBER">
-                      <x-input
-                          v-model="quoteForm.chassis_number"
-                          class="w-full"
-                          type="text"
-                          placeholder="Enter Chassis Number"
-                          @blur="chassisNumberValidate('blur')"
-                          @keypress="chassisNumberValidate('change')"
-                          :error="quoteForm.errors.chassis_number"
-                      />
-                  </x-field>
-              </template>
-          </div>
+            </x-tooltip>
+            <x-input
+              :disabled="chassisNumberDisabled"
+              v-model="quoteForm.chassis_number"
+              class="w-full"
+              type="text"
+              placeholder="Enter Chassis Number"
+            />
+          </template>
+          <template v-else>
+            <x-field label="CHASSIS NUMBER">
+              <x-input
+                v-model="quoteForm.chassis_number"
+                class="w-full"
+                type="text"
+                placeholder="Enter Chassis Number"
+                @blur="chassisNumberValidate('blur')"
+                @keypress="chassisNumberValidate('change')"
+                :error="quoteForm.errors.chassis_number"
+              />
+            </x-field>
+          </template>
+        </div>
 
         <x-field label="TRIM">
           <ComboBox

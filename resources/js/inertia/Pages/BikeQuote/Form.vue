@@ -205,12 +205,11 @@ const getModelDetails = onchange => {
 };
 
 const gender = computed(() => {
-    return [
-        { value: 'Male', label: 'Male'},
-        { value: 'Female', label: 'Female'}
-    ];
+  return [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+  ];
 });
-
 </script>
 
 <template>
@@ -292,11 +291,11 @@ const gender = computed(() => {
           />
         </x-field>
         <x-field label="Gender">
-            <x-select
-                v-model="quoteForm.gender"
-                :options="gender"
-                placeholder="Gender"
-            />
+          <x-select
+            v-model="quoteForm.gender"
+            :options="gender"
+            placeholder="Gender"
+          />
         </x-field>
         <x-field label="UAE LICENCE HELD FOR" required>
           <x-select

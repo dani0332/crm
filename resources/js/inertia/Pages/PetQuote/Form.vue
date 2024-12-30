@@ -111,34 +111,32 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.mobile_no"
           />
         </x-field>
-          <x-field label="DATE OF BIRTH">
-              <DatePicker
-                  v-model="quoteForm.dob"
-                  name="created_at_start"
-              />
-          </x-field>
-          <x-field label="NATIONALITY">
-              <ComboBox
-                  v-model="quoteForm.nationality_id"
-                  :single="true"
-                  :options="
-                nationalities.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))"
-                  placeholder="Nationality"
-              />
-          </x-field>
-          <x-field label="GENDER">
-              <x-select
-                  v-model="quoteForm.customer_gender"
-                  :options="[
-                      { value: 'Male', label: 'Male' },
-                      { value: 'Female', label: 'Female' },
-                    ]"
-                  class="w-full"
-              />
-          </x-field>
+        <x-field label="DATE OF BIRTH">
+          <DatePicker v-model="quoteForm.dob" name="created_at_start" />
+        </x-field>
+        <x-field label="NATIONALITY">
+          <ComboBox
+            v-model="quoteForm.nationality_id"
+            :single="true"
+            :options="
+              nationalities.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            placeholder="Nationality"
+          />
+        </x-field>
+        <x-field label="GENDER">
+          <x-select
+            v-model="quoteForm.customer_gender"
+            :options="[
+              { value: 'Male', label: 'Male' },
+              { value: 'Female', label: 'Female' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
         <x-field label="TYPE OF PET" required>
           <x-select
             v-model="quoteForm.pet_type_id"
@@ -231,18 +229,18 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.has_injury"
           />
         </x-field>
-          <x-field label="PET'S GENDER" required>
-              <x-select
-                  v-model="quoteForm.gender"
-                  :rules="[isRequired]"
-                  :options="[
+        <x-field label="PET'S GENDER" required>
+          <x-select
+            v-model="quoteForm.gender"
+            :rules="[isRequired]"
+            :options="[
               { value: 'Male', label: 'Male' },
               { value: 'Female', label: 'Female' },
             ]"
-                  class="w-full"
-                  :error="quoteForm.errors.gender"
-              />
-          </x-field>
+            class="w-full"
+            :error="quoteForm.errors.gender"
+          />
+        </x-field>
       </div>
 
       <x-divider class="my-4" />

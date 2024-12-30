@@ -1642,11 +1642,10 @@ const allowStatusUpdate = computed(() => {
 });
 
 function genderFormatForProfile(gender) {
-    if (!gender) return gender;
+  if (!gender) return gender;
 
-    return (gender == 'M') ? 'Male' : 'Female';
-};
-
+  return gender == 'M' ? 'Male' : 'Female';
+}
 </script>
 
 <template>
@@ -1895,8 +1894,8 @@ function genderFormatForProfile(gender) {
                 <dd>{{ record.cylinder }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">CHASSIS NUMBER</dt>
-                  <dd>{{ record.chassis_number }}</dd>
+                <dt class="font-medium">CHASSIS NUMBER</dt>
+                <dd>{{ record.chassis_number }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRIM</dt>
@@ -2267,14 +2266,14 @@ function genderFormatForProfile(gender) {
                   </dt>
                   <dd>{{ fullAddress }}</dd>
                 </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">DATE OF BIRTH</dt>
-                      <dd>{{ record.dob }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">GENDER</dt>
-                      <dd>{{ genderFormatForProfile(record.gender) }}</dd>
-                  </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">DATE OF BIRTH</dt>
+                  <dd>{{ record.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ genderFormatForProfile(record.gender) }}</dd>
+                </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
                   <dd>{{ record.nationality_id_text }}</dd>

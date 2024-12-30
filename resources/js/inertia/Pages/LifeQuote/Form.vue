@@ -132,15 +132,15 @@ function onSubmit(isValid) {
           />
         </x-field>
         <x-field label="Gender">
-            <x-select
-                v-model="quoteForm.gender"
-                :options="[
-                  { value: 'Male', label: 'Male' },
-                  { value: 'Female', label: 'Female' },
-                ]"
-                class="w-full"
-                :error="quoteForm.errors.gender"
-            />
+          <x-select
+            v-model="quoteForm.gender"
+            :options="[
+              { value: 'Male', label: 'Male' },
+              { value: 'Female', label: 'Female' },
+            ]"
+            class="w-full"
+            :error="quoteForm.errors.gender"
+          />
         </x-field>
         <x-field label="Sum Insured Value">
           <x-input

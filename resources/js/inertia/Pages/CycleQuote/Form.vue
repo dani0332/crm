@@ -64,12 +64,11 @@ function onSubmit(isValid) {
 }
 
 const gender = computed(() => {
-    return [
-        { value: 'Male', label: 'Male'},
-        { value: 'Female', label: 'Female'}
-    ];
+  return [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+  ];
 });
-
 </script>
 
 <template>
@@ -133,29 +132,27 @@ const gender = computed(() => {
           />
         </x-field>
         <x-field label="DATE OF BIRTH">
-            <DatePicker
-                v-model="quoteForm.dob"
-                name="created_at_start"
-            />
+          <DatePicker v-model="quoteForm.dob" name="created_at_start" />
         </x-field>
         <x-field label="NATIONALITY">
-            <ComboBox
-                v-model="quoteForm.nationality_id"
-                :single="true"
-                :options="
-                nationalities.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))"
-            />
-         </x-field>
-         <x-field label="Gender">
-            <x-select
-                v-model="quoteForm.gender"
-                :options="gender"
-                placeholder="Gender"
-            />
-         </x-field>
+          <ComboBox
+            v-model="quoteForm.nationality_id"
+            :single="true"
+            :options="
+              nationalities.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+          />
+        </x-field>
+        <x-field label="Gender">
+          <x-select
+            v-model="quoteForm.gender"
+            :options="gender"
+            placeholder="Gender"
+          />
+        </x-field>
         <x-field label="Cycle Make" required>
           <x-input
             v-model="quoteForm.cycle_make"

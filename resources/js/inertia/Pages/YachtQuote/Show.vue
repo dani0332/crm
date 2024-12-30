@@ -591,10 +591,10 @@ const onAddUpdate = () => {
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
                 </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">GENDER</dt>
-                      <dd>{{ quote.gender }}</dd>
-                  </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ quote.gender }}</dd>
+                </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
                   <dd>
