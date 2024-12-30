@@ -2518,7 +2518,11 @@ watch(
     <x-modal
       v-model="modals.attestRecord"
       size="md"
-      :title="props.updateBtn === sendUpdateStatusEnum.SU ? 'Book Update' : props.updateBtn"
+      :title="
+        props.updateBtn === sendUpdateStatusEnum.SU
+          ? 'Book Update'
+          : props.updateBtn
+      "
       show-close
       backdrop
     >
