@@ -7,12 +7,13 @@ const props = defineProps({
 const { isRequired } = useRules();
 const notification = useToast();
 const params = useUrlSearchParams('history');
+const formatted = date => useDateFormat(date, 'YYYY-MM-DD HH:mm:ss').value;
 
 const tableHeader = reactive([
   { text: 'Ref-Id', value: 'ref_id' },
   { text: 'Line Of Business', value: 'quote_type.code' },
   { text: 'Department', value: 'department' },
-  { text: 'Requested Date', value: 'requested_date' },
+  { text: 'Requested Date', value: 'created_at' },
   { text: 'Lead Cost', value: 'cost' },
 ]);
 
@@ -44,7 +45,7 @@ const onSubmit = isValid => {
 };
 
 const onExport = () => {
-  if (filters.quote_type && filters.date) {
+  if (filters.quote_type && filters.date && props.list?.data?.length > 0) {
     window.location.href = route('buy-leads.request.tracking', {
       ...filters,
       export: true,
@@ -52,7 +53,9 @@ const onExport = () => {
   } else {
     notification.error({
       title:
-        'Select the Line of Business and Requested Date to download the PDF report.',
+        filters.quote_type && filters.date && props.list?.data?.length === 0
+          ? 'No Data Found'
+          : 'Select the Line of Business and Requested Date to download the PDF report.',
       position: 'top',
     });
   }
@@ -128,7 +131,7 @@ onMounted(() => {
     table-class-name="mt-4"
     :loading="table.loading"
     :headers="tableHeader"
-    :items="list.data != null ? list.data : []"
+    :items="list?.data != null ? list?.data : []"
     border-cell
     hide-rows-per-page
     hide-footer
@@ -141,14 +144,20 @@ onMounted(() => {
         :key="item.ref_id"
       />
     </template>
+    <template #item-created_at="{ created_at }">
+      <span>
+        {{ created_at ? formatted(created_at) : 'N/A' }}
+      </span>
+    </template>
   </DataTable>
   <Pagination
+    v-if="list"
     :links="{
-      next: list?.next_page_url,
-      prev: list?.prev_page_url,
-      current: list?.current_page,
-      from: list?.from,
-      to: list?.to,
+      next: list?.next_page_url || null,
+      prev: list?.prev_page_url || null,
+      current: list?.current_page || null,
+      from: list?.from || null,
+      to: list?.to || null,
     }"
   />
 </template>
