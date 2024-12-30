@@ -43,6 +43,8 @@ class HomeQuoteService extends BaseService
             'hqr.last_name',
             // 'hqr.email',
             // 'hqr.mobile_no',
+            'hqr.company_name AS home_company_name',
+            'hqr.company_address AS home_company_address',
             'hqr.address',
             'hqr.has_contents',
             'hqr.contents_aed',
@@ -181,6 +183,8 @@ class HomeQuoteService extends BaseService
             'email' => $request->email,
             'address' => $request->address,
             'mobileNo' => $request->mobile_no,
+            'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
             'contentsAed' => $request->contents_aed,
             'premium' => $request->premium,
             'iamPossesionTypeId' => $request->iam_possesion_type_id,
@@ -459,6 +463,8 @@ class HomeQuoteService extends BaseService
         $homeQuote->first_name = $request->first_name;
         $homeQuote->last_name = $request->last_name;
         $homeQuote->address = $request->address;
+        $homeQuote->company_name = $request->company_name;
+        $homeQuote->company_address = $request->company_address;
         $homeQuote->contents_aed = $request->contents_aed;
         $homeQuote->iam_possesion_type_id = $request->iam_possesion_type_id;
         $homeQuote->ilivein_accommodation_type_id = $request->ilivein_accommodation_type_id;
@@ -486,6 +492,8 @@ class HomeQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
+            'company_name' => 'input|text|max:250',
+            'company_address' => 'input|text|max:1000',
             'quote_status_id' => 'select|title|multiple',
             'advisor_id' => 'select|title|multiple',
             'created_at' => 'input|date|title|range',

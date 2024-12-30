@@ -10,33 +10,29 @@ final class AssignmentTypeEnum extends Enum
     const SYSTEM_REASSIGNED = 2;
     const MANUAL_ASSIGNED = 3;
     const MANUAL_REASSIGNED = 4;
+    const BOUGHT_LEAD = 5;
+    const REASSIGNED_TO_BOUGHT_LEAD = 6;
     const AssignmentTypeList = [
         self::SYSTEM_ASSIGNED,
         self::SYSTEM_REASSIGNED,
         self::MANUAL_ASSIGNED,
         self::MANUAL_REASSIGNED,
+        self::BOUGHT_LEAD,
+        self::REASSIGNED_TO_BOUGHT_LEAD,
     ];
 
     public static function getAssignmentTypeText($assignmentType)
     {
-        $assignmentText = '';
-        switch ($assignmentType) {
-            case 1:
-                $assignmentText = 'System Assigned';
-                break;
-            case 2:
-                $assignmentText = 'System ReAssigned';
-                break;
-            case 3:
-                $assignmentText = 'Manual Assigned';
-                break;
-            case 4:
-                $assignmentText = 'Manual ReAssigned';
-                break;
-            default:
-                break;
-        }
+        return getAssignmentTypeText($assignmentType);
+    }
 
-        return $assignmentText;
+    public static function withLabels()
+    {
+        $item = ['value' => 'all', 'label' => 'All'];
+        $items = collect(self::AssignmentTypeList)->map(function ($value) {
+            return ['value' => (string) $value, 'label' => self::getAssignmentTypeText($value)];
+        })->toArray();
+
+        return array_merge([$item], $items);
     }
 }

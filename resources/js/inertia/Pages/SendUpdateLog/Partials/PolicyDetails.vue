@@ -296,7 +296,7 @@ const rules = {
               <!-- First name -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -323,7 +323,7 @@ const rules = {
               <!-- Last name -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -348,7 +348,7 @@ const rules = {
               <!-- Provider Name -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -376,7 +376,7 @@ const rules = {
               <!-- Plan Name -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -403,7 +403,7 @@ const rules = {
               <!-- Policy Number -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -430,7 +430,7 @@ const rules = {
               <!-- Issuance Date -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -460,7 +460,7 @@ const rules = {
               <!-- Start Date -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -490,7 +490,7 @@ const rules = {
               <!-- Expiry Date -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -518,7 +518,7 @@ const rules = {
               <!-- Insurer Quote Number -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -547,7 +547,7 @@ const rules = {
               <!-- Issuance Status -->
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -596,7 +596,14 @@ const rules = {
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+              <x-button
+                v-else
+                size="sm"
+                @click="onEdit"
+                class="focus:ring-2 focus:ring-black"
+              >
+                Edit
+              </x-button>
             </template>
             <template v-else>
               <x-button
@@ -610,6 +617,7 @@ const rules = {
                 Cancel
               </x-button>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="primary"
                 type="submit"
