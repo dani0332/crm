@@ -3,17 +3,17 @@
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
-use App\Enums\QuoteStatusEnum;
 use App\Services\HomeQuoteService;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\DeleteTempOCBPDFFileJob;
 
 class HomeEmailService extends BaseService
 {
@@ -50,7 +50,7 @@ class HomeEmailService extends BaseService
         );
 
         // Fetch the automated workflow configuration
-        $homeAutomatedEvent = ApplicationStorage::where('key_name',ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS)->first();
+        $homeAutomatedEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS)->first();
 
         if (! $homeAutomatedEvent) {
             info("sendHomeOCBIntroEmail - Workflow configuration not found for Lead Ref ID: {$lead->uuid} | Time: ".now());
@@ -108,7 +108,7 @@ class HomeEmailService extends BaseService
 
             // Workflow-related data
             'workflowType' => $workflowType,
-            'tempUrlPDF'=> $this->attachHomeOCBPDFToEmail($lead->uuid),
+            'tempUrlPDF' => $this->attachHomeOCBPDFToEmail($lead->uuid),
         ];
     }
 
@@ -122,22 +122,21 @@ class HomeEmailService extends BaseService
     public function attachHomeOCBPDFToEmail($quoteUID)
     {
         try {
-            info( self::class." - attachHomeOCBPDFToEmail - Generating PDF for Quote UID: {$quoteUID} | Time: " . now());
+            info(self::class." - attachHomeOCBPDFToEmail - Generating PDF for Quote UID: {$quoteUID} | Time: ".now());
             $quotePlans = app(HomeQuoteService::class)->getQuotePlans($quoteUID);
             // Generate the PDF
             $planIds = [];
-            if(isset($quotePlans->quotes->plans)){
+            if (isset($quotePlans->quotes->plans)) {
                 $planIds = collect($quotePlans->quotes->plans)->pluck('id')->take(6)->toArray() ?? [];
             }
-
 
             $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
             $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
 
-            info( self::class." - attachHomeOCBPDFToEmail - Storing PDF temporarily for Quote UID: {$quoteUID} | Time: " . now());
+            info(self::class." - attachHomeOCBPDFToEmail - Storing PDF temporarily for Quote UID: {$quoteUID} | Time: ".now());
 
             // Generate a unique temporary file path
-            $tempFilePath = 'temp/' . uniqid() . '.pdf';
+            $tempFilePath = 'temp/'.uniqid().'.pdf';
             Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
 
             // Generate a public URL
@@ -148,12 +147,13 @@ class HomeEmailService extends BaseService
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            info(self::class . " - attachHomeOCBPDFToEmail - Public URL generated for Quote UID: {$quoteUID} | Time: " . now());
+            info(self::class." - attachHomeOCBPDFToEmail - Public URL generated for Quote UID: {$quoteUID} | Time: ".now());
 
-        return $publicUrl;
+            return $publicUrl;
         } catch (\Exception $e) {
             // Log the error details
-            info(self::class." - Error: attachHomeOCBPDFToEmail - Error attaching PDF for Quote UID: {$quoteUID} | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()} | Time: " . now());
+            info(self::class." - Error: attachHomeOCBPDFToEmail - Error attaching PDF for Quote UID: {$quoteUID} | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()} | Time: ".now());
+
             return false;
         }
     }

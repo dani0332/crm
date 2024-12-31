@@ -2,19 +2,18 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
+use App\Models\PersonalQuote;
+use App\Services\EmailServices\HomeEmailService;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\PersonalQuote;
-use App\Models\ApplicationStorage;
-use App\Services\EmailServices\HomeEmailService;
-use App\Enums\ApplicationStorageEnums;
 
 class SendHomeOCBIntroEmailJob implements ShouldQueue
 {
-
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
@@ -28,8 +27,6 @@ class SendHomeOCBIntroEmailJob implements ShouldQueue
     {
         $this->personalQuote = $personalQuote;
     }
-
-
 
     /**
      * Execute the job.

@@ -45,7 +45,7 @@ class HandleBikeAdvisorUpdated
 
         $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
         if (in_array($lead->source, $skippableSources)) {
-            info('lead is source is ' . $lead->source . ' upload. Skipping intro email job');
+            info('lead is source is '.$lead->source.' upload. Skipping intro email job');
 
             return;
         }
@@ -54,7 +54,7 @@ class HandleBikeAdvisorUpdated
 
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
 
-        info('about to trigger intro email job for lead uuid : ' . $lead->uuid . ' and previous advisor id : ' . $oldAdvisorId);
+        info('about to trigger intro email job for lead uuid : '.$lead->uuid.' and previous advisor id : '.$oldAdvisorId);
 
         SendOCBIntroEmailForBikeJob::dispatch($lead->uuid, $previousAdvisor);
 

@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -10,16 +9,14 @@ use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
-use App\Models\ApplicationStorage;
+use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
-use App\Services\EmailServices\HomeEmailService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\SendHomeOCBIntroEmailJob;
-use Carbon\Carbon;
 
 class PersonalQuoteObserver
 {
@@ -141,7 +138,7 @@ class PersonalQuoteObserver
 
         if ($this->isEligibleForHomeIntroEmail($personalQuote)) {
 
-            info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: " . now());
+            info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: ".now());
             SendHomeOCBIntroEmailJob::dispatch($personalQuote)->delay(Carbon::now()->addMinutes(1));
             info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
         }

@@ -28,6 +28,7 @@ use App\Models\SubArea;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailStatusService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
@@ -39,7 +40,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
-use App\Services\EmailStatusService;
 
 class HomeQuoteRepository extends BaseRepository
 {
@@ -73,7 +73,7 @@ class HomeQuoteRepository extends BaseRepository
         ];
 
         // Determine if the created_at check should be added
-        $addCreatedDateCheck = !$this->hasActiveFilters($filterFields);
+        $addCreatedDateCheck = ! $this->hasActiveFilters($filterFields);
 
         return $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
@@ -89,21 +89,18 @@ class HomeQuoteRepository extends BaseRepository
             ->when($addCreatedDateCheck, function ($query) {
                 $query->whereBetween('created_at', $this->getDateRange());
             })
-            ->filter(!$forExport, $forTotalLeadsCount)
+            ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
-                fn($query) => $query->count(),
-                fn($query) => $query->when($forExport, fn($query) => $query->get(), fn($query) => $query->simplePaginate())
+                fn ($query) => $query->count(),
+                fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate())
             );
     }
 
     /**
      * Check if any of the specified filters are active.
-     *
-     * @param array $fields
-     * @return bool
      */
     private function hasActiveFilters(array $fields): bool
     {
@@ -112,13 +109,12 @@ class HomeQuoteRepository extends BaseRepository
                 return true;
             }
         }
+
         return false;
     }
 
     /**
      * Get the eager load relationships for the query.
-     *
-     * @return array
      */
     private function getWithRelations(): array
     {
@@ -151,8 +147,7 @@ class HomeQuoteRepository extends BaseRepository
     /**
      * Apply the renewal filter to the query.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return void
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      */
     private function applyRenewalFilter($query): void
     {
@@ -162,7 +157,6 @@ class HomeQuoteRepository extends BaseRepository
             $query->whereNull('previous_quote_policy_number');
         }
     }
-
 
     public function fetchGetFormOptions()
     {
@@ -214,11 +208,11 @@ class HomeQuoteRepository extends BaseRepository
 
         $quoteData = $baseQuoteData;
 
-        info('Home Quote Create :' . json_encode($quoteData));
+        info('Home Quote Create :'.json_encode($quoteData));
 
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 
-        info('Home Quote Create Response :' . json_encode($response));
+        info('Home Quote Create Response :'.json_encode($response));
 
         // if (isset($response->quoteUID)) {
         //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);
@@ -274,12 +268,12 @@ class HomeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable() . '.*',
+                $this->getTable().'.*',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
-                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
                 as customer_type'),
             ])
             ->firstOrFail();
@@ -379,7 +373,7 @@ class HomeQuoteRepository extends BaseRepository
             'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -400,7 +394,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::HOME->value) . '-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
     }
 
     public function fetchUpdate($uuid, $data)

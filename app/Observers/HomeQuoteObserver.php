@@ -2,16 +2,13 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
-use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
 use App\Repositories\PaymentRepository;
-use App\Services\EmailServices\HomeEmailService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -23,7 +20,7 @@ class HomeQuoteObserver
 
     public function updating(HomeQuote $quote): void
     {
-        info("HomeQuoteObserver - Updating - Ref ID: {$quote->uuid} | Time: " . now());
+        info("HomeQuoteObserver - Updating - Ref ID: {$quote->uuid} | Time: ".now());
         if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
             $quote->quote_status_date = now();
         }
@@ -36,7 +33,7 @@ class HomeQuoteObserver
      */
     public function updated(HomeQuote $homeQuote): void
     {
-        info("HomeQuoteObserver - Updated - Ref ID: {$homeQuote->uuid} | Time: " . now());
+        info("HomeQuoteObserver - Updated - Ref ID: {$homeQuote->uuid} | Time: ".now());
         $dirty = $homeQuote->getDirty();
 
         if (
