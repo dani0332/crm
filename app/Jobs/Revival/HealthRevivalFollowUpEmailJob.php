@@ -100,6 +100,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
             $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
                 'quoteUID' => $healthQuote->uuid,
+                'isModified' => true,
             ]);
 
             if (empty($response['quote']['plans'])) {
@@ -143,6 +144,9 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             $emailData->templateId = (int) $emailTemplateId;
             $emailData->uuid = $healthQuote->uuid;
             $emailData->id = $healthQuote->id;
+            $emailData->quotePlanLink = $response['quote']['quotePlanLink'];
+            $emailData->requestAdvisorLink = $response['quote']['requestAdvisorLink'];
+
 
             $key = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
 
