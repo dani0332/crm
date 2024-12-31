@@ -12,7 +12,6 @@ use App\Models\AlfredChat;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
-use App\Models\TravelQuote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +19,7 @@ class InstantAlfredService extends BaseService
 {
     private $personalQuery;
 
-    private function buildQueryByModel($modelType, $quoteTypeId)
+    private function buildQueryByModel($quoteTypeId)
     {
         $aliases = [];
    
@@ -131,12 +130,12 @@ class InstantAlfredService extends BaseService
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $modelType = (checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-        $aliases = $this->buildQueryByModel($modelType, $quoteTypeId);
+        $aliases = $this->buildQueryByModel($quoteTypeId);
 
         $modelData = $aliases[PersonalQuote::class] ?? $aliases[CarQuote::class];
-        
+
         $alias = $modelData['alias'];
-        
+
         $partialQuery = $modelData['query'];
 
         $partialQuery->whereNotNull('chat_initiated_at');
@@ -218,7 +217,7 @@ class InstantAlfredService extends BaseService
 
     public function generateChatConsolidateReport()
     {
-        
+
         $request = request();
         
         $data = $this->processSqlChatFilters($request)->get();
