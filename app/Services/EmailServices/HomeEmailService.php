@@ -13,6 +13,7 @@ use App\Services\BirdService;
 use App\Enums\QuoteStatusEnum;
 use App\Services\HomeQuoteService;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\DeleteTempOCBPDFFileJob;
 
 class HomeEmailService extends BaseService
 {
@@ -107,7 +108,7 @@ class HomeEmailService extends BaseService
 
             // Workflow-related data
             'workflowType' => $workflowType,
-            // 'tempUrlPDF'=> $this->attachHomeOCBPDFToEmail($lead->uuid),
+            'tempUrlPDF'=> $this->attachHomeOCBPDFToEmail($lead->uuid),
         ];
     }
 
@@ -131,22 +132,29 @@ class HomeEmailService extends BaseService
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/' . uniqid() . '.pdf';
-            Storage::disk()->put($tempFilePath, $pdfContent);
+            Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
 
-            // Generate a publicly accessible URL for the file with expiration
-            $publicUrl = Storage::disk()->temporaryUrl($tempFilePath, now()->addMinutes(5));
+            // Generate a public URL
+            // $publicUrl = asset('storage/' . $tempFilePath);
+            $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+                $tempFilePath, now()->addMinutes(5)
+            );
+            // Schedule deletion after 5 minutes
+            $this->scheduleFileDeletion($tempFilePath);
 
-            // // Schedule file deletion after 5 minutes
-            // Storage::disk()->delete($tempFilePath, now()->addMinutes(5));
+            info(self::class . " - attachHomeOCBPDFToEmail - Public URL generated for Quote UID: {$quoteUID} | Time: " . now());
 
-            info(self::class." - attachHomeOCBPDFToEmail - Public URL generated for Quote UID: {$quoteUID} | Time: " . now());
-
-            return $publicUrl;
+        return $publicUrl;
         } catch (\Exception $e) {
             // Log the error details
             info(self::class." - Error: attachHomeOCBPDFToEmail - Error attaching PDF for Quote UID: {$quoteUID} | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()} | Time: " . now());
             return false;
         }
     }
+    protected function scheduleFileDeletion($filePath)
+    {
+        // Use a job to handle file deletion
+        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(5));
 
+    }
 }
