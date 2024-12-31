@@ -33,11 +33,17 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  typeFilters: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
+const { isRequired } = useRules();
+const params = useUrlSearchParams('history');
 const rolesEnum = page.props.rolesEnum;
 
 const canManage = ref(props.isAutoAllocationWorking === 1 ? true : false);
@@ -67,6 +73,7 @@ const confirmModal = reactive({
 const loader = reactive({
   submit: false,
   table: false,
+  search: false,
 });
 
 const isBlCapChanged = computed(() => {
@@ -295,6 +302,7 @@ const onToggleResetCap = async (active, userId, leadId) => {
 };
 
 onMounted(() => {
+  setQueryStringFilters(params, filters);
   leadData.value = props.data.map(item => {
     return {
       id: item.id,
@@ -344,6 +352,34 @@ const onToggleBLResetCap = async (active, userId, laId) => {
     .finally(() => {
       loader.table = false;
     });
+};
+
+const filters = reactive({
+  type: null,
+});
+
+function onReset() {
+  router.visit(route('lead-allocation.index'), {
+    method: 'get',
+    data: {},
+    preserveScroll: true,
+    onBefore: () => (loader.search = true),
+    onSuccess: () => (loader.search = false),
+  });
+}
+
+const onSubmit = isValid => {
+  if (isValid) {
+    loader.search = true;
+    router.visit(route('lead-allocation.index'), {
+      method: 'get',
+      data: { ...filters },
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loader.search = true),
+      onFinish: () => (loader.search = false),
+    });
+  }
 };
 </script>
 <template>
@@ -413,6 +449,34 @@ const onToggleBLResetCap = async (active, userId, laId) => {
       </TransitionGroup>
     </div>
   </div>
+  <x-divider class="my-4" />
+  <x-form @submit="onSubmit" :auto-focus="false">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <x-field label="Type" required>
+        <x-select
+          placeholder="Select Type"
+          :options="typeFilters || []"
+          filterable
+          v-model="filters.type"
+          :rules="[isRequired]"
+        ></x-select>
+      </x-field>
+    </div>
+    <div class="flex justify-end gap-3 mb-4">
+      <x-button size="md" color="orange" type="submit" :loading="loader.search">
+        Search
+      </x-button>
+      <x-button
+        size="md"
+        color="primary"
+        type="submit"
+        :loading="loader.search"
+        @click.prevent="onReset()"
+      >
+        Reset
+      </x-button>
+    </div>
+  </x-form>
   <DataTable
     id="car-lead-allocation"
     table-class-name="compact"
