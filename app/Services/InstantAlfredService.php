@@ -88,10 +88,10 @@ class InstantAlfredService extends BaseService
         //         // })
         //         ->addSelect([
         //             DB::raw("
-        //                 CASE 
+        //                 CASE
         //                 WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
-        //                 WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
-        //                     AND cqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
+        //                 WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."'
+        //                     AND cqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."')
         //                     THEN 'SIC-REVIVAL'
         //                 WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
         //                 ELSE 'N/A'
@@ -155,10 +155,10 @@ class InstantAlfredService extends BaseService
         //         })
         //         ->addSelect([
         //             DB::raw("
-        //                 CASE 
+        //                 CASE
         //                 WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
-        //                 WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
-        //                     AND hqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
+        //                 WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."'
+        //                     AND hqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."')
         //                     THEN 'SIC-REVIVAL'
         //                 WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
         //                 ELSE 'N/A'
@@ -193,7 +193,6 @@ class InstantAlfredService extends BaseService
         //         DB::raw('DATE_FORMAT(tqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
         //         DB::raw('DATE_FORMAT(tqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
         //         DB::raw('DATE_FORMAT(tqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
-  
 
         //     )
         //         ->leftJoin('payments as py', function ($join) {
@@ -221,10 +220,10 @@ class InstantAlfredService extends BaseService
         //         })
         //         ->addSelect([
         //             DB::raw("
-        //                 CASE 
+        //                 CASE
         //                 WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
-        //                 WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
-        //                     AND tqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
+        //                 WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."'
+        //                     AND tqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."')
         //                     THEN 'SIC-REVIVAL'
         //                 WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
         //                 ELSE 'N/A'
@@ -234,93 +233,93 @@ class InstantAlfredService extends BaseService
         //         ->groupBy('tqr.id');
 
         //     $aliases = [TravelQuote::class => ['query' => $this->travelQuery, 'alias' => 'tqr']];
-        // } 
+        // }
         // if($modelType == PersonalQuote::class){
-            $this->personalQuery = DB::table('personal_quotes as pqr')
-                ->select(
-                    'pqr.uuid',
-                    'pqr.id',
-                    'pqr.email',
-                    'pqr.code',
-                    'pqr.payment_status_id',
-                    'pqr.plan_id',
-                    'pqr.quote_status_id',
-                    'pqr.quote_batch_id',
-                    'pqr.insurance_provider_id',
-                    'pqr.premium as total_price',
-                    'pqrd.chat_initiated_at',
-                    'qs.text AS quote_status_id_text',
-                    'qb.name as quote_batch_id_text',
-                    'lu.text as transaction_type_text',
-                    'ps.text AS payment_status',
-                    DB::raw('DATE_FORMAT(pqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
-                    // DB::raw('DATE_FORMAT(pqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
-                    DB::raw('DATE_FORMAT(pqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
-                    DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
-    
-                )
-                ->where('pqr.quote_type_id', $quoteTypeId)
-                ->leftJoin('payments as py', function ($join) {
-                    $join->on('py.paymentable_id', '=', 'pqr.id')
-                        ->where('py.paymentable_type', '=', PersonalQuote::class);
-                })
-                ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
-                ->leftJoin('quote_tags as qt', function ($join) use($quoteTypeId) {
-                    $join->on('qt.quote_uuid', '=', 'pqr.uuid')
-                        ->where('qt.quote_type_id', '=', $quoteTypeId);
-                })
-                ->leftJoin('lookups as lu', 'lu.id', '=', 'pqr.transaction_type_id')
-                ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
-                ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
-                ->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
-                ->when($quoteTypeId == QuoteTypeId::Car, function ($query) {
-                    $query->leftJoin('car_plan as cp', 'cp.id', '=', 'pqr.plan_id');
-                    $query->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id');
-                    $query->addSelect([
-                        'cp.text AS plan_id_text',
-                        'cpip.code as plan_provider_code',
-                        'cpip.text as provider_name',
-                        'cp.repair_type as plan_type',
-                        'cp.text as plan_name',
-                    ]);
-                })
-                ->when($quoteTypeId == QuoteTypeId::Health, function ($query) {
-                    $query->leftJoin('health_plan as hp', 'hp.id', '=', 'pqr.plan_id');
-                    $query->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hp.plan_type_id');
-                    $query->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id');
-                    $query->addSelect([
-                        'hp.plan_type_id as plan_type_id',
-                        'ihp.text as provider_name',
-                        'hpt.text as plan_type',
-                        'hp.text as plan_name',
-                    ]);
-                })
-                ->when($quoteTypeId == QuoteTypeId::Travel, function ($query) {
-                    $query->leftJoin('travel_plan as tp', 'tp.id', '=', 'pqr.plan_id');
-                    $query->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id');
-                    $query->leftJoin('travel_quote_plan_details as tqpd', function ($join) {
-                        $join->on('pqr.uuid', '=', 'tqpd.quote_uuid')
-                            ->whereColumn('pqr.plan_id', '=', 'tqpd.plan_id');
-                    });
-                    $query->addSelect([
-                        'tp.text AS plan_id_text',
-                        'tpip.text AS travel_plan_provider_text',
-                        'tp.travel_type as plan_type',
-                        'tqpd.provider_name',
-                        'tqpd.plan_name',
-                    ]);
-                })
-                ->when($quoteTypeId == QuoteTypeId::Bike, function ($query) {
-                    $query->leftJoin('bike_quote_plan_details as bp', 'bp.id', '=', 'pqr.uuid');
-                    $query->leftJoin('insurance_provider as bip', 'bip.id', '=', 'bp.insurance_provider_id');
-                    $query->addSelect([
-                        'bp.plan_name AS plan_name',
-                        'bip.text AS provider_name',
-                        'bp.repair_type as plan_type',
-                    ]);
-                })
-                ->addSelect([
-                    DB::raw("
+        $this->personalQuery = DB::table('personal_quotes as pqr')
+            ->select(
+                'pqr.uuid',
+                'pqr.id',
+                'pqr.email',
+                'pqr.code',
+                'pqr.payment_status_id',
+                'pqr.plan_id',
+                'pqr.quote_status_id',
+                'pqr.quote_batch_id',
+                'pqr.insurance_provider_id',
+                'pqr.premium as total_price',
+                'pqrd.chat_initiated_at',
+                'qs.text AS quote_status_id_text',
+                'qb.name as quote_batch_id_text',
+                'lu.text as transaction_type_text',
+                'ps.text AS payment_status',
+                DB::raw('DATE_FORMAT(pqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
+                // DB::raw('DATE_FORMAT(pqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+                DB::raw('DATE_FORMAT(pqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+                DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
+
+            )
+            ->where('pqr.quote_type_id', $quoteTypeId)
+            ->leftJoin('payments as py', function ($join) {
+                $join->on('py.paymentable_id', '=', 'pqr.id')
+                    ->where('py.paymentable_type', '=', PersonalQuote::class);
+            })
+            ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
+            ->leftJoin('quote_tags as qt', function ($join) use ($quoteTypeId) {
+                $join->on('qt.quote_uuid', '=', 'pqr.uuid')
+                    ->where('qt.quote_type_id', '=', $quoteTypeId);
+            })
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'pqr.transaction_type_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
+            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
+            ->when($quoteTypeId == QuoteTypeId::Car, function ($query) {
+                $query->leftJoin('car_plan as cp', 'cp.id', '=', 'pqr.plan_id');
+                $query->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id');
+                $query->addSelect([
+                    'cp.text AS plan_id_text',
+                    'cpip.code as plan_provider_code',
+                    'cpip.text as provider_name',
+                    'cp.repair_type as plan_type',
+                    'cp.text as plan_name',
+                ]);
+            })
+            ->when($quoteTypeId == QuoteTypeId::Health, function ($query) {
+                $query->leftJoin('health_plan as hp', 'hp.id', '=', 'pqr.plan_id');
+                $query->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hp.plan_type_id');
+                $query->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id');
+                $query->addSelect([
+                    'hp.plan_type_id as plan_type_id',
+                    'ihp.text as provider_name',
+                    'hpt.text as plan_type',
+                    'hp.text as plan_name',
+                ]);
+            })
+            ->when($quoteTypeId == QuoteTypeId::Travel, function ($query) {
+                $query->leftJoin('travel_plan as tp', 'tp.id', '=', 'pqr.plan_id');
+                $query->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id');
+                $query->leftJoin('travel_quote_plan_details as tqpd', function ($join) {
+                    $join->on('pqr.uuid', '=', 'tqpd.quote_uuid')
+                        ->whereColumn('pqr.plan_id', '=', 'tqpd.plan_id');
+                });
+                $query->addSelect([
+                    'tp.text AS plan_id_text',
+                    'tpip.text AS travel_plan_provider_text',
+                    'tp.travel_type as plan_type',
+                    'tqpd.provider_name',
+                    'tqpd.plan_name',
+                ]);
+            })
+            ->when($quoteTypeId == QuoteTypeId::Bike, function ($query) {
+                $query->leftJoin('bike_quote_plan_details as bp', 'bp.id', '=', 'pqr.uuid');
+                $query->leftJoin('insurance_provider as bip', 'bip.id', '=', 'bp.insurance_provider_id');
+                $query->addSelect([
+                    'bp.plan_name AS plan_name',
+                    'bip.text AS provider_name',
+                    'bp.repair_type as plan_type',
+                ]);
+            })
+            ->addSelect([
+                DB::raw("
                         CASE 
                         WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
                         WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
@@ -330,9 +329,10 @@ class InstantAlfredService extends BaseService
                         ELSE 'N/A'
                         END as segment
                     "),
-                ])
-                ->groupBy('pqr.id');
-            $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
+            ])
+            ->groupBy('pqr.id');
+        $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
+
         // }
         return $aliases;
     }
@@ -349,9 +349,9 @@ class InstantAlfredService extends BaseService
 
         // $modelData = $aliases[$modelType] ?? $aliases[CarQuote::class];
         $modelData = $aliases[PersonalQuote::class] ?? $aliases[CarQuote::class];
-        
+
         $alias = $modelData['alias'];
-        
+
         $partialQuery = $modelData['query'];
 
         $partialQuery->whereNotNull('chat_initiated_at');
@@ -434,9 +434,9 @@ class InstantAlfredService extends BaseService
 
     public function generateChatConsolidateReport()
     {
-        
+
         $request = request();
-        
+
         // dd($request->quoteType);
         $data = $this->processSqlChatFilters($request)->get();
 
