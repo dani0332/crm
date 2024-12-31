@@ -156,7 +156,7 @@ class SageApiService
             $quoteModelObject = $this->getModelObject($sendUpdateRequest->quoteType);
             $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
             $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quoteDetails, $sendUpdateRequest->reversalInvoice);
-            if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
+            if ($getPaymentByInsurerInvoiceNumber?->send_update_log_id !== null) { // TODO: if($getPaymentByInsurerInvoiceNumber?->send_update_log_id) should work, need to confirm with Bilal
                 // This case if the Reversal Invoice is Endorsement itself
                 $getReverseInvoiceRelation = [
                     'section_type' => $sendUpdateLog->getMorphClass(),
