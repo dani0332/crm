@@ -75,7 +75,7 @@ class EmbeddedProduct
             $nationality = $quoteObject->customer->nationality->text ?? '';
 
             $age = isset($quoteObject->dob) ?
-                floor(Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now())) . ' Years'
+                floor(Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now())).' Years'
                 : '';
             $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
