@@ -147,7 +147,6 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             $emailData->quotePlanLink = $response['quote']['quotePlanLink'];
             $emailData->requestAdvisorLink = $response['quote']['requestAdvisorLink'];
 
-
             $key = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
 
             $emailData->fromEmail = ApplicationStorage::where('key_name', $key)->value('value');
