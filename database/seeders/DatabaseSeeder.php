@@ -21,10 +21,10 @@ class DatabaseSeeder extends Seeder
             PermissionsSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
-            SendUpdateAdditionalSubType::class,
-            PermissionsSeeder::class,
-            AllianceNationalitySeeder::class,
-            SUAdditionalCRNSubTypesSeeder::class,
+            // SendUpdateAdditionalSubType::class,
+            // PermissionsSeeder::class,
+            // AllianceNationalitySeeder::class,
+            // SUAdditionalCRNSubTypesSeeder::class,
         ]);
     }
 }
