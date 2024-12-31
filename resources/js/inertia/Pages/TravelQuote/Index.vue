@@ -109,7 +109,7 @@ const tableHeader = [
     text: 'ADVISOR REQUESTED',
     value: 'sic_advisor_requested',
   },
-  { text: 'Advisor Assigned Date ', value: 'advisor_assigned_date' },
+  { text: 'Advisor Assigned Date And Time', value: 'advisor_assigned_date' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {

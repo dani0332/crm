@@ -78,11 +78,13 @@ class ReAssignCarLeadsJob implements ShouldQueue
                         DB::commit();
                     } catch (\Exception $e) {
                         DB::rollback();
+                        $this->carAllocationService->endBuyLeadProcessing();
                         Log::error($e->getMessage());
                     }
                 } else {
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
+                    $this->carAllocationService->endBuyLeadProcessing();
                 }
             } else {
                 // Log that tier was not found for the lead and skip processing

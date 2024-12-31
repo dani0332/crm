@@ -71,6 +71,8 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.buy_lead_max_capacity as BLMaxCapacity',
                 'lead_allocation.buy_lead_allocation_count as BLAllocationCount',
                 'lead_allocation.buy_lead_status as BLStatus',
+                'lead_allocation.normal_allocation_enabled as normalAllocationEnabled',
+                'lead_allocation.buy_lead_reset_capacity as blResetCap',
             ])
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
