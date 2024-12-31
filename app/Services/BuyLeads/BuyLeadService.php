@@ -88,12 +88,12 @@ class BuyLeadService
             $requestType = 'volume';
         }
 
-        if ($cost <= 0) {
-            return "System is unable to process your request.";
+        if (is_null($cost)) {
+            return "You're neither a value user nor a volume user";
         }
 
-        if (! $cost) {
-            return "You're neither a value user nor a volume user";
+        if ($cost <= 0) {
+            return 'System is unable to process your request.';
         }
 
         return [$cost, $requestType];
