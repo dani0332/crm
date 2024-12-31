@@ -44,7 +44,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     {
         $this->vat = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
 
-        $this->baseUrl = config('constants.ALLIANCE_API_BASE_URL');
+        $this->baseUrl = config('constants.ALLIANCE_API_BASE_URL').'/api';
         $this->authParam = [
             'agency_id' => config('constants.ALLIANCE_AGENCY_ID'),
             'agency_code' => config('constants.ALLIANCE_AGENCY_CODE'),
@@ -97,6 +97,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Travel Type : '.$travelType);
                 $lastCompletedStep = $process->completed_step;
                 $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY;
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Next Step : '.$nextStepToBeExecuted);
 
                 if ($nextStepToBeExecuted) {
                     if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY) {
@@ -232,7 +233,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$issuePolicy);
 
         $issuePolicyResponse = $issuePolicy->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $endPoint, $response['completed_step'], $issuePolicy->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $this->baseUrl.$endPoint, $response['completed_step'], $issuePolicy->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
         if ($issuePolicy->failed()) {
             $response['error'] = $issuePolicyResponse?->errors;
@@ -282,7 +283,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyPurchase);
 
         $policyPurchaseResponse = $policyPurchase->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $endPoint, $response['completed_step'], $policyPurchase->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $this->baseUrl.$endPoint, $response['completed_step'], $policyPurchase->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
         if ($policyPurchase->failed()) {
             $response['error'] = $policyPurchaseResponse?->errors;
@@ -339,7 +340,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
         } while ($retryCount < $maxRetries);
 
-        $this->storePolicyIssuanceLog($quote, $payload, $policyDocumentsResponse, $endPoint, $response['completed_step'], $policyDocuments->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+        $this->storePolicyIssuanceLog($quote, $payload, $policyDocumentsResponse, $this->baseUrl.$endPoint, $response['completed_step'], $policyDocuments->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
         if ($policyDocuments->failed()) {
             $response['error'] = $policyDocumentsResponse?->errors;
 
@@ -384,7 +385,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$buyerTaxInvoice);
 
         $buyerTaxInvoiceResponse = $buyerTaxInvoice->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $buyerTaxInvoiceResponse, $endPoint, $response['completed_step'], $buyerTaxInvoice->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+        $this->storePolicyIssuanceLog($quote, $payload, $buyerTaxInvoiceResponse, $this->baseUrl.$endPoint, $response['completed_step'], $buyerTaxInvoice->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
         if ($buyerTaxInvoice->failed()) {
             $response['error'] = $buyerTaxInvoiceResponse?->errors;
@@ -692,10 +693,14 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     private function allianceHttpCall($endPoint, $param, $method = 'POST')
     {
+        $headers = [
+            'Content-Type' => 'application/json',
+        ];
+
         $payload = array_merge($this->authParam, $param);
         $url = $this->baseUrl.$endPoint;
 
-        return Http::post($url, $payload);
+        return Http::withHeaders($headers)->post($url, $payload);
     }
 
 }

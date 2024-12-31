@@ -1388,7 +1388,7 @@ class SendEmailCustomerService extends BaseService
             'currentInsurer' => $currentInsurer ? $currentInsurer->text : null,
             'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.'/?assignAdvisor=true'),
-            'assignmentType' => $this->getAssignmentTypeText($healthQuote->assignment_type),
+            'assignmentType' => getAssignmentTypeText($healthQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor),
@@ -1405,29 +1405,6 @@ class SendEmailCustomerService extends BaseService
 
             return $this->buildCommonEmailData($lead, $advisor, $previousAdvisor, $request, $emailTemplateId);
         }
-    }
-
-    private function getAssignmentTypeText($assignmentType)
-    {
-        $assignmentText = '';
-        switch ($assignmentType) {
-            case 1:
-                $assignmentText = 'System Assigned';
-                break;
-            case 2:
-                $assignmentText = 'System ReAssigned';
-                break;
-            case 3:
-                $assignmentText = 'Manual Assigned';
-                break;
-            case 4:
-                $assignmentText = 'Manual ReAssigned';
-                break;
-            default:
-                break;
-        }
-
-        return $assignmentText;
     }
 
     private function getPlanBuyNowLink($plan, $uuid)

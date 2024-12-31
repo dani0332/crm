@@ -18,6 +18,7 @@ defineProps({
     default: 0,
   },
   authorizedDays: Number,
+  assignmentTypes: Object,
 });
 
 const page = usePage();
@@ -203,13 +204,6 @@ const subTeamOptions = [
   { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
-];
-
-const assignmentTypeOptions = [
-  { value: 1, label: 'System Assigned' },
-  { value: 2, label: 'System ReAssigned' },
-  { value: 3, label: 'Manual Assigned' },
-  { value: 4, label: 'Manual ReAssigned' },
 ];
 
 const leadStatusOptions = computed(() => {
@@ -789,7 +783,7 @@ watch(() => {
           v-model="filters.assignment_type"
           label="Assignment Type"
           placeholder="Search by Assignment Type"
-          :options="assignmentTypeOptions"
+          :options="assignmentTypes"
           :single="true"
         />
         <x-input

@@ -72,7 +72,29 @@ const tableHeader = ref([
   { text: 'A. Assigned', value: 'autoAllocationCount', sortable: true },
   { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
+  {
+    text: 'Norm Allo.',
+    value: 'normalAllocationEnabled',
+    sortable: true,
+    width: '100',
+  },
   { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
+  {
+    text: 'BL Cap Limit',
+    value: 'BLMaxCapacity',
+    sortable: true,
+    width: '100',
+  },
+  { text: 'BL Status', value: 'BLStatus', sortable: true, width: '100' },
+  {
+    text: 'BL Assigned',
+    value: 'BLAllocationCount',
+    sortable: true,
+    width: '100',
+    tooltip:
+      'The BL ASSIGNED count shows only the leads requested through Buy Leads. It excludes system-assigned leads. Check the TOT. ASSIGNED column for the total number of assigned leads.',
+  },
+  { text: 'BL Reset CAP', value: 'blResetCap', sortable: true, width: '100' },
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
 
@@ -81,6 +103,9 @@ const leadData = ref([
     id: 0,
     userId: 0,
     cap: 0,
+    BlMaxcap: 0,
+    BlCapEdit: false,
+    BlAllocationStatus: false,
     capEdit: false,
     status: '1',
     loading: false,
@@ -88,33 +113,58 @@ const leadData = ref([
   },
 ]);
 
-const currentRow = id => {
+const currentRow = (id, type = 'normal') => {
   const row = leadData?.value.find(item => item.id === id);
-  return row?.capEdit;
+
+  if (type === 'buy-lead') {
+    return row?.BlCapEdit;
+  } else {
+    return row?.capEdit;
+  }
 };
 
-const editCap = id => {
+const editCap = (id, type = 'normal') => {
   if (
     hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
   ) {
     const row = leadData?.value.find(item => item.id === id);
-    row.capEdit = true;
+
+    if (type === 'buy-lead') {
+      row.BlCapEdit = true;
+    } else {
+      row.capEdit = true;
+    }
   }
 };
 
-const updateCap = (value, id) => {
+const updateCap = (value, id, type = 'normal') => {
   const row = leadData?.value.find(item => item.id === id);
-  row.cap = value;
+
+  if (type === 'buy-lead') {
+    row.BlMaxcap = value;
+  } else {
+    row.cap = value;
+  }
 };
 
-const resetCap = (id, maxCapacity) => {
+const resetCap = (id, maxCapacity, type = 'normal') => {
   const row = leadData?.value.find(item => item.id === id);
-  row.cap = maxCapacity;
-  row.capEdit = false;
+
+  if (type === 'buy-lead') {
+    row.BlMaxcap = maxCapacity;
+    row.BlCapEdit = false;
+  } else {
+    row.cap = maxCapacity;
+    row.capEdit = false;
+  }
 };
 
 const isCapChanged = computed(() => {
   return leadData?.value.some(item => item.capEdit);
+});
+
+const isBlCapChanged = computed(() => {
+  return leadData?.value.some(item => item.BlCapEdit);
 });
 
 const onConfirmClose = event => {
@@ -220,18 +270,70 @@ const onToggleResetCap = async (active, userId, leadId) => {
     });
 };
 
-const onSubmitChanges = async () => {
-  loaders.submit = true;
-  const max_cap = leadData?.value
-    .filter(item => item.capEdit && item.cap !== item.maxCapacity)
-    .map(item => {
-      return {
-        userId: item.userId,
-        maxCap: item.cap,
-      };
-    });
+const onToggleBlStatus = async (active, userId, leadId) => {
+  loaders.table = true;
   await axios
-    .post(`/lead-allocation/${page.props.quoteType}/update-cap`, { max_cap })
+    .post('/lead-allocation/toggle-bl-status', {
+      leadId,
+      userId,
+      buyLeadStatus: active,
+    })
+    .finally(() => {
+      loaders.table = false;
+    });
+};
+
+const onToggleNormalAllocation = async (active, userId, laId) => {
+  loaders.table = true;
+  await axios
+    .post('/lead-allocation/toggle-normal-allocation', {
+      laId,
+      userId,
+      nlStatus: active,
+    })
+    .finally(() => {
+      loaders.table = false;
+    });
+};
+
+const onToggleBLResetCap = async (active, userId, laId) => {
+  loaders.table = true;
+  await axios
+    .post('/lead-allocation/toggle-bl-reset-cap', {
+      laId,
+      userId,
+      blResetCap: active,
+    })
+    .finally(() => {
+      loaders.table = false;
+    });
+};
+
+const onSubmitChanges = async type => {
+  loaders.submit = true;
+  let max_cap = leadData?.value;
+
+  if (type === 'buy-lead') {
+    max_cap = max_cap.filter(
+      item => item.BlCapEdit && item.BlMaxcap !== item.BlMaxCapacity,
+    );
+  } else {
+    max_cap = max_cap.filter(
+      item => item.capEdit && item.cap !== item.maxCapacity,
+    );
+  }
+
+  max_cap = max_cap.map(item => {
+    return {
+      userId: item.userId,
+      maxCap: type === 'buy-lead' ? item.BlMaxcap : item.cap,
+    };
+  });
+  await axios
+    .post(`/lead-allocation/${page.props.quoteType}/update-cap`, {
+      type,
+      max_cap,
+    })
     .then(() => {
       router.get('/lead-allocation/car', {
         replace: true,
@@ -384,9 +486,25 @@ onMounted(() => {
             color="emerald"
             :loading="loaders.submit"
             block
-            @click="onSubmitChanges"
+            @click="() => onSubmitChanges()"
           >
             Save Cap Changes
+          </x-button>
+        </div>
+      </TransitionGroup>
+
+      <TransitionGroup name="fade">
+        <div v-if="isBlCapChanged" class="col-span-2">
+          <x-alert type="info" light>For Unlimited Capactiy Add ( -1 )</x-alert>
+        </div>
+        <div v-if="isBlCapChanged" class="col-span-2">
+          <x-button
+            color="emerald"
+            :loading="loaders.submit"
+            block
+            @click="() => onSubmitChanges('buy-lead')"
+          >
+            Save Buy Lead Cap Changes
           </x-button>
         </div>
       </TransitionGroup>
@@ -404,6 +522,15 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
+      <template #header-BLAllocationCount="header">
+        <x-tooltip placement="top">
+          <p class="underline decoration-dotted decoration-primary-600">
+            {{ header.text }}
+          </p>
+          <template #tooltip>{{ header.tooltip }}</template>
+        </x-tooltip>
+      </template>
+
       <template #item-tiers="{ tiers }">
         <div class="relative">
           <x-tooltip placement="top">
@@ -432,6 +559,29 @@ onMounted(() => {
             size="sm"
             ghost
             @click="resetCap(id, maxCapacity)"
+          />
+        </div>
+      </template>
+
+      <template #item-BLMaxCapacity="{ BLMaxCapacity, id }">
+        <div
+          v-if="!currentRow(id, 'buy-lead')"
+          @click="editCap(id, 'buy-lead')"
+        >
+          {{ BLMaxCapacity }}
+        </div>
+        <div v-else class="flex gap-1">
+          <x-input
+            type="number"
+            :value="BLMaxCapacity"
+            class="w-16"
+            @update:model-value="updateCap($event, id, 'buy-lead')"
+          />
+          <x-button
+            icon="reset"
+            size="sm"
+            ghost
+            @click="resetCap(id, maxCapacity, 'buy-lead')"
           />
         </div>
       </template>
@@ -473,6 +623,38 @@ onMounted(() => {
             :is-active="reset_cap"
             :id="id"
             @toggle="onToggleResetCap($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
+      <template #item-BLStatus="{ BLStatus, userId, id }">
+        <div class="text-center">
+          <ItemToggler
+            :is-active="BLStatus"
+            :id="id"
+            @toggle="onToggleBlStatus($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
+      <template
+        #item-normalAllocationEnabled="{ normalAllocationEnabled, userId, id }"
+      >
+        <div class="text-center">
+          <ItemToggler
+            :is-active="normalAllocationEnabled"
+            :id="id"
+            @toggle="onToggleNormalAllocation($event.active, userId, id)"
+          />
+        </div>
+      </template>
+
+      <template #item-blResetCap="{ blResetCap, userId, id }">
+        <div class="text-center">
+          <ItemToggler
+            :is-active="blResetCap"
+            :id="id"
+            @toggle="onToggleBLResetCap($event.active, userId, id)"
           />
         </div>
       </template>
