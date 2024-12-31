@@ -207,8 +207,6 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($request->segment) && $request->segment != 'all' && $request->segment != '') {
-            $query = $modelType == HealthQuote::class ? 'hqr' : ($modelType == CarQuote::class ? 'cqr' : 'tqr');
-            $quoteTypeId = $modelType == HealthQuote::class ? QuoteTypeId::Health : ($modelType == CarQuote::class ? QuoteTypeId::Car : QuoteTypeId::Travel);
             $partialQuery->having('segment', '=', $request->segment);
         }
 
