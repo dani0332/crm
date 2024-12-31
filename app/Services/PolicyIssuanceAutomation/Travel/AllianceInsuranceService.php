@@ -44,7 +44,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     {
         $this->vat = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
 
-        $this->baseUrl = config('constants.ALLIANCE_API_BASE_URL');
+        $this->baseUrl = config('constants.ALLIANCE_API_BASE_URL').'/api';
         $this->authParam = [
             'agency_id' => config('constants.ALLIANCE_AGENCY_ID'),
             'agency_code' => config('constants.ALLIANCE_AGENCY_CODE'),
@@ -97,6 +97,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Travel Type : '.$travelType);
                 $lastCompletedStep = $process->completed_step;
                 $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY;
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Next Step : '.$nextStepToBeExecuted);
 
                 if ($nextStepToBeExecuted) {
                     if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY) {
@@ -692,10 +693,14 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     private function allianceHttpCall($endPoint, $param, $method = 'POST')
     {
+        $headers = [
+            'Content-Type' => 'application/json',
+        ];
+
         $payload = array_merge($this->authParam, $param);
         $url = $this->baseUrl.$endPoint;
 
-        return Http::post($url, $payload);
+        return Http::withHeaders($headers)->post($url, $payload);
     }
 
 }
