@@ -36,7 +36,7 @@ class BirdService extends BaseService
                 : $request->$method($url, ['query' => $data]);
 
             // Log the response details
-            info('Bird Webhook Response received', array_merge($logContext, ['Headers' => $response->headers() ?? '', 'Status' => $response->status(), 'Body' => $response->body()]));
+            info("Bird Webhook Response: Ref-ID: {$uuid} | Status: {$response->status()} | Time: ".now());
 
             return (object) ['headers' => $response->headers() ?? '', 'body' => $response->body(), 'status_code' => $response->status()];
         } catch (\Exception $e) {

@@ -109,6 +109,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
+            $this->healthAllocationService->endBuyLeadProcessing();
             Log::error($e->getMessage());
         }
     }
