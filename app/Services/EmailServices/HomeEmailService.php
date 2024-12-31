@@ -91,7 +91,7 @@ class HomeEmailService extends BaseService
             'refID' => $lead->code,
             'customerMobile' => $lead->mobile_no ?? '',
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HOME, $lead->uuid),
-            'flowExecutedAt' => $lead->flow_executed_at ?? null,
+            'flowExecutedAt' => $lead->automated_flow_executed_at ?? null,
 
             // Home quote-related data
             'automatedFlowExecuted' => ! empty($homeQuote?->automated_flow_executed_at),
@@ -123,9 +123,15 @@ class HomeEmailService extends BaseService
     {
         try {
             info( self::class." - attachHomeOCBPDFToEmail - Generating PDF for Quote UID: {$quoteUID} | Time: " . now());
-
+            $quotePlans = app(HomeQuoteService::class)->getQuotePlans($quoteUID);
             // Generate the PDF
-            $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID]);
+            $planIds = [];
+            if(isset($quotePlans->quotes->plans)){
+                $planIds = collect($quotePlans->quotes->plans)->pluck('id')->take(6)->toArray() ?? [];
+            }
+
+
+            $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
             $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
 
             info( self::class." - attachHomeOCBPDFToEmail - Storing PDF temporarily for Quote UID: {$quoteUID} | Time: " . now());
