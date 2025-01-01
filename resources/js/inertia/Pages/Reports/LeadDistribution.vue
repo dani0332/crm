@@ -9,6 +9,7 @@ const loaders = reactive({
 });
 const page = usePage();
 const can = permission => useCan(permission);
+const { isRequired } = useRules();
 const permissionsEnum = page.props.permissionsEnum;
 let quoteSegments = reactive(page.props.quoteSegments ?? []);
 
@@ -21,30 +22,37 @@ const tableHeader = [
   {
     text: 'Team Name',
     value: 'team_name',
+    tooltip: 'Filter teams by selected LOB.',
   },
   {
     text: 'Received Leads',
     value: 'received_leads',
+    tooltip: 'Leads received via webform i.e. IM Leads.',
   },
   {
     text: 'LEADS CREATED',
     value: 'lead_created',
+    tooltip: 'Leads manually created in IMCRM.',
   },
   {
     text: 'TOTAL LEADS',
     value: 'total_leads',
+    tooltip: 'Total of IMCRM and webform leads.',
   },
   {
     text: 'UNASSIGNED LEADS',
     value: 'unassigned_leads',
+    tooltip: 'Leads not yet assigned to advisors.',
   },
   {
     text: 'AUTO ASSIGNED',
     value: 'auto_assigned',
+    tooltip: 'System-assigned IM Leads to advisors.',
   },
   {
     text: 'MANUALLY ASSIGNED',
     value: 'manually_assigned',
+    tooltip: 'Leads manually assigned by the manager.',
   },
 ];
 
@@ -192,25 +200,41 @@ const onLobChange = (e, isOnMounted = false) => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
-          v-model="filters.lob"
-          label="Line of Business"
-          placeholder="Select Line of Business"
-          :options="quoteTypesOptions"
-          class="w-full"
-          :single="true"
-          @update:modelValue="onLobChange"
-        />
+        <div>
+          <label>
+            Line of Business <span class="text-red-500">*</span>
+          </label>
+          <ComboBox
+            v-model="filters.lob"
+            placeholder="Select Line of Business"
+            :options="quoteTypesOptions"
+            class="w-full"
+            :single="true"
+            @update:modelValue="onLobChange"
+            :rules="[isRequired]"
+          />
+        </div>
 
-        <DatePicker
-          v-model="filters.createdAtDates"
-          label="Created Date"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
-          size="sm"
-          model-type="yyyy-MM-dd"
-        />
+        <div>
+          <x-tooltip position="top">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Created Date <span class="text-red-500">*</span>
+            </label>
+            <template #tooltip> The date when the lead is created. </template>
+          </x-tooltip>
+          <DatePicker
+            v-model="filters.createdAtDates"
+            placeholder="Select Start & End Date"
+            range
+            :max-range="92"
+            size="sm"
+            model-type="yyyy-MM-dd"
+            :rules="[isRequired]"
+            :onlySelect="true"
+          />
+        </div>
 
         <ComboBox
           v-model="filters.assignmentTypes"
@@ -256,6 +280,13 @@ const onLobChange = (e, isOnMounted = false) => {
       hide-rows-per-page
       hide-footer
     >
+      <template
+        v-for="header in tableHeader"
+        :key="header.value"
+        #[`header-${header.value}`]="header"
+      >
+        <HeaderWithTooltip :header="header" />
+      </template>
       <template #body-append>
         <tr
           v-if="reportData.data && reportData.data.length > 0"
