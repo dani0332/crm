@@ -4,12 +4,14 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\ActivityAlertEmailJob;
 use App\Jobs\ReAssignBikeLeadsJob;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
+use App\Jobs\ReAssignLeads;
 use App\Models\ApplicationStorage;
 use App\Models\Sessions;
 use App\Models\Team;
@@ -91,9 +93,9 @@ class UpdateUserStatus extends Command
                     info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus.' for user : '.$session->user->name);
                     User::where('id', $userId)->update(['status' => $newStatus]);
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
-                        $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()->pluck('id');
-                        $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()->pluck('id');
-                        $bikeId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Bike)->first()->pluck('id');
+                        $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()?->id;
+                        $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()?->id;
+                        $bikeId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Bike)->first()?->id;
                         if ($this->userHaveProduct($userId, $carId)) {
                             info('System triggered car reassignment job for user : '.$session->user->name);
                             ReAssignCarLeadsJob::dispatch(new CarAllocationService, $userId);
@@ -106,6 +108,15 @@ class UpdateUserStatus extends Command
                             info('System triggered bike reassignment job for user : '.$session->user->name);
                             ReAssignBikeLeadsJob::dispatch(new BikeAllocationService, $userId);
                         }
+
+                        // Disabled Leads Auto Re Assignment for below Types as this is not needed at the moment
+                        // foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {
+                        //     $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
+                        //     if ($this->userHaveProduct($userId, $team->id)) {
+                        //         info("user belongs to {$quoteType->value} so dispatching {$quoteType->value} reassignment job");
+                        //         ReAssignLeads::dispatch($quoteType, $userId);
+                        //     }
+                        // }
                     }
                 } else {
                     if ($newStatus == UserStatusEnum::OFFLINE && $subtime > $lastActivity) {

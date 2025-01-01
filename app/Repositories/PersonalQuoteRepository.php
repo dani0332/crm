@@ -15,9 +15,9 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\GetWatermarkPropertyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +26,6 @@ use Illuminate\Support\Facades\DB;
 class PersonalQuoteRepository extends BaseRepository
 {
     use GenericQueriesAllLobs;
-    use GetWatermarkPropertyTrait;
 
     public function model()
     {
@@ -109,7 +108,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $quote = $this->getQuoteObject($quoteType ?? '', $id);
             }
 
-            $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType, $insuranceProviderId);
+            $isWaterMarkQualifyDoc = app(QuoteDocumentService::class)->getWatermarkProperty($quote, $documentType, $insuranceProviderId);
 
             $originalName = sanitizeFileName($file->getClientOriginalName());
             $docName = preg_replace('/\s+/', '', $originalName);
@@ -165,10 +164,10 @@ class PersonalQuoteRepository extends BaseRepository
 
                 if ($isWaterMarkQualifyDoc && $quoteDocument) {
                     WatermarkDocumentsJob::dispatch(
-                        $quoteDocument->id, $docName, $data['quote_uuid'], $documentType->id
-                    );
+                        $quoteDocument->id, $data['quote_uuid'], $documentType->id
+                    )->afterCommit();
                 } else {
-                    info('Watermkark job not dispatched - Ref: '.$quote->code);
+                    info('Watermark job not dispatched - Ref: '.$quote->code);
                 }
 
                 if (! $insuranceProviderId && request()->is_send_update) {

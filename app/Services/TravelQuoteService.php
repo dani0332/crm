@@ -82,6 +82,7 @@ class TravelQuoteService extends BaseService
             'ps.text AS payment_status_id_text',
             'tqr.plan_id',
             'tp.text AS plan_id_text',
+            // 'tp.id as plan_new_id_text',
             'tpip.text AS travel_plan_provider_text',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
@@ -91,6 +92,7 @@ class TravelQuoteService extends BaseService
             'tqrd.insly_id',
             'ls.text as lost_reason',
             'tqrd.notes',
+            'tqrd.advisor_assigned_date',
             'tqr.currently_located_in_id',
             'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
@@ -112,8 +114,12 @@ class TravelQuoteService extends BaseService
             'tqr.has_arrived_uae',
             'tqr.start_date',
             'tqr.end_date',
-            'direction_code',
-            'coverage_code',
+            'tqr.insurer_api_status_id',
+            'tqr.api_issuance_status_id',
+            'tqr.start_date',
+            'tqr.end_date',
+            'tqr.direction_code',
+            'tqr.coverage_code',
             'tqr.primary_member_id',
             'tqr.risk_score',
             'tqr.kyc_decision',
@@ -381,11 +387,6 @@ class TravelQuoteService extends BaseService
             $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
 
-        if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-            $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
-            $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
@@ -413,7 +414,7 @@ class TravelQuoteService extends BaseService
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $this->query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->code) && $request->code != '') {
@@ -433,6 +434,9 @@ class TravelQuoteService extends BaseService
         }
         if (isset($request->policy_number) && $request->policy_number != '') {
             $this->query->where('tqr.policy_number', $request->policy_number);
+        }
+        if (isset($request->insurer_api_status_id) && $request->insurer_api_status_id != '') {
+            $this->query->whereIn('tqr.insurer_api_status_id', $request->insurer_api_status_id);
         }
         if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -494,6 +498,18 @@ class TravelQuoteService extends BaseService
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
             $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
+        if ($request->has('amlStatus') && $request->amlStatus != '') {
+            $this->query->whereIn('tqr.aml_status', $request->amlStatus);
+        }
+
+        if ($request->has('insurance_provider_ids') && $request->insurance_provider_ids != '') {
+            $this->query->whereIn('tqr.insurance_provider_id', $request->insurance_provider_ids);
+        }
+
+        if ($request->has('plan_name') && $request->plan_name != '') {
+            $this->query->whereIn('tqr.plan_id', $request->plan_name);
         }
 
         foreach ($searchProperties as $item) {
@@ -1074,7 +1090,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->save();
     }
 
-    public function createDuplicateLead($leadModal)
+    public function createDuplicateLead($leadModal, $quoteStatusId)
     {
         if (! $leadModal) {
             return false; // Add validation to avoid failure if $leadModal is null
@@ -1090,6 +1106,8 @@ class TravelQuoteService extends BaseService
         $duplicateLead->uuid = $leadModal->uuid.'-1';
         $duplicateLead->code = $newLeadCode;
         $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
+        $duplicateLead->quote_status_id = $quoteStatusId;
+        $duplicateLead->region_cover_for_id = $leadModal->region_cover_for_id;
         $duplicateLead->save();
 
         if ($duplicateLead) {
@@ -1103,12 +1121,45 @@ class TravelQuoteService extends BaseService
                 });
             });
 
+            // Update the above 65 age member
+            $aboveAgeMemberCount = $this->getAboveAgeMembers($leadModal->id);
+            info("Above age member count for lead code {$leadModal->code}: {$aboveAgeMemberCount}");
+            if ($aboveAgeMemberCount > 0) {
+                info("Updating above age members for lead code {$leadModal->code} to duplicate lead code {$duplicateLead->code}");
+                $this->updateAboveAgeMember($leadModal->id, $duplicateLead->id);
+            }
+
             info("Updating plan and premium for parent lead code {$leadModal->code} and child lead code {$duplicateLead->code}");
             // update plan & premium for parent & child lead
             $this->updatePlanAndPremium($leadModal, $duplicateLead);
+
+            $leadModal->TravelDestinations()->get()->each(function ($destination) use ($duplicateLead) {
+                $duplicateDestination = $destination->replicate();
+                $duplicateDestination->quote_id = $duplicateLead->id;
+                $duplicateDestination->uuid = $duplicateLead->uuid;
+                $duplicateDestination->save();
+            });
         }
 
         return true;
+    }
+
+    private function updatePlanAndPremium($parentLead, $childLead)
+    {
+        $parentPayment = Payment::where('code', $parentLead->code)->first();
+        $childPayment = Payment::where('code', $childLead->code)->first();
+
+        $parentLead->premium = $parentPayment->total_price;
+        $parentLead->plan_id = $parentPayment->plan_id;
+        $parentLead->insurance_provider_id = $parentPayment->insurance_provider_id;
+        $parentLead->save();
+        info("Updated parent lead code {$parentLead->code} with premium {$parentLead->premium} and plan ID {$parentLead->plan_id}");
+
+        $childLead->premium = $childPayment->total_price;
+        $childLead->plan_id = $childPayment->plan_id;
+        $childLead->insurance_provider_id = $childPayment->insurance_provider_id;
+        $childLead->save();
+        info("Updated child lead code {$childLead->code} with premium {$childLead->premium} and plan ID {$childLead->plan_id}");
     }
 
     public function getTravelDestinations($id)
@@ -1272,21 +1323,12 @@ class TravelQuoteService extends BaseService
         return $access;
     }
 
-    private function updatePlanAndPremium($parentLead, $childLead)
+    // Update above age members to new quote
+    private function updateAboveAgeMember($oldQuoteId, $newQuoteId)
     {
-        $parentPayment = Payment::where('code', $parentLead->code)->first();
-        $childPayment = Payment::where('code', $childLead->code)->first();
-
-        $parentLead->premium = $parentPayment->total_price;
-        $parentLead->plan_id = $parentPayment->plan_id;
-        $parentLead->insurance_provider_id = $parentPayment->insurance_provider_id;
-        $parentLead->save();
-        info("Updated parent lead code {$parentLead->code} with premium {$parentLead->premium} and plan ID {$parentLead->plan_id}");
-
-        $childLead->premium = $childPayment->total_price;
-        $childLead->plan_id = $childPayment->plan_id;
-        $childLead->insurance_provider_id = $childPayment->insurance_provider_id;
-        $childLead->save();
-        info("Updated child lead code {$childLead->code} with premium {$childLead->premium} and plan ID {$childLead->plan_id}");
+        CustomerMembers::where('quote_id', $oldQuoteId)
+            ->where('quote_type', 'App\Models\TravelQuote')
+            ->whereDate('dob', '<=', now()->subYears(65))
+            ->update(['quote_id' => $newQuoteId]);
     }
 }

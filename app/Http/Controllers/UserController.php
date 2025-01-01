@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
+use App\Models\BusinessTypeOfInsurance;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\DepartmentService;
@@ -86,6 +87,7 @@ class UserController extends Controller
         $subTeams = [];
         $permissions = Permission::orderBy('name')->get();
         $departments = $this->userService->getDepartmentsList();
+        $businessTypes = BusinessTypeOfInsurance::select('id as value', 'text as label')->get();
 
         return inertia('Admin/Users/Form', [
             'roles' => $roles,
@@ -94,6 +96,7 @@ class UserController extends Controller
             'departments' => $departments,
             'subTeams' => $subTeams,
             'permissions' => $permissions,
+            'businessTypes' => $businessTypes,
         ]);
     }
 
@@ -153,6 +156,9 @@ class UserController extends Controller
 
         $user->assignRole($request->input('roles'));
 
+        // if Corpline Advisor exists, then set Business Types otherwise set it as empty
+        $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
+
         return redirect(route('users.show', $user->id))->with('success', $user->name.' with a email '.$user->email.' '.'has been store');
     }
 
@@ -174,6 +180,7 @@ class UserController extends Controller
         $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
         $user->roles = $user->roles->pluck('name')->toArray();
         $user->permissions = $user->permissions->pluck('name')->toArray();
+        $user->businessTypes = $user->businessTypes->pluck('text')->toArray();
         $user->department = $user->department ?? '';
         $departments = implode(',', $user->departments->pluck('name')->toArray()) ?? '';
 
@@ -207,6 +214,7 @@ class UserController extends Controller
         $roles = Role::pluck('name', 'name')->all();
         $userRole = $user->roles->pluck('name', 'name')->all();
         $userProductIds = $this->getUserProducts($user->id)->pluck('id')->toArray();
+        $userBusinessTypeIds = $user->businessTypes->pluck('id')->toArray();
         $teams = $this->getTeamsByProductIds($userProductIds);
         $subTeams = $this->getSubTeamsByTeamIds($teams->pluck('id'));
 
@@ -224,6 +232,7 @@ class UserController extends Controller
         $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
         $departmentIds = $this->getUserDepartments($user->id)->pluck('department_id')->toArray();
         $departments = $this->userService->getDepartmentsList();
+        $businessTypes = BusinessTypeOfInsurance::select('id as value', 'text as label')->get();
 
         return inertia('Admin/Users/Form', [
             'user' => $user,
@@ -241,6 +250,8 @@ class UserController extends Controller
             'userManagerIds' => $userManagerIds,
             'permissions' => $permissions,
             'userPermissions' => $userPermissions,
+            'businessTypes' => $businessTypes,
+            'userBusinessTypeIds' => $userBusinessTypeIds,
         ]);
     }
 
@@ -356,6 +367,9 @@ class UserController extends Controller
         // Updating user roles
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
+
+        // if Corpline Advisor exists, then set Business Types otherwise set it as empty
+        $user->businessTypes()->sync($user->hasRole(RolesEnum::CorpLineAdvisor) ? request('businessTypes', []) : []);
 
         return redirect(route('users.show', $user->id))->with('success', 'User has been updated');
     }

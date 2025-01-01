@@ -742,7 +742,7 @@ class RenewalsUploadService
             $detailData = [];
 
             $quoteObject = $this->createQuoteObject($quoteType->code);
-            if ($this->checkForExistingQuote($data, $renewalQuoteProcess, $renewalUploadLead, $quoteObject)) {
+            if ($this->checkForExistingQuote($data, $renewalQuoteProcess, $renewalUploadLead, $quoteObject, $quoteType)) {
                 return false;
             }
             $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
@@ -932,14 +932,22 @@ class RenewalsUploadService
      * @param [type] $quoteObject
      * @return bool
      */
-    private function checkForExistingQuote($data, $renewalQuoteProcess, $renewalUploadLead, $quoteObject)
+    private function checkForExistingQuote($data, $renewalQuoteProcess, $renewalUploadLead, $quoteObject, $quoteType)
     {
         $leadValidationErrors = collect($renewalQuoteProcess->validation_errors);
-        $existingQuote = $quoteObject->where('previous_quote_policy_number', $renewalQuoteProcess->policy_number)
-            ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
-            ->first();
+        $isQuotePersonal = checkPersonalQuotes($quoteType->code);
 
-        if ($existingQuote) {
+        $existingQuote = $isQuotePersonal ?
+            $quoteObject->where('quote_type_id', $quoteType->id)->where('previous_quote_policy_number', $renewalQuoteProcess->policy_number)
+                ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
+                ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
+                ->first() :
+            $quoteObject->where('previous_quote_policy_number', $renewalQuoteProcess->policy_number)
+                ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
+                ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
+                ->first();
+
+        if ($existingQuote && $existingQuote != null) {
             $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
             $renewalQuoteProcess->validation_errors = $leadValidationErrors;
             $renewalQuoteProcess->status = RenewalProcessStatuses::BAD_DATA;
@@ -986,6 +994,7 @@ class RenewalsUploadService
             $quoteObject = $this->createQuoteObject(ucfirst($quoteType->code));
 
             $quote = $quoteObject->where('previous_quote_policy_number', $data['policy_number'])
+                ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
                 ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))->first();
 
             throw_unless($quote, ('Quote not found for PolicyNumber: '.$data['policy_number'].' EndDate: '.$data['end_date'].' Batch: '.$renewalQuoteProcess->batch));
@@ -1571,6 +1580,7 @@ class RenewalsUploadService
 
                 $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
                 $quoteTypeObject = $this->createQuoteObject($quoteType->code);
+                $isQuotePersonal = checkPersonalQuotes($quoteType->code);
 
                 $leadData = (object) $lead->data;
                 info('CQF VALIDATION - Checking Quote Existence PolicyNo - '.$lead->policy_number.' Quote Type - '.json_encode($quoteTypeObject));
@@ -1578,7 +1588,7 @@ class RenewalsUploadService
                     $leadValidationErrors->push('Policy Number is mandatory for update process');
                 } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->policy_number && $quoteTypeObject) {
                     info('CQF VALIDATION - Checking Quote Existence 1 - '.$lead->policy_number);
-                    if (! $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
+                    if (! $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first()) {
                         $leadValidationErrors->push('Quote does not exist for this policy number, use upload and create');
                     } else {
                         info('CQF VALIDATION - Quote Found for Update - '.$lead->policy_number);
@@ -1633,7 +1643,9 @@ class RenewalsUploadService
                 }
 
                 if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number && $quoteTypeObject) {
-                    if ($quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
+                    $quoteExist = $isQuotePersonal == 1 ? $quoteTypeObject->where('quote_type_id', $quoteType->id)->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first() : $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first();
+
+                    if ($quoteExist != null && isset($quoteExist)) {
                         $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
                     }
                 }

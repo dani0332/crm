@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -226,21 +228,36 @@ class User extends Authenticatable implements AuditableContract
     public function hasMyLeadAccess()
     {
         return Auth::user()->hasAnyRole([
-            RolesEnum::Admin, RolesEnum::BusinessAdvisor, RolesEnum::HealthAdvisor, RolesEnum::HomeAdvisor,
-            RolesEnum::LifeAdvisor, RolesEnum::TravelAdvisor, RolesEnum::GMAdvisor, RolesEnum::RMAdvisor, RolesEnum::CorpLineAdvisor,
-            RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor,
-            RolesEnum::TravelAdvisor, RolesEnum::HealthRenewalAdvisor,
+            RolesEnum::Admin,
+            RolesEnum::BusinessAdvisor,
+            RolesEnum::HealthAdvisor,
+            RolesEnum::HomeAdvisor,
+            RolesEnum::LifeAdvisor,
+            RolesEnum::TravelAdvisor,
+            RolesEnum::GMAdvisor,
+            RolesEnum::RMAdvisor,
+            RolesEnum::CorpLineAdvisor,
+            RolesEnum::EBPAdvisor,
+            RolesEnum::HealthRenewalAdvisor,
+            RolesEnum::TravelAdvisor,
+            RolesEnum::HealthRenewalAdvisor,
             RolesEnum::LifeRenewalAdvisor,
-            RolesEnum::HomeRenewalAdvisor, RolesEnum::GMRenewalAdvisor,
+            RolesEnum::HomeRenewalAdvisor,
+            RolesEnum::GMRenewalAdvisor,
             RolesEnum::CorpLineRenewalAdvisor,
-            RolesEnum::PetRenewalAdvisor, RolesEnum::CarRenewalAdvisor, RolesEnum::PetAdvisor,
+            RolesEnum::PetRenewalAdvisor,
+            RolesEnum::CarRenewalAdvisor,
+            RolesEnum::PetAdvisor,
         ]);
     }
 
     public function hasPolicyIssuanceAccess()
     {
         return Auth::user()->hasAnyRole([
-            RolesEnum::Advisor, RolesEnum::PA, RolesEnum::Payment, RolesEnum::Invoicing,
+            RolesEnum::Advisor,
+            RolesEnum::PA,
+            RolesEnum::Payment,
+            RolesEnum::Invoicing,
             RolesEnum::ProductionApprovalManager,
         ]);
     }
@@ -313,9 +330,9 @@ class User extends Authenticatable implements AuditableContract
     /**
      * @return mixed
      */
-    public function scopeWithActive($query)
+    public function scopeActiveUser($query)
     {
-        return $query->where('is_active', 1);
+        return $query->where('users.is_active', 1);
     }
 
     /**
@@ -341,13 +358,11 @@ class User extends Authenticatable implements AuditableContract
     public function sessions()
     {
         return $this->hasMany(Sessions::class);
-
     }
 
     public function products()
     {
         return $this->hasMany(UserProducts::class);
-
     }
 
     public function department()
@@ -355,8 +370,42 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsTo(Department::class)->select('id', 'name');
     }
 
+    public function businessTypes()
+    {
+        return $this->belongsToMany(BusinessTypeOfInsurance::class, 'business_type_of_insurance_user', 'user_id', 'business_type_of_insurance_id');
+    }
+
     public function departments()
     {
         return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
+    }
+
+    public function isValueUser()
+    {
+        return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VALUE);
+    }
+
+    public function isVolumeUser()
+    {
+        return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VOLUME);
+    }
+
+    public function scopeIsValueUser($q)
+    {
+        $q->whereHas('subTeam', function ($q) {
+            $q->where('name', 'like', TeamNameEnum::VALUE);
+        });
+    }
+
+    public function scopeIsVolumeUser($q)
+    {
+        $q->whereHas('subTeam', function ($q) {
+            $q->where('name', 'like', TeamNameEnum::VOLUME);
+        });
+    }
+
+    public function scopeChs($query)
+    {
+        return $query->where('email', PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL);
     }
 }

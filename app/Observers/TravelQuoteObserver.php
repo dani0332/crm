@@ -45,8 +45,14 @@ class TravelQuoteObserver
         if (isset($dirty['advisor_id'])) {
             try {
                 $travelQuote->markLeadAllocationPassed();
-                $oldAdvisorId = $changes['advisor_id']['old'];
-                TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
+
+                // If advisor is not CHS advisor, then send FTC email
+                if (isCHSAdvisor($dirty['advisor_id'])) {
+                    info(self::class." - Advisor is CHS advisor for uuid: {$travelQuote->uuid} so not sending FTC email");
+                } else {
+                    $oldAdvisorId = $changes['advisor_id']['old'];
+                    TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
+                }
             } catch (Exception $e) {
                 Log::error('TravelQuoteObserver - travel quote advisor updated failed', [
                     'error' => $e->getMessage(),
