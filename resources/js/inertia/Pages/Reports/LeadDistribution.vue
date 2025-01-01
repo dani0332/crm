@@ -201,9 +201,7 @@ const onLobChange = (e, isOnMounted = false) => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <label>
-            Line of Business <span class="text-red-500">*</span>
-          </label>
+          <label> Line of Business <span class="text-red-500">*</span> </label>
           <ComboBox
             v-model="filters.lob"
             placeholder="Select Line of Business"
