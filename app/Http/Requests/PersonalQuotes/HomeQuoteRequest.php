@@ -40,6 +40,11 @@ class HomeQuoteRequest extends FormRequest
             'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
             'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
             'is_property_rented_holiday_home' => 'required_if:iam_possesion_type_id,2',
+
+            'addressObj' => 'required|array',
+            'addressObj.villa_apartment_office_no' => 'required|string|max:50',
+            'addressObj.villa_building_name' => 'required|string|max:100',
+            'addressObj.street_name' => 'required|string|max:150',
         ];
     }
 
@@ -90,6 +95,18 @@ class HomeQuoteRequest extends FormRequest
             'iam_possesion_type_id.exists' => 'The selected ownership status is invalid.',
 
             'is_property_rented_holiday_home.required_if' => 'The owner occupancy type is required if you are renting out your property.',
+
+            'addressObj.required' => 'The address information is required.',
+            'addressObj.array' => 'The address information must be an array.',
+            'addressObj.villa_apartment_office_no.required' => 'The villa/apartment/office number is required.',
+            'addressObj.villa_apartment_office_no.string' => 'The villa/apartment/office number must be a string.',
+            'addressObj.villa_apartment_office_no.max' => 'The villa/apartment/office number cannot exceed 50 characters.',
+            'addressObj.villa_building_name.required' => 'The building name is required.',
+            'addressObj.villa_building_name.string' => 'The building name must be a string.',
+            'addressObj.villa_building_name.max' => 'The building name cannot exceed 100 characters.',
+            'addressObj.street_name.required' => 'The street name is required.',
+            'addressObj.street_name.string' => 'The street name must be a string.',
+            'addressObj.street_name.max' => 'The street name cannot exceed 150 characters.',
         ];
     }
 }

@@ -61,9 +61,10 @@ const quoteForm = useForm({
       : null,
   addressObj: {
     villa_apartment_office_no:
-      page.props.customerAddressData?.office_number || null,
-    villa_building_name: page.props.customerAddressData?.building_name || null,
-    street_name: page.props.customerAddressData?.street || null,
+      page.props.customerAddressData?.villa_apartment_office_no || null,
+    villa_building_name:
+      page.props.customerAddressData?.villa_building_name || null,
+    street_name: page.props.customerAddressData?.street_name || null,
   },
 });
 
@@ -89,6 +90,7 @@ function successResponse() {
 }
 
 function onSubmit(isValid) {
+  console.log('onSubmit:', quoteForm);
   try {
     if (!isFormValid() || !isValid) {
       console.info('Form validation failed.');
@@ -523,27 +525,33 @@ const personalBelongingsInAEDOptions = computed(() => {
           />
         </x-field>
 
-        <x-field label="Floor and Villa/ Apartment number">
+        <x-field label="Floor and Villa/ Apartment number" required>
           <x-input
             type="text"
+            :rules="[isRequired]"
             v-model="quoteForm.addressObj.villa_apartment_office_no"
             class="w-full"
+            :error="quoteForm?.errors?.villa_apartment_office_no"
           />
         </x-field>
 
-        <x-field label="Villa/ Building name">
+        <x-field label="Villa/ Building name" required>
           <x-input
             type="text"
+            :rules="[isRequired]"
             v-model="quoteForm.addressObj.villa_building_name"
             class="w-full"
+            :error="quoteForm?.errors?.villa_building_name"
           />
         </x-field>
 
-        <x-field label="Street name">
+        <x-field label="Street name" required>
           <x-input
             type="text"
+            :rules="[isRequired]"
             v-model="quoteForm.addressObj.street_name"
             class="w-full"
+            :error="quoteForm?.errors?.street_name"
           />
         </x-field>
 
