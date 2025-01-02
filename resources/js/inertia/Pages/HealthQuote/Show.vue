@@ -1952,7 +1952,10 @@ const onAddUpdate = () => {
     </x-modal>
 
     <div
-      v-if="!$page.props.can.isAdvisor || hasRole(rolesEnum.SuperManagerLeadAllocation)"
+      v-if="
+        !$page.props.can.isAdvisor ||
+        hasRole(rolesEnum.SuperManagerLeadAllocation)
+      "
       class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
     >
       <Collapsible :expanded="sectionExpanded">

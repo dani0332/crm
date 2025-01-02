@@ -400,7 +400,13 @@ onMounted(() => {});
     </x-form>
 
     <Transition name="fade">
-      <div v-if="quotesSelected.length > 0 && hasRole(rolesEnum.SuperManagerLeadAllocation)" class="mb-4">
+      <div
+        v-if="
+          quotesSelected.length > 0 &&
+          hasRole(rolesEnum.SuperManagerLeadAllocation)
+        "
+        class="mb-4"
+      >
         <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
