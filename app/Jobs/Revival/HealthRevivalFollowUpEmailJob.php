@@ -117,14 +117,10 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                 $planObj->eligibilityName = $plan['eligibilityName'];
                 $planObj->planCode = $plan['planCode'];
                 $planObj->providerCode = $plan['providerCode'];
-                $planObj->total = $plan['premium'];
-                $planObj->buynowURL = $plan['planLink'];
+                $planObj->total = $plan['total'];
+                $planObj->buynowURL = $plan['buynowURL'];
+                $planObj->planBenefit = $plan['planBenefit'];
 
-                $lowestRate = collect($plan['ratesPerCopay'])->sortBy('discountPremium')->first();
-
-                $coPaymentsCollection = collect($plan['coPayments']);
-                $filteredSelectedCopay = $coPaymentsCollection->where('id', $lowestRate['healthPlanCoPaymentId'])->first();
-                $planObj->planBenefit = $this->getBenefitsDetails($plan['benefits'], $filteredSelectedCopay);
                 $plansArray[] = $planObj;
             }
 
