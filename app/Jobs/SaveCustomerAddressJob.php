@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class SaveCustomerAddressJob implements ShouldQueue
@@ -25,16 +24,14 @@ class SaveCustomerAddressJob implements ShouldQueue
     public $backoff = 300;
     public $quoteUID;
     public $address;
-    protected $customerAddress;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(string $quoteUID, array $address, CustomerAddress $customerAddress)
+    public function __construct(string $quoteUID, array $address)
     {
         $this->quoteUID = $quoteUID;
         $this->address = $address;
-        $this->customerAddress = $customerAddress;
     }
 
     /**
@@ -64,29 +61,46 @@ class SaveCustomerAddressJob implements ShouldQueue
                 // Format the address data
                 $custmerAddress = app(HomeQuoteService::class)->formatAddress($customerId, $subArea, $this->quoteUID, $this->address);
 
+                if (empty($custmerAddress)) {
+                    throw new InvalidArgumentException('Formatted address data is empty.');
+                }
+
                 // Save the customer address
-                $this->customerAddress->create($custmerAddress);
+                CustomerAddress::create($custmerAddress);
 
                 info('Customer address saved successfully', ['quoteUID' => $this->quoteUID]);
             } else {
                 info('Quote data not found', ['quoteUID' => $this->quoteUID]);
             }
         } catch (InvalidArgumentException $e) {
-            Log::error('Invalid address data', [
+            info('Invalid address data', [
                 'quoteUID' => $this->quoteUID,
                 'error' => $e->getMessage(),
             ]);
         } catch (ModelNotFoundException $e) {
-            Log::error('Quote data not found', [
+            info('Quote data not found', [
                 'quoteUID' => $this->quoteUID,
                 'error' => $e->getMessage(),
             ]);
         } catch (Exception $e) {
-            Log::error('Unexpected error saving customer address', [
+            info('Unexpected error saving customer address', [
                 'quoteUID' => $this->quoteUID,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
         }
+    }
+
+    /**
+     * The job failed to process.
+     */
+    public function failed(Exception $exception): void
+    {
+        // Log the failure
+        info('SaveCustomerAddressJob failed', [
+            'quoteUID' => $this->quoteUID,
+            'error' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
+        ]);
     }
 }

@@ -1059,9 +1059,9 @@ class HomeQuoteService extends BaseService
 
     public function getQuoteData(string $quoteUID): ?PersonalQuote
     {
-        return PersonalQuote::select('customerId', 'home_quote_id')
+        return PersonalQuote::select('id', 'customer_id')
             ->with([
-                'homeQuote:sub_area_id',
+                'homeQuote:personal_quote_id,sub_area_id',
                 'homeQuote.subArea:id,description,emirates_id',
                 'homeQuote.subArea.emirate:id,text',
             ])
@@ -1083,6 +1083,7 @@ class HomeQuoteService extends BaseService
             'area' => $subArea->description,
             'city' => $subArea->emirate->text,
             'is_courier_address' => 0,
+            'is_default' => 1,
         ];
     }
 }
