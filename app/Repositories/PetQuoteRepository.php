@@ -38,7 +38,7 @@ class PetQuoteRepository extends BaseRepository
             'lastName' => $request['last_name'],
             'email' => $request['email'],
             'mobileNo' => $request['mobile_no'],
-            'gender' => $request['gender'], // Reminder:: this is pet's gender
+            'petGender' => $request['gender'], // Reminder:: this is pet's gender
             'microchipNo' => $request['microchip_no'],
             'petTypeId' => $request['pet_type_id'],
             'petAgeId' => $request['pet_age_id'],
@@ -56,7 +56,7 @@ class PetQuoteRepository extends BaseRepository
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
-            'customerGender' => $request['customer_gender'], // Reminder:: this is customer gender
+            'gender' => $request['customer_gender'], // Reminder:: this is customer gender
             'dob' => $request['dob'],
             'nationalityId' => $request['nationality_id'],
         ];
