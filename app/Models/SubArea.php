@@ -10,4 +10,9 @@ class SubArea extends Model
     use HasFactory;
 
     protected $table = 'sub_areas';
+
+    public function emirate()
+    {
+        return $this->belongsTo(Emirate::class, 'emirates_id');
+    }
 }

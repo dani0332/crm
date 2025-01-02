@@ -1,0 +1,92 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Enums\QuoteTypeId;
+use App\Models\CustomerAddress;
+use App\Models\PersonalQuote;
+use App\Services\HomeQuoteService;
+use Exception;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
+
+class SaveCustomerAddressJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $tries = 3;
+    public $timeout = 60;
+    public $backoff = 300;
+    public $quoteUID;
+    public $address;
+    protected $customerAddress;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct(string $quoteUID, array $address, CustomerAddress $customerAddress)
+    {
+        $this->quoteUID = $quoteUID;
+        $this->address = $address;
+        $this->customerAddress = $customerAddress;
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        info('SaveCustomerAddressJob started', ['quoteUID' => $this->quoteUID]);
+
+        try {
+            info('Attempting to save the customer address', ['quoteUID' => $this->quoteUID]);
+
+            $quoteData = app(HomeQuoteService::class)->getQuoteData($this->quoteUID);
+
+            if ($quoteData) {
+                $customerId = $quoteData->customer_id;
+                $subArea = $quoteData->homeQuote->subArea ?? null;
+
+                if (!$subArea) {
+                    throw new ModelNotFoundException("SubArea not found for quote: {$this->quoteUID}");
+                }
+
+                if (!$subArea->emirate) {
+                    throw new ModelNotFoundException("Emirate not found for subArea: {$subArea->id}");
+                }
+
+                // Format the address data
+                $custmerAddress = app(HomeQuoteService::class)->formatAddress($customerId, $subArea, $this->quoteUID, $this->address);
+
+                // Save the customer address
+                $this->customerAddress->create($custmerAddress);
+
+                info('Customer address saved successfully', ['quoteUID' => $this->quoteUID]);
+            } else {
+                info('Quote data not found', ['quoteUID' => $this->quoteUID]);
+            }
+        } catch (InvalidArgumentException $e) {
+            Log::error('Invalid address data', [
+                'quoteUID' => $this->quoteUID,
+                'error' => $e->getMessage(),
+            ]);
+        } catch (ModelNotFoundException $e) {
+            Log::error('Quote data not found', [
+                'quoteUID' => $this->quoteUID,
+                'error' => $e->getMessage(),
+            ]);
+        } catch (Exception $e) {
+            Log::error('Unexpected error saving customer address', [
+                'quoteUID' => $this->quoteUID,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+}

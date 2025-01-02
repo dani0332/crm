@@ -19,6 +19,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\Capi;
+use App\Jobs\SaveCustomerAddressJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\Emirate;
@@ -212,13 +213,13 @@ class HomeQuoteRepository extends BaseRepository
 
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 
-        // if (empty($response->errors) || empty($response->msg)) {
-        //     // add Address fields to Customer Address table
-        //     $addressData = $data['address'] ?? [];
-        //     $customerEmail = $data['email'] ?? null;
+        dd('STORING...', $response);
 
-        //     // save the customer address
-        // }
+        if (isset($response->quoteUID)) {
+            // add Address fields to Customer Address table
+            $addressData = $data['addressObj'] ?? [];
+            SaveCustomerAddressJob::dispatch($quoteUID, $addressData);
+        }
 
         info('Home Quote Create Response :' . json_encode($response));
 
