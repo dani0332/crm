@@ -38,7 +38,7 @@ class ActivityRepository extends BaseRepository
                 request()->due_date_time_end = Carbon::createFromFormat('d-m-Y', $dueDate, null)->endOfDay()->toDateTimeString() ?? null;
             } else {
                 request()->due_date_time_end = null;
-        
+
             }
         }
 
