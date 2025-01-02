@@ -142,14 +142,8 @@ class TravelAllocationService extends AllocationService
         }
 
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$lead->uuid}");
-            if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-                $previousAdvisorId = $this->getPreviousAdvisor($lead->customer_id)->advisor_id ?? null;
-                $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
-                info("lead is renewal pervious advisor-ID:{$previousAdvisorId} lead uuid: {$lead->uuid} | Time: ".now());
-            }
             info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quoteUUID}");
-            $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $lead, $previousAdvisorId ?? null);
+            $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $lead);
 
             if ($eligibleUser) {
                 info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$lead->uuid}");
@@ -161,7 +155,7 @@ class TravelAllocationService extends AllocationService
         return null;
     }
 
-    public function getAdvisorByStatus($status, $teamId = null, ?TravelQuote $lead = null, $previousAdvisorId = null)
+    public function getAdvisorByStatus($status, $teamId = null, ?TravelQuote $lead = null)
     {
         if ($this->isCHSAdvisor) {
             info(self::class." - getAdvisorByStatus: CHS Advisor is required for lead: {$lead->uuid}");
@@ -197,10 +191,6 @@ class TravelAllocationService extends AllocationService
             ->whereIn('r.name', [RolesEnum::TravelAdvisor])
             ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
             ->activeUser()
-            ->when($previousAdvisorId,
-                fn ($q) => $q->where('users.id', $previousAdvisorId),
-                fn ($q) => $q->orderBy('la.last_allocated', 'asc')
-            )
             ->when($lead->isSIC(QuoteTypes::TRAVEL), function ($q) {
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
@@ -244,15 +234,5 @@ class TravelAllocationService extends AllocationService
         $this->upsertQuoteDetail($leadId, TravelQuoteRequestDetail::class, 'travel_quote_request_id');
 
         return $oldAdvisorAssignedDate;
-    }
-
-    private function getPreviousAdvisor($customer_id = null)
-    {
-        // Retrieve the most recent TravelQuote for the given customer with an assigned advisor
-        return TravelQuote::query()
-            ->where('customer_id', $customer_id)
-            ->whereNotNull('advisor_id')
-            ->latest('created_at')
-            ->first();
     }
 }
