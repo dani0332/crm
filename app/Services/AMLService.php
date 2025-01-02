@@ -629,18 +629,21 @@ class AMLService
         $customerDetails->fill(['customer_name' => $customerDetails->insured_first_name.($customerDetails->insured_last_name == 'NULL' || $customerDetails->insured_last_name == null ? '' : ' '.$customerDetails->insured_last_name)]);
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
         try {
-            $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', [
+            $insurerScreeningPayload = [
                 'quoteUID' => $quoteDetails->uuid,
-                'quoteTypeId' => $quoteTypeId,
+                'quoteTypeId' => (int) $quoteTypeId,
                 'emirateDetails' => [
                     'emirateId' => $customerDetails->emirates_id_number,
                     'expiryDate' => $customerDetails->emirates_id_expiry_date,
                 ],
                 'passportNumber' => '',
                 'chassisNumber' => $chassisNumber ?? '',
-            ]);
+            ];
 
-            info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
+            info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
+            $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
+
+            info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
             $screeningResponse['screening_type'] = $screeningType;
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse);
 
@@ -653,9 +656,9 @@ class AMLService
         }
     }
 
-    private function updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse)
+    private function updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse): void
     {
-        info('fn:updateInsurerKYCLogs - GIG AML Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
+        info('fn:updateInsurerKYCLogs - GIG AML Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
         session()->push('insurerAMLScreeningResponse', $screeningResponse);
         $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;
         $kycLogDetails = [
@@ -671,16 +674,16 @@ class AMLService
         ];
 
         if ($isScreeningCleared) {
-            info('fn:amlScreeningGIG - GIG AML Screening Cleared - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
+            info('fn:amlScreeningGIG - GIG AML Screening Cleared - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
             $kycLogDetails['match_found'] = 0;
             $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
         } else {
             if ($screeningResponse['status'] == AMLStatusCode::AMLPending) {
-                info('fn:amlScreeningGIG - GIG AML Screening Pending - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
+                info('fn:amlScreeningGIG - GIG AML Screening Pending - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
                 $kycLogDetails['match_found'] = 0;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::UNKNOWN;
             } else {
-                info('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message']);
+                info('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
                 $kycLogDetails['match_found'] = 1;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
             }
