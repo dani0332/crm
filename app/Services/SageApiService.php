@@ -480,7 +480,11 @@ class SageApiService
                 info('SAGE API : Reversal invoice number updated - previous reversal batch number ('.$sageLogArray[$step]['sage_end_point'].') - current reversal batch number ('.$payLoadOptions['endPoint'].') - Send Update Code: '.$sendUpdateLog->code);
                 $getNewResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], 'GET');
                 $sageLogArray[$step]['response'] = $getNewResponse;
-                SageApiLog::where('id', $sageLogArray[$step]['id'])->update(['response' => $getNewResponse]);
+                $sageLogArray[$step]['sage_end_point'] = $payLoadOptions['endPoint'];
+                SageApiLog::where('id', $sageLogArray[$step]['id'])->update([
+                    'sage_end_point' => $payLoadOptions['endPoint'],
+                    'response' => $getNewResponse,
+                ]);
                 info('SAGE API : Response against current batch number has been updated - Send Update Code: '.$sendUpdateLog->code);
             }
 
