@@ -1355,6 +1355,13 @@ const fetchUpdatedQuote = async () => {
       @onAddUpdate="onAddUpdate"
     />
 
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'BIKE'"
+      :expanded="sectionExpanded"
+    />
+
     <AuditLogs
       :id="$page.props.quote.id"
       :quote-type="quoteType"
