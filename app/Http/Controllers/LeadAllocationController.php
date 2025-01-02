@@ -263,6 +263,36 @@ class LeadAllocationController extends Controller
         }
     }
 
+    public function updateNormalLeadAllocationStatus(Request $request)
+    {
+        if (isset($request->nlStatus)) {
+            $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
+            if (isset($request->laId)) {
+                $leadAllocationObj = $leadAllocationObj->where('id', $request->laId);
+            } else {
+                $leadAllocationObj = $leadAllocationObj->where('user_id', $request->userId);
+            }
+            $leadAllocationObj = $leadAllocationObj->first();
+            $leadAllocationObj->normal_allocation_enabled = (int) $request->nlStatus;
+            $leadAllocationObj->save();
+        }
+    }
+
+    public function updateBLResetCap(Request $request)
+    {
+        if (isset($request->blResetCap)) {
+            $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
+            if (isset($request->laId)) {
+                $leadAllocationObj = $leadAllocationObj->where('id', $request->laId);
+            } else {
+                $leadAllocationObj = $leadAllocationObj->where('user_id', $request->userId);
+            }
+            $leadAllocationObj = $leadAllocationObj->first();
+            $leadAllocationObj->buy_lead_reset_capacity = (int) $request->blResetCap;
+            $leadAllocationObj->save();
+        }
+    }
+
     public function toggleLeadAllocationJobStatus()
     {
         $this->applicationStorageService->updateLeadAllocationJobStatus();
