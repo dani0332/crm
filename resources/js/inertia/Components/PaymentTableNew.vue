@@ -20,6 +20,7 @@ const can = permission => useCan(permission);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const paymentAllocationStatus = page.props.paymentAllocationStatus;
 const paymentMethodsEnums = page.props.paymentMethodsEnum;
+
 const props = defineProps({
   payments: Array,
   can: Object,
@@ -790,6 +791,7 @@ const handlePaymentOptions = count => {
   } else {
     isCheckDetailsEnabled.value[count] = false;
   }
+  setFrequencyTypes();
 };
 
 const handleCollectionTypeChange = () => {
@@ -827,17 +829,15 @@ const handleCollectionTypeChange = () => {
   );
 
   if (paymentMethodsForm.collection_type === 'insurer') {
+    const excludedPaymentMethods = [
+      page.props.paymentMethodsEnum?.BankTransfer,
+      page.props.paymentMethodsEnum?.Cheque,
+      page.props.paymentMethodsEnum?.Cash,
+    ];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item =>
-        ![
-          page.props.paymentMethodsEnum?.CreditCard,
-          page.props.paymentMethodsEnum?.BankTransfer,
-          page.props.paymentMethodsEnum?.Cheque,
-          page.props.paymentMethodsEnum?.Cash,
-        ].includes(item.value),
+      (item) => !excludedPaymentMethods.includes(item.value)
     );
-    paymentMethodsModels.value[1] =
-      page.props.paymentMethodsEnum?.InsurerPayment;
+    paymentMethodsModels.value[1] = page.props.paymentMethodsEnum?.InsurerPayment;
   } else {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
@@ -927,40 +927,41 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
     if (paymentMethodsForm.collection_type === 'insurer') {
       if (paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT) {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is  UpFront*/
+        const excludedPaymentMethods = [
+          page.props.paymentMethodsEnum?.BankTransfer,
+          page.props.paymentMethodsEnum?.Cheque,
+          page.props.paymentMethodsEnum?.Cash,
+          page.props.paymentMethodsEnum?.PostDatedCheque,
+        ];
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item =>
-            ![
-              page.props.paymentMethodsEnum?.PostDatedCheque,
-              page.props.paymentMethodsEnum?.Cheque,
-              page.props.paymentMethodsEnum?.Cash,
-              page.props.paymentMethodsEnum?.CreditCard,
-              page.props.paymentMethodsEnum?.BankTransfer,
-            ].includes(item.value),
+          (item) => !excludedPaymentMethods.includes(item.value)
         );
       } else if (
         paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
       ) {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
+        const excludedPaymentMethods = [
+          page.props.paymentMethodsEnum?.PostDatedCheque,
+          page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+          page.props.paymentMethodsEnum?.Cheque,
+          page.props.paymentMethodsEnum?.Cash,
+          page.props.paymentMethodsEnum?.BankTransfer,
+        ];
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item =>
-            ![
-              page.props.paymentMethodsEnum?.PostDatedCheque,
-              page.props.paymentMethodsEnum?.ProformaPaymentRequest,
-              page.props.paymentMethodsEnum?.Cheque,
-              page.props.paymentMethodsEnum?.Cash,
-              page.props.paymentMethodsEnum?.CreditCard,
-              page.props.paymentMethodsEnum?.BankTransfer,
-            ].includes(item.value),
+          (item) => !excludedPaymentMethods.includes(item.value)
         );
       } else {
+        const excludedPaymentMethods = [
+          page.props.paymentMethodsEnum?.Cheque,
+          page.props.paymentMethodsEnum?.Cash,
+          page.props.paymentMethodsEnum?.BankTransfer,
+          page.props.paymentMethodsEnum?.CreditCard,
+        ];
+        if (paymentMethodsForm.collection_type === "insurer") {
+          excludedPaymentMethods.pop();
+        }
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item =>
-            ![
-              page.props.paymentMethodsEnum?.Cheque,
-              page.props.paymentMethodsEnum?.Cash,
-              page.props.paymentMethodsEnum?.CreditCard,
-              page.props.paymentMethodsEnum?.BankTransfer,
-            ].includes(item.value),
+          (item) => !excludedPaymentMethods.includes(item.value)
         );
       }
     } else {
@@ -2425,15 +2426,26 @@ const addPayment = isValid => {
     });
 };
 
-const applyPermissions = () => {
-  const setFrequencyTypes = () => {
-    frequencyTypes.value = paymentLookups.paymentFrequencyTypes.map(item => ({
-      value: item.code,
-      label: item.text,
-      tooltip: item.description,
-    }));
-  };
+const setFrequencyTypes = () => {
+  let allFrequencyTypes = paymentLookups.paymentFrequencyTypes.map((item) => ({
+    value: item.code,
+    label: item.text,
+    tooltip: item.description,
+  }));
+  if (
+    paymentMethodsForm.collection_type === "insurer" &&
+    isCCEnabled.value &&
+    isSplitFrequencyHidden.value &&
+    hasAnyCCPayment()
+  ) {
+    allFrequencyTypes = allFrequencyTypes.filter(
+      (item) => item.value !== paymentFrequencyEnum.SPLIT_PAYMENTS
+    );
+  }
+  frequencyTypes.value = allFrequencyTypes;
+};
 
+const applyPermissions = () => {
   const setDiscountAndCreditApprovalPermissions = () => {
     isDiscountAllowed.value = can(permissionEnum.PAYMENTS_DISCOUNT_ADD);
     isCreditApprovalAllowed.value = can(
@@ -3297,6 +3309,19 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
     splitPayment.sr_no > 1
   );
 };
+
+const isCCEnabled = ref(page.props?.bookPolicyDetails?.isCreditCardEnabled || false);
+const isSplitFrequencyHidden = ref(page.props?.bookPolicyDetails?.isSplitFrequencyHidden || false);
+
+const hasAnyCCPayment = () => {
+  const paymentMM = Object.values(paymentMethodsModels.value);
+  return paymentMM.some((item) => item == "CC");
+};
+const isCCPaymentDisabled = (option) => {
+  return (
+    !isCCEnabled.value && paymentMethodsForm.collection_type === 'insurer' && option == 'CC'
+  ) 
+}
 </script>
 
 <template>
@@ -4661,7 +4686,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                       >PAYMENT NO</span
                     >
                     <sup
-                      v-if="!isViewEnabled && !isCreditApprovalView"
+                      v-if="!isViewEnabled && !isCreditApprovalView && !hasAnyCCPayment()"
                       class="text-red-500"
                       >*</sup
                     >
@@ -5160,7 +5185,8 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                             v-for="option in handlePaymentTypes(count)"
                             :key="option.value"
                             :value="option.value"
-                            :title="option.tooltip"
+                            :title="isCCPaymentDisabled(option.value) ? 'This payment method is currently unavailable. Credit Card payment is not supported by the selected Insurance Provider' :option.tooltip"
+                            :disabled="isCCPaymentDisabled(option.value)"
                           >
                             {{ option.label }}
                           </option>

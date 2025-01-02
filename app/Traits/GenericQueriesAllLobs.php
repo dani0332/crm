@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsurerProviderEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -13,7 +14,9 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
+use App\Models\BrokerCommission;
 use App\Models\Customer;
+use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
@@ -230,6 +233,7 @@ trait GenericQueriesAllLobs
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
+        // dd($record);
         info('Quote Code: '.$record->code.' fn: bookPolicyPayload called');
         $infoMessage = 'Quote Code: '.$record->code.' ';
         $brokerInvoiceNo = $invoiceDescription = '';
@@ -264,6 +268,9 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
+        $bookPolicyDetails['isCreditCardEnabled'] = $this->isCreditCardEnabled($record, $quoteType);
+        $bookPolicyDetails['isSplitFrequencyHidden'] = InsuranceProvider::whereIn('code', [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE])->where('id',  $record->insurance_provider_id)->select('id')->exists();
+
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -728,5 +735,15 @@ trait GenericQueriesAllLobs
         ];
 
         return in_array($lead_status_id, $skipStatus);
+    }
+    
+    public function isCreditCardEnabled($record, $quoteType) {
+        $quoteTypeId =  QuoteTypes::getIdFromValue($quoteType);
+        $brokerCommission = BrokerCommission::where('insurance_provider_id', $record->insurance_provider_id)
+        ->where('quote_type_id', $quoteTypeId);
+        if ($quoteTypeId == QuoteTypes::BUSINESS->value) {
+            $brokerCommission->where('business_type_of_insurance_id', $record->business_type_of_insurance_id);
+        }
+        return $brokerCommission->select('id')->exists();
     }
 }
