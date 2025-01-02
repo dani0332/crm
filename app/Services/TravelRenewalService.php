@@ -179,7 +179,7 @@ class TravelRenewalService extends BaseService
             $this->leadAllocation($response->quoteUID);
             info(self::class." -  Lead allocation completed for Ref-ID: {$response->quoteUID} - | Time: ".now());
         } catch (\Exception $e) {
-            info(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->quoteUID} | Time:".now());
+            info(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->previousQuoteId} | Time:".now());
             throw $e;
         }
 
@@ -226,9 +226,14 @@ class TravelRenewalService extends BaseService
 
             $previousAdvisorId = $this->getPreviousAdvisor($lead->customer_id)->advisor_id ?? null;
             info(self::class." Previous Advisor ID: {$previousAdvisorId} Ref:ID- {$quoteUID} | Time: ".now() );
-            $eligibleUser = $this->getTravelRenewalsAdvisor($previousAdvisorId);
-            info(self::class." - Eligible Advisor found for Quote UID: {$quoteUID} | Time: ".now());
+
+            $eligibleUser = $this->findPrevEligibleAdvisor($previousAdvisorId);
+            if(!$eligibleUser) {
+                $eligibleUser = $this->getTravelRenewalsAdvisor();
+            }
+
             if ($eligibleUser) {
+                info(self::class." - Eligible Advisor {$eligibleUser->user_id} found for Quote UID: {$quoteUID} | Time: ".now());
                 $this->assignLead($lead, $eligibleUser->user_id, AssignmentTypeEnum::SYSTEM_ASSIGNED);
                 info(self::class.' - TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob  Ref-ID: '.$quoteUID.' | Time: '.now());
                 SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
@@ -241,20 +246,42 @@ class TravelRenewalService extends BaseService
             info(self::class." - No lead found for Quote UID: {$quoteUID} | Time: ".now());
         }
     }
+
+    private function findPrevEligibleAdvisor($previousAdvisorId = null)
+    {
+        if(!$previousAdvisorId) {
+            return null;
+        }
+
+        return $this->getTravelRenewalsAdvisor($previousAdvisorId);
+    }
+
     public function assignLead(TravelQuote $lead,$advisorId, $assignmentType)
     {
-
         $lead->advisor_id = $advisorId;
         $lead->assignment_type = $assignmentType;
         $lead->save();
-        info(self::class." - Lead assigned to Advisor: {$advisorId} | Time: ".now());
-        app(AllocationService::class)->addAllocationCounts($advisorId, QuoteTypes::TRAVEL->id());
-        info(self::class." - Allocation counts updated for Advisor: {$advisorId} | Time: ".now());
+
+        $this->assignToChildLead($lead);
     }
+
+    private function assignToChildLead($lead)
+    {
+        $childLead = TravelQuote::where('parent_id', $lead->id)->first();
+
+        if ($childLead) {
+            info(self::class." - Assigning Advisor {$lead->advisor_id} to child lead {$childLead->uuid} for Quote UID: {$lead->uuid}");
+            $childLead->advisor_id = $lead->advisor_id;
+            $childLead->assignment_type = $lead->assignment_type;
+            $childLead->save();
+        }
+    }
+
     public function getTravelRenewalsAdvisor($previousAdvisorId=null)
     {
         $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
-        $user = User::select('users.id as user_id')
+
+        return User::select('users.id as user_id')
         ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
         ->join('roles as r', 'r.id', '=', 'mhr.role_id')
@@ -263,9 +290,13 @@ class TravelRenewalService extends BaseService
         })
         ->whereIn('r.name', [RolesEnum::TravelAdvisor])
         ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
-        ->orderBy('la.last_allocated', 'asc');
-        return $user->first();
+        ->orderBy('la.last_allocated', 'asc')
+        ->when($previousAdvisorId, function ($q) use ($previousAdvisorId) {
+            $q->where('users.id', $previousAdvisorId);
+        })
+        ->first();
     }
+
     private function getPreviousAdvisor($customer_id = null)
     {
         // Retrieve the most recent TravelQuote for the given customer with an assigned advisor
