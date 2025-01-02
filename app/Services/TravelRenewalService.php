@@ -288,6 +288,7 @@ class TravelRenewalService extends BaseService
             ->whereIn('r.name', [RolesEnum::TravelAdvisor])
             ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
             ->orderBy('la.last_allocated', 'asc')
+            ->activeUser()
             ->when($previousAdvisorId, function ($q) use ($previousAdvisorId) {
                 $q->where('users.id', $previousAdvisorId);
             })
