@@ -200,7 +200,7 @@ class TravelAllocationService extends AllocationService
             ->when($previousAdvisorId,
                 fn ($q) => $q->where('users.id', $previousAdvisorId),
                 fn ($q) => $q->orderBy('la.last_allocated', 'asc')
-             )
+            )
             ->when($lead->isSIC(QuoteTypes::TRAVEL), function ($q) {
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })

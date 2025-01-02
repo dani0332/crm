@@ -401,9 +401,10 @@ class CustomerService extends BaseService
         }
     }
 
-    public function getPrimaryCustomerById($id ,$memberId=null)
+    public function getPrimaryCustomerById($id, $memberId = null)
     {
         $customer = CustomerMembers::find($id);
+
         return $customer && $customer->id == $memberId;
     }
 }

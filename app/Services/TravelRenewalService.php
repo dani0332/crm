@@ -3,21 +3,20 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 use App\Jobs\TravelRenewalLeadCreationJob;
 use App\Models\RenewalBatch;
 use App\Models\TravelQuote;
-use Carbon\Carbon;
 use App\Models\User;
-use App\Enums\RolesEnum;
-use App\Enums\AssignmentTypeEnum;
-use App\Services\AllocationService;
+use Carbon\Carbon;
 
 class TravelRenewalService extends BaseService
 {
@@ -36,7 +35,7 @@ class TravelRenewalService extends BaseService
                 PaymentStatusEnum::PARTIAL_CAPTURED,
                 PaymentStatusEnum::CREDIT_APPROVED,
             ])
-            ->whereIn('coverage_code',[TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP,TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP]) //only for testing purpose
+            ->whereIn('coverage_code', [TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP]) //only for testing purpose
             ->where('direction_code', TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
             ->whereDate('start_date', $startDate)
             ->chunkById(100, function ($quotes) {
@@ -122,9 +121,9 @@ class TravelRenewalService extends BaseService
                 'isEcommerce' => $quote->is_ecommerce ?? null,
                 'startDate' => $policyStartDate,
                 'policyExpiryDate' => Carbon::parse($newPolicyExpiryDate)->format('Y-m-d'),
-                'coverageCode' => $quote->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP : $quote->coverage_code ,
+                'coverageCode' => $quote->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP : $quote->coverage_code,
                 'regionCoverForId' => $quote->region_cover_for_id,
-                'previousPolicyExpiryDate'=> $quote->policy_expiry_date,
+                'previousPolicyExpiryDate' => $quote->policy_expiry_date,
                 'tripStarted' => false,
             ];
 
@@ -162,10 +161,10 @@ class TravelRenewalService extends BaseService
                 'isThirdPartyPayer' => $member->is_third_party_payer,
                 'oldPrimaryMemberId' => $member->old_primary_member_id,
                 'deletedAt' => $member->deleted_at,
-                'uaeResident' => $member->uae_resident ,
+                'uaeResident' => $member->uae_resident,
                 'passport' => $member->passport,
                 'emiratesIdNumber' => $member->emirates_id_number,
-                'primary' => app(CustomerService::class)->getPrimaryCustomerById($primaryMemberId ,$member->id),
+                'primary' => app(CustomerService::class)->getPrimaryCustomerById($primaryMemberId, $member->id),
             ];
         });
     }
@@ -218,17 +217,15 @@ class TravelRenewalService extends BaseService
     {
         info(self::class." - Processing Travel record for Quote Allocation with Ref-ID: {$quoteUID} | Time: ".now());
 
-
         $lead = TravelQuote::where('uuid', $quoteUID)->first();
         if ($lead) {
             info(self::class." - Lead found for Quote UID: {$quoteUID} | Time: ".now());
 
-
             $previousAdvisorId = $this->getPreviousAdvisor($lead->customer_id)->advisor_id ?? null;
-            info(self::class." Previous Advisor ID: {$previousAdvisorId} Ref:ID- {$quoteUID} | Time: ".now() );
+            info(self::class." Previous Advisor ID: {$previousAdvisorId} Ref:ID- {$quoteUID} | Time: ".now());
 
             $eligibleUser = $this->findPrevEligibleAdvisor($previousAdvisorId);
-            if(!$eligibleUser) {
+            if (! $eligibleUser) {
                 $eligibleUser = $this->getTravelRenewalsAdvisor();
             }
 
@@ -249,14 +246,14 @@ class TravelRenewalService extends BaseService
 
     private function findPrevEligibleAdvisor($previousAdvisorId = null)
     {
-        if(!$previousAdvisorId) {
+        if (! $previousAdvisorId) {
             return null;
         }
 
         return $this->getTravelRenewalsAdvisor($previousAdvisorId);
     }
 
-    public function assignLead(TravelQuote $lead,$advisorId, $assignmentType)
+    public function assignLead(TravelQuote $lead, $advisorId, $assignmentType)
     {
         $lead->advisor_id = $advisorId;
         $lead->assignment_type = $assignmentType;
@@ -277,24 +274,24 @@ class TravelRenewalService extends BaseService
         }
     }
 
-    public function getTravelRenewalsAdvisor($previousAdvisorId=null)
+    public function getTravelRenewalsAdvisor($previousAdvisorId = null)
     {
         $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
 
         return User::select('users.id as user_id')
-        ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
-        ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
-        ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-        ->when($teamId, function ($q) use ($teamId) {
-            $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
-        })
-        ->whereIn('r.name', [RolesEnum::TravelAdvisor])
-        ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
-        ->orderBy('la.last_allocated', 'asc')
-        ->when($previousAdvisorId, function ($q) use ($previousAdvisorId) {
-            $q->where('users.id', $previousAdvisorId);
-        })
-        ->first();
+            ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
+            ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+            ->when($teamId, function ($q) use ($teamId) {
+                $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
+            })
+            ->whereIn('r.name', [RolesEnum::TravelAdvisor])
+            ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
+            ->orderBy('la.last_allocated', 'asc')
+            ->when($previousAdvisorId, function ($q) use ($previousAdvisorId) {
+                $q->where('users.id', $previousAdvisorId);
+            })
+            ->first();
     }
 
     private function getPreviousAdvisor($customer_id = null)
