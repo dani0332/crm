@@ -20,6 +20,8 @@ const rules = {
 };
 const notification = useNotifications('toast');
 
+let params = useUrlSearchParams('history');
+
 const getLink = (quote_uuid, quote_type_id) =>
   buildCdbidLink(quote_uuid, quote_type_id);
 
@@ -108,13 +110,14 @@ function resetFilters() {
 }
 
 function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
-      filters[key] = value;
-    });
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+    } else {
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
+    }
   }
 
   if (filters.redirect) {
