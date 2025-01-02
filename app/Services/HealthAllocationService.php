@@ -94,6 +94,10 @@ class HealthAllocationService extends AllocationService
 
         $priceStartingFrom = $this->determinePriceStartingFrom($lead);
 
+        if($priceStartingFrom == null) {
+            return false;
+        }
+
         $healthTeam = Team::where('allocation_threshold_enabled', true)
             ->where('min_price', '<=', $priceStartingFrom)
             ->where('max_price', '>=', $priceStartingFrom)
