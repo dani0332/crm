@@ -629,6 +629,7 @@ class AMLService
         $customerDetails->fill(['customer_name' => $customerDetails->insured_first_name.($customerDetails->insured_last_name == 'NULL' || $customerDetails->insured_last_name == null ? '' : ' '.$customerDetails->insured_last_name)]);
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
         try {
+            // TODO:: Need to confirm this data will fetched from customer or AML Screen Form
             $insurerScreeningPayload = [
                 'quoteUID' => $quoteDetails->uuid,
                 'quoteTypeId' => (int) $quoteTypeId,
@@ -636,7 +637,7 @@ class AMLService
                     'emirateId' => $customerDetails->emirates_id_number,
                     'expiryDate' => $customerDetails->emirates_id_expiry_date,
                 ],
-                'passportNumber' => '',
+                'passportNumber' => $request['screening_id_type'] == 'passport' ? $request['screening_id_number'] : '',
                 'chassisNumber' => $chassisNumber ?? '',
             ];
 
@@ -658,7 +659,6 @@ class AMLService
 
     private function updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse): void
     {
-        info('fn:updateInsurerKYCLogs - GIG AML Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
         session()->push('insurerAMLScreeningResponse', $screeningResponse);
         $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;
         $kycLogDetails = [

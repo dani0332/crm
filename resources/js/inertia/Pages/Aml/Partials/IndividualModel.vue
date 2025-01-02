@@ -198,18 +198,10 @@ const submitQuoteUpdateForm = isValid => {
       } else {
         if (response.props.flash.info.length !== 0) {
           const insurerScreeningResponse = response.props.flash.info;
-          if (insurerScreeningResponse.status === 'AML_PENDING') {
-            notification.error({
-              title:
-                'GIG server connection issue. Please check API logs for details of the error',
-              position: 'top',
-            });
-          } else if (insurerScreeningResponse.status === 'AML_FAILED') {
-            notification.error({
-              title: insurerScreeningResponse.message,
-              position: 'top',
-            });
-          }
+          notification.error({
+            title: insurerScreeningResponse.message,
+            position: 'top',
+          });
         }
       }
     },
