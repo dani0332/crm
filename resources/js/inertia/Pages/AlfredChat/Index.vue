@@ -4,6 +4,7 @@ const props = defineProps({
   leadStatuses: Array,
   batches: Array,
   pagination: Object,
+  transactionTypes: Array,
 });
 
 const page = usePage();
@@ -72,6 +73,13 @@ const leadBatches = computed(() => {
   return props.batches.map(status => ({
     value: status.id,
     label: status.name,
+  }));
+});
+
+const transactionTypes = computed(() => {
+  return props.transactionTypes.map(status => ({
+    value: status.id,
+    label: status.text,
   }));
 });
 
@@ -295,11 +303,7 @@ const downloadReport = () => {
       <x-field label="Transaction Type">
         <combo-box
           v-model="filters.transaction_type_id"
-          :options="[
-            { label: 'New Business', value: 132 },
-            { label: 'Existing Customer\'s Renewal', value: 133 },
-            { label: 'Existing Customer\'s New Business', value: 134 },
-          ]"
+          :options="transactionTypes"
           placeholder="Search by Transaction type"
           class="w-full"
         >

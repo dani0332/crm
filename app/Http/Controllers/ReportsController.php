@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
@@ -49,7 +50,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        // $this->middleware('readonly_db');
+        $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -108,6 +109,7 @@ class ReportsController extends Controller
             'filtersByLob' => $advisorDistributionReportService->getFiltersByLob(),
             'filterOptions' => $advisorDistributionReportService->getFilterOptions(),
             'defaultFilters' => $advisorDistributionReportService->getDefaultFilters(),
+            'assignmentTypes' => AssignmentTypeEnum::withLabels(),
         ]);
     }
 
