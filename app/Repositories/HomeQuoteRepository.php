@@ -218,7 +218,9 @@ class HomeQuoteRepository extends BaseRepository
         if (isset($response->quoteUID)) {
             // add Address fields to Customer Address table
             $addressData = $data['addressObj'] ?? [];
-            SaveCustomerAddressJob::dispatch($quoteUID, $addressData);
+            if (! empty($addressData)) {
+                SaveCustomerAddressJob::dispatch($quoteUID, $addressData);
+            }
         }
 
         info('Home Quote Create Response :' . json_encode($response));
