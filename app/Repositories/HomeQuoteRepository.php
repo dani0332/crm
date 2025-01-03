@@ -21,7 +21,6 @@ use App\Enums\TeamNameEnum;
 use App\Facades\Capi;
 use App\Jobs\SaveCustomerAddressJob;
 use App\Models\ApplicationStorage;
-use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\HomeQuote;
@@ -97,8 +96,8 @@ class HomeQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
-                fn($query) => $query->count(),
-                fn($query) => $query->when($forExport, fn($query) => $query->get(), fn($query) => $query->simplePaginate())
+                fn ($query) => $query->count(),
+                fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate())
             );
     }
 
@@ -211,13 +210,13 @@ class HomeQuoteRepository extends BaseRepository
 
         $quoteData = $baseQuoteData;
 
-        info('Home Quote Create :' . json_encode($quoteData));
+        info('Home Quote Create :'.json_encode($quoteData));
 
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 
         try {
             if (isset($response->quoteUID)) {
-                info('Dispatching SaveCustomerAddressJob for quoteUID: ' . $response->quoteUID);
+                info('Dispatching SaveCustomerAddressJob for quoteUID: '.$response->quoteUID);
                 // add Address fields to Customer Address table
                 $addressData = $data['addressObj'] ?? [];
                 if (! empty($addressData)) {
@@ -228,7 +227,7 @@ class HomeQuoteRepository extends BaseRepository
             info('Failed to dispatch SaveCustomerAddressJob', ['error' => $e->getMessage()]);
         }
 
-        info('Home Quote Create Response :' . json_encode($response));
+        info('Home Quote Create Response :'.json_encode($response));
 
         // if (isset($response->quoteUID)) {
         //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);
@@ -284,12 +283,12 @@ class HomeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable() . '.*',
+                $this->getTable().'.*',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
-                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
                 as customer_type'),
             ])
             ->firstOrFail();
@@ -391,7 +390,7 @@ class HomeQuoteRepository extends BaseRepository
             'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -414,7 +413,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::HOME->value) . '-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
     }
 
     public function fetchUpdate($uuid, $data)

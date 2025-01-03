@@ -3,20 +3,20 @@
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
+use App\Models\QuoteFlowDetails;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\HomeQuoteService;
 use Illuminate\Support\Facades\Storage;
-use App\Models\QuoteFlowDetails;
-use App\Enums\QuoteFlowType;
-use App\Enums\QuoteTypeId;
 
 class HomeEmailService extends BaseService
 {

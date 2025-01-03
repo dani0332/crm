@@ -2,9 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\QuoteTypeId;
 use App\Models\CustomerAddress;
-use App\Models\PersonalQuote;
 use App\Services\HomeQuoteService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -50,11 +48,11 @@ class SaveCustomerAddressJob implements ShouldQueue
                 $customerId = $quoteData->customer_id;
                 $subArea = $quoteData->homeQuote->subArea ?? null;
 
-                if (!$subArea) {
+                if (! $subArea) {
                     throw new ModelNotFoundException("SubArea not found for quote: {$this->quoteUID}");
                 }
 
-                if (!$subArea->emirate) {
+                if (! $subArea->emirate) {
                     throw new ModelNotFoundException("Emirate not found for subArea: {$subArea->id}");
                 }
 
