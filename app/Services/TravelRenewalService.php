@@ -220,15 +220,7 @@ class TravelRenewalService extends BaseService
         $lead = TravelQuote::where('uuid', $quoteUID)->first();
         if ($lead) {
             info(self::class." - Lead found for Quote UID: {$quoteUID} | Time: ".now());
-
-            $previousAdvisorId = $this->getPreviousAdvisor($lead->customer_id)->advisor_id ?? null;
-            info(self::class." Previous Advisor ID: {$previousAdvisorId} Ref:ID- {$quoteUID} | Time: ".now());
-
-            $eligibleUser = $this->findPrevEligibleAdvisor($previousAdvisorId);
-            if (! $eligibleUser) {
-                $eligibleUser = $this->getTravelRenewalsAdvisor();
-            }
-
+            $eligibleUser = $this->getTravelRenewalsAdvisor();
             if ($eligibleUser) {
                 info(self::class." - Eligible Advisor {$eligibleUser->user_id} found for Quote UID: {$quoteUID} | Time: ".now());
                 $this->assignLead($lead, $eligibleUser->user_id, AssignmentTypeEnum::SYSTEM_ASSIGNED);
@@ -242,15 +234,6 @@ class TravelRenewalService extends BaseService
         } else {
             info(self::class." - No lead found for Quote UID: {$quoteUID} | Time: ".now());
         }
-    }
-
-    private function findPrevEligibleAdvisor($previousAdvisorId = null)
-    {
-        if (! $previousAdvisorId) {
-            return null;
-        }
-
-        return $this->getTravelRenewalsAdvisor($previousAdvisorId);
     }
 
     public function assignLead(TravelQuote $lead, $advisorId, $assignmentType)
@@ -295,13 +278,4 @@ class TravelRenewalService extends BaseService
             ->first();
     }
 
-    private function getPreviousAdvisor($customer_id = null)
-    {
-        // Retrieve the most recent TravelQuote for the given customer with an assigned advisor
-        return TravelQuote::query()
-            ->where('customer_id', $customer_id)
-            ->whereNotNull('advisor_id')
-            ->latest('created_at')
-            ->first();
-    }
 }
