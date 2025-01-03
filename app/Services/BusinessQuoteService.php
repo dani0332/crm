@@ -420,7 +420,7 @@ class BusinessQuoteService extends BaseService
         $this->adjustQueryByDateFilters($this->query, 'bqr');
 
         // sortBy filter
-        if (isset($request->sortBy) && $request->sortBy != '' && in_array($request->sortType, ['asc','desc'])) {
+        if (isset($request->sortBy) && $request->sortBy != '' && in_array(strtolower($request->sortType), ['asc','desc'])) {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($request->sortBy, $request->sortType);
         } else {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'DESC');
