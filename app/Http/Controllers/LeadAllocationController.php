@@ -234,6 +234,9 @@ class LeadAllocationController extends Controller
 
     public function updateResetCapSwitch(Request $request)
     {
+        $requester = auth()->user();
+        info(self::class."::updateResetCapSwitch - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
+
         if (isset($request->resetCap)) {
             $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
             if (isset($request->leadId)) {
@@ -250,6 +253,8 @@ class LeadAllocationController extends Controller
 
     public function updateBlStatus(Request $request)
     {
+        $requester = auth()->user();
+        info(self::class."::updateBlStatus - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         if (isset($request->buyLeadStatus)) {
             $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
             if (isset($request->leadId)) {
@@ -265,6 +270,8 @@ class LeadAllocationController extends Controller
 
     public function updateNormalLeadAllocationStatus(Request $request)
     {
+        $requester = auth()->user();
+        info(self::class."::updateNormalLeadAllocationStatus - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         if (isset($request->nlStatus)) {
             $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
             if (isset($request->laId)) {
@@ -280,6 +287,8 @@ class LeadAllocationController extends Controller
 
     public function updateBLResetCap(Request $request)
     {
+        $requester = auth()->user();
+        info(self::class."::updateBLResetCap - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         if (isset($request->blResetCap)) {
             $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
             if (isset($request->laId)) {
