@@ -464,12 +464,12 @@ trait GenericQueriesAllLobs
                 if (abs(($paymentTotalAmount + $discountValue) > $paymentTotalPrice) < PHP_FLOAT_EPSILON) {
                     return true;
                 }
-            } else if ($discountValue == 0) {
+            } elseif ($discountValue == 0) {
                 if ($paymentTotalAmount > $paymentTotalPrice) {
                     return true;
                 }
             }
-          
+
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $discountValue), 2);
             info('Quote Code: '.$payment->code.' Checking Lacking Payment paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
