@@ -79,6 +79,7 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
+  sendConfirm: false,
 });
 
 const allowStatusUpdate = computed(() => {
@@ -829,7 +830,9 @@ const possessionTypeText = computed(() => {
     return '';
   }
 
-  const matchedItem = page.props.lookUpData.possessionType.find(item => item.id === id);
+  const matchedItem = page.props.lookUpData.possessionType.find(
+    item => item.id === id,
+  );
 
   return matchedItem ? matchedItem.description : '';
 });
@@ -841,11 +844,62 @@ const accommodationTypeText = computed(() => {
     return '';
   }
 
-  const matchedItem = page.props.lookUpData.accommodationType.find(item => item.id === id);
+  const matchedItem = page.props.lookUpData.accommodationType.find(
+    item => item.id === id,
+  );
 
   return matchedItem ? matchedItem.text : '';
 });
 
+const confirmSendEmail = () => {
+  console.log('confirmSendEmail');
+  //   const first_name = page.props.record.first_name || '';
+  //   const last_name = page.props.record.last_name || '';
+  //   axios
+  //     .post(
+  //       `/quotes/car/${page.props.record.uuid}/send-email-one-click-buy`,
+  //       {
+  //         quote_type_id: page.props.quoteTypeId,
+  //         quote_id: page.props.record.id,
+  //         quote_uuid: page.props.record.uuid,
+  //         quote_cdb_id: page.props.record.code,
+  //         quote_previous_expiry_date:
+  //           page.props.record.previous_policy_expiry_date,
+  //         quote_currently_insured_with: page.props.record.currently_insured_with,
+  //         quote_car_make: page.props.carMakeText,
+  //         quote_car_model: page.props.carModelText,
+  //         quote_car_year_of_manufacture: page.props.record.year_of_manufacture,
+  //         quote_previous_policy_number:
+  //           page.props.record.previous_quote_policy_number,
+  //         customer_name: `${first_name} ${last_name}`,
+  //         customer_email: page.props.record.email,
+  //         advisor_name: page.props.advisor ? page.props.advisor.name : null,
+  //         advisor_email: page.props.advisor ? page.props.advisor.email : null,
+  //         advisor_mobile_no: page.props.advisor
+  //           ? page.props.advisor.mobile_no
+  //           : null,
+  //         advisor_landline_no: page.props.advisor
+  //           ? page.props.advisor.landline_no
+  //           : null,
+  //       },
+  //       {
+  //         responseType: 'json',
+  //       },
+  //     )
+
+  //     .then(response => {
+  //       notification.success({
+  //         title: response.data.success,
+  //         position: 'top',
+  //       });
+  //     })
+  //     .catch(error => {
+  //       console.log(error);
+  //     })
+  //     .finally(() => {
+  //       modals.sendConfirm = false;
+  //     });
+};
 </script>
 
 <template>
@@ -1733,7 +1787,7 @@ const accommodationTypeText = computed(() => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex justify-between items-center flex-wrap gap-2">
+          <div class="flex mb-4 justify-end">
             <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -1773,8 +1827,44 @@ const accommodationTypeText = computed(() => {
               >
                 Download PDF
               </x-button>
+              <x-button
+                @click.prevent="modals.sendConfirm = true"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Send OCB Email to Customer
+              </x-button>
             </div>
           </div>
+
+          <x-modal
+            v-model="modals.sendConfirm"
+            title="Send Email"
+            show-close
+            backdrop
+          >
+            <p>Are you sure send email to customer?</p>
+            <template #actions>
+              <div class="text-right space-x-4">
+                <x-button
+                  size="sm"
+                  ghost
+                  @click.prevent="modals.sendConfirm = false"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="error"
+                  @click.prevent="confirmSendEmail"
+                >
+                  Send
+                </x-button>
+              </div>
+            </template>
+          </x-modal>
 
           <div
             v-if="
