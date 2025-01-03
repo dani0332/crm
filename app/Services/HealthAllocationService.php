@@ -95,7 +95,9 @@ class HealthAllocationService extends AllocationService
         $priceStartingFrom = $this->determinePriceStartingFrom($lead);
 
         if($priceStartingFrom == null) {
-            return false;
+            info("No team found for {$lead->uuid}");
+            $lead->is_error_email_sent = true;
+            Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
         }
 
         $healthTeam = Team::where('allocation_threshold_enabled', true)

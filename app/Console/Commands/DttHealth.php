@@ -69,6 +69,7 @@ class DttHealth extends Command
             'has_home',
             'currently_insured_with_id',
             'emirate_of_your_visa_id',
+            'price_starting_from',
             'nationality_id',
             'salary_band_id',
             'member_category_id',
