@@ -449,6 +449,15 @@ const personalBelongingsInAEDOptions = computed(() => {
       }))
     : [];
 });
+
+watch(
+  () => quoteForm.sub_area_id,
+  (newValue) => {
+    if (newValue != null && newValue !== '') {
+      formFieldReq.sub_area_id = false; // Reset the validation error
+    }
+  }
+);
 </script>
 
 <template>
@@ -593,7 +602,7 @@ const personalBelongingsInAEDOptions = computed(() => {
             class="w-full"
           />
         </x-field>
-        <x-field label="BUILDING AED" required v-if="showBuildingField">
+        <x-field label="BUILDING VALUE AED" required v-if="showBuildingField">
           <x-input
             v-model="quoteForm.building_aed"
             type="number"
