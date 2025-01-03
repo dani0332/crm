@@ -3,7 +3,9 @@
 namespace App\Listeners;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
+use App\Jobs\SendFTCEmailJob;
 use App\Jobs\SendOCBIntroEmailForBikeJob;
 use App\Models\Customer;
 use App\Models\User;
@@ -43,9 +45,14 @@ class HandleBikeAdvisorUpdated
 
         $lead = $event->lead;
 
+        if ($lead) {
+            info('about to dispatch SendFTCEmailJob for lead uuid : ' . $lead->uuid);
+            SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::BIKE)->delay(now()->addSeconds(5));
+        }
+
         $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
         if (in_array($lead->source, $skippableSources)) {
-            info('lead is source is '.$lead->source.' upload. Skipping intro email job');
+            info('lead is source is ' . $lead->source . ' upload. Skipping intro email job');
 
             return;
         }
@@ -54,7 +61,7 @@ class HandleBikeAdvisorUpdated
 
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
 
-        info('about to trigger intro email job for lead uuid : '.$lead->uuid.' and previous advisor id : '.$oldAdvisorId);
+        info('about to trigger intro email job for lead uuid : ' . $lead->uuid . ' and previous advisor id : ' . $oldAdvisorId);
 
         SendOCBIntroEmailForBikeJob::dispatch($lead->uuid, $previousAdvisor);
 
