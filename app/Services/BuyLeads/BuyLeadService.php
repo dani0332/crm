@@ -80,10 +80,10 @@ class BuyLeadService
         $cost = null;
         $requestType = null;
 
-        if (Auth::user()->isValueUser()) {
+        if (Auth::user()->isValueUser($quoteType)) {
             $cost = $config->value;
             $requestType = 'value';
-        } elseif (Auth::user()->isVolumeUser()) {
+        } elseif (Auth::user()->isVolumeUser($quoteType)) {
             $cost = $config->volume;
             $requestType = 'volume';
         }
