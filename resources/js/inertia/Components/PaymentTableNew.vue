@@ -3300,10 +3300,39 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
 const isCCEnabled = ref(page.props?.bookPolicyDetails?.isCreditCardEnabled || page.props?.bookingDetails?.isCreditCardEnabled ||  false);
 const isSplitFrequencyHidden = ref(page.props?.bookPolicyDetails?.isSplitFrequencyHidden || page.props?.bookingDetails?.isSplitFrequencyHidden || false);
 
+watch(
+  () => page.props?.bookPolicyDetails?.isCreditCardEnabled,
+  newVal => {
+    isCCEnabled.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.bookPolicyDetails?.isSplitFrequencyHidden,
+  newVal => {
+    isSplitFrequencyHidden.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.bookingDetails?.isCreditCardEnabled,
+  newVal => {
+    isCCEnabled.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.bookingDetails?.isSplitFrequencyHidden,
+  newVal => {
+    isSplitFrequencyHidden.value = newVal || false;
+  },
+);
+
 const hasAnyCCPayment = () => {
   const paymentMM = Object.values(paymentMethodsModels.value);
   return paymentMM.some((item) => item == "CC");
 };
+
 const isCCPaymentDisabled = (option) => {
   return (
     !isCCEnabled.value && paymentMethodsForm.collection_type === 'insurer' && option == 'CC'

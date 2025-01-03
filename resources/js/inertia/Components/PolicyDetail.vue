@@ -384,10 +384,6 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] =
 
 const setQuotePlanInsurerNumber = () => {
   policyDetailsForm.quote_plan_insurer_quote_number =
-    planQuoteInsurerNumber.value ||
-    page.props.quote.insurer_quote_number ||
-    props.availablePlans?.find(item => item.id == page.props.quote?.plan_id)
-      ?.insurerQuoteNo ||
     '';
 };
 const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
