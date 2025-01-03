@@ -40,7 +40,7 @@ class SendFTCEmailJob implements ShouldQueue
         $nonEligibleSICTypes = [QuoteTypes::BIKE->id(), QuoteTypes::HOME->id()];
 
         try {
-            info(self::class . " - Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid {$this->quoteUUID}");
+            info(self::class." - Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid {$this->quoteUUID}");
 
             $leadQuery = $this->quoteType->model()::with('payments')
                 ->whereNotNull('advisor_id')
@@ -65,15 +65,15 @@ class SendFTCEmailJob implements ShouldQueue
                     ];
 
                     Marshall::request('/payment/send-payment-auth-email', 'post', $data);
-                    info(self::class . " - Email Sent Sucessfully for uuid: {$this->quoteUUID}");
+                    info(self::class." - Email Sent Sucessfully for uuid: {$this->quoteUUID}");
                 } else {
-                    info(self::class . " - Payment not authorized for uuid {$this->quoteUUID}");
+                    info(self::class." - Payment not authorized for uuid {$this->quoteUUID}");
                 }
             } else {
-                info(self::class . " - Quote not found for uuid {$this->quoteUUID}");
+                info(self::class." - Quote not found for uuid {$this->quoteUUID}");
             }
         } catch (Exception $e) {
-            Log::error(self::class . ' - Error: ' . $e->getMessage() . $e->getTraceAsString());
+            Log::error(self::class.' - Error: '.$e->getMessage().$e->getTraceAsString());
         }
     }
 }
