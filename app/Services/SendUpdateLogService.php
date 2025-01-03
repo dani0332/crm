@@ -524,6 +524,7 @@ class SendUpdateLogService
             'invoice_description' => $invoiceDescription ?? '',
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
             'is_non_self_billing_enabled' => $isNonSelfBillingEnabled,
+            'insurance_provider_id' => $insuranceProviderId,
         ];
 
         $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();

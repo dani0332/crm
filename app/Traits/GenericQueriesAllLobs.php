@@ -11,6 +11,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
@@ -268,9 +269,9 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        $bookPolicyDetails['isCreditCardEnabled'] = $this->isCreditCardEnabled($record, $quoteType);
-        $bookPolicyDetails['isSplitFrequencyHidden'] = InsuranceProvider::whereIn('code', [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE])->where('id',  $record->insurance_provider_id)->select('id')->exists();
-
+        @[$isCreditCardEnabled, $isSplitFrequencyHidden] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id);
+        $bookPolicyDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
+        $bookPolicyDetails['isSplitFrequencyHidden'] = $isSplitFrequencyHidden;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -487,14 +488,14 @@ trait GenericQueriesAllLobs
      *
      * @return array
      */
-    private function checkForInsufficientPayment($paymnet)
+    public function checkForInsufficientPayment($payment)
     {
         $paymentStatusHeading = '';
         $paymentStatusDescription = '';
         $isInsufficientPayment = false;
 
-        if ($paymnet) {
-            $paymentStatusId = $paymnet->payment_status_id;
+        if ($payment) {
+            $paymentStatusId = $payment->payment_status_id;
 
             $insufficientPaymentStatuses = [
                 PaymentStatusEnum::PARTIALLY_PAID,
@@ -510,7 +511,7 @@ trait GenericQueriesAllLobs
                 PaymentStatusEnum::OVERDUE,
             ];
 
-            if (in_array($paymnet->payment_status_id, $insufficientPaymentStatuses)) {
+            if (in_array($payment->payment_status_id, $insufficientPaymentStatuses)) {
                 switch ($paymentStatusId) {
                     case PaymentStatusEnum::PARTIALLY_PAID:
                         $paymentStatusHeading = 'Insufficient payment received';
@@ -528,7 +529,6 @@ trait GenericQueriesAllLobs
                 $isInsufficientPayment = true;
             }
         }
-
         return [$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription];
     }
 
@@ -737,13 +737,26 @@ trait GenericQueriesAllLobs
         return in_array($lead_status_id, $skipStatus);
     }
     
-    public function isCreditCardEnabled($record, $quoteType) {
-        $quoteTypeId =  QuoteTypes::getIdFromValue($quoteType);
-        $brokerCommission = BrokerCommission::where('insurance_provider_id', $record->insurance_provider_id)
-        ->where('quote_type_id', $quoteTypeId);
-        if ($quoteTypeId == QuoteTypes::BUSINESS->value) {
-            $brokerCommission->where('business_type_of_insurance_id', $record->business_type_of_insurance_id);
+    public function getCreditCardAndSplitFrequencyStatus($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId) {
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $brokerCommissionQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId);
+    
+        if (in_array($quoteTypeId, [QuoteTypes::getId(QuoteTypes::BUSINESS),QuoteTypes::getId(QuoteTypes::CORPLINE), QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)])) {
+            $brokerCommissionQuery->where('business_type_of_insurance_id', $businessTypeOfInsuranceId)
+                ->where('quote_type_id', QuoteTypeId::Business);
+        } else {
+            $brokerCommissionQuery->where('quote_type_id', $quoteTypeId);
         }
-        return $brokerCommission->select('id')->exists();
+    
+        $isCreditCardEnabled = $brokerCommissionQuery->select('id')->exists();
+        $isSplitFrequencyHidden = InsuranceProvider::whereIn('code', [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE])
+            ->where('id', $insuranceProviderId)
+            ->select('id')
+            ->exists();
+    
+        return [
+            $isCreditCardEnabled,
+            $isSplitFrequencyHidden
+        ];
     }
 }

@@ -954,12 +954,8 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
         const excludedPaymentMethods = [
           page.props.paymentMethodsEnum?.Cheque,
           page.props.paymentMethodsEnum?.Cash,
-          page.props.paymentMethodsEnum?.BankTransfer,
-          page.props.paymentMethodsEnum?.CreditCard,
+          page.props.paymentMethodsEnum?.BankTransfer
         ];
-        if (paymentMethodsForm.collection_type === "insurer") {
-          excludedPaymentMethods.pop();
-        }
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
           (item) => !excludedPaymentMethods.includes(item.value)
         );
@@ -3310,8 +3306,8 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
   );
 };
 
-const isCCEnabled = ref(page.props?.bookPolicyDetails?.isCreditCardEnabled || false);
-const isSplitFrequencyHidden = ref(page.props?.bookPolicyDetails?.isSplitFrequencyHidden || false);
+const isCCEnabled = ref(page.props?.bookPolicyDetails?.isCreditCardEnabled || page.props?.bookingDetails?.isCreditCardEnabled ||  false);
+const isSplitFrequencyHidden = ref(page.props?.bookPolicyDetails?.isSplitFrequencyHidden || page.props?.bookingDetails?.isSplitFrequencyHidden || false);
 
 const hasAnyCCPayment = () => {
   const paymentMM = Object.values(paymentMethodsModels.value);
