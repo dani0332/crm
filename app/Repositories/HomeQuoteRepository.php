@@ -29,6 +29,7 @@ use App\Models\PersonalQuote;
 use App\Models\SubArea;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailStatusService;
 use App\Services\LookupService;
@@ -352,6 +353,7 @@ class HomeQuoteRepository extends BaseRepository
         $planURL = $this->getEcomQuoteLink(QuoteTypes::HOME, $quote->uuid);
         $allowedDuplicateLOB = app(CRUDService::class)->getAllowedDuplicateLOB('home', $quote->code);
         $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Home, $quote->id);
+        $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
 
         return [
             'documentTypes' => $documentTypes,
@@ -404,6 +406,7 @@ class HomeQuoteRepository extends BaseRepository
             'leadStatuses' => $leadStatuses,
             'planURL' => $planURL,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
+            'customerAddressData' => $customerAddressData,
         ];
     }
 

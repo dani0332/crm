@@ -783,6 +783,45 @@ const emailTableColumns = reactive({
     { text: 'Updated At', value: 'updated_at' },
   ],
 });
+
+const fullAddress = computed(() => {
+  const address = page.props?.customerAddressData;
+
+  if (!address) {
+    return null; // Return null if customerAddressData is null or undefined
+  }
+
+  const {
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  } = address;
+
+  const parts = [
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  ];
+
+  // Check if all parts are null or undefined
+  const allPartsAreNull = parts.every(part => part == null);
+
+  if (allPartsAreNull) {
+    return null;
+  }
+
+  // Filter out null or undefined parts and join the rest with comma and space
+  return parts.filter(part => part).join(', ');
+});
+
 </script>
 
 <template>
@@ -1289,7 +1328,7 @@ const emailTableColumns = reactive({
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ADDRESS</dt>
-                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
+                  <dd>{{ fullAddress }}</dd>
                 </div>
 
                 <div class="grid sm:grid-cols-2">
@@ -1299,17 +1338,17 @@ const emailTableColumns = reactive({
 
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FLOOR AND VILLA/ APARTMENT NUMBER</dt>
-                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
+                  <dd>{{ page?.props?.customerAddressData?.office_number }}</dd>
                 </div>
 
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">VILLA/ BUILDING NAME</dt>
-                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
+                  <dd>{{ page?.props?.customerAddressData?.building_name }}</dd>
                 </div>
 
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">STREET NAME</dt>
-                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
+                  <dd>{{ page?.props?.customerAddressData?.street }}</dd>
                 </div>
 
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
