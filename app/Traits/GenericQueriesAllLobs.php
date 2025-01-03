@@ -460,7 +460,7 @@ trait GenericQueriesAllLobs
             $paymentTotalPrice = round($payment->total_price, 2);
             $discountValue = round($payment->discount_value, 2);
             $paymentTotalAmount = round($payment->total_amount, 2);
-            if ($paymentTotalAmount + $discountValue > $paymentTotalPrice) {
+            if (abs(($paymentTotalAmount + $discountValue) > $paymentTotalPrice) < PHP_FLOAT_EPSILON) {
                 return true;
             }
             $paymentTotalPrice = round($payment->total_price, 2);
