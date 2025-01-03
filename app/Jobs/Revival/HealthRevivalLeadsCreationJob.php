@@ -76,6 +76,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'premium' => $this->lead->premium,
                 'leadTypeId' => $this->lead->lead_type_id,
                 'referenceUrl' => config('constants.APP_URL'),
+                'price_starting_from' => $this->lead->price_starting_from,
                 'is_ebp_renewal' => $this->lead->is_ebp_renewal == 'on' ? true : false,
                 'coverForId' => $this->lead->cover_for_id,
                 'hasDental' => $this->lead->has_dental == 'on' ? true : false,
@@ -95,7 +96,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'salaryBandId' => $this->lead->salary_band_id,
                 'memberCategoryId' => $this->lead->member_category_id,
             ];
-
+            
             $capiResponse = Capi::request('/api/v1-save-health-quote', 'post', $dataArr);
 
             if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
