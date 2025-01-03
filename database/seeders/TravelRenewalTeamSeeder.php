@@ -15,7 +15,7 @@ class TravelRenewalTeamSeeder extends Seeder
     public function run(): void
     {
 
-        $team = Team::where(['name'=>TeamNameEnum::TRAVEL_TEAM,'type'=>TeamTypeEnum::TEAM])->first();
+        $team = Team::where(['name' => TeamNameEnum::TRAVEL_TEAM, 'type' => TeamTypeEnum::TEAM])->first();
 
         Team::firstOrCreate(
             ['name' => TeamNameEnum::TRAVEL_RENEWALS],
