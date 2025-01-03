@@ -162,11 +162,11 @@ const personalBelonginsValue = computed({
   get() {
     console.log(
       'personalBelonginsValue',
-      planForm.listQuotePlanBenefitsInclusions?.contents?.[0]?.value,
+      planForm.listQuotePlanBenefitsInclusions?.personalBelongings?.[0]?.value,
     );
 
     const rawValue =
-      planForm.listQuotePlanBenefitsInclusions?.contents?.[0]?.value || '0';
+      planForm.listQuotePlanBenefitsInclusions?.personalBelongings?.[0]?.value || '0';
 
     const numericValue = parseFloat(rawValue.replace(/[^\d.-]/g, ''));
 
@@ -175,7 +175,7 @@ const personalBelonginsValue = computed({
     return numericValue;
   },
   set(newValue) {
-    planForm.listQuotePlanBenefitsInclusions.contents[0].value =
+    planForm.listQuotePlanBenefitsInclusions.personalBelongings[0].value =
       newValue.toString();
   },
 });
