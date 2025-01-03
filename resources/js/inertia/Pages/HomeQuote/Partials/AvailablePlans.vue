@@ -233,6 +233,20 @@ const onUpdatePlan = () => {
       }
     });
 };
+
+const formattedCategories = computed(() => {
+  const categories = props.plan?.listQuotePlanBenefitsInclusions || {};
+
+  // Create a new object with formatted keys
+  return Object.keys(categories).reduce((acc, key) => {
+    acc[key] = camelCaseToSpacedText(key);
+    return acc;
+  }, {});
+});
+
+function camelCaseToSpacedText(camelCaseStr) {
+  return camelCaseStr.replace(/([A-Z])/g, ' $1').trim();
+}
 </script>
 
 <template>
@@ -371,7 +385,9 @@ const onUpdatePlan = () => {
               class="mb-6"
             >
               <!-- Heading for each category (e.g., "Buildings", "Contents") -->
-              <h6 class="font-bold capitalize mb-1">{{ category }}:</h6>
+              <h6 class="font-bold capitalize mb-1">
+                {{ formattedCategories[category] }}:
+              </h6>
 
               <!-- Loop through each item in the current category (e.g., buildings[0], buildings[1], etc.) -->
               <div class="grid sm:grid-cols-2 gap-4">
