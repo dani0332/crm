@@ -822,6 +822,30 @@ const fullAddress = computed(() => {
   return parts.filter(part => part).join(', ');
 });
 
+const possessionTypeText = computed(() => {
+  const id = page.props?.quote?.home_quote?.possession_type_id;
+
+  if (!id || !page.props?.lookUpData?.possessionType?.length) {
+    return '';
+  }
+
+  const matchedItem = page.props.lookUpData.possessionType.find(item => item.id === id);
+
+  return matchedItem ? matchedItem.description : '';
+});
+
+const accommodationTypeText = computed(() => {
+  const id = page.props?.quote?.home_quote?.accommodation_type_id;
+
+  if (!id || !page.props?.lookUpData?.accommodationType?.length) {
+    return '';
+  }
+
+  const matchedItem = page.props.lookUpData.accommodationType.find(item => item.id === id);
+
+  return matchedItem ? matchedItem.text : '';
+});
+
 </script>
 
 <template>
@@ -1140,12 +1164,12 @@ const fullAddress = computed(() => {
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">POSSESSIONA TYPE</dt>
-                <dd>{{ quote?.home_quote?.possession_type?.text }}</dd>
+                <dt class="font-medium">OWNERSHIP STATUS</dt>
+                <dd>{{ possessionTypeText }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ACCOMMODATION TYPE</dt>
-                <dd>{{ quote?.home_quote?.accommodation_type?.text }}</dd>
+                <dt class="font-medium">TYPE OF PROPERTY</dt>
+                <dd>{{ accommodationTypeText }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS CONTENTS</dt>
@@ -1196,10 +1220,6 @@ const fullAddress = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
                 <dd>{{ quote.currently_insured_with_id_text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TYPE OF PLAN</dt>
-                <dd>{{ quote.plan_id }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>

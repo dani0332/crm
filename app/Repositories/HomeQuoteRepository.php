@@ -354,6 +354,7 @@ class HomeQuoteRepository extends BaseRepository
         $allowedDuplicateLOB = app(CRUDService::class)->getAllowedDuplicateLOB('home', $quote->code);
         $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Home, $quote->id);
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
+        $lookUpData = app(LookupService::class)->getHomeLookUpData();
 
         return [
             'documentTypes' => $documentTypes,
@@ -407,6 +408,7 @@ class HomeQuoteRepository extends BaseRepository
             'planURL' => $planURL,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'customerAddressData' => $customerAddressData,
+            'lookUpData' => $lookUpData,
         ];
     }
 
