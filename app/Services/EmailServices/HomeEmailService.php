@@ -148,7 +148,7 @@ class HomeEmailService extends BaseService
             // Generate a public URL
             // $publicUrl = asset('storage/' . $tempFilePath);
             $publicUrl = Storage::disk('azureIM')->temporaryUrl(
-                $tempFilePath, now()->addMinutes(5)
+                $tempFilePath, now()->addMinutes(120)
             );
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
@@ -166,7 +166,7 @@ class HomeEmailService extends BaseService
     protected function scheduleFileDeletion($filePath)
     {
         // Use a job to handle file deletion
-        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(5));
+        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(120));
 
     }
 
