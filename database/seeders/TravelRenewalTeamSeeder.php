@@ -14,10 +14,14 @@ class TravelRenewalTeamSeeder extends Seeder
      */
     public function run(): void
     {
+
+        $team = Team::where(['name'=>TeamNameEnum::TRAVEL_TEAM,'type'=>TeamTypeEnum::TEAM])->first();
+
         Team::firstOrCreate(
             ['name' => TeamNameEnum::TRAVEL_RENEWALS],
             [
                 'type' => TeamTypeEnum::TEAM,
+                'parent_team_id' => $team->id ?? null,
                 'is_active' => 1,
                 'slabs_count' => 0,
                 'created_at' => now(),

@@ -20,7 +20,7 @@ use Carbon\Carbon;
 
 class TravelRenewalService extends BaseService
 {
-    public function getTravelRenewalLeads()
+    public function processTravelRenewalLeads()
     {
         $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_RENEWALS_DAYS_THRESHOLD);
         $startDate = Carbon::now()->subDays((int) $renewalDaysThreshold);
@@ -43,7 +43,7 @@ class TravelRenewalService extends BaseService
                 info(self::class." - Total quotes in current chunk: {$quoteCount} | Time: ".now());
                 if ($quoteCount > 0) {
                     info(self::class." - processing travel renewals quotes in chunk: {$quoteCount} | Time: ".now());
-                    $this->processTravelRenewalQuotes($quotes);
+                    $this->createTravelRenewalLeads($quotes);
                 } else {
                     info(self::class.' - No quotes in chunk. | Time: '.now());
                 }
@@ -52,7 +52,7 @@ class TravelRenewalService extends BaseService
         info(self::class.' Travel Renewal Leads processing completed | Time: '.now());
     }
 
-    public function processTravelRenewalQuotes($quotes)
+    public function createTravelRenewalLeads($quotes)
     {
         foreach ($quotes as $quote) {
             try {

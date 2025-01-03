@@ -31,7 +31,7 @@ class TravelRenewalLeads extends Command
         $isTravelRenewals = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_RENEWALS_SWITCH)->first();
         if ($isTravelRenewals && $isTravelRenewals->value == 1) {
             info('Starting process to retrieve travel renewal leads | Time: '.now());
-            app(TravelRenewalService::class)->getTravelRenewalLeads();
+            app(TravelRenewalService::class)->processTravelRenewalLeads();
             info('Completed process to retrieve travel renewal leads | Time: '.now());
         } else {
             info('Travel Renewals Switch is disabled | Time: '.now());
