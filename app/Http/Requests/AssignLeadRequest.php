@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteTypeId;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AssignLeadRequest extends FormRequest
 {
@@ -22,8 +24,8 @@ class AssignLeadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quoteUUID.required' => 'Quote UUID is required',
-            'quoteTypeId.required' => 'Quote Type Id is required',
+            'quoteUUID' => ['required'],
+            'quoteTypeId' => ['required', Rule::in(QuoteTypeId::asArray())],
         ];
     }
 }

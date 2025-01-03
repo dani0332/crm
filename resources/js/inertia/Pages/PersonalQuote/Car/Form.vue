@@ -58,6 +58,8 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  company_name: props.quote?.car_company_name || null,
+  company_address: props.quote?.car_company_address || null,
   dob: props.quote?.dob ? props.quote?.dob.split('-').reverse().join('-') : '',
   cylinder: props.quote?.cylinder || null,
   uae_license_held_for_id: props.quote?.uae_license_held_for_id || null,
@@ -95,7 +97,6 @@ const quoteForm = useForm({
   courierQuoteStatus: page.props.courierQuoteStatus || 'Pending',
   registration_type: props.quote?.registration_type || carRegistrationTypeEnum.PERSONAL,
   vehicle_use: props.quote?.vehicle_use || '',
-  company_name: props.quote?.quote_company_name || '',
   company_contact_name: `${props.quote.customer_first_name || ''} ${props.quote.customer_last_name || ''}`.trim(),
   business_activity_id: props.quote?.business_activity_id || '',
 });
@@ -442,6 +443,17 @@ const isCourierStatusPending = computed(() => {
         </x-field>
 
         <x-field 
+        v-if="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY"
+        label="COMPANY ADDRESS">
+          <x-input
+            v-model="quoteForm.company_address"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_address"
+          />
+        </x-field>
+
+        <x-field 
         v-if="quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE || quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
         :label="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY && quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE ? 'DRIVER\'S NAME' : 'FIRST NAME'"
         required>
@@ -494,7 +506,7 @@ const isCourierStatusPending = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL" 
+        v-if="quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
         label="Address Type">
           <ComboBox
             v-model="quoteForm.addressObj.address_type"

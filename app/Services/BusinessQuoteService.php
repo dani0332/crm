@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -16,11 +17,11 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
-use Auth;
 use Carbon\Carbon;
 use Config;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class BusinessQuoteService extends BaseService
@@ -44,7 +45,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.last_name',
                 'bqr.email',
                 'bqr.mobile_no',
-                'bqr.company_name',
+                'bqr.company_name AS business_company_name',
+                'bqr.company_address AS business_company_address',
                 'bqr.brief_details',
                 'bqr.number_of_employees',
                 'bqr.business_type_of_insurance_id',
@@ -190,17 +192,6 @@ class BusinessQuoteService extends BaseService
         ])->first();
     }
 
-    public function updateChildRecord($id)
-    {
-        BusinessQuoteRequestDetail::updateOrCreate(
-            ['business_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
-    }
-
     public function getDetailEntity($id)
     {
         return BusinessQuoteRequestDetail::firstOrCreate(['business_quote_request_id' => $id]);
@@ -233,6 +224,8 @@ class BusinessQuoteService extends BaseService
             'numberOfEmployees' => $request->number_of_employees,
             'mobileNo' => $request->mobile_no,
             'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
+            'gender' => $request->gender,
             'briefDetails' => $request->brief_details,
             'premium' => $request->premium,
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
@@ -242,7 +235,6 @@ class BusinessQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
         if (isset($response->quoteUID)) {
@@ -472,6 +464,7 @@ class BusinessQuoteService extends BaseService
             $businessQuote->first_name = $request->first_name;
             $businessQuote->last_name = $request->last_name;
             $businessQuote->company_name = $request->company_name;
+            $businessQuote->company_address = $request->company_address;
             $businessQuote->gender = $request->gender;
             $businessQuote->brief_details = $request->brief_details;
             $businessQuote->premium = $request->premium;
@@ -499,7 +492,8 @@ class BusinessQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'company_name' => 'input|text|required',
+            'company_name' => 'input|text|max:250',
+            'company_address' => 'input|text|max:1000',
             'next_followup_date' => 'input|date|title|range',
             'transapp_code' => 'readonly|none',
             'source' => 'input|text',
@@ -653,10 +647,8 @@ class BusinessQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::BUSINESS, BusinessQuoteRequestDetail::class, 'business_quote_request_id');
         }
 
         return $result;

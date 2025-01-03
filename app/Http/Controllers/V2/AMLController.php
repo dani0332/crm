@@ -170,6 +170,7 @@ class AMLController extends Controller
             'created_at',
             'decision',
         ])
+            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
             ->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
 
         $data = collect();
@@ -484,6 +485,7 @@ class AMLController extends Controller
 
                 if (isset($AMLCheckRequest->company_name) && $quoteTypeId == QuoteTypeId::Business) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
+                    $updateQuote->company_address = $AMLCheckRequest->company_address;
                     $updateQuote->save();
                 }
 

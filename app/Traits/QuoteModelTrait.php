@@ -2,17 +2,21 @@
 
 namespace App\Traits;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
@@ -59,6 +63,11 @@ trait QuoteModelTrait
         return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
     }
 
+    public function isPaid()
+    {
+        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized() || $payment->isPaid());
+    }
+
     public function scopeAs($q, string $as)
     {
         $q->from("{$q->getModel()->getTable()} as {$as}");
@@ -75,7 +84,11 @@ trait QuoteModelTrait
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                });
+                })->whereNotIn("{$alias}.source", [
+                    LeadSourceEnum::REVIVAL,
+                    LeadSourceEnum::REVIVAL_REPLIED,
+                    LeadSourceEnum::REVIVAL_PAID,
+                ])->where("{$alias}.source", 'like', '%'.LeadSourceEnum::INSURANCE_MARKET.'%');
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -83,15 +96,9 @@ trait QuoteModelTrait
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                });
-            })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias, $quoteTypeId) {
-                $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_tags.quote_type_id', $quoteTypeId);
-                })->whereIn("{$alias}.source", [
+                })->where("{$alias}.source", 'like', '%'.LeadSourceEnum::INSURANCE_MARKET.'%');
+            })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
+                $query->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
@@ -120,7 +127,11 @@ trait QuoteModelTrait
         if ($not) {
             $q->whereNotIn("{$q->getModel()->getTable()}.uuid", $subQuery);
         } else {
-            $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery);
+            $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery)->whereNotIn("{$q->getModel()->getTable()}.source", [
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+            ]);
         }
     }
 
@@ -142,12 +153,19 @@ trait QuoteModelTrait
     public function markLeadAllocationFailed()
     {
         if ($this->lead_allocation_failed_at) {
+            self::withoutEvents(function () {
+                $this->update([
+                    'lead_allocation_started_at' => null,
+                ]);
+            });
+
             return; // Already marked as failed
         }
 
         self::withoutEvents(function () {
             $this->update([
                 'lead_allocation_failed_at' => now(),
+                'lead_allocation_started_at' => null,
             ]);
         });
     }
@@ -155,12 +173,19 @@ trait QuoteModelTrait
     public function markLeadAllocationPassed()
     {
         if (! $this->lead_allocation_failed_at || ! $this->advisor_id) {
+            self::withoutEvents(function () {
+                $this->update([
+                    'lead_allocation_started_at' => null,
+                ]);
+            });
+
             return; // Already marked as passed or advisor not assigned
         }
 
         self::withoutEvents(function () {
             $this->update([
                 'lead_allocation_failed_at' => null,
+                'lead_allocation_started_at' => null,
             ]);
         });
     }
@@ -199,7 +224,72 @@ trait QuoteModelTrait
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
     {
         $q->where(function ($sq) {
-            $sq->where('sic_advisor_requested', 1)->orWhere('payment_status_id', PaymentStatusEnum::AUTHORISED);
+            $sq->where('sic_advisor_requested', 1)->orWhereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
         });
+    }
+
+    public function isBuyLeadApplicable(): bool
+    {
+        return request('isRequestedForAnAdvisor', false) ||
+            $this->sic_advisor_requested == 1 ||
+            $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
+            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+    }
+
+    public function startAllocation()
+    {
+        if ($this->lead_allocation_started_at) {
+            return; // Already Started
+        }
+
+        self::withoutEvents(function () {
+            $this->update([
+                'lead_allocation_started_at' => now(),
+            ]);
+        });
+    }
+
+    public function isAllocationInProgress(): bool
+    {
+        // We will consider the lead to be in progress if attempted within 10 minutes of the last attempt
+        return ! empty($this->lead_allocation_started_at) && Carbon::parse($this->lead_allocation_started_at)->greaterThanOrEqualTo(now()->subMinutes(10));
+    }
+
+    public function endAllocation()
+    {
+        if (! $this->lead_allocation_started_at) {
+            return; // Already Ended
+        }
+
+        self::withoutEvents(function () {
+            $this->update([
+                'lead_allocation_started_at' => null,
+            ]);
+        });
+    }
+
+    public function getForeignKey()
+    {
+        return Str::snake(Str::singular($this->getTable())).'_id';
+    }
+
+    public static function applyRequestTableJoins($query, $request): void
+    {
+        $applicableFilters = ['member_first_name', 'member_last_name', 'company_name'];
+        $quoteTypes = [
+            QuoteTypeId::Car => 'car_quote_request',
+            QuoteTypeId::Home => 'home_quote_request',
+            QuoteTypeId::Health => 'health_quote_request',
+            QuoteTypeId::Life => 'life_quote_request',
+            QuoteTypeId::Business => 'business_quote_request',
+            QuoteTypeId::Travel => 'travel_quote_request',
+        ];
+
+        if ($request->hasAny($applicableFilters) && $request->has('line_of_business') && isset($quoteTypes[$request->line_of_business])) {
+            $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
+                $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
+                $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
+            });
+        }
     }
 }

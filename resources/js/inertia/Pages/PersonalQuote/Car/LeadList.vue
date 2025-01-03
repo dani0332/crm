@@ -15,6 +15,7 @@ defineProps({
   isBetaUser: Boolean,
   teams: Object,
   authorizedDays: Number,
+  assignmentTypes: Object,
 });
 
 const page = usePage();
@@ -45,7 +46,7 @@ const tableHeader = [
   { text: 'REF-ID', value: 'code' },
   { text: 'BATCH', value: 'quote_batch_id_text' },
   { text: 'Vehicle Use', value: 'vehicle_use' },
-  { text: 'Company Name', value: 'quote_company_name' },
+  { text: 'Company Name', value: 'car_company_name' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
@@ -103,14 +104,6 @@ const ecommerceOptions = [
   { value: '', label: 'Please select is ecommerce' },
   { value: 'Yes', label: 'Yes' },
   { value: 'No', label: 'No' },
-];
-
-const assignmentTypeOptions = [
-  { value: '', label: 'Please select is assignment type' },
-  { value: 1, label: 'System Assigned' },
-  { value: 2, label: 'System ReAssigned' },
-  { value: 3, label: 'Manual Assigned' },
-  { value: 4, label: 'Manual ReAssigned' },
 ];
 
 const filteredTableHeader = computed(() => {
@@ -846,7 +839,7 @@ const onExport = (url, isLoading = false) => {
           v-model="filters.assignment_type"
           label="Assignment Type"
           placeholder="Please select assignment type"
-          :options="assignmentTypeOptions"
+          :options="assignmentTypes"
           :single="true"
           class="w-full"
         />

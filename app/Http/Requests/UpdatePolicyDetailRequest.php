@@ -6,6 +6,7 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
@@ -67,6 +68,11 @@ class UpdatePolicyDetailRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
+
+            $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->modelType);
+            if ($lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] && $lockStatusOfPolicyIssuanceSteps['isEditPolicyDetailsDisabled']) {
+                $validator->errors()->add('value', 'Policy Booking is scheduled! You are not allowed to edit policy details');
+            }
 
             $this->validatePolicyBooked($validator, $quoteModel);
             $this->validatePolicyNumberFormat($validator);
@@ -170,20 +176,12 @@ class UpdatePolicyDetailRequest extends FormRequest
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($modelType);
         $startDate = Carbon::parse(request()->quote_policy_start_date);
 
-        $validMonths = 0;
-        $validationErrorMsg = '';
-        if ($quoteTypeId == QuoteTypeId::Travel) {
-            $validMonths = 6;
-            $validationErrorMsg = 'Please select a date within the next six months.';
-        } else {
-            $validMonths = 2;
-            $validationErrorMsg = 'Please select a date within the next two months.';
-        }
+        if ($quoteTypeId !== QuoteTypeId::Travel) {
+            $maxStartDate = Carbon::now()->addMonths(2)->endOfDay();
 
-        $maxStartDate = Carbon::now()->addMonths($validMonths)->endOfDay();
-
-        if ($startDate > $maxStartDate) {
-            $validator->errors()->add('quote_policy_start_date', $validationErrorMsg);
+            if ($startDate > $maxStartDate) {
+                $validator->errors()->add('quote_policy_start_date', 'Please select a date within the next two months.');
+            }
         }
     }
 
