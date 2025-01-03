@@ -188,6 +188,7 @@ const checkCaption = (whatsapp_request, UserAudio) => {
               </div>
 
               <SanitizeHtml
+                :key="message.id"
                 v-else="message.msg"
                 :html="renderMarkdown(message.msg)"
               />
