@@ -11,6 +11,9 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Enums\QuoteStatusEnum;
+use App\Models\QuoteFlowDetails;
+use App\Enums\QuoteFlowType;
+use App\Enums\QuoteTypeId;
 
 class HomeEmailService extends BaseService
 {
@@ -63,10 +66,13 @@ class HomeEmailService extends BaseService
                 $homeQuote->save();
                 $lead->quote_status_id = QuoteStatusEnum::FollowedUp;
                 $lead->save();
-                info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote ID: {$homeQuote->id} | Time: ".now());
+                info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote Ref-ID: {$homeQuote->id} | Time: ".now());
+                info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: ".now());
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response);
+                    info("sendHomeOCBIntroEmail - Run-ID: {$response->headers['Run-Id']} for HomeQuote Ref-ID: {$homeQuote->id} | Time: ".now());
+                }
             }
-
-            info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: ".now());
 
             return $response ?? null;
         } catch (\Exception $e) {
@@ -114,4 +120,29 @@ class HomeEmailService extends BaseService
             ->where('uuid', $uuid)
             ->first();
     }
+
+
+    public function createQuoteFlowDetails($lead, $response)
+    {
+        try {
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => QuoteTypeId::Home,
+                    'flow_type' => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
+                    'flow_id' => $runId,
+                ]);
+                info(self::class." HomeAutomated | workflow run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            } else {
+                info(self::class." HomeAutomated | workflow run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Throwable $th) {
+            $errorMessage = self::class." - Error while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            info($errorMessage);
+            info("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            throw $th;
+        }
+    }
+
 }
