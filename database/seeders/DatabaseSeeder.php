@@ -22,9 +22,10 @@ class DatabaseSeeder extends Seeder
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
             TravelRenewalTeamSeeder::class,
-            SendUpdateAdditionalSubType::class,
-            PermissionsSeeder::class,
-            AllianceNationalitySeeder::class,
+            // SendUpdateAdditionalSubType::class,
+            // PermissionsSeeder::class,
+            // AllianceNationalitySeeder::class,
+            // SUAdditionalCRNSubTypesSeeder::class,
         ]);
     }
 }

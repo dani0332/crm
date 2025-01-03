@@ -314,6 +314,8 @@ class SageApiService
             SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
         ];
 
+        $arDiscountInvoiceTypes = [SageEnum::SRT_CREATE_AR_DISC_INV, SageEnum::SRT_CREATE_AR_DISC_CORR_INV];
+
         $arInvoiceTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_INV,
@@ -335,7 +337,7 @@ class SageApiService
             $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
         }
 
-        if (in_array(SageEnum::SRT_CREATE_AR_DISC_INV, $reverseSageRequestTypes)) {
+        if (! empty(array_intersect($arDiscountInvoiceTypes, $reverseSageRequestTypes))) {
             $isOnlyDiscountReversal = $sendUpdateLog && (int) $sendUpdateLog->discount == 0;
         } else {
             if ($sendUpdateLog->discount > 0) {
@@ -391,8 +393,8 @@ class SageApiService
                     }
                 }
 
-                if ($reverseSageRequestType == SageEnum::SRT_CREATE_AR_DISC_INV) {
-                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL && $isOnlyDiscountReversal) {
+                if (in_array($reverseSageRequestType, $arDiscountInvoiceTypes)) {
+                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL) {
                         // Create AR Discount Invoice (Reversal)
                         $extraDetails['is_reversal_discount'] = true;
                         $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);

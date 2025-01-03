@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -377,6 +378,30 @@ class User extends Authenticatable implements AuditableContract
     public function departments()
     {
         return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
+    }
+
+    public function isValueUser()
+    {
+        return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VALUE);
+    }
+
+    public function isVolumeUser()
+    {
+        return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VOLUME);
+    }
+
+    public function scopeIsValueUser($q)
+    {
+        $q->whereHas('subTeam', function ($q) {
+            $q->where('name', 'like', TeamNameEnum::VALUE);
+        });
+    }
+
+    public function scopeIsVolumeUser($q)
+    {
+        $q->whereHas('subTeam', function ($q) {
+            $q->where('name', 'like', TeamNameEnum::VOLUME);
+        });
     }
 
     public function scopeChs($query)
