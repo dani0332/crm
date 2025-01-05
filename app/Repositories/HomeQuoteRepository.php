@@ -61,35 +61,31 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false)
     {
-        // Fields to check for active filters
-        $filterFields = [
+        $excludeCreatedAtFilters = [
             'email',
             'mobile_no',
             'code',
-            'created_at_start',
-            'created_at_end',
             'renewal_batch',
             'previous_quote_policy_number',
             'payment_due_date',
             'booking_date',
         ];
 
-        // Determine if the created_at check should be added
-        $addCreatedDateCheck = ! $this->hasActiveFilters($filterFields);
+        // Check if any of the exclude filters are active
+        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters);
 
         return $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
-            ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
-                $query->where('advisor_id', auth()->id());
-            })
-            ->when(request()->filled('advisors'), function ($query) {
-                $query->whereIn('advisor_id', (array) request('advisors'));
-            })
-            ->when(request()->has('is_renewal'), function ($query) {
-                $this->applyRenewalFilter($query);
-            })
-            ->when($addCreatedDateCheck, function ($query) {
-                $query->whereBetween('created_at', $this->getDateRange());
+            ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', auth()->id()))
+            ->when(request()->filled('advisors'), fn ($query) => $query->whereIn('advisor_id', (array) request('advisors')))
+            ->when(request()->has('is_renewal'), fn ($query) => $this->applyRenewalFilter($query))
+            ->tap(fn ($query) => $this->applyFilters($query))
+            ->when(! $shouldExcludeCreatedAtFilters, function ($query) {
+                if (request()->filled('created_at_start') && request()->filled('created_at_end')) {
+                    $query->whereBetween('created_at', [request('created_at_start'), request('created_at_end')]);
+                } else {
+                    $query->whereBetween('created_at', $this->getDateRange());
+                }
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
@@ -545,5 +541,44 @@ class HomeQuoteRepository extends BaseRepository
         }
 
         return SubArea::select('id', 'text', 'description')->where('id', $subAreaId)->first();
+    }
+
+    /**
+     * Apply dynamic filters to the query.
+     */
+    private function applyFilters($query): void
+    {
+        $filters = $this->getFilterMappings();
+
+        foreach ($filters as $field => $condition) {
+            if (request()->filled($field)) {
+                $condition($query, request($field));
+            }
+        }
+    }
+
+    /**
+     * Define filter mappings for dynamic filtering.
+     */
+    private function getFilterMappings(): array
+    {
+        return [
+            'code' => fn ($query, $value) => $query->where('code', $value),
+            'first_name' => fn ($query, $value) => $query->where('first_name', 'like', "%$value%"),
+            'last_name' => fn ($query, $value) => $query->where('last_name', 'like', "%$value%"),
+            'email' => fn ($query, $value) => $query->where('email', 'like', "%$value%"),
+            'mobile_no' => fn ($query, $value) => $query->where('mobile_no', 'like', "%$value%"),
+            'quote_status_id' => fn ($query, $value) => $query->where('quote_status_id', $value),
+            'policy_expiry_date' => fn ($query, $value) => $query->whereDate('policy_expiry_date', '>=', $value),
+            'policy_expiry_date_end' => fn ($query, $value) => $query->whereDate('policy_expiry_date', '<=', $value),
+            'previous_quote_policy_number' => fn ($query, $value) => $query->where('previous_quote_policy_number', $value),
+            'renewal_batches' => fn ($query, $value) => $query->whereIn('renewal_batch', (array) $value),
+            'payment_due_date' => fn ($query, $value) => $query->whereDate('payment_due_date', $value),
+            'booking_date' => fn ($query, $value) => $query->whereDate('booking_date', $value),
+            'last_modified_date' => fn ($query, $value) => $query->whereDate('last_modified_date', $value),
+            'advisor_assigned_date' => fn ($query, $value) => $query->whereDate('advisor_assigned_date', $value),
+            'insurer_tax_invoice_number' => fn ($query, $value) => $query->where('insurer_tax_invoice_number', $value),
+            'insurer_commission_tax_invoice_number' => fn ($query, $value) => $query->where('insurer_commission_tax_invoice_number', $value),
+        ];
     }
 }

@@ -358,6 +358,7 @@ const resetDateFilters = filterName => {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
     booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
     created_at: ['booking_date', 'payment_due_date'],
+    previous_quote_policy_number: ['created_at_start', 'created_at_end'],
   };
 
   const filtersToReset =
