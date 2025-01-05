@@ -40,35 +40,50 @@ class SaveCustomerAddressJob implements ShouldQueue
         info('SaveCustomerAddressJob started', ['quoteUID' => $this->quoteUID]);
 
         try {
+            // Validate address data
+            if (empty($this->address)) {
+                throw new InvalidArgumentException('Address data is empty.');
+            }
+
             info('Attempting to save the customer address', ['quoteUID' => $this->quoteUID]);
 
             $quoteData = app(HomeQuoteService::class)->getQuoteData($this->quoteUID);
 
-            if ($quoteData) {
-                $customerId = $quoteData->customer_id;
-                $subArea = $quoteData->homeQuote->subArea ?? null;
-
-                if (! $subArea) {
-                    throw new ModelNotFoundException("SubArea not found for quote: {$this->quoteUID}");
-                }
-
-                if (! $subArea->emirate) {
-                    throw new ModelNotFoundException("Emirate not found for subArea: {$subArea->id}");
-                }
-
-                // Format the address data
-                $custmerAddress = app(HomeQuoteService::class)->formatAddress($customerId, $subArea, $this->quoteUID, $this->address);
-
-                if (empty($custmerAddress)) {
-                    throw new InvalidArgumentException('Formatted address data is empty.');
-                }
-
-                // Save the customer address
-                CustomerAddress::create($custmerAddress);
-
-                info('Customer address saved successfully', ['quoteUID' => $this->quoteUID]);
-            } else {
+            if (! $quoteData) {
                 info('Quote data not found', ['quoteUID' => $this->quoteUID]);
+                return;
+            }
+
+            $customerId = $quoteData->customer_id;
+            $subArea = $quoteData->homeQuote->subArea ?? null;
+
+            if (! $subArea) {
+                throw new ModelNotFoundException("SubArea not found for quote: {$this->quoteUID}");
+            }
+
+            if (! $subArea->emirate) {
+                throw new ModelNotFoundException("Emirate not found for subArea: {$subArea->id}");
+            }
+
+            // Format the address data
+            $customerAddress = app(HomeQuoteService::class)->formatAddress($customerId, $subArea, $this->quoteUID, $this->address);
+
+            if (empty($customerAddress)) {
+                throw new InvalidArgumentException('Formatted address data is empty.');
+            }
+
+            // Check if a CustomerAddress record already exists
+            $customerAddressRecord = CustomerAddress::where('customer_id', $customerId)
+                ->where('quote_uuid', $this->quoteUID)
+                ->first();
+
+            // Create or update the customer address
+            if ($customerAddressRecord) {
+                $customerAddressRecord->update($customerAddress);
+                info('Customer address updated successfully', ['quoteUID' => $this->quoteUID]);
+            } else {
+                CustomerAddress::create($customerAddress);
+                info('Customer address created successfully', ['quoteUID' => $this->quoteUID]);
             }
         } catch (InvalidArgumentException $e) {
             info('Invalid address data', [
