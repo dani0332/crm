@@ -289,7 +289,7 @@ class AdvisorDistributionReportService extends BaseService
         ];
 
         $lobs = array_filter($lobs, function ($permission, $lob) {
-            return (Auth::user()->can($permission) || Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($lob));
+            return Auth::user()->can($permission) || Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($lob);
         }, ARRAY_FILTER_USE_BOTH);
 
         $lobs = QuoteTypeRepository::GetList()

@@ -56,7 +56,7 @@ class CheckRouteAccess
             quoteTypeCode::Yacht,
             quoteTypeCode::Life,
             quoteTypeCode::Home,
-            quoteTypeCode::Jetski
+            quoteTypeCode::Jetski,
         ];
 
         $allowed = false;
@@ -71,22 +71,23 @@ class CheckRouteAccess
                 'advisor-performance-report-view',
             ];
 
-            if(in_array($routeName, $allowedRoutes)) {
+            if (in_array($routeName, $allowedRoutes)) {
                 $allowed = true;
                 break;
             }
         }
+
         return auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS) && $allowed;
     }
 
     private function allowedViewAllReports($routeName)
     {
         $allowedRoutes = [
-            'total-premium-leads-sales-report'
+            'total-premium-leads-sales-report',
         ];
 
         $allowed = in_array($routeName, $allowedRoutes);
-        
+
         return auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && $allowed;
     }
 }

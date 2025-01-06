@@ -1573,6 +1573,7 @@ if (! function_exists('userHasProduct')) {
     function userHasProduct($product)
     {
         $productIds = auth()->user()->products->pluck('product_id');
+
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
