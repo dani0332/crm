@@ -698,7 +698,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $title;
     }
 
-    private function allianceHttpCall($endPoint, $param, $method = 'POST')
+    private function allianceHttpCall($endPoint, $param)
     {
         $headers = [
             'Content-Type' => 'application/json',
