@@ -874,9 +874,7 @@ const confirmSendEmail = () => {
       processingOCBEmailNB.value = false;
       modals.sendConfirm = false;
     });
-
-
-}
+};
 </script>
 
 <template>
@@ -1809,6 +1807,7 @@ const confirmSendEmail = () => {
                 size="sm"
                 color="orange"
                 class="mr-2"
+                :disabled="quote.advisor_id != $page.props.auth.user.id"
                 v-if="readOnlyMode.isDisable === true"
               >
                 Send OCB Email to Customer
@@ -1830,7 +1829,6 @@ const confirmSendEmail = () => {
                   ghost
                   @click.prevent="modals.sendConfirm = false"
                   :disable="processingOCBEmailNB"
-
                 >
                   Cancel
                 </x-button>
