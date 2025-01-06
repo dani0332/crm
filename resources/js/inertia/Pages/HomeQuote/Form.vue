@@ -61,10 +61,10 @@ const quoteForm = useForm({
       : null,
   addressObj: {
     villa_apartment_office_no:
-      page.props.quote.customerAddressData?.floor_number || null,
+      page.props?.quote?.customerAddressData?.floor_number || null,
     villa_building_name:
-      page.props.quote.customerAddressData?.building_name || null,
-    street_name: page.props.quote.customerAddressData?.street || null,
+      page.props?.quote?.customerAddressData?.building_name || null,
+    street_name: page.props?.quote?.customerAddressData?.street || null,
   },
 });
 
