@@ -1853,7 +1853,7 @@ const onAddUpdate = () => {
 
       <template #default v-if="readOnlyMode.isDisable === true">
         <Link
-          v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+          v-if="quote?.insly_id && canAny([permissionsEnum.VIEW_LEGACY_DETAILS, permissionsEnum.VIEW_ALL_LEADS])"
           :href="`/legacy-policy/${quote.insly_id}`"
           preserve-scroll
         >
@@ -3708,6 +3708,7 @@ const onAddUpdate = () => {
         canAny([
           permissionsEnum.VIEW_INSLY_BOOK_POLICY,
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

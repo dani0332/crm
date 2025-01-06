@@ -369,7 +369,7 @@ const fetchUpdatedQuote = async () => {
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([permissionsEnum.VIEW_LEGACY_DETAILS, permissionsEnum.VIEW_ALL_LEADS])
           "
           :href="
             route(
@@ -1334,6 +1334,7 @@ const fetchUpdatedQuote = async () => {
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"
