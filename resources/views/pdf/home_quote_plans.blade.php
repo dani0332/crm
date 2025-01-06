@@ -726,7 +726,8 @@
             </div>
             <h3>Your Tailor Made <br />Home Insurance Comparison Table</h3>
         </div>
-        <p class="head-caption">Your home insurance reference ID is <span class="text-blue">HOM : 12ERTYWE</span></p>
+        <p class="head-caption">Your home insurance reference ID is <span class="text-blue">{{ $quote->code }}</span>
+        </p>
     </header>
 
 
