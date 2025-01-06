@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\LeadAllocationTypeFiltersEnum;
+use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -52,8 +52,8 @@ class LeadAllocationController extends Controller
             $unAvailableUsers = 0;
             $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('LEAD_ALLOCATION_JOB_SWITCH');
             $data = $this->leadAllocationService->getGridData();
-            if (request()->has('type') && request('type') !== LeadAllocationTypeFiltersEnum::ALL->value) {
-                $type = LeadAllocationTypeFiltersEnum::from(request('type'));
+            if (request()->has('type') && request('type') !== LeadAllocationUserBLStatusFiltersEnum::ALL->value) {
+                $type = LeadAllocationUserBLStatusFiltersEnum::from(request('type'));
                 $data = $type->applyFilter($data);
             }
             foreach ($data as $key => $value) {
@@ -72,7 +72,7 @@ class LeadAllocationController extends Controller
                 'isAutoAllocationWorking' => (int) $isAutoAllocationWorking,
                 'data' => $data,
                 'quoteType' => QuoteTypes::HEALTH->value,
-                'typeFilters' => LeadAllocationTypeFiltersEnum::withLabels(),
+                'typeFilters' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
             ]);
         } else {
             abort(403, 'Unauthorized action.');

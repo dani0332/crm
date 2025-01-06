@@ -452,9 +452,9 @@ const onSubmit = isValid => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Type" required>
+      <x-field label="Buy Lead Status of Users" required>
         <x-select
-          placeholder="Select Type"
+          placeholder="Select Status"
           :options="typeFilters || []"
           filterable
           v-model="filters.type"

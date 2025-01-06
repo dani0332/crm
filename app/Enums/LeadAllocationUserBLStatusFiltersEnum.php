@@ -5,13 +5,13 @@ namespace App\Enums;
 use App\Models\LeadAllocation;
 use App\Models\User;
 
-enum LeadAllocationTypeFiltersEnum: string
+enum LeadAllocationUserBLStatusFiltersEnum: string
 {
     use Enumable;
 
     case ALL = 'all';
-    case BUY_LEAD = 'buy-lead';
-    case NON_BUY_LEAD = 'non-buy-lead';
+    case BUY_LEAD_ENABLED = 'buy-lead-enabled';
+    case BUY_LEAD_DISABLED = 'buy-lead-disabled';
 
     public function applyFilter($data)
     {
@@ -22,7 +22,7 @@ enum LeadAllocationTypeFiltersEnum: string
         return $data->filter(function (User|LeadAllocation $record) use ($users) {
             $freshUser = $users[$record->userId];
 
-            return $this === self::BUY_LEAD ?
+            return $this === self::BUY_LEAD_ENABLED ?
             ($freshUser->can(PermissionsEnum::BUY_LEADS) || $freshUser->hasPermissionTo(PermissionsEnum::BUY_LEADS)) :
             ($freshUser->cannot(PermissionsEnum::BUY_LEADS) || ! $freshUser->hasPermissionTo(PermissionsEnum::BUY_LEADS));
         })->values();
