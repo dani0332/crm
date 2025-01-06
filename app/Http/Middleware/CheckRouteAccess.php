@@ -85,7 +85,7 @@ class CheckRouteAccess
         $allowedRoutes = [
             'total-premium-leads-sales-report',
             'advisor-performance-report-view',
-            'lead-distribution-report-view'
+            'lead-distribution-report-view',
         ];
 
         $allowed = in_array($routeName, $allowedRoutes);
