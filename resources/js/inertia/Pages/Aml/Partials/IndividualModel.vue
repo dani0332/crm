@@ -126,7 +126,7 @@ const insuredFormDetails = useForm({
       ? props.membersDetails[0]?.first_name
       : null),
   insured_last_name:
-      props.insuredPersonDetails?.insured?.last_name ??
+    props.insuredPersonDetails?.insured?.last_name ??
     (props.quoteType.code === 'Health'
       ? props.membersDetails[0]?.last_name
       : null),
@@ -191,18 +191,20 @@ const submitQuoteUpdateForm = isValid => {
       });
     },
     onSuccess: response => {
-        if (response.props.flash.success.length === 0) {
-            notification.success({
-              title: 'Quote is updated',
-              position: 'top',
-            });
-        }
-        if (response.props.flash.info.length !== 0) {
-            notification.error({
-                title: response.props.flash.info.message || 'GIG server connection issue. Please check API logs for details of the error',
-                position: 'top',
-            });
-        }
+      if (response.props.flash.success.length === 0) {
+        notification.success({
+          title: 'Quote is updated',
+          position: 'top',
+        });
+      }
+      if (response.props.flash.info.length !== 0) {
+        notification.error({
+          title:
+            response.props.flash.info.message ||
+            'GIG server connection issue. Please check API logs for details of the error',
+          position: 'top',
+        });
+      }
     },
   });
 };
@@ -566,14 +568,17 @@ watch(
 );
 
 watch(() => {
-    if (insuredFormDetails.screening_id_type === '' || insuredFormDetails.screening_id_type === null) {
-        insuredFormDetails.screening_id_type =
-            props.quoteType.id === page.props.quoteTypeIdEnum.Travel && props.quoteDetails.direction_code === 'travelUaeInbound'
-                ? 'passport'
-                : 'emiratesId';
-    }
+  if (
+    insuredFormDetails.screening_id_type === '' ||
+    insuredFormDetails.screening_id_type === null
+  ) {
+    insuredFormDetails.screening_id_type =
+      props.quoteType.id === page.props.quoteTypeIdEnum.Travel &&
+      props.quoteDetails.direction_code === 'travelUaeInbound'
+        ? 'passport'
+        : 'emiratesId';
+  }
 });
-
 </script>
 
 <template>
