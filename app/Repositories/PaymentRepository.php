@@ -779,6 +779,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
     }
 
+    private function getTotalCreditPayments($payment)
+    {
+        return PaymentSplits::whereIn('payment_status_id', [
+            PaymentStatusEnum::CREDIT_APPROVED,
+        ])
+            ->where('code', $payment->code)
+            ->count();
+    }
+
     public function setMasterPaymentStatus($payment)
     {
         if ($payment) {
