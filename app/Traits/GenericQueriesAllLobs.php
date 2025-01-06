@@ -456,18 +456,24 @@ trait GenericQueriesAllLobs
         if ($this->isSplitPaymentFullyPaid($payment)) {
             return true;
         }
+
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $discountValue = round($payment->discount_value, 2);
             $paymentTotalAmount = round($payment->total_amount, 2);
-            if (abs(($paymentTotalAmount + $discountValue) > $paymentTotalPrice) < PHP_FLOAT_EPSILON) {
-                return true;
-            }
-            $paymentTotalPrice = round($payment->total_price, 2);
-            $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $discountValue), 2);
-            info('Quote Code: '.$payment->code.' Checking Lacking Payment paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
+            $tolerance = 0.01;
 
-            return ! ($sumOfSplitPayment >= $paymentTotalPrice);
+            if (($paymentTotalAmount + $discountValue) >= ($paymentTotalPrice - $tolerance) &&
+                ($paymentTotalAmount + $discountValue) <= ($paymentTotalPrice + $tolerance)) {
+                return false;
+            }
+
+            $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $discountValue), 2);
+            info('Quote Code: ' . $payment->code . ' Checking Lacking Payment paymentTotalPrice ' . $paymentTotalPrice . ' sum of Split payment ' . $sumOfSplitPayment);
+
+            // Check if the sum of split payments is approximately equal to the total price
+            return !(($sumOfSplitPayment >= ($paymentTotalPrice - $tolerance)) &&
+                    ($sumOfSplitPayment <= ($paymentTotalPrice + $tolerance)));
         }
 
         return true;
