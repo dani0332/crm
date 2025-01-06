@@ -97,13 +97,11 @@ class HomeAllocation extends BaseAllocation
 
     /**
      * Fetch emails of advisors belonging to the Corp Team.
-     *
-     * @return array
      */
     protected function getCorpTeamAdvisorEmails(): array
     {
         $corpTeamId = Team::where('name', TeamNameEnum::MOTOR_COOPERATE_RENEWALS)->value('id');
-        if (!$corpTeamId) {
+        if (! $corpTeamId) {
             return [];
         }
 
@@ -122,8 +120,6 @@ class HomeAllocation extends BaseAllocation
 
     /**
      * Fetch emails of advisors based on the lead type (value or volume).
-     *
-     * @return array
      */
     protected function getAdvisorEmailsBasedOnLeadType(): array
     {
@@ -139,7 +135,6 @@ class HomeAllocation extends BaseAllocation
     /**
      * Fetch a Home Advisor (value or volume) based on the online status.
      *
-     * @param int $onlineStatus
      * @return mixed
      */
     protected function fetchHomeAdvisor(int $onlineStatus)
@@ -157,7 +152,6 @@ class HomeAllocation extends BaseAllocation
     /**
      * Fetch a Corp Line Advisor based on the online status.
      *
-     * @param int $onlineStatus
      * @return mixed
      */
     protected function fetchCorpLineAdvisor(int $onlineStatus)
@@ -174,9 +168,6 @@ class HomeAllocation extends BaseAllocation
 
     /**
      * Check if the property is rented for a holiday home.
-     *
-     * @param string $uuid
-     * @return bool
      */
     private function isPropertyRentedForHolidayHome(string $uuid): bool
     {

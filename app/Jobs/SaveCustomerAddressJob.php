@@ -51,6 +51,7 @@ class SaveCustomerAddressJob implements ShouldQueue
 
             if (! $quoteData) {
                 info('Quote data not found', ['quoteUID' => $this->quoteUID]);
+
                 return;
             }
 
