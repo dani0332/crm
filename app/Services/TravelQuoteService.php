@@ -7,6 +7,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -31,8 +32,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
 
@@ -75,7 +76,12 @@ class TravelQuoteService extends BaseService
             'qs.id as quote_status_id',
             'qs.text as quote_status_id_text',
             'u.id as advisor_id',
-            'u.name as advisor_id_text',
+            DB::raw("
+                CASE
+                    WHEN u.email = '".PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL."' THEN 'Auto Issued'
+                    ELSE u.name
+                END as advisor_id_text
+            "),
             'tqr.previous_advisor_id',
             'uadv.name AS previous_advisor_id_text',
             'tqr.payment_status_id',
