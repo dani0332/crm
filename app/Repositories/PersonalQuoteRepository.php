@@ -167,7 +167,7 @@ class PersonalQuoteRepository extends BaseRepository
                         $quoteDocument->id, $data['quote_uuid'], $documentType->id
                     )->afterCommit();
                 } else {
-                    info('Watermkark job not dispatched - Ref: '.$quote->code);
+                    info('Watermark job not dispatched - Ref: '.$quote->code);
                 }
 
                 if (! $insuranceProviderId && request()->is_send_update) {

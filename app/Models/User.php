@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -111,6 +113,11 @@ class User extends Authenticatable implements AuditableContract
         } else {
             return 0;
         }
+    }
+
+    public function hasTeam(...$teams)
+    {
+        return $this->teams->whereIn('name', $teams)->isNotEmpty();
     }
 
     public function isLeadPool()
@@ -382,6 +389,50 @@ class User extends Authenticatable implements AuditableContract
     public function departments()
     {
         return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
+    }
+
+    public function isValueUser(QuoteTypes $quoteType): bool
+    {
+        if ($quoteType === QuoteTypes::HEALTH) {
+            return $this->hasTeam(TeamNameEnum::RM_SPEED);
+        }
+
+        return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VALUE);
+    }
+
+    public function isVolumeUser(QuoteTypes $quoteType): bool
+    {
+        if ($quoteType === QuoteTypes::HEALTH) {
+            return $this->hasTeam(TeamNameEnum::EBP);
+        }
+
+        return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VOLUME);
+    }
+
+    public function scopeIsValueUser($q, QuoteTypes $quoteType)
+    {
+        if ($quoteType === QuoteTypes::HEALTH) {
+            $q->whereHas('teams', function ($q) {
+                $q->where('name', 'like', TeamNameEnum::RM_SPEED);
+            });
+        } else {
+            $q->whereHas('subTeam', function ($q) {
+                $q->where('name', 'like', TeamNameEnum::VALUE);
+            });
+        }
+    }
+
+    public function scopeIsVolumeUser($q, QuoteTypes $quoteType)
+    {
+        if ($quoteType === QuoteTypes::HEALTH) {
+            $q->whereHas('teams', function ($q) {
+                $q->where('name', 'like', TeamNameEnum::EBP);
+            });
+        } else {
+            $q->whereHas('subTeam', function ($q) {
+                $q->where('name', 'like', TeamNameEnum::VOLUME);
+            });
+        }
     }
 
     public function scopeChs($query)

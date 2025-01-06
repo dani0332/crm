@@ -361,8 +361,12 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
         $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
-        // commented this because its value is null so no need to assign.
-        /* $dataArr['insurance_provider_id'] = null; */
+
+        if ($insurer = $policy['policy']['insurer'] ?? null) {
+            $insuranceProviderId = InsuranceProviderRepository::getInslyProviderId(trim($insurer));
+            $dataArr['insurance_provider_id'] = $insuranceProviderId;
+        }
+
         $dataArr['policy_issuance_date'] = now()->format('Y-m-d');
 
         $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;
