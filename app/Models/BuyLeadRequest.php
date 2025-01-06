@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BuyLeadSegment;
 use App\Enums\QuoteTypes;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,13 +18,25 @@ class BuyLeadRequest extends Model
         'request_type',
         'expires_at',
         'status',
+        'segment',
     ];
     protected $casts = [
         'requested_count' => 'integer',
         'allocated_count' => 'integer',
         'cost_per_lead' => 'float',
         'expires_at' => 'datetime',
+        'segment' => BuyLeadSegment::class,
     ];
+
+    public function scopeIsSIC($query)
+    {
+        $query->where('segment', BuyLeadSegment::SIC);
+    }
+
+    public function scopeIsNonSIC($query)
+    {
+        $query->where('segment', BuyLeadSegment::NON_SIC);
+    }
 
     public function quoteType()
     {
