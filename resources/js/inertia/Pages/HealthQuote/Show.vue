@@ -1649,7 +1649,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
+    only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment', 'bookPolicyDetails'],
   });
 };
 watch(
