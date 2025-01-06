@@ -197,7 +197,10 @@ const submitQuoteUpdateForm = isValid => {
           position: 'top',
         });
       }
-      if (typeof response.props.flash.info !== 'undefined' && response.props.flash.info?.length > 0) {
+      if (
+        typeof response.props.flash.info !== 'undefined' &&
+        response.props.flash.info?.length > 0
+      ) {
         notification.error({
           title:
             response.props.flash.info?.message ||
