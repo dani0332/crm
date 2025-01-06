@@ -10,7 +10,7 @@ class LifeAllocation extends BaseAllocation
     private const CAT_A = 'categoryA';
     private const CAT_B = 'categoryB';
 
-    protected function fetchAdvisor(int $onlineStatus)
+    protected function fetchAdvisor(int $onlineStatus, ?string $uuid = null)
     {
         $emails = $this->getAdvisorEmails();
 
@@ -47,7 +47,15 @@ class LifeAllocation extends BaseAllocation
     private function getCountriesMapping()
     {
         $catACountryMapping = [
-            'South African', 'Australian', 'New Zealander', 'Canadian', 'United Kingdom', 'Lebanese', 'Filipino', 'American', 'Europe',
+            'South African',
+            'Australian',
+            'New Zealander',
+            'Canadian',
+            'United Kingdom',
+            'Lebanese',
+            'Filipino',
+            'American',
+            'Europe',
         ];
 
         $catBCountryMapping = cache()->remember('countries_category_mapping', now()->addHours(24), function () use ($catACountryMapping) {
