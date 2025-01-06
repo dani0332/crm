@@ -743,7 +743,8 @@ trait GenericQueriesAllLobs
     
         if (in_array($quoteTypeId, [QuoteTypes::getId(QuoteTypes::BUSINESS),QuoteTypes::getId(QuoteTypes::CORPLINE), QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)])) {
             $brokerCommissionQuery->where('business_type_of_insurance_id', $businessTypeOfInsuranceId)
-                ->where('quote_type_id', QuoteTypeId::Business);
+            ->active()
+            ->where('quote_type_id', QuoteTypeId::Business);
         } else {
             $brokerCommissionQuery->where('quote_type_id', $quoteTypeId);
         }
