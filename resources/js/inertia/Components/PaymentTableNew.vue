@@ -1792,6 +1792,7 @@ const editPaymentModal = (
   applyPermissions();
   processPaymentSplits(payment);
   finalizePaymentForm(payment, capture_approval);
+  setFrequencyTypes();
 };
 
 const resetPaymentForm = () => {
@@ -3338,6 +3339,7 @@ watch(
 );
 
 const hasAnyCCPayment = () => {
+  console.log("paymentMethodsModels.value", paymentMethodsModels.value)
   const paymentMM = Object.values(paymentMethodsModels.value);
   return paymentMM.some(item => item == 'CC');
 };
