@@ -78,7 +78,7 @@ class BuyLeadRequest extends Model
         $q->where('request_type', 'volume');
     }
 
-    public function scopeValueVolume($q, QuoteTypes $quoteType, bool $isValue)
+    public function scopeByValueOrVolume($q, QuoteTypes $quoteType, bool $isValue)
     {
         $q->when($isValue, function ($q) use ($quoteType) {
             $q->whereHas('user', function ($q) use ($quoteType) {
@@ -91,16 +91,25 @@ class BuyLeadRequest extends Model
         });
     }
 
-    public static function getRequestedUserIds(QuoteTypes $quoteType, bool $isValue): array
+    public function scopeBySegment($q, bool $isSIC)
     {
-        $userIds = self::valueVolume($quoteType, $isValue)->where('quote_type_id', $quoteType->id())->active()->unfulfilled()->pluck('user_id')->toArray();
+        $q->when($isSIC, function ($q) {
+            $q->isSIC();
+        }, function ($q) {
+            $q->isNonSIC();
+        });
+    }
+
+    public static function getRequestedUserIds(QuoteTypes $quoteType, bool $isSIC, bool $isValue): array
+    {
+        $userIds = self::byValueOrVolume($quoteType, $isValue)->bySegment($isSIC)->where('quote_type_id', $quoteType->id())->active()->unfulfilled()->pluck('user_id')->toArray();
 
         return array_values(array_unique($userIds));
     }
 
-    public static function getRequest(QuoteTypes $quoteType, int $userId, bool $isValue): ?BuyLeadRequest
+    public static function getRequest(QuoteTypes $quoteType, bool $isSIC, int $userId, bool $isValue): ?BuyLeadRequest
     {
-        return self::valueVolume($quoteType, $isValue)->where('quote_type_id', $quoteType->id())->where('user_id', $userId)->active()->unfulfilled()->first();
+        return self::byValueOrVolume($quoteType, $isValue)->bySegment($isSIC)->where('quote_type_id', $quoteType->id())->where('user_id', $userId)->active()->unfulfilled()->first();
     }
 
     public function buyLead($lead, QuoteTypes $quoteType)
