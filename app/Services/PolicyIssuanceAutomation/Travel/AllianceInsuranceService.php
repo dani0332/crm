@@ -181,7 +181,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         } catch (\Exception $e) {
             $response['error'] = $e->getMessage();
             $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-
             info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Exception : '.$e->getMessage());
 
             return $response;
