@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\BuyLeadSegment;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -21,6 +22,7 @@ class BuyLeadConfigController extends Controller
     public function show()
     {
         $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        $data['segments'] = BuyLeadSegment::withLabels();
         $data['departments'] = Department::where('is_active', true)->get()
             ->map(function ($department) {
                 return [
