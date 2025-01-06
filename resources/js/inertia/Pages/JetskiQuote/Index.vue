@@ -56,6 +56,7 @@ const permissionAssignLeads = ref(false);
 const hasRole = role => useHasRole(role);
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -533,7 +534,7 @@ watch(
     >
       <template #item-uuid="{ code, uuid }">
         <Link
-          v-if="can(permissionsEnum.JetskiQuotesShow)"
+          v-if="canAny([permissionsEnum.JetskiQuotesShow, permissionsEnum.VIEW_ALL_LEADS])"
           :href="route('jetski-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >

@@ -393,6 +393,8 @@ final class PermissionsEnum extends Enum
     public const RECEIVE_NOTIFICATIONS = 'receive-notifications';
     public const SEARCH_ALL_LEAD_LOB = 'search-all-lead-lob';
     public const DATA_EXTRACTION_SEARCH_ALL_LEADS = 'data-extraction-search-all-leads';
+    public const VIEW_ALL_LEADS = 'view-all-leads';
+    public const VIEW_ALL_REPORTS = 'view-all-reports';
 
     public static function getAdvisorConversionReportPermissions()
     {

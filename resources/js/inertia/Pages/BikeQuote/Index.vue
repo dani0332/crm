@@ -178,6 +178,7 @@ const tableHeader = [
 ];
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -589,7 +590,7 @@ watch(
       <template #item-uuid="{ code, uuid }">
         <!-- :href="`/personal-quotes/bike/${uuid}`" -->
         <Link
-          v-if="can(permissionsEnum.BikeQuotesShow)"
+          v-if="canAny([permissionsEnum.BikeQuotesShow, permissionsEnum.VIEW_ALL_LEADS])"
           class="text-primary-500 hover:underline"
           :href="route('bike-quotes-show', uuid)"
         >

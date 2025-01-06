@@ -205,6 +205,7 @@ const handleSelectedFilters = selectedFilters => {
 };
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -730,7 +731,7 @@ const validateDateRange = () => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
-          v-if="can(permissionsEnum.PetQuotesShow)"
+          v-if="canAny([permissionsEnum.PetQuotesShow, permissionsEnum.VIEW_ALL_LEADS])"
           :href="route('pet-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >

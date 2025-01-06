@@ -35,6 +35,25 @@ class RolePermissionSeeder extends Seeder
                     'updated_at' => now(),
                 ]);
             }
+
+            $viewAllLeadsPermission = Permission::where('name', PermissionsEnum::VIEW_ALL_LEADS)->first();
+            if (! $viewAllLeadsPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::VIEW_ALL_LEADS,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            $viewAllReportsPermission = Permission::where('name', PermissionsEnum::VIEW_ALL_REPORTS)->first();
+            if (! $viewAllReportsPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::VIEW_ALL_REPORTS,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         } catch (\Throwable $th) {
             info('RolePermission Seeder issue Error:'.$th->getMessage().' Line:'.$th->getLine());
             throw $th;

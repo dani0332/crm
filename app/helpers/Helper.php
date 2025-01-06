@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -1565,5 +1566,13 @@ if (! function_exists('isCHSAdvisor')) {
         $user = User::select('id')->chs()->first();
 
         return $user?->id == $userId;
+    }
+}
+
+if (! function_exists('userHasProduct')) {
+    function userHasProduct($product)
+    {
+        $productIds = auth()->user()->products->pluck('product_id');
+        return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }

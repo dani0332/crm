@@ -307,7 +307,7 @@ class TravelController extends Controller
                 'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
-                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
+                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit') || (userHasProduct(quoteTypeCode::Travel) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS)),
                 'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                 'isPA' => auth()->user()->hasRole(RolesEnum::PA),
 

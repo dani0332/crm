@@ -722,7 +722,7 @@ const validateDateRange = () => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
-          v-if="can(permissionsEnum.CycleQuotesShow)"
+          v-if="canAny([permissionsEnum.CycleQuotesShow, permissionsEnum.VIEW_ALL_LEADS])"
           :href="route('cycle-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >

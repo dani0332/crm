@@ -136,6 +136,7 @@ const quotesSelected = ref([]);
 const permissionAssignLeads = ref(false);
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 
 function onSubmit(isValid) {
@@ -736,7 +737,7 @@ const validateDateRange = () => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
-          v-if="can(permissionsEnum.YachtQuotesShow)"
+          v-if="canAny([permissionsEnum.YachtQuotesShow, permissionsEnum.VIEW_ALL_LEADS])"
           :href="route('yacht-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >

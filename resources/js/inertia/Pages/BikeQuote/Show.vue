@@ -402,7 +402,7 @@ const fetchUpdatedQuote = async () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.BikeQuotesEdit)"
+            v-if="canAny([permissionsEnum.BikeQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
             :isDisabled="true"
           />
           <template #tooltip
@@ -413,7 +413,7 @@ const fetchUpdatedQuote = async () => {
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.BikeQuotesEdit)"
+            v-if="canAny([permissionsEnum.BikeQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
           />
         </template>
 

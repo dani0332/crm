@@ -33,6 +33,7 @@ defineProps({
 const page = usePage();
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const modelClass = 'App\\Models\\PersonalQuote';
 const readOnlyMode = reactive({
@@ -95,7 +96,7 @@ const dateFormat = date =>
               placement="bottom"
             >
               <LeadEditBtnReuseTemplate
-                v-if="can(permissionsEnum.JetskiQuotesEdit)"
+                v-if="canAny([permissionsEnum.JetskiQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
                 :isDisabled="true"
               />
               <template #tooltip
@@ -106,7 +107,7 @@ const dateFormat = date =>
             </x-tooltip>
             <template v-else>
               <LeadEditBtnReuseTemplate
-                v-if="can(permissionsEnum.JetskiQuotesEdit)"
+                v-if="canAny([permissionsEnum.JetskiQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
               />
             </template>
             <Link

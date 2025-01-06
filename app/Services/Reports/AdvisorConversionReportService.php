@@ -373,9 +373,9 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
         ];
 
-        $lobs = array_filter($lobs, function ($permission) {
-            return Auth::user()->can($permission);
-        });
+        $lobs = array_filter($lobs, function ($permission, $lob) {
+            return (Auth::user()->can($permission) || Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($lob));
+        }, ARRAY_FILTER_USE_BOTH);
 
         $lobs = QuoteTypeRepository::GetList()
             ->filter(function ($lob) use ($lobs) {

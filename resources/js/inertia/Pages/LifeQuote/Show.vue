@@ -575,7 +575,7 @@ const onAddUpdate = () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            v-if="canAny([permissionsEnum.LifeQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
             :isDisabled="true"
           />
           <template #tooltip
@@ -586,7 +586,7 @@ const onAddUpdate = () => {
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            v-if="canAny([permissionsEnum.LifeQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
           />
         </template>
       </div>

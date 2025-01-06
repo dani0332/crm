@@ -161,6 +161,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::TPL_DASHBOARD_VIEW,
             PermissionsEnum::MAIN_DASHBOARD_VIEW,
             PermissionsEnum::UtmLeadsSalesReport,
+            PermissionsEnum::VIEW_ALL_LEADS,
         ], PermissionsEnum::getComprehensiveDashboardPermissions()))) {
             $nav = $nav->add('Dashboard', '', function (Section $section) {
                 $section
@@ -173,7 +174,7 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'graph'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::MAIN_DASHBOARD_VIEW),
+                        auth()->user()->hasAnyPermission([PermissionsEnum::MAIN_DASHBOARD_VIEW, PermissionsEnum::VIEW_ALL_LEADS]),
                         'Accumulative Dashboard',
                         route('main-dashboard-view'),
                         fn ($s) => $s->attributes(['icon' => 'graph'])
@@ -198,19 +199,19 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
                     ->addIf(auth()->user()->can(PermissionsEnum::CONVERSION_AS_AT_REPORT), 'Conversion As At Report', route('conversion-as-at-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->hasAnyPermission(PermissionsEnum::getAdvisorConversionReportPermissions()), 'Advisor Conversion', route('advisor-conversion-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW), 'Advisor Performance', route('advisor-performance-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->hasAnyPermission(PermissionsEnum::getAdvisorDistributionReportPermissions()), 'Advisor Distribution', route('advisor-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission(array_merge(PermissionsEnum::getAdvisorConversionReportPermissions(), [PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])), 'Advisor Conversion', route('advisor-conversion-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission([PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS]), 'Advisor Performance', route('advisor-performance-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission(array_merge(PermissionsEnum::getAdvisorDistributionReportPermissions(), [PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])), 'Advisor Distribution', route('advisor-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission([PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS]), 'Lead Distribution', route('lead-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW), 'Revival Conversion', route('revival-conversion-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Motor Retention report', route('renewal-batch-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY), 'Authorised Payment Summary', route('authorized-payment-summary', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->hasAnyPermission([PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY, PermissionsEnum::VIEW_ALL_REPORTS]), 'Authorised Payment Summary', route('authorized-payment-summary', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::MANAGEMENT_REPORT), 'Management Report', route('management-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::STALE_LEADS_REPORT), 'Stale Leads Report', route('stale-leads-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::PIPELINE_REPORT), 'Pipeline Report', route('pipeline-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT), 'Total Premium Report', route('total-premium-leads-sales-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf((auth()->user()->can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT) || (auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct(quoteTypeCode::Car))), 'Total Premium Report', route('total-premium-leads-sales-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(true, 'Non Motor Retention Report', route('retentionn-report'), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
@@ -309,63 +310,66 @@ class HandleInertiaRequests extends Middleware
         $nav = $nav->add('Personal Quotes', '', function (Section $section) {
             $section
                 ->addIf(
-                    auth()->user()->hasAnyPermission([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch, PermissionsEnum::CAR_REVIVAL_QUOTE_LIST]),
+                    (auth()->user()->hasAnyPermission([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch, PermissionsEnum::CAR_REVIVAL_QUOTE_LIST]) || (userHasProduct(quoteTypeCode::Car) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Car',
                     route('car.index'),
                     fn ($s) => $s
                         ->attributes(['icon' => 'car'])
                         ->addIf(
-                            auth()->user()->can(PermissionsEnum::CarQuoteSearch),
+                            (auth()->user()->can(PermissionsEnum::CarQuoteSearch) || (userHasProduct(quoteTypeCode::Car) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                             'Search',
                             route('car-quotes-search'),
                             fn ($s) => $s->attributes(['icon' => 'car'])
                         )
                         ->addIf(
-                            auth()->user()->can(PermissionsEnum::CarQuotesList),
+                            (auth()->user()->can(PermissionsEnum::CarQuotesList) || (userHasProduct(quoteTypeCode::Car) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                             'Lead List',
                             route('car.index'),
                             fn ($s) => $s->attributes(['icon' => 'car'])
                         )
                         ->addIf(
-                            auth()->user()->can(PermissionsEnum::CAR_REVIVAL_QUOTE_LIST),
+                            (auth()->user()->can(PermissionsEnum::CAR_REVIVAL_QUOTE_LIST) || (userHasProduct(quoteTypeCode::Car) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                             'Revival Quotes',
                             route('carrevival-quotes-list'),
                             fn ($s) => $s->attributes(['icon' => 'car'])
                         ),
                 )
                 ->addIf(
-                    auth()->user()->hasAnyPermission(
+                    (auth()->user()->hasAnyPermission(
                         PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
                         PermissionsEnum::HEALTH_QUOTES_ACCESS
-                    ),
+                    ) || (userHasProduct(quoteTypeCode::Health) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Health Quotes',
                     route('health.index'),
                     fn ($s) => $s->attributes(['icon' => 'health'])
                 )
                 ->addIf(
-                    auth()->user()->can(PermissionsEnum::TravelQuotesList),
+                    (auth()->user()->can(PermissionsEnum::TravelQuotesList)
+                     || (userHasProduct(quoteTypeCode::Travel) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Travel Quotes',
                     route('travel.index'),
                     fn ($s) => $s->attributes(['icon' => 'travel'])
                 )
                 ->addIf(
-                    auth()->user()->can(PermissionsEnum::LifeQuotesList),
+                    (auth()->user()->can(PermissionsEnum::LifeQuotesList)
+                     || (userHasProduct(quoteTypeCode::Life) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Life Quotes',
                     route('life-quotes-list'),
                     fn ($s) => $s->attributes(['icon' => 'life'])
                 )
                 ->addIf(
-                    auth()->user()->can(PermissionsEnum::HomeQuotesList),
+                    (auth()->user()->can(PermissionsEnum::HomeQuotesList)
+                     || (userHasProduct(quoteTypeCode::Home) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Home Quotes',
                     route('home.index'),
                     fn ($s) => $s->attributes(['icon' => 'home'])
                 )
-                ->addIf(auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', route('pet-quotes-list'), fn ($s) => $s->attributes(['icon' => 'pet']))
-                ->addIf(auth()->user()->can(PermissionsEnum::BikeQuotesList), 'Bike Quotes', route('bike-quotes-list'), fn ($s) => $s->attributes(['icon' => 'bike']))
-                ->addIf(auth()->user()->can(PermissionsEnum::CycleQuotesList), 'Cycle Quotes', route('cycle-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cycle']))
-                ->addIf(auth()->user()->can(PermissionsEnum::YachtQuotesList), 'Yacht Quotes', route('yacht-quotes-list'), fn ($s) => $s->attributes(['icon' => 'yacht']))
-                ->addIf(auth()->user()->can(PermissionsEnum::JetskiQuotesList), 'Jetski Quotes', route('jetski-quotes-list'), fn ($s) => $s->attributes(['icon' => 'jetski']));
+                ->addIf((auth()->user()->can(PermissionsEnum::PetQuotesList)|| (userHasProduct(quoteTypeCode::Pet) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Pet Quotes', route('pet-quotes-list'), fn ($s) => $s->attributes(['icon' => 'pet']))
+                ->addIf((auth()->user()->can(PermissionsEnum::BikeQuotesList)|| (userHasProduct(quoteTypeCode::Bike) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Bike Quotes', route('bike-quotes-list'), fn ($s) => $s->attributes(['icon' => 'bike']))
+                ->addIf((auth()->user()->can(PermissionsEnum::CycleQuotesList)|| (userHasProduct(quoteTypeCode::Cycle) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Cycle Quotes', route('cycle-quotes-list'), fn ($s) => $s->attributes(['icon' => 'cycle']))
+                ->addIf((auth()->user()->can(PermissionsEnum::YachtQuotesList)|| (userHasProduct(quoteTypeCode::Yacht) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Yacht Quotes', route('yacht-quotes-list'), fn ($s) => $s->attributes(['icon' => 'yacht']))
+                ->addIf((auth()->user()->can(PermissionsEnum::JetskiQuotesList)|| (userHasProduct(quoteTypeCode::Jetski) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Jetski Quotes', route('jetski-quotes-list'), fn ($s) => $s->attributes(['icon' => 'jetski']));
         });
         /* personal quotes section end */
 
@@ -373,17 +377,17 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,
             PermissionsEnum::UtmLeadsSalesReport,
-        ])) {
+        ])|| ((userHasProduct(quoteTypeCode::GroupMedical) || userHasProduct(quoteTypeCode::CORPLINE)) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))) {
             $nav = $nav->add('Business Quotes', '', function (Section $section) {
                 $section
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::GMQuotesList),
+                        (auth()->user()->can(PermissionsEnum::GMQuotesList)|| (userHasProduct(quoteTypeCode::GroupMedical) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                         'Group Medical Quotes',
                         route('amt.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CorpLineQuotesList),
+                        (auth()->user()->can(PermissionsEnum::CorpLineQuotesList) || (userHasProduct(quoteTypeCode::CORPLINE) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                         'CorpLine Quotes',
                         route('business.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
