@@ -3339,7 +3339,7 @@ watch(
 );
 
 const hasAnyCCPayment = () => {
-  console.log("paymentMethodsModels.value", paymentMethodsModels.value)
+  console.log('paymentMethodsModels.value', paymentMethodsModels.value);
   const paymentMM = Object.values(paymentMethodsModels.value);
   return paymentMM.some(item => item == 'CC');
 };
