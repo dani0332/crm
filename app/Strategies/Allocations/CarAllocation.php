@@ -74,6 +74,7 @@ class CarAllocation implements Allocation
             }
         } catch (\Throwable $th) {
             $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+            $this->carAllocationService->endBuyLeadProcessing();
 
             $message = $th->getMessage() ?? '';
             info('exception occurred in car lead allocation with error : '.$message);
@@ -125,6 +126,7 @@ class CarAllocation implements Allocation
             info('Advisor is same as previous advisor. Skipping for now.');
 
             $lead->endAllocation();
+            $this->carAllocationService->endBuyLeadProcessing();
 
             return $this->carAllocationService->createResponse($advisorId, 'Advisor is same as previous advisor. Skipping for now', Response::HTTP_OK);
         }
@@ -136,6 +138,7 @@ class CarAllocation implements Allocation
             return $this->carAllocationService->createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
         } else {
             $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+            $this->carAllocationService->endBuyLeadProcessing();
 
             info('Advisor not found. Skipping for now.');
             $this->updateLeadTier($lead, $tier);

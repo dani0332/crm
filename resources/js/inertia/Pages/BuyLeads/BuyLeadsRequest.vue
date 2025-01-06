@@ -216,7 +216,7 @@ const maxLeadsOptions = computed(() => {
     <div class="flex justify-end gap-3 mb-4">
       <x-button
         size="md"
-        color="primary"
+        color="orange"
         type="submit"
         :loading="table.loading"
         :disabled="isRequestAlreadySubmitted || maximumLeads == 0"

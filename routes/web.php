@@ -270,6 +270,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('route:clear');
         Artisan::call('config:clear');
         Artisan::call('view:clear');
+        Artisan::call('permission:cache-reset');
         Artisan::call('schedule:clear-cache');
 
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
@@ -336,6 +337,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/{quoteType}/update-cap', [LeadAllocationController::class, 'updateCaps']);
     Route::post('/lead-allocation/toggle-reset-cap', [LeadAllocationController::class, 'updateResetCapSwitch']);
     Route::post('/lead-allocation/toggle-bl-status', [LeadAllocationController::class, 'updateBlStatus']);
+    Route::post('/lead-allocation/toggle-normal-allocation', [LeadAllocationController::class, 'updateNormalLeadAllocationStatus']);
+    Route::post('/lead-allocation/toggle-bl-reset-cap', [LeadAllocationController::class, 'updateBLResetCap']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
@@ -704,5 +707,3 @@ Route::get('/add-batch-number', function () {
 //     }
 
 // });
-//todo: temp endpoint to be removed later
-Route::get('/receipt-generate', [CentralController::class, 'manualReceiptGeneration']);

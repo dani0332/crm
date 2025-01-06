@@ -67,12 +67,7 @@ class BuyLeadService
 
     public function findConfig(QuoteTypes $quoteType): ?BuyLeadConfiguration
     {
-        $userDepartmentIds = [
-            Auth::user()->department_id ?? 0,
-            ...(Auth::user()->departments?->pluck('id')?->toArray() ?? []),
-        ];
-
-        return BuyLeadConfiguration::where('quote_type_id', $quoteType->id())->whereIn('department_id', $userDepartmentIds)->first();
+        return BuyLeadConfiguration::where('quote_type_id', $quoteType->id())->where('department_id', Auth::user()->department_id ?? 0)->first();
     }
 
     public function findConfigCost(QuoteTypes $quoteType)
@@ -85,16 +80,20 @@ class BuyLeadService
         $cost = null;
         $requestType = null;
 
-        if (Auth::user()->isValueUser()) {
+        if (Auth::user()->isValueUser($quoteType)) {
             $cost = $config->value;
             $requestType = 'value';
-        } elseif (Auth::user()->isVolumeUser()) {
+        } elseif (Auth::user()->isVolumeUser($quoteType)) {
             $cost = $config->volume;
             $requestType = 'volume';
         }
 
-        if (! $cost) {
+        if (is_null($cost)) {
             return "You're neither a value user nor a volume user";
+        }
+
+        if ($cost <= 0) {
+            return 'System is unable to process your request.';
         }
 
         return [$cost, $requestType];
@@ -120,6 +119,7 @@ class BuyLeadService
             'cost_per_lead' => $cost,
             'request_type' => $requestType,
             'expires_at' => now()->endOfDay(),
+            'department_id' => Auth::user()->department_id,
         ]);
 
         return null;
@@ -139,12 +139,12 @@ class BuyLeadService
 
     public function getTrackingData(QuoteTypes $quoteType, Carbon $startDate, Carbon $endDate, bool $isExport = false)
     {
-        return BuyLeadRequestLog::select('buy_lead_request_logs.id', 'buy_lead_request_logs.quote_type_id', 'buy_lead_request_logs.uuid as ref_id', 'buy_lead_requests.created_at as requested_date', 'departments.name as department')
+        return BuyLeadRequestLog::select('buy_lead_request_logs.id', 'buy_lead_request_logs.quote_type_id', 'buy_lead_request_logs.uuid as ref_id', 'buy_lead_requests.created_at', 'departments.name as department')
             ->selectRaw('CONCAT(ROUND(buy_lead_requests.cost_per_lead, 0), " AED") as cost')
             ->with('quoteType:id,code')
             ->join('buy_lead_requests', 'buy_lead_requests.id', '=', 'buy_lead_request_logs.buy_lead_request_id')
             ->join('users', 'users.id', '=', 'buy_lead_requests.user_id')
-            ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
+            ->leftJoin('departments', 'buy_lead_requests.department_id', '=', 'departments.id')
             ->where('buy_lead_requests.user_id', Auth::id())
             ->where('buy_lead_request_logs.quote_type_id', $quoteType->id())
             ->whereBetween('buy_lead_request_logs.created_at', [$startDate->startOfDay(), $endDate->endOfDay()])
