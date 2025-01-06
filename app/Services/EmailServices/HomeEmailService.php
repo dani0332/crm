@@ -66,6 +66,7 @@ class HomeEmailService extends BaseService
 
             if (empty($homeQuote->automated_flow_executed_at)) {
                 $homeQuote->automated_flow_executed_at = now();
+                $homeQuote->quote_status_id = QuoteStatusEnum::FollowedUp;
                 $homeQuote->save();
                 $lead->quote_status_id = QuoteStatusEnum::FollowedUp;
                 $lead->save();
