@@ -707,7 +707,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $payload = array_merge($this->authParam, $param);
         $url = $this->baseUrl.$endPoint;
 
-        return Http::timeout(80)->withHeaders($headers)->post($url, $payload);
+        return Http::timeout(20)->withHeaders($headers)->post($url, $payload);
     }
 
 }
