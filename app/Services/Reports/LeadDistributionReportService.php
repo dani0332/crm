@@ -12,7 +12,6 @@ use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\UserManager;
-use App\Models\Team;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;

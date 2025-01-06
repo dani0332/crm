@@ -476,6 +476,18 @@ class SageApiService
         $payLoadOptions = SagePayloadFactory::getInvoiceDetails($reversalInvoiceDetails['invoiceType'], $reverseInvoiceBatchNumber);
         $isLiveApiCallStep2 = true;
         if (isset($sageLogArray[$step]) && $sageLogArray[$step]['status'] == SageEnum::STATUS_SUCCESS) {
+            if ($sageLogArray[$step]['sage_end_point'] !== $payLoadOptions['endPoint']) {
+                info('SAGE API : Reversal invoice number updated - previous reversal batch number ('.$sageLogArray[$step]['sage_end_point'].') - current reversal batch number ('.$payLoadOptions['endPoint'].') - Send Update Code: '.$sendUpdateLog->code);
+                $getNewResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], 'GET');
+                $sageLogArray[$step]['response'] = $getNewResponse;
+                $sageLogArray[$step]['sage_end_point'] = $payLoadOptions['endPoint'];
+                SageApiLog::where('id', $sageLogArray[$step]['id'])->update([
+                    'sage_end_point' => $payLoadOptions['endPoint'],
+                    'response' => $getNewResponse,
+                ]);
+                info('SAGE API : Response against current batch number has been updated - Send Update Code: '.$sendUpdateLog->code);
+            }
+
             info('SAGE API :  getInvoiceDetails for '.$reversalInvoiceDetails['invoiceType'].' Sent Already for '.$sendUpdateLog->code);
             $isLiveApiCallStep2 = false;
             $sageResponse = json_decode($sageLogArray[$step]['response'], true);
