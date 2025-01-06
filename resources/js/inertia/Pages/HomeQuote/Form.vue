@@ -571,6 +571,7 @@ watch(
             :options="possessionTypeOptions"
             @update:modelValue="handleConditionalFields"
             class="w-full"
+            native
           />
         </x-field>
         <x-field label="TYPE OF PROPERTY" required>
