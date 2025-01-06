@@ -191,16 +191,16 @@ const submitQuoteUpdateForm = isValid => {
       });
     },
     onSuccess: response => {
-      if (response.props.flash.success.length === 0) {
+      if (response.props.flash.success?.length === 0) {
         notification.success({
           title: 'Quote is updated',
           position: 'top',
         });
       }
-      if (response.props.flash.info.length !== 0) {
+      if (typeof response.props.flash.info !== 'undefined' && response.props.flash.info?.length > 0) {
         notification.error({
           title:
-            response.props.flash.info.message ||
+            response.props.flash.info?.message ||
             'GIG server connection issue. Please check API logs for details of the error',
           position: 'top',
         });

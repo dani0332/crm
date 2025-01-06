@@ -467,10 +467,12 @@ class AMLController extends Controller
                     session()->put('insurerAMLScreeningResponse');
                     InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
                     $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                    $insurerAMLScreeningResponse = [
-                        'status' => $getInsurerScreeningResponse['status'],
-                        'message' => $getInsurerScreeningResponse['message'],
-                    ];
+                    if (! empty($insurerAMLScreeningResponse)) {
+                        $insurerAMLScreeningResponse = [
+                            'status' => $getInsurerScreeningResponse['status'],
+                            'message' => $getInsurerScreeningResponse['message'],
+                        ];
+                    }
                     session()->forget('insurerAMLScreeningResponse');
                 }
 
