@@ -57,6 +57,7 @@ class SaleSummaryReportService extends ManagementReport
             IFNULL(SUM(personal_quotes.price_vat_not_applicable),0) as price_vat_not_applicable,
             IFNULL(SUM(p.discount_value) ,0) as discount,
             IFNULL(SUM(p.commission_vat_applicable) ,0) as commission_vat_applicable,
+            IFNULL(SUM(p.commission_vat), 0) as commission_vat,
             IFNULL(SUM(p.commission_vat_not_applicable) ,0) as commission_vat_not_applicable,
             IFNULL( ( SUM(personal_quotes.price_vat_applicable)  ), 0) +
                 IFNULL( ( SUM(personal_quotes.price_vat_not_applicable) ), 0) +
@@ -188,6 +189,7 @@ class SaleSummaryReportService extends ManagementReport
                     sum(IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ))) -
                     sum(IFNULL( IF(ps.discount_value IS NULL OR ps.discount_value = 0, send_update_logs.discount, ps.discount_value) , 0 ))) as total_endorsement_amount'),
                 DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_vat_applicable, 0) ELSE 0 END) as commission_vat_applicable'),
+                DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.vat_on_commission, 0) ELSE 0 END) as commission_vat'),
                 DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(p.commission_vat_not_applicable, IFNULL(send_update_logs.commission_vat_not_applicable, 0)) ELSE 0 END) as commission_vat_not_applicable'),
             )
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
@@ -262,6 +264,7 @@ class SaleSummaryReportService extends ManagementReport
                  sum(IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0))) -
                  sum(IFNULL(p.discount_value, 0))) as total_endorsement_amount'),
                 DB::raw('sum(-1 * IFNULL(s2.commission_vat_applicable, IFNULL(p.commission_vat_applicable, 0))) as commission_vat_applicable'),
+                DB::raw('sum(-1 * IFNULL(p.commission_vat, IFNULL(s2.vat_on_commission, 0))) as commission_vat'),
                 DB::raw('sum(-1 * IFNULL(s2.commission_vat_not_applicable, IFNULL(p.commission_vat_not_applicable, 0))) as commission_vat_not_applicable'),
             )
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
@@ -345,6 +348,7 @@ class SaleSummaryReportService extends ManagementReport
                     'total_endorsements' => $group->sum('total_endorsements'),
                     'total_endorsement_amount' => $group->sum('total_endorsement_amount'),
                     'commission_vat_applicable' => $group->sum('commission_vat_applicable'),
+                    'commission_vat' => $group->sum('commission_vat'),
                     'commission_vat_not_applicable' => $group->sum('commission_vat_not_applicable'),
                 ];
             })->values());
@@ -360,6 +364,7 @@ class SaleSummaryReportService extends ManagementReport
             $item->price_vat_not_applicable = isset($item->price_vat_not_applicable) ? number_format($item->price_vat_not_applicable, 2) : '0.00';
             $item->discount = isset($item->discount) ? number_format($item->discount, 2) : '0.00';
             $item->commission_vat_applicable = isset($item->commission_vat_applicable) ? number_format($item->commission_vat_applicable, 2) : '0.00';
+            $item->commission_vat = isset($item->commission_vat) ? number_format($item->commission_vat, 2) : '0.00';
             $item->commission_vat_not_applicable = isset($item->commission_vat_not_applicable) ? number_format($item->commission_vat_not_applicable, 2) : '0.00';
         });
     }
