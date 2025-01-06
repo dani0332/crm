@@ -12,6 +12,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\UserManager;
+use App\Models\Team;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
@@ -69,6 +70,7 @@ class LeadDistributionReportService extends BaseService
 
     private function getCarQuoteQuery($lob)
     {
+        $parentTeam = $this->getProductByName($lob);
         // Base query for car quotes with necessary joins
         $carQuoteQuery = CarQuote::query()
             ->select('teams.name AS team_name')
@@ -78,6 +80,7 @@ class LeadDistributionReportService extends BaseService
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('teams.parent_team_id', $parentTeam->id)
             ->groupBy('teams.name')
             ->orderBy('teams.name');
 
@@ -164,6 +167,7 @@ class LeadDistributionReportService extends BaseService
     private function getPersonalQuoteQuery($lob)
     {
         $lobId = $this->getLobId($lob);
+        $parentTeam = $this->getProductByName($lob);
 
         $personalQuoteQuery = PersonalQuote::query()
             ->select('teams.name AS team_name')
@@ -172,6 +176,7 @@ class LeadDistributionReportService extends BaseService
             ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('personal_quotes.quote_type_id', $lobId)
+            ->where('teams.parent_team_id', $parentTeam->id)
             ->groupBy('teams.name')
             ->orderBy('teams.name');
 
