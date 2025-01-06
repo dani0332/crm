@@ -4829,7 +4829,7 @@ const isCCPaymentDisabled = option => {
                         >DOCUMENTS</span
                       >
                       <sup
-                        v-if="!isViewEnabled && !isCreditApprovalView"
+                        v-if="!isViewEnabled && !isCreditApprovalView && !(hasAnyCCPayment() && paymentMethodsForm.collection_type == 'insurer')"
                         class="text-red-500"
                         >*</sup
                       >
