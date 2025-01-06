@@ -83,7 +83,12 @@ class TravelQuoteService extends BaseService
                 END as advisor_id_text
             "),
             'tqr.previous_advisor_id',
-            'uadv.name AS previous_advisor_id_text',
+            DB::raw("
+                CASE
+                    WHEN uadv.email = '".PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL."' THEN 'Auto Issued'
+                    ELSE uadv.name
+                END as previous_advisor_id_text
+            "),
             'tqr.payment_status_id',
             'ps.text AS payment_status_id_text',
             'tqr.plan_id',
