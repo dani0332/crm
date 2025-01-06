@@ -576,12 +576,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('send-bridger-response', [AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
         Route::get('aml-fetch-entity', [AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
-        Route::get('aml-fetch-customer-details', [AMLController::class, 'fetchCustomerDetails'])->name('aml-fetch-customer-details');
+        Route::get('get-insured-person', [AMLController::class, 'getInsuredPersonDetails'])->name('get-insured-person');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
-        Route::post('link-customer-details', [AMLController::class, 'linkCustomerDetails'])->name('link-customer-details');
         Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
     });
     Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');

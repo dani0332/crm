@@ -267,11 +267,9 @@ class CustomerRepository extends BaseRepository
 
     public function fetchUpdateCustomerDetails($customerId, $data)
     {
-        info('before updating customer details');
+        info('fn:updateCustomerDetails - Updating customer details');
 
         $customer = Customer::with('nationality')->findOrFail($customerId);
-        $customer->update($data->only(['insured_first_name', 'insured_last_name', 'nationality_id', 'dob']));
-
         $customer->detail()->updateOrCreate(['customer_id' => $customerId], $data->only([
             'place_of_birth',
             'country_of_residence',
@@ -288,7 +286,7 @@ class CustomerRepository extends BaseRepository
 
         $customer->refresh();
 
-        info('customer detail updated');
+        info('fn:updateCustomerDetails - Updated customer details');
 
         return $customer;
     }

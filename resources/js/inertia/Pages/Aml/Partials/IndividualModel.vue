@@ -16,7 +16,7 @@ const props = defineProps({
   residentStatuses: Object,
   lookups: Object,
   quoteAmlStatus: Number,
-  customerDetails: Object,
+  insuredPersonDetails: Object,
   cardHolderName: Object,
   kycLogs: Array,
 });
@@ -116,22 +116,23 @@ const insuredFormDetails = useForm({
   id_issuance_authority:
     props.entityDetails?.entity?.id_issuance_authority ?? null,
 
-  screening_id_type: null,
-  screening_id_number: null,
+  insured_id: props.insuredPersonDetails?.insured?.id ?? null,
+  screening_id_type: props.insuredPersonDetails?.insured?.id_type ?? null,
+  screening_id_number: props.insuredPersonDetails?.insured?.id_number ?? null,
 
   insured_first_name:
-    props.quoteDetails?.customer?.insured_first_name ??
+    props.insuredPersonDetails?.insured?.first_name ??
     (props.quoteType.code === 'Health'
       ? props.membersDetails[0]?.first_name
       : null),
   insured_last_name:
-    props.quoteDetails?.customer?.insured_last_name ??
+      props.insuredPersonDetails?.insured?.last_name ??
     (props.quoteType.code === 'Health'
       ? props.membersDetails[0]?.last_name
       : null),
-  nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
-  dob: props.quoteDetails?.customer.dob ?? null,
-  screening_gender: props.quoteDetails?.customer?.gender ?? null,
+  nationality_id: props.insuredPersonDetails?.insured.nationality_id ?? null,
+  dob: props.insuredPersonDetails?.insured.dob ?? null,
+  screening_gender: props.insuredPersonDetails?.insured?.gender ?? null,
   chassis_number:
     props.quoteDetails?.car_quote_request_detail?.chassis_number ?? null,
 
@@ -190,20 +191,18 @@ const submitQuoteUpdateForm = isValid => {
       });
     },
     onSuccess: response => {
-      if (response.props.flash.length === 0) {
-        notification.success({
-          title: 'Quote is updated',
-          position: 'top',
-        });
-      } else {
-        if (response.props.flash.info.length !== 0) {
-          const insurerScreeningResponse = response.props.flash.info;
-          notification.error({
-            title: insurerScreeningResponse.message,
-            position: 'top',
-          });
+        if (response.props.flash.success.length === 0) {
+            notification.success({
+              title: 'Quote is updated',
+              position: 'top',
+            });
         }
-      }
+        if (response.props.flash.info.length !== 0) {
+            notification.error({
+                title: response.props.flash.info.message || 'GIG server connection issue. Please check API logs for details of the error',
+                position: 'top',
+            });
+        }
     },
   });
 };
@@ -213,12 +212,6 @@ const updateCustomerDetails = isValid => {
     customer_id: insuredFormDetails.customer_id,
     customer_type: insuredFormDetails.customer_type,
     quote_type: insuredFormDetails.quote_type,
-
-    insured_first_name: insuredFormDetails.insured_first_name,
-    insured_last_name: insuredFormDetails.insured_last_name,
-    nationality_id: insuredFormDetails.nationality_id,
-    dob: insuredFormDetails.dob,
-
     place_of_birth: insuredFormDetails.place_of_birth,
     country_of_residence: insuredFormDetails.country_of_residence,
     residential_address: insuredFormDetails.residential_address,
@@ -372,8 +365,8 @@ const linkEntity = () => {
     .finally(() => (entityDetailsFound.value = false));
 };
 
-const customerDetailsFound = ref(false);
-const customerSearchValidation = computed(() => {
+const insuredPersonDetailsFound = ref(false);
+const insuredSearchValidation = computed(() => {
   if (
     insuredFormDetails.screening_id_type === '' ||
     insuredFormDetails.screening_id_number === '' ||
@@ -408,24 +401,23 @@ const customerSearchValidation = computed(() => {
   return true;
 });
 
-const submitCustomerSearch = () => {
-  if (customerSearchValidation.value) {
+const submitInsuredPersonSearch = () => {
+  if (insuredSearchValidation.value) {
     loader.value.search = true;
-    let url = `/kyc/aml-fetch-customer-details?id_type=${insuredFormDetails.screening_id_type}&id_number=${insuredFormDetails.screening_id_number}`;
+    let url = `/kyc/get-insured-person?id_type=${insuredFormDetails.screening_id_type}&id_number=${insuredFormDetails.screening_id_number}`;
     axios
       .get(url)
       .then(res => {
         if (res.data.status) {
           let response = res.data.response;
-          customerDetailsFound.value = true;
+          insuredPersonDetailsFound.value = true;
 
-          insuredFormDetails.insured_first_name =
-            response?.customer?.insured_first_name;
-          insuredFormDetails.insured_last_name =
-            response?.customer?.insured_last_name;
-          insuredFormDetails.nationality_id =
-            response?.customer?.nationality_id;
-          insuredFormDetails.dob = response?.customer?.dob;
+          insuredFormDetails.insured_id = response?.id;
+          insuredFormDetails.insured_first_name = response?.first_name;
+          insuredFormDetails.insured_last_name = response?.last_name;
+          insuredFormDetails.nationality_id = response?.nationality_id;
+          insuredFormDetails.dob = response?.dob;
+          insuredFormDetails.screening_gender = response?.gender;
 
           notification.success({
             title: res.data.message,
@@ -445,56 +437,17 @@ const submitCustomerSearch = () => {
   }
 };
 
-const linkCustomerDetails = () => {
-  if (customerSearchValidation.value) {
-    linkLoader.value = true;
-    let ScreeningCustomerDetails = {
-      quote_type_id: props.quoteType.id,
-      uuid: props.quoteDetails.uuid,
-      insured_first_name: insuredFormDetails.insured_first_name,
-      insured_last_name: insuredFormDetails.insured_last_name,
-      nationality: insuredFormDetails.nationality_id,
-      gender: insuredFormDetails.gender,
-      dob: insuredFormDetails.dob,
-    };
-    axios
-      .post(route('link-customer-details'), ScreeningCustomerDetails)
-      .then(res => {
-        if (res.data.status) {
-          let response = res.data.response;
-
-          insuredFormDetails.insured_first_name = response.insured_first_name;
-          insuredFormDetails.insured_last_name = response.insured_last_name;
-          insuredFormDetails.nationality_id = response.nationality_id;
-          insuredFormDetails.dob = response.dob;
-          insuredFormDetails.gender = response.gender;
-
-          notification.success({
-            title: res.data.message,
-            position: 'top',
-          });
-        }
-        linkLoader.value = false;
-      })
-      .catch(err => {
-        console.log(err);
-      })
-      .finally(() => (customerDetailsFound.value = false));
-  }
-};
-
-function clearCustomerDetails() {
+function clearInsuredPersonDetails() {
   insuredFormDetails.insured_first_name = '';
   insuredFormDetails.insured_last_name = '';
   insuredFormDetails.nationality_id = null;
   insuredFormDetails.dob = null;
   insuredFormDetails.gender = null;
 
-  customerDetailsFound.value = false;
+  insuredPersonDetailsFound.value = false;
 }
 
 const is_insured = ref(0);
-
 const documentIDTypeForScreening = computed(() => {
   return props.lookups.id_type
     ?.filter(docIDTypeScreening =>
@@ -533,7 +486,6 @@ const applyScreeningIdNumMasking = () => {
     );
   }
 
-  // Update the value
   insuredFormDetails.screening_id_number = screeningIdNumber;
 };
 
@@ -564,7 +516,7 @@ const validatePassportNumber = type => {
       lengthValid &&
       isAlphanumeric
     ) {
-      insuredFormDetails.clearErrors('screening_id_number'); // Clear error only if validation passes
+      insuredFormDetails.clearErrors('screening_id_number');
     }
   }
 };
@@ -614,15 +566,14 @@ watch(
 );
 
 watch(() => {
-  if (
-    props.quoteType.id === page.props.quoteTypeIdEnum.Travel &&
-    props.quoteDetails.direction_code === 'travelUaeInbound'
-  ) {
-    insuredFormDetails.screening_id_type = 'passport';
-  } else {
-    insuredFormDetails.screening_id_type = 'emiratesId';
-  }
+    if (insuredFormDetails.screening_id_type === '' || insuredFormDetails.screening_id_type === null) {
+        insuredFormDetails.screening_id_type =
+            props.quoteType.id === page.props.quoteTypeIdEnum.Travel && props.quoteDetails.direction_code === 'travelUaeInbound'
+                ? 'passport'
+                : 'emiratesId';
+    }
 });
+
 </script>
 
 <template>
@@ -678,10 +629,10 @@ watch(() => {
               />
             </template>
           </x-field>
-          <template v-if="!customerDetailsFound">
+          <template v-if="!insuredPersonDetailsFound">
             <x-field>
               <x-button
-                @click.prevent="submitCustomerSearch"
+                @click.prevent="submitInsuredPersonSearch"
                 size="sm"
                 color="primary"
                 :loading="loader.search"
@@ -695,17 +646,9 @@ watch(() => {
               <x-button
                 size="sm"
                 color="info"
-                @click.prevent="clearCustomerDetails"
+                @click.prevent="clearInsuredPersonDetails"
               >
                 Cancel
-              </x-button>
-              <x-button
-                size="sm"
-                color="orange"
-                @click.prevent="linkCustomerDetails"
-                :loading="linkLoader"
-              >
-                Link
               </x-button>
             </div>
           </template>

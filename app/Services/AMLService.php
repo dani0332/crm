@@ -19,7 +19,7 @@ use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
-use App\Models\Customer;
+use App\Models\CustomerInsured;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -623,21 +623,22 @@ class AMLService
         }
 
         info('fn:amlScreeningGIG - Payment Method is CREDIT CARD and Payment Status is AUTHORIZED- Ref-ID: '.$quoteDetails->code);
-        $customerDetails = Customer::select(['emirates_id_number', 'emirates_id_expiry_date', 'insured_first_name', 'insured_last_name', 'code'])
-            ->where('id', $quoteDetails->customer_id)
-            ->first();
-        $customerDetails->fill(['customer_name' => $customerDetails->insured_first_name.($customerDetails->insured_last_name == 'NULL' || $customerDetails->insured_last_name == null ? '' : ' '.$customerDetails->insured_last_name)]);
+        $insuredPersonDetails = CustomerInsured::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteDetails->id,
+            'customer_id' => $quoteDetails->customer_id,
+        ])->with(['customer', 'insured'])->first();
+
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
         try {
-            // TODO:: Need to confirm this data will fetched from customer or AML Screen Form
             $insurerScreeningPayload = [
                 'quoteUID' => $quoteDetails->uuid,
                 'quoteTypeId' => (int) $quoteTypeId,
                 'emirateDetails' => [
-                    'emirateId' => $customerDetails->emirates_id_number,
-                    'expiryDate' => $customerDetails->emirates_id_expiry_date,
+                    'emirateId' => $insuredPersonDetails?->insured?->id_type ?? null,
+                    'expiryDate' => $insuredPersonDetails?->customer?->emirates_id_expiry_date ?? null,
                 ],
-                'passportNumber' => $request['screening_id_type'] == 'passport' ? $request['screening_id_number'] : '',
+                'passportNumber' => $insuredPersonDetails?->insured?->id_number ?? null,
                 'chassisNumber' => $chassisNumber ?? '',
             ];
 
@@ -646,31 +647,32 @@ class AMLService
 
             info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
             $screeningResponse['screening_type'] = $screeningType;
-            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse);
+            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $insuredPersonDetails, $screeningResponse);
 
         } catch (Exception $exception) {
             info('fn:amlScreeningGIG - GIG Screening failed - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Error: '.$exception->getMessage());
             $screeningResponse = ['status' => AMLStatusCode::AMLPending, 'message' => $exception->getMessage(), 'screening_type' => $screeningType];
-            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse);
+            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $insuredPersonDetails, $screeningResponse);
 
             return false;
         }
     }
 
-    private function updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $customerDetails, $screeningResponse): void
+    private function updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $customerType, $insuredPersonDetails, $screeningResponse): void
     {
         session()->push('insurerAMLScreeningResponse', $screeningResponse);
         $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;
+        $insurePersonName = $insuredPersonDetails?->insured?->first_name.($insuredPersonDetails?->insured?->last_name == 'NULL' || $insuredPersonDetails?->insured?->last_name == null ? '' : ' '.$insuredPersonDetails?->insured?->last_name);
         $kycLogDetails = [
             'quote_request_id' => $quoteDetails->id,
             'results' => json_encode($screeningResponse),
             'results_found' => (bool) $isScreeningCleared,
             'created_at' => Carbon::now(),
             'quote_type_id' => $quoteTypeId,
-            'input' => $customerDetails->customer_name ?? '',
+            'input' => $insurePersonName,
             'screening_type' => $screeningResponse['screening_type'],
             'search_type' => $customerType,
-            'customer_code' => $customerDetails->code ?? '',
+            'customer_code' => $insuredPersonDetails?->customer?->code ?? '',
         ];
 
         if ($isScreeningCleared) {
