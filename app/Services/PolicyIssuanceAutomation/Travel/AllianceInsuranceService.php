@@ -697,7 +697,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $title;
     }
 
-    private function allianceHttpCall($endPoint, $param, $method = 'POST')
+    private function allianceHttpCall($endPoint, $param)
     {
         $headers = [
             'Content-Type' => 'application/json',
@@ -706,7 +706,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $payload = array_merge($this->authParam, $param);
         $url = $this->baseUrl.$endPoint;
 
-        return Http::withHeaders($headers)->post($url, $payload);
+        return Http::timeout(20)->withHeaders($headers)->post($url, $payload);
     }
 
 }
