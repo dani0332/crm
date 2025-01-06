@@ -19,6 +19,7 @@ use Throwable;
 class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     public $timeout = 60;
     public $tries = 1;
 
