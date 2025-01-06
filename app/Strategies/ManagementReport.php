@@ -438,6 +438,7 @@ class ManagementReport
                 $item->total_transaction = $item->total_policies + $item->total_endorsements;
                 $item->endorsements_amount = (float) $endorsement->total_endorsement_amount;
                 $item->commission_vat_applicable = (float) $item->commission_vat_applicable + (float) $endorsement->commission_vat_applicable;
+                $item->commission_vat_not_applicable = (float) $item->commission_vat_not_applicable + (float) $endorsement->commission_vat_not_applicable;
                 $item->total_price =
                     ($item->total_price ? (float) $item->total_price : 0) +
                     ($endorsement->total_endorsement_amount ? (float) $endorsement->total_endorsement_amount : 0);
@@ -475,6 +476,7 @@ class ManagementReport
                 $endorsement->total_transaction = $endorsement->total_endorsements;
                 $endorsement->total_price = (float) $endorsement->total_endorsement_amount;
                 $endorsement->commission_vat_applicable = (float) $endorsement->commission_vat_applicable;
+                $endorsement->commission_vat_not_applicable = (float) $endorsement->commission_vat_not_applicable;
                 $reportData->push($endorsement);
             }
         }
