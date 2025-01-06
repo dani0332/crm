@@ -835,9 +835,10 @@ const handleCollectionTypeChange = () => {
       page.props.paymentMethodsEnum?.Cash,
     ];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      (item) => !excludedPaymentMethods.includes(item.value)
+      item => !excludedPaymentMethods.includes(item.value),
     );
-    paymentMethodsModels.value[1] = page.props.paymentMethodsEnum?.InsurerPayment;
+    paymentMethodsModels.value[1] =
+      page.props.paymentMethodsEnum?.InsurerPayment;
   } else {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
@@ -934,7 +935,7 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
           page.props.paymentMethodsEnum?.PostDatedCheque,
         ];
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          (item) => !excludedPaymentMethods.includes(item.value)
+          item => !excludedPaymentMethods.includes(item.value),
         );
       } else if (
         paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
@@ -948,16 +949,16 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
           page.props.paymentMethodsEnum?.BankTransfer,
         ];
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          (item) => !excludedPaymentMethods.includes(item.value)
+          item => !excludedPaymentMethods.includes(item.value),
         );
       } else {
         const excludedPaymentMethods = [
           page.props.paymentMethodsEnum?.Cheque,
           page.props.paymentMethodsEnum?.Cash,
-          page.props.paymentMethodsEnum?.BankTransfer
+          page.props.paymentMethodsEnum?.BankTransfer,
         ];
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          (item) => !excludedPaymentMethods.includes(item.value)
+          item => !excludedPaymentMethods.includes(item.value),
         );
       }
     } else {
@@ -2423,19 +2424,19 @@ const addPayment = isValid => {
 };
 
 const setFrequencyTypes = () => {
-  let allFrequencyTypes = paymentLookups.paymentFrequencyTypes.map((item) => ({
+  let allFrequencyTypes = paymentLookups.paymentFrequencyTypes.map(item => ({
     value: item.code,
     label: item.text,
     tooltip: item.description,
   }));
   if (
-    paymentMethodsForm.collection_type === "insurer" &&
+    paymentMethodsForm.collection_type === 'insurer' &&
     isCCEnabled.value &&
     isSplitFrequencyHidden.value &&
     hasAnyCCPayment()
   ) {
     allFrequencyTypes = allFrequencyTypes.filter(
-      (item) => item.value !== paymentFrequencyEnum.SPLIT_PAYMENTS
+      item => item.value !== paymentFrequencyEnum.SPLIT_PAYMENTS,
     );
   }
   frequencyTypes.value = allFrequencyTypes;
@@ -3297,8 +3298,16 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
   );
 };
 
-const isCCEnabled = ref(page.props?.bookPolicyDetails?.isCreditCardEnabled || page.props?.bookingDetails?.isCreditCardEnabled ||  false);
-const isSplitFrequencyHidden = ref(page.props?.bookPolicyDetails?.isSplitFrequencyHidden || page.props?.bookingDetails?.isSplitFrequencyHidden || false);
+const isCCEnabled = ref(
+  page.props?.bookPolicyDetails?.isCreditCardEnabled ||
+    page.props?.bookingDetails?.isCreditCardEnabled ||
+    false,
+);
+const isSplitFrequencyHidden = ref(
+  page.props?.bookPolicyDetails?.isSplitFrequencyHidden ||
+    page.props?.bookingDetails?.isSplitFrequencyHidden ||
+    false,
+);
 
 watch(
   () => page.props?.bookPolicyDetails?.isCreditCardEnabled,
@@ -3330,14 +3339,16 @@ watch(
 
 const hasAnyCCPayment = () => {
   const paymentMM = Object.values(paymentMethodsModels.value);
-  return paymentMM.some((item) => item == "CC");
+  return paymentMM.some(item => item == 'CC');
 };
 
-const isCCPaymentDisabled = (option) => {
+const isCCPaymentDisabled = option => {
   return (
-    !isCCEnabled.value && paymentMethodsForm.collection_type === 'insurer' && option == 'CC'
-  ) 
-}
+    !isCCEnabled.value &&
+    paymentMethodsForm.collection_type === 'insurer' &&
+    option == 'CC'
+  );
+};
 </script>
 
 <template>
@@ -4702,7 +4713,11 @@ const isCCPaymentDisabled = (option) => {
                       >PAYMENT NO</span
                     >
                     <sup
-                      v-if="!isViewEnabled && !isCreditApprovalView && !hasAnyCCPayment()"
+                      v-if="
+                        !isViewEnabled &&
+                        !isCreditApprovalView &&
+                        !hasAnyCCPayment()
+                      "
                       class="text-red-500"
                       >*</sup
                     >
@@ -5201,7 +5216,11 @@ const isCCPaymentDisabled = (option) => {
                             v-for="option in handlePaymentTypes(count)"
                             :key="option.value"
                             :value="option.value"
-                            :title="isCCPaymentDisabled(option.value) ? 'This payment method is currently unavailable. Credit Card payment is not supported by the selected Insurance Provider' :option.tooltip"
+                            :title="
+                              isCCPaymentDisabled(option.value)
+                                ? 'This payment method is currently unavailable. Credit Card payment is not supported by the selected Insurance Provider'
+                                : option.tooltip
+                            "
                             :disabled="isCCPaymentDisabled(option.value)"
                           >
                             {{ option.label }}
