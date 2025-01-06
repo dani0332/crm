@@ -138,8 +138,8 @@ class LeadDistributionReportService extends BaseService
 
         $query->addSelect(
             DB::raw(strtr(
-                '(SUM(CASE WHEN :table.auto_assigned = 1 AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END) +
-                SUM(CASE WHEN :table.auto_assigned = 0 AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END) +
+                '(SUM(CASE WHEN (:table.assignment_type = 1 OR :table.assignment_type = 2) AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END) +
+                SUM(CASE WHEN (:table.assignment_type = 3 OR :table.assignment_type = 4) AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END) +
                 SUM(CASE WHEN :table.advisor_id IS NULL THEN 1 ELSE 0 END)) AS received_leads',
                 $bindings
             )),
@@ -149,11 +149,11 @@ class LeadDistributionReportService extends BaseService
                 $bindings
             )),
             DB::raw(strtr(
-                'SUM(CASE WHEN :table.auto_assigned = 1 AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned',
+                'SUM(CASE WHEN (:table.assignment_type = 1 OR :table.assignment_type = 2) AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned',
                 $bindings
             )),
             DB::raw(strtr(
-                'SUM(CASE WHEN :table.auto_assigned = 0 AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned',
+                'SUM(CASE WHEN (:table.assignment_type = 3 OR :table.assignment_type = 4) AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned',
                 $bindings
             )),
             DB::raw(strtr(
