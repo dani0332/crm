@@ -535,6 +535,7 @@ trait GenericQueriesAllLobs
                 $isInsufficientPayment = true;
             }
         }
+
         return [$isInsufficientPayment, $paymentStatusHeading, $paymentStatusDescription];
     }
 
@@ -742,28 +743,29 @@ trait GenericQueriesAllLobs
 
         return in_array($lead_status_id, $skipStatus);
     }
-    
-    public function getCreditCardAndSplitFrequencyStatus($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId) {
+
+    public function getCreditCardAndSplitFrequencyStatus($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId)
+    {
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $brokerCommissionQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId);
-    
-        if (in_array($quoteTypeId, [QuoteTypes::getId(QuoteTypes::BUSINESS),QuoteTypes::getId(QuoteTypes::CORPLINE), QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)])) {
+
+        if (in_array($quoteTypeId, [QuoteTypes::getId(QuoteTypes::BUSINESS), QuoteTypes::getId(QuoteTypes::CORPLINE), QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)])) {
             $brokerCommissionQuery->where('business_type_of_insurance_id', $businessTypeOfInsuranceId)
-            ->active()
-            ->where('quote_type_id', QuoteTypeId::Business);
+                ->active()
+                ->where('quote_type_id', QuoteTypeId::Business);
         } else {
             $brokerCommissionQuery->where('quote_type_id', $quoteTypeId);
         }
-    
+
         $isCreditCardEnabled = $brokerCommissionQuery->select('id')->exists();
         $isSplitFrequencyHidden = InsuranceProvider::whereIn('code', [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE])
             ->where('id', $insuranceProviderId)
             ->select('id')
             ->exists();
-    
+
         return [
             $isCreditCardEnabled,
-            $isSplitFrequencyHidden
+            $isSplitFrequencyHidden,
         ];
     }
 }

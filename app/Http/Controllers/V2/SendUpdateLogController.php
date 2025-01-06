@@ -211,6 +211,7 @@ class SendUpdateLogController extends Controller
         @[$isCreditCardEnabled, $isSplitFrequencyHidden] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $insurance_provider_id, $quote->business_type_of_insurance_id);
         $bookingDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
         $bookingDetails['isSplitFrequencyHidden'] = $isSplitFrequencyHidden;
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
@@ -248,7 +249,7 @@ class SendUpdateLogController extends Controller
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
             'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
-            'isSentOrBooked' => $isSentOrBooked
+            'isSentOrBooked' => $isSentOrBooked,
         ]);
     }
 
