@@ -469,10 +469,10 @@ trait GenericQueriesAllLobs
             }
 
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $discountValue), 2);
-            info('Quote Code: ' . $payment->code . ' Checking Lacking Payment paymentTotalPrice ' . $paymentTotalPrice . ' sum of Split payment ' . $sumOfSplitPayment);
+            info('Quote Code: '.$payment->code.' Checking Lacking Payment paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
 
             // Check if the sum of split payments is approximately equal to the total price
-            return !(($sumOfSplitPayment >= ($paymentTotalPrice - $tolerance)) &&
+            return ! (($sumOfSplitPayment >= ($paymentTotalPrice - $tolerance)) &&
                     ($sumOfSplitPayment <= ($paymentTotalPrice + $tolerance)));
         }
 
