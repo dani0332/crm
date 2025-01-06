@@ -67,6 +67,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const can = permission => useCan(permission);
 const modelClass = 'App\\Models\\HomeQuote';
+const processingOCBEmailNB = ref(false);
 
 console.log('SHOW PROPS', page.props);
 
@@ -853,53 +854,29 @@ const accommodationTypeText = computed(() => {
 
 const confirmSendEmail = () => {
   console.log('confirmSendEmail');
-  //   const first_name = page.props.record.first_name || '';
-  //   const last_name = page.props.record.last_name || '';
-  //   axios
-  //     .post(
-  //       `/quotes/car/${page.props.record.uuid}/send-email-one-click-buy`,
-  //       {
-  //         quote_type_id: page.props.quoteTypeId,
-  //         quote_id: page.props.record.id,
-  //         quote_uuid: page.props.record.uuid,
-  //         quote_cdb_id: page.props.record.code,
-  //         quote_previous_expiry_date:
-  //           page.props.record.previous_policy_expiry_date,
-  //         quote_currently_insured_with: page.props.record.currently_insured_with,
-  //         quote_car_make: page.props.carMakeText,
-  //         quote_car_model: page.props.carModelText,
-  //         quote_car_year_of_manufacture: page.props.record.year_of_manufacture,
-  //         quote_previous_policy_number:
-  //           page.props.record.previous_quote_policy_number,
-  //         customer_name: `${first_name} ${last_name}`,
-  //         customer_email: page.props.record.email,
-  //         advisor_name: page.props.advisor ? page.props.advisor.name : null,
-  //         advisor_email: page.props.advisor ? page.props.advisor.email : null,
-  //         advisor_mobile_no: page.props.advisor
-  //           ? page.props.advisor.mobile_no
-  //           : null,
-  //         advisor_landline_no: page.props.advisor
-  //           ? page.props.advisor.landline_no
-  //           : null,
-  //       },
-  //       {
-  //         responseType: 'json',
-  //       },
-  //     )
+  processingOCBEmailNB.value = true;
+  axios
+    .post(`/quotes/home/${page.props.quote.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
+    })
+    .then(response => {
+      processingOCBEmailNB.value = false;
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      processingOCBEmailNB.value = false;
+      console.log(error);
+    })
+    .finally(() => {
+      processingOCBEmailNB.value = false;
+      modals.sendConfirm = false;
+    });
 
-  //     .then(response => {
-  //       notification.success({
-  //         title: response.data.success,
-  //         position: 'top',
-  //       });
-  //     })
-  //     .catch(error => {
-  //       console.log(error);
-  //     })
-  //     .finally(() => {
-  //       modals.sendConfirm = false;
-  //     });
-};
+
+}
 </script>
 
 <template>
@@ -1852,12 +1829,15 @@ const confirmSendEmail = () => {
                   size="sm"
                   ghost
                   @click.prevent="modals.sendConfirm = false"
+                  :disable="processingOCBEmailNB"
+
                 >
                   Cancel
                 </x-button>
                 <x-button
                   size="sm"
                   color="error"
+                  :loading="processingOCBEmailNB"
                   @click.prevent="confirmSendEmail"
                 >
                   Send

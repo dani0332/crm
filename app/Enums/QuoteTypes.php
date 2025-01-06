@@ -43,6 +43,7 @@ use App\Strategies\Allocations\TravelAllocation;
 use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
+use App\Jobs\SendHomeOCBIntroEmailJob;
 
 enum QuoteTypes: string
 {
@@ -178,6 +179,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
+            self::HOME => SendHomeOCBIntroEmailJob::class,
             // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };

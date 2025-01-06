@@ -9,12 +9,10 @@ use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
-use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -139,7 +137,7 @@ class PersonalQuoteObserver
         if ($this->isEligibleForHomeIntroEmail($personalQuote)) {
 
             info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: ".now());
-            SendHomeOCBIntroEmailJob::dispatch($personalQuote)->delay(Carbon::now()->addMinutes(1));
+            QuoteTypes::HOME->ocbEmailJob()->dispatch($personalQuote->uuid)->delay(now()->addMinutes(1));
             info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
         }
     }
