@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService
 {
-    abstract protected function fetchAdvisor(int $onlineStatus);
+    abstract protected function fetchAdvisor(int $onlineStatus, ?string $uuid = null);
 
     protected $lead;
 
@@ -118,7 +118,7 @@ abstract class BaseAllocation extends AllocationService
 
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$this->uuid}");
-            $eligibleUser = $this->fetchAdvisor($status);
+            $eligibleUser = $this->fetchAdvisor($status, $this->uuid);
 
             if ($eligibleUser) {
                 info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$this->uuid}");

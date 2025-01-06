@@ -9,7 +9,7 @@ use App\Models\User;
 class PetAllocation extends BaseAllocation
 {
     // this function not being used as we overrode fetchAvailableAdvisor, this function exists here just to meet abstract function in parent class
-    protected function fetchAdvisor(int $onlineStatus)
+    protected function fetchAdvisor(int $onlineStatus, ?string $uuid = null)
     {
         return null;
     }
