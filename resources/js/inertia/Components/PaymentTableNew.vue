@@ -2911,8 +2911,8 @@ const hasAnyAuthorisedPendingCA = computed(() => {
   ];
 
   return payment => {
-    return payment.payment_splits.some(
-      item => statusesToCheck.includes(item.payment_status_id)
+    return payment.payment_splits.some(item =>
+      statusesToCheck.includes(item.payment_status_id),
     );
   };
 });
@@ -2921,7 +2921,10 @@ const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
       const paymentMethodCC = filterCCPayments(payment);
-      if (payment.collection_type === 'insurer' && hasAnyAuthorisedPendingCA.value(payment)) {
+      if (
+        payment.collection_type === 'insurer' &&
+        hasAnyAuthorisedPendingCA.value(payment)
+      ) {
         return 'approve';
       }
       return paymentMethodCC.length > 0 ? 'capture' : 'approve';
