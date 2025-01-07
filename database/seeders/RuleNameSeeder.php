@@ -7,6 +7,7 @@ use App\Enums\RuleTypeEnum;
 use App\Models\Rule;
 use App\Models\RuleType;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Seeder;
 
 class RuleNameSeeder extends Seeder
 {
