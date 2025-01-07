@@ -93,7 +93,7 @@ class ResetLeadAllocationCounts extends Command
             ->whereIn('quote_type_id', [1, 3])
             ->update([
                 'buy_lead_status' => true,
-                'buy_lead_max_capacity' => DB::raw('CASE WHEN quote_type_id = 1 THEN 5 ELSE 3 END'),
+                'buy_lead_max_capacity' => DB::raw('CASE WHEN quote_type_id = 1 THEN 5 ELSE 50 END'),
             ]);
     }
 }
