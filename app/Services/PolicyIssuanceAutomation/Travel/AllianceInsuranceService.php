@@ -19,6 +19,7 @@ use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
+use App\Models\TravelQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -534,7 +535,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function updateQuoteApiIssuanceStatusAndAllocate($quote, $status = null, $issuanceStatus = null)
+    public function updateQuoteApiIssuanceStatusAndAllocate(TravelQuote $quote, $status = null, $issuanceStatus = null)
     {
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Start');
 
@@ -545,6 +546,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $isPolicyAutomationStatusCompleted = $policyIssuanceAutomation?->status == PolicyIssuanceEnum::COMPLETED_STATUS;
         $insurerApiStatus = $quote?->insurer_api_status;
         $apiIssuanceStatus = $quote?->api_issuance_status;
+
+        $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
 
         if (! $apiIssuanceStatus) {
             if ($isPolicyAutomationStatusCompleted && $isPolicyBooked && ! $insurerApiStatus) {
@@ -575,22 +578,25 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $quote->update(['api_issuance_status_id' => $issuanceStatus]);
         }
 
-        $this->allocateLead($quote);
+        $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' start allocation of failed lead ');
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
 
-    public function allocateLead($quote)
+    public function allocateLead($quote, $isInsurerApiStatusAlreadyFailed)
     {
         $uuid = $quote->uuid;
         info(self::class.' fn:'.__FUNCTION__.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
-        if ($response) {
+        if ($response && $response['advisorId']) {
             info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
-            SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+            if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
+                SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+            }
+
             if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
                 // Here we need to dispatch document email
                 $data = new \stdClass;
