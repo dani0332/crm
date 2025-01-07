@@ -32,4 +32,4 @@ volumes:
 x-docker-args:
   build:
     environment:
-      DOCKER_BUILDKIT: 1  
+      DOCKER_BUILDKIT: 1
