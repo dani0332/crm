@@ -1725,7 +1725,6 @@ const handleRetryPayment = async () => {
 };
 
 const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
-  console.log('deleteSplitPaymentModal', payment_split_id);
   deleteSplitPaymentId.value = payment_split_id;
   deleteSplitPaymentStatus.value = payment_status_id;
   isDeleteModalOpen.value = true;
@@ -2908,6 +2907,18 @@ const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
       const paymentMethodCC = filterCCPayments(payment);
+      const statusesToCheck = [
+      props.paymentStatusEnum.AUTHORISED,
+      props.paymentStatusEnum.CREDIT_APPROVED,
+      props.paymentStatusEnum.PENDING,
+    ];
+
+      const hasAnyAuthorisedPendingCA = payment.payment_splits.some(
+        item => statusesToCheck.includes(item.payment_status_id),
+      );
+      if (payment.collection_type === 'insurer' && hasAnyAuthorisedPendingCA) {
+        return 'approve';
+      }
       return paymentMethodCC.length > 0 ? 'capture' : 'approve';
     }
     return;
@@ -3339,7 +3350,6 @@ watch(
 );
 
 const hasAnyCCPayment = () => {
-  console.log('paymentMethodsModels.value', paymentMethodsModels.value);
   const paymentMM = Object.values(paymentMethodsModels.value);
   return paymentMM.some(item => item == 'CC');
 };
