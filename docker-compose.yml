@@ -22,6 +22,11 @@ volumes:
   logs:
   stglogs:
   devlogs:
+# Set BuildKit globally for the build
+x-docker-args:
+  build:
+    environment:
+      DOCKER_BUILDKIT: 1  
   dev01logs:
   dev02logs:
   uatlogs:
