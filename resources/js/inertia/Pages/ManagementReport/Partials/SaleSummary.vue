@@ -75,8 +75,7 @@ const tableHeader = reactive([
   {
     text: 'VAT ON Commission',
     value: 'commission_vat',
-    tooltip:
-      'VAT on Commission (VAT applicable)',
+    tooltip: 'VAT on Commission (VAT applicable)',
   },
   {
     text: 'Commission (VAT Not applicable)',
@@ -228,7 +227,9 @@ const isIntegerColumn = key => {
     <template #item-commission_vat="{ commission_vat }">
       {{ commission_vat ? commission_vat : 0.0 }}
     </template>
-    <template #item-commission_vat_not_applicable="{ commission_vat_not_applicable }">
+    <template
+      #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
+    >
       {{ commission_vat_not_applicable ? commission_vat_not_applicable : 0.0 }}
     </template>
     <template #item-endorsements_amount="{ endorsements_amount }">
