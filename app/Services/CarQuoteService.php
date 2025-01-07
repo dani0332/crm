@@ -259,7 +259,7 @@ class CarQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'cqr.id');
             })
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
-            ->leftJoin('quote_view_count as qvc', function ($join) {Tra
+            ->leftJoin('quote_view_count as qvc', function ($join) {
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
                 $join->on('qvc.user_id', 'cqr.advisor_id');
