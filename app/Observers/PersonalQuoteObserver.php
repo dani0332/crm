@@ -15,6 +15,8 @@ use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SendHomeOCBIntroEmailJob;
+use Carbon\Carbon;
 
 class PersonalQuoteObserver
 {
@@ -137,7 +139,7 @@ class PersonalQuoteObserver
         if ($this->isEligibleForHomeIntroEmail($personalQuote)) {
 
             info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: ".now());
-            QuoteTypes::HOME->ocbEmailJob()->dispatch($personalQuote->uuid)->delay(now()->addMinutes(1));
+            SendHomeOCBIntroEmailJob::dispatch($personalQuote)->delay(Carbon::now()->addMinutes(1));
             info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
         }
     }
