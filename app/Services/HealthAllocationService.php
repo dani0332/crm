@@ -196,9 +196,9 @@ class HealthAllocationService extends AllocationService
 
         $advisor = $this->getAdvisorBaseQuery($status, $leadTeam)
             ->when($lead->isValueLead(), function ($q) {
-                $q->isValueUser();
+                $q->isValueUser(QuoteTypes::HEALTH);
             }, function ($q) {
-                $q->isVolumeUser();
+                $q->isVolumeUser(QuoteTypes::HEALTH);
             })
             ->whereIn('users.id', $buyLeadRequestedUserIds)
             ->where('la.buy_lead_status', true)
