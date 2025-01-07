@@ -403,7 +403,7 @@ const possessionTypeOptions = computed(() => {
   return page.props?.lookUpData?.possessionType?.length
     ? page.props.lookUpData.possessionType.map(item => ({
         value: item.id,
-        label: item.description,
+        label: item.text,
       }))
     : [];
 });
@@ -571,7 +571,6 @@ watch(
             :options="possessionTypeOptions"
             @update:modelValue="handleConditionalFields"
             class="w-full"
-            native
           />
         </x-field>
         <x-field label="TYPE OF PROPERTY" required>
