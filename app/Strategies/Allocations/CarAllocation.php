@@ -60,7 +60,7 @@ class CarAllocation implements Allocation
 
                 $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
 
-                return AllocationFactory::createResponse(0, 'Lead is Tier R and from Company Webform. Skipping allocation.', Response::HTTP_OK);
+                return $this->carAllocationService->createResponse(0, 'Lead is Tier R and from Company Webform. Skipping allocation.', Response::HTTP_OK);
             }
 
             if ($tier) {
