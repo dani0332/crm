@@ -139,7 +139,7 @@ class PersonalQuoteObserver
         if ($this->isEligibleForHomeIntroEmail($personalQuote)) {
 
             info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: ".now());
-            SendHomeOCBIntroEmailJob::dispatch($personalQuote)->delay(Carbon::now()->addMinutes(1));
+            SendHomeOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
             info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
         }
     }
