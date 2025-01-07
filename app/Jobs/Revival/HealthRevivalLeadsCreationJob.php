@@ -96,7 +96,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'salaryBandId' => $this->lead->salary_band_id,
                 'memberCategoryId' => $this->lead->member_category_id,
             ];
-            
+
             $capiResponse = Capi::request('/api/v1-save-health-quote', 'post', $dataArr);
 
             if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
