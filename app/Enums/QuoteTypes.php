@@ -324,6 +324,11 @@ enum QuoteTypes: string
         return $typesWithIds;
     }
 
+    public function refId(string $uuid)
+    {
+        return "{$this->shortCode()}{$uuid}";
+    }
+
     public static function getQuoteTypeIdToClass($quoteType): string
     {
         switch ($quoteType) {

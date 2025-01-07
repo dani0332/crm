@@ -17,6 +17,7 @@ class PermissionsSeeder extends Seeder
     {
         $this->paidLeads();
         $this->seedProcessTrackerPermissions();
+        $this->buyLeads();
         $this->leadAllocationDashboards();
     }
 
@@ -44,5 +45,10 @@ class PermissionsSeeder extends Seeder
         if ($role && ! $role->hasPermissionTo($permission)) {
             $role->givePermissionTo($permission);
         }
+    }
+
+    private function buyLeads()
+    {
+        Permission::findOrCreate(PermissionsEnum::BUY_LEADS, 'web');
     }
 }

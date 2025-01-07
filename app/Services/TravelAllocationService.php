@@ -67,6 +67,7 @@ class TravelAllocationService extends AllocationService
                         if ($travelQuote->isPolicyIssuanceFailed()) {
                             info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation");
                             $this->isSICAdvisor = true;
+                            $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
 
                             return true;
                         }
@@ -246,6 +247,9 @@ class TravelAllocationService extends AllocationService
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
+
+        $lead->endAllocation();
+
         info(self::class." - Lead Id {$lead->uuid} assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
