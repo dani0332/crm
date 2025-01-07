@@ -2063,8 +2063,9 @@ class SageApiService
     {
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - start');
 
-        if($quote->advisor_id){
+        if ($quote->advisor_id) {
             info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' end - Advisor already assigned, skipping allocation');
+
             return;
         }
 
