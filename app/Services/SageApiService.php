@@ -1978,7 +1978,7 @@ class SageApiService
             QuoteStatusLog::create($quoteLogData);
         }
 
-        if (in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED])) {
+        if (!$quote->advisor_id && in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED])) {
             info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.' start assignAdvisor Quote Status ID : '.$quote->quote_status_id);
             $this->assignAdvisor($quote, $quoteTypeId);
         }
@@ -2062,6 +2062,11 @@ class SageApiService
     public function assignAdvisor($quote, $quoteTypeId)
     {
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - start');
+
+        if($quote->advisor_id){
+            info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' end - Advisor already assigned, skipping allocation');
+            return;
+        }
 
         $policyIssuanceAutomation = $quote?->policyIssuance;
 
