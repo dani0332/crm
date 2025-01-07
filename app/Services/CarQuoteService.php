@@ -192,9 +192,9 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 5 THEN "Bought Lead"
                 WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
-                'c.insured_first_name',
-                'c.insured_last_name',
-                'c.emirates_id_number',
+                'insured.first_name as insured_first_name',
+                'insured.last_name as insured_last_name',
+                DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
                 'qrem.entity_id',
@@ -259,13 +259,18 @@ class CarQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'cqr.id');
             })
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
-            ->leftJoin('quote_view_count as qvc', function ($join) {
+            ->leftJoin('quote_view_count as qvc', function ($join) {Tra
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
                 $join->on('qvc.user_id', 'cqr.advisor_id');
             })
             ->leftJoin('user_team as ut', 'u.id', '=', 'ut.user_id')
             ->leftJoin('teams as team', 'team.id', '=', 'ut.team_id')
+            ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
+                $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
+                $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
+            })
+            ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->groupBy('cqr.id');
 
         $this->exportQuery = DB::table('car_quote_request as cqr')
