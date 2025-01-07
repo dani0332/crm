@@ -2903,20 +2903,25 @@ const alertCapture = payment => {
   });
 };
 
+const hasAnyAuthorisedPendingCA = computed(() => {
+  const statusesToCheck = [
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.CREDIT_APPROVED,
+    props.paymentStatusEnum.PENDING,
+  ];
+
+  return payment => {
+    return payment.payment_splits.some(
+      item => statusesToCheck.includes(item.payment_status_id)
+    );
+  };
+});
+
 const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
       const paymentMethodCC = filterCCPayments(payment);
-      const statusesToCheck = [
-      props.paymentStatusEnum.AUTHORISED,
-      props.paymentStatusEnum.CREDIT_APPROVED,
-      props.paymentStatusEnum.PENDING,
-    ];
-
-      const hasAnyAuthorisedPendingCA = payment.payment_splits.some(
-        item => statusesToCheck.includes(item.payment_status_id),
-      );
-      if (payment.collection_type === 'insurer' && hasAnyAuthorisedPendingCA) {
+      if (payment.collection_type === 'insurer' && hasAnyAuthorisedPendingCA.value(payment)) {
         return 'approve';
       }
       return paymentMethodCC.length > 0 ? 'capture' : 'approve';
