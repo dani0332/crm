@@ -6,6 +6,7 @@ use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\V2\HomeQuoteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -65,3 +66,4 @@ Route::prefix('v1')->group(function () {
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
+Route::post('/imcrm/home-sync-sal', [HomeQuoteController::class, 'homeSyncSAL'])->name('home-sync-sal');

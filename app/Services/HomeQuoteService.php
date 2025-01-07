@@ -1089,6 +1089,14 @@ class HomeQuoteService extends BaseService
 
     public function syncSAL($request)
     {
-        dd($request->all());
+        // dd($request->quoteUID);
+
+        // $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, true);
+        // $data['quoteType'] = $quoteType;
+        $pdf = PDF::loadView('pdf.home-sal');
+
+        $pdfName = 'InsuranceMarket.ae™ Home SAL Declaration.pdf';
+
+        return $pdf->download($pdfName);
     }
 }

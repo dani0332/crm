@@ -202,5 +202,22 @@ class HomeQuoteController extends Controller
     public function homeSyncSAL(Request $request)
     {
         $response = app(HomeQuoteService::class)->syncSAL($request);
+
+        // if (is_int($response) && in_array($response, [200, 201])) {
+        //     return response()->json([
+        //         'message' => 'SAL has been synced successfully',
+        //     ], 200);
+        // }
+
+        // $responseMessage = 'Unknown error';
+        // if (is_object($response) && isset($response->message)) {
+        //     $responseMessage = $response->message;
+        // } elseif (is_string($response)) {
+        //     $responseMessage = $response;
+        // }
+
+        // return response()->json([
+        //     'message' => 'SAL has not been synced. ' . $responseMessage,
+        // ], 400);
     }
 }

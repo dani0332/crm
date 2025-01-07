@@ -198,7 +198,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('home/{quoteId}/plan_details/{planId}', [HomeQuoteController::class, 'planDetails'])->name('home_plan_details');
         Route::post('{quoteType}/home-manual-plan-toggle', [HomeQuoteController::class, 'manualPlanToggle'])->name('homeManualPlanToggle');
         Route::post('/home-plan-manual-update-process', [HomeQuoteController::class, 'homePlanUpdateManualProcess']);
-        Route::post('/home-sync-sal', [HomeQuoteController::class, 'homeSyncSAL'])->name('home-sync-sal');
 
         Route::group(['prefix' => 'quotes/'], function () {
             Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
