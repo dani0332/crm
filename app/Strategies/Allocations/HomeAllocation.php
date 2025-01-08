@@ -20,9 +20,10 @@ class HomeAllocation extends BaseAllocation
     {
         // corp advisors logic needs to be implemented once its approved from business
         // If UUID is provided and the property is rented, fetch Corp Team advisors
-        // if ($uuid !== null && $this->isPropertyRentedForHolidayHome($uuid)) {
-        //     return $this->fetchCorpLineAdvisor($onlineStatus);
-        // }
+        if ($uuid !== null && $this->isPropertyRentedForHolidayHome($uuid)) {
+            // return $this->fetchCorpLineAdvisor($onlineStatus);
+            return []; // Corp advisors logic is not implemented yet so returning empty array and lead should be unassigned in this case
+        }
 
         // Default behavior: Fetch value or volume advisors (Home Advisors)
         return $this->fetchHomeAdvisor($onlineStatus);

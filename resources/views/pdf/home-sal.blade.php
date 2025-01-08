@@ -31,7 +31,6 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 40px;
-            /* Added more space below the table */
         }
 
         .table th,
@@ -59,24 +58,26 @@
             background-color: #f9f9f9;
             border: 1px solid #ddd;
             border-radius: 10px;
-            /* Curved edges */
             padding: 20px;
             margin-top: 40px;
-            /* Space between table and card */
         }
 
         .advisor-photo {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            /* Circular profile photo */
             margin-right: 20px;
             object-fit: cover;
-            /* Ensures the image fits well */
+            float: left;
+            /* Float the image to the left */
         }
 
         .advisor-details {
             flex: 1;
+            float: left;
+            /* Float the details to the left */
+            width: calc(100% - 100px);
+            /* Adjust width to account for image and margin */
         }
 
         .advisor-details h3 {
@@ -88,6 +89,13 @@
             margin: 5px 0;
             font-size: 14px;
             color: #555;
+        }
+
+        /* Clear floats */
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
         }
     </style>
 </head>
@@ -128,9 +136,10 @@
         </table>
 
         <!-- Advisor Info Card -->
-        <div class="advisor-card">
+        <div class="advisor-card clearfix">
             <!-- Advisor Profile Photo -->
-            <img src="{{ $data['profile_photo_path'] }}" alt="Advisor Profile Photo" class="advisor-photo">
+            <img src="{{ $data['profile_photo_path'] != null ? $data['profile_photo_path'] : public_path('image/alfred-theme.png') }}"
+                alt="Advisor Profile Photo" class="advisor-photo">
 
             <!-- Advisor Details -->
             <div class="advisor-details">

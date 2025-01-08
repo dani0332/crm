@@ -1110,7 +1110,10 @@ class HomeQuoteService extends BaseService
             $data['items'] = $items;
 
             $pdf = PDF::loadView('pdf.home-sal', compact('data'))
-                ->setOptions(['defaultFont' => 'DejaVu Sans'])
+                ->setOptions([
+                    'defaultFont' => 'DejaVu Sans',
+                    'isRemoteEnabled' => true, // Enable remote images
+                ])
                 ->setPaper('A4');
             $pdfFile = $pdf->output();
 
@@ -1143,7 +1146,7 @@ class HomeQuoteService extends BaseService
             $data['profile_photo_path'] = '';
         }
 
-        $data['pdf_filename'] = 'HOME SAL PDF';
+        $data['pdf_filename'] = $quote->code . '-SAL-DECLARATION';
         $data['quote_uuid'] = $quote->uuid;
 
         return $data;
