@@ -2310,7 +2310,6 @@ const addPayment = isValid => {
       declined_custom_reason: declinedCustomReason,
       send_update_id: props.sendUpdate?.id || null,
       collection_type: paymentMethodsForm.collection_type,
-      has_any_cc_payment: hasAnyCCPayment(),
     };
     paymentMethodsForm
       .transform(data => viewData)

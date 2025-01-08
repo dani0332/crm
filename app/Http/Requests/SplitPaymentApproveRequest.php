@@ -39,7 +39,6 @@ class SplitPaymentApproveRequest extends FormRequest
             'quote_id' => 'required|integer',
             'collection_type' => 'required|string',
             'send_update_id' => 'nullable|integer',
-            'has_any_cc_payment' => 'nullable|boolean',
         ];
     }
 
