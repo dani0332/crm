@@ -490,14 +490,16 @@
         //  'selectedPlanIds','hasAdultAndSeniorMember'
 
         foreach ($quotePlans->quotes->plans as &$quotePlan) {
+            // Skip if the plan ID is not in the selected $planIds
+            if (!isset($quotePlan->id) || !in_array($quotePlan->id, $planIds)) {
+                continue;
+            }
+
+            // Add the plan to the $plans array
             $plans[$quotePlan->id] = $quotePlan;
             $quotePlan->total = 0;
             if (!isset($quotePlan->vat)) {
                 $quotePlan->vat = 0;
-            }
-
-            if (!isset($quotePlan->id) || !in_array($quotePlan->id, $planIds)) {
-                continue;
             }
 
             // Loop over benefits to safely decode
@@ -568,15 +570,25 @@
 
             foreach ($quotePlan->benefits as &$benefit) {
                 $benefit = (object) $benefit;
-                // set default value to excluded
+                // Set default value to excluded
                 $benefit->value = 'Excluded';
 
-                // set default values
+                // Set default values
                 $benefit->price = 0;
                 $benefit->vat = 0;
             }
         }
 
+        // Filter $plans to only include selected plans
+        $plans = array_filter(
+            $plans,
+            function ($planId) use ($planIds) {
+                return in_array($planId, $planIds);
+            },
+            ARRAY_FILTER_USE_KEY,
+        );
+
+        // Sort the filtered plans by 'isRenewal' in descending order and update $planIds
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
 
         $features = [

@@ -673,13 +673,13 @@ const onCopyText = text => {
 };
 
 const onExportPlans = () => {
-  //   if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
-  //     notification.error({
-  //       title: 'Please select 2 to 5 plans to download PDF.',
-  //       position: 'top',
-  //     });
-  //     return;
-  //   }
+    if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+      notification.error({
+        title: 'Please select 2 to 5 plans to download PDF.',
+        position: 'top',
+      });
+      return;
+    }
   exportLoader.value = true;
   const planIds = selectedPlans.value.map(p => {
     return p.id;
