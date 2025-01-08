@@ -212,12 +212,18 @@ trait QuoteModelTrait
         });
     }
 
+    public function isStale()
+    {
+        return ! empty($this->stale_at);
+    }
+
     public function isBuyLeadApplicable(): bool
     {
-        return request('isRequestedForAnAdvisor', false) ||
+        return (! $this->isStale() && ! $this->isPaid()) &&
+            (request('isRequestedForAnAdvisor', false) ||
             $this->sic_advisor_requested == 1 ||
             $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
-            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD);
     }
 
     public function startAllocation()
