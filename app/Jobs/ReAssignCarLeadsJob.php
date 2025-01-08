@@ -47,13 +47,22 @@ class ReAssignCarLeadsJob implements ShouldQueue
         }
         foreach ($leads as $lead) {
             info('--------------- ReAssignment processing current lead : '.$lead->uuid.' ---------------');
+
+            if ($lead->isAllocationInProgress()) {
+                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                continue;
+            }
+
+            $lead->startAllocation();
+
             // Find the appropriate tier for the lead
             $tier = $this->findTier($lead);
 
             // If a valid tier is found
             if ($tier) {
                 // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $lead);
+                $availableUsers = $this->findAvailableUsers($tier, $lead->source, $lead);
 
                 // Find custom rules for the lead
                 $rules = $this->findRules($lead);
@@ -69,16 +78,20 @@ class ReAssignCarLeadsJob implements ShouldQueue
                         DB::commit();
                     } catch (\Exception $e) {
                         DB::rollback();
+                        $this->carAllocationService->endBuyLeadProcessing();
                         Log::error($e->getMessage());
                     }
                 } else {
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
+                    $this->carAllocationService->endBuyLeadProcessing();
                 }
             } else {
                 // Log that tier was not found for the lead and skip processing
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
             }
+
+            $lead->endAllocation();
 
             info('--------------- ReAssignment processing ended for current lead : '.$lead->uuid.' ---------------');
         }
@@ -105,9 +118,9 @@ class ReAssignCarLeadsJob implements ShouldQueue
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId, $leadSource, $lead)
+    protected function findAvailableUsers($tier, $leadSource, $lead)
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId, true, $leadSource, null, $lead);
+        return $this->carAllocationService->getEligibleUserForAllocation($tier, $this->advisorId, true, $leadSource, null, $lead);
     }
 
     protected function findRules($lead)
@@ -117,7 +130,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
 
     protected function finalizeAdvisors($lead, $tier, $users, $rules)
     {
-        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, null);
+        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, null, $tier);
     }
 
     protected function assignLead($lead, $userId, $tier)

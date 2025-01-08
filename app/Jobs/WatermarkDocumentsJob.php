@@ -9,6 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -43,9 +44,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         // Ensure the quoteDocument and documentType exist
         if (! $quoteDocument || ! $documentType) {
-            Log::error('Document or DocumentType not found.');
-            info('Watermark job not completed, Document or DocumentType not found.
-             Job Parameters: Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId);
+            Log::error('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
 
             return;
         }
@@ -69,5 +68,10 @@ class WatermarkDocumentsJob implements ShouldQueue
             'watermarked_doc_url' => $watermarkData['watermarked_doc_url'] ?? null,
         ]);
         info('watermark job completed for '.$this->uuid);
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->quoteDocumentId.$this->uuid.$this->documentTypeId))->dontRelease()];
     }
 }

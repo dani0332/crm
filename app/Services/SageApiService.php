@@ -313,6 +313,8 @@ class SageApiService
             SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
         ];
 
+        $arDiscountInvoiceTypes = [SageEnum::SRT_CREATE_AR_DISC_INV, SageEnum::SRT_CREATE_AR_DISC_CORR_INV];
+
         $arInvoiceTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_INV,
@@ -334,7 +336,7 @@ class SageApiService
             $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
         }
 
-        if (in_array(SageEnum::SRT_CREATE_AR_DISC_INV, $reverseSageRequestTypes)) {
+        if (! empty(array_intersect($arDiscountInvoiceTypes, $reverseSageRequestTypes))) {
             $isOnlyDiscountReversal = $sendUpdateLog && (int) $sendUpdateLog->discount == 0;
         } else {
             if ($sendUpdateLog->discount > 0) {
@@ -390,8 +392,8 @@ class SageApiService
                     }
                 }
 
-                if ($reverseSageRequestType == SageEnum::SRT_CREATE_AR_DISC_INV) {
-                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL && $isOnlyDiscountReversal) {
+                if (in_array($reverseSageRequestType, $arDiscountInvoiceTypes)) {
+                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL) {
                         // Create AR Discount Invoice (Reversal)
                         $extraDetails['is_reversal_discount'] = true;
                         $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
@@ -473,6 +475,18 @@ class SageApiService
         $payLoadOptions = SagePayloadFactory::getInvoiceDetails($reversalInvoiceDetails['invoiceType'], $reverseInvoiceBatchNumber);
         $isLiveApiCallStep2 = true;
         if (isset($sageLogArray[$step]) && $sageLogArray[$step]['status'] == SageEnum::STATUS_SUCCESS) {
+            if ($sageLogArray[$step]['sage_end_point'] !== $payLoadOptions['endPoint']) {
+                info('SAGE API : Reversal invoice number updated - previous reversal batch number ('.$sageLogArray[$step]['sage_end_point'].') - current reversal batch number ('.$payLoadOptions['endPoint'].') - Send Update Code: '.$sendUpdateLog->code);
+                $getNewResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], 'GET');
+                $sageLogArray[$step]['response'] = $getNewResponse;
+                $sageLogArray[$step]['sage_end_point'] = $payLoadOptions['endPoint'];
+                SageApiLog::where('id', $sageLogArray[$step]['id'])->update([
+                    'sage_end_point' => $payLoadOptions['endPoint'],
+                    'response' => $getNewResponse,
+                ]);
+                info('SAGE API : Response against current batch number has been updated - Send Update Code: '.$sendUpdateLog->code);
+            }
+
             info('SAGE API :  getInvoiceDetails for '.$reversalInvoiceDetails['invoiceType'].' Sent Already for '.$sendUpdateLog->code);
             $isLiveApiCallStep2 = false;
             $sageResponse = json_decode($sageLogArray[$step]['response'], true);

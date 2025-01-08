@@ -57,7 +57,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
             [
-                'value' => 1,
+                'value' => 0,
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -66,7 +66,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
             [
-                'value' => 1,
+                'value' => 0,
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

@@ -40,11 +40,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public mixed $vat = null;
     public $policyIssuance = null;
+    public $currentInsurerApiStatus = null;
     public function __construct()
     {
         $this->vat = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
 
-        $this->baseUrl = config('constants.ALLIANCE_API_BASE_URL');
+        $this->baseUrl = config('constants.ALLIANCE_API_BASE_URL').'/api';
         $this->authParam = [
             'agency_id' => config('constants.ALLIANCE_AGENCY_ID'),
             'agency_code' => config('constants.ALLIANCE_AGENCY_CODE'),
@@ -97,13 +98,15 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Travel Type : '.$travelType);
                 $lastCompletedStep = $process->completed_step;
                 $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY;
+                info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Next Step : '.$nextStepToBeExecuted);
 
                 if ($nextStepToBeExecuted) {
                     if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY) {
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID;
                         $policyIssuanceResponse = $this->issuePolicyAndFillPolicyDetails($quote, $selectedPlan, $travelType);
                         if (! $policyIssuanceResponse['status']) {
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
 
                             return $policyIssuanceResponse;
                         }
@@ -113,9 +116,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                     $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
                     if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_PURCHASE_POLICY) {
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID;
                         $policyPurchaseResponse = $this->policyPurchase($quote, $payment, $travelType);
                         if (! $policyPurchaseResponse['status']) {
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
 
                             return $policyPurchaseResponse;
                         }
@@ -125,9 +129,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                     $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
                     if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS) {
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID;
                         $uploadPolicyDocumentResponse = $this->fetchAndUploadDocument($quote, $travelType);
                         if (! $uploadPolicyDocumentResponse['status']) {
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
 
                             return $uploadPolicyDocumentResponse;
                         }
@@ -138,9 +143,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                     $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
                     if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS) {
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
                         $fillPolicyDetailsResponse = $this->uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment);
                         if (! $fillPolicyDetailsResponse['status']) {
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
 
                             return $fillPolicyDetailsResponse;
                         }
@@ -150,9 +156,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                     $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
                     if ($nextStepToBeExecuted === PolicyIssuanceEnum::ALLIANCE_TRAVEL_BOOK_POLICY) {
                         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                        $this->currentInsurerApiStatus = PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
                         $fillPolicyDetailsResponse = $this->triggerBookPolicyProcess($quote);
                         if (! $fillPolicyDetailsResponse['status']) {
-                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+                            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
 
                             return $fillPolicyDetailsResponse;
                         }
@@ -173,6 +180,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
         } catch (\Exception $e) {
             $response['error'] = $e->getMessage();
+            $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
             info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Exception : '.$e->getMessage());
 
             return $response;
@@ -222,8 +230,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'dob' => $dobTraveller,
             'passport_number' => $passportTraveller,
             'nationality_traveller' => $nationalityTraveller,
-            'email' => $quote->email,
-            'mobile' => $quote->mobile_no,
+            'email' => 'happiness@support.insurancemarket.ae', // will be static, as we dont share customer contact details outside organization
+            'mobile' => '971502245943', // will be static, as we dont share customer contact details outside organization
             'agency_reference' => 'asc',
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
@@ -232,7 +240,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$issuePolicy);
 
         $issuePolicyResponse = $issuePolicy->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $endPoint, $response['completed_step'], $issuePolicy->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $this->baseUrl.$endPoint, $response['completed_step'], $issuePolicy->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
         if ($issuePolicy->failed()) {
             $response['error'] = $issuePolicyResponse?->errors;
@@ -249,7 +257,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $quote->update([
             'insurer_policy_id' => $insurerPolicyId,
-            'price_without_vat' => $priceVatApplicable,
             'price_with_vat' => $premium,
             'vat' => $premium - $priceVatApplicable,
             'price_vat_applicable' => $priceVatApplicable,
@@ -282,7 +289,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyPurchase);
 
         $policyPurchaseResponse = $policyPurchase->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $endPoint, $response['completed_step'], $policyPurchase->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $this->baseUrl.$endPoint, $response['completed_step'], $policyPurchase->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
         if ($policyPurchase->failed()) {
             $response['error'] = $policyPurchaseResponse?->errors;
@@ -339,7 +346,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
         } while ($retryCount < $maxRetries);
 
-        $this->storePolicyIssuanceLog($quote, $payload, $policyDocumentsResponse, $endPoint, $response['completed_step'], $policyDocuments->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+        $this->storePolicyIssuanceLog($quote, $payload, $policyDocumentsResponse, $this->baseUrl.$endPoint, $response['completed_step'], $policyDocuments->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
         if ($policyDocuments->failed()) {
             $response['error'] = $policyDocumentsResponse?->errors;
 
@@ -384,7 +391,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$buyerTaxInvoice);
 
         $buyerTaxInvoiceResponse = $buyerTaxInvoice->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $buyerTaxInvoiceResponse, $endPoint, $response['completed_step'], $buyerTaxInvoice->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
+        $this->storePolicyIssuanceLog($quote, $payload, $buyerTaxInvoiceResponse, $this->baseUrl.$endPoint, $response['completed_step'], $buyerTaxInvoice->failed() ? PolicyIssuanceEnum::FAILED_STATUS : PolicyIssuanceEnum::SUCCESS_STATUS);
 
         if ($buyerTaxInvoice->failed()) {
             $response['error'] = $buyerTaxInvoiceResponse?->errors;
@@ -584,12 +591,15 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         if ($response) {
             info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
             SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
-            // Here we need to dispatch document email
-            $data = new \stdClass;
-            $data->model_type = self::TYPE;
-            $data->quote_id = $quote->id;
-            info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' - Dispatching SendBookPolicyDocumentsJob');
-            SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
+            if ($quote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+                // Here we need to dispatch document email
+                $data = new \stdClass;
+                $data->model_type = self::TYPE;
+                $data->quote_id = $quote->id;
+                info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' - Dispatching SendBookPolicyDocumentsJob advisor id '.$quote->advisor_id);
+                SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
+            }
+
         }
     }
 
@@ -687,12 +697,16 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $title;
     }
 
-    private function allianceHttpCall($endPoint, $param, $method = 'POST')
+    private function allianceHttpCall($endPoint, $param)
     {
+        $headers = [
+            'Content-Type' => 'application/json',
+        ];
+
         $payload = array_merge($this->authParam, $param);
         $url = $this->baseUrl.$endPoint;
 
-        return Http::post($url, $payload);
+        return Http::timeout(20)->withHeaders($headers)->post($url, $payload);
     }
 
 }

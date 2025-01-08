@@ -7,6 +7,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -31,8 +32,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
 
@@ -75,13 +76,24 @@ class TravelQuoteService extends BaseService
             'qs.id as quote_status_id',
             'qs.text as quote_status_id_text',
             'u.id as advisor_id',
-            'u.name as advisor_id_text',
+            DB::raw("
+                CASE
+                    WHEN u.email = '".PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL."' THEN 'Auto Issued'
+                    ELSE u.name
+                END as advisor_id_text
+            "),
             'tqr.previous_advisor_id',
-            'uadv.name AS previous_advisor_id_text',
+            DB::raw("
+                CASE
+                    WHEN uadv.email = '".PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL."' THEN 'Auto Issued'
+                    ELSE uadv.name
+                END as previous_advisor_id_text
+            "),
             'tqr.payment_status_id',
             'ps.text AS payment_status_id_text',
             'tqr.plan_id',
             'tp.text AS plan_id_text',
+            // 'tp.id as plan_new_id_text',
             'tpip.text AS travel_plan_provider_text',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
@@ -91,6 +103,7 @@ class TravelQuoteService extends BaseService
             'tqrd.insly_id',
             'ls.text as lost_reason',
             'tqrd.notes',
+            'tqrd.advisor_assigned_date',
             'tqr.currently_located_in_id',
             'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
@@ -385,11 +398,6 @@ class TravelQuoteService extends BaseService
             $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
 
-        if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-            $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
-            $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
@@ -417,7 +425,7 @@ class TravelQuoteService extends BaseService
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $this->query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->code) && $request->code != '') {
@@ -501,6 +509,18 @@ class TravelQuoteService extends BaseService
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
             $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
+        if ($request->has('amlStatus') && $request->amlStatus != '') {
+            $this->query->whereIn('tqr.aml_status', $request->amlStatus);
+        }
+
+        if ($request->has('insurance_provider_ids') && $request->insurance_provider_ids != '') {
+            $this->query->whereIn('tqr.insurance_provider_id', $request->insurance_provider_ids);
+        }
+
+        if ($request->has('plan_name') && $request->plan_name != '') {
+            $this->query->whereIn('tqr.plan_id', $request->plan_name);
         }
 
         foreach ($searchProperties as $item) {

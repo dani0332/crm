@@ -72,7 +72,17 @@ trait TeamHierarchyTrait
 
     public function getSubTeamsByTeamIds($teamIds)
     {
-        return Team::where('type', TeamTypeEnum::SUB_TEAM)->whereIn('parent_team_id', $teamIds)->where('is_active', 1)->select('id', 'name')->orderBy('name', 'asc')->get();
+        $subTeams = Team::with('parent')->where('type', TeamTypeEnum::SUB_TEAM)->whereIn('parent_team_id', $teamIds)->where('is_active', 1)->select('id', 'name', 'parent_team_id')->orderBy('name', 'asc')->get();
+
+        $subTeams->map(function ($subTeam) {
+            if ($subTeam->parent) {
+                $subTeam->name = "$subTeam->name ({$subTeam->parent?->name})";
+            }
+
+            return $subTeam;
+        });
+
+        return $subTeams;
     }
 
     public function getUsersByTeamId($teamId)
@@ -191,7 +201,7 @@ trait TeamHierarchyTrait
             ->select('users.id', 'users.name', 'ut.team_id as u_team_id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->where('users.is_active', 1)
+            ->activeUser()
             ->where('r.name', $role)
             ->get();
     }

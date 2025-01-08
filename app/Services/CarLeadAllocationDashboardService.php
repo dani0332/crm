@@ -35,7 +35,7 @@ class CarLeadAllocationDashboardService extends BaseService
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
-                ->where('users.is_active', 1)
+                ->activeUser()
                 ->where('la.quote_type_id', QuoteTypes::CAR->id())
                 ->groupBy('users.name', 'users.id', 'la.id')
                 ->select(
@@ -52,6 +52,11 @@ class CarLeadAllocationDashboardService extends BaseService
                     'la.manual_assignment_count as manualAllocationCount',
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.reset_cap',
+                    'la.buy_lead_max_capacity as BLMaxCapacity',
+                    'la.buy_lead_allocation_count as BLAllocationCount',
+                    'la.buy_lead_status as BLStatus',
+                    'la.normal_allocation_enabled as normalAllocationEnabled',
+                    'la.buy_lead_reset_capacity as blResetCap',
                 );
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
