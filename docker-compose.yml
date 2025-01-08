@@ -2,13 +2,10 @@ version: '3'
 
 services:
   laravel:
-    #build:
-    # context: .
-    # dockerfile: Dockerfile
-    #image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:Build.BuildId
+    #container_name: imcrm${DOCKERENV}
+    #image: imcrm${DOCKERENV}:latest
+    image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:latest
     container_name: imcrm${DOCKERENV}
-    image: imcrm${DOCKERENV}:latest
-
     environment:
       - DOPPLER_TOKEN
     ports:
