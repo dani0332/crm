@@ -312,7 +312,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             if ($revivalRecord && $revivalRecord->follow_up_email_count == 6 && $revivalRecord->previous_health_plan_type) {
                 $lead->update(['quote_status_id' => QuoteStatusEnum::Stale]);
             }
-            if ($revivalRecord && $revivalRecord->follow_up_email_count == 3 && ! $revivalRecord->previous_health_plan_type) {
+            if ($revivalRecord && $revivalRecord->follow_up_email_count == 3 && $revivalRecord->previous_health_plan_type == false) {
                 $lead->update(['quote_status_id' => QuoteStatusEnum::Stale]);
             }
 
@@ -383,7 +383,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             }
         }
 
-        if ($revivalRecord->previous_health_plan_type == 0) {
+        if ($revivalRecord->previous_health_plan_type == false) {
             if ($today->eq($afterTwoDays)) {
                 $revivalRecord->update(['created_at' => Carbon::now()->subDays(4)->toDateString()]);
             } elseif ($today->eq($afterFourDays)) {
