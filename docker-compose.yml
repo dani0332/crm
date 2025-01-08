@@ -1,7 +1,9 @@
 version: '3'
 
 services:
-  laravel:    
+  laravel:
+    #container_name: imcrm${DOCKERENV}
+    #image: imcrm${DOCKERENV}:latest
     image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:Build.BuildId
     container_name: imcrm${DOCKERENV}
     environment:
@@ -22,3 +24,8 @@ volumes:
   uatlogs:
   uat2logs:
   testlogs:
+# Set BuildKit globally for the build
+x-docker-args:
+  build:
+    environment:
+      DOCKER_BUILDKIT: 1
