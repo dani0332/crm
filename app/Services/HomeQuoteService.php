@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -11,6 +12,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\DocumentType;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\InsuranceProvider;
@@ -1089,14 +1091,79 @@ class HomeQuoteService extends BaseService
 
     public function syncSAL($request)
     {
-        // dd($request->quoteUID);
+        try {
+            $quote = $this->getQuoteObject(QuoteTypes::HOME->value, $request->quoteUID);
+            $quote->load(['advisor']);
 
-        // $data['list'] = $this->getTrackingData($quoteType, $startDate, $endDate, true);
-        // $data['quoteType'] = $quoteType;
-        $pdf = PDF::loadView('pdf.home-sal');
+            $data = $this->prepareHomeSALData($quote);
 
-        $pdfName = 'InsuranceMarket.ae™ Home SAL Declaration.pdf';
+            $documentType = DocumentType::where('code', DocumentTypeCode::HOME_SAL)->first();
+            if (!$documentType) {
+                throw new \Exception('Document type not found for ' . DocumentTypeCode::HOME_SAL);
+            }
+            $data['document_type_code'] = $documentType->code; // Use the code, not the entire object
 
-        return $pdf->download($pdfName);
+            $items = $this->getSALItems($quote->uuid);
+            if ($items->isEmpty()) {
+                throw new \Exception('No items found for SAL for quote ' . $quote->uuid);
+            }
+            $data['items'] = $items;
+
+            $pdf = PDF::loadView('pdf.home-sal', compact('data'))
+                ->setOptions(['defaultFont' => 'DejaVu Sans'])
+                ->setPaper('A4');
+            $pdfFile = $pdf->output();
+
+            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, false, true);
+
+            return $document;
+        } catch (\Exception $e) {
+            Log::error('Error in syncSAL: ' . $e->getMessage());
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    private function prepareHomeSALData($quote)
+    {
+        $data = [];
+
+        // Ensure the advisor relationship is loaded
+        if ($quote->relationLoaded('advisor') && $quote->advisor) {
+            $data['advisor_name'] = $quote->advisor->name ?? '';
+            $data['advisor_email'] = $quote->advisor->email ?? '';
+            $data['advisor_mobile_no'] = $quote->advisor->mobile_no ?? '';
+            $data['advisor_landline_no'] = $quote->advisor->landline_no ?? '';
+            $data['profile_photo_path'] = $quote->advisor->profile_photo_path ?? '';
+        } else {
+            // Handle case where advisor is not loaded or null
+            $data['advisor_name'] = '';
+            $data['advisor_email'] = '';
+            $data['advisor_mobile_no'] = '';
+            $data['advisor_landline_no'] = '';
+            $data['profile_photo_path'] = '';
+        }
+
+        $data['pdf_filename'] = 'HOME SAL PDF';
+        $data['quote_uuid'] = $quote->uuid;
+
+        return $data;
+    }
+
+
+    private function getSALItems($uuid)
+    {
+        try {
+            if (empty($uuid)) {
+                throw new \Exception('Invalid UUID provided');
+            }
+
+            return DB::table('home_quote_declared_items')
+                ->select('value', 'description', 'purchase_date', 'invoice_number')
+                ->where('quote_uuid', $uuid)
+                ->get();
+        } catch (\Exception $e) {
+            Log::error('Error fetching SAL items: ' . $e->getMessage() . ' for quote ' . $uuid);
+            return collect();
+        }
     }
 }

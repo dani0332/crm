@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             QuoteStatusSeeder::class,
             LookupSeeder::class,
             PermissionsSeeder::class,
-            //DocumentTypeSeeder::class,
+            DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
             // SendUpdateAdditionalSubType::class,
             // PermissionsSeeder::class,

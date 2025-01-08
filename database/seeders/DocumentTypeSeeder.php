@@ -37662,5 +37662,20 @@ class DocumentTypeSeeder extends Seeder
             'category' => DocumentTypeCode::EP,
             'sort_order' => 14,
         ]);
+
+        DocumentType::firstOrCreate(([
+            'code' => 'HOME_SAL',
+            'category' => DocumentTypeCode::QUOTE,
+        ]), [
+            'text' => 'Home SAL Declaration',
+            'is_active' => 1,
+            'quote_type_id' => 2,
+            'folder_path' => 'home_sal',
+            'accepted_files' => '.pdf',
+            'max_files' => 5,
+            'max_size' => 5,
+            'is_required' => 0,
+            'category' => DocumentTypeCode::QUOTE
+        ]);
     }
 }

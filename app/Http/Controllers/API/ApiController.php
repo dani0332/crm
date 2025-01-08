@@ -23,6 +23,7 @@ use App\Models\QuoteFlowDetails;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\EmailStatusService;
+use App\Services\HomeQuoteService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
 use App\Services\QuoteStatusService;
@@ -65,7 +66,7 @@ class ApiController extends Controller
         try {
 
             // Log the incoming request parameters
-            info(self::class.'assignLeads: request params as : '.json_encode($request->all()));
+            info(self::class . 'assignLeads: request params as : ' . json_encode($request->all()));
 
             // Check if lead allocation endpoint is disabled
             if ($this->apiService->isLeadAllocationEndpointDisabled()) {
@@ -126,12 +127,12 @@ class ApiController extends Controller
         $flowType = $request->flowType;
         $quoteUID = $request->uuid;
         $flowId = $request->flowId ?? null;
-        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
+        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:" . now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
             ->first();
         if (! $workflow) {
-            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
+            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: " . now());
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
@@ -227,5 +228,12 @@ class ApiController extends Controller
         app(QuoteStatusService::class)->markQuoteAsStale($quoteTypeId, $request->quote_uuid);
 
         return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
+    }
+
+    public function homeSyncSAL(Request $request)
+    {
+        $response = app(HomeQuoteService::class)->syncSAL($request);
+
+        return $response;
     }
 }

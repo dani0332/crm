@@ -76,4 +76,7 @@ class DocumentTypeCode extends Enum
     const AML = 'AML';
     const E_TICKETS = 'E_TICKETS';
     const AUDIT = 'AUDIT';
+
+    // HOME SAL
+    const HOME_SAL = 'HOME_SAL';
 }

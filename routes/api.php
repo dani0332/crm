@@ -66,4 +66,4 @@ Route::prefix('v1')->group(function () {
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
-Route::post('/imcrm/home-sync-sal', [HomeQuoteController::class, 'homeSyncSAL'])->name('home-sync-sal');
+Route::post('/imcrm/home-sync-sal', [ApiController::class, 'homeSyncSAL'])->name('home-sync-sal');

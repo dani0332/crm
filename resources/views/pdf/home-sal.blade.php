@@ -30,7 +30,8 @@
         .table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 40px;
+            /* Added more space below the table */
         }
 
         .table th,
@@ -50,6 +51,44 @@
             font-size: 12px;
             color: #555;
         }
+
+        /* Advisor Info Card */
+        .advisor-card {
+            display: flex;
+            align-items: center;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            /* Curved edges */
+            padding: 20px;
+            margin-top: 40px;
+            /* Space between table and card */
+        }
+
+        .advisor-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            /* Circular profile photo */
+            margin-right: 20px;
+            object-fit: cover;
+            /* Ensures the image fits well */
+        }
+
+        .advisor-details {
+            flex: 1;
+        }
+
+        .advisor-details h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+
+        .advisor-details p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #555;
+        }
     </style>
 </head>
 
@@ -66,28 +105,41 @@
         <p>Each item that's valued at AED 40,000 or more has been recorded for comprehensive coverage.</p>
         <p>Below, you'll find a summary of the declared items:</p>
 
+        <!-- SAL Items Table -->
         <table class="table">
             <thead>
                 <tr>
-                    <th>REF-ID</th>
-                    <th>Line of Business</th>
-                    <th>Department</th>
-                    <th>Requested Date</th>
-                    <th>Lead Cost</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                    <th>Purchase Date</th>
+                    <th>Invoice Number</th>
                 </tr>
             </thead>
-            {{-- <tbody>
-                @foreach ($list as $row)
+            <tbody>
+                @foreach ($data['items'] as $item)
                     <tr>
-                        <td>{{ $quoteType->refId($row->ref_id) }}</td>
-                        <td>{{ $row->quoteType?->code }}</td>
-                        <td>{{ $row->department }}</td>
-                        <td>{{ \Carbon\Carbon::parse($row->requested_date)->format('Y-m-d H:i:s') }}</td>
-                        <td>{{ $row->cost }}</td>
+                        <td>{{ $item->value }}</td>
+                        <td>{{ $item->description }}</td>
+                        <td>{{ $item->purchase_date }}</td>
+                        <td>{{ $item->invoice_number }}</td>
                     </tr>
                 @endforeach
-            </tbody> --}}
+            </tbody>
         </table>
+
+        <!-- Advisor Info Card -->
+        <div class="advisor-card">
+            <!-- Advisor Profile Photo -->
+            <img src="{{ $data['profile_photo_path'] }}" alt="Advisor Profile Photo" class="advisor-photo">
+
+            <!-- Advisor Details -->
+            <div class="advisor-details">
+                <h3>{{ $data['advisor_name'] }}</h3>
+                <p>Email: {{ $data['advisor_email'] }}</p>
+                <p>Mobile: {{ $data['advisor_mobile_no'] }}</p>
+                <p>Landline: {{ $data['advisor_landline_no'] }}</p>
+            </div>
+        </div>
     </div>
 
     <div class="footer">
