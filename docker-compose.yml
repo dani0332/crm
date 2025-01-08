@@ -5,7 +5,7 @@ services:
     #build:
     # context: .
     # dockerfile: Dockerfile
-    image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:latest
+    image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:Build.BuildId
     container_name: imcrm${DOCKERENV}
     #image: imcrm${DOCKERENV}:latest
 
