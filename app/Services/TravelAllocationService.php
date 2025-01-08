@@ -38,7 +38,7 @@ class TravelAllocationService extends AllocationService
         $this->isMixEnquiryWithAutomation = false;
     }
 
-    private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, $quoteUUID)
+    private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, $quoteUUID, ProcessTrackerService $tracker)
     {
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
         if (getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE) == '1' && $travelQuote->isParent() && $travelQuote->isAdult()) {
@@ -56,15 +56,25 @@ class TravelAllocationService extends AllocationService
             info(self::class." - verifyFetchLeadPreChecks: {$quoteUUID} - isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
 
             if ($isALNC && $isAutomationEnabled && $travelQuote->isSingleTrip() && $travelQuote->isPaid()) {
+                $tracker->addStep(ProcessTrackerAllocationEnum::ALIANCE_PLAN_FOUND);
                 if ($travelQuote->isAutomationCompleted() || $travelQuote->isBookingFailed()) {
-                    $travelQuote->isAutomationCompleted() && info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is completed so proceed with allocation");
-                    $travelQuote->isBookingFailed() && info(self::class.":fetchLead - {$quoteUUID} is Alliance and booking failed so proceed with allocation");
+                    if($travelQuote->isAutomationCompleted()) {
+                        $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_COMPLETED);
+                        info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is completed so proceed with allocation");
+                    }
+                    if($travelQuote->isBookingFailed()) {
+                        $tracker->addStep(ProcessTrackerAllocationEnum::BOOKING_FAILED);
+                        info(self::class.":fetchLead - {$quoteUUID} is Alliance and booking failed so proceed with allocation");
+                    }
+
                     $this->isCHSAdvisor = true;
                     $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
                 } else {
                     if (! $travelQuote->isAutomationCompleted()) {
+                        $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_NOT_COMPLETED);
                         info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed so check fail cases");
                         if ($travelQuote->isPolicyIssuanceFailed()) {
+                            $tracker->addStep(ProcessTrackerAllocationEnum::POLICY_ISSUANCE_FAILED);
                             info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation");
                             $this->isSICAdvisor = true;
                             $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
@@ -81,7 +91,7 @@ class TravelAllocationService extends AllocationService
         return true;
     }
 
-    public function fetchLead($quoteId, $overrideAdvisorId = false)
+    public function fetchLead(ProcessTrackerService $tracker, $quoteId, $overrideAdvisorId = false)
     {
         $travelQuote = TravelQuote::where('uuid', $quoteId)->first();
 
@@ -92,7 +102,7 @@ class TravelAllocationService extends AllocationService
             return null;
         }
 
-        if ($this->verifyFetchLeadPreChecks($travelQuote, $quoteId) === false) {
+        if ($this->verifyFetchLeadPreChecks($travelQuote, $quoteId, $tracker) === false) {
             return null;
         }
 
