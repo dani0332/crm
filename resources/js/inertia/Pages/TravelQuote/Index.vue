@@ -11,6 +11,7 @@ defineProps({
   amlStatuses: Object,
   insuranceProviders: Array,
   travelPlans: Array,
+  insurerAMLStatus: Array,
 });
 
 let params = useUrlSearchParams('history');
@@ -56,6 +57,7 @@ const filters = reactive({
   created_at_start: new Date() || '',
   created_at_end: new Date() || '',
   quote_status_id: [],
+  insurer_aml_status: [],
   advisor_id: [],
   is_ecommerce: '',
   payment_status_id: '',
@@ -503,6 +505,14 @@ watch(
   },
   { deep: true },
 );
+
+const insurerAMLStatusOption = computed(() => {
+    return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+        value: key,
+        label: value,
+    }));
+});
+
 </script>
 
 <template>
@@ -614,6 +624,14 @@ watch(
             placeholder="Search by Lead Status"
             :options="leadsStatusOptions"
           />
+        </x-field>
+        <x-field label="Insurer AML Status">
+            <ComboBox
+                v-model="filters.insurer_aml_status"
+                name="insurer_aml_status"
+                placeholder="Search by Insurer AML Status"
+                :options="insurerAMLStatusOption"
+            />
         </x-field>
         <x-field label="Policy Expiry Start Date">
           <DatePicker

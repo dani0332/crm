@@ -1500,6 +1500,13 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
+
+function capitalizeString(str) {
+    if (!str) return 'N/A';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
+
 </script>
 
 <template>
@@ -1739,6 +1746,10 @@ const allowStatusUpdate = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURER AML STATUS</dt>
+                  <dd>{{ capitalizeString(quote.insurer_aml_status) }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">

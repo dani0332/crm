@@ -1643,9 +1643,15 @@ const allowStatusUpdate = computed(() => {
 
 function genderFormatForProfile(gender) {
   if (!gender) return gender;
-
-  return gender == 'M' ? 'Male' : 'Female';
+  return (gender === 'M' || gender === 'Male')  ? 'Male' : 'Female';
 }
+
+function capitalizeString(str) {
+    if (!str) return 'N/A';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
+
 </script>
 
 <template>
@@ -1867,7 +1873,7 @@ function genderFormatForProfile(gender) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER AML STATUS</dt>
-                <dd>{{ insurerAMLStatus ?? 'N/A' }}</dd>
+                <dd>{{ capitalizeString(quote.insurer_aml_status) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BATCH</dt>

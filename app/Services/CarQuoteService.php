@@ -222,6 +222,7 @@ class CarQuoteService extends BaseService
                 DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'cqr.insly_migrated',
                 'cqr.aml_status',
+                'cqr.insurer_aml_status',
                 'cqrd.chassis_number',
                 'c.gender',
             )
@@ -1040,6 +1041,10 @@ class CarQuoteService extends BaseService
                 $query->where('cqr.policy_number', $request->previous_quote_policy_number)
                     ->orWhere('cqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
+        }
+
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('cqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'cqr');

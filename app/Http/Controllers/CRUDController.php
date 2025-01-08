@@ -347,6 +347,7 @@ class CRUDController extends Controller
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
             $productTeam = $this->getProductByName(quoteTypeCode::Car);
             $teams = $this->getTeamsByProductId($productTeam->id);
+            $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -365,6 +366,7 @@ class CRUDController extends Controller
                 'teams' => $teams,
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
+                'insurerAMLStatus' => $insurerAMLStatus,
             ]);
         }
 
@@ -794,7 +796,6 @@ class CRUDController extends Controller
 
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
-            $insurerAMLStatus = app(AMLService::class)->getInsurerAMLScreeningDetails(QuoteTypeId::Car, $record);
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record',
@@ -886,7 +887,6 @@ class CRUDController extends Controller
                 'paymentDocument',
                 'customerAddressData',
                 'amlStatusName',
-                'insurerAMLStatus',
             ]));
         }
 

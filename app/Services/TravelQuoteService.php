@@ -169,6 +169,7 @@ class TravelQuoteService extends BaseService
             'tqr.insly_migrated',
             'tqr.sic_advisor_requested',
             'tqr.aml_status',
+            'tqr.insurer_aml_status',
             'tqr.departure_country_id',
             'tqr.insurance_provider_id',
         ])
@@ -526,6 +527,10 @@ class TravelQuoteService extends BaseService
 
         if ($request->has('plan_name') && $request->plan_name != '') {
             $this->query->whereIn('tqr.plan_id', $request->plan_name);
+        }
+
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('tqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
         foreach ($searchProperties as $item) {

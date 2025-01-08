@@ -16,6 +16,7 @@ defineProps({
   teams: Object,
   authorizedDays: Number,
   assignmentTypes: Object,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -220,6 +221,7 @@ const filters = reactive({
   email: '',
   mobile_no: '',
   quote_status_id: [],
+  insurer_aml_status: [],
   created_at_start: '',
   currently_insured_with: '',
   is_ecommerce: '',
@@ -544,6 +546,14 @@ const onExport = (url, isLoading = false) => {
       }, 1000);
   });
 };
+
+const insurerAMLStatusOption = computed(() => {
+    return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+        value: key,
+        label: value,
+    }));
+});
+
 </script>
 
 <template>
@@ -689,6 +699,12 @@ const onExport = (url, isLoading = false) => {
           label="Lead Status"
           name="quote_status_id"
           :options="leadStatuses"
+        />
+        <ComboBox
+            v-model="filters.insurer_aml_status"
+            label="Insurer AML Status"
+            name="insurer_aml_status"
+            :options="insurerAMLStatusOption"
         />
         <ComboBox
           v-model="filters.tier_id"
