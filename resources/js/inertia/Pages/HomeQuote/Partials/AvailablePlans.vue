@@ -191,6 +191,7 @@ onMounted(() => {
 const onUpdatePlan = () => {
   console.log('onUpdatePlan', props.plan);
 
+    updatePlanLoading.value = true;
   axios
     .post(
       '/home-plan-manual-update-process',
@@ -209,6 +210,8 @@ const onUpdatePlan = () => {
         title: 'Plan updated successfully',
         position: 'top',
       });
+
+      updatePlanLoading.value = false;
 
       emit('onLoadAvailablePlansData');
     })
@@ -232,6 +235,7 @@ const onUpdatePlan = () => {
           position: 'top',
         });
       }
+      updatePlanLoading.value = false;
     });
 };
 
@@ -248,6 +252,9 @@ const formattedCategories = computed(() => {
 function camelCaseToSpacedText(camelCaseStr) {
   return camelCaseStr.replace(/([A-Z])/g, ' $1').trim();
 }
+
+const updatePlanLoading = ref(false);
+
 </script>
 
 <template>
@@ -367,7 +374,7 @@ function camelCaseToSpacedText(camelCaseStr) {
               color="primary"
               size="sm"
               @click="onUpdatePlan"
-              :loading="props.plan.processing"
+              :loading="updatePlanLoading"
               v-if="readOnlyMode.isDisable === true"
             >
               Update
