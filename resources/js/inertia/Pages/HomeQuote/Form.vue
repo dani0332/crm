@@ -75,7 +75,7 @@ console.log('quoteForm:', quoteForm);
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
-const { isRequired, isEmail, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo, minValue } = useRules();
 
 function successResponse() {
   notification.success({
@@ -452,11 +452,11 @@ const personalBelongingsInAEDOptions = computed(() => {
 
 watch(
   () => quoteForm.sub_area_id,
-  (newValue) => {
+  newValue => {
     if (newValue != null && newValue !== '') {
       formFieldReq.sub_area_id = false; // Reset the validation error
     }
-  }
+  },
 );
 </script>
 
@@ -607,7 +607,8 @@ watch(
             v-model="quoteForm.building_aed"
             type="number"
             class="w-full"
-            :rules="[isRequired]"
+            :rules="[isRequired, minValue(100000)]"
+            :error="quoteForm.errors.building_aed"
           />
         </x-field>
         <x-field

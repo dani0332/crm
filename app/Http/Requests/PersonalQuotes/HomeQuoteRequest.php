@@ -32,7 +32,7 @@ class HomeQuoteRequest extends FormRequest
             'has_personal_belongings' => self::SOMETIMES_BOOLEAN,
             // Conditionally required fields
             'contents_aed' => 'nullable|required_if:has_contents,true',
-            'building_aed' => 'nullable|required_if:has_building,true|numeric',
+            'building_aed' => 'nullable|required_if:has_building,true|numeric|min:100000',
             'personal_belongings_aed' => 'nullable|required_if:has_personal_belongings,true',
             'sub_area_id' => 'required',
             'type_of_coverage_you_need' => 'required',
@@ -79,6 +79,7 @@ class HomeQuoteRequest extends FormRequest
             'contents_aed.required_if' => 'The contents AED field is required when you have selected contents coverage.',
             'building_aed.required_if' => 'The building AED field is required when you have selected building coverage.',
             'building_aed.numeric' => 'The building AED field must be a valid number.',
+            'building_aed.min' => 'The building AED field must be at least 100,000.',
             'personal_belongings_aed.required_if' => 'The personal belongings AED field is required when you have selected personal belongings coverage.',
 
             'sub_area_id.required' => 'The location area is required.',

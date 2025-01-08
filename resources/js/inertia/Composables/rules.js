@@ -113,6 +113,14 @@ export const useRules = () => {
       'This field must be a number, special characters are not allowed.'
     );
   };
+  // Add minValue rule
+  const minValue = (min) => (v) => {
+    return (
+      !v ||
+      (Number(v) >= min) ||
+      `The minimum value is ${min}.`
+    );
+  };
 
   return {
     name,
@@ -134,5 +142,6 @@ export const useRules = () => {
     vat,
     amount_with_vat,
     emptyOrNumericAndNoSpecialChar,
+    minValue,
   };
 };
