@@ -172,8 +172,16 @@ const showLackingPayment = () => {
 // Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
-} else if (props.quoteType === 'Health') {
+} else if (
+  props.quoteType === 'Health' &&
+  props.quoteRequest?.source !== 'Revival'
+) {
   initialAmount.value = props.eCommercePrice;
+} else if (
+  props.quoteType === 'Health' &&
+  props.quoteRequest?.source === 'Revival'
+) {
+  initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === 'Bike') {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
