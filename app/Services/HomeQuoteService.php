@@ -1064,7 +1064,7 @@ class HomeQuoteService extends BaseService
         return PersonalQuote::select('id', 'customer_id')
             ->with([
                 'homeQuote:personal_quote_id,sub_area_id',
-                'homeQuote.subArea:id,description,emirates_id',
+                'homeQuote.subArea:id,text,emirates_id',
                 'homeQuote.subArea.emirate:id,text',
             ])
             ->where('uuid', $quoteUID)
@@ -1082,7 +1082,7 @@ class HomeQuoteService extends BaseService
             'floor_number' => $address['villa_apartment_office_no'],
             'building_name' => $address['villa_building_name'],
             'street' => $address['street_name'],
-            'area' => $subArea->description,
+            'area' => $subArea->text,
             'city' => $subArea->emirate->text,
             'is_courier_address' => 0,
             'is_default' => 1,

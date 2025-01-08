@@ -395,7 +395,7 @@ const locationAreaOptions = computed(() => {
   return page.props?.lookUpData?.subAreas?.length
     ? page.props.lookUpData.subAreas.map(item => ({
         value: item.id,
-        label: item.description,
+        label: item.text,
       }))
     : [];
 });

@@ -44,7 +44,7 @@ class HomeAllocation extends BaseAllocation
 
     private function getHomeQuoteData(string $uuid): ?HomeQuote
     {
-        return HomeQuote::with('subArea:id,description')
+        return HomeQuote::with('subArea:id,text')
             ->where('uuid', $uuid)
             ->first();
     }
@@ -66,7 +66,7 @@ class HomeAllocation extends BaseAllocation
     {
         $homeQuote = $this->getHomeQuoteData($this->lead->uuid);
 
-        $address = Str::lower($homeQuote?->subArea?->description ?? '');
+        $address = Str::lower($homeQuote?->subArea?->text ?? '');
 
         return $this->matchesTargetLocations($address);
     }

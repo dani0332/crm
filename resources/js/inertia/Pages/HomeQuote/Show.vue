@@ -1382,7 +1382,7 @@ const confirmSendEmail = () => {
 
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">LOCATION AREA</dt>
-                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
+                  <dd>{{ quote?.home_quote?.subArea?.text }}</dd>
                 </div>
 
                 <div class="grid sm:grid-cols-2">
