@@ -26,7 +26,7 @@ class HomeQuoteRequest extends FormRequest
             'first_name' => 'required|between:1,20',
             'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns|max:150',
-            'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
+            'mobile_no' => 'required|min:7|max:20',
             'has_contents' => self::SOMETIMES_BOOLEAN,
             'has_building' => self::SOMETIMES_BOOLEAN,
             'has_personal_belongings' => self::SOMETIMES_BOOLEAN,
@@ -67,8 +67,6 @@ class HomeQuoteRequest extends FormRequest
             'email.max' => 'The email address cannot exceed 150 characters.',
 
             'mobile_no.required' => 'The mobile number is required.',
-            'mobile_no.regex' => 'The mobile number must start with 0 and contain only numbers.',
-            'mobile_no.not_regex' => 'The mobile number cannot contain letters.',
             'mobile_no.min' => 'The mobile number must be at least 7 digits.',
             'mobile_no.max' => 'The mobile number cannot exceed 20 digits.',
 
