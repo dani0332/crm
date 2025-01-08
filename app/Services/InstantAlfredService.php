@@ -62,7 +62,7 @@ class InstantAlfredService extends BaseService
             ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) use ($quoteTypeId) {
                 $query->leftJoin('car_plan as cp', function ($join) use ($quoteTypeId) {
                     $join->on('cp.id', '=', 'pqr.plan_id')
-                         ->where('cp.quote_type_id', '=', $quoteTypeId);
+                        ->where('cp.quote_type_id', '=', $quoteTypeId);
                 });
                 $query->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id');
                 $query->addSelect([
