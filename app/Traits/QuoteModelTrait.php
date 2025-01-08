@@ -228,9 +228,16 @@ trait QuoteModelTrait
         });
     }
 
+    public function isStale()
+    {
+        return ! empty($this->stale_at);
+    }
+
     public function isBuyLeadApplicable(): bool
     {
-        return ! $this->isPaid() || in_array(
+        // If lead is not stale and not paid, or previously lead is bought lead or reassigned as bought lead
+
+        return (! $this->isStale() && ! $this->isPaid()) || in_array(
             $this->assignment_type,
             [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD]
         );
