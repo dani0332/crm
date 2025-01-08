@@ -58,14 +58,8 @@ class TravelAllocationService extends AllocationService
             if ($isALNC && $isAutomationEnabled && $travelQuote->isSingleTrip() && $travelQuote->isPaid()) {
                 $tracker->addStep(ProcessTrackerAllocationEnum::ALIANCE_PLAN_FOUND);
                 if ($travelQuote->isAutomationCompleted() || $travelQuote->isBookingFailed()) {
-                    if ($travelQuote->isAutomationCompleted()) {
-                        $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_COMPLETED);
-                        info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is completed so proceed with allocation");
-                    }
-                    if ($travelQuote->isBookingFailed()) {
-                        $tracker->addStep(ProcessTrackerAllocationEnum::BOOKING_FAILED);
-                        info(self::class.":fetchLead - {$quoteUUID} is Alliance and booking failed so proceed with allocation");
-                    }
+                    $travelQuote->isAutomationCompleted() && $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_COMPLETED);
+                    $travelQuote->isBookingFailed() && $tracker->addStep(ProcessTrackerAllocationEnum::BOOKING_FAILED);
 
                     $this->isCHSAdvisor = true;
                     $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
