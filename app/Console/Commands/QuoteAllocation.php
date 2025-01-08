@@ -134,7 +134,7 @@ class QuoteAllocation extends Command
     {
         $processedRecords = 0;
         $leads = HealthQuote::whereNull('advisor_id')
-            ->select('uuid')
+            ->select('uuid', 'payment_status_id', 'sic_advisor_requested', 'quote_status_id', 'lead_allocation_failed_at', 'sic_flow_enabled')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
@@ -150,8 +150,17 @@ class QuoteAllocation extends Command
             })
             ->take($chunkSize);
 
+        info("For Health - leads fetch query is : {$leads->toRawSql()}");
+
         foreach ($leads->get() as $lead) {
-            info('Processing Health record for Quote Allocation with uuid: '.$lead->uuid);
+            info("Processing Health record for Quote Allocation with uuid: {$lead->uuid}", [
+                'uuid' => $lead->uuid,
+                'payment_status_id' => $lead->payment_status_id,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+            ]);
             QuoteTypes::HEALTH->allocate(uuid: $lead->uuid);
             $processedRecords++;
             info('Processed Health record for Quote Allocation with uuid: '.$lead->uuid);
@@ -165,7 +174,7 @@ class QuoteAllocation extends Command
         $processedRecords = 0;
         $leads = TravelQuote::with('parent')
             ->whereNull('advisor_id')
-            ->select('uuid', 'payment_status_id')
+            ->select('uuid', 'payment_status_id', 'sic_advisor_requested', 'quote_status_id', 'lead_allocation_failed_at', 'sic_flow_enabled')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
@@ -178,6 +187,8 @@ class QuoteAllocation extends Command
             })
             ->take($chunkSize);
 
+        info("For Travel - leads fetch query is : {$leads->toRawSql()}");
+
         // Get the teamId once before the loop
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
@@ -189,7 +200,15 @@ class QuoteAllocation extends Command
                 continue;
 
             }
-            info('Processing Travel record for Quote Allocation with uuid: '.$lead->uuid);
+
+            info("Processing Travel record for Quote Allocation with uuid: {$lead->uuid}", [
+                'uuid' => $lead->uuid,
+                'payment_status_id' => $lead->payment_status_id,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+            ]);
 
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;

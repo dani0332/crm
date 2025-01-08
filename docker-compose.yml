@@ -27,3 +27,9 @@ volumes:
   uatlogs:
   uat2logs:
   testlogs:
+
+# Set BuildKit globally for the build
+x-docker-args:
+  build:
+    environment:
+      DOCKER_BUILDKIT: 1

@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -14,17 +13,34 @@ use App\Enums\UserStatusEnum;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
+use App\Models\BuyLeadRequest;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthAllocationService extends AllocationService
 {
+    public bool $isBuyLeadAdvisor = false;
+    protected ?BuyLeadRequest $buyLeadRequest = null;
+
+    protected function resetProps(): void
+    {
+        $this->isBuyLeadAdvisor = false;
+        $this->buyLeadRequest = null;
+    }
+
+    public function endBuyLeadProcessing(): void
+    {
+        if ($this->buyLeadRequest) {
+            $this->buyLeadRequest->completeProcessing();
+        }
+        $this->resetProps();
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         $healthQuoteQuery = HealthQuote::where('uuid', $quoteId)
@@ -62,13 +78,6 @@ class HealthAllocationService extends AllocationService
 
         return $leads->get();
     }
-    public function isSICLead($uuid)
-    {
-        return DB::table('quote_tags')->where('quote_uuid', $uuid)
-            ->where('name', QuoteSegmentEnum::SIC->tag())
-            ->where('value', 1)
-            ->exists();
-    }
 
     public function assignTeamBasedOnPrices($lead)
     {
@@ -93,9 +102,9 @@ class HealthAllocationService extends AllocationService
         $lead->save();
     }
 
-    private function determinePriceStartingFrom($lead)
+    private function determinePriceStartingFrom(HealthQuote $lead)
     {
-        if ($this->isSICLead($lead->uuid)) {
+        if ($lead->isSIC(QuoteTypes::HEALTH)) {
             $price = ! empty($lead->plan_id) && ! empty($lead->premium) ? $lead->premium : $lead->price_starting_from;
             $planStatus = ! empty($lead->plan_id) ? 'found' : 'not found';
             info("Plan {$planStatus} for {$lead->uuid} with plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
@@ -107,7 +116,7 @@ class HealthAllocationService extends AllocationService
         return $price;
     }
 
-    public function fetchAvailableAdvisor($leadTeam, $isReassignmentJob)
+    private function fetchAdvisor(string $findAdvisorFn, $leadTeam, $isReassignmentJob, HealthQuote $lead)
     {
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -119,7 +128,7 @@ class HealthAllocationService extends AllocationService
         }
 
         foreach ($statusOrder as $status) {
-            $eligibleUser = $this->getAdvisorByStatus($status, $leadTeam);
+            $eligibleUser = $this->{$findAdvisorFn}($status, $leadTeam, $lead);
 
             if ($eligibleUser) {
                 info('eligible user found for team : '.$leadTeam.' with status : '.$status.' and user id :'.$eligibleUser->user_id);
@@ -131,45 +140,133 @@ class HealthAllocationService extends AllocationService
         return [];
     }
 
-    public function getAdvisorByStatus($status, $leadTeam)
+    public function fetchAvailableAdvisor($leadTeam, $isReassignmentJob, HealthQuote $lead)
     {
-        info('trying to get advisors for team : '.$leadTeam.' with current status as '.$status);
+        // Reset Buy Lead Advisor flag and Buy Lead Request object.
+        $this->resetProps();
 
-        return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+        $advisor = null;
+
+        if ($lead->isBuyLeadApplicable() && ($lead->isValueLead() || $lead->isVolumeLead())) {
+            $advisor = $this->fetchAdvisor('getBLAdvisorByStatus', $leadTeam, $isReassignmentJob, $lead);
+        }
+
+        if (empty($advisor) || ! $advisor) {
+            $advisor = $this->fetchAdvisor('getAdvisorByStatus', $leadTeam, $isReassignmentJob, $lead);
+        }
+
+        return $advisor;
+    }
+
+    private function getAdvisorBaseQuery($status, $leadTeam)
+    {
+        return User::select('users.id as user_id')
+            ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
             ->join('teams as t', 't.id', '=', 'ut.team_id')
             ->where('users.status', $status)
-            ->where(function ($query) {
-                $query->whereRaw('la.allocation_count < la.max_capacity')
-                    ->orWhere('la.max_capacity', '=', -1);
-            })
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
             ->where('la.quote_type_id', QuoteTypes::HEALTH->id())
             ->activeUser()
-            ->where('t.name', $leadTeam)
-            ->orderBy('la.last_allocated', 'asc')->first();
+            ->where('t.name', $leadTeam);
     }
 
-    public function assignLead($lead, $advisor, $assignmentType)
+    public function getBLAdvisorByStatus($status, $leadTeam, HealthQuote $lead)
     {
+        info(self::class."::getBLAdvisorByStatus - trying to get advisors for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
+
+        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::HEALTH, $lead->isValueLead());
+
+        $advisor = $this->getAdvisorBaseQuery($status, $leadTeam)
+            ->when($lead->isValueLead(), function ($q) {
+                $q->isValueUser(QuoteTypes::HEALTH);
+            }, function ($q) {
+                $q->isVolumeUser(QuoteTypes::HEALTH);
+            })
+            ->whereIn('users.id', $buyLeadRequestedUserIds)
+            ->where('la.buy_lead_status', true)
+            ->where(function ($query) {
+                $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity')->orWhere('la.buy_lead_max_capacity', -1);
+            })
+            ->orderBy('la.buy_lead_last_allocated', 'asc')
+            ->first();
+
+        if ($advisor) {
+            info(self::class."::getBLAdvisorByStatus - found Advisor : {$advisor->user_id} for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
+            $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::HEALTH, $advisor->user_id, $lead->isValueLead());
+            if ($this->buyLeadRequest) {
+                $this->buyLeadRequest->startProcessing();
+                $this->isBuyLeadAdvisor = true;
+            } else {
+                info(self::class."::getBLAdvisorByStatus - Advisor found but Buy Lead Request not found for Advisor : {$advisor->user_id} for UUID: {$lead->uuid}");
+                $advisor = null;
+            }
+        }
+
+        return $advisor;
+    }
+
+    public function getAdvisorByStatus($status, $leadTeam, HealthQuote $lead)
+    {
+        info(self::class."::getAdvisorByStatus - trying to get advisors for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
+
+        return $this->getAdvisorBaseQuery($status, $leadTeam)
+            ->where('la.normal_allocation_enabled', true)
+            ->where(function ($query) {
+                $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', '=', -1);
+            })
+            ->orderBy('la.last_allocated', 'asc')
+            ->first();
+    }
+
+    public function assignLead(HealthQuote $lead, $advisor, $assignmentType)
+    {
+        if ($lead->advisor_id === $advisor->id) {
+            info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
+
+            return;
+        }
+
+        if (! empty($lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
+            $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
+        }
+
+        if ($assignmentType === AssignmentTypeEnum::SYSTEM_ASSIGNED && $this->isBuyLeadAdvisor) {
+            $assignmentType = AssignmentTypeEnum::BOUGHT_LEAD;
+        }
+
+        if ($assignmentType === AssignmentTypeEnum::SYSTEM_REASSIGNED && $this->isBuyLeadAdvisor) {
+            $assignmentType = AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+        }
+
         $previousAssignmentType = $lead->assignment_type;
         $previousUserId = $lead->advisor_id;
         $isReassignment = $previousUserId != null;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
-        $lead->quote_updated_at = now();
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
-        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+
+        $lead->endAllocation();
+
+        if ($this->isBuyLeadAdvisor) {
+            $this->buyLeadRequest->buyLead($lead, QuoteTypes::HEALTH);
+            info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' as bought lead');
+        } else {
+            info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        }
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
 
         if ($lead->source != LeadSourceEnum::REFERRAL) {
             info('lead source is not referral so about to update allocation record');
-            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id, QuoteTypes::HEALTH->id()) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::HEALTH->id());
+            match ($assignmentType) {
+                AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($advisor->id, QuoteTypes::HEALTH->id(), $this->isBuyLeadAdvisor),
+                default => $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::HEALTH->id(), $this->isBuyLeadAdvisor),
+            };
         }
 
         Haystack::build()
@@ -179,6 +276,9 @@ class HealthAllocationService extends AllocationService
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousUserId, $isReassignment)->delay(now()->addSeconds(15));
                 }
             })->dispatch();
+
+        // Reset Buy Lead Advisor flag and Buy Lead Request object.
+        $this->resetProps();
     }
 
     public function updateQuoteDetail($leadId)
