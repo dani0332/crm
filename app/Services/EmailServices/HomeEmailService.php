@@ -134,7 +134,7 @@ class HomeEmailService extends BaseService
             // Generate the PDF
             $planIds = [];
             if (isset($quotePlans->quotes->plans)) {
-                $planIds = collect($quotePlans->quotes->plans)->pluck('id')->take(6)->toArray() ?? [];
+                $planIds = collect($quotePlans->quotes->plans)->pluck('id')->take(5)->toArray() ?? [];
             }
 
             $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
