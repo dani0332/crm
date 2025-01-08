@@ -634,33 +634,34 @@ const onTogglePlans = toggle => {
 
 const planDetails = ref(null);
 
-const getPlanDetails = item => {
+const getPlanDetails = async (item) => {
   console.log('getPlanDetails', item);
+
+  // Set loading state for the specific plan
+  viewPlanDetailsLoader.value[item.id] = true;
+  console.log('Loading state set for plan:', item.id, viewPlanDetailsLoader.value);
+
   try {
-    axios
-      .get(`/home/${page.props.quote.uuid}/plan_details/${item.id}`)
-      .then(res => {
-        console.log('Plan Details:', res.data);
-        planDetails.value = res.data;
-        modals.planDetails = true;
-      })
-      .catch(err => {
-        notification.error({
-          title: 'Error',
-          message: 'Plan Details Not Found',
-          position: 'top',
-        });
-        console.log(err);
-      });
+    const response = await axios.get(`/home/${page.props.quote.uuid}/plan_details/${item.id}`);
+    console.log('Plan Details:', response.data);
+
+    // Update plan details and open modal
+    planDetails.value = response.data;
+    modals.planDetails = true;
   } catch (err) {
-    console.log(err);
+    console.error(err);
     notification.error({
       title: 'Error',
-      message: 'Something went wrong',
+      message: 'Plan Details Not Found',
       position: 'top',
     });
+  } finally {
+    // Reset loading state for the specific plan
+    viewPlanDetailsLoader.value[item.id] = false;
+    console.log('Loading state reset for plan:', item.id, viewPlanDetailsLoader.value);
   }
 };
+
 
 const { copy, copied } = useClipboard();
 const onCopyText = text => {
@@ -673,13 +674,13 @@ const onCopyText = text => {
 };
 
 const onExportPlans = () => {
-    if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
-      notification.error({
-        title: 'Please select 2 to 5 plans to download PDF.',
-        position: 'top',
-      });
-      return;
-    }
+  if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 2 to 5 plans to download PDF.',
+      position: 'top',
+    });
+    return;
+  }
   exportLoader.value = true;
   const planIds = selectedPlans.value.map(p => {
     return p.id;
@@ -875,6 +876,8 @@ const confirmSendEmail = () => {
       modals.sendConfirm = false;
     });
 };
+
+const viewPlanDetailsLoader = ref({});
 </script>
 
 <template>
@@ -1940,37 +1943,15 @@ const confirmSendEmail = () => {
                 <div class="flex gap-2">
                   <x-button
                     size="xs"
-                    color="error"
+                    color="primary"
                     outlined
                     @click.prevent="getPlanDetails(item)"
+                    :loading="viewPlanDetailsLoader[item.id]"
                   >
                     View
                   </x-button>
 
                   <span>
-                    <!-- <SelectPlan
-                      v-if="!selectedPlanIds.includes(item.id)"
-                      @update:selectedPlanChanged="handlePlanSelected"
-                      :plan="item"
-                      :quoteType="modelType"
-                      :uuid="quote.uuid"
-                      :extraDetails="{
-                        homePlansIds: homePlansIds.ids,
-                        selectedPlansIds: selectedPlanIds,
-                        planType: 'normalPlans',
-                      }"
-                    />
-                    <x-button
-                      v-else
-                      size="xs"
-                      color="orange"
-                      outlined
-                      :disabled="true"
-                    >
-                      Selected
-                    </x-button> -->
-
-                    <!-- new -->
                     <SelectPlan
                       v-if="selectedProviderPlan.id != item.id"
                       @update:selectedPlanChanged="handlePlanSelected"
@@ -1988,7 +1969,6 @@ const confirmSendEmail = () => {
                     >
                       Selected
                     </x-button>
-                    <!-- new -->
                   </span>
                 </div>
               </template>
