@@ -166,7 +166,8 @@ const personalBelonginsValue = computed({
     );
 
     const rawValue =
-      planForm.listQuotePlanBenefitsInclusions?.personalBelongings?.[0]?.value || '0';
+      planForm.listQuotePlanBenefitsInclusions?.personalBelongings?.[0]
+        ?.value || '0';
 
     const numericValue = parseFloat(rawValue.replace(/[^\d.-]/g, ''));
 
@@ -385,7 +386,10 @@ function camelCaseToSpacedText(camelCaseStr) {
               class="mb-6"
             >
               <!-- Heading for each category (e.g., "Buildings", "Contents") -->
-              <h6 class="font-bold capitalize mb-1">
+              <h6
+                v-if="items && items.length > 0"
+                class="font-bold capitalize mb-1"
+              >
                 {{ formattedCategories[category] }}:
               </h6>
 
