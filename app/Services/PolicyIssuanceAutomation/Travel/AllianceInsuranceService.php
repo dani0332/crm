@@ -535,7 +535,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function updateQuoteApiIssuanceStatusAndAllocate(TravelQuote $quote, $status = null, $issuanceStatus = null)
+    public function updateQuoteApiIssuanceStatusAndAllocate(TravelQuote $quote, $newInsurerApiStatus = null, $newApiIssuanceStatus = null)
     {
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Start');
 
@@ -548,40 +548,53 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $apiIssuanceStatus = $quote?->api_issuance_status;
 
         $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Existing Insurer API Status : '.$isInsurerApiStatusAlreadyFailed);
 
+        /* If Quote API issuance status is not already set, than set insurer api and api issuance status */
         if (! $apiIssuanceStatus) {
             if ($isPolicyAutomationStatusCompleted && $isPolicyBooked && ! $insurerApiStatus) {
-                $issuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+                $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
 
             } elseif ($isPolicyAutomationStatusCompleted && $isPolicyBookingFailed) {
                 if (! $insurerApiStatus) {
-                    $status = PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
+                    $newInsurerApiStatus = PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID;
                 }
-                $issuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
+                $newApiIssuanceStatus = PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
             }
         }
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code, [
-            'insurerApiStatus' => $insurerApiStatus,
-            'apiIssuanceStatus' => $apiIssuanceStatus,
-            'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted,
-            'isPolicyBooked' => $isPolicyBooked,
-            'isPolicyBookingFailed' => $isPolicyBookingFailed,
+            'insurerApiStatus' => $insurerApiStatus, 'apiIssuanceStatus' => $apiIssuanceStatus,
+            'isPolicyAutomationStatusCompleted' => $isPolicyAutomationStatusCompleted, 'isPolicyBooked' => $isPolicyBooked,
+            'isPolicyBookingFailed' => $isPolicyBookingFailed, 'newInsurerApiStatus' => $newInsurerApiStatus,
+            'newApiIssuanceStatus' => $newApiIssuanceStatus,
         ]);
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote Insurer API  Status : '.$status);
-        if ($status) {
-            $quote->update(['insurer_api_status_id' => $status]);
-        }
+        $this->updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus);
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' updateQuoteInsurerApiStatus executed');
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$issuanceStatus);
-        if ($issuanceStatus) {
-            $quote->update(['api_issuance_status_id' => $issuanceStatus]);
-        }
+        $this->updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus);
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' updateQuoteApiIssuanceStatus executed');
 
         $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' start allocation of failed lead ');
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'  allocation of failed lead started');
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+    }
+
+    private function updateQuoteInsurerApiStatus($quote, $newInsurerApiStatus)
+    {
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote Insurer API  Status : '.$newInsurerApiStatus);
+        if ($newInsurerApiStatus) {
+            $quote->update(['insurer_api_status_id' => $newInsurerApiStatus]);
+        }
+    }
+
+    private function updateQuoteApiIssuanceStatus($quote, $newApiIssuanceStatus)
+    {
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' update Quote API Issuance Status : '.$newApiIssuanceStatus);
+        if ($newApiIssuanceStatus) {
+            $quote->update(['api_issuance_status_id' => $newApiIssuanceStatus]);
+        }
     }
 
     public function allocateLead($quote, $isInsurerApiStatusAlreadyFailed)
@@ -593,6 +606,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
         if ($response && $response['advisorId']) {
             info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
+            /* Send Failed notification only when Insurer API status is not failed already to prevent multiple email triggers and Insurer API Status is not null */
             if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
                 SendTravelAllianceFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
             }
