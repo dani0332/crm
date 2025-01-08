@@ -153,7 +153,8 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())
+        $quoteTypeId = QuoteTypes::PET->id();
+        $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
                 'petQuote.accomodationType:id,text',
@@ -166,6 +167,9 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'transactionType',
+                'insured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -217,6 +221,9 @@ class PetQuoteRepository extends BaseRepository
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        if (isset($data['insured'][0])) {
+            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        }
 
         return $quote;
     }

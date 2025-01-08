@@ -48,7 +48,7 @@ class TravelQuoteService extends BaseService
     public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
-        $this->query = TravelQuote::as('tqr')->select(
+        $this->query = TravelQuote::as('tqr')->select([
             'tqr.id',
             'tqr.uuid',
             DB::raw('DATE_FORMAT(tqr.created_at, "%d-%m-%Y %H:%i") as created_at'),
@@ -131,9 +131,9 @@ class TravelQuoteService extends BaseService
                 WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
                 "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
-            'c.insured_first_name',
-            'c.insured_last_name',
-            'c.emirates_id_number',
+            'insured.first_name as insured_first_name',
+            'insured.last_name as insured_last_name',
+            DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
@@ -160,7 +160,7 @@ class TravelQuoteService extends BaseService
             'tqr.aml_status',
             'tqr.departure_country_id',
             'tqr.insurance_provider_id',
-        )
+        ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -183,6 +183,11 @@ class TravelQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'tqr.id');
             })
+            ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
+                $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
+                $insuredCustomerMapping->on('ic.quote_request_id', '=', 'tqr.id');
+            })
+            ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
