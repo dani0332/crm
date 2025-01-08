@@ -1,6 +1,6 @@
 trigger:
   - main
-pool: "PRD DockerBuild"
+pool: 'PRD DockerBuild'
 variables:
   - group: prd
   - name: imageName
