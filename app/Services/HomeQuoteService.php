@@ -208,7 +208,7 @@ class HomeQuoteService extends BaseService
             'hasBuilding' => $request->has_building == 'on' ? true : false,
             'hasPersonalBelongings' => $request->has_personal_belongings == 'on' ? true : false,
             'source' => $sourceName,
-            'isPropertyRentedHolidayHome' => $request->is_property_rented_holiday_home == 'on' ? true : false,
+            'isPropertyRentedHolidayHome' => $request->owner_occupancy_type_id == 'on' ? true : false,
             'referenceUrl' => $appUrl,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -583,7 +583,7 @@ class HomeQuoteService extends BaseService
             case 'previous_policy_expiry_date':
                 $title = 'Previous Policy Expiry Date';
                 break;
-            case 'is_property_rented_holiday_home':
+            case 'owner_occupancy_type_id':
                 $title = 'Is Property Rented Holiday Home ?';
                 break;
             case 'previous_quote_policy_premium':

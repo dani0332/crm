@@ -185,7 +185,7 @@ class HomeQuoteRepository extends BaseRepository
             'hasClaimedLosses' => 'have_claimed_losses',
             'buildingValue' => 'building_aed',
             'hasPersonalBelongings' => 'has_personal_belongings',
-            'ownerOccupancyTypeId' => 'is_property_rented_holiday_home',
+            'ownerOccupancyTypeId' => 'owner_occupancy_type_id',
             'accommodationTypeId' => 'ilivein_accommodation_type_id',
             'possessionTypeId' => 'iam_possesion_type_id',
             'subAreaId' => 'sub_area_id',
@@ -446,7 +446,7 @@ class HomeQuoteRepository extends BaseRepository
                     'building_aed' => 'building_value',
                     'personal_belongings_aed' => 'personal_belongings_value_id',
                     'have_claimed_losses' => 'has_claimed_losses',
-                    'is_property_rented_holiday_home' => 'is_property_rented_holiday_home',
+                    'owner_occupancy_type_id' => 'owner_occupancy_type_id',
                     'sub_area_id' => 'sub_area_id',
                 ];
 

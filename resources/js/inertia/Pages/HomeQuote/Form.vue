@@ -52,8 +52,8 @@ const quoteForm = useForm({
   building_aed: buildingAED.value,
   personal_belongings_aed: personalBelongingsAED.value,
   sub_area_id: props.quote?.home_quote?.sub_area_id || null,
-  is_property_rented_holiday_home:
-    props.quote?.home_quote?.is_property_rented_holiday_home || null,
+  owner_occupancy_type_id:
+    props.quote?.home_quote?.owner_occupancy_type_id || null,
   type_of_coverage_you_need: props.quote?.home_quote?.coverage_type_id || null,
   have_claimed_losses:
     props.quote?.home_quote?.has_claimed_losses !== undefined
@@ -417,11 +417,8 @@ const accommodationTypeOptions = computed(() => {
 });
 
 const typeOfOwnerOccupancyOptions = computed(() => {
-  //   return [
-  //     { value: '0', label: 'Owner renting out (annually)' },
-  //     { value: '1', label: 'Owner renting out short term/Holiday home' },
-  //   ];
-  return page.props?.lookUpData?.ownerOccupancies?.length
+    quoteForm.owner_occupancy_type_id = page.props?.quote?.home_quote?.owner_occupancy_type_id;
+    return page.props?.lookUpData?.ownerOccupancies?.length
     ? page.props.lookUpData.ownerOccupancies.map(item => ({
         value: item.id,
         label: item.text,
@@ -587,7 +584,7 @@ watch(
           v-if="showTypeOfOwnerOccupancy"
         >
           <x-select
-            v-model="quoteForm.is_property_rented_holiday_home"
+            v-model="quoteForm.owner_occupancy_type_id"
             :rules="[isRequired]"
             :options="typeOfOwnerOccupancyOptions"
             class="w-full"

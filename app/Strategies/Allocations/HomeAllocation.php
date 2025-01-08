@@ -116,7 +116,7 @@ class HomeAllocation extends BaseAllocation
 
     private function getHomePropertyRentedAttribute(string $uuid): HomeQuote
     {
-        return HomeQuote::where('uuid', $uuid)->select('is_property_rented_holiday_home')->first();
+        return HomeQuote::where('uuid', $uuid)->select('owner_occupancy_type_id')->first();
     }
 
     /**
@@ -173,7 +173,7 @@ class HomeAllocation extends BaseAllocation
     private function isPropertyRentedForHolidayHome(string $uuid): bool
     {
         $homeRented = HomeQuote::where('uuid', $uuid)
-            ->value('is_property_rented_holiday_home');
+            ->value('owner_occupancy_type_id');
 
         return $homeRented === 2; // 2 represents a short term or holiday home
     }

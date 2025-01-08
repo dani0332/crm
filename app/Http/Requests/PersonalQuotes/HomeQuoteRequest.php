@@ -39,7 +39,7 @@ class HomeQuoteRequest extends FormRequest
             'have_claimed_losses' => 'required|boolean',
             'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
             'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
-            'is_property_rented_holiday_home' => 'required_if:iam_possesion_type_id,2',
+            'owner_occupancy_type_id' => 'required_if:iam_possesion_type_id,2',
 
             'addressObj' => 'required|array',
             'addressObj.villa_apartment_office_no' => 'required|string|max:50',
@@ -95,7 +95,7 @@ class HomeQuoteRequest extends FormRequest
             'iam_possesion_type_id.required' => 'You must select your ownership status.',
             'iam_possesion_type_id.exists' => 'The selected ownership status is invalid.',
 
-            'is_property_rented_holiday_home.required_if' => 'The owner occupancy type is required if you are renting out your property.',
+            'owner_occupancy_type_id.required_if' => 'The owner occupancy type is required if you are renting out your property.',
 
             'addressObj.required' => 'The address information is required.',
             'addressObj.array' => 'The address information must be an array.',
