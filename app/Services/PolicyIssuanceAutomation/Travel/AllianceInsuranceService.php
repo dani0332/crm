@@ -230,8 +230,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'dob' => $dobTraveller,
             'passport_number' => $passportTraveller,
             'nationality_traveller' => $nationalityTraveller,
-            'email' => $quote->email,
-            'mobile' => $quote->mobile_no,
+            'email' => 'happiness@support.insurancemarket.ae', // will be static, as we dont share customer contact details outside organization
+            'mobile' => '971502245943', // will be static, as we dont share customer contact details outside organization
             'agency_reference' => 'asc',
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
