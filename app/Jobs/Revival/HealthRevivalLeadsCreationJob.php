@@ -15,6 +15,7 @@ use App\Models\QuoteBatches;
 use App\Services\SendEmailCustomerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -197,7 +198,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 if ($response == 201) {
                     info($logPrefix.'ParentLead - '.$this->lead->uuid.' - childLead - '.$capiResponse->quoteUID.' - emailSent - '.$emailData->customerEmail);
 
-                    DttRevival::create([
+                    $dtt_revival = DttRevival::create([
                         'quote_type_id' => QuoteTypes::HEALTH->id(),
                         'quote_id' => $healthQuote->id,
                         'uuid' => $capiResponse->quoteUID,
@@ -205,6 +206,8 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'email_sent' => true,
                         'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
                     ]);
+                    //DTT Temp Code
+                    $dtt_revival->update(['created_at' => Carbon::now()->subDays(2)->toDateString()]);
                     // update child lead
                     HealthQuote::find($healthQuote->id)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
                     // update parent lead
