@@ -1318,6 +1318,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer.last_name as client_last_name',
                 'customer.email as client_email',
                 'customer.mobile_no as client_phone_number',
+                "{$table}.mobile_no as quote_client_phone_number",
                 'customer_addresses.type as courier_address_type',
                 'customer_addresses.office_number as courier_address_office_number',
                 'customer_addresses.floor_number as courier_address_floor_number',
@@ -1394,7 +1395,7 @@ if (! function_exists('getCourierQuote')) {
                         'first_name' => $quote->client_first_name,
                         'last_name' => $quote->client_last_name,
                         'email' => $quote->client_email,
-                        'phone_number' => $quote->client_phone_number,
+                        'phone_number' => !empty($quote->client_phone_number) ? $quote->client_phone_number : $quote->quote_client_phone_number,                       
                         'is_whatsapp_enabled' => $whatsappConsent,
                     ],
                     'emirate' => [
