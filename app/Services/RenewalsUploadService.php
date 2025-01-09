@@ -1020,7 +1020,6 @@ class RenewalsUploadService
             }
 
             $this->updateCustomer($quote, $customerData);
-            $data['is_gcc'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
             $quoteData = $this->getNonEmptyValues([
                 'first_name' => $customerData['first_name'],
                 'last_name' => $customerData['last_name'],
@@ -1045,8 +1044,10 @@ class RenewalsUploadService
                 'year_of_manufacture' => $data['year'] ?? null,
                 'previous_advisor_id' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
                 'has_ncd_supporting_documents' => $data['nc_letter'],
-                'is_gcc_standard' => $data['is_gcc'],
             ]);
+
+            $quoteData['is_gcc_standard'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
+
 
             /*
              * API refresh plans when quote_updated_at have latest date
@@ -1085,6 +1086,8 @@ class RenewalsUploadService
             }
 
             info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
+
+            info($logPrefix. ' quote data: '.json_encode($quoteData));
 
             $quote->update($quoteData);
             if (! checkPersonalQuotes($quoteType)) {
