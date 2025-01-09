@@ -1450,7 +1450,8 @@ class SendUpdateLogService
         if ($category == SendUpdateLogStatusEnum::EF) {
             return ! is_null($policyDetails['expiry_date']);
         } else {
-            if (! ($quote->insly_id || $quote->insly_migrated)) {
+            // if legacy lead and planId is not available, because plandId is optional.
+            if (! ($quote->insly_id || $quote->insly_migrated) && ! is_null($planId)) {
                 if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
                     $policyDetails['plan_id'] = $planId;
                 }
