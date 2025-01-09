@@ -117,17 +117,17 @@ class CarAllocationService extends AllocationService
                     if (! empty($axaValuation)) {
                         $firstAxaValuation = reset($axaValuation); // Get the first element of the array
                         $carValue = $firstAxaValuation->carValue;
-                        info(self::class.'- Company registration with private use. AXA valuation found. Car value: '.$carValue .' Ref-ID: '.$carLead->uuid .' | Time: '.now());
+                        info(self::class.'- Company registration with private use. AXA valuation found. Car value: '.$carValue.' Ref-ID: '.$carLead->uuid.' | Time: '.now());
                     }
                 } else {
                     $carValue = $carLead->car_value;
-                    info(self::class.'- Company registration with non-private use. Car value: '.$carValue .' Ref-ID: '.$carLead->uuid .' Time: '.now());
+                    info(self::class.'- Company registration with non-private use. Car value: '.$carValue.' Ref-ID: '.$carLead->uuid.' Time: '.now());
                 }
             } else {
                 if (! empty($axaValuation)) {
                     $firstAxaValuation = reset($axaValuation); // Get the first element of the array
                     $carValue = $firstAxaValuation->carValue;
-                    info(self::class.'- Non-company registration. AXA valuation found. Car value: '.$carValue .' Ref-ID: '.$carLead->uuid .' | Time: '.now());
+                    info(self::class.'- Non-company registration. AXA valuation found. Car value: '.$carValue.' Ref-ID: '.$carLead->uuid.' | Time: '.now());
                 }
             }
 
