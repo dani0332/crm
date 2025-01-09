@@ -240,6 +240,7 @@ class EmbeddedProductRepository extends BaseRepository
 
                 if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
                     $address = CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->first();
+
                     return empty($address?->type);
 
                 }
