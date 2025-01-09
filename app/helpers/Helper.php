@@ -1395,7 +1395,7 @@ if (! function_exists('getCourierQuote')) {
                         'first_name' => $quote->client_first_name,
                         'last_name' => $quote->client_last_name,
                         'email' => $quote->client_email,
-                        'phone_number' => !empty($quote->client_phone_number) ? $quote->client_phone_number : $quote->quote_client_phone_number,                       
+                        'phone_number' => ! empty($quote->client_phone_number) ? $quote->client_phone_number : $quote->quote_client_phone_number,
                         'is_whatsapp_enabled' => $whatsappConsent,
                     ],
                     'emirate' => [
