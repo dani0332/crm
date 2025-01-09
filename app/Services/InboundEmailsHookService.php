@@ -150,9 +150,9 @@ class InboundEmailsHookService extends BaseService
             DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
             Log::info(self::class." - handleHealth: Health Quote Source updated for Revival for uuid {$lead->uuid}");
 
-            info(self::class." - handleHealth: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
-            $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Health, $lead->uuid);
-            $assignedAdvisorId = $allocationStrategy->executeSteps();
+            info(self::class." - handleHealth: Allocation Process Executing for lead: {$lead->uuid}");
+            $response = QuoteTypes::HEALTH->allocate($lead->uuid);
+            $assignedAdvisorId = $response['advisorId'] ?? '';
             info(self::class." - handleHealth: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
             return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
