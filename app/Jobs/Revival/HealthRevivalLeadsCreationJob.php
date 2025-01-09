@@ -138,7 +138,11 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'quoteUID' => $capiResponse->quoteUID,
                         'isPlanTypes' => true,
                     ]);
+                    if (! isset($response['planTypes'])) {
+                        info($logPrefix.'noPlansReturned - UUID -'.$capiResponse->quoteUID.'-'.json_encode($response));
 
+                        return false;
+                    }
                     $emailData = new \stdClass;
                     $emailData->planTypes = $response['planTypes'];
 
