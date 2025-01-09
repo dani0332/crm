@@ -80,16 +80,20 @@ class BuyLeadService
         $cost = null;
         $requestType = null;
 
-        if (Auth::user()->isValueUser()) {
+        if (Auth::user()->isValueUser($quoteType)) {
             $cost = $config->value;
             $requestType = 'value';
-        } elseif (Auth::user()->isVolumeUser()) {
+        } elseif (Auth::user()->isVolumeUser($quoteType)) {
             $cost = $config->volume;
             $requestType = 'volume';
         }
 
-        if (! $cost) {
+        if (is_null($cost)) {
             return "You're neither a value user nor a volume user";
+        }
+
+        if ($cost <= 0) {
+            return 'System is unable to process your request.';
         }
 
         return [$cost, $requestType];

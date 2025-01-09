@@ -3,8 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
@@ -20,7 +18,6 @@ use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class CarRevivalQuoteRepository extends BaseRepository
@@ -169,90 +166,4 @@ class CarRevivalQuoteRepository extends BaseRepository
         info('UpdateLeadSource  - UUID - '.$lead->uuid.' - source updated to Revival');
     }
 
-    public function fetchGetReportsData($request)
-    {
-        $source = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
-
-        $carInsurancetypeId = $request->car_type_insurance_id;
-        $leadSource = $request->lead_source;
-
-        $query = $this
-            ->select(
-                'dtt_revivals.revival_quote_batch_id as quote_batch_id',
-                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as conversion_captured'),
-                DB::raw('COUNT(CASE  WHEN source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE NULL END) as total_revived'),
-                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' and  quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE NULL END) as captured'),
-                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' and  quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE NULL END) as authorized'),
-                DB::raw('COUNT(CASE  WHEN email_sent = 1 THEN 1 ELSE NULL END) as email_sent_count'),
-                DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
-            )
-            ->leftjoin('dtt_revivals', 'dtt_revivals.quote_id', 'car_quote_request.id')
-            ->whereNotNull(['dtt_revivals.revival_quote_batch_id', 'payment_status_id'])
-            ->orderBy('dtt_revivals.revival_quote_batch_id', 'desc');
-
-        if (! empty($leadSource)) {
-            $query->where('source', $leadSource);
-        } else {
-            $query->whereIn('source', $source);
-        }
-        if (! empty($carInsurancetypeId)) {
-            $query->where('car_type_insurance_id', $carInsurancetypeId);
-        }
-        $record = $query->groupBy('dtt_revivals.revival_quote_batch_id')->get()->toArray();
-
-        $data = [];
-        foreach ($record as $item) {
-            $batch = QuoteBatches::find($item['quote_batch_id'])->name;
-            $c['quote_batch_id'] = $batch;
-            $c['conversion_captured'] = $item['conversion_captured'];
-            $c['total_revived'] = $item['email_sent_count'];
-            $c['ratio'] = $item['conversion_captured'] > 0 ? round(($item['conversion_captured'] / $item['email_sent_count']) * 100, 2).'%' : null;
-            $data['conversionRate'][] = $c;
-
-            $ac['quote_batch_id'] = $batch;
-            $ac['authorized'] = $item['authorized'];
-            $ac['captured'] = $item['captured'];
-            $ac['ratio'] = $item['authorized'] > 0 ? round(($item['captured'] / $item['authorized']) * 100, 2).'%' : null;
-            $data['leadConversionReport'][] = $ac;
-
-            $rs['quote_batch_id'] = $batch;
-            $rs['email_sent_count'] = $item['email_sent_count'];
-            $rs['reply_received_count'] = $item['reply_received_count'];
-
-            $rs['ratio'] = $item['email_sent_count'] > 0 ? round(($item['reply_received_count'] / $item['email_sent_count']) * 100, 2).'%' : null;
-            $data['emailConversionReport'][] = $rs;
-        }
-
-        return $data;
-    }
-
-    public function fetchUpdate($uuid, $data)
-    {
-        $lead = $this->where('uuid', $uuid)->firstOrFail();
-        $lead->update(Arr::only($data, [
-            'first_name',
-            'last_name',
-            'dob',
-            'email',
-            'mobile_no',
-            'nationality_id',
-            'uae_license_held_for_id',
-            'back_home_license_held_for_id',
-            'car_make_id',
-            'car_model_id',
-            'cylinder',
-            'car_model_detail_id',
-            'year_of_manufacture',
-            'car_value',
-            'vehicle_type_id',
-            'seat_capacity',
-            'emirate_of_registration_id',
-            'car_type_insurance_id',
-            'currently_insured_with',
-            'claim_history_id',
-            'additional_notes',
-        ]));
-
-        return $lead;
-    }
 }
