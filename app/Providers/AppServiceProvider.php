@@ -15,7 +15,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\LifeQuote;
-use App\Models\LifeQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
