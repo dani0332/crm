@@ -68,14 +68,14 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
-            // insurance_provider_id and plan_id.
+            // insurance_provider_id.
             $policyDetails = [];
             if (
                 $category == SendUpdateLogStatusEnum::CPD
                 || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)
             ) {
                 @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true);
-                $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $plan_id);
+                $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $category, $plan_id);
             } elseif ($quote->insly_id || $quote->insly_migrated) {
                 $insuranceProviderId = $quote?->insurance_provider_id ?? null;
                 info('Insurance Provider ID: '.$insuranceProviderId.' selected for Send Update (Legacy) - uuid: '.$uuid.' quote_uuid: '.$data['quote_uuid']);
@@ -373,9 +373,8 @@ class SendUpdateLogRepository extends BaseRepository
         })->orderBy('id', 'desc')->get();
     }
 
-    public function autoFillPolicyDetails($quote, $quoteTypeId, $insuranceProviderId, $planId = null): array
+    public function autoFillPolicyDetails($quote, $quoteTypeId, $insuranceProviderId, $category, $planId = null): array
     {
-
         if ($quoteTypeId == QuoteTypeId::Travel) { // policy_expiry_date format is different in TravelQuoteService file.
             $quote->policy_expiry_date = Carbon::createFromFormat('d-m-Y', $quote->policy_expiry_date)->format('Y-m-d');
         }
@@ -389,7 +388,7 @@ class SendUpdateLogRepository extends BaseRepository
             'expiry_date' => $quote->policy_expiry_date ?? null,
         ];
 
-        $isPolicyFilled = app(SendUpdateLogService::class)->isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId);
+        $isPolicyFilled = app(SendUpdateLogService::class)->isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId, $category, $quote);
 
         if ($isPolicyFilled) {
             $policyDetails = array_merge($policyDetails, [

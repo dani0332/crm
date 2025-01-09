@@ -1400,7 +1400,7 @@ class SendUpdateLogService
         }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
-            return [$insuranceProviderId, $plan_id];
+            return [$quote?->insurance_provider_id, $plan_id];
         }
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
@@ -1444,20 +1444,26 @@ class SendUpdateLogService
         return SendUpdateLogRepository::updateInsurerDetails($sendUpdate, $bookingDetails);
     }
 
-    public function isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId): bool
+    public function isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId, $category, $quote): bool
     {
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
-            $policyDetails['plan_id'] = $planId;
-        }
+        // For CPD, all fields are mandatory, and for EF PPE, only expiry date is mandatory.
+        if ($category == SendUpdateLogStatusEnum::EF) {
+            return ! is_null($policyDetails['expiry_date']);
+        } else {
+            if (! ($quote->insly_id || $quote->insly_migrated)) {
+                if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+                    $policyDetails['plan_id'] = $planId;
+                }
+            }
+            $policyDetails['insurance_provider_id'] = $insuranceProviderId;
 
-        $policyDetails['insurance_provider_id'] = $insuranceProviderId;
+            $filledValues = array_filter($policyDetails, function ($value) {
+                return ! is_null($value) && $value !== '';
+            });
 
-        $filledValues = array_filter($policyDetails, function ($value) {
-            return ! is_null($value) && $value !== '';
-        });
-
-        if (count($policyDetails) === count($filledValues)) {
-            return true;
+            if (count($policyDetails) === count($filledValues)) {
+                return true;
+            }
         }
 
         return false;
