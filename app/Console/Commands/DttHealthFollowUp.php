@@ -34,7 +34,7 @@ class DttHealthFollowUp extends Command
     {
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_HEALTH_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
-            info('DTT_HEALTH_ENABLED is not enabled from cms');
+            info('DTT_HEALTH is not enabled from cms');
 
             return false;
         }
