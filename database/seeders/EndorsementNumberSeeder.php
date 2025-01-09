@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\PermissionsEnum;
 use App\Models\Permission;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class EndorsementNumberSeeder extends Seeder
