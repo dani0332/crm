@@ -1093,37 +1093,80 @@ class HomeQuoteService extends BaseService
     {
         try {
             $quote = $this->getQuoteObject(QuoteTypes::HOME->value, $request->quoteUID);
+            if (!$quote) {
+                throw new \Exception('Quote not found for UID: ' . $request->quoteUID);
+            }
+
             $quote->load(['advisor']);
 
             $data = $this->prepareHomeSALData($quote);
-
-            $documentType = DocumentType::where('code', DocumentTypeCode::HOME_SAL)->first();
-            if (!$documentType) {
-                throw new \Exception('Document type not found for ' . DocumentTypeCode::HOME_SAL);
+            if (empty($data)) {
+                throw new \Exception('Failed to prepare SAL data for quote: ' . $quote->uuid);
             }
-            $data['document_type_code'] = $documentType->code; // Use the code, not the entire object
+
+            $documentType = $this->getDocumentType(DocumentTypeCode::HOME_SAL);
+            if (!$documentType) {
+                throw new \Exception('Document type not found for code: ' . DocumentTypeCode::HOME_SAL);
+            }
+            $data['document_type_code'] = $documentType->code;
 
             $items = $this->getSALItems($quote->uuid);
             if ($items->isEmpty()) {
-                throw new \Exception('No items found for SAL for quote ' . $quote->uuid);
+                throw new \Exception('No items found for SAL for quote: ' . $quote->uuid);
             }
             $data['items'] = $items;
 
-            $pdf = PDF::loadView('pdf.home-sal', compact('data'))
-                ->setOptions([
-                    'defaultFont' => 'DejaVu Sans',
-                    'isRemoteEnabled' => true, // Enable remote images
-                ])
-                ->setPaper('A4');
-            $pdfFile = $pdf->output();
+            $pdfFile = $this->generateHomeSALPdf($data);
 
-            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, false, true);
+            $document = app(QuoteDocumentService::class)->uploadQuoteDocument(
+                $pdfFile,
+                $data,
+                $quote,
+                false,
+                false,
+                true
+            );
+
+            if (!$document) {
+                throw new \Exception('Failed to upload SAL document for quote: ' . $quote->uuid);
+            }
 
             return $document;
         } catch (\Exception $e) {
-            Log::error('Error in syncSAL: ' . $e->getMessage());
+            Log::error('Error in syncSAL: ' . $e->getMessage(), [
+                'quoteUID' => $request->quoteUID ?? 'N/A',
+                'exception' => $e,
+            ]);
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Fetch the document type by code.
+     *
+     * @param string $code
+     * @return \App\Models\DocumentType|null
+     */
+    private function getDocumentType(string $code)
+    {
+        return DocumentType::where('code', $code)->first();
+    }
+
+    /**
+     * Generate the Home SAL PDF.
+     *
+     * @param array $data
+     * @return string
+     */
+    private function generateHomeSALPdf(array $data): string
+    {
+        return PDF::loadView('pdf.home-sal', compact('data'))
+            ->setOptions([
+                'defaultFont' => 'DejaVu Sans',
+                'isRemoteEnabled' => true, // Enable remote images
+            ])
+            ->setPaper('A4')
+            ->output();
     }
 
     private function prepareHomeSALData($quote)
