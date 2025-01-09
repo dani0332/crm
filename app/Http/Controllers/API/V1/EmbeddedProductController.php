@@ -31,7 +31,7 @@ class EmbeddedProductController extends Controller
             $quote = $this->getQuoteObject($modelType, $quoteId);
             info('Checking if address is entered for lead in sendAddressReminderOnPolicyIssue : '.$quote->uuid);
             $address = CustomerAddress::where('quote_uuid', $quote->uuid)->first();
-            if (! $address) {
+            if (empty($address?->type)) {
                 AddressReminderJob::dispatch($quote)->delay(now()->addSeconds(15));
             }
         }
