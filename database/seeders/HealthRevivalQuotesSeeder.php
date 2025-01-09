@@ -144,7 +144,7 @@ class HealthRevivalQuotesSeeder extends Seeder
         if (count($dttHealthReplyToProd) == 0) {
             DB::table('application_storage')->insert([[
                 'key_name' => ApplicationStorageEnums::DTT_HEALTH_REPLY_TO,
-                'value' => 'health@insurancemarket.ae',
+                'value' => 'buyhealth@insurancemarket.ae',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

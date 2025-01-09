@@ -356,7 +356,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
         return $benefitsTypes;
     }
-
+    //DTT Temp Code
     private function rotateRevival($uuid)
     {
         $revivalRecord = DttRevival::where('uuid', $uuid)->first();
