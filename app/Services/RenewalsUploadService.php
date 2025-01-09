@@ -1020,7 +1020,7 @@ class RenewalsUploadService
             }
 
             $this->updateCustomer($quote, $customerData);
-            $data['is_gcc'] == 'Yes' ? 1 : 0;
+            $data['is_gcc'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
             $quoteData = $this->getNonEmptyValues([
                 'first_name' => $customerData['first_name'],
                 'last_name' => $customerData['last_name'],
