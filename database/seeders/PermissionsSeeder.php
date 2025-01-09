@@ -15,10 +15,17 @@ class PermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->paidLeads();
-        $this->seedProcessTrackerPermissions();
-        $this->buyLeads();
-        $this->leadAllocationDashboards();
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::TAP_BETA_ACCESS,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        // $this->paidLeads();
+        // $this->seedProcessTrackerPermissions();
+        // $this->buyLeads();
+        // $this->leadAllocationDashboards();
     }
 
     private function leadAllocationDashboards()
