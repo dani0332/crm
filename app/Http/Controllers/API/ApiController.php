@@ -29,6 +29,7 @@ use App\Services\NotificationService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -232,8 +233,25 @@ class ApiController extends Controller
 
     public function homeSyncSAL(Request $request)
     {
-        $response = app(HomeQuoteService::class)->syncSAL($request);
+        info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
+        try {
+            $response = app(HomeQuoteService::class)->syncSAL($request);
 
-        return $response;
+            info('SAL sync completed successfully.', ['quoteUID' => $request->quoteUID]);
+
+            return $response;
+        } catch (Exception $e) {
+            info('SAL sync failed.', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'quoteUID' => $request->quoteUID,
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while syncing SAL data.',
+                'error_details' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
