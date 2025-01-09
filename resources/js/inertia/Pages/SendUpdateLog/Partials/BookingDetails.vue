@@ -61,7 +61,7 @@ const props = defineProps({
   },
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
-  disableMainBtn: String
+  disableMainBtn: String,
 });
 
 const state = reactive({
@@ -2349,20 +2349,28 @@ watch(
                 <div>
                   <x-tooltip>
                     <x-button
-                        class="focus:ring-2 focus:ring-black"
-                        size="sm"
-                        color="orange"
-                        v-if="props.updateBtn"
-                        :loading="loader.sendUpdateSectionBtn"
-                        @click="sendUpdateValidation"
-                        :disabled="sendUpdatePermissionCheck || isLackingPayment || disableMainBtn"
+                      class="focus:ring-2 focus:ring-black"
+                      size="sm"
+                      color="orange"
+                      v-if="props.updateBtn"
+                      :loading="loader.sendUpdateSectionBtn"
+                      @click="sendUpdateValidation"
+                      :disabled="
+                        sendUpdatePermissionCheck ||
+                        isLackingPayment ||
+                        disableMainBtn
+                      "
                     >
                       {{ props.updateBtn }}
                     </x-button>
                     <template #tooltip>
-                    <span class="custom-tooltip-content">
-                      {{ disableMainBtn ? disableMainBtn : 'Action Needed: Please revise payment details to reflect plan changes.'}}
-                    </span>
+                      <span class="custom-tooltip-content">
+                        {{
+                          disableMainBtn
+                            ? disableMainBtn
+                            : 'Action Needed: Please revise payment details to reflect plan changes.'
+                        }}
+                      </span>
                     </template>
                   </x-tooltip>
                 </div>

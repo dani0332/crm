@@ -4,7 +4,7 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyProviderDetails from './Partials/ProviderDetails.vue';
-import {XInput} from "@indielayer/ui";
+import { XInput } from '@indielayer/ui';
 
 const props = defineProps({
   quoteType: String,
@@ -147,8 +147,10 @@ const onCancel = () => {
   sendUpdateForm.option_id = props.sendUpdateLog?.option_id || null;
   sendUpdateForm.car_addons = props.sendUpdateLog?.car_addons || null;
   sendUpdateForm.emirates_id = props.sendUpdateLog?.emirates_id || null;
-  sendUpdateForm.seating_capacity = props.sendUpdateLog?.seating_capacity || null;
-  sendUpdateForm.endorsement_number = props.sendUpdateLog?.endorsement_number || null;
+  sendUpdateForm.seating_capacity =
+    props.sendUpdateLog?.seating_capacity || null;
+  sendUpdateForm.endorsement_number =
+    props.sendUpdateLog?.endorsement_number || null;
 };
 
 const onUpdateLog = isValid => {
@@ -251,14 +253,22 @@ const isEFOrEN = computed(() => {
   ].includes(props.sendUpdateLog.category.code);
 });
 
-const isAOCOV = computed(() => props.sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.AOCOV);
+const isAOCOV = computed(
+  () => props.sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.AOCOV,
+);
 
 const isCOEOrCOE_NFI = computed(() => {
-  return [props.sendUpdateStatusEnum.COE, props.sendUpdateStatusEnum.COE_NFI].includes(props.sendUpdateLog?.option?.code);
+  return [
+    props.sendUpdateStatusEnum.COE,
+    props.sendUpdateStatusEnum.COE_NFI,
+  ].includes(props.sendUpdateLog?.option?.code);
 });
 
 const isCISCOrCISC_NFI = computed(() => {
-  return [props.sendUpdateStatusEnum.CISC, props.sendUpdateStatusEnum.CISC_NFI].includes(props.sendUpdateLog?.option?.code);
+  return [
+    props.sendUpdateStatusEnum.CISC,
+    props.sendUpdateStatusEnum.CISC_NFI,
+  ].includes(props.sendUpdateLog?.option?.code);
 });
 
 const endorsementNumberValidation = event => {
@@ -396,7 +406,7 @@ const isLegacyPolicy = computed(() => {
                     <dt>
                       <x-tooltip>
                         <label
-                            class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                          class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                         >
                           SUB TYPE
                         </label>
@@ -424,12 +434,7 @@ const isLegacyPolicy = computed(() => {
                     (isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI)
                   "
                 >
-                  <template
-                    v-if="
-                      props.additionalField &&
-                      isAOCOV
-                    "
-                  >
+                  <template v-if="props.additionalField && isAOCOV">
                     <dt>
                       <label
                         class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
@@ -451,12 +456,7 @@ const isLegacyPolicy = computed(() => {
                       />
                     </dd>
                   </template>
-                  <template
-                    v-else-if="
-                      props.additionalField &&
-                      isCOEOrCOE_NFI
-                    "
-                  >
+                  <template v-else-if="props.additionalField && isCOEOrCOE_NFI">
                     <dt>
                       <label
                         class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
@@ -477,10 +477,7 @@ const isLegacyPolicy = computed(() => {
                     </dd>
                   </template>
                   <template
-                    v-else-if="
-                      props.additionalField &&
-                      isCISCOrCISC_NFI
-                    "
+                    v-else-if="props.additionalField && isCISCOrCISC_NFI"
                   >
                     <dt>
                       <label
@@ -504,31 +501,34 @@ const isLegacyPolicy = computed(() => {
                   </template>
                 </div>
                 <div
-                    class="grid sm:grid-cols-2"
-                    v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
+                  class="grid sm:grid-cols-2"
+                  v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
                 >
                   <dt>
                     <x-tooltip>
                       <label
-                          class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                       >
                         ENDORSEMENT NUMBER
                       </label>
                       <template #tooltip>
-                        The number associated with a specific endorsement or update to the policy. This is the endorsement number available on the tax invoice or provided by the insurance provider.
+                        The number associated with a specific endorsement or
+                        update to the policy. This is the endorsement number
+                        available on the tax invoice or provided by the
+                        insurance provider.
                       </template>
                     </x-tooltip>
                   </dt>
                   <dd>
                     <x-input
-                        :rules="isEndorsementNumberRequired ? [isRequired] : []"
-                        v-model="sendUpdateForm.endorsement_number"
-                        size="xs"
-                        :disabled="!state.edit || isUpdateBooked"
-                        placeholder="Enter Endorsement Number"
-                        maxlength="23"
-                        @keypress="endorsementNumberValidation"
-                        class="w-3/4"
+                      :rules="isEndorsementNumberRequired ? [isRequired] : []"
+                      v-model="sendUpdateForm.endorsement_number"
+                      size="xs"
+                      :disabled="!state.edit || isUpdateBooked"
+                      placeholder="Enter Endorsement Number"
+                      maxlength="23"
+                      @keypress="endorsementNumberValidation"
+                      class="w-3/4"
                     />
                   </dd>
                 </div>
