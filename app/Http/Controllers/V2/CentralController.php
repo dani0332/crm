@@ -99,6 +99,7 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::LIFE->value,
         ])) {
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
@@ -114,9 +115,6 @@ class CentralController extends Controller
         }
 
         switch (ucfirst($quoteType)) {
-            case QuoteTypes::LIFE->value:
-                return app(LifeQuotesExport::class)->download('life_leads');
-
             case QuoteTypes::HOME->value:
                 return app(HomeQuoteExport::class)->download('home_leads');
 

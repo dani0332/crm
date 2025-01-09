@@ -2,6 +2,8 @@
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 const page = usePage();
@@ -17,6 +19,7 @@ defineProps({
   lostReasons: Array,
   embeddedProducts: Array,
   customerTypeEnum: Object,
+  can: Object,
   nationalities: Array,
   memberRelations: Array,
   membersDetails: Array,
@@ -311,7 +314,7 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.life_quote_request_detail?.notes || null,
   lostReason:
-    page.props.quote.life_quote_request_detail?.lost_reason_id || null,
+    page.props.quote.quote_detail?.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -694,17 +697,17 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUM INSURED VALUE</dt>
-                <dd>{{ quote.sum_insured_value }}</dd>
+                <dd>{{ quote.life_quote?.sum_insured_value }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
                 <dd>
-                  {{ quote.life_quote_request_detail?.next_followup_date }}
+                  {{ quote.quote_detail?.next_followup_date }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSAPP CODE</dt>
-                <dd>{{ quote.life_quote_request_detail?.transapp_code }}</dd>
+                <dd>{{ quote.quote_detail?.transapp_code }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
@@ -713,7 +716,7 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>
-                  {{ quote.life_quote_request_detail?.lost_reason?.text }}
+                  {{ quote.quote_detail?.lost_reason?.text }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -722,23 +725,23 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENCY</dt>
-                <dd>{{ quote.currency?.text }}</dd>
+                <dd>{{ quote.life_quote?.currency?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PURPOSE OF INSURANCE</dt>
-                <dd>{{ quote.purpose_of_insurance?.text }}</dd>
+                <dd>{{ quote.life_quote?.purpose_of_insurance?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF INSURANCE</dt>
-                <dd>{{ quote.insurance_tenure?.text }}</dd>
+                <dd>{{ quote.life_quote?.insurance_tenure?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TENURE OF COVER</dt>
-                <dd>{{ quote.number_of_years?.text }}</dd>
+                <dd>{{ quote.life_quote?.number_of_years?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">OTHERS INFO</dt>
-                <dd>{{ quote.others_info }}</dd>
+                <dd>{{ quote.life_quote?.others_info }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY EXPIRY DATE</dt>
@@ -930,17 +933,17 @@ const onAddUpdate = () => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MARITAL STATUS</dt>
-                  <dd>{{ quote.marital_status?.text }}</dd>
+                  <dd>{{ quote.life_quote?.marital_status?.text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">CHILDREN</dt>
-                  <dd>{{ quote.children?.text }}</dd>
+                  <dd>{{ quote.life_quote?.children?.text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">IS SMOKER</dt>
-                  <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
+                  <dd>{{ quote.life_quote?.is_smoker ? 'Yes' : 'No' }}</dd>
                 </div>
-                <RiskRatingScoreDetails :quote="quote" :modelType="'Life'" />
+                <RiskRatingScoreDetails :quote="quote.life_quote" :modelType="'Life'" />
               </dl>
               <dl
                 v-if="
@@ -1186,105 +1189,14 @@ const onAddUpdate = () => {
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-1/2">
-              <div class="flex flex-col gap-4">
-                <x-field label="Status">
-                  <x-select
-                    v-model="leadStatusForm.leadStatus"
-                    :options="leadStatusOptions"
-                    :disabled="
-                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                    "
-                    placeholder="Lead Status"
-                    class="w-full"
-                    filterable
-                  />
-                </x-field>
-                <x-field label="Notes">
-                  <x-textarea
-                    v-model="leadStatusForm.notes"
-                    type="text"
-                    placeholder="Lead Notes"
-                    class="w-full"
-                    :disabled="
-                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                    "
-                  />
-                </x-field>
-              </div>
-            </div>
-            <div class="w-full md:w-2/3">
-              <div class="flex flex-col gap-4">
-                <x-field
-                  label="Lost Reason"
-                  v-if="
-                    leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
-                  "
-                >
-                  <x-select
-                    v-model="leadStatusForm.lostReason"
-                    :options="
-                      lostReasons?.map(item => ({
-                        value: item.id,
-                        label: item.text,
-                      }))
-                    "
-                    placeholder="Lost Reason is required"
-                    class="w-full"
-                    :error="leadStatusForm.errors.lostReason"
-                    :disabled="lockLeadSectionsDetails.lead_status"
-                  />
-                </x-field>
-                <x-field label="Transaction Type">
-                  <x-input
-                    type="text"
-                    v-model="quote.transaction_type_text"
-                    class="w-full"
-                    :disabled="true"
-                  />
-                </x-field>
-              </div>
-            </div>
-          </div>
-          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-              :disabled="allowStatusUpdate || isDisabled"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Change Status
-            </x-button>
-          </StatusUpdateButtonTemplate>
-          <div class="flex justify-end">
-            <x-tooltip
-              v-if="lockLeadSectionsDetails.lead_status"
-              placement="bottom"
-            >
-              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
-              <template #tooltip>
-                The lead status cannot be manually updated once it has reached
-                'Transaction Approved'
-              </template>
-            </x-tooltip>
-            <StatusUpdateButtonReuseTemplate v-else />
-          </div>
-        </template>
-      </Collapsible>
-    </div>
+
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="page.props.quoteStatusEnum"
+    />
 
     <PlanDetails
       :insuranceProviders="insuranceProviders"
@@ -1340,7 +1252,7 @@ const onAddUpdate = () => {
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"
-      :quoteStatusEnum="enums.quoteStatusEnum"
+      :quoteStatusEnum="page.props.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
       :expanded="sectionExpanded"
@@ -1381,207 +1293,16 @@ const onAddUpdate = () => {
       @onAddUpdate="onAddUpdate"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Activities
-              <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="my-4 flex justify-end">
-            <x-button
-              size="sm"
-              color="orange"
-              @click.prevent="addActivity"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Add Activity
-            </x-button>
-          </div>
-          <DataTable
-            table-class-name="compact"
-            :headers="activityTable"
-            :items="activities"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="activities.length < 15"
-          >
-            <template #item-status="{ status, id }">
-              <x-checkbox
-                color="emerald"
-                size="xl"
-                :modelValue="status === 1"
-                :disabled="status === 1"
-                @change="onActivityStatusUpdate(id)"
-              />
-            </template>
-            <template #item-advisor="{ assignee }">
-              {{ assignee?.name }}
-            </template>
-            <template #item-action="item">
-              <div class="space-x-4">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  outlined
-                  :disabled="item.status === 1"
-                  @click.prevent="activityEdit(item)"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Edit
-                </x-button>
-                <x-button
-                  size="xs"
-                  color="error"
-                  :disabled="item.status === 1"
-                  outlined
-                  @click.prevent="activityDelete(item.id)"
-                  v-if="
-                    readOnlyMode.isDisable === true &&
-                    item.user_id &&
-                    item.user_id != null
-                  "
-                  :key="item.user_id"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-      <x-modal
-        v-model="modals.activity"
-        size="lg"
-        :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
-        show-close
-        backdrop
-        is-form
-        @submit="onActivitySubmit"
-      >
-        <div class="grid gap-4">
-          <x-field label="Title" required>
-            <x-input
-              v-model="activityForm.title"
-              :rules="[rules.isRequired]"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Description">
-            <x-textarea
-              v-model="activityForm.description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Assignee" required>
-            <x-select
-              v-model="activityForm.assignee_id"
-              :options="advisorOptions"
-              :rules="[rules.isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Due Date" required>
-            <DatePicker
-              v-model="activityForm.due_date"
-              withTime
-              :rules="[rules.isRequired]"
-            />
-          </x-field>
-        </div>
+    <QuoteActivities
+      :can="can"
+      :quote="quote"
+      :activities="activities"
+      :advisors="advisors"
+      :quote-type="quoteType"
+    />
 
-        <template #secondary-action>
-          <x-button
-            ghost
-            size="sm"
-            tabindex="-1"
-            @click.prevent="modals.activity = false"
-          >
-            Cancel
-          </x-button>
-        </template>
-        <template #primary-action>
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="activityForm.processing"
-            type="submit"
-          >
-            {{ activityActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </template>
-      </x-modal>
-      <x-modal
-        v-model="modals.activityConfirm"
-        title="Delete Activity"
-        show-close
-        backdrop
-      >
-        <p>Are you sure you want to delete this activity?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.activityConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              :loading="activityForm.processing"
-              @click.prevent="activityDeleteConfirmed"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    </div>
+    <LeadHistory :quote="$page.props.quote" />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
     <AuditLogs
       :quoteType="$page.props.modelType"
       :type="modelClass"

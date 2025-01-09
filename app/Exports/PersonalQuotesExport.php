@@ -6,6 +6,7 @@ use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
+use App\Repositories\LifeQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Traits\ExcelExportable;
@@ -26,6 +27,7 @@ class PersonalQuotesExport
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::LIFE->value,
         ];
     }
 
@@ -46,6 +48,9 @@ class PersonalQuotesExport
 
             case QuoteTypes::JETSKI->value:
                 return JetskiQuoteRepository::getData(true);
+
+            case QuoteTypes::LIFE->value:
+                return LifeQuoteRepository::getData(true);
 
             default:
                 return abort(404);
@@ -162,6 +167,30 @@ class PersonalQuotesExport
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
                 ];
+
+            case QuoteTypes::LIFE->value:
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'TRANSAPP CODE',
+                    'PREMIUM',
+                    'POLICY NUMBER',
+                    'SOURCE',
+                    'LOST REASON',
+                    'IS ECOMMERCE',
+                    'RENEWAL BATCH',
+                    'PREVIOUS POLICY EXPIRY DATE',
+                    'PREVIOUS POLICY PREMIUM',
+                    'PREVIOUS POLICY NUMBER',
+                    'TRANSACTION APPROVED DATE',
+                    'BOOKING DATE',
+                ];
+
         }
     }
 
@@ -274,6 +303,29 @@ class PersonalQuotesExport
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
                 ];
+
+                case QuoteTypes::LIFE->value:
+                    return [
+                        $quote->code,
+                        $quote->first_name,
+                        $quote->last_name,
+                        optional($quote->quoteStatus)->text ?? '',
+                        optional($quote->advisor)->name,
+                        date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                        date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+                        $quote->transapp_code,
+                        $quote->premium,
+                        $quote->policy_number,
+                        $quote->source,
+                        optional($quote->quoteDetail)?->lostReason->text ?? '',
+                        $quote->is_ecommerce ? 'Yes' : 'No',
+                        $quote->renewal_batch,
+                        $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+                        $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+                        $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
+                        $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+                        $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+                    ];
         }
     }
 }

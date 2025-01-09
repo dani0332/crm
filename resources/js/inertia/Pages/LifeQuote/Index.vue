@@ -715,8 +715,11 @@ watch(
       <template #item-nationality="{ nationality }">
         {{ nationality?.code }}
       </template>
-      <template #item-lost_reason="{ life_quote_request_detail }">
-        {{ life_quote_request_detail?.lost_reason?.text }}
+      <template #item-transapp_code="{ quote_detail }">
+        {{ quote_detail?.transapp_code }}
+      </template>
+      <template #item-lost_reason="{ quote_detail }">
+        {{ quote_detail?.lost_reason?.text }}
       </template>
 
       <!-- <template #item-is_ecommerce="{ is_ecommerce }">
