@@ -610,7 +610,7 @@ const getS3TempUrl = async docURL => {
 
     <x-modal
       v-model="modals.sendConfirm"
-      title="Send Update"
+      :title="props.updateBtn"
       size="md"
       show-close
       backdrop

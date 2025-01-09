@@ -16,15 +16,17 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
+            HealthRevivalQuotesSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
             EndorsementNumberSeeder::class,
             PermissionsSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
-            SendUpdateAdditionalSubType::class,
-            PermissionsSeeder::class,
-            AllianceNationalitySeeder::class,
+            // SendUpdateAdditionalSubType::class,
+            // PermissionsSeeder::class,
+            // AllianceNationalitySeeder::class,
+            // SUAdditionalCRNSubTypesSeeder::class,
         ]);
     }
 }

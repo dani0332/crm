@@ -788,7 +788,7 @@ class SendUpdateLogService
                 'policy_expiry_date' => $sendUpdateLog->expiry_date,
                 'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
                 'frequency' => PaymentFrequency::UPFRONT,
-                'insurance_provider_id' => ($checkInslyMigratedLead) ? $quote->insurance_provider_id : $payment->insurance_provider_id,
+                'insurance_provider_id' => ($checkInslyMigratedLead) ? $sendUpdateLog?->insurance_provider_id : $payment->insurance_provider_id,
             ]);
 
             $splitPayments->first()->fill([
@@ -1254,7 +1254,7 @@ class SendUpdateLogService
 
     public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
     {
-        $this->updatePriceAndDiscount($sendUpdateLog, $payment);
+        app(CentralService::class)->synchronizePaymentInformation($sendUpdateLog, $payment);
     }
 
     public function updatePaymentTotalPrice($payment, $totalPrice): void

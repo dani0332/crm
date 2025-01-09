@@ -412,7 +412,7 @@ onMounted(() => {
             size="sm"
             class="transition transform duration-300"
           />
-          Search Filter
+          Search Filters
         </x-button>
       </div>
     </div>

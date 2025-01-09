@@ -15,10 +15,13 @@ const buyForm = useForm({
 });
 
 const loader = ref(false);
+const fetchLoader = ref(false);
 const onSubmit = isValid => {
   if (isValid) {
+    loader.value = true;
     buyForm.submit('post', route('admin.buy-leads.config.upsert'), {
       onError: errors => {
+        loader.value = false;
         Object.keys(errors).forEach(function (key) {
           notification.error({
             title: errors[key],
@@ -27,6 +30,7 @@ const onSubmit = isValid => {
         });
       },
       onSuccess: response => {
+        loader.value = false;
         notification.success({
           title: 'Buy Lead Configuration updated successfully',
           position: 'top',
@@ -47,7 +51,7 @@ const computedValueText = computed(() => {
 const fetchValues = () => {
   buyForm.value = '';
   buyForm.volume = '';
-  loader.value = true;
+  fetchLoader.value = true;
   axios
     .post(route('admin.buy-leads.config.fetch'), {
       quote_type: buyForm.quote_type,
@@ -59,10 +63,10 @@ const fetchValues = () => {
         buyForm.value = config.value;
         buyForm.volume = config.volume;
       }
-      loader.value = false;
+      fetchLoader.value = false;
     })
     .catch(error => {
-      loader.value = false;
+      fetchLoader.value = false;
       notification.success({
         title: 'Error fetching configuration',
         position: 'top',
@@ -105,6 +109,7 @@ watch(
           :options="props.departments"
           filterable
           v-model="buyForm.department_id"
+          :rules="[isRequired]"
         ></x-select>
       </x-field>
     </div>
@@ -114,13 +119,18 @@ watch(
         <div class="grid grid-cols-3 items-center">
           <p>{{ computedValueText }}</p>
           <p>Enter Cost ({{ computedValueText }})</p>
-          <x-input v-model="buyForm.value" class="!mb-0" :disabled="loader">
+          <x-input
+            v-model="buyForm.value"
+            class="!mb-0"
+            :disabled="fetchLoader"
+            :rules="[isRequired]"
+          >
             <template #suffix>
               <div
                 class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
               >
-                <x-spinner v-if="loader" size="sm" class="text-primary" />
-                <span v-if="!loader">AED</span>
+                <x-spinner v-if="fetchLoader" size="sm" class="text-primary" />
+                <span v-if="!fetchLoader">AED</span>
               </div>
             </template>
           </x-input>
@@ -133,13 +143,18 @@ watch(
         <div class="grid grid-cols-3 items-center">
           <p>{{ computedVolumeText }}</p>
           <p>Enter Cost ({{ computedVolumeText }})</p>
-          <x-input v-model="buyForm.volume" class="!mb-0" :disabled="loader">
+          <x-input
+            v-model="buyForm.volume"
+            class="!mb-0"
+            :disabled="fetchLoader"
+            :rules="[isRequired]"
+          >
             <template #suffix>
               <div
                 class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
               >
-                <x-spinner v-if="loader" size="sm" class="text-primary" />
-                <span v-if="!loader">AED</span>
+                <x-spinner v-if="fetchLoader" size="sm" class="text-primary" />
+                <span v-if="!fetchLoader">AED</span>
               </div>
             </template>
           </x-input>
@@ -154,7 +169,7 @@ watch(
         color="emerald"
         type="submit"
         :loading="loader"
-        :disable="loader"
+        :disabled="loader"
       >
         Update
       </x-button>

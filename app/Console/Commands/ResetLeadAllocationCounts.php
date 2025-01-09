@@ -50,8 +50,8 @@ class ResetLeadAllocationCounts extends Command
         info('Scheduler has reset max capacity for all users where reset_cap was true');
 
         info('Scheduler is about to reset buy leads max capacity for every user');
-        $this->resetBuyLeadAllocationCapacity('reset_cap');
-        info('Scheduler has reset buy leads max capacity for all users where reset_cap was true');
+        $this->resetBuyLeadAllocationCapacity('buy_lead_reset_capacity');
+        info('Scheduler has reset buy leads max capacity for all users where buy_lead_reset_capacity was true');
 
         DB::table('sessions')->delete(); // truncate sessions table
 
@@ -93,7 +93,7 @@ class ResetLeadAllocationCounts extends Command
             ->whereIn('quote_type_id', [1, 3])
             ->update([
                 'buy_lead_status' => true,
-                'buy_lead_max_capacity' => DB::raw('CASE WHEN quote_type_id = 1 THEN 5 ELSE 3 END'),
+                'buy_lead_max_capacity' => DB::raw('CASE WHEN quote_type_id = 1 THEN 5 ELSE 50 END'),
             ]);
     }
 }

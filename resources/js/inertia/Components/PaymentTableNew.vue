@@ -155,11 +155,32 @@ const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
+const showLackingPayment = () => {
+  if (is_lacking_payment.value && props.payments.length > 0) {
+    notification.error(
+      {
+        title:
+          'Action Needed: Please revise payment details to reflect plan changes.',
+        position: 'top',
+      },
+      50000,
+    );
+  }
+};
+
 // Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
-} else if (props.quoteType === 'Health') {
+} else if (
+  props.quoteType === 'Health' &&
+  props.quoteRequest?.source !== 'Revival'
+) {
   initialAmount.value = props.eCommercePrice;
+} else if (
+  props.quoteType === 'Health' &&
+  props.quoteRequest?.source === 'Revival'
+) {
+  initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === 'Bike') {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
@@ -2721,155 +2742,152 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
+// Will check if the payment is ready for capture
+const shouldProcessUpdate = payment => {
+  const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
+  const calculatedTotal =
+    Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
+  const hasPayments = props.payments.length > 0;
+  const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
+  const isAmlCleared =
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningCleared;
+  const isTransactionDeclined =
+    props.quoteRequest.quote_status_id ===
+    page.props.quoteStatusEnum.TransactionDeclined;
+  const isTransactionApproved =
+    props.quoteRequest.quote_status_id ===
+    page.props.quoteStatusEnum.TransactionApproved;
+  const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
+  const isTravelQuote = props.quoteType === 'Travel';
+  const shouldSendUpdate = props.sendUpdate;
+  const isAmlOrTransactionApproved =
+    isAmlCleared || isTransactionDeclined || isTransactionApproved;
+  const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
+  return (
+    hasPayments &&
+    isTotalPriceMatching &&
+    (isAmlAndKycComplete || isTravelQuote || shouldSendUpdate)
+  );
+};
+
+const getValidStatuses = paymentSplitRec => {
+  const validStatuses = [
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.PARTIALLY_PAID,
+  ];
+  return validStatuses.includes(paymentSplitRec.payment_status_id);
+};
+
+const validateUpfrontCapture = paymentRecord => {
+  let paymentSplitRec = paymentRecord.payment_splits[0];
+  if (paymentSplitRec.payment_method.code === 'CC')
+    return getValidStatuses(paymentSplitRec);
+  const isIPPending =
+    paymentSplitRec.payment_method.code === 'IP' &&
+    paymentSplitRec.payment_status_id === props.paymentStatusEnum.PENDING;
+  const isCAPayment =
+    paymentSplitRec.payment_method.code === 'CA' &&
+    paymentSplitRec.payment_status_id ===
+      props.paymentStatusEnum.CREDIT_APPROVED;
+  const isPaidPayment =
+    paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID;
+  return isIPPending || isCAPayment || isPaidPayment;
+};
+
+const filterCCPayments = payment => {
+  return payment.payment_splits.filter(
+    item => item.payment_method.code === 'CC',
+  );
+};
+
+const filterCAPayments = payment => {
+  return payment.payment_splits.filter(
+    item => item.payment_status_id == props.paymentStatusEnum.CREDIT_APPROVED,
+  );
+};
+
+const validateSplitPaymentsCapture = paymentRecord => {
+  const paymentMethodCC = filterCCPayments(paymentRecord);
+  const creditApprovedPayments = filterCAPayments(paymentRecord);
+  if (paymentMethodCC.length > 0 && creditApprovedPayments.length == 0) {
+    let totalSplitPayments = paymentRecord.payment_splits.length;
+    let paidPaymentStatus = paymentRecord.payment_splits.filter(
+      item =>
+        item.payment_status_id === props.paymentStatusEnum.PAID ||
+        item.payment_status_id === props.paymentStatusEnum.PARTIALLY_PAID,
+    );
+    let ccPaymentStatus = paymentMethodCC.filter(
+      item => item.payment_status_id === props.paymentStatusEnum.AUTHORISED,
+    );
+    return (
+      totalSplitPayments == ccPaymentStatus.length + paidPaymentStatus.length
+    );
+  } else {
+    let ipPaymentStatus = paymentRecord.payment_splits.filter(
+      item => item.payment_method.code === 'IP',
+    );
+    if (ipPaymentStatus.length > 0) {
+      let ipPending = ipPaymentStatus.filter(
+        item =>
+          item.payment_status_id === props.paymentStatusEnum.PENDING ||
+          item.payment_status_id === props.paymentStatusEnum.PAID,
+      );
+      return ipPending.length === ipPaymentStatus.length;
+    } else {
+      if (verifyCreditApproved(paymentRecord)) return true;
+      let paidPaymentStatus = paymentRecord.payment_splits.filter(
+        item => item.payment_status_id === props.paymentStatusEnum.PAID,
+      );
+      return paidPaymentStatus.length === paymentRecord.payment_splits.length;
+    }
+  }
+};
+
+const validateNonUpfrontAndSplitCapture = paymentRecord => {
+  if (
+    paymentRecord.payment_status_id === props.paymentStatusEnum.CREDIT_APPROVED
+  ) {
+    if (verifyCreditApproved(paymentRecord)) return true;
+  } else if (
+    (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
+      paymentRecord.payment_splits[0].payment_method.code === 'PDC') &&
+    paymentRecord.payment_splits[0].payment_status_id ===
+      props.paymentStatusEnum.PENDING
+  ) {
+    return true;
+  }
+  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
+};
+
 const getCaptureValidation = computed(() => {
   return payment => {
-    const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
-    const calculatedTotal =
-      Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
-    if (
-      props.payments.length > 0 &&
-      totalPriceRounded === calculatedTotal &&
-      (((props.quoteRequest.aml_status ===
-        page.props.amlStatusEnum.AMLScreeningCleared ||
-        props.quoteRequest.quote_status_id ===
-          page.props.quoteStatusEnum.TransactionDeclined ||
-        props.quoteRequest.quote_status_id ===
-          page.props.quoteStatusEnum.TransactionApproved) &&
-        props.quoteRequest.kyc_decision === 'Complete') ||
-        props.quoteType === 'Travel' ||
-        props.sendUpdate) //Skip AML & KYC for travel and send update
-    ) {
-      if (payment.is_approved === 1) {
-        return false;
-      }
+    if (shouldProcessUpdate(payment)) {
+      if (payment.is_approved === 1) return false;
       let paymentRecord = payment;
-      if (paymentRecord.frequency === 'upfront') {
-        let paymentSplitRec = paymentRecord.payment_splits[0];
-        if (paymentSplitRec.payment_method.code === 'CC') {
-          const validStatuses = [
-            props.paymentStatusEnum.AUTHORISED,
-            props.paymentStatusEnum.PAID,
-            props.paymentStatusEnum.PARTIALLY_PAID,
-          ];
-          if (validStatuses.includes(paymentSplitRec.payment_status_id)) {
-            return true;
-          }
-          return false;
-        } else if (
-          paymentSplitRec.payment_method.code === 'IP' &&
-          paymentSplitRec.payment_status_id === props.paymentStatusEnum.PENDING
-        ) {
-          return true;
-        } else if (
-          paymentSplitRec.payment_method.code === 'CA' &&
-          paymentSplitRec.payment_status_id ===
-            props.paymentStatusEnum.CREDIT_APPROVED
-        ) {
-          return true;
-        } else if (
-          paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID
-        ) {
-          return true;
-        }
+      if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
+        return validateUpfrontCapture(paymentRecord);
       } else if (
         paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
       ) {
-        const paymentMethodCC = paymentRecord.payment_splits.filter(
-          item => item.payment_method.code === 'CC',
-        );
-        if (
-          paymentMethodCC.length > 0 &&
-          paymentRecord.payment_status_id !=
-            props.paymentStatusEnum.CREDIT_APPROVED
-        ) {
-          let totalSplitPayments = paymentRecord.payment_splits.length;
-          let paidPaymentStatus = paymentRecord.payment_splits.filter(
-            item =>
-              item.payment_status_id === props.paymentStatusEnum.PAID ||
-              item.payment_status_id === props.paymentStatusEnum.PARTIALLY_PAID,
-          );
-          let ccPaymentStatus = paymentMethodCC.filter(
-            item =>
-              item.payment_status_id === props.paymentStatusEnum.AUTHORISED,
-          );
-          if (
-            totalSplitPayments ==
-            ccPaymentStatus.length + paidPaymentStatus.length
-          ) {
-            return true;
-          }
-        } else {
-          let ipPaymentStatus = paymentRecord.payment_splits.filter(
-            item => item.payment_method.code === 'IP',
-          );
-          if (ipPaymentStatus.length > 0) {
-            let ipPending = ipPaymentStatus.filter(
-              item =>
-                item.payment_status_id === props.paymentStatusEnum.PENDING ||
-                item.payment_status_id === props.paymentStatusEnum.PAID,
-            );
-            if (ipPending.length === ipPaymentStatus.length) {
-              return true;
-            }
-          } else {
-            if (verifyCreditArroved(paymentRecord)) {
-              return true;
-            } else {
-              let paidPaymentStatus = paymentRecord.payment_splits.filter(
-                item => item.payment_status_id === props.paymentStatusEnum.PAID,
-              );
-              if (
-                paidPaymentStatus.length === paymentRecord.payment_splits.length
-              ) {
-                return true;
-              }
-            }
-          }
-        }
+        return validateSplitPaymentsCapture(paymentRecord);
       } else {
-        if (
-          paymentRecord.payment_status_id ===
-          props.paymentStatusEnum.CREDIT_APPROVED
-        ) {
-          if (verifyCreditArroved(paymentRecord)) {
-            return true;
-          }
-        } else if (
-          (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
-            paymentRecord.payment_splits[0].payment_method.code === 'PDC') &&
-          paymentRecord.payment_splits[0].payment_status_id ===
-            props.paymentStatusEnum.PENDING
-        ) {
-          return true;
-        } else if (
-          paymentRecord.payment_splits[0].payment_status_id ===
-            props.paymentStatusEnum.PAID ||
-          paymentRecord.payment_splits[0].payment_status_id ===
-            props.paymentStatusEnum.AUTHORISED ||
-          paymentRecord.payment_splits[0].payment_status_id ===
-            props.paymentStatusEnum.PARTIALLY_PAID
-        ) {
-          return true;
-        }
+        return validateNonUpfrontAndSplitCapture(paymentRecord);
       }
     }
     return false;
   };
 });
 
-//verify if all credit payments are approved
-const verifyCreditArroved = paymentRecord => {
+// verify if all credit payments are approved for capture
+const verifyCreditApproved = paymentRecord => {
   let caPaymentStatus = paymentRecord.payment_splits.filter(
     item => item.payment_method.code === 'CA',
   );
   if (caPaymentStatus.length > 0) {
-    let caApproved = caPaymentStatus.filter(
-      item =>
-        item.payment_status_id === props.paymentStatusEnum.CREDIT_APPROVED,
-    );
-    if (caApproved.length === caPaymentStatus.length) {
-      return true;
-    }
+    let caApproved = filterCAPayments(paymentRecord);
+    return caApproved.length === caPaymentStatus.length;
   }
   return false;
 };
@@ -2887,14 +2905,8 @@ const alertCapture = payment => {
 const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
-      const paymentMethodCC = payment.payment_splits.filter(
-        item => item.payment_method.code === 'CC',
-      );
-      if (paymentMethodCC.length > 0) {
-        return 'capture';
-      } else {
-        return 'approve';
-      }
+      const paymentMethodCC = filterCCPayments(payment);
+      return paymentMethodCC.length > 0 ? 'capture' : 'approve';
     }
     return;
   };
@@ -2928,6 +2940,7 @@ onMounted(() => {
   if (props.sendUpdate?.plan_id) {
     fetchPlans();
   }
+  showLackingPayment();
 });
 
 const getPlanName = computed(() => {
@@ -3089,7 +3102,7 @@ onMounted(() => {
   // setLeadStatuses();
 });
 
-let is_lacking_payment = ref(
+const is_lacking_payment = ref(
   page.props?.bookPolicyDetails?.isLackingOfPayment ||
     page.props?.bookingDetails?.isLackingOfPayment ||
     false,
@@ -3100,6 +3113,15 @@ const isPaidEditable = ref(
     page.props?.bookingDetails?.isPaidEditable ||
     page.props?.isPaidEditable ||
     false,
+);
+
+watch(
+  () => is_lacking_payment.value,
+  newVal => {
+    if (newVal) {
+      showLackingPayment();
+    }
+  },
 );
 
 watch(
