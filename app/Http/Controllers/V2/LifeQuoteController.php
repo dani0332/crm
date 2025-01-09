@@ -85,6 +85,7 @@ class LifeQuoteController extends Controller
 
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $quoteData = LifeQuoteRepository::getShowFormOptions($quote);
+
         return inertia('LifeQuote/Show', $quoteData);
     }
 

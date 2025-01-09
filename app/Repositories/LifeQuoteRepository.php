@@ -2,33 +2,24 @@
 
 namespace App\Repositories;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Capi;
 use App\Models\ApplicationStorage;
+use App\Models\Emirate;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
-use App\Models\Emirate;
-use App\Repositories\ActivityRepository;
-use App\Repositories\CustomerMembersRepository;
-use App\Repositories\CustomerRepository;
-use App\Repositories\EmbeddedProductRepository;
-use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
-use App\Repositories\LostReasonRepository;
-use App\Repositories\NationalityRepository;
-use App\Repositories\SendUpdateLogRepository;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -96,9 +87,9 @@ class LifeQuoteRepository extends BaseRepository
 
             // check the columns to be updated in life quote request.
             if ($quote->lifeQuote) {
-                $quote->lifeQuote()->update(Arr::only($data, (new LifeQuote())->allowedColumns()));
+                $quote->lifeQuote()->update(Arr::only($data, (new LifeQuote)->allowedColumns()));
             } else {
-                $quote->lifeQuote()->create(Arr::only($data, (new LifeQuote())->allowedColumns()));
+                $quote->lifeQuote()->create(Arr::only($data, (new LifeQuote)->allowedColumns()));
             }
 
             return $quote;
@@ -108,14 +99,14 @@ class LifeQuoteRepository extends BaseRepository
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
         $query = $this->byQuoteTypeCode(QuoteTypes::LIFE)->with([
-                'advisor',
-                'quoteStatus',
-                'nationality',
-                'quoteDetail.lostReason:id,text',
-                'renewalBatchModel',
-                'paymentStatus',
-                'payments'
-            ])
+            'advisor',
+            'quoteStatus',
+            'nationality',
+            'quoteDetail.lostReason:id,text',
+            'renewalBatchModel',
+            'paymentStatus',
+            'payments',
+        ])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
@@ -181,7 +172,7 @@ class LifeQuoteRepository extends BaseRepository
                                 'paymentMethod',
                                 'documents',
                                 'verifiedByUser',
-                                'processJob'
+                                'processJob',
                             ])->orderBy('sr_no', 'asc');
                         },
                     ]);
