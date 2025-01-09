@@ -15,13 +15,6 @@ class PermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        Permission::firstOrCreate([
-            'name' => PermissionsEnum::TAP_BETA_ACCESS,
-            'guard_name' => 'web',
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
         // $this->paidLeads();
         // $this->seedProcessTrackerPermissions();
         // $this->buyLeads();
