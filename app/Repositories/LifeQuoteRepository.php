@@ -232,7 +232,7 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchExportData()
     {
-        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuote.lifeQuoteRequestDetail.lostReason'])
+        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuote.quoteDetail.lostReason'])
             ->filter(false)
             ->withFakeLeadCriteria();
         $this->adjustQueryByDateFilters($query, 'life_quote_request');

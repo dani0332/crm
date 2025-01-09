@@ -36,7 +36,6 @@ use App\Observers\HealthQuoteDetailObserver;
 use App\Observers\HealthQuoteObserver;
 use App\Observers\HomeQuoteDetailObserver;
 use App\Observers\HomeQuoteObserver;
-use App\Observers\LifeQuoteDetailObserver;
 use App\Observers\LifeQuoteObserver;
 use App\Observers\PaymentObserver;
 use App\Observers\PaymentSplitsObserver;
@@ -89,7 +88,6 @@ class AppServiceProvider extends ServiceProvider
         CarQuoteRequestDetail::observe(CarQuoteDetailObserver::class);
         HealthQuoteRequestDetail::observe(HealthQuoteDetailObserver::class);
         HomeQuoteRequestDetail::observe(HomeQuoteDetailObserver::class);
-        LifeQuoteRequestDetail::observe(LifeQuoteDetailObserver::class);
         TravelQuoteRequestDetail::observe(TravelQuoteDetailObserver::class);
         BusinessQuoteRequestDetail::observe(BusinessQuoteDetailObserver::class);
         PetQuote::observe(PetQuoteObserver::class);

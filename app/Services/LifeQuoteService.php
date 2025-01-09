@@ -9,7 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\LifeQuote;
-use App\Models\LifeQuoteRequestDetail;
+use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -157,7 +157,7 @@ class LifeQuoteService extends BaseService
 
     public function getSelectedLostReason($id)
     {
-        $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+        $entity = PersonalQuoteDetail::where('personal_quote_id', $id)->first();
         $lostId = 0;
         if (! is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
@@ -168,8 +168,8 @@ class LifeQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        return LifeQuoteRequestDetail::firstOrCreate(
-            ['life_quote_request_id' => $id]
+        return PersonalQuoteDetail::firstOrCreate(
+            ['personal_quote_id' => $id]
         );
     }
 
@@ -609,7 +609,7 @@ class LifeQuoteService extends BaseService
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
 
-            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::LIFE, LifeQuoteRequestDetail::class, 'life_quote_request_id');
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::LIFE, PersonalQuoteDetail::class, 'personal_quote_id');
         }
 
         return $result;

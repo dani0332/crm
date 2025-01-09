@@ -155,7 +155,7 @@ class SendUpdateLogService
             case LifeQuote::class:
                 $quoteRelations = [
                     'quoteRelations' => [
-                        'lifeQuoteRequestDetail' => [
+                        'quoteDetail' => [
                             'skipColumns' => $requestDetailsSkipColumns,
                             'fillColumns' => ['advisor_assigned_date' => now()],
                         ],
