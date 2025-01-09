@@ -10,7 +10,6 @@ use App\Enums\EnvEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
@@ -610,14 +609,15 @@ class AMLService
 
         $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
         try {
+            $insuredDetails = $insuredPersonDetails?->insured;
             $insurerScreeningPayload = [
                 'quoteUID' => $quoteDetails->uuid,
                 'quoteTypeId' => (int) $quoteTypeId,
                 'emirateDetails' => [
-                    'emirateId' => $insuredPersonDetails?->insured?->id_type ?? null,
+                    'emirateId' => $insuredDetails?->id_type == 'emiratesId' ? $insuredDetails?->id_number : null,
                     'expiryDate' => $insuredPersonDetails?->customer?->emirates_id_expiry_date ?? null,
                 ],
-                'passportNumber' => $insuredPersonDetails?->insured?->id_number ?? null,
+                'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
                 'chassisNumber' => $chassisNumber ?? '',
             ];
 
