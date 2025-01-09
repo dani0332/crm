@@ -39,7 +39,8 @@ class LifeQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
-    public $allowedColumns = ['others_info', 'is_smoker', 'sum_insured_value', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'tenure_of_insurance_id', 'number_of_years_id', 'height', 'weight', 'bmi', 'age', 'lang', 'is_synced', 'promo_code', 'pa_id', 'other_email_addresses', 'order_reference', 'payment_reference', 'payment_gateway', 'risk_score'];
+
+    public $allowedColumns = ['others_info', 'is_smoker', 'sum_insured_value', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'tenure_of_insurance_id', 'number_of_years_id', 'height', 'weight', 'bmi', 'age', 'lang'];
 
     protected static function booted()
     {
