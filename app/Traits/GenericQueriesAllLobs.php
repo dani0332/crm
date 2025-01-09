@@ -269,9 +269,10 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        @[$isCreditCardEnabled, $isSplitFrequencyHidden] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id);
+        @[$isCreditCardEnabled, $isSplitFrequencyHidden, $brokerCommission] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id);
         $bookPolicyDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
         $bookPolicyDetails['isSplitFrequencyHidden'] = $isSplitFrequencyHidden;
+        $bookPolicyDetails['brokerCommission'] = $brokerCommission;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -747,25 +748,25 @@ trait GenericQueriesAllLobs
     public function getCreditCardAndSplitFrequencyStatus($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId)
     {
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        $brokerCommissionQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId);
+        $brokerCommissionQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)->active();
 
         if (in_array($quoteTypeId, [QuoteTypes::getId(QuoteTypes::BUSINESS), QuoteTypes::getId(QuoteTypes::CORPLINE), QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)])) {
             $brokerCommissionQuery->where('business_type_of_insurance_id', $businessTypeOfInsuranceId)
-                ->active()
                 ->where('quote_type_id', QuoteTypeId::Business);
         } else {
             $brokerCommissionQuery->where('quote_type_id', $quoteTypeId);
         }
 
-        $isCreditCardEnabled = $brokerCommissionQuery->select('id')->exists();
+        $brokerCommission = $brokerCommissionQuery->first();
         $isSplitFrequencyHidden = InsuranceProvider::whereIn('code', [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE])
             ->where('id', $insuranceProviderId)
             ->select('id')
             ->exists();
 
         return [
-            $isCreditCardEnabled,
+            $brokerCommission ? true : false,
             $isSplitFrequencyHidden,
+            $brokerCommission
         ];
     }
 }

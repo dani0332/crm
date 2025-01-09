@@ -95,6 +95,7 @@ const dateToDMYWithTime = date => {
 
 const bp = reactive({
   isEditing: false,
+  isAllowedToUpdateCommission: true
 });
 
 const currentDate = computed(() => {
@@ -162,10 +163,6 @@ const isNonSelfBillingEnabledForInsuranceProvider = computed(() => {
 });
 // use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
 const binAsInsurerCommissionTaxInvoiceNumber = () => {
-  console.log(
-    'page.props.bookPolicyDetails',
-    isNonSelfBillingEnabledForInsuranceProvider.value,
-  );
   let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
   if (isNonSelfBillingEnabledForInsuranceProvider.value) {
     return brokerInvoiceNo;
@@ -216,26 +213,23 @@ watch(
   },
 );
 
-const onUpdatebookPolicyDetails = isValid => {
+const onUpdateBookPolicyDetails = isValid => {
+  if (!isValid) return;
   showInsufficientPaymentAlert();
-  if (isValid) {
-    bpForm.post('/quotes/update-booking-policy', {
-      preserveScroll: true,
-      onSuccess: () => {
-        bp.isEditing = false;
-      },
-      onError: errors => {
-        Object.keys(errors).forEach(function (key) {
-          notification.error({
-            title: errors[key],
-            position: 'top',
-          });
+  bpForm.post('/quotes/update-booking-policy', {
+    preserveScroll: true,
+    onSuccess: () => {
+      bp.isEditing = false;
+    },
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
         });
-      },
-    });
-  } else {
-    console.log('Invalid');
-  }
+      });
+    },
+  });
 };
 
 const isAllowedToSendPolicy = ref(false);
@@ -308,7 +302,18 @@ const calculateCommissionPercentage = (
   totalPriceWithoutVat,
 ) => {
   if (totalCommissionWithoutVat > 0) {
-    return useRoundIt((totalCommissionWithoutVat / totalPriceWithoutVat) * 100);
+    let totalCommissionInPercentage = (totalCommissionWithoutVat / totalPriceWithoutVat) * 100;
+    let brokerCommission = props.bookPolicyDetails.brokerCommission;
+    let commission_percentage_min = brokerCommission?.commission_percentage_min || 0;
+    let commission_percentage_max = brokerCommission?.commission_percentage_max || 0;
+    if (commission_percentage_min != 0 && commission_percentage_max != 0) {
+      if (totalCommissionInPercentage < commission_percentage_min || totalCommissionInPercentage > commission_percentage_max) {
+        bp.isAllowedToUpdateCommission = false;
+      } else{
+        bp.isAllowedToUpdateCommission = true;
+      }
+  }
+  return useRoundIt(totalCommissionInPercentage);
   } else {
     return 0;
   }
@@ -322,7 +327,7 @@ const calculateCommission = () => {
   let totalCommissionWithoutVat =
     Number(bpForm.commission_vat_not_applicable) +
     Number(bpForm.commission_vat_applicable);
-
+    
   if (totalCommissionWithoutVat > 0) {
     bpForm.vat_on_commission = calculateVatOnCommission(
       bpForm.commission_vat_applicable,
@@ -651,7 +656,7 @@ onMounted(() => {
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <x-form @submit.prevent :auto-focus="false">
+        <x-form @submit="onUpdateBookPolicyDetails" :auto-focus="false">
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -902,7 +907,9 @@ onMounted(() => {
                         class="w-full"
                         :disabled="disableCommissionVatNotApplicable"
                       />
-
+                      <p v-if="!disableCommissionVatNotApplicable && !bp.isAllowedToUpdateCommission" class="text-error-500 dark:text-error-400">
+                        The commission amount you entered is outside the permitted range.
+                      </p>
                       <template #tooltip>
                         <span class="custom-tooltip-content">{{
                           commissionVatNotApplicableTooltip
@@ -918,6 +925,9 @@ onMounted(() => {
                       class="w-full"
                       :disabled="disableCommissionVatNotApplicable"
                     />
+                    <p v-if="!disableCommissionVatNotApplicable && !bp.isAllowedToUpdateCommission" class="text-error-500 dark:text-error-400">
+                        The commission amount you entered is outside the permitted range.
+                    </p>
                   </template>
                 </dd>
               </div>
@@ -963,7 +973,9 @@ onMounted(() => {
                         class="w-full"
                         :disabled="disableCommissionVatApplicable"
                       />
-
+                      <p v-if="!disableCommissionVatApplicable && !bp.isAllowedToUpdateCommission" class="text-error-500 dark:text-error-400">
+                        The commission amount you entered is outside the permitted range.
+                      </p>
                       <template #tooltip>
                         <span class="custom-tooltip-content">{{
                           commissionVatApplicableTooltip
@@ -979,6 +991,9 @@ onMounted(() => {
                       class="w-full"
                       :disabled="disableCommissionVatApplicable"
                     />
+                    <p v-if="!disableCommissionVatApplicable && !bp.isAllowedToUpdateCommission" class="text-error-500 dark:text-error-400">
+                      The commission amount you entered is outside the permitted range.
+                    </p>
                   </template>
                 </dd>
               </div>
@@ -1124,7 +1139,12 @@ onMounted(() => {
                 class="mt-4 mr-2"
                 color="emerald"
                 size="sm"
-                @click.prevent="bp.isEditing = true"
+                @click.prevent="
+                    () => {
+                      bp.isEditing = true;
+                      calculateCommission()
+                    }
+                  "
                 :disabled="
                   isDisabled ||
                   disableIfPolicyFailedAndNoBookingFailedEditPermission
@@ -1185,7 +1205,8 @@ onMounted(() => {
                   color="emerald"
                   size="sm"
                   :loading="bpForm.processing"
-                  @click.prevent="onUpdatebookPolicyDetails"
+                  type="submit"
+                  :disabled="!bp.isAllowedToUpdateCommission"
                 >
                   Update
                 </x-button>
@@ -1337,7 +1358,8 @@ onMounted(() => {
                     color="emerald"
                     size="sm"
                     :loading="bpForm.processing"
-                    @click.prevent="onUpdatebookPolicyDetails"
+                    type="submit"
+                    :disabled="!bp.isAllowedToUpdateCommission"
                   >
                     Update
                   </x-button>
