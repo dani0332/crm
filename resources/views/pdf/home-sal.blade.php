@@ -69,15 +69,12 @@
             margin-right: 20px;
             object-fit: cover;
             float: left;
-            /* Float the image to the left */
         }
 
         .advisor-details {
             flex: 1;
             float: left;
-            /* Float the details to the left */
             width: calc(100% - 100px);
-            /* Adjust width to account for image and margin */
         }
 
         .advisor-details h3 {
@@ -97,6 +94,14 @@
             clear: both;
             display: table;
         }
+
+        /* No Items Message */
+        .no-items {
+            text-align: center;
+            font-size: 16px;
+            color: #555;
+            margin: 20px 0;
+        }
     </style>
 </head>
 
@@ -111,29 +116,33 @@
         <p>We've successfully received your declaration form for valuable item(s) with your chosen home insurance plan.
         </p>
         <p>Each item that's valued at AED 40,000 or more has been recorded for comprehensive coverage.</p>
-        <p>Below, you'll find a summary of the declared items:</p>
 
         <!-- SAL Items Table -->
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Value</th>
-                    <th>Description</th>
-                    <th>Purchase Date</th>
-                    <th>Invoice Number</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($data['items'] as $item)
+        @if (!empty($data['items']))
+            <p>Below, you'll find a summary of the declared items:</p>
+            <table class="table">
+                <thead>
                     <tr>
-                        <td>{{ $item->value }}</td>
-                        <td>{{ $item->description }}</td>
-                        <td>{{ $item->purchase_date }}</td>
-                        <td>{{ $item->invoice_number }}</td>
+                        <th>Value</th>
+                        <th>Description</th>
+                        <th>Purchase Date</th>
+                        <th>Invoice Number</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach ($data['items'] as $item)
+                        <tr>
+                            <td>{{ $item->value }}</td>
+                            <td>{{ $item->description }}</td>
+                            <td>{{ $item->purchase_date }}</td>
+                            <td>{{ $item->invoice_number }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <p class="no-items">No items were declared.</p>
+        @endif
 
         <!-- Advisor Info Card -->
         <div class="advisor-card clearfix">
