@@ -857,7 +857,7 @@ class HomeQuoteService extends BaseService
                 'personalBelongings' => $selectedPlan->benefits->personalBelonging ?? '',
             ],
             'listQuotePlanBenefitsExclusions' => $selectedPlan->benefits->exclusion ?? [],
-            'listQuotePlanBenefitsAditionalCovers' => $selectedPlan->benefits->standardBenefit ?? [],
+            'listQuotePlanBenefitsAditionalCovers' => $selectedPlan->benefits->additionalCover ?? [],
             'is_disabled' => $selectedPlan->isDisabled ?? false,
             'is_manual_update' => $selectedPlan->isManualPlan ?? false,
             'vat' => $selectedPlan->vat ?? '',
