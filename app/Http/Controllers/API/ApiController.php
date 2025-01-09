@@ -233,24 +233,27 @@ class ApiController extends Controller
 
     public function homeSyncSAL(Request $request)
     {
-        info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
+        Log::info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
+
         try {
             $response = app(HomeQuoteService::class)->syncSAL($request);
 
-            info('SAL sync completed successfully.', ['quoteUID' => $request->quoteUID]);
+            Log::info('SAL sync completed successfully.', ['quoteUID' => $request->quoteUID]);
 
             return $response;
         } catch (Exception $e) {
-            info('SAL sync failed.', [
+            Log::error('SAL sync failed.', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'quoteUID' => $request->quoteUID,
+                'request' => $request->all(),
             ]);
 
             return response()->json([
                 'status' => 'error',
                 'message' => 'An error occurred while syncing SAL data.',
                 'error_details' => $e->getMessage(),
+                'quoteUID' => $request->quoteUID,
             ], 500);
         }
     }
