@@ -645,6 +645,14 @@ class CarAllocationService extends AllocationService
     {
         info('About to assign car lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
 
+        if ($lead->advisor_id === $userId) {
+            info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
+
+            $this->endBuyLeadProcessing();
+
+            return;
+        }
+
         if (! empty($lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
             $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
         }

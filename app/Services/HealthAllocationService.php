@@ -226,6 +226,8 @@ class HealthAllocationService extends AllocationService
         if ($lead->advisor_id === $advisor->id) {
             info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
 
+            $this->endBuyLeadProcessing();
+
             return;
         }
 
