@@ -2,7 +2,9 @@
 
 namespace App\Jobs\Revival;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\DttRevival;
+use App\Services\ApplicationStorageService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,6 +40,13 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
+            info('Dtt is not enabled from cms');
+
+            return false;
+        }
+
         $response = app(SendEmailCustomerService::class)->sendDttEmail($this->data);
         if ($response == 201) {
             DttRevival::where('id', $this->data->id)->increment('follow_up_email_count');
