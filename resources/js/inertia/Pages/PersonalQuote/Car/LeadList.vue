@@ -548,12 +548,11 @@ const onExport = (url, isLoading = false) => {
 };
 
 const insurerAMLStatusOption = computed(() => {
-    return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
-        value: key,
-        label: value,
-    }));
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
 });
-
 </script>
 
 <template>
@@ -701,10 +700,10 @@ const insurerAMLStatusOption = computed(() => {
           :options="leadStatuses"
         />
         <ComboBox
-            v-model="filters.insurer_aml_status"
-            label="Insurer AML Status"
-            name="insurer_aml_status"
-            :options="insurerAMLStatusOption"
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
         />
         <ComboBox
           v-model="filters.tier_id"

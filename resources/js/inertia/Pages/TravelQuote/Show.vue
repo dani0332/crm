@@ -1502,11 +1502,9 @@ const allowStatusUpdate = computed(() => {
 });
 
 function capitalizeString(str) {
-    if (!str) return 'N/A';
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
-
-
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
 </script>
 
 <template>
@@ -1748,8 +1746,8 @@ function capitalizeString(str) {
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURER AML STATUS</dt>
-                  <dd>{{ capitalizeString(quote.insurer_aml_status) }}</dd>
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ capitalizeString(quote.insurer_aml_status) }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">

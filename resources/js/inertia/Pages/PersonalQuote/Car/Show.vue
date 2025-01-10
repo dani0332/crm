@@ -1643,15 +1643,13 @@ const allowStatusUpdate = computed(() => {
 
 function genderFormatForProfile(gender) {
   if (!gender) return gender;
-  return (gender === 'M' || gender === 'Male')  ? 'Male' : 'Female';
+  return gender === 'M' || gender === 'Male' ? 'Male' : 'Female';
 }
 
 function capitalizeString(str) {
-    if (!str) return 'N/A';
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
-
-
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
 </script>
 
 <template>

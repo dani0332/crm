@@ -507,12 +507,11 @@ watch(
 );
 
 const insurerAMLStatusOption = computed(() => {
-    return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
-        value: key,
-        label: value,
-    }));
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
 });
-
 </script>
 
 <template>
@@ -626,12 +625,12 @@ const insurerAMLStatusOption = computed(() => {
           />
         </x-field>
         <x-field label="Insurer AML Status">
-            <ComboBox
-                v-model="filters.insurer_aml_status"
-                name="insurer_aml_status"
-                placeholder="Search by Insurer AML Status"
-                :options="insurerAMLStatusOption"
-            />
+          <ComboBox
+            v-model="filters.insurer_aml_status"
+            name="insurer_aml_status"
+            placeholder="Search by Insurer AML Status"
+            :options="insurerAMLStatusOption"
+          />
         </x-field>
         <x-field label="Policy Expiry Start Date">
           <DatePicker
