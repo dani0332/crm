@@ -919,7 +919,7 @@ class RenewalsUploadService
     public function getNonEmptyValues($values)
     {
         return collect($values)->filter(function ($value) {
-            return $value;
+            return $value ?? null;
         })->toArray();
     }
 
@@ -1048,7 +1048,6 @@ class RenewalsUploadService
 
             $quoteData['is_gcc_standard'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
 
-
             /*
              * API refresh plans when quote_updated_at have latest date
              */
@@ -1086,8 +1085,6 @@ class RenewalsUploadService
             }
 
             info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
-
-            info($logPrefix. ' quote data: '.json_encode($quoteData));
 
             $quote->update($quoteData);
             if (! checkPersonalQuotes($quoteType)) {
