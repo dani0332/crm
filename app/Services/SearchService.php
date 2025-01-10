@@ -324,16 +324,24 @@ class SearchService extends BaseService
 
         if (request()->has('insurer_tax_invoice_number') && ! isset(request()->code)) {
             if (! request()->has('su_code') && ! $isSendUpdateFilter) {
-                $query->join('send_update_logs', 'personal_quotes.id', 'send_update_logs.personal_quote_id');
+                if (! (request()->has('date_type') && in_array($request->date_type, ['payment_due_date', 'payment_date'])) && ! request()->has('payment_status')) {
+                    $query->join('payments', 'personal_quotes.code', 'payments.code');
+                }
+                $query->where('payments.insurer_tax_number', request()->insurer_tax_invoice_number);
+            } else {
+                $query->where('send_update_logs.insurer_tax_invoice_number', request()->insurer_tax_invoice_number);
             }
-            $query->where('send_update_logs.insurer_tax_invoice_number', request()->insurer_tax_invoice_number);
         }
 
         if (request()->has('insurer_commission_tax_invoice_number') && ! isset(request()->code)) {
-            if (! request()->has('su_code') && ! request()->has('insurer_tax_invoice_number') && ! $isSendUpdateFilter) {
-                $query->join('send_update_logs', 'personal_quotes.id', 'send_update_logs.personal_quote_id');
+            if (! request()->has('su_code') && ! $isSendUpdateFilter) {
+                if (! (request()->has('date_type') && in_array($request->date_type, ['payment_due_date', 'payment_date'])) && ! request()->has('payment_status')) {
+                    $query->join('payments', 'personal_quotes.code', 'payments.code');
+                }
+                $query->where('payments.insurer_commmission_invoice_number', request()->insurer_commission_tax_invoice_number);
+            } else {
+                $query->where('send_update_logs.insurer_commission_invoice_number', request()->insurer_commission_tax_invoice_number);
             }
-            $query->where('send_update_logs.insurer_commission_invoice_number', request()->insurer_commission_tax_invoice_number);
         }
 
         if (request()->has('update_status') && ! isset(request()->su_code)) {
