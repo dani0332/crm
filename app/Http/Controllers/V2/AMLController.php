@@ -256,7 +256,11 @@ class AMLController extends Controller
             $quoteRequest->quote_link = '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
         }
 
-        $insuredPersonDetails = CustomerInsured::where('customer_id', $quoteRequest->customer_id)->with(['customer', 'insured'])->first();
+        $insuredPersonDetails = CustomerInsured::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+            'customer_id' => $quoteRequest->customer_id,
+        ])->with(['customer', 'insured'])->first();
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
