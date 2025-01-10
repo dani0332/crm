@@ -131,4 +131,17 @@ class HealthRevivalQuoteRepository extends BaseRepository
 
         return $quote;
     }
+
+    /**
+     * This function is used to update the source of the quote to REVIVAL_PAID. when the payment is paid
+     * 
+     * 
+     * @param $quoteId
+     */
+    public function fetchUpdateRevivalPaid($quoteId)
+    {
+        $quote = HealthQuote::find($quoteId);
+        $quote->source = LeadSourceEnum::REVIVAL_PAID;
+        $quote->save();
+    }
 }

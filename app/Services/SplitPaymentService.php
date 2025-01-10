@@ -8,6 +8,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -32,6 +33,7 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
+use App\Repositories\HealthRevivalQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -911,6 +913,8 @@ class SplitPaymentService
             if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 info('Master payment code: '.$payment->code.' updating payment paid at for lead');
                 $quoteModel->payment_paid_at = now();
+                $isRevival = $quoteModel->source == LeadSourceEnum::REVIVAL || $quoteModel->source == LeadSourceEnum::REVIVAL_REPLIED;
+                $payment->paymentable_type == HealthQuote::class && $isRevival && app(HealthRevivalQuoteRepository::class)->fetchUpdateRevivalPaid($quoteModel->id);
             }
             $quoteModel->save();
             // Log after successfully saving the quote model
