@@ -36,6 +36,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use PDF;
 use App\Enums\CarRegistrationType;
+use App\Models\QuoteRequestEntityMapping;
+use App\Models\Entity;
 
 class CarQuoteService extends BaseService
 {
@@ -348,12 +350,12 @@ class CarQuoteService extends BaseService
                 $name = explode(' ', $firstName);
                 $firstName = reset($name);
                 unset($name[0]);
-                $lastName = implode(' ', $name) ?? ' ';
+                $lastName = implode(' ', $name) ?? null;
             } else {
                 $name = explode(' ', $request->company_contact_name);
                 $firstName = reset($name);
                 unset($name[0]);
-                $lastName = implode(' ', $name) ?? ' ';
+                $lastName = implode(' ', $name) ?? null;
             }
         }
 
@@ -433,17 +435,43 @@ class CarQuoteService extends BaseService
 
         $firstName = $request->first_name ?? null;
         $lastName = $request->last_name ?? null;
+
+        $entityMapping = QuoteRequestEntityMapping::with('entity')
+            ->where('quote_type_id', QuoteTypeId::Car)
+            ->where('quote_request_id', $carQuote->id)
+            ->first();
         if ($registrationType == CarRegistrationType::COMPANY) {
             if($vehicleUse == CarVehicleUse::PRIVATE) {
                 $name = explode(' ', $firstName);
                 $firstName = reset($name);
                 unset($name[0]);
-                $lastName = implode(' ', $name) ?? ' ';
+                $lastName = implode(' ', $name) ?? null;
             } else {
                 $name = explode(' ', $request->company_name);
                 $firstName = reset($name);
                 unset($name[0]);
-                $lastName = implode(' ', $name) ?? ' ';
+                $lastName = implode(' ', $name) ?? null;
+            }
+
+            if(!$entityMapping) {
+
+                $entity = Entity::create([
+                    'company_name' => $carQuote->company_name,
+                ]);
+                $entity->refresh();
+                $entityId = $entity->id;
+                $entity->update(['code' => CustomerTypeEnum::EntityShort . '-' . $entityId]);
+
+                QuoteRequestEntityMapping::updateOrCreate([
+                    'quote_type_id' => QuoteTypeId::Car,
+                    'quote_request_id' => $carQuote->id,
+                ], ['entity_id' => $entityId]);                
+            }
+
+        } else {
+            if($entityMapping) {
+                $entityMapping->entity->delete();
+                $entityMapping->delete();
             }
         }
 

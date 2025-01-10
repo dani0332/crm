@@ -22,6 +22,8 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
+const amlStatusEnum = page.props.amlStatusEnum;
+const kycStatusEnum = page.props.kycEnums;
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -107,14 +109,20 @@ const isDisbaled =
 
 const trimOptions = ref([]);
 
-const getCarModel = reset => {
-
+const validateCompanyCar = () => {
   const filteredCarMake = props.dropdownSource.car_make_id.filter(item => item.id === quoteForm.car_make_id);
-  if (filteredCarMake && filteredCarMake[0].is_commercial == 1) {
+  if (filteredCarMake && filteredCarMake[0]?.is_commercial == 1) {
     quoteForm.vehicle_use = carVehicleUseEnum.COMMERCIAL;
     isCommercialCar.value = true;
   } else {
     isCommercialCar.value = false;
+  }
+}
+
+const getCarModel = reset => {
+
+  if (isEdit) {
+    validateCompanyCar();
   }
   
   if (reset) {
@@ -225,7 +233,6 @@ const clearFormValues = () => {
   } else {
 
     delete quoteForm.last_name;
-    delete quoteForm.addressObj;
 
     if (quoteForm.vehicle_use === carVehicleUseEnum.COMMERCIAL) {
       delete quoteForm.first_name;
@@ -239,6 +246,7 @@ const clearFormValues = () => {
 
 onMounted(() => {
   setCarMakeAndModalValues();
+  validateCompanyCar();
 });
 
 const setCarMakeAndModalValues = () => {
@@ -326,6 +334,12 @@ const floorLabel = computed(() => {
 const isCourierStatusPending = computed(() => {
   return quoteForm.courierQuoteStatus !== 'Pending';
 });
+
+const isAmlOrKycUpdated = computed(() => {
+  return isEdit.value
+    && (props.quote?.aml_status !== amlStatusEnum.AMLPending
+    || (props.quote?.kyc_decision !== kycStatusEnum.PENDING && props.quote?.kyc_decision !== null));
+});
 </script>
 
 <template>
@@ -363,6 +377,7 @@ const isCourierStatusPending = computed(() => {
             :options="registrationTypeOptions"
             class="w-full"
             :rules="[isRequired]"
+            :disabled="isAmlOrKycUpdated"
           />
         </x-field>
 
@@ -505,8 +520,7 @@ const isCourierStatusPending = computed(() => {
           />
         </x-field>
 
-        <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
+        <x-field
         label="Address Type">
           <ComboBox
             v-model="quoteForm.addressObj.address_type"
