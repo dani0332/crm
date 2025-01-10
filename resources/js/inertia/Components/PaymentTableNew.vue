@@ -3032,10 +3032,11 @@ const setPaymentInitialPrice = () => {
 const setPlanDetail = () => {
   if (
     props.quoteType == 'Business' ||
-    props.quoteType == 'Home' ||
     props.isPlanDetailEnabled
   ) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (props.quoteType == 'Home') {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == 'Bike') {

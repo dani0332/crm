@@ -1999,7 +1999,7 @@ const viewPlanDetailsLoader = ref({});
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       :quoteType="quoteType"
-      :payments="payments"
+      :payments="quote.payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
