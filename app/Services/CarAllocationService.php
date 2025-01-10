@@ -70,16 +70,16 @@ class CarAllocationService extends AllocationService
 
         // Create a query to retrieve a car lead based on the provided quote ID and filters.
         $carQuoteQuery = CarQuote::where('uuid', $quoteId)
-                        ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                        ->whereNotIn('source', $exemptedLeadSources)
-                        ->where('is_renewal_tier_email_sent', 0)
-                        ->where(function ($query) {
-                            $query->where(function ($q) {
-                                $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowDisabled();
-                            })->orWhere(function ($query) {
-                                $query->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                            });
-                        });
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', $exemptedLeadSources)
+            ->where('is_renewal_tier_email_sent', 0)
+            ->where(function ($query) {
+                $query->where(function ($q) {
+                    $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowDisabled();
+                })->orWhere(function ($query) {
+                    $query->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                });
+            });
 
         if (! $overrideAdvisorId) {
             $carQuoteQuery->whereNull('advisor_id');

@@ -207,6 +207,7 @@ class QuoteAllocation extends Command
             // Skip the child leads if the parent lead does not have an advisor
             if ($lead->isChild() && empty($lead->parent?->advisor_id)) {
                 info('Skipping Travel record for Quote Allocation with uuid: '.$lead->uuid.' as parent lead does not have an advisor');
+
                 continue;
             }
 
