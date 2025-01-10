@@ -53,9 +53,9 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             return false;
         }
 
-        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_HEALTH_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
-            info('Dtt is not enabled from cms');
+            info('DTT_HEALTH is not enabled from cms');
 
             return false;
         }
@@ -356,7 +356,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
         return $benefitsTypes;
     }
-
+    //DTT Temp Code
     private function rotateRevival($uuid)
     {
         $revivalRecord = DttRevival::where('uuid', $uuid)->first();
