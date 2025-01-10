@@ -82,6 +82,10 @@ class QuoteStatusService
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+        if (isset($updateQuote->quote_status_id) && ! empty($updateQuote->quote_status_id) && $updateQuote->quote_status_id == QuoteStatusEnum::NewLead) {
+            $updateQuote->quote_status_id = QuoteStatusEnum::FollowedUp;
+            $updateQuote->save();
+        }
         if (isset($updateQuote->quote_status_id) && ! empty($updateQuote->quote_status_id) && $updateQuote->quote_status_id == QuoteStatusEnum::FollowedUp) {
             $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
             $updateQuote->save();
