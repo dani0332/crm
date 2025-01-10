@@ -17,6 +17,7 @@ use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
+use App\Jobs\HomeSyncSALJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\QuoteFlowDetails;
@@ -233,14 +234,22 @@ class ApiController extends Controller
 
     public function homeSyncSAL(Request $request)
     {
+        $request->validate([
+            'quoteUID' => 'required|string', // Ensure quoteUID is present
+        ]);
+
         Log::info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
 
         try {
-            $response = app(HomeQuoteService::class)->syncSAL($request);
+            HomeSyncSALJob::dispatch($request->all());
 
-            Log::info('SAL sync completed successfully.', ['quoteUID' => $request->quoteUID]);
+            Log::info('SAL sync job dispatched.', ['quoteUID' => $request->quoteUID]);
 
-            return $response;
+            return response()->json([
+                'status' => 'success',
+                'message' => 'SAL sync job has been queued.',
+                'quoteUID' => $request->quoteUID,
+            ], 202);
         } catch (Exception $e) {
             Log::error('SAL sync failed.', [
                 'error' => $e->getMessage(),
