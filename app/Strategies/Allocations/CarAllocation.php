@@ -37,12 +37,6 @@ class CarAllocation implements Allocation
         try {
             $lead = $this->fetchLead();
 
-            if (! $lead) {
-                info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
-
-                return $this->carAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
-            }
-
             info('Processing record for Quote Allocation with uuid: '.$lead->uuid, [
                 'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
@@ -53,6 +47,12 @@ class CarAllocation implements Allocation
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
             ]);
+
+            if (! $lead) {
+                info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
+
+                return $this->carAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+            }
 
             if ($lead->isAllocationInProgress()) {
                 info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
