@@ -1251,7 +1251,7 @@ const viewPlanDetailsLoader = ref({});
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CLAIM HISTORY</dt>
-                <dd>{{ quote?.home_quote?.personal_belongings_value_id ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote?.home_quote?.has_claimed_losses ? 'Yes' : 'No' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
