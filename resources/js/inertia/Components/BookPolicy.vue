@@ -93,6 +93,7 @@ const dateToDMYWithTime = date => {
   return '';
 };
 
+const commissionErrorMessage = 'The commission amount you entered is outside the permitted range.';
 const bp = reactive({
   isEditing: false,
   isAllowedToUpdateCommission: true
@@ -214,22 +215,30 @@ watch(
 );
 
 const onUpdateBookPolicyDetails = isValid => {
-  if (!isValid) return;
+  if (!bp.isAllowedToUpdateCommission) {
+    notification.error({
+      title: commissionErrorMessage,
+      position: 'top',
+    });
+    return;
+  }
   showInsufficientPaymentAlert();
-  bpForm.post('/quotes/update-booking-policy', {
-    preserveScroll: true,
-    onSuccess: () => {
-      bp.isEditing = false;
-    },
-    onError: errors => {
-      Object.keys(errors).forEach(function (key) {
-        notification.error({
-          title: errors[key],
-          position: 'top',
+  if (isValid) {
+    bpForm.post('/quotes/update-booking-policy', {
+      preserveScroll: true,
+      onSuccess: () => {
+        bp.isEditing = false;
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
         });
-      });
-    },
-  });
+      },
+    });
+  }
 };
 
 const isAllowedToSendPolicy = ref(false);
@@ -907,9 +916,11 @@ onMounted(() => {
                         class="w-full"
                         :disabled="disableCommissionVatNotApplicable"
                       />
-                      <p v-if="!disableCommissionVatNotApplicable && !bp.isAllowedToUpdateCommission" class="text-error-500 dark:text-error-400">
-                        The commission amount you entered is outside the permitted range.
-                      </p>
+                      <div v-if="!disableCommissionVatNotApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
+                        <p class="text-error-500 dark:text-error-400">
+                          {{ commissionErrorMessage }}
+                        </p>
+                      </div>
                       <template #tooltip>
                         <span class="custom-tooltip-content">{{
                           commissionVatNotApplicableTooltip
@@ -925,9 +936,11 @@ onMounted(() => {
                       class="w-full"
                       :disabled="disableCommissionVatNotApplicable"
                     />
-                    <p v-if="!disableCommissionVatNotApplicable && !bp.isAllowedToUpdateCommission" class="text-error-500 dark:text-error-400">
-                        The commission amount you entered is outside the permitted range.
-                    </p>
+                    <div v-if="!disableCommissionVatNotApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
+                      <p class="text-error-500 dark:text-error-400">
+                        {{ commissionErrorMessage }}
+                      </p>
+                    </div>
                   </template>
                 </dd>
               </div>
@@ -973,9 +986,12 @@ onMounted(() => {
                         class="w-full"
                         :disabled="disableCommissionVatApplicable"
                       />
-                      <p v-if="!disableCommissionVatApplicable && !bp.isAllowedToUpdateCommission" class="text-error-500 dark:text-error-400">
-                        The commission amount you entered is outside the permitted range.
-                      </p>
+                      <div v-if="!disableCommissionVatApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
+                        <p class="text-error-500 dark:text-error-400">
+                          {{ commissionErrorMessage }}
+                        </p>
+                      </div>
+
                       <template #tooltip>
                         <span class="custom-tooltip-content">{{
                           commissionVatApplicableTooltip
@@ -991,9 +1007,11 @@ onMounted(() => {
                       class="w-full"
                       :disabled="disableCommissionVatApplicable"
                     />
-                    <p v-if="!disableCommissionVatApplicable && !bp.isAllowedToUpdateCommission" class="text-error-500 dark:text-error-400">
-                      The commission amount you entered is outside the permitted range.
-                    </p>
+                    <div v-if="!disableCommissionVatApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
+                      <p class="text-error-500 dark:text-error-400">
+                        {{ commissionErrorMessage }}
+                      </p>
+                    </div>
                   </template>
                 </dd>
               </div>
@@ -1004,7 +1022,6 @@ onMounted(() => {
                       class="border-b-2 border-dotted border-black uppercase"
                       >Total Commission</label
                     >
-
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.TOTAL_COMMISSION
@@ -1206,7 +1223,6 @@ onMounted(() => {
                   size="sm"
                   :loading="bpForm.processing"
                   type="submit"
-                  :disabled="!bp.isAllowedToUpdateCommission"
                 >
                   Update
                 </x-button>
@@ -1359,7 +1375,6 @@ onMounted(() => {
                     size="sm"
                     :loading="bpForm.processing"
                     type="submit"
-                    :disabled="!bp.isAllowedToUpdateCommission"
                   >
                     Update
                   </x-button>
