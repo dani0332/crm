@@ -66,9 +66,9 @@ class HomeEmailService extends BaseService
 
             if (empty($homeQuote->automated_flow_executed_at)) {
                 $homeQuote->automated_flow_executed_at = now();
-                $homeQuote->quote_status_id = QuoteStatusEnum::FollowedUp;
+                $homeQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $homeQuote->save();
-                $lead->quote_status_id = QuoteStatusEnum::FollowedUp;
+                $lead->quote_status_id = QuoteStatusEnum::Quoted;
                 $lead->save();
                 info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote Ref-ID: {$homeQuote->id} | Time: " . now());
                 info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: " . now());
