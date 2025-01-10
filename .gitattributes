@@ -1,5 +1,5 @@
 * text=auto
-/docker-local/entrypoint.sh eol=crlf 
+/docker-local/entrypoint.sh eol=lf
 *.css linguist-vendored
 *.scss linguist-vendored
 *.js linguist-vendored
