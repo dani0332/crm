@@ -103,12 +103,12 @@ class QuoteAllocation extends Command
                     ->orWhere(function ($q) {
                         $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowDisabled();
                     })->orWhere(function ($query) {
-                        $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                        $query->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
                     });
             })
             ->take($chunkSize);
 
-        info('leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
+        info('leads fetch query is : '.$leads->toRawSql());
 
         // Get the teamId once before the loop
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
@@ -117,7 +117,17 @@ class QuoteAllocation extends Command
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
-            info('Processing record for Quote Allocation with uuid: '.$lead->uuid);
+
+            info('Processing record for Quote Allocation with uuid: '.$lead->uuid, [
+                'uuid' => $lead->uuid,
+                'payment_status_id' => $lead->payment_status_id,
+                'source' => $lead->source,
+                'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+            ]);
 
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
@@ -160,6 +170,7 @@ class QuoteAllocation extends Command
                 'quote_status_id' => $lead->quote_status_id,
                 'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
                 'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'price_starting_from' => $lead->price_starting_from,
             ]);
             QuoteTypes::HEALTH->allocate(uuid: $lead->uuid);
             $processedRecords++;
@@ -196,9 +207,7 @@ class QuoteAllocation extends Command
             // Skip the child leads if the parent lead does not have an advisor
             if ($lead->isChild() && empty($lead->parent?->advisor_id)) {
                 info('Skipping Travel record for Quote Allocation with uuid: '.$lead->uuid.' as parent lead does not have an advisor');
-
                 continue;
-
             }
 
             info("Processing Travel record for Quote Allocation with uuid: {$lead->uuid}", [
@@ -208,6 +217,7 @@ class QuoteAllocation extends Command
                 'quote_status_id' => $lead->quote_status_id,
                 'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
                 'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'parent_quote_id' => $lead->parent_id,
             ]);
 
             // Only apply teamId if the payment status is AUTHORIZED
