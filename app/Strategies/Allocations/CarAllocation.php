@@ -37,6 +37,17 @@ class CarAllocation implements Allocation
         try {
             $lead = $this->fetchLead();
 
+            info('Processing record for Quote Allocation with uuid: '.$lead->uuid, [
+                'uuid' => $lead->uuid,
+                'payment_status_id' => $lead->payment_status_id,
+                'source' => $lead->source,
+                'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+            ]);
+
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
 
