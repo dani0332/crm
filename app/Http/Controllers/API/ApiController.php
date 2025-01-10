@@ -17,13 +17,13 @@ use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
+use App\Jobs\HomeSyncSALJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\QuoteFlowDetails;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\EmailStatusService;
-use App\Services\HomeQuoteService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
 use App\Services\QuoteStatusService;
@@ -67,7 +67,7 @@ class ApiController extends Controller
         try {
 
             // Log the incoming request parameters
-            info(self::class . 'assignLeads: request params as : ' . json_encode($request->all()));
+            info(self::class.'assignLeads: request params as : '.json_encode($request->all()));
 
             // Check if lead allocation endpoint is disabled
             if ($this->apiService->isLeadAllocationEndpointDisabled()) {
@@ -128,12 +128,12 @@ class ApiController extends Controller
         $flowType = $request->flowType;
         $quoteUID = $request->uuid;
         $flowId = $request->flowId ?? null;
-        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:" . now());
+        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
             ->first();
         if (! $workflow) {
-            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: " . now());
+            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
@@ -233,14 +233,22 @@ class ApiController extends Controller
 
     public function homeSyncSAL(Request $request)
     {
+        $request->validate([
+            'quoteUID' => 'required|string', // Ensure quoteUID is present
+        ]);
+
         Log::info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
 
         try {
-            $response = app(HomeQuoteService::class)->syncSAL($request);
+            HomeSyncSALJob::dispatch($request->all());
 
-            Log::info('SAL sync completed successfully.', ['quoteUID' => $request->quoteUID]);
+            Log::info('SAL sync job dispatched.', ['quoteUID' => $request->quoteUID]);
 
-            return $response;
+            return response()->json([
+                'status' => 'success',
+                'message' => 'SAL sync job has been queued.',
+                'quoteUID' => $request->quoteUID,
+            ], 202);
         } catch (Exception $e) {
             Log::error('SAL sync failed.', [
                 'error' => $e->getMessage(),

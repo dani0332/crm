@@ -9,14 +9,14 @@ use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\SendHomeOCBIntroEmailJob;
-use Carbon\Carbon;
 
 class PersonalQuoteObserver
 {
