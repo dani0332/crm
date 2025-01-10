@@ -10,6 +10,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
@@ -550,7 +551,6 @@ class SplitPaymentService
         if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
             return response()->json(['success' => true, 'payment_link' => $splitPayment->payment_link]);
         } else {
-
             $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 
@@ -558,7 +558,12 @@ class SplitPaymentService
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
-            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
+            $paymentMethodEndPoint = 'checkout';
+            if ( $payment->insuranceProvider->payment_gateway_id == PaymentGatewayIdEnum::TAP_PAYMENT_GATEWAY){
+                $paymentMethodEndPoint = 'tap';
+            }
+            
+            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.$paymentMethodEndPoint;
 
             $paymentParams = [
                 'code' => $payment->code.'-'.$splitPayment->sr_no,
