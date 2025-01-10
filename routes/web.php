@@ -2,6 +2,7 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
@@ -82,6 +83,10 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Models\CarQuote;
+use App\Models\Payment;
+use App\Models\PaymentSplits;
+use App\Repositories\PaymentRepository;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -719,3 +724,32 @@ Route::get('/add-batch-number', function () {
 //     }
 
 // });
+
+
+Route::get('tap-pay-checkout-api/{code}', function(){
+    $quoteTypeId = 1;
+    $quote = CarQuote::where('uuid', request()->code)->first();
+    $payment = Payment::where('code', $quote->code)->first();
+    $paymentSplits = PaymentSplits::where('code', $quote->code)->get();
+
+    $modelType = QuoteTypes::getName($quoteTypeId)->value;
+    // premium_authorized need to confirm this in case of broker cc payment we are targetting collection amount 
+    $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
+    $data = new \stdClass();
+    $data->modelType = $modelType;
+    $data->quote_id = $quote->id;
+    $data->plan_id = $payment->plan_id;
+    $data->payment_code = $payment->code;
+    $data->customer_id = $quote->customer_id;
+    $data->collection_amount = $collectionAmount;
+    $data->is_declined = 0;
+    $data->is_capture = 1;
+    $data->is_approved = 0;
+    $data->declined_reason = $payment->declined_reason;
+    $data->send_update_id = null;
+    $data->collection_type = $payment->collection_type;
+
+    app(PaymentRepository::class)->handlePaymentApprove($data);
+
+    echo "Payment Capture";
+});

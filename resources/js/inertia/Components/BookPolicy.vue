@@ -201,6 +201,8 @@ const bpForm = useForm({
     page.props?.bookPolicyDetails?.isPolicyCancelledOrPending,
   isPolicyCancelledOrPendingToolTtip:
     page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
+  isCommissionDisabled: page.props?.bookPolicyDetails?.isCommissionDisabled,
+  commissionTooltip: page.props?.bookPolicyDetails?.commissionTooltip,
 });
 
 let is_lacking_payment = ref(
@@ -367,6 +369,9 @@ let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {
   let toolTip = null;
+  if (bpForm.isCommissionDisabled){
+    return bpForm.commissionTooltip;
+  }
   if (bpForm.commission_vat_applicable > 0) {
     if (isLifeLead) {
       toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
@@ -389,6 +394,9 @@ const commissionVatNotApplicableTooltip = computed(() => {
 });
 const commissionVatApplicableTooltip = computed(() => {
   let toolTip = null;
+  if (bpForm.isCommissionDisabled){
+    return bpForm.commissionTooltip;
+  }
   if (bpForm.commission_vat_not_applicable > 0) {
     if (isLifeLead) {
       toolTip =
@@ -914,7 +922,7 @@ onMounted(() => {
                         @change="calculateCommission"
                         placeholder="Commission VAT NOT APPLICABLE"
                         class="w-full"
-                        :disabled="disableCommissionVatNotApplicable"
+                        :disabled="disableCommissionVatNotApplicable || bpForm.isCommissionDisabled"
                       />
                       <div v-if="!disableCommissionVatNotApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
                         <p class="text-error-500 dark:text-error-400">
@@ -984,7 +992,7 @@ onMounted(() => {
                         @change="calculateCommission"
                         placeholder="Commission VAT APPLICABLE"
                         class="w-full"
-                        :disabled="disableCommissionVatApplicable"
+                        :disabled="disableCommissionVatApplicable || bpForm.isCommissionDisabled"
                       />
                       <div v-if="!disableCommissionVatApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
                         <p class="text-error-500 dark:text-error-400">

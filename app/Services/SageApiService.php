@@ -10,6 +10,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
@@ -521,6 +522,29 @@ class SageApiService
         return $returnMessage;
     }
 
+    private function tapPaymentCalled($quoteTypeId, $quote, $payment, $paymentSplits){
+        $modelType = QuoteTypes::getName($quoteTypeId)->value;
+         // premium_authorized need to confirm this in case of broker cc payment we are targetting collection amount 
+        $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
+        $data = new \stdClass();
+        $data->modelType = $modelType;
+        $data->quote_id = $quote->id;
+        $data->plan_id = $payment->plan_id;
+        $data->payment_code = $payment->code;
+        $data->customer_id = $quote->customer_id;
+        $data->collection_amount = $collectionAmount;
+        $data->is_declined = 0;
+        $data->is_capture = 1;
+        $data->is_approved = 0;
+        $data->declined_reason = $payment->declined_reason;
+        $data->send_update_id = null;
+        $data->collection_type = $payment->collection_type;
+
+        app(PaymentRepository::class)->handlePaymentApprove($data);
+
+        echo "Payment Capture";
+    }
+
     public function postBookPolicyToSage($request, $quote)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
@@ -534,7 +558,6 @@ class SageApiService
             return $returnMessage;
         }
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
-
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
 
@@ -548,6 +571,10 @@ class SageApiService
 
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
 
+        // $this->tapPaymentCalled($quoteTypeId, $quote, $payment, $paymentSplits);
+
+        // dd("Tap Payment Transaction");
+        
         //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;

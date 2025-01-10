@@ -2,11 +2,14 @@
 
 namespace App\Traits;
 
+use App\Enums\CollectionTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
@@ -19,6 +22,7 @@ use App\Models\BrokerCommission;
 use App\Models\Customer;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
@@ -273,6 +277,9 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
         $bookPolicyDetails['isSplitFrequencyHidden'] = $isSplitFrequencyHidden;
         $bookPolicyDetails['brokerCommission'] = $brokerCommission;
+        [$isCommissionDisabled, $commissionTooltip] = $this->isCommissionDisabled($payment);
+        $bookPolicyDetails['isCommissionDisabled'] = $isCommissionDisabled;
+        $bookPolicyDetails['commissionTooltip'] = $commissionTooltip;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -768,5 +775,23 @@ trait GenericQueriesAllLobs
             $isSplitFrequencyHidden,
             $brokerCommission
         ];
+    }
+    private function isCommissionDisabled($payment)
+    {
+        if ($payment && $payment->collection_type == CollectionTypeEnum::INSURER) {
+            $paymentSplits = $payment->paymentSplits;
+            if ($paymentSplits->isNotEmpty()) {
+                $hasAnyCCPayment =  $paymentSplits->contains(function ($split) {
+                    return $split->payment_method == PaymentMethodsEnum::CreditCard;
+                });
+                if ($hasAnyCCPayment) {
+                    return [
+                        true,
+                        PaymentTooltip::DISABLED_COMMISSION
+                    ];
+                }
+            }
+        }
+        return [false, ''];
     }
 }

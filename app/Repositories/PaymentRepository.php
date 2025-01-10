@@ -444,7 +444,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
      * @return mixed The result of the master payment approval process.
      */
-    private function handlePaymentApprove($request)
+    public function handlePaymentApprove($request)
     {
         if ($request->is_capture) { //update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
