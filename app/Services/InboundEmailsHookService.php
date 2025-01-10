@@ -22,6 +22,8 @@ use Illuminate\Http\Response;
 
 class InboundEmailsHookService extends BaseService
 {
+    use Inboundable;
+
     private function verifyAuthorization()
     {
         $authUser = config('constants.INBOUND_WEBHOOK_BASIC_AUTH_USER_NAME');
@@ -99,11 +101,14 @@ class InboundEmailsHookService extends BaseService
             DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
             info(self::class." - handleCar: Car Quote Source updated for Revival for uuid {$lead->uuid}");
 
+            $this->handleCarAllocation($lead);
+
             return apiResponse([], Response::HTTP_OK, 'Car Source Updated Successfully!');
         } else {
             try {
                 info(self::class." - handleCar: Going to handle Car Quote for uuid {$lead->uuid}");
-                (new ApiService)->sicReplyToILA($lead);
+
+                $this->handleSicReplyToILA($lead);
 
                 return apiResponse([], Response::HTTP_OK, 'Car Handled for SIC to ILA Successfully!');
             } catch (\Exception $e) {
@@ -119,7 +124,7 @@ class InboundEmailsHookService extends BaseService
         info(self::class." - handleTravel: Going to Assign Advisor to uuid: {$lead->uuid}");
 
         if ($lead->advisor_id) {
-            info(self::class." - handleTravel: Lead already has an advisor assigned: {$lead->uuid}");
+            info(self::class." - handleTravel: Lead already has an advisor assigned: {$lead->uuid} - Advisor ID: {$lead->advisor_id}");
 
             return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
         }
@@ -128,7 +133,7 @@ class InboundEmailsHookService extends BaseService
 
         $response = QuoteTypes::TRAVEL->allocate($lead->uuid);
         $assignedAdvisorId = $response['advisorId'] ?? '';
-        info(self::class." - handleTravel: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+        info(self::class." - handleTravel: Allocation Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
