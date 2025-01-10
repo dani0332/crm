@@ -19,6 +19,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 class InboundEmailsHookService extends BaseService
 {
@@ -77,6 +78,7 @@ class InboundEmailsHookService extends BaseService
                 return match ($quoteType) {
                     QuoteTypes::CAR => $this->handleCar($lead),
                     QuoteTypes::TRAVEL => $this->handleTravel($lead),
+                    QuoteTypes::HEALTH => $this->handleHealth($lead),
                     default => apiResponse([], Response::HTTP_UNPROCESSABLE_ENTITY, "Unhandled quote type: {$quoteType->value}")
                 };
             }
@@ -133,6 +135,29 @@ class InboundEmailsHookService extends BaseService
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
 
+    private function handleHealth(HealthQuote $lead)
+    {
+        if ($lead->source == LeadSourceEnum::REVIVAL) {
+            Log::info(self::class." - handleHealth: Going to Assign Advisor to uuid: {$lead->uuid}");
+            if ($lead->advisor_id) {
+                Log::info(self::class." - handleHealth: Lead already has an advisor assigned: {$lead->uuid}");
+
+                return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
+            }
+
+            $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+            Log::info(self::class." - handleHealth: Car Quote Source updated for Revival for uuid {$lead->uuid} to REVIVAL_REPLIED");
+            DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+            Log::info(self::class." - handleHealth: Health Quote Source updated for Revival for uuid {$lead->uuid}");
+
+            info(self::class." - handleHealth: Allocation Process Executing for lead: {$lead->uuid}");
+            $response = QuoteTypes::HEALTH->allocate($lead->uuid);
+            $assignedAdvisorId = $response['advisorId'] ?? '';
+            info(self::class." - handleHealth: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+
+            return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
+        }
+    }
     public function handleBirdWebhook($request)
     {
         try {
@@ -243,7 +268,5 @@ class InboundEmailsHookService extends BaseService
             $msg = 'EmailStatus not found for msg_id: '.$messageId;
             info($msg);
         }
-
     }
-
 }
