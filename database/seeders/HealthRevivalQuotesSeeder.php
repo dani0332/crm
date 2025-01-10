@@ -160,5 +160,16 @@ class HealthRevivalQuotesSeeder extends Seeder
                 'updated_at' => now(),
             ]]);
         }
+
+        $dttHealthEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_ENABLED)->first();
+        if (! $dttHealthEnabled) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::DTT_HEALTH_ENABLED,
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

@@ -2,10 +2,13 @@ version: '3'
 
 services:
   laravel:
-    #container_name: imcrm${DOCKERENV}
-    #image: imcrm${DOCKERENV}:latest
-    image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:latest
+    #build:
+    # context: .
+    # dockerfile: Dockerfile
+    image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:Build.BuildId
     container_name: imcrm${DOCKERENV}
+    #image: imcrm${DOCKERENV}:latest
+
     environment:
       - DOPPLER_TOKEN
     ports:
@@ -24,7 +27,6 @@ volumes:
   uatlogs:
   uat2logs:
   testlogs:
-
 # Set BuildKit globally for the build
 x-docker-args:
   build:

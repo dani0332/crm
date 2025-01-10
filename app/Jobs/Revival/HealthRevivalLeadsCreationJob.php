@@ -49,9 +49,9 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
-        $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ENABLED)->value('value');
+        $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_HEALTH_ENABLED)->value('value');
         if ($dttEnabled == 0) {
-            info('HealthRevivalLeadsCreationJob - Dtt is not enabled from cms');
+            info('HealthRevivalLeadsCreationJob - DTT_HEALTH is not enabled from cms');
 
             return false;
         }

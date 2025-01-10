@@ -4,8 +4,7 @@ pool: 'PRD DockerBuild'
 variables:
   - group: prd
   - name: imageName
-    value: '$(imcrm):latest'
-
+    value: '$(imcrm):$(Build.BuildId)'
 steps:
   - checkout: self
     fetchDepth: 1
