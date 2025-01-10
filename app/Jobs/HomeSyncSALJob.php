@@ -19,7 +19,6 @@ class HomeSyncSALJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 120;
     public $backoff = 300;
-
     private array $requestData;
 
     public function __construct(array $requestData)
@@ -49,7 +48,7 @@ class HomeSyncSALJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
-        Log::error('HomeSyncSALJob failed for quoteUID: ' . ($this->requestData['quoteUID'] ?? 'N/A'), [
+        Log::error('HomeSyncSALJob failed for quoteUID: '.($this->requestData['quoteUID'] ?? 'N/A'), [
             'error' => $exception->getMessage(),
         ]);
     }
