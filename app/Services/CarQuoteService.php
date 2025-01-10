@@ -2251,7 +2251,7 @@ class CarQuoteService extends BaseService
             'customer_id' => $lead->customer_id,
         ])->first();
 
-        if (! $existingAddress) {
+        if (empty($existingAddress?->type)) {
             info('Sending address notification to customer for lead : '.$lead->uuid);
             // only trigger bird flow if address is not already added
             $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);
