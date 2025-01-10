@@ -26,6 +26,7 @@ trait Inboundable
 
         if ($lead->advisor_id) {
             info("handleSicReplyToILA: Lead already has an advisor assigned: {$lead->uuid} - Advisor ID: {$lead->advisor_id}");
+
             return;
         }
 
