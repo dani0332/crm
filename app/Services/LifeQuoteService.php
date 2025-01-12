@@ -2,25 +2,24 @@
 
 namespace App\Services;
 
-use DB;
-use Auth;
-use Carbon\Carbon;
-use App\Enums\QuoteTypes;
-use App\Models\LifeQuote;
-use App\Enums\QuoteTypeId;
-use App\Enums\quoteTypeCode;
-use App\Models\QuoteBatches;
-use Illuminate\Http\Request;
-use App\Models\PersonalQuote;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\DatabaseColumnsString;
+use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\GenericRequestEnum;
-use App\Traits\AddPremiumAllLobs;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
-use Illuminate\Support\Facades\Log;
-use App\Enums\DatabaseColumnsString;
+use App\Models\QuoteBatches;
+use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
+use Auth;
+use Carbon\Carbon;
+use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class LifeQuoteService extends BaseService
 {
