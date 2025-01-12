@@ -425,6 +425,8 @@ class CRUDService extends BaseService
             }
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::GMRenewalAdvisor]);
+        } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Life)) {
+            $query->whereIn('r.name', [RolesEnum::LifeAdvisor]);
         } else {
             $query->whereIn('r.name', [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR']);
         }

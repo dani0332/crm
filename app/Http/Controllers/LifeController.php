@@ -2,25 +2,50 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\GenericRequestEnum;
+use App\Models\Emirate;
+use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\AMLStatusCode;
+use App\Enums\quoteTypeCode;
+use Illuminate\Http\Request;
+use Inertia\ResponseFactory;
+use App\Enums\PaymentTooltip;
+use App\Services\CRUDService;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Http\Requests\StoreLifeRequest;
-use App\Services\CRUDService;
-use App\Services\DropdownSourceService;
-use App\Services\LifeQuoteService;
-use App\Services\LookupService;
-use App\Services\QuoteDocumentService;
-use Illuminate\Http\Request;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\TravelQuoteEnum;
 use Illuminate\Support\Carbon;
-use Inertia\ResponseFactory;
+use App\Enums\CustomerTypeEnum;
+use App\Services\LookupService;
+use App\Services\CentralService;
+use App\Enums\GenericRequestEnum;
+use App\Models\ApplicationStorage;
+use App\Services\LifeQuoteService;
+use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Repositories\LookupRepository;
+use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
+use App\Http\Requests\StoreLifeRequest;
+use App\Repositories\PaymentRepository;
+use App\Services\DropdownSourceService;
+use App\Repositories\NationalityRepository;
+use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
+use App\Repositories\CustomerMembersRepository;
+use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\InsuranceProviderRepository;
+use App\Services\Reports\RenewalBatchReportService;
 
 class LifeController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     protected $lifeQuoteService;
     protected $lookupService;
     protected $crudService;
@@ -49,23 +74,19 @@ class LifeController extends Controller
      */
     public function index(Request $request)
     {
-        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $gridData = $this->lifeQuoteService->getGridData($this->genericModel, $request);
-        $quotes = $gridData->simplePaginate(10)->withQueryString();
-
+        $lifeQuotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('LifeQuote/Index', [
-            'quotes' => $quotes,
+            'quotes' => $lifeQuotes,
             'dropdownSource' => $dropdownSource,
             'advisors' => $advisors,
-            'permissions' => [
-                'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
-                'lifeAdvisor' => auth()->user()->hasRole(RolesEnum::LifeAdvisor),
-                'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LifeManager) ? true : false,
-                'isLeadPool' => auth()->user()->isLeadPool(),
-                'isManagerORDeputy' => auth()->user()->isManagerOrDeputy(),
-            ],
+            'renewalBatches' => $renewalBatches,
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -145,17 +166,34 @@ class LifeController extends Controller
 
     public function show($uuid)
     {
+        /* Start - Temporarily adding for correcting historic data  */
         $quote = $this->lifeQuoteService->getEntity($uuid);
         abort_if(! $quote, 404);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
+        /* End - Temporarily adding for correcting historic data  */
+
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($quote->id);
+        $payments = $paymentEntityModel->payments;
+
         $quoteType = strtolower($this->genericModel->modelType);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $quote->code);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        $advisors->load(['roles']);
 
-        $isRenewalUser = false;
-        $renewalAdvisors = $this->lifeQuoteService->getRenewalAdvisors();
         $this->lifeQuoteService->fillData();
 
-        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::LIFE->id(), $quoteStatuses);
+
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            })->values();
+        }
+
         $fields = $this->lifeQuoteService->fieldsToDisplay($this->lifeQuoteService->getFieldsToShow(), $quote);
         $customTitles = [];
         foreach ($fields as $property => $value) {
@@ -166,54 +204,85 @@ class LifeController extends Controller
             }
         }
 
-        $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->lifeQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = $this->lifeQuoteService->getQuoteDocuments($this->genericModel->modelType, $quote->id);
-        $displaySendPolicyButton = $this->lifeQuoteService->displaySendPolicyButton($quote, $quoteDocuments, self::TYPE_ID);
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Life);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         $customerAdditionalContacts = $this->lifeQuoteService->getAdditionalContacts($quote->customer_id, $quote->mobile_no);
         $activities = $this->lifeQuoteService->getActivityByLeadId($quote->id, strtolower($this->genericModel->modelType));
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::LIFE->id(), $quote->id);
+        $nationalities = NationalityRepository::withActive()->get();
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+        $membersDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name);
+        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::LIFE->id());
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
 
-        if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
-            unset($fields['id']);
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quote);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Life);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+
         return inertia('LifeQuote/Show', [
-            'quote' => $quote,
-            'quoteType' => QuoteTypes::LIFE,
-            'fieldsToDisplay' => $fields,
-            'activities' => $activities,
-            'modelType' => $this->genericModel->modelType,
-            'dropdownSource' => $dropdownSource,
-            'leadStatuses' => $dropdownSource['quote_status_id'],
-            'advisors' => $advisors,
-            'renewalAdvisors' => $renewalAdvisors,
-            'allowedDuplicateLOB' => $allowedDuplicateLOB,
-            'assignmentTypes' => $assignmentTypes,
-            'genderOptions' => $this->crudService->getGenderOptions(),
-            'lostReasons' => $this->lookupService->getLostReasons(),
-            'quoteDocuments' => $quoteDocuments,
             'documentTypes' => $documentTypes,
-            'cdnPath' => $cdnPath,
-            'memberCategories' => $this->lookupService->getMemberCategories(),
-            'emailStatuses' => $this->lifeQuoteService->getEmailStatus(self::TYPE_ID, $quote->id),
-            'isAdmin' => auth()->user()->isAdmin(),
+            'storageUrl' => storageUrl(),
+            'quoteType' => QuoteTypes::LIFE,
+            'quoteTypeId' => QuoteTypeId::Life,
+            'quoteStatuses' => $quoteStatuses,
+            'quote' => $quote,
+            'amlStatusName' => $amlStatusName,
+            'record' => $quote,
+            'activities' => $activities,
+            'advisors' => $advisors,
+            'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'customerAdditionalContacts' => $customerAdditionalContacts,
+            'lostReasons' => $this->lookupService->getLostReasons(),
+            'modelType' => QuoteTypes::LIFE,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
+            'embeddedProducts' => $embeddedProducts,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'nationalities' => $nationalities,
+            'memberRelations' => $memberRelations,
+            'membersDetails' => $membersDetails,
+            'industryType' => $industryType,
+            'emirates' => $emirates,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
+            'paymentMethods' => (new LookupService)->getPaymentMethods(),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'quoteRequest' => $paymentEntityModel,
+            'payments' => $payments,
+            'insuranceProviders' => $insuranceProviders,
             'permissions' => [
-                'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
-                'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
-                'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-                'displaySendPolicyButton' => $displaySendPolicyButton,
-                'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
-                'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
-                'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
-                'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
-                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
             ],
+            'enums' => [
+                'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+            ],
+            'bookPolicyDetails' => $bookPolicyDetails,
+            'vatPercentage' => $vatPercentage,
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($payments),
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
         ]);
     }

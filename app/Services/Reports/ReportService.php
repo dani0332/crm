@@ -604,7 +604,7 @@ class ReportService extends BaseService
             quoteTypeCode::Health => ['table' => 'health_quote_request', 'quoteTypeId' => null],
             quoteTypeCode::Business => ['table' => 'business_quote_request', 'quoteTypeId' => null],
             quoteTypeCode::Travel => ['table' => 'travel_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Life => ['table' => 'life_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Life => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Life],
             quoteTypeCode::Pet => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Pet],
             quoteTypeCode::Yacht => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Yacht],
             quoteTypeCode::Bike => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],

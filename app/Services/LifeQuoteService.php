@@ -2,22 +2,25 @@
 
 namespace App\Services;
 
-use App\Enums\DatabaseColumnsString;
-use App\Enums\GenericRequestEnum;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
-use App\Models\LifeQuote;
-use App\Models\PersonalQuoteDetail;
-use App\Models\QuoteBatches;
-use App\Traits\AddPremiumAllLobs;
-use App\Traits\RolePermissionConditions;
+use DB;
 use Auth;
 use Carbon\Carbon;
-use DB;
+use App\Enums\QuoteTypes;
+use App\Models\LifeQuote;
+use App\Enums\QuoteTypeId;
+use App\Enums\quoteTypeCode;
+use App\Models\QuoteBatches;
 use Illuminate\Http\Request;
+use App\Models\PersonalQuote;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
+use App\Traits\AddPremiumAllLobs;
+use App\Models\PersonalQuoteDetail;
 use Illuminate\Support\Facades\Log;
+use App\Enums\DatabaseColumnsString;
+use App\Traits\RolePermissionConditions;
 
 class LifeQuoteService extends BaseService
 {
@@ -31,25 +34,30 @@ class LifeQuoteService extends BaseService
     public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
-        $this->query = DB::table('life_quote_request as lqr')
+        $this->query = DB::table('personal_quotes as pq')
             ->select(
-                'lqr.id',
-                'lqr.uuid',
-                'lqr.code',
-                DB::raw('DATE_FORMAT(lqr.created_at, "%d-%m-%y %H:%i") as created_at'),
-                DB::raw('DATE_FORMAT(lqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
-                'lqr.first_name',
-                'lqr.last_name',
-                'lqr.email',
-                'lqr.mobile_no',
-                'lqr.gender',
-                DB::raw('DATE_FORMAT(lqr.dob, "%d-%m-%Y") as dob'),
+                'pq.id',
+                'pq.uuid',
+                'pq.code',
+                DB::raw('DATE_FORMAT(pq.created_at, "%d-%m-%y %H:%i") as created_at'),
+                DB::raw('DATE_FORMAT(pq.updated_at, "%d-%m-%y %H:%i") as updated_at'),
+                'pq.first_name',
+                'pq.last_name',
+                'pq.email',
+                'pq.mobile_no',
+                'pq.gender',
+                'pq.aml_status',
+                'pq.transaction_approved_at',
+                DB::raw('DATE_FORMAT(pq.dob, "%d-%m-%Y") as dob'),
                 'lqr.is_smoker',
                 'lqr.others_info',
                 'lqr.sum_insured_value',
-                'lqr.source',
-                'lqr.premium',
-                'lqr.policy_number',
+                'pq.source',
+                'pq.premium',
+                'pq.policy_number',
+                'pq.price_with_vat',
+                'pq.price_vat_applicable',
+                'pq.price_vat_not_applicable',
                 'lqr.sum_insured_currency_id',
                 'ct.TEXT AS sum_insured_currency_id_text',
                 'lqr.marital_status_id',
@@ -60,52 +68,85 @@ class LifeQuoteService extends BaseService
                 'lc.TEXT AS children_id_text',
                 'lqr.tenure_of_insurance_id',
                 'lit.TEXT AS tenure_of_insurance_id_text',
-                'lqr.quote_status_id',
+                'pq.quote_status_id',
                 'qs.text as quote_status_id_text',
-                'lqr.advisor_id',
+                'pq.advisor_id',
                 'u.name as advisor_id_text',
                 'lqr.number_of_years_id',
                 'liy.TEXT AS number_of_years_id_text',
-                'lqr.nationality_id',
+                'pq.nationality_id',
                 'n.TEXT AS nationality_id_text',
-                DB::raw('DATE_FORMAT(lqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
-                'lqrd.transapp_code',
-                'lqrd.notes',
+                DB::raw('DATE_FORMAT(pqd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
+                'pqd.transapp_code',
                 'ls.text as lost_reason',
                 'lqr.previous_quote_id',
-                'lqr.renewal_batch',
-                'lqr.previous_quote_policy_number',
-                'lqr.policy_expiry_date',
-                'lqr.device',
-                DB::raw('DATE_FORMAT(lqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
-                'lqr.policy_start_date',
-                'lqr.previous_quote_policy_premium',
-                'lqr.customer_id',
-                'lqr.parent_duplicate_quote_id',
-                'lqr.risk_score',
-                'lqr.kyc_decision',
-                'lqr.insurance_provider_id',
+                'pq.renewal_batch',
+                'pq.previous_quote_policy_number',
+                'pq.policy_expiry_date',
+                'pq.device',
+                DB::raw('DATE_FORMAT(pq.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+                'pq.policy_start_date',
+                'pq.previous_quote_policy_premium',
+                'pq.customer_id',
+                'pq.parent_duplicate_quote_id',
+                'pq.risk_score',
+                'pq.kyc_decision',
+                'pq.insurance_provider_id',
                 'ip.text AS insurance_provider_text',
-                'lqr.insly_migrated',
-                'lqr.policy_issuance_status_id',
-                'lqr.insurer_quote_number',
-                'lqr.policy_issuance_date',
-                'lqrd.insly_id',
+                'pq.insly_migrated',
+                'pq.policy_issuance_status_id',
+                'pq.insurer_quote_number',
+                'pq.policy_issuance_date',
+                'pqd.insly_id',
                 'lu.text as transaction_type_text',
+                'u1.name as previous_advisor_id_text',
+                'c.insured_first_name',
+                'c.insured_last_name',
+                'c.emirates_id_number',
+                'c.emirates_id_expiry_date',
+                'c.receive_marketing_updates',
+                'qrem.entity_id',
+                'ent.code as entity_code',
+                'ent.trade_license_no',
+                'ent.company_name',
+                'ent.company_address',
+                'qrem.entity_type_code',
+                'ent.industry_type_code',
+                'ent.emirate_of_registration_id',
+                'pqd.lost_reason_id',
+                DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Life.' AND quote_request_id = pq.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
+
             )
-            ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
+            ->leftJoin('life_quote_request as lqr', 'lqr.personal_quote_id', 'pq.id')
+            ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', 'pq.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
-            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'lqrd.lost_reason_id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqd.lost_reason_id')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'lqr.marital_status_id')
             ->leftJoin('life_insurance_purpose as lip', 'lip.id', '=', 'lqr.purpose_of_insurance_id')
             ->leftJoin('life_children as lc', 'lc.id', '=', 'lqr.children_id')
             ->leftJoin('life_insurance_tenure as lit', 'lit.id', '=', 'lqr.tenure_of_insurance_id')
             ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
-            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id')
-            ->leftJoin('lookups as lu', 'lu.id', '=', 'lqr.transaction_type_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'lqr.insurance_provider_id');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'pq.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'pq.advisor_id')
+            ->leftJoin('users as u1', 'u1.id', '=', 'pqd.previous_advisor_id')
+            ->leftJoin('nationality as n', 'n.id', '=', 'pq.nationality_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'pq.transaction_type_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('renewal_batches as rb', 'rb.id', '=', 'pq.renewal_batch_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'pq.payment_status_id')
+            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
+            ->leftJoin('customer as c', 'pq.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Life));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'pq.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            ->where('pq.quote_type_id', QuoteTypeId::Life);
     }
 
     public function saveLifeQuote(Request $request)
@@ -152,7 +193,48 @@ class LifeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return LifeQuote::where('id', $id)->first();
+        return PersonalQuote::where('id', $id)->with([
+            'advisor',
+            'quoteStatus',
+            'nationality',
+            'lifeQuote' => function ($q) {
+                $q->with([
+                    'children',
+                    'currency',
+                    'maritalStatus',
+                    'purposeOfInsurance',
+                    'insuranceTenure',
+                    'numberOfYears',
+                ]);
+            },
+            'quoteDetail.lostReason:id,text',
+            'quoteDetail.previousAdvisor',
+            'paymentStatus',
+            'customer.additionalContactInfo',
+            'transactionType',
+            'insuranceProvider',
+            'payments' => function ($q) {
+                $q->with([
+                    'paymentMethod',
+                    'paymentStatus',
+                    'paymentSplits' => function ($q) {
+                        $q->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                            'processJob',
+                        ])->orderBy('sr_no', 'asc');
+                    },
+                ]);
+            },
+            'documents' => function ($q) {
+                $q->with('createdBy')->orderBy('created_at', 'desc');
+            },
+            'quoteRequestEntityMapping' => function ($entityMapping) {
+                $entityMapping->with('entity');
+            },
+        ])->first();
     }
 
     public function getSelectedLostReason($id)
@@ -175,7 +257,7 @@ class LifeQuoteService extends BaseService
 
     public function getLeadsForAssignment()
     {
-        return LifeQuote::orderBy('created_at', 'desc')->get();
+        return PersonalQuote::where('quote_type_id', QuoteTypeId::Life)->orderBy('created_at', 'desc')->get();
     }
 
     public function getGridData($model, $request)
@@ -193,71 +275,71 @@ class LifeQuoteService extends BaseService
         } else {
             $searchProperties = $model->searchProperties;
         }
-        // if ($request->ajax()) {
+
         if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
                 empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
-            $this->query->where('lqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
+            $this->query->where('pq.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween('lqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            $this->query->whereBetween('pqd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-            $this->query->whereBetween('lqr.created_at', [$dateFrom, $dateTo]);
+            $this->query->whereBetween('pq.created_at', [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $this->query->whereBetween('pqd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (Auth::user()->isSpecificTeamAdvisor('Life')) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('lqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('pq.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         if (isset($request->code) && $request->code != '') {
-            $this->query->where('lqr.code', $request->code);
+            $this->query->where('pq.code', $request->code);
         }
         if (isset($request->first_name) && $request->first_name != '') {
-            $this->query->where('lqr.first_name', $request->first_name);
+            $this->query->where('pq.first_name', $request->first_name);
         }
         if (isset($request->last_name) && $request->last_name != '') {
-            $this->query->where('lqr.last_name', $request->last_name);
+            $this->query->where('pq.last_name', $request->last_name);
         }
         if (isset($request->email) && $request->email != '') {
-            $this->query->where('lqr.email', $request->email);
+            $this->query->where('pq.email', $request->email);
         }
         if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $this->query->where('lqr.mobile_no', $request->mobile_no);
+            $this->query->where('pq.mobile_no', $request->mobile_no);
         }
         if (isset($request->policy_number) && $request->policy_number != '') {
-            $this->query->where('lqr.policy_number', $request->policy_number);
+            $this->query->where('pq.policy_number', $request->policy_number);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('lqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where('pq.previous_quote_policy_number', $request->previous_quote_policy_number);
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('lqr.renewal_batch', $request->renewal_batch);
+            $this->query->where('pq.renewal_batch', $request->renewal_batch);
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('lqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+            $this->query->whereBetween('pq.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $this->query->where('lqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+            $this->query->where('pq.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
 
-        $this->whereBasedOnRole($this->query, 'lqr');
+        $this->whereBasedOnRole($this->query, 'pq');
 
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == GenericRequestEnum::Yes) {
-                $this->query->whereNotNull('lqr.previous_quote_policy_number');
+                $this->query->whereNotNull('pq.previous_quote_policy_number');
             }
             if ($request->is_renewal == GenericRequestEnum::No) {
-                $this->query->whereNull('lqr.previous_quote_policy_number');
+                $this->query->whereNull('pq.previous_quote_policy_number');
             }
         }
         foreach ($searchProperties as $item) {
@@ -281,12 +363,11 @@ class LifeQuoteService extends BaseService
                 }
             }
         }
-        // }
 
         if (isset($request->sortBy) && $request->sortBy != '') {
             return $this->query->orderBy($request->sortBy, $request->sortType);
         } else {
-            return $this->query->orderBy('lqr.created_at', 'DESC');
+            return $this->query->orderBy('pq.created_at', 'DESC');
         }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -296,29 +377,29 @@ class LifeQuoteService extends BaseService
             $isAdmin = Auth::user()->hasRole('ADMIN');
             if ($isAdmin || $isManagerORDeputy == '1') {
                 if ($column == 6) {
-                    $column = 'lqr.created_at';
+                    $column = 'pq.created_at';
                 }
                 if ($column == 7) {
-                    $column = 'lqr.updated_at';
+                    $column = 'pq.updated_at';
                 }
                 if ($column == 8) {
-                    $column = 'lqrd.next_followup_date';
+                    $column = 'pqd.next_followup_date';
                 }
             } else {
                 if ($column == 5) {
-                    $column = 'lqr.created_at';
+                    $column = 'pq.created_at';
                 }
                 if ($column == 6) {
-                    $column = 'lqr.updated_at';
+                    $column = 'pq.updated_at';
                 }
                 if ($column == 7) {
-                    $column = 'lqrd.next_followup_date';
+                    $column = 'pqd.next_followup_date';
                 }
             }
 
             return $this->query->orderBy($column, $direction);
         } else {
-            return $this->query->orderBy('lqr.created_at', 'DESC');
+            return $this->query->orderBy('pq.created_at', 'DESC');
         }
     }
 
@@ -368,14 +449,14 @@ class LifeQuoteService extends BaseService
                 $title = 'Previous Quote ID';
                 break;
             default:
-                return 'lqr';
+                return 'pq';
                 break;
         }
     }
 
     public function updateLifeQuote(Request $request, $id)
     {
-        $lifeQuote = LifeQuote::where('uuid', $id)->first();
+        $lifeQuote = PersonalQuote::where('uuid', $id)->first();
         $lifeQuote->first_name = $request->first_name;
         $lifeQuote->last_name = $request->last_name;
         $lifeQuote->dob = $request->dob;
@@ -401,32 +482,32 @@ class LifeQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $query = DB::table('life_quote_request as lqr')
+        $query = DB::table('life_quote_request as pq')
             ->select(
-                'lqr.id',
-                'lqr.uuid',
-                'lqr.first_name',
-                'lqr.last_name',
-                'lqr.code',
-                'lqr.created_at',
+                'pq.id',
+                'pq.uuid',
+                'pq.first_name',
+                'pq.last_name',
+                'pq.code',
+                'pq.created_at',
                 'u.name AS advisor_name',
                 DB::raw("'Life' as lead_type"),
                 'u.id as advisor_id',
                 'qs.text as lead_status',
-                'lqrd.next_followup_date as nextFollowupDate',
+                'pqd.next_followup_date as nextFollowupDate',
             )
-            ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
-            ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
+            ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', '=', 'pq.id')
+            ->leftJoin('users as u', 'u.id', '=', 'pq.advisor_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'pq.quote_status_id')
             ->orderBy('advisor_id', 'ASC');
         if (! empty($CDBID)) {
-            $query->where('lqr.id', '=', $CDBID);
+            $query->where('pq.id', '=', $CDBID);
         }
         if (! empty($email)) {
-            $query->where('lqr.email', '=', $email);
+            $query->where('pq.email', '=', $email);
         }
         if (! empty($mobile_no)) {
-            $query->where('lqr.mobile_no', '=', $mobile_no);
+            $query->where('pq.mobile_no', '=', $mobile_no);
         }
 
         return $query;
@@ -592,7 +673,7 @@ class LifeQuoteService extends BaseService
 
     public function getDuplicateEntityByCode($code)
     {
-        return LifeQuote::where('parent_duplicate_quote_id', $code)->first();
+        return PersonalQuote::where('parent_duplicate_quote_id', $code)->first();
     }
 
     public function processManualLeadAssignment($request): array
@@ -617,7 +698,7 @@ class LifeQuoteService extends BaseService
 
     public function getEntityPlainByUUID($uuid)
     {
-        return LifeQuote::where('uuid', $uuid)->first();
+        return PersonalQuote::where('uuid', $uuid)->first();
     }
 
     public function validateRequest($request)

@@ -5,6 +5,7 @@ defineProps({
   renewalBatches: Array,
   advisors: Array,
   authorizedDays: Number,
+  dropdownSource: Object,
 });
 
 const page = usePage();
@@ -120,13 +121,26 @@ const tableHeader = reactive([
 ]);
 
 const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
+  let options = page.props.advisors.map(advisor => ({
     value: advisor.id,
-    label: advisor.roles[0].name
-      ? advisor.name + ' - ' + advisor.roles[0]?.name
-      : advisor.name,
+    label: advisor.name,
+  }));
+
+  options.push({
+    value: '-1',
+    label: 'UnAssigned',
+  });
+
+  return options;
+});
+
+const leadStatuses = computed(() => {
+  return page.props.dropdownSource.quote_status_id.map(status => ({
+    value: status.id,
+    label: status.text,
   }));
 });
+
 
 const renewalBatchOptions = computed(() => {
   return page.props.renewalBatches.map(batch => ({
@@ -490,12 +504,7 @@ watch(
             v-model="filters.quote_status_id"
             name="quote_status_id"
             placeholder="Search by Lead Status"
-            :options="
-              quoteStatuses.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
+            :options="leadStatuses"
           />
         </x-field>
         <x-field label="Policy Expiry Start Date">
