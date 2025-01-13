@@ -359,7 +359,7 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div style="margin-top: 24px">
+                                {{-- <div style="margin-top: 24px">
                                     <a href="{{ $data['quote_declaration_link'] }}" target="_blank"
                                         class="sm-p-5_5px_17_5px sm-max-w-full"
                                         style="box-sizing: border-box; display: inline-block; width: 100%; max-width: 230px; border-radius: 12px; background-color: #FF7700; padding: 10.5px 17.5px; text-align: center; font-size: 14px; color: #fff; text-decoration-line: none">
@@ -389,7 +389,7 @@
                                             Upload document(s)
                                         </p>
                                     </a>
-                                </div>
+                                </div> --}}
                                 <p class="dark-text-slate-200 sm-text-12px"
                                     style="margin-top: 16px; margin-bottom: 16px; font-family: inherit; font-size: 14px; color: #333333; line-height: 18px">
                                     Thank you for choosing InsuranceMarket.ae.<br>
