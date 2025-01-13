@@ -279,7 +279,6 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['brokerCommission'] = $brokerCommission;
         $bookPolicyDetails['isGIGInsuranceProvider'] = $isGIGInsuranceProvider;
         [$isCommissionDisabled, $commissionTooltip] = $this->isCommissionDisabled($payment);
-        dd($isCommissionDisabled, $commissionTooltip);
         $bookPolicyDetails['isCommissionDisabled'] = $isCommissionDisabled;
         $bookPolicyDetails['commissionTooltip'] = $commissionTooltip;
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
