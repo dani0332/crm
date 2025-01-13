@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
@@ -20,9 +21,8 @@ use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
-use App\Models\LifeQuote;
+use Illuminate\Support\Facades\Log;
 
 class LifeQuoteService extends BaseService
 {
@@ -483,7 +483,7 @@ class LifeQuoteService extends BaseService
             $quote = PersonalQuote::where('uuid', $id)->first();
 
             //check the columns to be updated in personal quotes.
-            $quoteData = Arr::only($data, (new PersonalQuote())->allowedColumns());
+            $quoteData = Arr::only($data, (new PersonalQuote)->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
             $quote->update($quoteData);
 
