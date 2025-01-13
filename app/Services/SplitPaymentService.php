@@ -636,7 +636,8 @@ class SplitPaymentService
         $paymentSplit = PaymentSplits::find($splitPaymentId);
         info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Processing split payment approval started is from job: '.($isFromJob ? 'true' : 'false'));
 
-        $sendUpdateId = $paymentSplit->payment->send_update_log_id;
+        $payment = $paymentSplit->payment;
+        $sendUpdateId = $payment->send_update_log_id;
         $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
         $maxRetries = 2;
 
@@ -711,9 +712,10 @@ class SplitPaymentService
             }
 
             $existingReceipts = QuoteDocument::where(['payment_split_id' => $splitPaymentId, 'document_type_text' => DocumentTypeEnum::RECEIPT])->get();
-            if ($existingReceipts->count() === 0 && $isFromJob) {
+            if ($existingReceipts->count() === 0 && $isFromJob && $payment->collection_type == CollectionTypeEnum::BROKER) {
                 $this->createReceipt($modelType, $quoteId, $paymentSplit, $sendUpdateId, $isFromJob);
             }
+            
         }
 
         if (! $paymentSplit->payment->is_approved &&
