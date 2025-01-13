@@ -110,8 +110,8 @@ const isDisbaled =
 const trimOptions = ref([]);
 
 const validateCompanyCar = () => {
-  const filteredCarMake = props.dropdownSource.car_make_id.filter(item => item.id === quoteForm.car_make_id);
-  if (filteredCarMake && filteredCarMake[0]?.is_commercial == 1) {
+  const filteredCarModel = props.dropdownSource.car_model_id.filter(item => item.id === quoteForm.car_model_id);
+  if (filteredCarModel && filteredCarModel[0]?.is_commercial == 1) {
     quoteForm.vehicle_use = carVehicleUseEnum.COMMERCIAL;
     isCommercialCar.value = true;
   } else {
@@ -120,11 +120,6 @@ const validateCompanyCar = () => {
 }
 
 const getCarModel = reset => {
-
-  if (isEdit) {
-    validateCompanyCar();
-  }
-  
   if (reset) {
     quoteForm.cylinder = null;
     quoteForm.seat_capacity = null;
@@ -140,6 +135,8 @@ const getCarModel = reset => {
 };
 
 const getModelDetails = onchange => {
+
+  validateCompanyCar();
   axios
     .get(`/getCarModelDetails?car_model_id=${quoteForm.car_model_id}`)
     .then(({ data }) => {
@@ -246,7 +243,6 @@ const clearFormValues = () => {
 
 onMounted(() => {
   setCarMakeAndModalValues();
-  validateCompanyCar();
 });
 
 const setCarMakeAndModalValues = () => {

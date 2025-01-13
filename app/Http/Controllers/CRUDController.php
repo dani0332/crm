@@ -2258,7 +2258,7 @@ class CRUDController extends Controller
      */
     private function getCarMakeDropdown()
     {
-        return CarMake::select('id', 'text', 'code', 'is_commercial')->where('is_active', true)->get();
+        return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
     }
 
     public function riskRatingDetails($quoteType, $uuid)
