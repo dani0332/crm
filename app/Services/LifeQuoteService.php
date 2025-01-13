@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
@@ -20,7 +21,6 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Enums\RolesEnum;
 
 class LifeQuoteService extends BaseService
 {
