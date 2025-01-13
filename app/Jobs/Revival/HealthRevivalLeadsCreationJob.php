@@ -202,14 +202,16 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 if ($response == 201) {
                     info($logPrefix.'ParentLead - '.$this->lead->uuid.' - childLead - '.$capiResponse->quoteUID.' - emailSent - '.$emailData->customerEmail);
 
-                    $dtt_revival = DttRevival::create([
-                        'quote_type_id' => QuoteTypes::HEALTH->id(),
-                        'quote_id' => $healthQuote->id,
-                        'uuid' => $capiResponse->quoteUID,
-                        'revival_quote_batch_id' => $quoteBatch->id,
-                        'email_sent' => true,
-                        'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
-                    ]);
+                    $dtt_revival = DttRevival::firstOrCreate(
+                        [
+                            'quote_type_id' => QuoteTypes::HEALTH->id(),
+                            'quote_id' => $healthQuote->id,
+                            'uuid' => $capiResponse->quoteUID, ],
+                        [
+                            'revival_quote_batch_id' => $quoteBatch->id,
+                            'email_sent' => true,
+                            'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
+                        ]);
                     //DTT Temp Code
                     $dtt_revival->update(['created_at' => Carbon::now()->subDays(2)->toDateString()]);
                     // update child lead
