@@ -39,7 +39,7 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  typeFilters: {
+  userBLStatuses: {
     type: Array,
     default: () => [],
   },
@@ -362,7 +362,7 @@ async function fetchData() {
 }
 
 const filters = reactive({
-  type: null,
+  userBlStatus: null,
 });
 
 function onReset() {
@@ -552,9 +552,9 @@ onMounted(() => {
         <x-field label="Buy Lead Status of Users" required>
           <x-select
             placeholder="Select Status"
-            :options="typeFilters || []"
+            :options="userBLStatuses || []"
             filterable
-            v-model="filters.type"
+            v-model="filters.userBlStatus"
             :rules="[isRequired]"
           ></x-select>
         </x-field>

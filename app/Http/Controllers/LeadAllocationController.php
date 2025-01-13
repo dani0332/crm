@@ -52,9 +52,9 @@ class LeadAllocationController extends Controller
             $unAvailableUsers = 0;
             $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('LEAD_ALLOCATION_JOB_SWITCH');
             $data = $this->leadAllocationService->getGridData();
-            if (request()->has('type') && request('type') !== LeadAllocationUserBLStatusFiltersEnum::ALL->value) {
-                $type = LeadAllocationUserBLStatusFiltersEnum::from(request('type'));
-                $data = $type->applyFilter($data);
+            if (request()->has('userBlStatus') && request('userBlStatus') !== LeadAllocationUserBLStatusFiltersEnum::ALL->value) {
+                $userBlStatus = LeadAllocationUserBLStatusFiltersEnum::from(request('userBlStatus'));
+                $data = $userBlStatus->applyFilter($data);
             }
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount += $value->allocation_count;
@@ -72,7 +72,7 @@ class LeadAllocationController extends Controller
                 'isAutoAllocationWorking' => (int) $isAutoAllocationWorking,
                 'data' => $data,
                 'quoteType' => QuoteTypes::HEALTH->value,
-                'typeFilters' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
+                'userBLStatuses' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
             ]);
         } else {
             abort(403, 'Unauthorized action.');
