@@ -742,7 +742,7 @@ watch(() => {
               rolesEnum.CarAdvisor,
               rolesEnum.HealthRenewalAdvisor,
               rolesEnum.HealthAdvisor,
-            ])
+            ]) || hasRole(rolesEnum.SuperManagerLeadAllocation)
           "
           v-model="filters.advisors"
           label="Advisor"

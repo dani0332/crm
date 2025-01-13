@@ -5,7 +5,6 @@ variables:
   - group: prd
   - name: imageName
     value: '$(imcrm):$(Build.BuildId)'
-
 steps:
   - checkout: self
     fetchDepth: 1
