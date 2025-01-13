@@ -2778,11 +2778,9 @@ const shouldProcessUpdate = payment => {
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
-
   if (isInsurer && isGIGInsuranceProvider && (isCarQuote || isTravelQuote) && hasAnyCCSplitPayment()) {
-    isInsurerAmlCleared = insurerAMLStatus === 'CLEARED'
+    isInsurerAmlCleared = insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared
   }
-
   return (
     hasPayments &&
     isTotalPriceMatching &&
