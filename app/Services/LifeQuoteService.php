@@ -189,7 +189,7 @@ class LifeQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('lqr.uuid', $id)->first();
+        return $this->query->where('pq.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
