@@ -314,8 +314,7 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.life_quote_request_detail?.notes || null,
-  lostReason:
-    page.props.quote.lost_reason_id || null,
+  lostReason: page.props.quote.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -357,24 +356,14 @@ const customerProfileForm = useForm({
   insured_first_name: page.props.quote?.insured_first_name || '',
   insured_last_name: page.props.quote?.insured_last_name || '',
   emirates_id_number: page.props.quote?.emirates_id_number || null,
-  emirates_id_expiry_date:
-    page.props.quote?.emirates_id_expiry_date || null,
+  emirates_id_expiry_date: page.props.quote?.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote?.entity_id ?? null,
-  trade_license_no:
-    page.props.quote?.trade_license_no ??
-    null,
-  company_name:
-    page.props.quote?.company_name ??
-    null,
-  company_address:
-    page.props.quote?.company_address ??
-    null,
-  entity_type_code:
-    page.props.quote?.entity_type_code ??
-    'Parent',
-  industry_type_code:
-    page.props.quote?.industry_type_code ?? null,
+  trade_license_no: page.props.quote?.trade_license_no ?? null,
+  company_name: page.props.quote?.company_name ?? null,
+  company_address: page.props.quote?.company_address ?? null,
+  entity_type_code: page.props.quote?.entity_type_code ?? 'Parent',
+  industry_type_code: page.props.quote?.industry_type_code ?? null,
   emirate_of_registration_id:
     page.props.quote?.emirate_of_registration_id ?? null,
 });
@@ -897,9 +886,7 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
                   <dd>
-                    {{
-                      quote.receive_marketing_updates ? 'Yes' : 'No'
-                    }}
+                    {{ quote.receive_marketing_updates ? 'Yes' : 'No' }}
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">

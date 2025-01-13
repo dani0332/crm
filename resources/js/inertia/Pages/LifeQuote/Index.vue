@@ -141,7 +141,6 @@ const leadStatuses = computed(() => {
   }));
 });
 
-
 const renewalBatchOptions = computed(() => {
   return page.props.renewalBatches.map(batch => ({
     value: batch.id,

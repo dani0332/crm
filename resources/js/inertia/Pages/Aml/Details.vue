@@ -399,7 +399,9 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">PURPOSE OF INSURANCE</dt>
-              <dd>{{ quoteRequest?.life_quote?.purpose_of_insurance?.text ?? '' }}</dd>
+              <dd>
+                {{ quoteRequest?.life_quote?.purpose_of_insurance?.text ?? '' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">CHILDREN</dt>
@@ -407,11 +409,15 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">MARITAL STATUS</dt>
-              <dd>{{ quoteRequest?.life_quote?.marital_status?.text ?? '' }}</dd>
+              <dd>
+                {{ quoteRequest?.life_quote?.marital_status?.text ?? '' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">TENURE OF INSURANCE</dt>
-              <dd>{{ quoteRequest?.life_quote?.insurance_tenure?.text ?? '' }}</dd>
+              <dd>
+                {{ quoteRequest?.life_quote?.insurance_tenure?.text ?? '' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">SMOKER</dt>
@@ -419,7 +425,9 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">NO. OF YEARS</dt>
-              <dd>{{ quoteRequest?.life_quote?.number_of_years?.text ?? '' }}</dd>
+              <dd>
+                {{ quoteRequest?.life_quote?.number_of_years?.text ?? '' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">SUM INSURED</dt>
