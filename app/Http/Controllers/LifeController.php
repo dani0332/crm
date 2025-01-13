@@ -38,8 +38,8 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
-use Inertia\ResponseFactory;
 use Illuminate\Support\Carbon;
+use Inertia\ResponseFactory;
 
 class LifeController extends Controller
 {

@@ -15,9 +15,9 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
-use DB;
 use Auth;
 use Carbon\Carbon;
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 

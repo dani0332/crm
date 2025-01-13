@@ -72,7 +72,6 @@ use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\HealthRevivalQuoteController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
-use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
