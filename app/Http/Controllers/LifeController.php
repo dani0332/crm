@@ -159,9 +159,6 @@ class LifeController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
         }
-        if (isset($response->quoteUID)) {
-            return redirect('/personal-quotes/life/'.$response->quoteUID)->with('message', 'Quote created successfully.');
-        }
 
         return redirect('/personal-quotes/life')->with('message', 'Quote created successfully.');
     }
@@ -334,7 +331,7 @@ class LifeController extends Controller
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
 
-        return inertia('LifeQuote/Edit', [
+        return inertia('LifeQuote/Form', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,
             'genderOptions' => $this->crudService->getGenderOptions(),
@@ -366,7 +363,7 @@ class LifeController extends Controller
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
-        return redirect('/quotes/life'.'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
+        return redirect('/personal-quotes/life'.'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
     }
 
     public function cardsView(Request $request)

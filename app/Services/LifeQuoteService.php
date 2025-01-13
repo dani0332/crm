@@ -21,6 +21,8 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
+use App\Models\LifeQuote;
 
 class LifeQuoteService extends BaseService
 {
@@ -457,28 +459,43 @@ class LifeQuoteService extends BaseService
 
     public function updateLifeQuote(Request $request, $id)
     {
-        $lifeQuote = PersonalQuote::where('uuid', $id)->first();
-        $lifeQuote->first_name = $request->first_name;
-        $lifeQuote->last_name = $request->last_name;
-        $lifeQuote->dob = $request->dob;
-        $lifeQuote->gender = $request->gender;
-        $lifeQuote->sum_insured_value = $request->sum_insured_value;
-        $lifeQuote->sum_insured_currency_id = $request->sum_insured_currency_id;
-        $lifeQuote->marital_status_id = $request->marital_status_id;
-        $lifeQuote->nationality_id = $request->nationality_id;
-        $lifeQuote->purpose_of_insurance_id = $request->purpose_of_insurance_id;
-        $lifeQuote->children_id = $request->children_id;
-        $lifeQuote->premium = $request->premium;
-        $lifeQuote->tenure_of_insurance_id = $request->tenure_of_insurance_id;
-        $lifeQuote->number_of_years_id = $request->number_of_years_id;
-        $lifeQuote->others_info = $request->others_info;
-        $lifeQuote->policy_start_date = $request->policy_start_date;
-        $lifeQuote->is_smoker = $request->is_smoker == 1 ? 1 : 0;
-        $lifeQuote->save();
+        $data = [
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'mobile_no' => $request->mobile_no,
+            'dob' => $request->dob,
+            'sum_insured_value' => $request->sum_insured_value,
+            'nationality_id' => $request->nationality_id,
+            'sum_insured_currency_id' => $request->sum_insured_currency_id,
+            'marital_status_id' => $request->marital_status_id,
+            'purpose_of_insurance_id' => $request->purpose_of_insurance_id,
+            'children_id' => $request->children_id,
+            'premium' => $request->premium,
+            'tenure_of_insurance_id' => $request->tenure_of_insurance_id,
+            'number_of_years_id' => $request->number_of_years_id,
+            'is_smoker' => $request->is_smoker,
+            'gender' => $request->gender,
+            'others_info' => $request->others_info,
+        ];
 
-        if (isset($request->return_to_view)) {
-            return redirect('quotes/life')->with('success', 'Life Quote has been updated');
-        }
+        return DB::transaction(function () use ($id, $data) {
+            $quote = PersonalQuote::where('uuid', $id)->first();
+
+            //check the columns to be updated in personal quotes.
+            $quoteData = Arr::only($data, (new PersonalQuote())->allowedColumns());
+            $quoteData['updated_by_id'] = auth()->user()->id;
+            $quote->update($quoteData);
+
+            // check the columns to be updated in life quote request.
+            if ($quote->lifeQuote) {
+                $quote->lifeQuote()->update(Arr::only($data, (new LifeQuote)->allowedColumns()));
+            } else {
+                $quote->lifeQuote()->create(Arr::only($data, (new LifeQuote)->allowedColumns()));
+            }
+
+            return $quote;
+        });
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
