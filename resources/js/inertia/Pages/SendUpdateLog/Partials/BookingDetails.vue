@@ -2354,11 +2354,7 @@ watch(
                       color="orange"
                       :loading="loader.sendUpdateSectionBtn"
                       @click="sendUpdateValidation"
-                      :disabled="
-                         ||
-                        isLackingPayment ||
-                        disableMainBtn
-                      "
+                      :disabled="isLackingPayment || disableMainBtn"
                     >
                       {{ props.updateBtn }}
                     </x-button>
