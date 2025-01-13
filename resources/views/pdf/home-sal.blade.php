@@ -12,7 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
-    </style> <!--[if mso]>
+    </style>
+    <!--[if mso]>
       <noscript>
         <xml>
           <o:OfficeDocumentSettings
@@ -259,14 +260,14 @@
                             </div>
                             <hr style="margin: 0;">
                             <div class="sm-px-4" style="padding: 14px 28px">
-                                {% datafetch 'Home-Insurance-SAL', 'quoteUID', quoteUID %}<table
-                                    style="vertical-align: top" cellpadding="0" cellspacing="0" role="presentation">
+                                <table style="vertical-align: top" cellpadding="0" cellspacing="0" role="presentation">
                                     <tbody>
                                         <td
                                             style="width: 60%; padding-right: 12px; vertical-align: top; max-width: calc(100% - 176px)">
                                             <p class="dark-text-slate-200 sm-text-12px sm-important-text-10px"
                                                 style="font-family: inherit; font-size: 14px; color: #333333">
-                                                <span>Dear {{ dataFetchResponse . customerName }},</span></p>
+                                                <span>Dear {{ $data['customer_name'] }},</span>
+                                            </p>
                                             <p class="dark-text-slate-200 sm-text-12px sm-important-text-10px sm-important-my-1"
                                                 style="margin-top: 20px; margin-bottom: 20px; font-family: inherit; font-size: 14px; color: #333333">
                                                 Thank you for choosing Alfred!
@@ -334,32 +335,32 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for data in dataFetchResponse.data %}
-                                                <tr>
-                                                    <td class="sm-text-8px"
-                                                        style="width: 40%; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
-                                                        {{ data . description }}
-                                                    </td>
-                                                    <td class="sm-text-8px"
-                                                        style="width: 20%; max-width: 108px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
-                                                        {{ data . value }}
-                                                    </td>
-                                                    <td class="sm-text-8px"
-                                                        style="width: 20%; max-width: 113px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
-                                                        {{ data . purchaseDate }}
-                                                    </td>
-                                                    <td class="sm-text-8px"
-                                                        style="width: 20%; max-width: 96px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
-                                                        {{ data . invoiceNumber }}
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
+                                                @foreach ($data['items'] as $item)
+                                                    <tr>
+                                                        <td class="sm-text-8px"
+                                                            style="width: 40%; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
+                                                            {{ $item->description }}
+                                                        </td>
+                                                        <td class="sm-text-8px"
+                                                            style="width: 20%; max-width: 108px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
+                                                            {{ $item->value }}
+                                                        </td>
+                                                        <td class="sm-text-8px"
+                                                            style="width: 20%; max-width: 113px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
+                                                            {{ $item->purchase_date }}
+                                                        </td>
+                                                        <td class="sm-text-8px"
+                                                            style="width: 20%; max-width: 96px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
+                                                            {{ $item->invoice_number }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                                 <div style="margin-top: 24px">
-                                    <a href="{{ dataFetchResponse . quoteDeclarationLink }}" target="_blank"
+                                    <a href="{{ $data['quote_declaration_link'] }}" target="_blank"
                                         class="sm-p-5_5px_17_5px sm-max-w-full"
                                         style="box-sizing: border-box; display: inline-block; width: 100%; max-width: 230px; border-radius: 12px; background-color: #FF7700; padding: 10.5px 17.5px; text-align: center; font-size: 14px; color: #fff; text-decoration-line: none">
                                         <p class="sm-leading-8"
@@ -377,7 +378,7 @@
                                     your profile, declared item(s) and documents.
                                 </p>
                                 <div style="margin-top: 24px;">
-                                    <a href="{{ dataFetchResponse . quoteSalLink }}" target="_blank"
+                                    <a href="{{ $data['quote_sal_link'] }}" target="_blank"
                                         class="sm-p-5_5px_17_5px sm-max-w-full"
                                         style="box-sizing: border-box; display: inline-block; width: 100%; max-width: 230px; border-radius: 12px; border: 2px solid #ff7700; padding: 10.5px 17.5px; text-align: center; font-size: 14px; font-weight: 500; text-decoration-line: none; color: #FF7700">
                                         <p class="sm-leading-8"
@@ -413,105 +414,112 @@
                                                             align="center" style="width: 100%;" role="presentation">
                                                             <tbody>
                                                                 <tr>
-                                                                    <td> {%if dataFetchResponse.advisor.profilePhotoPath%}
-                                                                        <img src="{{ dataFetchResponse . advisor . profilePhotoPath }}"
-                                                                            width="70" class="xs-w-45px sm-w-60px"
-                                                                            valign="top" alt="Call Alfred"
-                                                                            style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0; margin-right: 8px; width: 85px; border-radius: 9999px">
-                                                                        {%else%}
-                                                                        <img src="https://myalfred.blob.core.windows.net/assets/call.png"
-                                                                            width="70" class="xs-w-45px sm-w-60px"
-                                                                            valign="top" alt="Call Alfred"
-                                                                            style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0; margin-right: 8px; width: 85px">
-                                                                        {%endif%}
+                                                                    <td>
+                                                                        @if (isset($data['profile_photo_path']))
+                                                                            <img src="{{ $data['profile_photo_path'] }}"
+                                                                                width="70"
+                                                                                class="xs-w-45px sm-w-60px"
+                                                                                valign="top" alt="Call Alfred"
+                                                                                style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0; margin-right: 8px; width: 85px; border-radius: 9999px">
+                                                                        @else
+                                                                            <img src="https://myalfred.blob.core.windows.net/assets/call.png"
+                                                                                width="70"
+                                                                                class="xs-w-45px sm-w-60px"
+                                                                                valign="top" alt="Call Alfred"
+                                                                                style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0; margin-right: 8px; width: 85px">
+                                                                        @endif
                                                                     </td>
                                                                     <td class="sm-table-cell" style="display: none">
-                                                                        {% if dataFetchResponse.advisor.name %}<p
-                                                                            class="dark-text-slate-200 sm-text-12px"
-                                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                                            Name:
-                                                                            {{ dataFetchResponse . advisor . name }}
-                                                                        </p>
-                                                                        {%else%}<p
-                                                                            class="dark-text-slate-200 sm-text-12px xs-text-10px"
-                                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                                            Name: Customer Happiness Center
-                                                                        </p> {%endif%} </td>
+                                                                        @if (isset($data['advisor_name']))
+                                                                            <p class="dark-text-slate-200 sm-text-12px"
+                                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                                Name: {{ $data['advisor_name'] }}
+                                                                            </p>
+                                                                        @else
+                                                                            <p class="dark-text-slate-200 sm-text-12px xs-text-10px"
+                                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                                Name: Customer Happiness Center
+                                                                            </p>
+                                                                        @endif
+                                                                    </td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
                                                     </td>
                                                     <td class="sm-w-full sm-block sm-pt-0 sm-text-xs"
                                                         style="padding: 8px; font-size: 14px; line-height: 1.25">
-                                                        {% if dataFetchResponse.advisor.name %}<p
-                                                            class="dark-text-slate-200 sm-text-12px sm-hidden"
-                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                            Name: {{ dataFetchResponse . advisor . name }}
-                                                        </p>
-                                                        <p class="dark-text-slate-200 sm-text-12px"
-                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                            Email:
-                                                            <a href="mailto:{{ dataFetchResponse . advisor . email }}"
-                                                                style="color: inherit; text-decoration-line: none">
-                                                                {{ dataFetchResponse . advisor . email }}
-                                                            </a>
-                                                        </p>
-                                                        {% if dataFetchResponse.advisor.mobilePhone %}<p
-                                                            class="dark-text-slate-200 sm-text-12px"
-                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                            Mobile number:
-                                                            <a href="tel:{{ dataFetchResponse . advisor . mobileNoWithoutSpaces }}"
-                                                                style="color: inherit; text-decoration-line: none;">{{ dataFetchResponse . advisor . mobilePhone }}</a>
-                                                            <a href="https://wa.me/{{ dataFetchResponse . advisor . mobileNoWithoutSpaces }}"
-                                                                target="_blank"
-                                                                style="color: inherit; text-decoration-line: none;">
-                                                                <img src="https://myalfred.blob.core.windows.net/assets/social/whatsapp.png"
-                                                                    alt="WhatsApp" width="15" height="15"
-                                                                    style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0;">
-                                                            </a>
-                                                        </p>
-                                                        {% endif %} {% if dataFetchResponse.advisor.landLine %}<p
-                                                            class="dark-text-slate-200 sm-text-12px"
-                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                            Direct line:
-                                                            <a href="tel:{{ dataFetchResponse . advisor . landLine }}"
-                                                                style="color: inherit; text-decoration-line: none;">{{ dataFetchResponse . advisor . landLine }}</a>
-                                                        </p>
-                                                        {% endif %}<p class="dark-text-slate-200 sm-text-12px"
-                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                            Happiness center:800 ALFRED (800 253 733)
-                                                        </p>
-                                                        {% else %}<p
-                                                            class="dark-text-slate-200 sm-text-12px sm-hidden xs-text-10px"
-                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                            Name : Customer Happiness Center
-                                                        </p>
-                                                        <p class="dark-text-slate-200 sm-text-12px xs-text-10px"
-                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                            Email:
-                                                            <a href="mailto:askalfred@insurancemarket.ae"
-                                                                class="hover-underline"
-                                                                style="color: inherit; text-decoration-line: none;">askalfred@insurancemarket.ae</a>
-                                                        </p>
-                                                        <p class="dark-text-slate-200 sm-text-12px xs-text-10px"
-                                                            style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
-                                                            Happiness center:
-                                                            <a href="https://wa.me/971800253733" target="_blank"
-                                                                class="hover-underline"
-                                                                style="color: inherit; text-decoration-line: none;">
-                                                                800 ALFRED (800 253 733)<img
-                                                                    src="https://myalfred.blob.core.windows.net/assets/social/whatsapp.png"
-                                                                    alt="WhatsApp" width="15" height="15"
-                                                                    style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0;">
-                                                            </a>
-                                                        </p>
-                                                        {% endif %}
+                                                        @if (isset($data['advisor_name']))
+                                                            <p class="dark-text-slate-200 sm-text-12px sm-hidden"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                Name: {{ $data['advisor_name'] }}
+                                                            </p>
+                                                            <p class="dark-text-slate-200 sm-text-12px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                Email:
+                                                                <a href="mailto:{{ $data['advisor_email'] }}"
+                                                                    style="color: inherit; text-decoration-line: none">
+                                                                    {{ $data['advisor_email'] }}
+                                                                </a>
+                                                            </p>
+                                                            @if (isset($data['advisor_mobile_no']))
+                                                                <p class="dark-text-slate-200 sm-text-12px"
+                                                                    style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                    Mobile number:
+                                                                    <a href="tel:{{ $data['mobile_no_without_spaces'] }}"
+                                                                        style="color: inherit; text-decoration-line: none;">{{ $data['advisor_mobile_no'] }}</a>
+                                                                    <a href="https://wa.me/{{ $data['mobile_no_without_spaces'] }}"
+                                                                        target="_blank"
+                                                                        style="color: inherit; text-decoration-line: none;">
+                                                                        <img src="https://myalfred.blob.core.windows.net/assets/social/whatsapp.png"
+                                                                            alt="WhatsApp" width="15"
+                                                                            height="15"
+                                                                            style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0;">
+                                                                    </a>
+                                                                </p>
+                                                            @endif
+                                                            @if (isset($data['advisor_landline_no']))
+                                                                <p class="dark-text-slate-200 sm-text-12px"
+                                                                    style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                    Direct line:
+                                                                    <a href="tel:{{ $data['advisor_landline_no'] }}"
+                                                                        style="color: inherit; text-decoration-line: none;">{{ $data['advisor_landline_no'] }}</a>
+                                                                </p>
+                                                            @endif
+                                                            <p class="dark-text-slate-200 sm-text-12px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                Happiness center: 800 ALFRED (800 253 733)
+                                                            </p>
+                                                        @else
+                                                            <p class="dark-text-slate-200 sm-text-12px sm-hidden xs-text-10px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                Name: Customer Happiness Center
+                                                            </p>
+                                                            <p class="dark-text-slate-200 sm-text-12px xs-text-10px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                Email:
+                                                                <a href="mailto:askalfred@insurancemarket.ae"
+                                                                    class="hover-underline"
+                                                                    style="color: inherit; text-decoration-line: none;">askalfred@insurancemarket.ae</a>
+                                                            </p>
+                                                            <p class="dark-text-slate-200 sm-text-12px xs-text-10px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
+                                                                Happiness center:
+                                                                <a href="https://wa.me/971800253733" target="_blank"
+                                                                    class="hover-underline"
+                                                                    style="color: inherit; text-decoration-line: none;">
+                                                                    800 ALFRED (800 253 733)<img
+                                                                        src="https://myalfred.blob.core.windows.net/assets/social/whatsapp.png"
+                                                                        alt="WhatsApp" width="15" height="15"
+                                                                        style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0;">
+                                                                </a>
+                                                            </p>
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                     </div>
-                                </div> {% enddatafetch %}
+                                </div>
                             </div>
                             <div class="dark-bg-slate-800 dark-important-text-white"
                                 style="overflow: hidden; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; background-color: #f5f5f5; font-family: Verdana , Geneva , sans-serif">
