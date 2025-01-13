@@ -435,7 +435,7 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">GENDER</dt>
-              <dd>{{ quoteRequest?.life_quote.gender }}</dd>
+              <dd>{{ quoteRequest?.gender }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">NATIONALITY</dt>
