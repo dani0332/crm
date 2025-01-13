@@ -598,7 +598,6 @@ class ReportService extends BaseService
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $expiryDays = $authorizedDays->value;
 
-
         $quoteTypes = [
             QuoteTypes::CAR,
             QuoteTypes::HOME,
