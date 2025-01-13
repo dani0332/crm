@@ -59,8 +59,11 @@ class InstantAlfredService extends BaseService
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
             ->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
-            ->when($quoteTypeId == QuoteTypeId::Car, function ($query) {
-                $query->leftJoin('car_plan as cp', 'cp.id', '=', 'pqr.plan_id');
+            ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) use ($quoteTypeId) {
+                $query->leftJoin('car_plan as cp', function ($join) use ($quoteTypeId) {
+                    $join->on('cp.id', '=', 'pqr.plan_id')
+                        ->where('cp.quote_type_id', '=', $quoteTypeId);
+                });
                 $query->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id');
                 $query->addSelect([
                     'cp.text AS plan_id_text',
@@ -96,15 +99,15 @@ class InstantAlfredService extends BaseService
                     'tqpd.plan_name',
                 ]);
             })
-            ->when($quoteTypeId == QuoteTypeId::Bike, function ($query) {
-                $query->leftJoin('bike_quote_plan_details as bp', 'bp.id', '=', 'pqr.uuid');
-                $query->leftJoin('insurance_provider as bip', 'bip.id', '=', 'bp.insurance_provider_id');
-                $query->addSelect([
-                    'bp.plan_name AS plan_name',
-                    'bip.text AS provider_name',
-                    'bp.repair_type as plan_type',
-                ]);
-            })
+            // ->when($quoteTypeId == QuoteTypeId::Bike, function ($query) {
+            //     $query->leftJoin('bike_quote_plan_details as bp', 'bp.id', '=', 'pqr.uuid');
+            //     $query->leftJoin('insurance_provider as bip', 'bip.id', '=', 'bp.insurance_provider_id');
+            //     $query->addSelect([
+            //         'bp.plan_name AS plan_name',
+            //         'bip.text AS provider_name',
+            //         'bp.repair_type as plan_type',
+            //     ]);
+            // })
             ->addSelect([
                 DB::raw("
                         CASE 

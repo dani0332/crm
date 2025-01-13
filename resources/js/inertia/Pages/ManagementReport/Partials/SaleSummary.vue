@@ -73,6 +73,17 @@ const tableHeader = reactive([
       'Vatable commission incurred within the selected group by filter. Any amount appearing in this column will be computed with VAT.',
   },
   {
+    text: 'VAT ON Commission',
+    value: 'commission_vat',
+    tooltip: 'VAT on Commission (VAT applicable)',
+  },
+  {
+    text: 'Commission (VAT Not applicable)',
+    value: 'commission_vat_not_applicable',
+    tooltip:
+      'Non-vatable commission incurred within the selected group by filter. Any amount appearing in this column will not be computed with VAT.',
+  },
+  {
     text: 'T. Endorsement Amount',
     value: 'endorsements_amount',
     tooltip:
@@ -155,6 +166,8 @@ const isIntegerColumn = key => {
     'price_vat_not_applicable',
     'discount',
     'commission_vat_applicable',
+    'commission_vat',
+    'commission_vat_not_applicable',
     'total_price',
     'endorsements_amount',
   ].includes(key);
@@ -210,6 +223,14 @@ const isIntegerColumn = key => {
     </template>
     <template #item-commission_vat_applicable="{ commission_vat_applicable }">
       {{ commission_vat_applicable ? commission_vat_applicable : 0.0 }}
+    </template>
+    <template #item-commission_vat="{ commission_vat }">
+      {{ commission_vat ? commission_vat : 0.0 }}
+    </template>
+    <template
+      #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
+    >
+      {{ commission_vat_not_applicable ? commission_vat_not_applicable : 0.0 }}
     </template>
     <template #item-endorsements_amount="{ endorsements_amount }">
       {{

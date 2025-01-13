@@ -230,8 +230,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'dob' => $dobTraveller,
             'passport_number' => $passportTraveller,
             'nationality_traveller' => $nationalityTraveller,
-            'email' => $quote->email,
-            'mobile' => $quote->mobile_no,
+            'email' => 'happiness@support.insurancemarket.ae', // will be static, as we dont share customer contact details outside organization
+            'mobile' => '971502245943', // will be static, as we dont share customer contact details outside organization
             'agency_reference' => 'asc',
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
@@ -697,7 +697,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $title;
     }
 
-    private function allianceHttpCall($endPoint, $param, $method = 'POST')
+    private function allianceHttpCall($endPoint, $param)
     {
         $headers = [
             'Content-Type' => 'application/json',
@@ -706,7 +706,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $payload = array_merge($this->authParam, $param);
         $url = $this->baseUrl.$endPoint;
 
-        return Http::withHeaders($headers)->post($url, $payload);
+        return Http::timeout(20)->withHeaders($headers)->post($url, $payload);
     }
 
 }
