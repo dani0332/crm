@@ -149,7 +149,6 @@ const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
 const isCollectedByEnabled = ref(false);
 const modal2Ref = ref(null);
-
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
 const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
@@ -2773,10 +2772,21 @@ const shouldProcessUpdate = payment => {
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
+  const isCarQuote = props.quoteType === 'Car';
+  const isGIGInsuranceProvider = page.props?.bookPolicyDetails?.isGIGInsuranceProvider  
+    || page.props?.bookingDetails?.isGIGInsuranceProvider || false;
+  const isInsurer = payment?.collection_type == 'insurer';
+  const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
+  let isInsurerAmlCleared = true;
+
+  if (isInsurer && isGIGInsuranceProvider && (isCarQuote || isTravelQuote) && hasAnyCCSplitPayment()) {
+    isInsurerAmlCleared = insurerAMLStatus === 'CLEARED'
+  }
+
   return (
     hasPayments &&
     isTotalPriceMatching &&
-    (isAmlAndKycComplete || isTravelQuote || shouldSendUpdate)
+    (isAmlAndKycComplete || isTravelQuote || shouldSendUpdate) && isInsurerAmlCleared
   );
 };
 
@@ -3369,6 +3379,16 @@ const hasAnyCCPayment = () => {
   const paymentMM = Object.values(paymentMethodsModels.value);
   return paymentMM.some(item => item == 'CC');
 };
+
+const hasAnyCCSplitPayment = () => {
+  if (props.payments.length > 0) {
+    const paymentSplits = props.payments[0].payment_splits;
+    return paymentSplits.some(
+      item => item.payment_method.code === 'CC'
+    );
+  }
+  return false;
+}
 
 const isCCPaymentDisabled = option => {
   return (

@@ -273,10 +273,11 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        @[$isCreditCardEnabled, $isSplitFrequencyHidden, $brokerCommission] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id);
+        @[$isCreditCardEnabled, $isSplitFrequencyHidden, $brokerCommission, $isGIGInsuranceProvider] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id);
         $bookPolicyDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
         $bookPolicyDetails['isSplitFrequencyHidden'] = $isSplitFrequencyHidden;
         $bookPolicyDetails['brokerCommission'] = $brokerCommission;
+        $bookPolicyDetails['isGIGInsuranceProvider'] = $isGIGInsuranceProvider;
         [$isCommissionDisabled, $commissionTooltip] = $this->isCommissionDisabled($payment);
         $bookPolicyDetails['isCommissionDisabled'] = $isCommissionDisabled;
         $bookPolicyDetails['commissionTooltip'] = $commissionTooltip;
@@ -765,17 +766,22 @@ trait GenericQueriesAllLobs
         }
 
         $brokerCommission = $brokerCommissionQuery->first();
-        $isSplitFrequencyHidden = InsuranceProvider::whereIn('code', [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE])
+        $insuranceProvider = InsuranceProvider::whereIn('code', [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE])
             ->where('id', $insuranceProviderId)
-            ->select('id')
-            ->exists();
+            ->select('id', 'code')
+            ->first();
 
+        $isSplitFrequencyHidden = $insuranceProvider !== null;
+        $isGIGInsuranceProvider = $insuranceProvider !== null && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
+    
         return [
             $brokerCommission ? true : false,
             $isSplitFrequencyHidden,
-            $brokerCommission
+            $brokerCommission,
+            $isGIGInsuranceProvider
         ];
     }
+    
     private function isCommissionDisabled($payment)
     {
         if ($payment && $payment->collection_type == CollectionTypeEnum::INSURER) {
