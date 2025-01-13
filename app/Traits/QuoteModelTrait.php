@@ -195,30 +195,14 @@ trait QuoteModelTrait
         $q->whereNotNull('lead_allocation_failed_at');
     }
 
-    public function scopeSicFlowEnabled($q, bool $enabled = true, bool $or = false)
+    public function scopeSicFlowEnabled($q, bool $enabled = true)
     {
-        if ($or) {
-            $q->orWhere('sic_flow_enabled', $enabled);
-
-            return;
-        }
-
         $q->where('sic_flow_enabled', $enabled);
-    }
-
-    public function scopeOrSicFlowEnabled($q)
-    {
-        $q->sicFlowEnabled(or: true);
     }
 
     public function scopeSicFlowDisabled($q)
     {
         $q->sicFlowEnabled(false);
-    }
-
-    public function scopeOrSicFlowDisabled($q)
-    {
-        $q->sicFlowEnabled(false, true);
     }
 
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
