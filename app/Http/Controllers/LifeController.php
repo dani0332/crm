@@ -38,8 +38,8 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Inertia\ResponseFactory;
+use Illuminate\Support\Carbon;
 
 class LifeController extends Controller
 {
@@ -374,14 +374,15 @@ class LifeController extends Controller
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION;
         })->toArray();
 
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id']);
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id'], $request);
 
             return $item;
         }, $leadStatuses);
 
         return inertia('LifeQuote/Cards', [
             'quotes' => array_values($leadStatuses),
+            'quoteType' => self::TYPE,
         ]);
     }
 }

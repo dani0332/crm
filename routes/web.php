@@ -194,6 +194,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
 
         Route::resource('personal-quotes/life', LifeController::class)->names(generateRouteNames('life-quotes'));
+        Route::get('quotes/life/cards', [LifeController::class, 'cardsView'])->name('life-quotes-card');
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
@@ -210,8 +211,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('health-revival/{uuid}/edit', [HealthRevivalQuoteController::class, 'edit'])->name('health-revival-quotes-edit');
             Route::put('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'update'])->name('health-revival-quotes-update');
         });
-
-        Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
 
         Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
