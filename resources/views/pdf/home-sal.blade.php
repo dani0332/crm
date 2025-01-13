@@ -147,6 +147,25 @@
             color: #555;
             margin: 20px 0;
         }
+
+        /* Additional Text Styles */
+        .additional-text {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #555;
+            text-align: left;
+        }
+
+        .additional-text a {
+            color: #1c82bd;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .additional-text a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -192,6 +211,18 @@
                     @endforeach
                 </tbody>
             </table>
+
+            <!-- Add the text here -->
+            <p class="additional-text">
+                Thank you for choosing <a href="https://ecom.alfred.ae/" target="_blank">InsuranceMarket.ae</a>.
+                We look forward to serving you.
+            </p>
+            <p class="additional-text">
+                For any queries or support, reach me directly via WhatsApp or Email.
+            </p>
+            <p class="additional-text">
+                I'm here to ensure your insurance process is seamless and satisfying.
+            </p>
         @else
             <p class="no-items">No items were declared.</p>
         @endif
