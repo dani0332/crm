@@ -598,6 +598,20 @@ class ReportService extends BaseService
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $expiryDays = $authorizedDays->value;
 
+        $lobTable = [
+            quoteTypeCode::Car => ['table' => 'car_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Home => ['table' => 'home_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Health => ['table' => 'health_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Business => ['table' => 'business_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Travel => ['table' => 'travel_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Life => ['table' => 'life_quote_request', 'quoteTypeId' => null],
+            quoteTypeCode::Pet => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Pet],
+            quoteTypeCode::Yacht => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Yacht],
+            quoteTypeCode::Bike => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],
+            quoteTypeCode::Cycle => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Cycle],
+            quoteTypeCode::Jetski => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Jetski],
+        ];
+
         $quoteTypes = [
             QuoteTypes::CAR,
             QuoteTypes::HOME,
@@ -613,13 +627,19 @@ class ReportService extends BaseService
         ];
 
         $allowedLOBs = [];
-        foreach ($quoteTypes as $quoteType) {
-            if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
-                $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
-            } elseif (in_array(RolesEnum::Admin, $userRoles)) {
-                $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
-            } else {
-                continue;
+        if (isset($request->quoteType)) {
+            $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+            $allowedLOBs[] = $lobTable[ucfirst($quoteType)];
+        } else {
+            $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
+            foreach ($quoteTypes as $quoteType) {
+                if (in_array($quoteType->name . '_ADVISOR', $userRoles) || in_array($quoteType->name . '_MANAGER', $userRoles)) {
+                    $allowedLOBs[] = $lobTable[$quoteType->value];
+                } elseif (in_array(RolesEnum::Admin, $userRoles)) {
+                    $allowedLOBs[] = $lobTable[$quoteType->value];
+                } else {
+                    continue;
+                }
             }
         }
 
