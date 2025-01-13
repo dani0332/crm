@@ -81,6 +81,7 @@ const docForm = reactive({
 });
 
 const uploadFile = (doc, filesWithInfo) => {
+  console.log(' Upload Quote Docs Method');
   successStatus.value[doc.id] = false;
   errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
@@ -101,7 +102,9 @@ const uploadFile = (doc, filesWithInfo) => {
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
   formData.append('quote_type', usePage().props.quoteType);
-  formData.append('file', files[0].file);
+  files.forEach(file => {
+    formData.append('files[]', file.file);
+  });
 
   uploadingStatus.value[doc.id] = true;
 
@@ -114,12 +117,19 @@ const uploadFile = (doc, filesWithInfo) => {
       });
     })
     .catch(error => {
-      console.log(error);
+      console.log(error.response.data);
       errorMsg.value[doc.id] =
         error.response.data.message || 'File upload failed';
       notification.error({
         title: 'File upload failed',
         position: 'top',
+      });
+      let errorMessages = error.response.data.errors;
+      Object.keys(errorMessages).forEach(function (key) {
+        notification.error({
+          title: errorMessages[key][0] ?? errorMessages[key],
+          position: 'top',
+        });
       });
     })
     .finally(() => {
@@ -427,6 +437,7 @@ const getS3TempUrl = async docURL => {
                   documentType.code == documentTypeCodeEnum.AUDIT &&
                   !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
                 "
+                :multiple="true"
                 @change="uploadFile(documentType, $event)"
               />
 
