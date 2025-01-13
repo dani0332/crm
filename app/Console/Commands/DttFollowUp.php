@@ -6,8 +6,9 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\TiersEnum;
-use App\Jobs\CarRevivalFollowUpEmailJob;
+use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
@@ -88,7 +89,7 @@ class DttFollowUp extends Command
 
             //Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
             //or if the source is Revival Paid or if the lead is assigned to an advisor
-            if (! empty($created_at) && ! in_array($lead->quote_status_id, $leadStatusArray) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
+            if ($lead && ! empty($created_at) && ! in_array($lead->quote_status_id, $leadStatusArray) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
                 $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
                 $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
                 $aftertThirteenDays = Carbon::parse($created_at)->addDays(13)->startOfDay();
@@ -124,6 +125,7 @@ class DttFollowUp extends Command
                 $emailData->advisorName = $advisor[0];
                 $emailData->advisorEmail = $advisor[1];
                 $emailData->id = $item->id;
+                $emailData->lob = QuoteTypes::CAR->id();
                 // info($logPrefix.'emailData-'.json_encode($emailData));
 
                 // after two days
@@ -204,11 +206,10 @@ class DttFollowUp extends Command
             }
         }
 
-        info($logPrefix.'count-'.count($leads).'-leads-'.json_encode(array_column($leads, 'uuid')));
+        info($logPrefix.'count - '.count($leads).' leads'); //.json_encode(array_column($leads, 'uuid')));
 
         $jobs = [];
         foreach ($leads as $item) {
-            info($logPrefix.'-'.$item->uuid.'-email-'.$item->customerEmail);
             $jobs[] = new CarRevivalFollowUpEmailJob($item);
         }
 

@@ -29,4 +29,21 @@ enum QuoteSegmentEnum: string
             self::NON_SIC => 'Non-SIC',
         };
     }
+
+    public static function withLabels($quoteTypeId = null): array
+    {
+        $values = [];
+        $caseList = collect(self::cases());
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $caseList = collect($caseList)->whereNotIn('value', self::SIC_REVIVAL->value);
+        }
+        foreach ($caseList as $case) {
+            $values[] = [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ];
+        }
+
+        return $values;
+    }
 }

@@ -45,7 +45,16 @@ class HealthAllocationService extends AllocationService
     {
         $healthQuoteQuery = HealthQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotNull('health_quote_request.price_starting_from');
+            ->where(function ($query) {
+                // First condition: either `sic_advisor_requested` is 1 or `source` is not `REVIVAL`
+                $query->where('sic_advisor_requested', 1)
+                    ->orWhereNotIn('source', [LeadSourceEnum::REVIVAL]);
+            })
+            ->where(function ($query) {
+                // Second condition: applies if the first condition is false
+                $query->whereIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED])
+                    ->orWhereNotNull('health_quote_request.price_starting_from');
+            });
 
         if (! $overrideAdvisorId) {
             $healthQuoteQuery->whereNull('health_quote_request.advisor_id');
@@ -84,6 +93,12 @@ class HealthAllocationService extends AllocationService
         info("Inside assignHealthTeamBasedOnStartingPrice for quote: {$lead->uuid}");
 
         $priceStartingFrom = $this->determinePriceStartingFrom($lead);
+
+        if ($priceStartingFrom == null) {
+            info("No team found for {$lead->uuid}");
+            $lead->is_error_email_sent = true;
+            Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
+        }
 
         $healthTeam = Team::where('allocation_threshold_enabled', true)
             ->where('min_price', '<=', $priceStartingFrom)
@@ -181,9 +196,9 @@ class HealthAllocationService extends AllocationService
 
         $advisor = $this->getAdvisorBaseQuery($status, $leadTeam)
             ->when($lead->isValueLead(), function ($q) {
-                $q->isValueUser();
+                $q->isValueUser(QuoteTypes::HEALTH);
             }, function ($q) {
-                $q->isVolumeUser();
+                $q->isVolumeUser(QuoteTypes::HEALTH);
             })
             ->whereIn('users.id', $buyLeadRequestedUserIds)
             ->where('la.buy_lead_status', true)
