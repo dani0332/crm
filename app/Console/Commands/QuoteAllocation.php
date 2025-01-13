@@ -153,7 +153,7 @@ class QuoteAllocation extends Command
             ->where('source', '!=', LeadSourceEnum::IMCRM)
             ->where(function ($q) {
                 $q->leadAllocationFailed()
-                    ->orSicFlowDisabled()
+                    ->orWhere->sicFlowDisabled()
                     ->orWhere(function ($subQuery) {
                         $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
                     });
@@ -191,7 +191,7 @@ class QuoteAllocation extends Command
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->where(function ($q) {
                 $q->leadAllocationFailed()
-                    ->orSicFlowDisabled()
+                    ->orWhere->sicFlowDisabled()
                     ->orWhere(function ($subQuery) {
                         $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
                     });
