@@ -86,6 +86,7 @@ use App\Http\Middleware\SetReadDbConnection;
 use App\Models\CarQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\TravelQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
@@ -726,9 +727,13 @@ Route::get('/add-batch-number', function () {
 // });
 
 
-Route::get('tap-pay-checkout-api/{code}', function(){
-    $quoteTypeId = 1;
-    $quote = CarQuote::where('uuid', request()->code)->first();
+Route::get('tap-pay-checkout-api/{code}/{quoteTypeId}', function(){
+    $quoteTypeId = request()->quoteTypeId;
+    if ($quoteTypeId == 8){
+        $quote = TravelQuote::where('uuid', request()->code)->first();
+    } else {
+        $quote = CarQuote::where('uuid', request()->code)->first();
+    }
     $payment = Payment::where('code', $quote->code)->first();
     $paymentSplits = PaymentSplits::where('code', $quote->code)->get();
 

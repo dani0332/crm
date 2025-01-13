@@ -2778,13 +2778,17 @@ const shouldProcessUpdate = payment => {
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
+  let isAMlAndKycTravelComplete = isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
   if (isInsurer && isGIGInsuranceProvider && (isCarQuote || isTravelQuote) && hasAnyCCSplitPayment()) {
     isInsurerAmlCleared = insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared
+    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate
   }
+
   return (
     hasPayments &&
     isTotalPriceMatching &&
-    (isAmlAndKycComplete || isTravelQuote || shouldSendUpdate) && isInsurerAmlCleared
+    isAMlAndKycTravelComplete &&
+    isInsurerAmlCleared
   );
 };
 
