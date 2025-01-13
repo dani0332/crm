@@ -72,8 +72,6 @@ class DttFollowUp extends Command
             $jobs[] = new CarRevivalFollowUpEmailJob($item);
         }
 
-        // info($logPrefix.'count - '.count($leads).' leads'); //.json_encode(array_column($leads, 'uuid')));
-
         if ($jobs != null && count($jobs)) {
             Haystack::build()
                 ->addJobs($jobs)

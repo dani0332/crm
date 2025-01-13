@@ -58,8 +58,8 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
             return false;
         }
+
         $today = Carbon::today();
-        $leads = [];
 
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
@@ -107,7 +107,6 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             $emailData->advisorEmail = $advisor[1];
             $emailData->id = $this->dttRevival->id;
             $emailData->lob = QuoteTypes::CAR->id();
-            // info($logPrefix.'emailData-'.json_encode($emailData));
 
             // after two days
             if ($today->eq($afterTwoDays)) {
@@ -121,7 +120,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                 $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                 $emailData->tag = 'reminder-purchase-your-motor-policy';
                 if ($this->dttRevival->follow_up_email_count == 0) {
-                    $leads[] = $emailData;
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
             // after seven days
@@ -136,7 +135,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                 $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                 $emailData->tag = 'reminder-purchase-your-motor-policy';
                 if ($this->dttRevival->follow_up_email_count == 1) {
-                    $leads[] = $emailData;
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
             // after thirteen days
@@ -151,7 +150,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                 $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
                 $emailData->tag = 'friendly-reminder-secure-your-motor-policy';
                 if ($this->dttRevival->follow_up_email_count == 2) {
-                    $leads[] = $emailData;
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
             // after twenty days
@@ -166,7 +165,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                 $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
                 $emailData->tag = 'gentle-reminder-secure-your-motor-policy';
                 if ($this->dttRevival->follow_up_email_count == 3) {
-                    $leads[] = $emailData;
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
             // after twentyeight days
@@ -181,17 +180,21 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
                 $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
                 $emailData->tag = 'final-reminder-secure-your-motor-policy';
                 if ($this->dttRevival->follow_up_email_count == 4) {
-                    $leads[] = $emailData;
+                    $this->sendFollowUpEmail($emailData);
                 }
             }
         }
 
-        $response = app(SendEmailCustomerService::class)->sendDttEmail($this->data);
+    }
+
+    private function sendFollowUpEmail($emailData)
+    {
+        $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
         if ($response == 201) {
             DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');
-            info('CarRevivalFollowUpEmailJob email is sent '.$this->dttRevival->uuid.' - '.$this->data->customerEmail);
+            info('CarRevivalFollowUpEmailJob email is sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
         } else {
-            info('CarRevivalFollowUpEmailJob email not sent '.$this->dttRevival->uuid.' - '.$this->data->customerEmail);
+            info('CarRevivalFollowUpEmailJob email not sent '.$this->dttRevival->uuid.' - '.$emailData->customerEmail);
         }
     }
 }
