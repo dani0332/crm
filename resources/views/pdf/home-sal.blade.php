@@ -19,7 +19,6 @@
             background-color: #ffffff;
             border-bottom: 1px solid #ddd;
             overflow: hidden;
-            /* Clear floats */
         }
 
         .header-logo {
@@ -58,7 +57,6 @@
 
             .header-heading {
                 margin-top: 10px;
-                /* Add space between logo and heading on mobile */
             }
         }
 
@@ -102,7 +100,8 @@
             padding: 20px;
             margin-top: 40px;
             overflow: hidden;
-            /* Ensure the content stays within the container */
+            page-break-inside: avoid;
+            /* Prevent the advisor card from breaking across pages */
         }
 
         .advisor-photo {
@@ -113,9 +112,7 @@
             object-fit: cover;
             float: left;
             position: relative;
-            /* Ensure it stays on top of the background */
             z-index: 1;
-            /* Ensure it's above the background */
         }
 
         .advisor-details {
@@ -123,23 +120,19 @@
             float: left;
             width: calc(100% - 100px);
             position: relative;
-            /* Ensure it stays on top of the background */
             z-index: 1;
-            /* Ensure it's above the background */
         }
 
         .advisor-details h3 {
             margin: 0 0 10px 0;
             font-size: 18px;
             color: #000;
-            /* Black text */
         }
 
         .advisor-details p {
             margin: 5px 0;
             font-size: 14px;
             color: #000;
-            /* Black text */
         }
 
         .clearfix::after {
@@ -161,7 +154,6 @@
     <!-- Header -->
     <div class="header">
         <div class="header-logo">
-            <!-- Use Base64 encoding for the image -->
             <img class="custom-logo"
                 src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/im_logo_23k-hi.png'))) }}"
                 alt="logo" />
