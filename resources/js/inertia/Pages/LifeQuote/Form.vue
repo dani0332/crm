@@ -3,13 +3,9 @@ const notification = useNotifications('toast');
 
 const props = defineProps({
   quote: { type: Object, default: null },
-  nationalities: Object,
-  currency: Object,
-  purposeOfInsurance: Object,
-  maritalStatus: Object,
-  children: Object,
-  typeOfInsurance: Object,
-  numberOfYears: Object,
+  dropdownSource: Object,
+  fields: Object,
+  errors: Array,
   flash: Object,
 });
 
@@ -122,7 +118,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.nationality_id"
             :options="
-              nationalities.map(item => ({
+              fields.nationality_id.options.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -151,7 +147,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.sum_insured_currency_id"
             :options="
-              currency.map(item => ({
+              fields.sum_insured_currency_id.options.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -164,7 +160,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.purpose_of_insurance_id"
             :options="
-              purposeOfInsurance.map(item => ({
+              fields.purpose_of_insurance_id.options.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -177,7 +173,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.marital_status_id"
             :options="
-              maritalStatus.map(item => ({
+              fields.marital_status_id.options.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -191,7 +187,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.children_id"
             :options="
-              children.map(item => ({
+              fields.children_id.options.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -204,7 +200,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.tenure_of_insurance_id"
             :options="
-              typeOfInsurance.map(item => ({
+              fields.tenure_of_insurance_id.options.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -217,7 +213,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.number_of_years_id"
             :options="
-              numberOfYears.map(item => ({
+              fields.number_of_years_id.options.map(item => ({
                 value: item.id,
                 label: item.text,
               }))

@@ -136,7 +136,7 @@ class LifeController extends Controller
 
         $model = $this->genericModel;
 
-        return inertia('LifeQuote/Create', [
+        return inertia('LifeQuote/Form', [
             'model' => json_encode($model->properties),
             'customTitles' => $customTitles,
             'fields' => $fields,
@@ -159,8 +159,11 @@ class LifeController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
         }
+        if (isset($response->quoteUID)) {
+            return redirect('/personal-quotes/life/'.$response->quoteUID)->with('message', 'Quote created successfully.');
+        }
 
-        return redirect()->route('life.show', data_get($record, 'quoteUID'))->with('message', 'Quote created successfully.');
+        return redirect('/personal-quotes/life')->with('message', 'Quote created successfully.');
     }
 
     public function show($uuid)

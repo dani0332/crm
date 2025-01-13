@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Enums\RolesEnum;
 
 class LifeQuoteService extends BaseService
 {
@@ -154,7 +155,6 @@ class LifeQuoteService extends BaseService
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
             'email' => $request->email,
-            'address' => $request->address,
             'mobileNo' => $request->mobile_no,
             'dob' => $request->dob,
             'sumInsuredValue' => $request->sum_insured_value,
@@ -171,10 +171,12 @@ class LifeQuoteService extends BaseService
             'othersInfo' => $request->others_info,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'quoteTypeId' => intval(QuoteTypes::LIFE->id()),
+            'lang' => 'EN',
+            'device' => 'DESKTOP',
+            'createdById' => auth()->user()->id,
         ];
-        if (! Auth::user()->hasRole('ADMIN')) {
-            $dataArr['advisorId'] = Auth::user()->id;
-        }
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
 

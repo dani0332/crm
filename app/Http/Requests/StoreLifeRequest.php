@@ -25,9 +25,9 @@ class StoreLifeRequest extends FormRequest
      */
     public function rules()
     {
-        $travelService = (app()->make(LifeQuoteService::class));
-        $travelService->getGenericModel(quoteTypeCode::Life);
-        $properties = $travelService->getFieldsToCreate('skipProperties', 'create');
+        $lifeQuoteService = (app()->make(LifeQuoteService::class));
+        $lifeQuoteService->getGenericModel(quoteTypeCode::Life);
+        $properties = $lifeQuoteService->getFieldsToCreate('skipProperties', 'create');
         $requireProperties = array_filter($properties, function ($value) {
             return strpos($value, 'required') !== false;
         });
