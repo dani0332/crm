@@ -184,6 +184,7 @@
 
     <!-- Content -->
     <div class="content">
+        <p>Dear {{ $data['customer_name'] }},</p>
         <p>Thank you for choosing Alfred!</p>
         <p>We've successfully received your declaration form for valuable item(s) with your chosen home insurance plan.
         </p>
