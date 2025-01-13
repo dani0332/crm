@@ -12,19 +12,59 @@
             padding: 0;
         }
 
+        /* Header Styles */
         .header {
-            text-align: center;
-            margin-bottom: 20px;
+            width: 100%;
+            padding: 20px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #ddd;
+            overflow: hidden;
+            /* Clear floats */
         }
 
-        .header h1 {
+        .header-logo {
+            width: 40%;
+            float: left;
+            text-align: left;
+        }
+
+        .header-logo .custom-logo {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .header-heading {
+            width: 40%;
+            float: right;
+            text-align: right;
+        }
+
+        .header-heading p {
             margin: 0;
             font-size: 24px;
+            font-weight: bold;
+            color: #1c82bd;
         }
 
-        .header p {
-            margin: 5px 0 0;
-            font-size: 14px;
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+
+            .header-logo,
+            .header-heading {
+                width: 100%;
+                float: none;
+                text-align: center;
+            }
+
+            .header-heading {
+                margin-top: 10px;
+                /* Add space between logo and heading on mobile */
+            }
+        }
+
+        /* Content Styles */
+        .content {
+            padding: 20px;
         }
 
         .table {
@@ -51,15 +91,18 @@
             color: #555;
         }
 
-        /* Advisor Info Card */
+        /* Advisor Card Styles */
         .advisor-card {
-            display: flex;
-            align-items: center;
-            background-color: #f9f9f9;
+            position: relative;
+            background-image: url('data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/home-sal-advisor-bg.png'))) }}');
+            background-size: cover;
+            background-position: center;
             border: 1px solid #ddd;
             border-radius: 10px;
             padding: 20px;
             margin-top: 40px;
+            overflow: hidden;
+            /* Ensure the content stays within the container */
         }
 
         .advisor-photo {
@@ -69,33 +112,42 @@
             margin-right: 20px;
             object-fit: cover;
             float: left;
+            position: relative;
+            /* Ensure it stays on top of the background */
+            z-index: 1;
+            /* Ensure it's above the background */
         }
 
         .advisor-details {
             flex: 1;
             float: left;
             width: calc(100% - 100px);
+            position: relative;
+            /* Ensure it stays on top of the background */
+            z-index: 1;
+            /* Ensure it's above the background */
         }
 
         .advisor-details h3 {
             margin: 0 0 10px 0;
             font-size: 18px;
+            color: #000;
+            /* Black text */
         }
 
         .advisor-details p {
             margin: 5px 0;
             font-size: 14px;
-            color: #555;
+            color: #000;
+            /* Black text */
         }
 
-        /* Clear floats */
         .clearfix::after {
             content: "";
             clear: both;
             display: table;
         }
 
-        /* No Items Message */
         .no-items {
             text-align: center;
             font-size: 16px;
@@ -106,18 +158,26 @@
 </head>
 
 <body>
+    <!-- Header -->
     <div class="header">
-        <h1>InsuranceMARKET.ae</h1>
-        <p>Single Article Limit (SAL) Declaration</p>
+        <div class="header-logo">
+            <!-- Use Base64 encoding for the image -->
+            <img class="custom-logo"
+                src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/im_logo_23k-hi.png'))) }}"
+                alt="logo" />
+        </div>
+        <div class="header-heading">
+            <p>Single Article Limit (SAL) Declaration</p>
+        </div>
     </div>
 
+    <!-- Content -->
     <div class="content">
         <p>Thank you for choosing Alfred!</p>
         <p>We've successfully received your declaration form for valuable item(s) with your chosen home insurance plan.
         </p>
         <p>Each item that's valued at AED 40,000 or more has been recorded for comprehensive coverage.</p>
 
-        <!-- SAL Items Table -->
         @if (!empty($data['items']))
             <p>Below, you'll find a summary of the declared items:</p>
             <table class="table">
@@ -144,13 +204,10 @@
             <p class="no-items">No items were declared.</p>
         @endif
 
-        <!-- Advisor Info Card -->
+        <!-- Advisor Card -->
         <div class="advisor-card clearfix">
-            <!-- Advisor Profile Photo -->
-            <img src="{{ $data['profile_photo_path'] != null ? $data['profile_photo_path'] : public_path('image/alfred-theme.png') }}"
+            <img src="{{ $data['profile_photo_path'] != null ? $data['profile_photo_path'] : asset('image/alfred-theme.png') }}"
                 alt="Advisor Profile Photo" class="advisor-photo">
-
-            <!-- Advisor Details -->
             <div class="advisor-details">
                 <h3>{{ $data['advisor_name'] }}</h3>
                 <p>Email: {{ $data['advisor_email'] }}</p>
@@ -160,6 +217,7 @@
         </div>
     </div>
 
+    <!-- Footer -->
     <div class="footer">
         <p>Thank you for using our services. For any inquiries, please contact us at support@insurancemarket.ae</p>
     </div>
