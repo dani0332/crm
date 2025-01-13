@@ -1177,7 +1177,7 @@ class HomeQuoteService extends BaseService
             $data['advisor_mobile_no'] = $quote->advisor->mobile_no ?? '';
             $data['advisor_landline_no'] = $quote->advisor->landline_no ?? '';
             $data['profile_photo_path'] = $quote->advisor->profile_photo_path ?? '';
-            $data['mobile_no_without_spaces'] = $quote->advisor->mobile_no ?? '';
+            $data['mobile_no_without_spaces'] = (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) : '');
             $data['quote_declaration_link'] = '';
             $data['quote_sal_link'] = '';
         } else {
