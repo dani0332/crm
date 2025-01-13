@@ -524,7 +524,7 @@ const isLegacyPolicy = computed(() => {
                       :rules="isEndorsementNumberRequired ? [isRequired] : []"
                       v-model="sendUpdateForm.endorsement_number"
                       size="xs"
-                      :disabled="!state.edit || isUpdateBooked"
+                      :disabled="!state.edit || props.isSentOrBooked"
                       placeholder="Enter Endorsement Number"
                       maxlength="23"
                       @keypress="endorsementNumberValidation"
