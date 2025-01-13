@@ -614,7 +614,7 @@ class ReportService extends BaseService
 
         $allowedLOBs = [];
         foreach ($quoteTypes as $quoteType) {
-            if (in_array($quoteType->name . '_ADVISOR', $userRoles) || in_array($quoteType->name . '_MANAGER', $userRoles)) {
+            if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
                 $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
             } elseif (in_array(RolesEnum::Admin, $userRoles)) {
                 $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
