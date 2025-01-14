@@ -819,8 +819,12 @@
             </div>
             <h3
                 style="margin: 0; padding-top: 10px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
-                Your tailor made home insurance comparison table <br /> with isurance reference ID: {{ $quote->code }}
+                Your tailor made home insurance <br />comparison table
             </h3>
+            {{-- <h3
+                style="margin: 0; padding-top: 10px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
+                Your tailor made home insurance comparison table <br /> with isurance reference ID: {{ $quote->code }}
+            </h3> --}}
         </div>
         {{-- <p class="head-caption"
             style="position: fixed; top: 60px; right: 5px; font-size: 14px; font-weight: bold; text-align: right;">
@@ -933,6 +937,11 @@
                             </p>
                         </th>
                     @endforeach
+                </tr>
+                <tr style="page-break-inside: avoid;">
+                    <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
+                        <div class="spacer"></div>
+                    </td>
                 </tr>
             </thead>
             <tbody>
