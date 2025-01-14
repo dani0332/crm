@@ -834,7 +834,7 @@
                                     $totalPrice = ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0);
                                 @endphp
                                 <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}"
-                                    style="text-decoration: none; color: #fff; font-size: 14px; font-weight: bold; display: inline-block; padding: 5px 5px; border-radius: 4px;">
+                                    style="text-decoration: none; color: #fff; font-size: 14px; font-weight: bold; display: inline-block; padding: 8px 10px; border-radius: 4px; width: 130px; text-align: center;">
                                     {{ $buyNowText }}
                                     <br>
                                     <small style="font-size: 10px; font-weight: normal; line-height: 1.2;">AED</small>
