@@ -247,11 +247,11 @@
             background-color: #1d83bc;
             color: #ffffff;
             padding: 8px 12px;
-            margin-top: 30px;
+            margin-top: 10px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 12px;
+            font-size: 20px;
             font-weight: bold;
             border-radius: 5px;
             margin-bottom: 0px;
@@ -743,7 +743,7 @@
 
     {{-- PDF Page Inner Content --}}
     <main>
-        <table class="main-table">
+        <table class="main-table" style="width: 100%; table-layout: auto;">
             <thead>
                 <p style="margin-top:150px"></p>
                 <tr>
@@ -780,7 +780,7 @@
                     @endforeach
                 </tr>
                 <tr>
-                    <th class="bg-light-blue" style="width: 25% !important; background-color: #DBEEFF !important">
+                    <th class="bg-light-blue" style="background-color: #DBEEFF !important">
                         <p class="quote-info">Home insurance comparison for: <b>{{ $quote->first_name }}
                                 {{ $quote->last_name }}</b></p>
                     </th>
@@ -846,26 +846,27 @@
                     @endforeach
                 </tr>
                 <br>
-                <p style="margin-bottom:50px"></p>
+                {{-- <p style="margin-bottom:50px"></p> --}}
             </thead>
             <tbody>
                 @php $featCount = 0 @endphp
                 @foreach ($features as $feature)
                     {{-- heading row --}}
                     @if (@$feature['code'] == 'heading')
-                        <tr>
+                        <tr style="page-break-inside: avoid; page-break-before: auto;">
                             <td colspan="{{ sizeof($planIds) + 1 }}" class="text-heading">
                                 <p class="text-left !font-bold">{{ $feature['title'] }}</p>
                             </td>
                             <td colspan="{{ sizeof($planIds) }}" class="heading-desc">
-                                {{ $feature['description'] ?? '' }}</td>
+                                {{ $feature['description'] ?? '' }}
+                            </td>
                         </tr>
                         @php continue; @endphp
                     @endif
 
                     {{-- spacer row --}}
                     @if (@$feature['code'] == 'spacer')
-                        <tr>
+                        <tr style="page-break-inside: avoid;">
                             <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
                                 <div class="spacer"></div>
                             </td>
@@ -875,44 +876,47 @@
 
                     {{-- feature rows --}}
                     <?php $planIterate = 0; ?>
-                    <tr class="<?php echo 'row_' . $featCount; ?> {{ $feature['row_class'] ?? '' }}">
+                    <tr class="<?php echo 'row_' . $featCount; ?> {{ $feature['row_class'] ?? '' }}"
+                        style="page-break-inside: avoid;">
                         <td style="background-color: #DBEEFF">
                             <p class="text-left font-bold">{{ @$feature['title'] }}</p>
                         </td>
                         @foreach ($planIds as $planId)
                             <?php $return_value = ''; ?>
-                            @if ($feature['type'] == 'info')
-                                @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
-                            @elseif($feature['type'] == 'excess')
-                                @php $return_value =   $plans[$planId]->excess->premium ?? "" @endphp
-                            @elseif($feature['type'] == 'prop')
-                                @php $return_value =   $plans[$planId]->{$feature['code']}  @endphp
-                            @elseif($feature['type'] == 'buy')
-                                @php
-                                    if (in_array($planId, $selectedPlanIds)) {
-                                        $buyNowfullLink = '#';
-                                        $buyNowText = 'Selected';
-                                    } else {
-                                        $buyNowfullLink = $buyNowLink . $planId;
-                                        $buyNowText = $buyNow;
-                                    }
-                                $return_value = `<a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}" >'.$buyNowText.'</a>`; @endphp
-                            @elseif(is_array($feature['type']))
-                                @php $value = "Excluded";  @endphp
-                                @foreach ($feature['type'] as $type)
-                                    @if (isset($plans[$planId]->{$type}->{$feature['code']}->value))
-                                        @php
-                                            $value = $plans[$planId]->{$type}->{$feature['code']}->value;
-                                            break;
-                                        @endphp
-                                    @endif
-                                @endforeach
-                                @php  $return_value  = $value; @endphp
-                            @else
-                                @if ($feature['code'] == 'coPayment')
-                                    @php  $return_value = $addons[$planId]['coPayment']['text'] ?? 'N/A'; @endphp
+                            @if (isset($feature['type']))
+                                @if ($feature['type'] == 'info')
+                                    @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
+                                @elseif($feature['type'] == 'excess')
+                                    @php $return_value =   $plans[$planId]->excess->premium ?? "" @endphp
+                                @elseif($feature['type'] == 'prop')
+                                    @php $return_value =   $plans[$planId]->{$feature['code']}  @endphp
+                                @elseif($feature['type'] == 'buy')
+                                    @php
+                                        if (in_array($planId, $selectedPlanIds)) {
+                                            $buyNowfullLink = '#';
+                                            $buyNowText = 'Selected';
+                                        } else {
+                                            $buyNowfullLink = $buyNowLink . $planId;
+                                            $buyNowText = $buyNow;
+                                        }
+                                    $return_value = `<a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}" >'.$buyNowText.'</a>`; @endphp
+                                @elseif(is_array($feature['type']))
+                                    @php $value = "Excluded";  @endphp
+                                    @foreach ($feature['type'] as $type)
+                                        @if (isset($plans[$planId]->{$type}->{$feature['code']}->value))
+                                            @php
+                                                $value = $plans[$planId]->{$type}->{$feature['code']}->value;
+                                                break;
+                                            @endphp
+                                        @endif
+                                    @endforeach
+                                    @php  $return_value  = $value; @endphp
                                 @else
-                                    @php  $return_value =  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' ; @endphp
+                                    @if ($feature['code'] == 'coPayment')
+                                        @php  $return_value = $addons[$planId]['coPayment']['text'] ?? 'N/A'; @endphp
+                                    @else
+                                        @php  $return_value =  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' ; @endphp
+                                    @endif
                                 @endif
                             @endif
                             <td class="{{ @$feature['col_class'] }}">
@@ -938,7 +942,7 @@
                             </style>
                             <?php
                             }
-                    ?>
+                            ?>
                         @endforeach
                     </tr>
                     <?php $featCount++; ?>
@@ -949,16 +953,14 @@
                             href="{{ $websitURL . '/home-insurance/quote/' . $quote->uuid }}">View all quotes</a>
                     </td>
                 </tr>
-
-                <p style="margin-bottom: 50px"></p>
+                {{-- <p style="margin-bottom: 50px"></p> --}}
             </tbody>
         </table>
-
         <div class="disclaimer-container" style="width: 100%; padding: 10px; box-sizing: border-box;">
             <span class="section-title"
-                style="font-weight: bold; font-size: 16px; display: block; margin-bottom: 10px;">Disclaimer and
+                style="font-weight: bold; font-size: 20px; display: block; margin-bottom: 10px;">Disclaimer and
                 material information</span>
-            <p class="section-text" style="font-size: 9px; line-height: 1.5; width: 100%; margin: 0;">
+            <p class="section-text" style="font-size: 16px; line-height: 1.5; width: 100%; margin: 0;">
                 All quotes provided are indicative and based on the information you have supplied. While we
                 strive for accuracy in our comparison tables, discrepancies may occur. In such instances, the
                 terms detailed in the insurer's policy wordings and schedules will take precedence over the
