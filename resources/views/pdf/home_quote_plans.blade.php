@@ -1062,38 +1062,44 @@
 
     {{-- PDF Page Footer --}}
     <footer style="background-color: #1d83bc; color: #fff; text-align: center; padding: 10px;">
-        <table class="tbl-footer" style="padding: 7px 30px; margin: 0; width: 100%; border: none;">
+        <table class="tbl-footer" style="padding: 7px 10px; margin: 0; width: 100%; border: none;">
             <tr>
                 <td colspan="2" class="text-center">
-                    <h4>InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC</h4>
+                    <h4 style="font-size: 20px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
+                        Insurance Brokerage Services LLC</h4>
                 </td>
             </tr>
             <tr>
-                <td class="text-left">UAE Central Bank Registration number 85</td>
-                <td class="text-right">27th Floor, Control Tower, Motor City</td>
+                <td class="text-left" style="font-size: 16px;">UAE Central Bank Registration number 85</td>
+                <td class="text-right" style="font-size: 16px;">27th Floor, Control Tower, Motor City</td>
             </tr>
             <tr>
-                <td class="text-left">Registered member of the Emirates Insurance Association</td>
-                <td class="text-right">Dubai, United Arab Emirates, P.O Box 26423</td>
+                <td class="text-left" style="font-size: 16px;">Registered member of the Emirates Insurance Association
+                </td>
+                <td class="text-right" style="font-size: 16px;">Dubai, United Arab Emirates, P.O Box 26423</td>
             </tr>
             <tr>
-                <td class="text-left">Department of Economy & Tourism in Dubai Trade License number 238534</td>
-                <td class="text-right">Tel: <a href="tel:+800253733">800 ALFRED (800-253-733)</a> </td>
+                <td class="text-left" style="font-size: 16px;">Department of Economy & Tourism in Dubai Trade License
+                    number 238534</td>
+                <td class="text-right" style="font-size: 16px;">Tel: <a href="tel:+800253733"
+                        style="color: #fff; text-decoration: none;">800 ALFRED (800-253-733)</a></td>
             </tr>
             <tr>
-                <td class="text-left">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai
-                    Health Authority</td>
-                <td class="text-right"> <a href="https://insurancemarket.ae">www.insurancemarket.ae</a> </td>
+                <td class="text-left" style="font-size: 16px;">Holder of Health Insurance Intermediary Permit ID
+                    Number BRK-00003 from Dubai Health Authority</td>
+                <td class="text-right" style="font-size: 16px;"><a href="https://insurancemarket.ae"
+                        style="color: #fff; text-decoration: none;">www.insurancemarket.ae</a></td>
             </tr>
             <tr>
-                <td class="text-left">Registered member of Insurance Business Group under the Dubai Chamber of Commerce
-                    and Industry</td>
+                <td class="text-left" style="font-size: 16px;">Registered member of Insurance Business Group under the
+                    Dubai Chamber of Commerce and Industry</td>
             </tr>
         </table>
     </footer>
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}"
+        class="full-page-image" />
 </body>
 
 </html>
