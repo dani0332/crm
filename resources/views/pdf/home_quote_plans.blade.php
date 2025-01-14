@@ -313,21 +313,38 @@
             background-color: #d7fbd0;
         }
 
-        .text-heading {
+        /* .text-heading {
             color: #ffffff;
             background-image: url('{{ public_path('images/new-heading-title-bg-image.png') }}');
-            background-size: 100% 100%;
+            background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             height: 50px;
             width: 100%;
-            display: table-cell;
+            display: flex;
+            align-items: center;
             padding: 0;
             margin: 0;
-            font-size: 16px;
-            /* Adjusted font size */
-            font-weight: 600;
-            /* Semi-bold for headings */
+            font-size: 20px;
+            font-weight: 900;
+        } */
+
+        .text-heading {
+            color: #ffffff;
+            background-color: #2f8ec4;
+            height: 50px;
+            width: 100%;
+            display: flex;
+            vertical-align: middle;
+            padding: 0;
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .text-heading p {
+            margin: 0;
+            padding-left: 10px;
         }
 
         .heading-desc {
@@ -815,7 +832,7 @@
     <main>
         <table class="main-table" style="width: 100%; table-layout: auto;">
             <thead>
-                <p style="margin-top:100px"></p>
+                <p style="margin-top:95px"></p>
                 <tr>
                     <th class="alfred" id="alfred-th" rowspan="2">
                         <img src="{{ public_path('images/home-alfred.png') }}" />
@@ -851,12 +868,14 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue" style="background-color: #DBEEFF !important">
-                        <p class="quote-info">Home insurance comparison for: <b>{{ $quote->first_name }}
-                                {{ $quote->last_name }}</b></p>
+                        <p class="quote-info" style="font-size: 16px">Home insurance comparison for:
+                            <b>{{ $quote->first_name }}
+                                {{ $quote->last_name }}</b>
+                        </p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="font-size: 14px">
+                            <p class="text-center" style="font-size: 16px">
                                 {{ $plans[$planId]->name ?? '' }}
                             </p>
                         </th>
@@ -864,31 +883,31 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info">Gross Price</b></p>
+                        <p class="quote-info"><b>Gross Price</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="font-size: 14px">
-                                {{ $plans[$planId]->actualPremium ?? '' }}
+                            <p class="text-center" style="font-size: 16px">
+                                AED {{ $plans[$planId]->actualPremium ?? '' }}
                             </p>
                         </th>
                     @endforeach
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info">Vat</b></p>
+                        <p class="quote-info"><b>Vat</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="font-size: 14px">
-                                {{ $plans[$planId]->vat ?? '' }}
+                            <p class="text-center" style="font-size: 16px">
+                                AED {{ $plans[$planId]->vat ?? '' }}
                             </p>
                         </th>
                     @endforeach
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info">Total Price (with VAT)</p>
+                        <p class="quote-info" style="font-size: 16px"><b>Total Price (with VAT)</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
@@ -915,8 +934,6 @@
                         </th>
                     @endforeach
                 </tr>
-                <br>
-                {{-- <p style="margin-bottom:50px"></p> --}}
             </thead>
             <tbody>
                 @php $featCount = 0 @endphp
