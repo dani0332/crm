@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
             // SendUpdateAdditionalSubType::class,
-            // PermissionsSeeder::class,
+            PermissionsSeeder::class,
             // AllianceNationalitySeeder::class,
             // SUAdditionalCRNSubTypesSeeder::class,
         ]);
