@@ -221,6 +221,9 @@ final class PermissionsEnum extends Enum
     public const CAR_REVIVAL_QUOTE_LIST = 'carrevival-quotes-list';
     public const CAR_REVIVAL_QUOTES_EDIT = 'carrevival-quotes-edit';
     public const CAR_REVIVAL_QUOTES_SHOW = 'carrevival-quotes-show';
+    public const HEALTH_REVIVAL_QUOTES_LIST = 'health-revival-quotes-list';
+    public const HEALTH_REVIVAL_QUOTES_EDIT = 'health-revival-quotes-edit';
+    public const HEALTH_REVIVAL_QUOTES_SHOW = 'health-revival-quotes-show';
     public const ViewTeamsFilters = 'view-teams-filters';
     public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
@@ -394,6 +397,7 @@ final class PermissionsEnum extends Enum
     public const RECEIVE_NOTIFICATIONS = 'receive-notifications';
     public const SEARCH_ALL_LEAD_LOB = 'search-all-lead-lob';
     public const DATA_EXTRACTION_SEARCH_ALL_LEADS = 'data-extraction-search-all-leads';
+    public const TAP_BETA_ACCESS = 'tap-beta-access';
 
     public static function getAdvisorConversionReportPermissions()
     {

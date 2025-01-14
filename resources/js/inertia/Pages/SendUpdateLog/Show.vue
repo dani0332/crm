@@ -4,6 +4,7 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyProviderDetails from './Partials/ProviderDetails.vue';
+import { XInput } from '@indielayer/ui';
 
 const props = defineProps({
   quoteType: String,
@@ -41,6 +42,7 @@ const props = defineProps({
   insuranceProviderId: Number,
   isCommVatNotAppEnabled: Boolean,
   isSentOrBooked: Boolean,
+  disableMainBtn: String,
 });
 
 const page = usePage();
@@ -115,6 +117,7 @@ const sendUpdateForm = useForm({
   car_addons: props.sendUpdateLog?.car_addons || null,
   emirates_id: props.sendUpdateLog?.emirates_id || null,
   seating_capacity: props.sendUpdateLog?.seating_capacity || null,
+  endorsement_number: props.sendUpdateLog?.endorsement_number || null,
 });
 
 onMounted(() => {
@@ -146,6 +149,8 @@ const onCancel = () => {
   sendUpdateForm.emirates_id = props.sendUpdateLog?.emirates_id || null;
   sendUpdateForm.seating_capacity =
     props.sendUpdateLog?.seating_capacity || null;
+  sendUpdateForm.endorsement_number =
+    props.sendUpdateLog?.endorsement_number || null;
 };
 
 const onUpdateLog = isValid => {
@@ -237,6 +242,51 @@ const showBookingFailedAlert = () => {
 
 onBeforeMount(() => {
   showBookingFailedAlert();
+});
+
+const isEFOrEN = computed(() => {
+  return ![
+    props.sendUpdateStatusEnum.CI,
+    props.sendUpdateStatusEnum.CIR,
+    props.sendUpdateStatusEnum.CPU,
+    props.sendUpdateStatusEnum.CPD,
+  ].includes(props.sendUpdateLog.category.code);
+});
+
+const isAOCOV = computed(
+  () => props.sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.AOCOV,
+);
+
+const isCOEOrCOE_NFI = computed(() => {
+  return [
+    props.sendUpdateStatusEnum.COE,
+    props.sendUpdateStatusEnum.COE_NFI,
+  ].includes(props.sendUpdateLog?.option?.code);
+});
+
+const isCISCOrCISC_NFI = computed(() => {
+  return [
+    props.sendUpdateStatusEnum.CISC,
+    props.sendUpdateStatusEnum.CISC_NFI,
+  ].includes(props.sendUpdateLog?.option?.code);
+});
+
+const endorsementNumberValidation = event => {
+  const charCode = event.charCode || event.keyCode;
+  const char = String.fromCharCode(charCode);
+  const regex = /^[a-zA-Z0-9\\|\/-]$/;
+
+  if (!regex.test(char)) {
+    event.preventDefault();
+  }
+};
+
+const isEndorsementNumberRequired = computed(() => {
+  return [
+    props.sendUpdateStatusEnum.EF,
+    props.sendUpdateStatusEnum.CI,
+    props.sendUpdateStatusEnum.CIR,
+  ].includes(props.sendUpdateLog.category.code);
 });
 
 const isLegacyPolicy = computed(() => {
@@ -351,19 +401,8 @@ const isLegacyPolicy = computed(() => {
                   </dt>
                   <dd>{{ sendUpdateLog.display_status }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2 mb-2">
-                  <template
-                    v-if="
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CI &&
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CIR &&
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CPU &&
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CPD
-                    "
-                  >
+                <div v-if="isEFOrEN" class="grid sm:grid-cols-2">
+                  <template v-if="isEFOrEN">
                     <dt>
                       <x-tooltip>
                         <label
@@ -380,42 +419,22 @@ const isLegacyPolicy = computed(() => {
                     <dd>
                       <x-select
                         size="xs"
-                        :disabled="!state.edit"
+                        :disabled="!state.edit || isUpdateBooked"
                         v-model="sendUpdateForm.option_id"
                         :options="updateLogOptions"
+                        class="w-3/4"
                       />
                     </dd>
                   </template>
-                  <template
-                    v-else-if="
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CPU &&
-                      sendUpdateLog.category.code !==
-                        props.sendUpdateStatusEnum.CPD
-                    "
-                  >
-                    <!-- <dt class="font-bold text-right mr-10">Reason</dt>
-                  <dd>
-                    <x-select
-                      size="xs"
-                      :disabled="!state.edit"
-                      v-model="sendUpdateForm.change_reason"
-                      :options="changeReasonOptions"
-                    />
-                  </dd> -->
-                  </template>
                 </div>
                 <div
-                  class="grid sm:grid-cols-2 mb-2 md:ml-10"
-                  v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car"
+                  class="grid sm:grid-cols-2 mb-2"
+                  v-if="
+                    props.quoteType === page.props.quoteTypeCodeEnum.Car &&
+                    (isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI)
+                  "
                 >
-                  <template
-                    v-if="
-                      props.additionalField &&
-                      sendUpdateLog?.option?.code ===
-                        props.sendUpdateStatusEnum.AOCOV
-                    "
-                  >
+                  <template v-if="props.additionalField && isAOCOV">
                     <dt>
                       <label
                         class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
@@ -437,15 +456,7 @@ const isLegacyPolicy = computed(() => {
                       />
                     </dd>
                   </template>
-                  <template
-                    v-else-if="
-                      props.additionalField &&
-                      (sendUpdateLog?.option?.code ===
-                        props.sendUpdateStatusEnum.COE ||
-                        sendUpdateLog?.option?.code ===
-                          props.sendUpdateStatusEnum.COE_NFI)
-                    "
-                  >
+                  <template v-else-if="props.additionalField && isCOEOrCOE_NFI">
                     <dt>
                       <label
                         class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
@@ -466,13 +477,7 @@ const isLegacyPolicy = computed(() => {
                     </dd>
                   </template>
                   <template
-                    v-else-if="
-                      props.additionalField &&
-                      (sendUpdateLog?.option?.code ===
-                        props.sendUpdateStatusEnum.CISC ||
-                        sendUpdateLog?.option?.code ===
-                          props.sendUpdateStatusEnum.CISC_NFI)
-                    "
+                    v-else-if="props.additionalField && isCISCOrCISC_NFI"
                   >
                     <dt>
                       <label
@@ -494,6 +499,38 @@ const isLegacyPolicy = computed(() => {
                       />
                     </dd>
                   </template>
+                </div>
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
+                >
+                  <dt>
+                    <x-tooltip>
+                      <label
+                        class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      >
+                        ENDORSEMENT NUMBER
+                      </label>
+                      <template #tooltip>
+                        The number associated with a specific endorsement or
+                        update to the policy. This is the endorsement number
+                        available on the tax invoice or provided by the
+                        insurance provider.
+                      </template>
+                    </x-tooltip>
+                  </dt>
+                  <dd>
+                    <x-input
+                      :rules="isEndorsementNumberRequired ? [isRequired] : []"
+                      v-model="sendUpdateForm.endorsement_number"
+                      size="xs"
+                      :disabled="!state.edit || props.isSentOrBooked"
+                      placeholder="Enter Endorsement Number"
+                      maxlength="23"
+                      @keypress="endorsementNumberValidation"
+                      class="w-3/4"
+                    />
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -637,6 +674,7 @@ const isLegacyPolicy = computed(() => {
       @update-error-status="handleErrorStatusUpdate"
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
       :is-comm-vat-not-app-enabled="props.isCommVatNotAppEnabled"
+      :disable-main-btn="props.disableMainBtn"
     />
 
     <AuditLogs
