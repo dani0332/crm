@@ -6,6 +6,27 @@
     <title>Plans Comparison PDF</title>
 
     <style>
+        /* Embed Prompt Font */
+        @font-face {
+            font-family: 'Prompt';
+            src: url('{{ public_path('fonts/Prompt-Regular.ttf') }}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Prompt';
+            src: url('{{ public_path('fonts/Prompt-Bold.ttf') }}') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        /* Apply Prompt Font to All Elements */
+        * {
+            font-family: 'Prompt', sans-serif;
+        }
+
+        /* General Styles */
         @page {
             margin: 0;
             padding: 0;
@@ -19,13 +40,9 @@
 
         body {
             line-height: 1;
-            font-family: "DejaVu Sans", sans-serif;
             margin: 0;
             padding: 0;
-
-
         }
-
 
         div,
         span,
@@ -78,12 +95,10 @@
             text-indent: 0;
             border-color: #bfbfbf;
             max-width: 1200px;
-            /* margin: 7px 12px auto; */
             border-spacing: 0;
             border-radius: 10px;
             width: 100%;
             border-collapse: collapse;
-            /* Add space to prevent overlap */
         }
 
         tbody {
@@ -132,17 +147,6 @@
             border: 1px solid #bfbfbf;
         }
 
-        /* thead>tr>th:first-child {
-            max-width: 30%;
-        }
-
-        tr th:first-child,
-        tr td:first-child {
-            width: 400px;
-            min-width: 400px;
-            max-width: 400px;
-        } */
-
         td>p,
         th>p {
             padding: 4px;
@@ -187,7 +191,6 @@
 
         .provider {
             border: 1px solid #bfbfbf;
-
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
@@ -221,7 +224,6 @@
             text-align: right;
             vertical-align: bottom;
             margin-top: -1px;
-            /* background: #EFF6FF; */
             font-size: 10px;
             text-align: left;
             padding: 8px;
@@ -352,11 +354,11 @@
         }
 
         .text-white {
-            color: #ffffff
+            color: #ffffff;
         }
 
         .text-underline {
-            text-decoration: underline
+            text-decoration: underline;
         }
 
         .hidden {
@@ -384,7 +386,6 @@
             left: 0;
             right: 0;
             height: 60px;
-            /* z-index: 1000;  */
         }
 
         .header .logo {
@@ -418,7 +419,6 @@
         }
 
         main {
-            /* Push main content down */
             padding: 40px;
         }
 
@@ -434,7 +434,6 @@
         td,
         th {
             width: auto;
-            /* Ensures cells take up the necessary space */
         }
 
         .header {
@@ -457,7 +456,6 @@
             left: 0;
             right: 0;
             height: 60px;
-            /* z-index: 1000; */
         }
 
         .content {}
@@ -467,6 +465,7 @@
 <body>
     {{-- First Page --}}
     <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_home_first_page.jpg') }}" class="page-image" />
+
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
@@ -742,8 +741,6 @@
         </p>
     </header>
 
-
-
     {{-- PDF Page Inner Content --}}
     <main>
         <table class="main-table">
@@ -794,7 +791,6 @@
                             </p>
                         </th>
                     @endforeach
-
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
@@ -822,12 +818,11 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info">Total Price (wtih VAT)
-                        </p>
+                        <p class="quote-info">Total Price (with VAT)</p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center">
+                            <p class="text-center" style="text-align: center; margin: 0; padding: 0;">
                                 @php
                                     if (in_array($planId, $selectedPlanIds)) {
                                         $buyNowfullLink = '#';
@@ -836,10 +831,16 @@
                                         $buyNowfullLink = $buyNowLink . $planId;
                                         $buyNowText = $buyNow;
                                     }
+                                    $totalPrice = ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0);
                                 @endphp
-                                <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">{{ $buyNowText }}
-                                    <br> <small>AED</small>
-                                    <strong>{{ ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0) }}</strong></a>
+                                <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}"
+                                    style="text-decoration: none; color: #fff; font-size: 14px; font-weight: bold; display: inline-block; padding: 5px 5px; border-radius: 4px;">
+                                    {{ $buyNowText }}
+                                    <br>
+                                    <small style="font-size: 10px; font-weight: normal; line-height: 1.2;">AED</small>
+                                    <strong
+                                        style="font-size: 16px; font-weight: bold; line-height: 1.2;">{{ $totalPrice }}</strong>
+                                </a>
                             </p>
                         </th>
                     @endforeach
@@ -879,8 +880,7 @@
                             <p class="text-left font-bold">{{ @$feature['title'] }}</p>
                         </td>
                         @foreach ($planIds as $planId)
-                            <?php $return_value = '';
-                            ?>
+                            <?php $return_value = ''; ?>
                             @if ($feature['type'] == 'info')
                                 @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
                             @elseif($feature['type'] == 'excess')
@@ -928,7 +928,6 @@
 
                                     <?php } ?>
                                 </p>
-
                             </td>
                             <?php if (count($planIds) == $planIterate) {
                                 ?>
@@ -938,26 +937,12 @@
                                 }
                             </style>
                             <?php
-
                             }
                     ?>
                         @endforeach
                     </tr>
                     <?php $featCount++; ?>
                 @endforeach
-                <tr>
-                    <td>
-
-                    </td>
-                    @foreach ($planIds as $planId)
-                        <td>
-                            <p class="text-center">
-                                <a target="_blank" class="btn-buy"
-                                    href="{{ $buyNowLink . $planId }}">{{ in_array($planId, $selectedPlanIds) ? 'Selected' : $buyNow }}</a>
-                            </p>
-                        </td>
-                    @endforeach
-                </tr>
                 <tr>
                     <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
                         <a target="_blank" class="btn-all-quotes"
@@ -983,7 +968,6 @@
                 reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
             </p>
         </div>
-
     </main>
 
     {{-- PDF Page Footer --}}
@@ -1015,7 +999,6 @@
                 <td class="text-left">Registered member of Insurance Business Group under the Dubai Chamber of Commerce
                     and Industry</td>
             </tr>
-
         </table>
     </footer>
 

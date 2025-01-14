@@ -1048,7 +1048,7 @@ class HomeQuoteService extends BaseService
         $quote->load(['advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isRemoteEnabled' => true])
             ->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
 
         // return $pdf->stream('debug.pdf');
