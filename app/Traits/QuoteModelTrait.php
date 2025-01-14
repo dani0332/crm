@@ -205,6 +205,16 @@ trait QuoteModelTrait
         $q->sicFlowEnabled(false);
     }
 
+    public function isSICFlowEnabled()
+    {
+        return $this->sic_flow_enabled;
+    }
+
+    public function isSICFlowDisabled()
+    {
+        return ! $this->isSICFlowEnabled();
+    }
+
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
     {
         $q->where(function ($sq) {
@@ -281,5 +291,20 @@ trait QuoteModelTrait
                 $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
             });
         }
+    }
+
+    public function isFakeOrDuplicate()
+    {
+        return in_array($this->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+    }
+
+    public function isRequestedAdvisorOrPaymentAuthorized()
+    {
+        return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+    }
+
+    public function isRenewalUpload()
+    {
+        return $this->source == LeadSourceEnum::RENEWAL_UPLOAD;
     }
 }
