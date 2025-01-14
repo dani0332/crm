@@ -3,7 +3,9 @@
 namespace App\Jobs;
 
 use App\Enums\PaymentProcessJobEnum;
+use App\Enums\SendPolicyTypeEnum;
 use App\Models\CcPaymentProcess;
+use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -50,8 +52,17 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 true
             );
             info("CC Payments Job Ended For Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id}");
-           
-            // We can trigger sage & book policy entry from here 
+
+            // We can trigger sage & book policy entry from here
+            $request = new \stdClass;
+            $request->quote_id = $quote->id; // TODO :  Lead ID
+            $request->modelType = self::TYPE; // TODO : LOB Name like Car, health, Travel
+            $request->model_type = self::TYPE; // TODO : LOB Name like Car, health, Travel
+            $request->is_send_policy = false;
+            $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+            $request->transaction_payment_status = null;
+
+            return (new SageApiService)->postBookPolicyToSage($request, $quote);
         } catch (\Exception $exception) {
             // Handle the exception here
             info("CC Payments Job Failed for Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id} - Error: ".$exception->getMessage());
