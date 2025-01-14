@@ -126,6 +126,19 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID);
                 }
 
+                $healthRevival = DttRevival::firstOrCreate(
+                    [
+                        'quote_type_id' => QuoteTypes::HEALTH->id(),
+                        'quote_id' => $healthQuote->id,
+                        'uuid' => $capiResponse->quoteUID,
+                    ],
+                    [
+                        'revival_quote_batch_id' => $quoteBatch->id,
+                        'email_sent' => false,
+                        'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
+                    ]
+                );
+
                 $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
                 sleep(5);
                 if (empty($healthQuote->health_plan_type_id)) {
@@ -201,16 +214,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 if ($response == 201) {
                     info($logPrefix.'ParentLead - '.$this->lead->uuid.' - childLead - '.$capiResponse->quoteUID.' - emailSent - '.$emailData->customerEmail);
 
-                    DttRevival::firstOrCreate(
-                        [
-                            'quote_type_id' => QuoteTypes::HEALTH->id(),
-                            'quote_id' => $healthQuote->id,
-                            'uuid' => $capiResponse->quoteUID, ],
-                        [
-                            'revival_quote_batch_id' => $quoteBatch->id,
-                            'email_sent' => true,
-                            'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
-                        ]);
+                    $healthRevival->update(['email_sent' => true]);
                     // update child lead
                     HealthQuote::find($healthQuote->id)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
                     // update parent lead
