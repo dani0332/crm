@@ -2109,6 +2109,7 @@ class SageApiService
 
     private function handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits)
     {
+        info('handleSplitPaymentApproval called from sage api service: '.$quote->code.' : '.json_encode($data));
         $modelType = QuoteTypes::getName($quoteTypeId)->value;
         $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
     
@@ -2126,7 +2127,6 @@ class SageApiService
             'send_update_id' => null,
             'collection_type' => $payment->collection_type,
         ]);
-    
         return app(CentralController::class)->splitPaymentsApprove($data);
     }
 }
