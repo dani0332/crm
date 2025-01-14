@@ -56,17 +56,13 @@ const tableHeader = [
   },
 ];
 
-const getFiltersObject = () => {
-  return {
-    lob: quoteTypeCodeEnum.Car,
-    createdAtDates: [],
-    assignmentTypes: 'All',
-    segment_filter: 'all',
-    page: 1,
-  };
-};
-
-let filters = reactive(getFiltersObject());
+let filters = reactive({
+  lob: quoteTypeCodeEnum.Car,
+  createdAtDates: null,
+  assignmentTypes: 'All',
+  segment_filter: 'all',
+  page: 1,
+});
 
 function onSubmit(isValid, isMounted = false) {
   if (!filters.lob && isMounted === false) {
@@ -107,7 +103,6 @@ function onSubmit(isValid, isMounted = false) {
 }
 
 function onReset() {
-  filters = getFiltersObject();
   setDefaultValues();
 
   isDirty.value = false;
@@ -230,7 +225,6 @@ const onLobChange = (e, isOnMounted = false) => {
             size="sm"
             model-type="yyyy-MM-dd"
             :rules="[isRequired]"
-            :onlySelect="true"
           />
         </div>
 
