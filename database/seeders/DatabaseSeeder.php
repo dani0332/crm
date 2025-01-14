@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
+            TravelRenewalTeamSeeder::class,
             // SendUpdateAdditionalSubType::class,
             // PermissionsSeeder::class,
             // AllianceNationalitySeeder::class,
