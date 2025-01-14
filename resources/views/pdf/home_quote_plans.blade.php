@@ -39,9 +39,13 @@
         }
 
         body {
-            line-height: 1;
+            line-height: 1.6;
             margin: 0;
             padding: 0;
+            font-size: 12px;
+            /* Base font size */
+            font-weight: 400;
+            /* Base font weight */
         }
 
         div,
@@ -67,6 +71,10 @@
         p,
         pre {
             margin: 0;
+            font-size: 12px;
+            /* Consistent base font size */
+            font-weight: 400;
+            /* Consistent base font weight */
         }
 
         a {
@@ -75,14 +83,16 @@
 
         b,
         strong {
-            font-weight: bolder;
+            font-weight: 700;
+            /* Bold weight for strong text */
         }
 
         table.tbl-dec {
             margin: auto;
             padding: auto;
             border: none;
-            font-size: 3px;
+            font-size: 12px;
+            /* Adjusted font size */
         }
 
         table.tbl-dec tr td,
@@ -99,6 +109,8 @@
             border-radius: 10px;
             width: 100%;
             border-collapse: collapse;
+            font-size: 12px;
+            /* Adjusted font size */
         }
 
         tbody {
@@ -108,7 +120,10 @@
         .header {
             background: #1d83bc;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 18px;
+            /* Adjusted font size */
+            font-weight: 600;
+            /* Semi-bold for headers */
             text-align: center;
             padding: 8px 10px;
             width: 100%;
@@ -134,6 +149,9 @@
             margin: 0;
             padding-top: 20px;
             font-size: 18px;
+            /* Adjusted font size */
+            font-weight: 600;
+            /* Semi-bold for headers */
             float: right;
             text-align: right;
             padding-right: 18px;
@@ -151,8 +169,10 @@
         th>p {
             padding: 4px;
             font-size: 12px !important;
+            /* Adjusted font size */
             text-align: center;
-            font-weight: normal;
+            font-weight: 400;
+            /* Normal weight for table content */
         }
 
         .text-left {
@@ -161,14 +181,23 @@
 
         .text-xs {
             font-size: 10px;
+            /* Adjusted font size */
+            font-weight: 400;
+            /* Normal weight for small text */
         }
 
         .text-sm {
-            font-size: 10px;
+            font-size: 12px;
+            /* Adjusted font size */
+            font-weight: 400;
+            /* Normal weight for small text */
         }
 
         .text-xl {
             font-size: 16px;
+            /* Adjusted font size */
+            font-weight: 600;
+            /* Semi-bold for larger text */
         }
 
         .blue-box {
@@ -192,6 +221,7 @@
         .provider {
             border: 1px solid #bfbfbf;
             font-weight: 400;
+            /* Normal weight for provider text */
             color: #4ea4a8;
             vertical-align: middle;
         }
@@ -224,35 +254,43 @@
             text-align: right;
             vertical-align: bottom;
             margin-top: -1px;
-            font-size: 10px;
+            font-size: 12px;
+            /* Adjusted font size */
+            font-weight: 400;
+            /* Normal weight for info text */
             text-align: left;
             padding: 8px;
             max-width: 100%;
-            font-weight: normal;
         }
 
         .info h5 {
             background: #1d83bc;
             color: #ffffff;
             padding: 3px;
-            font-weight: normal;
+            font-weight: 600;
+            /* Semi-bold for info headers */
             margin: 0 0 10px 0;
         }
 
         .info p {
             font-size: 12px;
+            /* Adjusted font size */
+            font-weight: 400;
+            /* Normal weight for info text */
         }
 
         .btn-all-quotes {
             background-color: #1d83bc;
             color: #ffffff;
-            padding: 8px 12px;
+            padding: 10px;
             margin-top: 10px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
             font-size: 20px;
-            font-weight: bold;
+            /* Adjusted font size */
+            font-weight: 600;
+            /* Semi-bold for buttons */
             border-radius: 5px;
             margin-bottom: 0px;
         }
@@ -264,8 +302,10 @@
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 10px;
-            font-weight: bold;
+            font-size: 12px;
+            /* Adjusted font size */
+            font-weight: 600;
+            /* Semi-bold for buttons */
             border-radius: 4px;
         }
 
@@ -284,10 +324,17 @@
             display: table-cell;
             padding: 0;
             margin: 0;
+            font-size: 16px;
+            /* Adjusted font size */
+            font-weight: 600;
+            /* Semi-bold for headings */
         }
 
         .heading-desc {
-            font-size: 10px;
+            font-size: 12px;
+            /* Adjusted font size */
+            font-weight: 400;
+            /* Normal weight for descriptions */
         }
 
         .provider-logo {
@@ -327,7 +374,10 @@
         table.tbl-footer tr td a {
             color: #ffffff;
             border: none;
-            font-size: 14px;
+            font-size: 12px;
+            /* Adjusted font size */
+            font-weight: 400;
+            /* Normal weight for footer text */
         }
 
         .text-left {
@@ -372,12 +422,19 @@
         .header {
             background: #1d83bc;
             color: #ffffff;
-            font-size: 19px;
+            font-size: 18px;
+            /* Adjusted font size */
+            font-weight: 600;
+            /* Semi-bold for headers */
             text-align: center;
             padding: 8px 10px;
             width: 100%;
             height: 60px;
             max-height: 60px;
+            background-image: url('{{ public_path('images/new-header-bg-image.png') }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         header {
@@ -427,8 +484,10 @@
             right: 5px !important;
             top: 150px !important;
             font-size: 14px;
+            /* Adjusted font size */
+            font-weight: 600;
+            /* Semi-bold for captions */
             text-align: right;
-            font-weight: bold;
         }
 
         td,
@@ -438,7 +497,10 @@
 
         .header {
             color: #ffffff;
-            font-size: 19px;
+            font-size: 18px;
+            /* Adjusted font size */
+            font-weight: 600;
+            /* Semi-bold for headers */
             text-align: center;
             padding: 8px 10px;
             width: 100%;
@@ -731,13 +793,21 @@
 
     {{-- PDF Page Header --}}
     <header>
-        <div class="header">
-            <div class="logo">
-                <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo" />
+        <div class="header"
+            style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000; color: #ffffff; padding: 8px 10px; height: 60px; background-image: url('{{ public_path('images/new-header-bg-image.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+            <div class="logo"
+                style="float: left; background-color: white; border-radius: 5px; padding: 5px 10px 5px 0px; height: 50px;">
+                <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo"
+                    style="max-height: 50px; height: 50px;" />
             </div>
-            <h3>Your tailor made <br />home insurance comparison table</h3>
+            <h3
+                style="margin: 0; padding-top: 10px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
+                Your tailor made home insurance <br /> comparison table
+            </h3>
         </div>
-        <p class="head-caption">Your home insurance reference ID is <span class="text-blue">{{ $quote->code }}</span>
+        <p class="head-caption"
+            style="position: fixed; top: 60px; right: 5px; font-size: 14px; font-weight: bold; text-align: right;">
+            Your home insurance reference ID is <span class="text-blue">{{ $quote->code }}</span>
         </p>
     </header>
 
@@ -745,7 +815,7 @@
     <main>
         <table class="main-table" style="width: 100%; table-layout: auto;">
             <thead>
-                <p style="margin-top:150px"></p>
+                <p style="margin-top:200px"></p>
                 <tr>
                     <th class="alfred" id="alfred-th" rowspan="2">
                         <img src="{{ public_path('images/home-alfred.png') }}" />
@@ -922,27 +992,27 @@
                             <td class="{{ @$feature['col_class'] }}">
                                 <p>
                                     <?php if ($return_value == 'Excluded') {
-                                        $planIterate++;
-                                        ?>
+                                    $planIterate++;
+                                    ?>
                                     Excluded
                                     <?php } else {
-                                        $planIterate = 0;
-                                        ?>
+                                    $planIterate = 0;
+                                    ?>
                                     <?php echo $return_value; ?>
 
                                     <?php } ?>
                                 </p>
                             </td>
                             <?php if (count($planIds) == $planIterate) {
-                                ?>
+                            ?>
                             <style>
                                 .row_<?php echo $featCount; ?> {
                                     display: none !important;
                                 }
                             </style>
                             <?php
-                            }
-                            ?>
+                        }
+                        ?>
                         @endforeach
                     </tr>
                     <?php $featCount++; ?>
@@ -956,7 +1026,8 @@
                 {{-- <p style="margin-bottom: 50px"></p> --}}
             </tbody>
         </table>
-        <div class="disclaimer-container" style="width: 100%; padding: 10px; box-sizing: border-box;">
+        <div class="disclaimer-container"
+            style="width: 100%; padding: 10px; box-sizing: border-box; margin-bottom: 20px;">
             <span class="section-title"
                 style="font-weight: bold; font-size: 20px; display: block; margin-bottom: 10px;">Disclaimer and
                 material information</span>
@@ -973,8 +1044,8 @@
     </main>
 
     {{-- PDF Page Footer --}}
-    <footer>
-        <table class="tbl-footer">
+    <footer style="background-color: #1d83bc; color: #fff; text-align: center; padding: 10px;">
+        <table class="tbl-footer" style="padding: 7px 30px; margin: 0; width: 100%; border: none;">
             <tr>
                 <td colspan="2" class="text-center">
                     <h4>InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC</h4>
