@@ -1062,7 +1062,7 @@
 
     {{-- PDF Page Footer --}}
     <footer style="background-color: #1d83bc; color: #fff; text-align: center; padding: 10px;">
-        <table class="tbl-footer" style="padding: 7px 10px; margin: 0; width: 100%; border: none;">
+        <table class="tbl-footer" style="padding: 5px 10px; margin: 0; width: 100%; border: none;">
             <tr>
                 <td colspan="2" class="text-center">
                     <h4 style="font-size: 20px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
