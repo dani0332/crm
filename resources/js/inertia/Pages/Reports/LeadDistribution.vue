@@ -238,13 +238,7 @@ const onLobChange = (e, isOnMounted = false) => {
           v-model="filters.assignmentTypes"
           label="Assignment Type"
           placeholder="Select any option"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: 1, label: 'System Assigned' },
-            { value: 2, label: 'System ReAssigned' },
-            { value: 3, label: 'Manual Assigned' },
-            { value: 4, label: 'Manual ReAssigned' },
-          ]"
+          :options="filterOptions?.assignmentTypes"
           :single="true"
         />
 

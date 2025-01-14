@@ -2,6 +2,7 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -224,6 +225,7 @@ class LeadDistributionReportService extends BaseService
         return [
             'lob' => $lobs,
             'maxDays' => $maxDays,
+            'assignmentTypes' => AssignmentTypeEnum::withLabels()
         ];
     }
 
