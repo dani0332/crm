@@ -802,20 +802,20 @@
             </div>
             <h3
                 style="margin: 0; padding-top: 10px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
-                Your tailor made home insurance <br /> comparison table
+                Your tailor made home insurance comparison table <br /> with isurance reference ID: {{ $quote->code }}
             </h3>
         </div>
-        <p class="head-caption"
+        {{-- <p class="head-caption"
             style="position: fixed; top: 60px; right: 5px; font-size: 14px; font-weight: bold; text-align: right;">
             Your home insurance reference ID is <span class="text-blue">{{ $quote->code }}</span>
-        </p>
+        </p> --}}
     </header>
 
     {{-- PDF Page Inner Content --}}
     <main>
         <table class="main-table" style="width: 100%; table-layout: auto;">
             <thead>
-                <p style="margin-top:200px"></p>
+                <p style="margin-top:100px"></p>
                 <tr>
                     <th class="alfred" id="alfred-th" rowspan="2">
                         <img src="{{ public_path('images/home-alfred.png') }}" />
