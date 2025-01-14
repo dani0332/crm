@@ -68,7 +68,7 @@ class CarAllocationService extends AllocationService
             'quote_status_id' => $lead->quote_status_id,
         ]);
 
-        $result = false;
+        $continueAssignment = false;
 
         if (! $overrideAssignment && ! empty($lead->advisor_id)) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is already assigned to advisor with ID: {$lead->advisor_id}, skipping assignment");
@@ -82,15 +82,15 @@ class CarAllocationService extends AllocationService
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is Renwal Upload, skipping assignment");
         } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment");
-            $result = true;
+            $continueAssignment = true;
         } elseif ($lead->isSICFlowDisabled()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow disabled, continuing assignment");
-            $result = true;
+            $continueAssignment = true;
         } else {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} does not meet any criteria, skipping assignment");
         }
 
-        return $result;
+        return $continueAssignment;
     }
 
     public function fetchLead($quoteId, $overrideAdvisorId)
@@ -108,7 +108,7 @@ class CarAllocationService extends AllocationService
 
         $lead = CarQuote::where('uuid', $quoteId)->first();
 
-        if (! $lead || $this->verifyPreChecks($lead, $overrideAdvisorId) === false) {
+        if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
             return null;
         }
 
