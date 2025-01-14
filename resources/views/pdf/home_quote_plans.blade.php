@@ -736,7 +736,7 @@
             <div class="logo">
                 <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo" />
             </div>
-            <h3>Your Tailor Made <br />Home Insurance Comparison Table</h3>
+            <h3>Your tailor made <br />home insurance comparison table</h3>
         </div>
         <p class="head-caption">Your home insurance reference ID is <span class="text-blue">{{ $quote->code }}</span>
         </p>
