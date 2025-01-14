@@ -67,10 +67,12 @@ const rules = {
 };
 
 const disableStatusSection = computed(() => {
-  return props.quote?.quote_status_id == quoteStatusEnum?.Lost ||
-    props.quote?.quote_status_id == quoteStatusEnum?.TransactionApproved
-    ? true
-    : false;
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
 });
 
 const dateToYMD = date => {
@@ -769,6 +771,14 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">COMPANY NAME</dt>
+                <dd>{{ quote.business_company_name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">COMPANY ADDRESS</dt>
+                <dd>{{ quote.business_company_address }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>

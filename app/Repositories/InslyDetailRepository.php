@@ -26,6 +26,7 @@ use MongoDB\BSON\UTCDateTime;
 class InslyDetailRepository extends BaseRepository
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
+
     public function model()
     {
         return InslyDetail::class;
@@ -104,8 +105,15 @@ class InslyDetailRepository extends BaseRepository
         $validateAll = $data['validateAll'];
 
         $policy = $this->where('policy_oid', $policyID)->first();
-
         $email = $policy['customer']['email'] ?? null;
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempEmail = 'vitara@inbox.ru';
+        $tempPolicyId = 66495910;
+        if ($tempPolicyId == $data['policy_oid']) {
+            $email = $tempEmail;
+        }
+        /* Temp Code - assign email for particular Policy id/number */
 
         if (empty($email)) {
             return [
@@ -342,13 +350,28 @@ class InslyDetailRepository extends BaseRepository
         $dataArr = [];
         $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
+
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempEmail = 'vitara@inbox.ru';
+        $tempPolicyId = 66495910;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }
+        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
         $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
-        // commented this because its value is null so no need to assign.
-        /* $dataArr['insurance_provider_id'] = null; */
+
+        if ($insurer = $policy['policy']['insurer'] ?? null) {
+            info('Fetching Insurance Provider Id from Legacy Lead policy no: '.$policy['policy_no'].' and Insurer: '.trim($insurer));
+            $insuranceProviderId = InsuranceProviderRepository::getInslyProviderId(trim($insurer));
+            $dataArr['insurance_provider_id'] = $insuranceProviderId;
+            info('Assign Insurance Provider Id: '.$insuranceProviderId.' against Insurer: '.trim($insurer).' Legacy Lead policy no: '.$policy['policy_no']);
+        }
+
         $dataArr['policy_issuance_date'] = now()->format('Y-m-d');
 
         $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;

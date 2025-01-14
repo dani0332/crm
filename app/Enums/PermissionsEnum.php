@@ -221,6 +221,9 @@ final class PermissionsEnum extends Enum
     public const CAR_REVIVAL_QUOTE_LIST = 'carrevival-quotes-list';
     public const CAR_REVIVAL_QUOTES_EDIT = 'carrevival-quotes-edit';
     public const CAR_REVIVAL_QUOTES_SHOW = 'carrevival-quotes-show';
+    public const HEALTH_REVIVAL_QUOTES_LIST = 'health-revival-quotes-list';
+    public const HEALTH_REVIVAL_QUOTES_EDIT = 'health-revival-quotes-edit';
+    public const HEALTH_REVIVAL_QUOTES_SHOW = 'health-revival-quotes-show';
     public const ViewTeamsFilters = 'view-teams-filters';
     public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
@@ -373,13 +376,28 @@ final class PermissionsEnum extends Enum
     public const TRAVEL_SIC_ALLOCATION = 'travel-sic-allocation';
     public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
     public const ReApprovePayments = 'reapprove-payment';
+    public const UPLOAD_HEALTH_RATES = 'upload-health-rates';
+    public const UPLOAD_HEALTH_COVERAGES = 'upload-health-coverages';
     public const EXPORT_RM_LEADS = 'export-rm-leads';
     public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
+    public const CORPLINE_LEAD_ALLOCATION_DASHBOARD = 'corpline-lead-allocation-dashboard';
+    public const CYCLE_LEAD_ALLOCATION_DASHBOARD = 'cycle-lead-allocation-dashboard';
+    public const YACHT_LEAD_ALLOCATION_DASHBOARD = 'yacht-lead-allocation-dashboard';
+    public const PET_LEAD_ALLOCATION_DASHBOARD = 'pet-lead-allocation-dashboard';
+    public const LIFE_LEAD_ALLOCATION_DASHBOARD = 'life-lead-allocation-dashboard';
+    public const HOME_LEAD_ALLOCATION_DASHBOARD = 'home-lead-allocation-dashboard';
     public const UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE = 'update-lead-status-to-fake-duplicate';
     public const SEARCH_INSURER_TAX_INVOICE_NUMBER = 'search-insurer-tax-invoice-number';
     public const SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER = 'search-insurer-commission-tax-invoice-number';
     public const SEND_UPDATE_EDIT_NOTES = 'send-update-edit-notes';
     public const DEPARTMENT_MANAGER = 'department-manager';
+    public const ASSIGN_PAID_LEADS = 'assign-paid-leads';
+    public const VIEW_PROCESS_TRACKER = 'view-process-tracker';
+    public const BUY_LEADS = 'buy-leads';
+    public const RECEIVE_NOTIFICATIONS = 'receive-notifications';
+    public const SEARCH_ALL_LEAD_LOB = 'search-all-lead-lob';
+    public const DATA_EXTRACTION_SEARCH_ALL_LEADS = 'data-extraction-search-all-leads';
+    public const TAP_BETA_ACCESS = 'tap-beta-access';
 
     public static function getAdvisorConversionReportPermissions()
     {

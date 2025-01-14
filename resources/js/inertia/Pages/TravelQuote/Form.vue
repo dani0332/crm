@@ -76,6 +76,7 @@ const quoteForm = useForm({
   days_cover_for: props.quote?.days_cover_for || null,
   members: [{ value: 'male', label: 'Male', primary: true }],
   edit_mode: editMode.value,
+  departure_country_id: null,
 });
 
 const rules = {
@@ -120,7 +121,7 @@ const inboundCoverageCode = [
 ];
 const outboundCoverageCode = [
   { value: travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP, label: 'Single Trip' },
-  { value: travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP, label: 'Annual Trip' },
+  { value: travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP, label: 'Multi Trip' },
 ];
 const outboundRegions = [
   { value: '1', label: 'Worldwide (excl. US/Canada)' },
@@ -156,6 +157,15 @@ function onSubmit(isValid) {
       'Please select at least one destination.';
     return;
   }
+
+  if (
+    quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND &&
+    quoteForm?.departure_country_id == null
+  ) {
+    quoteForm.errors.departure_country_id = 'Please select departing from.';
+    return;
+  }
+
   quoteForm.clearErrors();
 
   const method = 'post';
@@ -361,11 +371,6 @@ watch(mappedDestinationIds, newVal => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-alert class="mb-4" v-for="error in errors" :key="error">
-      <h4 class="text-red-500">
-        <b>{{ error }}</b>
-      </h4>
-    </x-alert>
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
         <x-field label="Where will your journey take you?" required>
@@ -374,6 +379,7 @@ watch(mappedDestinationIds, newVal => {
             :options="subTeamOptions"
             class="w-full"
             :rules="[isRequired]"
+            :error="quoteForm.errors.direction_code"
           />
         </x-field>
         <x-field
@@ -386,6 +392,7 @@ watch(mappedDestinationIds, newVal => {
             :options="alreadylived"
             class="w-full"
             :rules="[isRequired]"
+            :error="quoteForm.errors.has_arrived_uae"
           />
         </x-field>
         <x-field v-else :label="'Has your trip started?'" required>
@@ -394,6 +401,7 @@ watch(mappedDestinationIds, newVal => {
             :options="alreadylived"
             class="w-full"
             :rules="[isRequired]"
+            :error="quoteForm.errors.has_arrived_destination"
           />
         </x-field>
       </div>
@@ -408,6 +416,7 @@ watch(mappedDestinationIds, newVal => {
             "
             class="w-full"
             :rules="[isRequired]"
+            :error="quoteForm.errors.coverage_code"
           />
         </x-field>
         <x-field
@@ -448,6 +457,7 @@ watch(mappedDestinationIds, newVal => {
             :disabled="true"
             :rules="[isRequired]"
             class="w-full"
+            :error="quoteForm.errors.region_cover_for_id"
           />
         </x-field>
         <x-field v-if="isArrivedUAE()" label="Travel Start Date" required>
@@ -470,6 +480,26 @@ watch(mappedDestinationIds, newVal => {
             name="end_date"
             :disabled-dates="disablePastDates"
             :rules="[isRequired]"
+          />
+        </x-field>
+
+        <x-field
+          v-if="quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND"
+          label="Departing From"
+          required
+        >
+          <ComboBox
+            v-model="quoteForm.departure_country_id"
+            :options="
+              fields.destination_id.options.map(option => ({
+                value: option.id,
+                label: option.text,
+              }))
+            "
+            :single="true"
+            class="w-full"
+            :rules="[rules.isRequired]"
+            :hasError="quoteForm.errors.departure_country_id"
           />
         </x-field>
 
@@ -522,6 +552,7 @@ watch(mappedDestinationIds, newVal => {
             class="w-full"
             :disabled="editMode"
             :rules="[isEmail]"
+            :error="quoteForm.errors.email"
           />
         </x-field>
         <x-field label="Mobile number" required>
@@ -583,6 +614,7 @@ watch(mappedDestinationIds, newVal => {
               name="created_at_start"
               format="dd-MM-yyyy"
               :rules="[rules.isRequired]"
+              :error="quoteForm.errors.dob"
             />
           </x-field>
           <x-field label="Gender" required>
@@ -627,12 +659,38 @@ watch(mappedDestinationIds, newVal => {
         Add Traveler
       </x-button>
       <x-divider class="my-4" />
+      <div
+        class="grid mb-2"
+        v-if="
+          quoteForm.has_arrived_destination == 1 ||
+          quoteForm.has_arrived_uae == 1
+        "
+      >
+        <div
+          class="alert flex items-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+          role="alert"
+        >
+          <span class="text-sm text-red-500 dark:text-red-400 mt-1">
+            Select 'Yes' if you have already started your journey. Choose 'No'
+            if you are yet to begin travelling, even if you're at the airport.
+            (Note: Selecting 'Yes' means your trip has already started and thus
+            ineligible for travel insurance).
+          </span>
+        </div>
+      </div>
+
       <div class="flex justify-end gap-3 mb-4">
         <x-button
           size="md"
           color="emerald"
           type="submit"
-          v-if="!hasZeroValueForUAEResident"
+          v-if="
+            !hasZeroValueForUAEResident &
+            !(
+              quoteForm.has_arrived_destination == 1 ||
+              quoteForm.has_arrived_uae == 1
+            )
+          "
           :loading="quoteForm.processing"
         >
           {{ editMode ? 'Update' : 'Create' }}

@@ -29,54 +29,101 @@ const tableHeader = reactive([
   {
     text: 'T. Policies',
     value: 'total_policies',
+    tooltip:
+      'Total count of policies incurred within the selected group by filter',
   },
   {
     text: 'T. Endorsements',
     value: 'total_endorsements',
+    tooltip:
+      'Total count of endorsements incurred within the selected group by filter',
   },
   {
     text: 'T. Transactions',
     value: 'total_transaction',
+    tooltip:
+      'Sum of total policies and total endorsements incurred within the selected group by filter',
   },
   {
     text: 'Price (VAT applicable)',
     value: 'price_vat_applicable',
+    tooltip:
+      'vatable price incurred within the selected group by filter. Any amount appearing in this column will be computed with VAT',
   },
   {
     text: 'T. VAT',
     value: 'total_vat',
+    tooltip: 'VAT of Price (VAT applicable)',
   },
   {
     text: 'Price (VAT not applicable)',
     value: 'price_vat_not_applicable',
+    tooltip:
+      'Non-vatable price incurred within the selected group by filter. Any amount appearing in this column will not be computed with VAT. For example: BASMAH, rider, etc',
   },
   {
     text: 'Discount',
     value: 'discount',
+    tooltip: 'Total discount incurred within the selected group by filter',
   },
   {
     text: 'Commission (VAT applicable)',
     value: 'commission_vat_applicable',
+    tooltip:
+      'Vatable commission incurred within the selected group by filter. Any amount appearing in this column will be computed with VAT.',
+  },
+  {
+    text: 'VAT ON Commission',
+    value: 'commission_vat',
+    tooltip: 'VAT on Commission (VAT applicable)',
+  },
+  {
+    text: 'Commission (VAT Not applicable)',
+    value: 'commission_vat_not_applicable',
+    tooltip:
+      'Non-vatable commission incurred within the selected group by filter. Any amount appearing in this column will not be computed with VAT.',
   },
   {
     text: 'T. Endorsement Amount',
     value: 'endorsements_amount',
+    tooltip:
+      'Total endorsement incurred within the selected group by filter. This was computed using the following formula: Endorsement[Price(VAT Applicable)] + Endorsement[VAT] + Endorsement[Price(VAT Not Applicable)] - Endorsement[Discount]',
   },
   {
     text: 'T. Price',
     value: 'total_price',
+    tooltip:
+      'Total price plus total endorsement amount less discount. This was computed using the following formula: Price(VAT Applicable) + VAT + Price(VAT Not Applicable) - Discount + Total Endorsement Amount',
   },
 ]);
 // v-if="props.groupBy == 'advisor'"
 
 watchEffect(() => {
   const headerMap = {
-    advisor: 'Advisor',
-    policy_issuer: 'Policy Issuer',
-    customer_group: 'Customer Group',
-    insurer: 'Insurer',
-    line_of_business: 'Line of Business',
-    department: 'Department',
+    advisor: {
+      text: 'Advisor',
+      tooltip: 'The advisor assigned to the policy.',
+    },
+    policy_issuer: {
+      text: 'Policy Issuer',
+      tooltip: 'The user who booked the policy.',
+    },
+    customer_group: {
+      text: 'Customer Group',
+      tooltip: 'Customer Group',
+    },
+    insurer: {
+      text: 'Insurer',
+      tooltip: 'Insurance provider',
+    },
+    line_of_business: {
+      text: 'Line of Business',
+      tooltip: 'Line of business of the lead',
+    },
+    department: {
+      text: 'Department',
+      tooltip: 'The department of the advisor assigned to this lead',
+    },
   };
 
   const headerText =
@@ -87,14 +134,14 @@ watchEffect(() => {
     tableHeader.splice(index, 1);
   }
 
-  const newItem = { text: headerText, value: props.groupBy };
+  const newItem = { ...headerText, value: props.groupBy };
   headerText && tableHeader[0].text === 'T. Policies'
     ? tableHeader.unshift(newItem)
     : tableHeader.splice(0, 1, newItem);
 
   if (props.groupBy === 'advisor') {
     if (!tableHeader.some(item => item.value === 'department')) {
-      tableHeader.unshift({ text: 'Department', value: 'department' });
+      tableHeader.unshift({ ...headerMap.department, value: 'department' });
     }
   }
 
@@ -119,6 +166,8 @@ const isIntegerColumn = key => {
     'price_vat_not_applicable',
     'discount',
     'commission_vat_applicable',
+    'commission_vat',
+    'commission_vat_not_applicable',
     'total_price',
     'endorsements_amount',
   ].includes(key);
@@ -138,6 +187,13 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template
+      v-for="header in tableHeader"
+      :key="header.value"
+      #[`header-${header.value}`]="header"
+    >
+      <HeaderWithTooltip :header="header" />
+    </template>
     <template #item-customer_group="{ customer_name }">
       {{ customer_name ?? '' }}
     </template>
@@ -167,6 +223,14 @@ const isIntegerColumn = key => {
     </template>
     <template #item-commission_vat_applicable="{ commission_vat_applicable }">
       {{ commission_vat_applicable ? commission_vat_applicable : 0.0 }}
+    </template>
+    <template #item-commission_vat="{ commission_vat }">
+      {{ commission_vat ? commission_vat : 0.0 }}
+    </template>
+    <template
+      #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
+    >
+      {{ commission_vat_not_applicable ? commission_vat_not_applicable : 0.0 }}
     </template>
     <template #item-endorsements_amount="{ endorsements_amount }">
       {{

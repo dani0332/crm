@@ -8,12 +8,17 @@ use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Facades\Marshall;
+use App\Jobs\EP\CancelEPJob;
+use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\CustomerAddress;
 use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
@@ -187,6 +192,8 @@ class EmbeddedProductRepository extends BaseRepository
                 'prices.transactions' => function ($query) use ($quoteRequestId) {
                     $query->where('quote_request_id', $quoteRequestId);
                 },
+                'prices.transactions.payments',
+                'prices.transactions.travelAnnualPayments',
             ])
             ->whereHas('prices.transactions', function ($query) use ($quoteRequestId) {
                 $query->where('quote_request_id', $quoteRequestId);
@@ -199,16 +206,17 @@ class EmbeddedProductRepository extends BaseRepository
             $optionsIds = $item->prices->pluck('id');
             $item->sync_document_button = false;
 
-            $transaction = EmbeddedTransaction::with('documents')->where([
+            $transaction = EmbeddedTransaction::with('documents', 'product.embeddedProduct')->where([
                 ['quote_type_id', '=', $quoteTypeId],
                 ['quote_request_id',  '=', $quoteRequestId],
                 ['is_selected',  '=', true],
             ])->whereIn('product_id', $optionsIds)->get();
+            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
 
             $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($item->short_code);
             if ($isAlfredProtect) {
                 $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0 : false;
-                $item->download_document_button = $isDocPresent;
+                $item->download_document_button = $isDocPresent && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
 
                 if (auth()->user()->hasRole(RolesEnum::Engineering)) {
                     $documentCount = ($isDocPresent == true) ? $transaction[0]->documents()->count() : 0;
@@ -217,32 +225,60 @@ class EmbeddedProductRepository extends BaseRepository
 
             }
 
-            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
-            $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+            $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+            $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
         });
 
         return $ep;
     }
 
-    private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
+    private function canCancelPayment($transaction, $quoteTypeId)
     {
-        $canSend = false;
-        if ($productCategory == EpCategoryEnum::BOLT_ON) {
-            if (in_array($quoteStatusId, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked])) {
-                if ($transaction->isNotEmpty()) {
-                    $canSend = true;
+        if ($transaction && $transaction->payments->first()) {
+            $payment = $transaction->payments->first();
+            if ($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
+
+                if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
+                    $address = CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->first();
+
+                    return empty($address?->type);
+
                 }
-            }
-        } elseif ($productCategory == EpCategoryEnum::STAND_ALONE) {
-            if ($transaction->isNotEmpty()) {
-                $canSend = true;
+
+                $paymentDate = Carbon::parse($payment->getAttributes()['captured_at']);
+
+                return $paymentDate->diffInDays(Carbon::now()) <= 3;
             }
         }
 
-        return $canSend;
+        return false;
     }
 
-    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)
+    private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)
+    {
+        if (! $transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            if (
+                $productCategory == EpCategoryEnum::STAND_ALONE ||
+                ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, $this->canSendDocumentEnums()))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function canSendDocumentEnums(): array
+    {
+        return [
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+    }
+
+    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $resendEmail = false)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
@@ -253,7 +289,9 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_type_id', $quoteTypeId],
             ['quote_request_id', $leadId],
             ['is_selected', 1],
-        ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
+        ])
+            ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
+            ->with(['product.embeddedProduct']);
 
         if (! empty($epId)) {
             $ep = $this->where('id', $epId)->first();
@@ -262,6 +300,12 @@ class EmbeddedProductRepository extends BaseRepository
                 $optionsIds = $ep->prices->pluck('id');
             }
             $epTransaction = $epTransaction->whereIn('product_id', $optionsIds);
+        }
+
+        if ($resendEmail) {
+            $epTransaction->whereHas('product.embeddedProduct', function ($query) {
+                $query->whereIn('short_code', [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX]);
+            });
         }
 
         $epTransaction = $epTransaction->get();
@@ -276,6 +320,12 @@ class EmbeddedProductRepository extends BaseRepository
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
                     ProcessSyncAlfredProtect::dispatch($quoteObject);
 
+                } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+                && ucwords($modelType) == quoteTypeCode::Car) {
+
+                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                    SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
+
                 } else {
 
                     // EP Send documents
@@ -283,6 +333,7 @@ class EmbeddedProductRepository extends BaseRepository
                     $data['quoteId'] = $leadId;
                     $data['modelType'] = $modelType;
                     $data['epId'] = $embedded_product_id;
+                    $data['regenerate'] = $resendEmail;
                     $this->fetchSendDocument($data);
                 }
             }
@@ -306,6 +357,7 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
+        $regenerate = $data['regenerate'];
 
         $ep = $this->where('id', $epId)->first();
         if (! $ep) {
@@ -325,7 +377,8 @@ class EmbeddedProductRepository extends BaseRepository
         $advisorData = $this->fetchAdvisorData($quoteObject);
         $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
 
-        if (! $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction)) {
+        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        if (! $canSendDocuments) {
             info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
 
             return 'Documents cannot be sent';
@@ -334,7 +387,7 @@ class EmbeddedProductRepository extends BaseRepository
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
         } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
-            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep);
+            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep, $regenerate);
         }
     }
 
@@ -432,9 +485,9 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendMedexEmail($short_code, $quoteObject, $transaction, $modelType, $attachments, $advisorData, $ep)
+    private function sendMedexEmail($short_code, $quoteObject, $transaction, $modelType, $attachments, $advisorData, $ep, $regenerate)
     {
-        $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType);
+        $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType, $regenerate);
         $certificatesConfig = config('embedded-products.certificates');
 
         if ($pdf) {
@@ -498,7 +551,8 @@ class EmbeddedProductRepository extends BaseRepository
         $short_code,
         $quoteObject,
         $transaction,
-        $modelType
+        $modelType,
+        $regenerate = false
     ) {
 
         $certificateDocument = null;
@@ -507,7 +561,7 @@ class EmbeddedProductRepository extends BaseRepository
         $capturedAt = $transaction->payment_status_date;
 
         $certificateDocument = $transaction->documents->where('document_type_code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->first();
-        if ($certificateDocument) {
+        if ($certificateDocument && $regenerate === false) {
             return $certificateDocument;
         }
 
@@ -563,7 +617,10 @@ class EmbeddedProductRepository extends BaseRepository
                 'created_by_id' => null,
             ];
 
-            $certificateDocument = $transaction->documents()->create($documentData);
+            $certificateDocument = $transaction->documents()->updateOrCreate(
+                ['document_type_code' => $documentType->code],
+                $documentData
+            );
         }
 
         return $certificateDocument;
@@ -614,12 +671,50 @@ class EmbeddedProductRepository extends BaseRepository
         return $strategy;
     }
 
+    public function fetchCancelEmbeddedProducts($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+        ])
+            ->whereHas('payments', function ($query) {
+                $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED);
+            })
+            ->with(['payments', 'quoteRequest'])
+            ->get();
+
+        if ($epTransaction->isNotEmpty()) {
+
+            foreach ($epTransaction as $item) {
+                $product_id = $item->product_id;
+                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                $payment = $item['payments'][0];
+
+                $data = [
+                    'embedded_id' => $embedded_product_id,
+                    'modelType' => ucfirst($modelType),
+                    'amount' => $payment->total_amount,
+                    'reason' => 'policy cancelled',
+                    'uuid' => $item->quoteRequest->uuid,
+                    'quote_id' => $item->quoteRequest->id,
+                ];
+                CancelEPJob::dispatch($data);
+            }
+        }
+    }
+
     public function fetchCancelPayment($data)
     {
         $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
         $type = QuoteType::where('code', $data['modelType'])->first();
 
-        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $data['quote_id'])
+        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest'])->where('quote_request_id', $data['quote_id'])
             ->where('quote_type_id', $type->id)
             ->where('is_selected', true)
             ->whereIn('product_id', $embeddedProductOptionsIds)
@@ -628,7 +723,6 @@ class EmbeddedProductRepository extends BaseRepository
         if ($embededTransaction->isNotEmpty()) {
             if (! empty($embededTransaction[0]['payments'][0])) {
                 $transaction = $embededTransaction[0];
-
                 $payment = $transaction['payments'][0];
                 $paymentStatus = $payment['payment_status_id'];
 
@@ -659,7 +753,7 @@ class EmbeddedProductRepository extends BaseRepository
                         'action_type' => 'REFUND',
                         'reason' => $data['reason'],
                         'amount' => $data['amount'],
-                        'created_by' => auth()->user()->email,
+                        'created_by' => auth()->user()->email ?? 'system',
                         'is_manager_approved' => 1,
                         'sr_no' => $sr,
                     ]);
@@ -670,6 +764,13 @@ class EmbeddedProductRepository extends BaseRepository
 
                     ];
                     $processResponse = $this->processCancelPayment($data);
+
+                    if (
+                        $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
+                        && $type->code == quoteTypeCode::Car
+                    ) {
+                        CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
+                    }
 
                     return [
                         'data' => $processResponse,
@@ -756,7 +857,7 @@ class EmbeddedProductRepository extends BaseRepository
                     'action_type' => 'CAPTURE',
                     'amount' => $item->price_with_vat,
                     'is_fulfilled' => 0,
-                    'created_by' => auth()->user()->email,
+                    'created_by' => auth()->user()->email ?? 'system',
                     'reason' => 'Payment Captured',
                     'is_manager_approved' => 1,
                     'sr_no' => $sr,
@@ -770,7 +871,6 @@ class EmbeddedProductRepository extends BaseRepository
 
         try {
             Marshall::request('/payment/checkout/capture', 'post', $payload);
-            $this->fetchSendDocumentsByLead($leadId, $modelType);
         } catch (Exception $e) {
             Log::error('Capture Payment Error: '.$e->getMessage());
         }
@@ -789,7 +889,7 @@ class EmbeddedProductRepository extends BaseRepository
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
         $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
 
-        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
         if ($canSendDocuments) {
             $this->getPDF($ep->short_code, $quoteObject, $transaction->first(), $data['modelType']);
         }

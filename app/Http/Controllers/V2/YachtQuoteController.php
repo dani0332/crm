@@ -44,6 +44,7 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -63,6 +64,7 @@ class YachtQuoteController extends Controller
         $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
             return $value['id'] != QuoteStatusEnum::Lost;
         })->values();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         //PD Revert
         // $count = $personalQuotes->count();
@@ -75,6 +77,7 @@ class YachtQuoteController extends Controller
             'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'renewalBatches' => $renewalBatches,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : YachtQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),
         ]);

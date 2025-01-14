@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -16,11 +17,11 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
-use Auth;
 use Carbon\Carbon;
 use Config;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class BusinessQuoteService extends BaseService
@@ -44,7 +45,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.last_name',
                 'bqr.email',
                 'bqr.mobile_no',
-                'bqr.company_name',
+                'bqr.company_name AS business_company_name',
+                'bqr.company_address AS business_company_address',
                 'bqr.brief_details',
                 'bqr.number_of_employees',
                 'bqr.business_type_of_insurance_id',
@@ -67,6 +69,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.previous_quote_id',
                 'bqr.policy_expiry_date',
                 'bqr.renewal_batch',
+                'rb.name as renewal_batch_text',
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
                 'bqr.previous_quote_policy_premium',
@@ -124,6 +127,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
+            ->leftJoin('renewal_batches as rb', 'bqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
@@ -188,17 +192,6 @@ class BusinessQuoteService extends BaseService
         ])->first();
     }
 
-    public function updateChildRecord($id)
-    {
-        BusinessQuoteRequestDetail::updateOrCreate(
-            ['business_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
-    }
-
     public function getDetailEntity($id)
     {
         return BusinessQuoteRequestDetail::firstOrCreate(['business_quote_request_id' => $id]);
@@ -231,6 +224,8 @@ class BusinessQuoteService extends BaseService
             'numberOfEmployees' => $request->number_of_employees,
             'mobileNo' => $request->mobile_no,
             'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
+            'gender' => $request->gender,
             'briefDetails' => $request->brief_details,
             'premium' => $request->premium,
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
@@ -240,7 +235,6 @@ class BusinessQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
         if (isset($response->quoteUID)) {
@@ -312,7 +306,7 @@ class BusinessQuoteService extends BaseService
             && isset($request->created_at_start) && $request->created_at_start != ''
             && empty($request->email)
             && empty($request->code)
-            && empty($request->renewal_batch)
+            && empty($request->renewal_batches)
             && empty($request->quote_batch_id)
             && empty($request->payment_due_date)
             && empty($request->booking_date)
@@ -354,8 +348,8 @@ class BusinessQuoteService extends BaseService
                     ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
         }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('bqr.renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
+            $this->query->whereIn('bqr.renewal_batch_id', $request->renewal_batches);
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
@@ -426,7 +420,7 @@ class BusinessQuoteService extends BaseService
         $this->adjustQueryByDateFilters($this->query, 'bqr');
 
         // sortBy filter
-        if (isset($request->sortBy) && $request->sortBy != '') {
+        if (isset($request->sortBy) && $request->sortBy != '' && in_array(strtolower($request->sortType), ['asc', 'desc'])) {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($request->sortBy, $request->sortType);
         } else {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'DESC');
@@ -470,6 +464,7 @@ class BusinessQuoteService extends BaseService
             $businessQuote->first_name = $request->first_name;
             $businessQuote->last_name = $request->last_name;
             $businessQuote->company_name = $request->company_name;
+            $businessQuote->company_address = $request->company_address;
             $businessQuote->gender = $request->gender;
             $businessQuote->brief_details = $request->brief_details;
             $businessQuote->premium = $request->premium;
@@ -497,7 +492,8 @@ class BusinessQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'company_name' => 'input|text|required',
+            'company_name' => 'input|text|max:250',
+            'company_address' => 'input|text|max:1000',
             'next_followup_date' => 'input|date|title|range',
             'transapp_code' => 'readonly|none',
             'source' => 'input|text',
@@ -514,7 +510,7 @@ class BusinessQuoteService extends BaseService
             'previous_quote_id' => 'readonly|title',
             'is_renewal' => 'static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'policy_expiry_date' => 'input|date|title|range',
-            'renewal_batch' => 'input|none',
+            'renewal_batches' => 'select|title|multiple',
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_number' => 'input|title',
             'previous_quote_policy_premium' => 'input|title',
@@ -651,10 +647,8 @@ class BusinessQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::BUSINESS, BusinessQuoteRequestDetail::class, 'business_quote_request_id');
         }
 
         return $result;
@@ -673,7 +667,7 @@ class BusinessQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }

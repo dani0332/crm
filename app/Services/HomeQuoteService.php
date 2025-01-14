@@ -8,6 +8,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -42,6 +43,8 @@ class HomeQuoteService extends BaseService
             'hqr.last_name',
             // 'hqr.email',
             // 'hqr.mobile_no',
+            'hqr.company_name AS home_company_name',
+            'hqr.company_address AS home_company_address',
             'hqr.address',
             'hqr.has_contents',
             'hqr.contents_aed',
@@ -88,6 +91,7 @@ class HomeQuoteService extends BaseService
             'hqr.previous_quote_id',
             'hqr.policy_expiry_date',
             'hqr.renewal_batch',
+            'rb.name as renewal_batch_text',
             'hqr.previous_quote_policy_number',
             'hqr.previous_quote_policy_premium',
             'hqr.customer_id',
@@ -137,6 +141,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+            ->leftJoin('renewal_batches as rb', 'hqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
@@ -178,6 +183,8 @@ class HomeQuoteService extends BaseService
             'email' => $request->email,
             'address' => $request->address,
             'mobileNo' => $request->mobile_no,
+            'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
             'contentsAed' => $request->contents_aed,
             'premium' => $request->premium,
             'iamPossesionTypeId' => $request->iam_possesion_type_id,
@@ -290,8 +297,8 @@ class HomeQuoteService extends BaseService
                     ->orWhere('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
         }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $this->query->where('hqr.renewal_batch', $request->renewal_batch);
+        if (isset($request->renewal_batches) && count($request->renewal_batches) > 0) {
+            $this->query->whereIn('hqr.renewal_batch_id', $request->renewal_batches);
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
@@ -419,17 +426,6 @@ class HomeQuoteService extends BaseService
         return HomeQuote::orderBy('created_at', 'desc')->get();
     }
 
-    public function updateChildRecord($id)
-    {
-        HomeQuoteRequestDetail::updateOrCreate(
-            ['home_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
-    }
-
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('home_quote_request as hqr')
@@ -467,6 +463,8 @@ class HomeQuoteService extends BaseService
         $homeQuote->first_name = $request->first_name;
         $homeQuote->last_name = $request->last_name;
         $homeQuote->address = $request->address;
+        $homeQuote->company_name = $request->company_name;
+        $homeQuote->company_address = $request->company_address;
         $homeQuote->contents_aed = $request->contents_aed;
         $homeQuote->iam_possesion_type_id = $request->iam_possesion_type_id;
         $homeQuote->ilivein_accommodation_type_id = $request->ilivein_accommodation_type_id;
@@ -494,6 +492,8 @@ class HomeQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
+            'company_name' => 'input|text|max:250',
+            'company_address' => 'input|text|max:1000',
             'quote_status_id' => 'select|title|multiple',
             'advisor_id' => 'select|title|multiple',
             'created_at' => 'input|date|title|range',
@@ -516,7 +516,7 @@ class HomeQuoteService extends BaseService
             'previous_quote_id' => 'readonly|title',
             'is_renewal' => '|static|Yes,No',
             'policy_expiry_date' => 'input|date|title|range',
-            'renewal_batch' => 'input|none',
+            'renewal_batch' => 'select|title|multiple',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_premium' => 'input|number|title',
@@ -715,11 +715,8 @@ class HomeQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            // TODO: needs validation similar to Health
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::HOME, HomeQuoteRequestDetail::class, 'home_quote_request_id');
         }
 
         return $result;
@@ -743,7 +740,7 @@ class HomeQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }
@@ -753,4 +750,6 @@ class HomeQuoteService extends BaseService
 
         return 'true';
     }
+
+    public function sendHomeOCB() {}
 }

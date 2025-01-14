@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
@@ -24,6 +25,7 @@ use App\Models\SageApiLog;
 use App\Models\SageProcess;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
@@ -121,6 +123,11 @@ class SageApiService
                     ->get($sageEndPoint, $payLoad),
             };
 
+            if ($response->failed()) {
+                $responseBody = is_array($response->json()) ? $response->json() : json_decode($response->body());
+                info('Sage API : '.$endPoint.' : '.$responseBody['error']['message']['value'] ?? 'Something went wrong with Sage Server.');
+            }
+
             return is_array($response->json()) ? json_encode($response->json()) : $response->body();
         } catch (Exception $e) {
             logger()->error('Sage API : '.$endPoint.' : '.$e->getMessage());
@@ -150,13 +157,13 @@ class SageApiService
             $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
             $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quoteDetails, $sendUpdateRequest->reversalInvoice);
             if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
-                //                This case if the Reversal Invoice is Endorsement itself
+                // This case if the Reversal Invoice is Endorsement itself
                 $getReverseInvoiceRelation = [
                     'section_type' => $sendUpdateLog->getMorphClass(),
                     'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
                 ];
             } else {
-                //                This case if the Reversal Invoice is Main Lead
+                // This case if the Reversal Invoice is Main Lead
                 $getReverseInvoiceRelation = [
                     'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
                     'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
@@ -168,7 +175,6 @@ class SageApiService
                     SageEnum::SRT_GET_AR_INVOICE,
                     SageEnum::SRT_GET_AP_INVOICE,
                     SageEnum::SCT_REVERSAL,
-                    SageEnum::SCT_CORRECTION,
                 ])->orderBy('step')->get()->toArray();
 
             info('fn:sendUpdateSageLogs - Fetching reversal invoice logs for reverse and correction - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
@@ -191,12 +197,9 @@ class SageApiService
                 info('fn:sendUpdateSageLogs - Reversal invoice logs not found for reverse and correction- QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
             }
 
-            $sageLogsArray = $sendUpdateLog->sageApiLogs?->whereIn('entry_type', [
-                SageEnum::SRT_GET_AR_INVOICE,
-                SageEnum::SRT_GET_AP_INVOICE,
-                SageEnum::SCT_REVERSAL,
-                SageEnum::SCT_CORRECTION,
-            ])->keyBy('step')->toArray();
+            // The Sage logs array for CPD should include GET logs for AR, AP, and Reversal/Correction invoices. Additionally, for discount adjustments, "Straight" should be included.
+            // Reminder:: After including "Straight" for the discount, all entry types will be included in the logs array.
+            $sageLogsArray = $sendUpdateLog->sageApiLogs?->keyBy('step')->toArray();
         }
 
         return [$sageLogsArray, $reversalInvoiceLogs];
@@ -217,7 +220,11 @@ class SageApiService
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
-        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD && ! empty($reversalInvoiceLogs)) {
+        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
+            if (empty($reversalInvoiceLogs)) {
+                return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
+            }
+
             $response = $this->bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog);
         } else {
             $response = $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray);
@@ -256,7 +263,7 @@ class SageApiService
 
         // Create AP Premium Invoice
         $extraDetails['sage_request_type'] = ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AP_PREM_INV : SageEnum::SRT_CREATE_AP_SPPAY_INV;
-        if ($preparedData['sendUpdateLog']?->option?->code !== SendUpdateLogStatusEnum::ACB) {
+        if (! in_array($preparedData['sendUpdateLog']?->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATCRNB_RBB])) {
             $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
             if (! $createAPInvoicePrem['status']) {
                 return $createAPInvoicePrem;
@@ -265,7 +272,12 @@ class SageApiService
 
         // Create AR Discount Invoice
         $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
-        if ($sageRequestPayload->discount > 0 && ! in_array(($preparedData['sendUpdateLog']?->option?->code ?? ''), [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ACB])) {
+        if ($sageRequestPayload->discount > 0 && ! in_array(($preparedData['sendUpdateLog']?->option?->code ?? ''), [
+            SendUpdateLogStatusEnum::ATIB,
+            SendUpdateLogStatusEnum::ACB,
+            SendUpdateLogStatusEnum::ATCRNB,
+            SendUpdateLogStatusEnum::ATCRNB_RBB,
+        ])) {
             $extraDetails['paymentFrequency'] = $preparedData['payment']->frequency;
             $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
             if (! $createARInvoiceDis['status']) {
@@ -293,13 +305,22 @@ class SageApiService
         }
 
         $invoiceTypeForCPD = [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION];
-        $arInvoiceTypes = [
+        $arInvoiceTypesWithDiscount = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_INV,
             SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV,
             SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV,
             SageEnum::SRT_CREATE_AR_DISC_INV,
             SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
+        ];
+
+        $arDiscountInvoiceTypes = [SageEnum::SRT_CREATE_AR_DISC_INV, SageEnum::SRT_CREATE_AR_DISC_CORR_INV];
+
+        $arInvoiceTypes = [
+            SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
+            SageEnum::SRT_CREATE_AR_SPPAY_INV,
+            SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV,
+            SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV,
         ];
 
         $apInvoiceTypes = [
@@ -316,7 +337,7 @@ class SageApiService
             $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
         }
 
-        if (in_array(SageEnum::SRT_CREATE_AR_DISC_INV, $reverseSageRequestTypes)) {
+        if (! empty(array_intersect($arDiscountInvoiceTypes, $reverseSageRequestTypes))) {
             $isOnlyDiscountReversal = $sendUpdateLog && (int) $sendUpdateLog->discount == 0;
         } else {
             if ($sendUpdateLog->discount > 0) {
@@ -325,7 +346,7 @@ class SageApiService
         }
 
         foreach ($reverseSageRequestTypes as $reverseSageRequestTypeKey => $reverseSageRequestType) {
-            $invoiceType = in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $arInvoiceTypes) ?
+            $invoiceType = in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $arInvoiceTypesWithDiscount) ?
                 SageEnum::SRT_GET_AR_INVOICE : (in_array($reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $apInvoiceTypes) ? SageEnum::SRT_GET_AP_INVOICE : null);
 
             if (is_null($invoiceType)) {
@@ -356,7 +377,7 @@ class SageApiService
                     unset($extraDetails['reversalFrequency']);
                 }
 
-                if (in_array($reverseSageRequestType, [SageEnum::SRT_CREATE_AR_PREM_COMM_INV, SageEnum::SRT_CREATE_AR_SPPAY_INV])) {
+                if (in_array($reverseSageRequestType, $arInvoiceTypes)) {
                     // Create AR Commission and Premium Invoice (Reversal and Correction)
                     $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
                     if (! $createARInvoicePremAndComm['status']) {
@@ -364,7 +385,7 @@ class SageApiService
                     }
                 }
 
-                if (in_array($reverseSageRequestType, [SageEnum::SRT_CREATE_AP_PREM_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV])) {
+                if (in_array($reverseSageRequestType, $apInvoiceTypes)) {
                     // Create AP Premium Invoice (Reversal and Correction)
                     $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
                     if (! $createAPInvoicePrem['status']) {
@@ -372,8 +393,8 @@ class SageApiService
                     }
                 }
 
-                if ($reverseSageRequestType == SageEnum::SRT_CREATE_AR_DISC_INV) {
-                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL && $isOnlyDiscountReversal) {
+                if (in_array($reverseSageRequestType, $arDiscountInvoiceTypes)) {
+                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL) {
                         // Create AR Discount Invoice (Reversal)
                         $extraDetails['is_reversal_discount'] = true;
                         $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
@@ -455,6 +476,18 @@ class SageApiService
         $payLoadOptions = SagePayloadFactory::getInvoiceDetails($reversalInvoiceDetails['invoiceType'], $reverseInvoiceBatchNumber);
         $isLiveApiCallStep2 = true;
         if (isset($sageLogArray[$step]) && $sageLogArray[$step]['status'] == SageEnum::STATUS_SUCCESS) {
+            if ($sageLogArray[$step]['sage_end_point'] !== $payLoadOptions['endPoint']) {
+                info('SAGE API : Reversal invoice number updated - previous reversal batch number ('.$sageLogArray[$step]['sage_end_point'].') - current reversal batch number ('.$payLoadOptions['endPoint'].') - Send Update Code: '.$sendUpdateLog->code);
+                $getNewResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], 'GET');
+                $sageLogArray[$step]['response'] = $getNewResponse;
+                $sageLogArray[$step]['sage_end_point'] = $payLoadOptions['endPoint'];
+                SageApiLog::where('id', $sageLogArray[$step]['id'])->update([
+                    'sage_end_point' => $payLoadOptions['endPoint'],
+                    'response' => $getNewResponse,
+                ]);
+                info('SAGE API : Response against current batch number has been updated - Send Update Code: '.$sendUpdateLog->code);
+            }
+
             info('SAGE API :  getInvoiceDetails for '.$reversalInvoiceDetails['invoiceType'].' Sent Already for '.$sendUpdateLog->code);
             $isLiveApiCallStep2 = false;
             $sageResponse = json_decode($sageLogArray[$step]['response'], true);
@@ -495,6 +528,7 @@ class SageApiService
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
 
         if (! $isSageEnabled) {
+            info('Policy Book : postBookPolicyToSage : Sage is not enabled');
             $returnMessage['message'] = 'Sage is not enabled';
 
             return $returnMessage;
@@ -519,6 +553,8 @@ class SageApiService
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
         $isTotalPriceZero = $payment->total_price == 0;
         if (! $isPaymentMethodCreditApproved && $isTotalPriceZero && $isPaymentFrequencyUpfront) {
+            info('Policy Book : postBookPolicyToSage : Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!');
+
             return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!'];
         }
 
@@ -534,10 +570,14 @@ class SageApiService
         /* Check Sage Vendor ID, GL Account ID, Insurer Customer ID, and Sage Customer ID*/
         $checkRequiredSageIds = $this->checkRequiredSageIds($sageRequest);
         if (! $checkRequiredSageIds['status']) {
+            info('Policy Book : postBookPolicyToSage : '.$checkRequiredSageIds['message']);
+
             return $checkRequiredSageIds;
         }
 
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            info('Policy Book : postBookPolicyToSage : Policy has been already booked!');
+
             return ['status' => true, 'message' => 'Policy has been already booked!'];
         }
 
@@ -570,6 +610,7 @@ class SageApiService
 
         if (! empty($missingFields)) {
             $message = implode(', ', $missingFields).' not found.';
+            info('Policy Book : postBookPolicyToSage : '.$message);
 
             return ['status' => false, 'message' => $message];
         }
@@ -646,8 +687,16 @@ class SageApiService
         } else {
             info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
+        $skipBookPolicyDocumentJob = false;
+        if ($quoteTypeId === QuoteTypeId::Travel) {
+            $quote->load('policyIssuance');
+            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
+                $skipBookPolicyDocumentJob = true;
+            }
+        }
 
-        if (! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
+        info('Quote code : '.$quote->code.' Skip book policy document job '.$skipBookPolicyDocumentJob ? 'Yes' : 'No');
+        if (! $skipBookPolicyDocumentJob && ! (app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
@@ -1940,6 +1989,12 @@ class SageApiService
         } else {
             QuoteStatusLog::create($quoteLogData);
         }
+
+        if (in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED])) {
+            info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.' start updateStatusesAndAllocate Quote Status ID : '.$quote->quote_status_id);
+            $this->updateStatusesAndAllocate($quote, $quoteTypeId);
+        }
+
     }
 
     public function createSageProcess($quote, $sageRequest, $request)
@@ -2015,4 +2070,30 @@ class SageApiService
             info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command is already running, skipping execution.');
         }
     }
+
+    public function updateStatusesAndAllocate($quote, $quoteTypeId)
+    {
+        info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - start');
+
+        $policyIssuanceAutomation = $quote?->policyIssuance;
+
+        if ($policyIssuanceAutomation) {
+            $quoteType = $policyIssuanceAutomation->quote_type;
+            $insuranceProvider = $policyIssuanceAutomation->insuranceProvider;
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider?->code);
+
+            /*if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
+            if ($insuranceProviderAutomation) {
+                info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
+                $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote);
+            } else {
+                info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' Insurer : '.$insuranceProvider?->code.'automation class not found');
+            }
+        } else {
+            info('Policy Book : Quote '.$quote?->code.' : policy issuance automation not found');
+        }
+
+        info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - end');
+    }
+
 }

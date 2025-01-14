@@ -42,7 +42,7 @@ class PersonalQuoteController extends Controller
         }
 
         // update status policy issued of req fulfilled
-        $this->updateQuoteStatus($request->folder_path, $quoteId);
+        app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);
 
         return back()->with('message', $response['message']);
     }

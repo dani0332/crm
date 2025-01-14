@@ -4,6 +4,7 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyProviderDetails from './Partials/ProviderDetails.vue';
+import { XInput } from '@indielayer/ui';
 
 const props = defineProps({
   quoteType: String,
@@ -38,6 +39,10 @@ const props = defineProps({
   isPlanDetailAvailable: Boolean,
   quoteLink: String,
   isEditDisabledForQueuedBooking: Boolean,
+  insuranceProviderId: Number,
+  isCommVatNotAppEnabled: Boolean,
+  isSentOrBooked: Boolean,
+  disableMainBtn: String,
 });
 
 const page = usePage();
@@ -57,7 +62,14 @@ const transactionType = computed(() => {
       props.sendUpdateStatusEnum.CI,
       props.sendUpdateStatusEnum.CIR,
       props.sendUpdateStatusEnum.CPD,
-    ].includes(props.sendUpdateLog.category.code)
+    ].includes(props.sendUpdateLog?.category?.code) ||
+    [
+      props.sendUpdateStatusEnum.MPC,
+      props.sendUpdateStatusEnum.CAAFE,
+      props.sendUpdateStatusEnum.DTSI,
+    ].includes(props.sendUpdateLog?.option?.code) ||
+    (props.sendUpdateStatusEnum.EF === props.sendUpdateLog?.category?.code &&
+      props.sendUpdateLog.option.code !== props.sendUpdateStatusEnum.ATICB)
   ) {
     return 'Endorsement';
   } else if (
@@ -105,6 +117,7 @@ const sendUpdateForm = useForm({
   car_addons: props.sendUpdateLog?.car_addons || null,
   emirates_id: props.sendUpdateLog?.emirates_id || null,
   seating_capacity: props.sendUpdateLog?.seating_capacity || null,
+  endorsement_number: props.sendUpdateLog?.endorsement_number || null,
 });
 
 onMounted(() => {
@@ -136,6 +149,8 @@ const onCancel = () => {
   sendUpdateForm.emirates_id = props.sendUpdateLog?.emirates_id || null;
   sendUpdateForm.seating_capacity =
     props.sendUpdateLog?.seating_capacity || null;
+  sendUpdateForm.endorsement_number =
+    props.sendUpdateLog?.endorsement_number || null;
 };
 
 const onUpdateLog = isValid => {
@@ -211,14 +226,6 @@ function handleErrorStatusUpdate(newStatus) {
   isAdditionalFieldError.value = newStatus;
 }
 
-const isLegacyPolicy = computed(() => {
-  return (
-    props.quote?.insly_migrated ||
-    props.realQuote?.insly_migrated ||
-    props.realQuote?.insly_id
-  );
-});
-
 const showBookingFailedAlert = () => {
   if (
     props.isEditDisabledForQueuedBooking &&
@@ -236,6 +243,59 @@ const showBookingFailedAlert = () => {
 onBeforeMount(() => {
   showBookingFailedAlert();
 });
+
+const isEFOrEN = computed(() => {
+  return ![
+    props.sendUpdateStatusEnum.CI,
+    props.sendUpdateStatusEnum.CIR,
+    props.sendUpdateStatusEnum.CPU,
+    props.sendUpdateStatusEnum.CPD,
+  ].includes(props.sendUpdateLog.category.code);
+});
+
+const isAOCOV = computed(
+  () => props.sendUpdateLog?.option?.code === props.sendUpdateStatusEnum.AOCOV,
+);
+
+const isCOEOrCOE_NFI = computed(() => {
+  return [
+    props.sendUpdateStatusEnum.COE,
+    props.sendUpdateStatusEnum.COE_NFI,
+  ].includes(props.sendUpdateLog?.option?.code);
+});
+
+const isCISCOrCISC_NFI = computed(() => {
+  return [
+    props.sendUpdateStatusEnum.CISC,
+    props.sendUpdateStatusEnum.CISC_NFI,
+  ].includes(props.sendUpdateLog?.option?.code);
+});
+
+const endorsementNumberValidation = event => {
+  const charCode = event.charCode || event.keyCode;
+  const char = String.fromCharCode(charCode);
+  const regex = /^[a-zA-Z0-9\\|\/-]$/;
+
+  if (!regex.test(char)) {
+    event.preventDefault();
+  }
+};
+
+const isEndorsementNumberRequired = computed(() => {
+  return [
+    props.sendUpdateStatusEnum.EF,
+    props.sendUpdateStatusEnum.CI,
+    props.sendUpdateStatusEnum.CIR,
+  ].includes(props.sendUpdateLog.category.code);
+});
+
+const isLegacyPolicy = computed(() => {
+  return (
+    props.quote?.insly_migrated ||
+    props.realQuote?.insly_migrated ||
+    props.realQuote?.insly_id
+  );
+});
 </script>
 
 <template>
@@ -244,286 +304,289 @@ onBeforeMount(() => {
   </Head>
   <div>
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-form @submit="onUpdateLog">
-        <div class="flex gap-2 w-100 flex-grow justify-between">
-          <h3 class="text-lg font-semibold text-primary-800 capitalize">
-            {{ sendUpdateLog.category.text }}
-          </h3>
-          <Link :href="quoteLink">
-            <x-button color="primary" size="sm" class="mr-5"
-              >Go back to lead</x-button
+      <Collapsible expanded>
+        <template #header>
+          <div class="flex gap-2 w-100 flex-grow justify-between">
+            <h3
+              class="text-xs sm:text-lg font-semibold text-primary-800 capitalize"
             >
-          </Link>
-        </div>
-        <x-divider class="my-4" />
-        <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-y-4">
-            <div class="grid sm:grid-cols-2">
-              <dt>
-                <x-tooltip placement="left">
-                  <label
-                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+              {{ sendUpdateLog.category.text }}
+            </h3>
+            <Link :href="quoteLink">
+              <x-button color="primary" size="sm" class="mr-5 text-xs"
+                >Go back to lead</x-button
+              >
+            </Link>
+          </div>
+        </template>
+        <template #body>
+          <x-form @submit="onUpdateLog">
+            <x-divider class="my-4" />
+            <div class="text-sm">
+              <dl class="grid md:grid-cols-2">
+                <div class="grid sm:grid-cols-2 mb-2">
+                  <dt>
+                    <x-tooltip>
+                      <label
+                        class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      >
+                        SU REF ID
+                      </label>
+                      <template #tooltip>
+                        A unique reference identifier assigned to each "Send
+                        Update" request, allowing for easy tracking and
+                        reference.
+                      </template>
+                    </x-tooltip>
+                  </dt>
+                  <dd>{{ sendUpdateLog.code }}</dd>
+                </div>
+                <div class="grid md:grid-cols-2">
+                  <dt class="font-bold">NOTES</dt>
+                  <dd>
+                    <x-textarea
+                      v-model="sendUpdateForm.notes"
+                      size="xs"
+                      :disabled="!state.edit"
+                      maxlength="250"
+                      class="h-7"
+                      rows="1"
+                    />
+                    <p class="text-xs text-right" v-if="state.edit">
+                      {{ sendUpdateForm.notes.length }} / 250
+                    </p>
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2 mb-2 h-10">
+                  <template
+                    v-if="
+                      props.sendUpdateLog.category.code !==
+                        props.sendUpdateStatusEnum.EN &&
+                      props.sendUpdateLog.category.code !==
+                        props.sendUpdateStatusEnum.CPU
+                    "
                   >
-                    SU ref ID
-                  </label>
+                    <dt>
+                      <x-tooltip>
+                        <label
+                          class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                        >
+                          TRANSACTION TYPE
+                        </label>
+                        <template #tooltip>
+                          Refers to category of the financial transaction
+                          associated with the policy. It helps classify the
+                          specific type of transaction being recorded or
+                          processed within the system.
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd>{{ transactionType || '' }}</dd>
+                  </template>
+                </div>
+                <div class="grid md:grid-cols-2 mb-2">
+                  <dt>
+                    <x-tooltip>
+                      <label
+                        class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      >
+                        STATUS
+                      </label>
+                      <template #tooltip>
+                        The current status of the ""Send Update"" request,
+                        indicating whether it is pending, transaction approved,
+                        or declined, among other possible states.
+                      </template>
+                    </x-tooltip>
+                  </dt>
+                  <dd>{{ sendUpdateLog.display_status }}</dd>
+                </div>
+                <div v-if="isEFOrEN" class="grid sm:grid-cols-2">
+                  <template v-if="isEFOrEN">
+                    <dt>
+                      <x-tooltip>
+                        <label
+                          class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                        >
+                          SUB TYPE
+                        </label>
+                        <template #tooltip>
+                          A further classification of the "Send Update" request,
+                          providing additional context or details.
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd>
+                      <x-select
+                        size="xs"
+                        :disabled="!state.edit || isUpdateBooked"
+                        v-model="sendUpdateForm.option_id"
+                        :options="updateLogOptions"
+                        class="w-3/4"
+                      />
+                    </dd>
+                  </template>
+                </div>
+                <div
+                  class="grid sm:grid-cols-2 mb-2"
+                  v-if="
+                    props.quoteType === page.props.quoteTypeCodeEnum.Car &&
+                    (isAOCOV || isCOEOrCOE_NFI || isCISCOrCISC_NFI)
+                  "
+                >
+                  <template v-if="props.additionalField && isAOCOV">
+                    <dt>
+                      <label
+                        class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                      >
+                        ADDONS
+                      </label>
+                    </dt>
+                    <dd>
+                      <x-select
+                        :rules="[isRequired]"
+                        v-model="sendUpdateForm.car_addons"
+                        placeholder="Select Addons"
+                        :options="additionalFieldOptions"
+                        size="xs"
+                        :disabled="!state.edit"
+                        :class="{ 'pointer-events-none': !state.edit }"
+                        multiple
+                        :error="isAdditionalFieldError"
+                      />
+                    </dd>
+                  </template>
+                  <template v-else-if="props.additionalField && isCOEOrCOE_NFI">
+                    <dt>
+                      <label
+                        class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                      >
+                        EMIRATE OF REGISTRATION
+                      </label>
+                    </dt>
+                    <dd>
+                      <x-select
+                        :rules="[isRequired]"
+                        v-model="sendUpdateForm.emirates_id"
+                        placeholder="Select Emirate of Registration"
+                        :options="additionalFieldOptions"
+                        size="xs"
+                        :disabled="!state.edit"
+                        :error="isAdditionalFieldError"
+                      />
+                    </dd>
+                  </template>
+                  <template
+                    v-else-if="props.additionalField && isCISCOrCISC_NFI"
+                  >
+                    <dt>
+                      <label
+                        class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
+                      >
+                        SEATING CAPACITY
+                      </label>
+                    </dt>
+                    <dd>
+                      <x-input
+                        :rules="[isRequired]"
+                        placeholder="Enter Seating Capacity"
+                        v-model="sendUpdateForm.seating_capacity"
+                        size="xs"
+                        :disabled="!state.edit"
+                        type="number"
+                        @keypress="onKeyPress"
+                        :error="isAdditionalFieldError"
+                      />
+                    </dd>
+                  </template>
+                </div>
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
+                >
+                  <dt>
+                    <x-tooltip>
+                      <label
+                        class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                      >
+                        ENDORSEMENT NUMBER
+                      </label>
+                      <template #tooltip>
+                        The number associated with a specific endorsement or
+                        update to the policy. This is the endorsement number
+                        available on the tax invoice or provided by the
+                        insurance provider.
+                      </template>
+                    </x-tooltip>
+                  </dt>
+                  <dd>
+                    <x-input
+                      :rules="isEndorsementNumberRequired ? [isRequired] : []"
+                      v-model="sendUpdateForm.endorsement_number"
+                      size="xs"
+                      :disabled="!state.edit || props.isSentOrBooked"
+                      placeholder="Enter Endorsement Number"
+                      maxlength="23"
+                      @keypress="endorsementNumberValidation"
+                      class="w-3/4"
+                    />
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            <div class="flex justify-end">
+              <template v-if="!state.edit">
+                <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+                  <x-button
+                    class="focus:ring-2 focus:ring-black"
+                    size="sm"
+                    @click="onEdit"
+                    :disabled="props.isEditDisabledForQueuedBooking"
+                  >
+                    Edit
+                  </x-button>
                   <template #tooltip>
-                    A unique reference identifier assigned to each "Send Update"
-                    request, allowing for easy tracking and reference.
+                    <span class="custom-tooltip-content">
+                      No further action can be taken on Update Booking Queued or
+                      Failed status.
+                    </span>
                   </template>
                 </x-tooltip>
-              </dt>
-              <dd>{{ sendUpdateLog.code }}</dd>
-            </div>
-            <div class="grid md:grid-cols-2 gap-y-4">
-              <dt>Notes</dt>
-              <dd>
-                <x-textarea
-                  v-model="sendUpdateForm.notes"
-                  size="xs"
-                  :disabled="!state.edit"
-                  maxlength="250"
-                />
-                <p class="text-xs text-right" v-if="state.edit">
-                  {{ sendUpdateForm.notes.length }} / 250
-                </p>
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <template
-                v-if="
-                  props.sendUpdateLog.category.code !==
-                    props.sendUpdateStatusEnum.EN &&
-                  props.sendUpdateLog.category.code !==
-                    props.sendUpdateStatusEnum.CPU
-                "
-              >
-                <dt>
-                  <x-tooltip placement="left">
-                    <label
-                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                    >
-                      Transaction Type
-                    </label>
-                    <template #tooltip>
-                      Refers to category of the financial transaction associated
-                      with the policy. It helps classify the specific type of
-                      transaction being recorded or processed within the system.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>{{ transactionType || '' }}</dd>
+                <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+              </template>
+              <template v-else>
+                <x-button
+                  size="sm"
+                  color="orange"
+                  @click="onCancel"
+                  class="mr-3 focus:ring-2 focus:ring-black"
+                  :loading="sendUpdateForm.processing"
+                  :disabled="sendUpdateForm.processing"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  class="focus:ring-2 focus:ring-black"
+                  size="sm"
+                  color="primary"
+                  type="submit"
+                  :loading="sendUpdateForm.processing"
+                  :disabled="sendUpdateForm.processing"
+                >
+                  Update
+                </x-button>
               </template>
             </div>
-            <div class="grid md:grid-cols-2 gap-y-4">
-              <dt>
-                <x-tooltip placement="left">
-                  <label
-                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                  >
-                    Status
-                  </label>
-                  <template #tooltip>
-                    The current status of the ""Send Update"" request,
-                    indicating whether it is pending, transaction approved, or
-                    declined, among other possible states.
-                  </template>
-                </x-tooltip>
-              </dt>
-              <dd>{{ sendUpdateLog.display_status }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <template
-                v-if="
-                  sendUpdateLog.category.code !==
-                    props.sendUpdateStatusEnum.CI &&
-                  sendUpdateLog.category.code !==
-                    props.sendUpdateStatusEnum.CIR &&
-                  sendUpdateLog.category.code !==
-                    props.sendUpdateStatusEnum.CPU &&
-                  sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPD
-                "
-              >
-                <dt>
-                  <x-tooltip placement="left">
-                    <label
-                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
-                    >
-                      Sub Type
-                    </label>
-                    <template #tooltip>
-                      A further classification of the "Send Update" request,
-                      providing additional context or details.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <x-select
-                    size="xs"
-                    :disabled="!state.edit"
-                    v-model="sendUpdateForm.option_id"
-                    :options="updateLogOptions"
-                  />
-                </dd>
-              </template>
-              <template
-                v-else-if="
-                  sendUpdateLog.category.code !==
-                    props.sendUpdateStatusEnum.CPU &&
-                  sendUpdateLog.category.code !== props.sendUpdateStatusEnum.CPD
-                "
-              >
-                <!-- <dt class="font-bold text-right mr-10">Reason</dt>
-              <dd>
-                <x-select
-                  size="xs"
-                  :disabled="!state.edit"
-                  v-model="sendUpdateForm.change_reason"
-                  :options="changeReasonOptions"
-                />
-              </dd> -->
-              </template>
-            </div>
-            <div
-              class="grid sm:grid-cols-2"
-              v-if="props.quoteType === page.props.quoteTypeCodeEnum.Car"
-            >
-              <template
-                v-if="
-                  props.additionalField &&
-                  sendUpdateLog?.option?.code ===
-                    props.sendUpdateStatusEnum.AOCOV
-                "
-              >
-                <dt>
-                  <label
-                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
-                  >
-                    ADDONS
-                  </label>
-                </dt>
-                <dd>
-                  <x-select
-                    :rules="[isRequired]"
-                    v-model="sendUpdateForm.car_addons"
-                    placeholder="Select Addons"
-                    :options="additionalFieldOptions"
-                    size="xs"
-                    :disabled="!state.edit"
-                    :class="{ 'pointer-events-none': !state.edit }"
-                    multiple
-                    :error="isAdditionalFieldError"
-                  />
-                </dd>
-              </template>
-              <template
-                v-else-if="
-                  props.additionalField &&
-                  (sendUpdateLog?.option?.code ===
-                    props.sendUpdateStatusEnum.COE ||
-                    sendUpdateLog?.option?.code ===
-                      props.sendUpdateStatusEnum.COE_NFI)
-                "
-              >
-                <dt>
-                  <label
-                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
-                  >
-                    EMIRATE OF REGISTRATION
-                  </label>
-                </dt>
-                <dd>
-                  <x-select
-                    :rules="[isRequired]"
-                    v-model="sendUpdateForm.emirates_id"
-                    placeholder="Select Emirate of Registration"
-                    :options="additionalFieldOptions"
-                    size="xs"
-                    :disabled="!state.edit"
-                    :error="isAdditionalFieldError"
-                  />
-                </dd>
-              </template>
-              <template
-                v-else-if="
-                  props.additionalField &&
-                  (sendUpdateLog?.option?.code ===
-                    props.sendUpdateStatusEnum.CISC ||
-                    sendUpdateLog?.option?.code ===
-                      props.sendUpdateStatusEnum.CISC_NFI)
-                "
-              >
-                <dt>
-                  <label
-                    class="font-bold text-gray-800 decoration-dotted decoration-primary-700"
-                  >
-                    SEATING CAPACITY
-                  </label>
-                </dt>
-                <dd>
-                  <x-input
-                    :rules="[isRequired]"
-                    placeholder="Enter Seating Capacity"
-                    v-model="sendUpdateForm.seating_capacity"
-                    size="xs"
-                    :disabled="!state.edit"
-                    type="number"
-                    @keypress="onKeyPress"
-                    :error="isAdditionalFieldError"
-                  />
-                </dd>
-              </template>
-            </div>
-          </dl>
-        </div>
-        <div class="flex justify-end">
-          <template v-if="!state.edit">
-            <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
-              <x-button
-                size="sm"
-                @click="onEdit"
-                :disabled="props.isEditDisabledForQueuedBooking"
-              >
-                Edit
-              </x-button>
-              <template #tooltip>
-                <span class="custom-tooltip-content">
-                  No further action can be taken on Update Booking Queued or
-                  Failed status.
-                </span>
-              </template>
-            </x-tooltip>
-            <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
-          </template>
-          <template v-else>
-            <x-button
-              size="sm"
-              color="orange"
-              @click="onCancel"
-              class="mr-3"
-              :loading="sendUpdateForm.processing"
-              :disabled="sendUpdateForm.processing"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="primary"
-              type="submit"
-              :loading="sendUpdateForm.processing"
-              :disabled="sendUpdateForm.processing"
-            >
-              Update
-            </x-button>
-          </template>
-        </div>
-      </x-form>
+          </x-form>
+        </template>
+      </Collapsible>
     </div>
 
     <LazyProviderDetails
       v-if="isLegacyPolicy"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
-      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
+      :insurance-provider-id="props.insuranceProviderId"
     />
 
     <!-- Indicative additional price & Plan details comp -->
@@ -591,6 +654,7 @@ onBeforeMount(() => {
       :send-update-log="props.sendUpdateLog"
       :update-btn="props.updateBtn"
       :quote-type="props.quoteType"
+      :is-sent-or-booked="props.isSentOrBooked"
     />
 
     <LazyBookingDetails
@@ -609,6 +673,8 @@ onBeforeMount(() => {
       :modelClass="modelClass"
       @update-error-status="handleErrorStatusUpdate"
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
+      :is-comm-vat-not-app-enabled="props.isCommVatNotAppEnabled"
+      :disable-main-btn="props.disableMainBtn"
     />
 
     <AuditLogs
