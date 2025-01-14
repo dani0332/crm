@@ -50,6 +50,8 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 true
             );
             info("CC Payments Job Ended For Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id}");
+           
+            // We can trigger sage & book policy entry from here 
         } catch (\Exception $exception) {
             // Handle the exception here
             info("CC Payments Job Failed for Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id} - Error: ".$exception->getMessage());

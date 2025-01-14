@@ -868,7 +868,6 @@ const handlePaymentTypes = count => {
       item =>
         ![
           page.props.paymentMethodsEnum?.Cheque,
-          page.props.paymentMethodsEnum?.CreditCard,
         ].includes(item.value),
     );
   }

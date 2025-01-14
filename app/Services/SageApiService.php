@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\PaymentCollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -14,6 +15,8 @@ use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
+use App\Http\Controllers\V2\CentralController;
+use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Jobs\BookPolicyOnSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendUpdateSageJob;
@@ -522,29 +525,6 @@ class SageApiService
         return $returnMessage;
     }
 
-    private function tapPaymentCalled($quoteTypeId, $quote, $payment, $paymentSplits){
-        $modelType = QuoteTypes::getName($quoteTypeId)->value;
-         // premium_authorized need to confirm this in case of broker cc payment we are targetting collection amount 
-        $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
-        $data = new \stdClass();
-        $data->modelType = $modelType;
-        $data->quote_id = $quote->id;
-        $data->plan_id = $payment->plan_id;
-        $data->payment_code = $payment->code;
-        $data->customer_id = $quote->customer_id;
-        $data->collection_amount = $collectionAmount;
-        $data->is_declined = 0;
-        $data->is_capture = 1;
-        $data->is_approved = 0;
-        $data->declined_reason = $payment->declined_reason;
-        $data->send_update_id = null;
-        $data->collection_type = $payment->collection_type;
-
-        app(PaymentRepository::class)->handlePaymentApprove($data);
-
-        echo "Payment Capture";
-    }
-
     public function postBookPolicyToSage($request, $quote)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
@@ -557,6 +537,9 @@ class SageApiService
 
             return $returnMessage;
         }
+
+
+        
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
@@ -571,10 +554,11 @@ class SageApiService
 
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
 
-        // $this->tapPaymentCalled($quoteTypeId, $quote, $payment, $paymentSplits);
-
-        // dd("Tap Payment Transaction");
-        
+        $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
+        if ($payment->collection_type == PaymentCollectionTypeEnum::INSURER && $hasAnyCCPayment) {
+            info('Skipping Policy Book & Authorizing payment for '. $payment->code);
+            return $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
+        }
         //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
@@ -2123,4 +2107,26 @@ class SageApiService
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - end');
     }
 
+    private function handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits)
+    {
+        $modelType = QuoteTypes::getName($quoteTypeId)->value;
+        $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
+    
+        $data = new SplitPaymentApproveRequest([
+            'modelType' => $modelType,
+            'quote_id' => $quote->id,
+            'plan_id' => $payment->plan_id,
+            'payment_code' => $payment->code,
+            'customer_id' => $quote->customer_id,
+            'collection_amount' => $collectionAmount,
+            'is_declined' => 0,
+            'is_capture' => 1,
+            'is_approved' => 0,
+            'declined_reason' => $payment->declined_reason,
+            'send_update_id' => null,
+            'collection_type' => $payment->collection_type,
+        ]);
+    
+        return app(CentralController::class)->splitPaymentsApprove($data);
+    }
 }

@@ -659,6 +659,21 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const isAllPaymentAuthorized = () => {
+  const payment = getPayment()
+  if (payment){
+    const paidStatusIds = [
+      props.paymentStatusEnum.AUTHORISED,
+    ];
+
+    return payment.payment_splits.every(split =>
+      paidStatusIds.includes(split.payment_status_id)
+    );
+  }
+  return false
+};
+
 </script>
 
 <template>
