@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\DaysNameEnum;
 use App\Enums\HealthTeamType;
@@ -1057,18 +1058,21 @@ class LeadAllocationService extends BaseService
     public function isCommercialVehicles($lead)
     {
         $isCommercial = false;
-        $commercialCarModel = CarModel::where('id', $lead->car_model_id)
-            ->where('is_commercial', true)
-            ->count();
+        if($lead->registration_type == CarRegistrationType::PERSONAL) {
+            
+            $commercialCarModel = CarModel::where('id', $lead->car_model_id)
+                ->where('is_commercial', true)
+                ->count();
 
-        if ($commercialCarModel) {
-            $isCommercial = true;
-        }
+            if ($commercialCarModel) {
+                $isCommercial = true;
+            }
 
-        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
-        $commercialKeywordsCheck = in_array(strtolower(trim($lead->full_name)), array_column($commercialKeywords->toArray(), strtolower(trim('name'))));
-        if ($commercialKeywordsCheck) {
-            $isCommercial = true;
+            $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+            $commercialKeywordsCheck = in_array(strtolower(trim($lead->full_name)), array_column($commercialKeywords->toArray(), strtolower(trim('name'))));
+            if ($commercialKeywordsCheck) {
+                $isCommercial = true;
+            }
         }
 
         return $isCommercial;
