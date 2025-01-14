@@ -16,7 +16,7 @@ class PermissionsSeeder extends Seeder
     public function run(): void
     {
         // $this->paidLeads();
-        $this->seedProcessTrackerPermissions();
+        // $this->seedProcessTrackerPermissions();
         // $this->buyLeads();
         // $this->leadAllocationDashboards();
     }
