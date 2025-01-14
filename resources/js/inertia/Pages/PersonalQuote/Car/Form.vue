@@ -450,6 +450,7 @@ const isAmlOrKycUpdated = computed(() => {
             :rules="[isRequired]"
             :single="true"
             :error="quoteForm.errors.business_activity_id"
+            :hasError="quoteForm.errors.business_activity_id"
           />
         </x-field>
 
