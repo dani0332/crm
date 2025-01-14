@@ -2345,7 +2345,9 @@ watch(
                 Edit
               </x-button>
 
-              <template v-if="props.updateBtn && (isLackingPayment || disableMainBtn)">
+              <template
+                v-if="props.updateBtn && (isLackingPayment || disableMainBtn)"
+              >
                 <div>
                   <x-tooltip>
                     <x-button
