@@ -14,7 +14,7 @@ class TravelRenewalLeads extends Command
      *
      * @var string
      */
-    protected $signature = 'leads:retrieve-travel-renewals';
+    protected $signature = 'leads:process-travel-renewals';
 
     /**
      * The console command description.
