@@ -2109,7 +2109,7 @@ class SageApiService
 
     private function handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits)
     {
-        info('handleSplitPaymentApproval called from sage api service: '.$quote->code.' : '.json_encode($data));
+        info('handleSplitPaymentApproval called from sage api service: '.$quote->code);
         $modelType = QuoteTypes::getName($quoteTypeId)->value;
         $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
     
