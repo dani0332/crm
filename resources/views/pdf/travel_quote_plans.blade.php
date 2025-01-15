@@ -553,7 +553,7 @@
             ['code' => 'travelDelayedBaggage', 'title' => 'Delayed Baggage', 'type' => 'travelInconvenienceCover'],
             ['code' => 'travelDelayedDeparture', 'title' => 'Delayed Departure', 'type' => 'travelInconvenienceCover'],
             ['code' => 'travelHijack', 'title' => 'Hijack', 'type' => 'exclusion'],
-            ['code' => 'travelLegalExpenses', 'title' => 'Legal Expenses', 'type' => 'travelLegalExpenses'],
+            ['code' => 'travelLegalExpenses', 'title' => 'Legal Expenses', 'type' => ['feature','travelLegalExpenses']],
             ['code' => 'travelMissedDeparture', 'title' => 'Missed Departure', 'type' => 'travelInconvenienceCover'],
             [
                 'code' => 'travelPassportAssistance',
@@ -565,7 +565,7 @@
             [
                 'code' => 'travelPersonalLiability',
                 'title' => 'Personal Liability',
-                'type' => 'travelInconvenienceCover',
+                'type' => ['feature', 'travelInconvenienceCover'],
             ],
             ['code' => 'travelPersonalMoney', 'title' => 'Personal Money', 'type' => 'travelInconvenienceCover'],
             [

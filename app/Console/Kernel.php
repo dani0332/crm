@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Console\Commands\PolicyIssuanceCommand;
+use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
@@ -33,7 +35,10 @@ class Kernel extends ConsoleKernel
         Commands\ProcessCCPaymentsCommand::class,
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
+        Commands\TravelRenewalLeads::class,
         SageProcessesMarkFailedCommand::class,
+        PolicyIssuanceCommand::class,
+        PolicyIssuanceDataCleanUpCommand::class,
     ];
 
     /**
@@ -113,9 +118,29 @@ class Kernel extends ConsoleKernel
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
 
+        $schedule->command('DttHealth')->timezone('Asia/Dubai')->dailyAt('09:03')->onOneServer()->withoutOverlapping();
+        $schedule->command('DttHealthFollowUp')->timezone('Asia/Dubai')->dailyAt('11:48')->onOneServer()->withoutOverlapping();
+
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(5);
+
+        $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
+        $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();
+
+        // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
+
+        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('10:50')
+        //     ->onOneServer()
+        //     ->withoutOverlapping()
+        //     ->onSuccess(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Completed -----------'.$output);
+        //     })
+        //     ->onFailure(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Failed -----------'.$output);
+        //     });
+
     }
 
     /**

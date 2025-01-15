@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
+use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
@@ -46,6 +48,8 @@ use Illuminate\Support\Facades\Route;
 
 enum QuoteTypes: string
 {
+    use Enumable, QuoteTypable;
+
     case CAR = 'Car';
     case HOME = 'Home';
     case HEALTH = 'Health';
@@ -260,7 +264,7 @@ enum QuoteTypes: string
             self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
             self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
             self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
-            self::TRAVEL => new TravelAllocation(new TravelAllocationService, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::TRAVEL => new TravelAllocation(new TravelAllocationService, $this->getTracker(ProcessTrackerTypeEnum::TRAVEL_ALLOCATION, $uuid, $teamId), $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             self::CYCLE => new CycleAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::YACHT => new YachtAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::PET => new PetAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
@@ -318,6 +322,69 @@ enum QuoteTypes: string
         }
 
         return $typesWithIds;
+    }
+
+    public function refId(string $uuid)
+    {
+        return "{$this->shortCode()}{$uuid}";
+    }
+
+    public static function getQuoteTypeIdToClass($quoteType): string
+    {
+        switch ($quoteType) {
+            case self::getId(self::CAR):
+                return CarQuote::class;
+            case self::getId(self::HOME):
+                return HomeQuote::class;
+            case self::getId(self::HEALTH):
+                return HealthQuote::class;
+            case self::getId(self::LIFE):
+                return LifeQuote::class;
+            case self::getId(self::BUSINESS):
+                return BusinessQuote::class;
+            case self::getId(self::TRAVEL):
+                return TravelQuote::class;
+            default:
+                return PersonalQuote::class;
+        }
+    }
+
+    public function trackerProcessTypes()
+    {
+        return match ($this) {
+            self::CAR => [
+                ProcessTrackerTypeEnum::CAR_ALLOCATION,
+            ],
+            self::HOME => [
+                ProcessTrackerTypeEnum::HOME_ALLOCATION,
+            ],
+            self::HEALTH => [
+                ProcessTrackerTypeEnum::HEALTH_ALLOCATION,
+            ],
+            self::LIFE => [
+                ProcessTrackerTypeEnum::LIFE_ALLOCATION,
+            ],
+            self::BUSINESS => [
+                ProcessTrackerTypeEnum::BUSINESS_ALLOCATION,
+            ],
+            self::BIKE => [],
+            self::YACHT => [],
+            self::TRAVEL => [
+                ProcessTrackerTypeEnum::TRAVEL_ALLOCATION,
+            ],
+            self::PET => [
+                ProcessTrackerTypeEnum::PET_ALLOCATION,
+            ],
+            self::CYCLE => [],
+            self::JETSKI => [],
+            self::AMT => [],
+            self::PERSONAL => [],
+            self::GROUP_MEDICAL => [],
+            self::CORPLINE => [],
+            self::CAR_REVIVAL => [],
+            self::CAR_BIKE => [],
+            default => [],
+        };
     }
 
 }

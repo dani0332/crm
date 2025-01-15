@@ -16,6 +16,7 @@ use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
+use App\Models\BuyLeadRequest;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -37,6 +38,61 @@ use Illuminate\Support\Facades\DB;
 
 class CarAllocationService extends AllocationService
 {
+    public bool $isBuyLeadAdvisor = false;
+    protected ?BuyLeadRequest $buyLeadRequest = null;
+
+    protected function resetProps(): void
+    {
+        $this->isBuyLeadAdvisor = false;
+        $this->buyLeadRequest = null;
+    }
+
+    public function endBuyLeadProcessing(): void
+    {
+        if ($this->buyLeadRequest) {
+            $this->buyLeadRequest->completeProcessing();
+        }
+        $this->resetProps();
+    }
+
+    private function verifyPreChecks(CarQuote $lead, bool $overrideAssignment): bool
+    {
+        info(self::class." - Processing Car ILA for uuid: {$lead->uuid}", [
+            'uuid' => $lead->uuid,
+            'payment_status_id' => $lead->payment_status_id,
+            'source' => $lead->source,
+            'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
+            'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+            'sic_flow_enabled' => $lead->sic_flow_enabled,
+            'sic_advisor_requested' => $lead->sic_advisor_requested,
+            'quote_status_id' => $lead->quote_status_id,
+        ]);
+
+        $continueAssignment = false;
+
+        if (! $overrideAssignment && ! empty($lead->advisor_id)) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is already assigned to advisor with ID: {$lead->advisor_id}, skipping assignment");
+        } elseif ($lead->isFakeOrDuplicate()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
+        } elseif ($lead->hasExemptedSource()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has exempted source {$lead->source}, skipping assignment");
+        } elseif ($lead->isRenewalTierEmailSent()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has renewal tier email sent, skipping assignment");
+        } elseif ($lead->isRenewalUpload()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is Renwal Upload, skipping assignment");
+        } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment");
+            $continueAssignment = true;
+        } elseif ($lead->isSICFlowDisabled()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow disabled, continuing assignment");
+            $continueAssignment = true;
+        } else {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} does not meet any criteria, skipping assignment");
+        }
+
+        return $continueAssignment;
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         // Check if Dubai Now exclusion should be applied
@@ -50,27 +106,13 @@ class CarAllocationService extends AllocationService
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
         }
 
-        // Create a query to retrieve a car lead based on the provided quote ID and filters.
-        $carQuoteQuery = CarQuote::where('uuid', $quoteId)
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', $exemptedLeadSources)
-            ->where('is_renewal_tier_email_sent', 0)
-            ->where(function ($query) {
-                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                    ->orWhere(function ($query) {
-                        $query->where('sic_flow_enabled', 1)
-                            ->where(function ($query) {
-                                $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-                                    ->orWhere('sic_advisor_requested', 1);
-                            });
-                    });
-            });
+        $lead = CarQuote::where('uuid', $quoteId)->first();
 
-        if (! $overrideAdvisorId) {
-            $carQuoteQuery->whereNull('advisor_id');
+        if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
+            return null;
         }
 
-        return $carQuoteQuery->first();
+        return $lead;
     }
 
     public function getTier($tierId)
@@ -261,25 +303,107 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
+    public function getEligibleUserForAllocation(Tier $tier, $advisorId, $isReassignmentJob, $leadSource, $teamId, CarQuote $lead)
     {
-        $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
-        info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
+        // reset these here because of dependency injection so new values each time
+        $this->resetProps();
 
-        $tierUserIds = $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
+        // Get initial tier users
+        $tierUserIds = $this->fetchTierUserIds($tier->id, $advisorId);
+        $tierUserIds = $this->applyRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
+        // Apply team filter if a team ID is provided
         if ($teamId) {
-            $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
-            if ($teamUserIds->count() > 0) {
-                $teamUserIds = $teamUserIds->pluck('user_id')->toArray();
-            } else {
-                $teamUserIds = [];
-            }
-            info('TeamID is: '.$teamId.' and available users for this team are: '.json_encode($teamUserIds));
-            $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
+            $tierUserIds = $this->filterUsersByTeam($tierUserIds, $teamId);
         }
 
-        // Define the order in which user statuses should be considered.
+        // Apply rule-based exclusions if no rules exist for the lead
+        $tierUserIds = $this->applyRuleExclusions($tierUserIds, $lead);
+
+        // Get eligible users by status in the defined order
+        $eligibleUsers = $this->fetchEligibleUsersByStatus($lead, $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob);
+
+        return $eligibleUsers ?: [];
+    }
+
+    // Helper methods
+
+    private function fetchTierUserIds($tierId, $advisorId)
+    {
+        $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
+        info("Users against Tier ID {$tierId}: ".json_encode($tierUserIds->toArray()));
+
+        return $tierUserIds;
+    }
+
+    private function applyRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId)
+    {
+        return $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
+    }
+
+    private function filterUsersByTeam($tierUserIds, $teamId)
+    {
+        $teamUserIds = UserTeams::where('team_id', $teamId)
+            ->pluck('user_id')
+            ->toArray();
+
+        info("Team ID {$teamId} available users: ".json_encode($teamUserIds));
+
+        return array_intersect(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $teamUserIds);
+    }
+
+    private function applyRuleExclusions($tierUserIds, $lead)
+    {
+        $rules = $this->getRules($lead);
+
+        if ($rules->isEmpty()) {
+            $ruleUserIds = $this->getRuleUsers();
+            info("No rules found for lead ({$lead->uuid}), excluding rule users: ".json_encode($ruleUserIds));
+
+            return array_diff(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $ruleUserIds);
+        }
+
+        return $tierUserIds;
+    }
+
+    private function fetchAdvisors(string $findAdvisorFn, $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead)
+    {
+        $statusOrder = $this->determineStatusOrder($isReassignmentJob);
+
+        foreach ($statusOrder as $status) {
+            $eligibleUsers = $this->{$findAdvisorFn}($lead, $status, $tier, $tierUserIds, $advisorId, $teamId);
+
+            if ($eligibleUsers && count($eligibleUsers) > 0) {
+                info(self::class."::fetchAdvisors - Eligble Users found for lead {$lead->uuid} with the availability status of: ".UserStatusEnum::getUserStatusText($status));
+
+                return $eligibleUsers->toArray();
+            }
+            info(self::class."::fetchAdvisors - No Users were found for lead {$lead->uuid} with the availability status of: ".UserStatusEnum::getUserStatusText($status));
+        }
+
+        return [];
+    }
+
+    private function fetchEligibleUsersByStatus(CarQuote $lead, Tier $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob)
+    {
+        $tierUserIds = is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray();
+        info(self::class."::fetchEligibleUsersByStatus - Users against tierID {$tier->id} and tier name: {$tier->name} for lead {$lead->uuid} are: ".json_encode($tierUserIds));
+
+        $advisors = [];
+
+        if ($lead->isBuyLeadApplicable() && ($tier->isValue() || $tier->isVolume())) {
+            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
+        }
+
+        if (empty($advisors)) {
+            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
+        }
+
+        return $advisors;
+    }
+
+    private function determineStatusOrder($isReassignmentJob)
+    {
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
@@ -289,22 +413,7 @@ class CarAllocationService extends AllocationService
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
-        // Iterate through user statuses in the specified order.
-        foreach ($statusOrder as $status) {
-            // Get eligible users with the specified status.
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId, $teamId);
-
-            // If eligible users are found, log the results and return them.
-            if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
-
-                return $eligibleUsers->toArray();
-            }
-            info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
-        }
-
-        // If no eligible users are found, return an empty array.
-        return [];
+        return $statusOrder;
     }
 
     public function updateTierBeforeEligibleUserIdentification($lead)
@@ -324,37 +433,70 @@ class CarAllocationService extends AllocationService
         }
     }
 
-    public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
+    private function getAdvisorBaseQuery($status, $userIds, $advisorId = null, $teamId = null)
     {
         $excludedUserIds = $this->getExcludedUserIds($teamId);
 
         $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
 
         // Create a query to fetch lead allocations with their associated users.
-        $query = LeadAllocation::with('leadAllocationUser')
-            ->whereHas('leadAllocationUser', function ($query) use ($status) {
-                // Filter by advisor status.
-                $query->where('status', $status);
-            })
-            ->where(function ($query) {
-                // Apply allocation count and max capacity conditions.
-                $query->whereRaw('allocation_count < max_capacity')
-                    ->orWhere('max_capacity', -1);
-            })
-            ->whereIn('user_id', $tierUserIds)
+        $query = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
+            // Filter by advisor status.
+            $query->where('status', $status);
+        })
+            ->whereIn('user_id', $userIds)
             ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
             ->where('quote_type_id', QuoteTypes::CAR->id())
-            ->orderBy('last_allocated');
+            ->activeUser();
 
         // Exclude a specific advisor if an advisor ID is provided.
         if (! empty($advisorId)) {
             $query->where('user_id', '!=', $advisorId);
         }
 
-        // Return the resulting collection of advisors.
-        return $query->get();
+        return $query;
+    }
+
+    public function getBLAdvisorsByStatus($lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
+    {
+        info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
+        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $tier->isValue());
+        info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
+
+        $userIds = array_values(array_intersect(
+            $buyLeadRequestedUserIds,
+            $tierUserIds
+        ));
+
+        $advisors = $this->getAdvisorBaseQuery($status, $userIds, $advisorId, $teamId)
+            ->where('buy_lead_status', true)
+            ->where(function ($query) {
+                $query->whereRaw('buy_lead_allocation_count < buy_lead_max_capacity')->orWhere('buy_lead_max_capacity', '=', -1);
+            })
+            ->orderBy('buy_lead_last_allocated')
+            ->get();
+
+        $this->isBuyLeadAdvisor = $advisors->count() > 0;
+
+        $advisors->count() > 0 && info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray())." found for uuid: {$lead->uuid}");
+
+        return $advisors;
+    }
+
+    public function getAdvisorsByStatus($lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
+    {
+        info(self::class."::getAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
+
+        return $this->getAdvisorBaseQuery($status, $tierUserIds, $advisorId, $teamId)
+            ->where('normal_allocation_enabled', true)
+            ->where(function ($query) {
+                // Apply allocation count and max capacity conditions.
+                $query->whereRaw('allocation_count < max_capacity')->orWhere('max_capacity', -1);
+            })
+            ->orderBy('last_allocated')
+            ->get();
     }
 
     public function getRules($carLead)
@@ -419,12 +561,13 @@ class CarAllocationService extends AllocationService
             ->where('rule_type', RuleTypeEnum::CAR_MAKE_MODEL)
             ->where('rules.is_active', 1)
             ->groupBy('rule_details.rule_id')
-            ->select(
-                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-            )->get();
+            ->select([
+                'rules.name AS ruleName',
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers'),
+            ])->get();
     }
 
-    public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId): mixed
+    public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
@@ -447,6 +590,17 @@ class CarAllocationService extends AllocationService
                 $finalEligibleUserIds = $this->getEligibleUserForSAPLead($ruleUserIds);
             }
 
+            // if finalEligibleUserIds count is zero then it means all rule users are unavailable
+            if (count($finalEligibleUserIds) == 0) {
+                //  check if the found rule is commercial rule
+                if ($rules->first()->ruleName == 'Commercial') {
+                    info('All rule users are unavailable, so checking for commercial rule users regardless of availability.');
+                    // if commercial then we need to assign lead to one of the $ruleUserIds based on max cap
+                    // and other allocation criteria like round robin
+                    $finalEligibleUserIds = $this->fetchUsersOnAllocationCriteria($ruleUserIds, $teamId);
+                }
+            }
+
             info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
@@ -458,6 +612,20 @@ class CarAllocationService extends AllocationService
             $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
 
             info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+        }
+
+        if ($this->isBuyLeadAdvisor) {
+            foreach ($finalEligibleUserIds as $advisorId) {
+                $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $advisorId, $tier->isValue());
+                if ($this->buyLeadRequest) {
+                    info("Buy Lead Request {$this->buyLeadRequest->id} found for advisor ID: {$advisorId} and tier ID: {$tier->id} for uuid : {$lead->uuid}");
+                    $this->buyLeadRequest->startProcessing();
+
+                    return $advisorId;
+                }
+            }
+
+            return 0;
         }
 
         // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
@@ -501,6 +669,18 @@ class CarAllocationService extends AllocationService
     {
         info('About to assign car lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
 
+        if (! empty($lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
+            $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
+        }
+
+        if ($assignmentType === AssignmentTypeEnum::SYSTEM_ASSIGNED && $this->isBuyLeadAdvisor) {
+            $assignmentType = AssignmentTypeEnum::BOUGHT_LEAD;
+        }
+
+        if ($assignmentType === AssignmentTypeEnum::SYSTEM_REASSIGNED && $this->isBuyLeadAdvisor) {
+            $assignmentType = AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+        }
+
         //Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
 
@@ -517,13 +697,20 @@ class CarAllocationService extends AllocationService
 
         info('Updating user record in lead allocation table with count increment for User ID: '.$userId);
 
-        // Depending on the assignment type, either add or adjust allocation counts.
-        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId, QuoteTypes::CAR->id()) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::CAR->id());
+        match ($assignmentType) {
+            AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($userId, QuoteTypes::CAR->id(), $this->isBuyLeadAdvisor),
+            default => $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::CAR->id(), $this->isBuyLeadAdvisor),
+        };
+
+        info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
+
+        // Reset Buy Lead Advisor flag and Buy Lead Request object.
+        $this->resetProps();
 
         info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
     }
 
-    private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
+    private function assignLeadToUserAndGetQuote(CarQuote $lead, $userId, $tier, $assignmentType): mixed
     {
         // Assign the lead to the advisor and send an email
         // Check if the lead was previously assigned to an advisor and log the change.
@@ -548,6 +735,15 @@ class CarAllocationService extends AllocationService
 
         // Save the updated lead.
         $lead->save();
+
+        if ($this->isBuyLeadAdvisor) {
+            $this->buyLeadRequest->buyLead($lead, QuoteTypes::CAR);
+            info('Lead Id '.$lead->uuid.' assigned to advisor id : '.$userId.' as bought lead');
+        } else {
+            info('Lead Id '.$lead->uuid.' assigned to advisor id : '.$userId);
+        }
+
+        $lead->endAllocation();
 
         return $lead;
     }
@@ -622,11 +818,8 @@ class CarAllocationService extends AllocationService
     public function isLeadReassigned($lead)
     {
         $leadDetail = CarQuoteRequestDetail::where('car_quote_request_id', $lead->id)->first();
-        if ($leadDetail && $leadDetail->advisor_assigned_date > now()->subMinutes(2)) {
-            return true;
-        } else {
-            return false;
-        }
+
+        return $leadDetail && $leadDetail->advisor_assigned_date > now()->subMinutes(2);
     }
 
     public function updateLeadTier($lead, $tier): void
@@ -641,12 +834,30 @@ class CarAllocationService extends AllocationService
     public function getEligibleUserForSAPLead($ruleUserIds): array
     {
         // Create a query to fetch lead allocations with their associated users.
-        $sapUserIds = LeadAllocation::with('leadAllocationUser')
+        return LeadAllocation::with('leadAllocationUser')
+            ->activeUser()
             ->whereIn('user_id', $ruleUserIds) // it will be the rule user ids for SAP rule only
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->orderBy('last_allocated')
             ->pluck('user_id')->toArray();
+    }
 
-        return $sapUserIds;
+    public function fetchUsersOnAllocationCriteria($ruleUserIds, $teamId)
+    {
+        $excludedUserIds = $this->getExcludedUserIds($teamId);
+
+        // Create a query to fetch lead allocations with their associated users.
+        return LeadAllocation::where(function ($query) {
+            // Apply allocation count and max capacity conditions.
+            $query->whereRaw('allocation_count < max_capacity')
+                ->orWhere('max_capacity', -1);
+        })
+            ->whereIn('user_id', $ruleUserIds)
+            ->whereNotIn('user_id', $excludedUserIds)
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->activeUser()
+            ->orderBy('last_allocated')
+            ->pluck('user_id')
+            ->toArray();
     }
 }

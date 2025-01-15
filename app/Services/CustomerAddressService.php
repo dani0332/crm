@@ -126,6 +126,24 @@ class CustomerAddressService
         )));
     }
 
+    public function fetchFullAddress($address)
+    {
+        $addressOrder = [
+            'office_number',
+            'floor_number',
+            'building_name',
+            'street',
+            'area',
+            'city',
+            'landmark',
+        ];
+
+        return implode(', ', array_filter(array_map(
+            fn ($key) => $address[$key] ?? null,
+            $addressOrder
+        )));
+    }
+
     public function validateAddress(Request $request)
     {
         $addressRequest = CustomerAddressRequest::createFrom($request);

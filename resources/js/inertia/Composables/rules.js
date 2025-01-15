@@ -115,6 +115,7 @@ export const useRules = () => {
   };
 
   return {
+    name,
     isEmail,
     isMobile,
     isRequired,
