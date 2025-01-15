@@ -6,7 +6,6 @@
     <title>Plans Comparison PDF</title>
 
     <style>
-        /* Embed Prompt Font */
         @font-face {
             font-family: 'Prompt';
             src: url('{{ public_path('fonts/Prompt-Regular.ttf') }}') format('truetype');
@@ -21,12 +20,10 @@
             font-style: normal;
         }
 
-        /* Apply Prompt Font to All Elements */
         * {
             font-family: 'Prompt', sans-serif;
         }
 
-        /* General Styles */
         @page {
             margin: 0;
             padding: 0;
@@ -43,9 +40,7 @@
             margin: 0;
             padding: 0;
             font-size: 12px;
-            /* Base font size */
             font-weight: 400;
-            /* Base font weight */
         }
 
         div,
@@ -72,9 +67,7 @@
         pre {
             margin: 0;
             font-size: 12px;
-            /* Consistent base font size */
             font-weight: 400;
-            /* Consistent base font weight */
         }
 
         a {
@@ -84,7 +77,6 @@
         b,
         strong {
             font-weight: 700;
-            /* Bold weight for strong text */
         }
 
         table.tbl-dec {
@@ -92,7 +84,6 @@
             padding: auto;
             border: none;
             font-size: 12px;
-            /* Adjusted font size */
         }
 
         table.tbl-dec tr td,
@@ -110,7 +101,6 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
-            /* Adjusted font size */
         }
 
         tbody {
@@ -121,9 +111,7 @@
             background: #1d83bc;
             color: #ffffff;
             font-size: 18px;
-            /* Adjusted font size */
             font-weight: 600;
-            /* Semi-bold for headers */
             text-align: center;
             padding: 8px 10px;
             width: 100%;
@@ -149,9 +137,7 @@
             margin: 0;
             padding-top: 20px;
             font-size: 18px;
-            /* Adjusted font size */
             font-weight: 600;
-            /* Semi-bold for headers */
             float: right;
             text-align: right;
             padding-right: 18px;
@@ -169,10 +155,8 @@
         th>p {
             padding: 4px;
             font-size: 12px !important;
-            /* Adjusted font size */
             text-align: center;
             font-weight: 400;
-            /* Normal weight for table content */
         }
 
         .text-left {
@@ -181,23 +165,17 @@
 
         .text-xs {
             font-size: 10px;
-            /* Adjusted font size */
             font-weight: 400;
-            /* Normal weight for small text */
         }
 
         .text-sm {
             font-size: 12px;
-            /* Adjusted font size */
             font-weight: 400;
-            /* Normal weight for small text */
         }
 
         .text-xl {
             font-size: 16px;
-            /* Adjusted font size */
             font-weight: 600;
-            /* Semi-bold for larger text */
         }
 
         .blue-box {
@@ -258,9 +236,7 @@
             vertical-align: bottom;
             margin-top: -1px;
             font-size: 12px;
-            /* Adjusted font size */
             font-weight: 400;
-            /* Normal weight for info text */
             text-align: left;
             padding: 8px;
             max-width: 100%;
@@ -271,15 +247,12 @@
             color: #ffffff;
             padding: 3px;
             font-weight: 600;
-            /* Semi-bold for info headers */
             margin: 0 0 10px 0;
         }
 
         .info p {
             font-size: 12px;
-            /* Adjusted font size */
             font-weight: 400;
-            /* Normal weight for info text */
         }
 
         .btn-all-quotes {
@@ -291,9 +264,7 @@
             text-decoration: none;
             display: inline-block;
             font-size: 20px;
-            /* Adjusted font size */
             font-weight: 600;
-            /* Semi-bold for buttons */
             border-radius: 5px;
             margin-bottom: 0px;
         }
@@ -301,15 +272,14 @@
         .btn-buy {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 10px 12px;
+            padding: 4px 20px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 12px;
-            /* Adjusted font size */
-            font-weight: 600;
-            /* Semi-bold for buttons */
-            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 5px;
+            margin: 5px 0;
         }
 
         .btn-buy:hover {
@@ -352,9 +322,7 @@
 
         .heading-desc {
             font-size: 12px;
-            /* Adjusted font size */
             font-weight: 400;
-            /* Normal weight for descriptions */
         }
 
         .provider-logo {
@@ -395,9 +363,7 @@
             color: #ffffff;
             border: none;
             font-size: 12px;
-            /* Adjusted font size */
             font-weight: 400;
-            /* Normal weight for footer text */
         }
 
         .text-left {
@@ -443,9 +409,7 @@
             background: #1d83bc;
             color: #ffffff;
             font-size: 18px;
-            /* Adjusted font size */
             font-weight: 600;
-            /* Semi-bold for headers */
             text-align: center;
             padding: 8px 10px;
             width: 100%;
@@ -504,9 +468,7 @@
             right: 5px !important;
             top: 150px !important;
             font-size: 14px;
-            /* Adjusted font size */
             font-weight: 600;
-            /* Semi-bold for captions */
             text-align: right;
         }
 
@@ -518,9 +480,7 @@
         .header {
             color: #ffffff;
             font-size: 18px;
-            /* Adjusted font size */
             font-weight: 600;
-            /* Semi-bold for headers */
             text-align: center;
             padding: 8px 10px;
             width: 100%;
@@ -929,8 +889,7 @@
                                     }
                                     $totalPrice = ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0);
                                 @endphp
-                                <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}"
-                                    style="text-decoration: none; color: #fff; font-size: 14px; font-weight: bold; display: inline-block; padding: 8px 10px; border-radius: 4px; width: 130px; text-align: center;">
+                                <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">
                                     {{ $buyNowText }}
                                     <br>
                                     <small style="font-size: 10px; font-weight: normal; line-height: 1.2;">AED</small>
