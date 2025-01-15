@@ -203,6 +203,7 @@ const bpForm = useForm({
     page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
   isCommissionDisabled: page.props?.bookPolicyDetails?.isCommissionDisabled,
   commissionTooltip: page.props?.bookPolicyDetails?.commissionTooltip,
+  isTapCaptureProcessStart: page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
 });
 
 let is_lacking_payment = ref(
@@ -442,6 +443,9 @@ const disableCommissionVatApplicable = computed(() => {
   return !bp.isEditing || bpForm.commission_vat_not_applicable > 0;
 });
 const showSendAndBookPolicyButtonBlock = computed(() => {
+  if (bpForm.isTapCaptureProcessStart) {
+    return false;
+  }
   const { quote_status_id } = props.quote;
   const {
     TransactionApproved,

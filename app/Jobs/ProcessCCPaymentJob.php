@@ -6,10 +6,12 @@ use App\Enums\PaymentCollectionTypeEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTagEnums;
 use App\Enums\SendPolicyTypeEnum;
 use App\Models\CcPaymentProcess;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\QuoteTag;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -69,6 +71,10 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 $quote = $this->getQuoteObject($this->paymentRecord->quote_type, $this->paymentRecord->quoteable_id);
                 // We can trigger sage & book policy entry from here
                 if ($quote){
+                    QuoteTag::where('quote_uuid', $quote->uuid)
+                    ->where('name', QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START)
+                    ->update(['value' => 0]);
+
                     $request = new \stdClass;
                     $request->quote_id = $quote->id; // TODO :  Lead ID
                     $request->modelType = $this->paymentRecord->quote_type;

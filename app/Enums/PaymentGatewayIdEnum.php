@@ -11,6 +11,6 @@ use BenSampo\Enum\Enum;
  */
 final class PaymentGatewayIdEnum extends Enum
 {
-    public const CHECKOUT_PAYMENT_GATEWAY = 2;
-    public const TAP_PAYMENT_GATEWAY = 3;
+    public const PAYMENT_GATEWAY_CHECKOUT = 2;
+    public const PAYMENT_GATEWAY_TAP = 3;
 }

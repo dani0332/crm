@@ -663,7 +663,7 @@ class CRUDService extends BaseService
             ],
         ];
 
-        $paymentGatewayEndpoint = $data['payment_gateway_id'] == PaymentGatewayIdEnum::TAP_PAYMENT_GATEWAY ? 'tap' : 'checkout';
+        $paymentGatewayEndpoint = $data['payment_gateway_id'] == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP ? 'tap' : 'checkout';
         info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/capture', 'post', $planData);
 

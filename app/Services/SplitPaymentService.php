@@ -559,7 +559,7 @@ class SplitPaymentService
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
             $paymentMethodEndPoint = 'checkout';
-            if ( $payment->insuranceProvider->payment_gateway_id == PaymentGatewayIdEnum::TAP_PAYMENT_GATEWAY){
+            if ( $payment->insuranceProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP){
                 $paymentMethodEndPoint = 'tap';
             }
             
