@@ -447,7 +447,7 @@ class CarQuoteService extends BaseService
                 unset($name[0]);
                 $lastName = implode(' ', $name) ?? null;
             } else {
-                $name = explode(' ', $request->company_name);
+                $name = explode(' ', $request->company_contact_name);
                 $firstName = reset($name);
                 unset($name[0]);
                 $lastName = implode(' ', $name) ?? null;
