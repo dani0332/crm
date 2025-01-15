@@ -195,20 +195,9 @@ trait QuoteModelTrait
         $q->whereNotNull('lead_allocation_failed_at');
     }
 
-    public function scopeSicFlowEnabled($q, bool $enabled = true, bool $or = false)
+    public function scopeSicFlowEnabled($q, bool $enabled = true)
     {
-        if ($or) {
-            $q->orWhere('sic_flow_enabled', $enabled);
-
-            return;
-        }
-
         $q->where('sic_flow_enabled', $enabled);
-    }
-
-    public function scopeOrSicFlowEnabled($q)
-    {
-        $q->sicFlowEnabled(or: true);
     }
 
     public function scopeSicFlowDisabled($q)
@@ -216,9 +205,14 @@ trait QuoteModelTrait
         $q->sicFlowEnabled(false);
     }
 
-    public function scopeOrSicFlowDisabled($q)
+    public function isSICFlowEnabled()
     {
-        $q->sicFlowEnabled(false, true);
+        return $this->sic_flow_enabled;
+    }
+
+    public function isSICFlowDisabled()
+    {
+        return ! $this->isSICFlowEnabled();
     }
 
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
@@ -228,12 +222,18 @@ trait QuoteModelTrait
         });
     }
 
+    public function isStale()
+    {
+        return ! empty($this->stale_at);
+    }
+
     public function isBuyLeadApplicable(): bool
     {
-        return request('isRequestedForAnAdvisor', false) ||
+        return (! $this->isStale() && ! $this->isPaid()) &&
+            (request('isRequestedForAnAdvisor', false) ||
             $this->sic_advisor_requested == 1 ||
             $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
-            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD);
     }
 
     public function startAllocation()
@@ -291,5 +291,20 @@ trait QuoteModelTrait
                 $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
             });
         }
+    }
+
+    public function isFakeOrDuplicate()
+    {
+        return in_array($this->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+    }
+
+    public function isRequestedAdvisorOrPaymentAuthorized()
+    {
+        return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+    }
+
+    public function isRenewalUpload()
+    {
+        return $this->source == LeadSourceEnum::RENEWAL_UPLOAD;
     }
 }

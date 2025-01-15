@@ -85,12 +85,12 @@ class InboundEmailsHookService extends BaseService
 
             info(self::class." - resolveLead: Lead not found for uuid: {$uuid}");
 
-            return apiResponse([], Response::HTTP_NOT_FOUND, "Lead not found for uuid: {$uuid}");
+            return apiResponse([], Response::HTTP_OK, "Lead not found for uuid: {$uuid}");
         }
 
         info(self::class." - resolveLead: uuid not found in subject: {$subject}");
 
-        return apiResponse([], Response::HTTP_NOT_FOUND, "UUID & Quote Type could not be extracted from subject: {$subject}");
+        return apiResponse([], Response::HTTP_OK, "UUID & Quote Type could not be extracted from subject: {$subject}");
     }
 
     private function handleCar(CarQuote $lead)
