@@ -75,7 +75,7 @@ class WatermarkDocumentsJob implements ShouldQueue
     {
         return [
             (new WithoutOverlapping($this->quoteDocumentId.$this->uuid.$this->documentTypeId))->dontRelease(),
-            (new ThrottlesExceptions(1, 2*60)) // ThrottlesExceptions(exceptionAllowed, throttlingDelayInSeconds)
+            (new ThrottlesExceptions(1, 2 * 60)) // ThrottlesExceptions(exceptionAllowed, throttlingDelayInSeconds)
                 ->backoff(2), // backoff(delayInMinutesBetweenAllowedException)
         ];
     }
