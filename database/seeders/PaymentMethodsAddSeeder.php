@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PaymentMethodsEnum;
 use App\Models\PaymentMethod;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -118,6 +119,17 @@ class PaymentMethodsAddSeeder extends Seeder
                 'name' => 'Proforma Payment Request',
                 'description' => 'Proforma Payment Request',
                 'tool_tip' => 'This is a preliminary payment request drafted and shared with the customer for their review or action. Such requests typically need approval from senior management before being finalized or shared.',
+                'is_active' => true,
+            ]);
+        }
+
+        $recordExists = PaymentMethod::where('code', PaymentMethodsEnum::InsurerPaymentLink)->first();
+        if (! $recordExists) {
+            PaymentMethod::create([
+                'code' => PaymentMethodsEnum::InsurerPaymentLink,
+                'name' => 'Insurer Payment Link',
+                'description' => 'Insurer Payment Link',
+                'tool_tip' => 'Enter the payment link received from the insurer. This insurer payment link will be included in the email to the customer to complete the payment for their health insurance policy',
                 'is_active' => true,
             ]);
         }

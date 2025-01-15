@@ -842,6 +842,7 @@ const handleCollectionTypeChange = () => {
           page.props.paymentMethodsEnum?.BankTransfer,
           page.props.paymentMethodsEnum?.Cheque,
           page.props.paymentMethodsEnum?.Cash,
+          props.quoteType != "Health" && page.props.paymentMethodsEnum?.InsurerPaymentLink,
         ].includes(item.value),
     );
     paymentMethodsModels.value[1] =
@@ -849,7 +850,7 @@ const handleCollectionTypeChange = () => {
   } else {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item =>
-        ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value),
+        ![page.props.paymentMethodsEnum?.InsurerPayment, page.props.paymentMethodsEnum?.InsurerPaymentLink].includes(item.value),
     );
     paymentMethodsModels.value[1] = '';
   }

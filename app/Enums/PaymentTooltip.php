@@ -102,6 +102,7 @@ final class PaymentTooltip extends Enum
     const PAYMENT_LIST_CC = 'The customer settles their payment using a credit card. This can be done in-person or electronically. Ensure to get authorization and proper documentation for such transactions.';
     const PAYMENT_LIST_PDC = 'This is a cheque given by the customer with a future date on it. It\'s a commitment to pay and cannot be cashed until the date mentioned.';
     const PAYMENT_LIST_IP = 'This indicates a direct payment to the insurance provider. It\'s not a payment to the broker or agency but directly to the company underwriting the insurance.';
+    const PAYMENT_LIST_IPL = 'Enter the payment link received from the insurer. This insurer payment link will be included in the email to the customer to complete the payment for their health insurance policy';
     const PAYMENT_LIST_PP = 'This payment method is used when the total amount is divided into multiple payments over a set period. It\'s typically chosen for semi-annual, quarterly, or monthly payment frequencies.';
     const PAYMENT_LIST_MP = 'When the customer opts to use various methods or sources to pay the total amount, this option is chosen. It\'s often used in conjunction with the split payment method.';
     const PAYMENT_LIST_CA = 'This indicates a special payment arrangement where there isn\'t an immediate payment. Instead, the advisor seeks permission from higher-ups to issue the policy first, often due to specific circumstances or arrangements.';

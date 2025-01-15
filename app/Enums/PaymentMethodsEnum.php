@@ -22,6 +22,7 @@ final class PaymentMethodsEnum extends Enum
     const InsureNowPayLater = 'IN_PL';
     const PostDatedCheque = 'PDC';
     const InsurerPayment = 'IP';
+    const InsurerPaymentLink = 'IPL';
     const PartialPayment = 'PP';
     const MultiplePayment = 'MP';
     const CreditApproval = 'CA';
