@@ -678,7 +678,7 @@ class CarAllocationService extends AllocationService
         }
 
         if ($assignmentType === AssignmentTypeEnum::SYSTEM_REASSIGNED && $this->isBuyLeadAdvisor) {
-            $assignmentType = AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+            $assignmentType = AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD;
         }
 
         //Store the previous Assignment Type
