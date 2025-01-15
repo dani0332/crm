@@ -9,6 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
@@ -72,6 +73,10 @@ class WatermarkDocumentsJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->quoteDocumentId.$this->uuid.$this->documentTypeId))->dontRelease()];
+        return [
+            (new WithoutOverlapping($this->quoteDocumentId.$this->uuid.$this->documentTypeId))->dontRelease(),
+            (new ThrottlesExceptions(1, 2*60)) // ThrottlesExceptions(exceptionAllowed, throttlingDelayInSeconds)
+                ->backoff(2), // backoff(delayInMinutesBetweenAllowedException)
+        ];
     }
 }
