@@ -20,6 +20,10 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const toast = useToast();
 const tableHeader = [
   {
+    text: 'Tier Name',
+    value: 'tier_name',
+  },
+  {
     text: 'Team Name',
     value: 'team_name',
     tooltip: 'Filter teams by selected LOB.',
@@ -62,6 +66,9 @@ let filters = reactive({
   assignmentTypes: 'All',
   segment_filter: 'all',
   page: 1,
+  tiers: [],
+  isCommercial: 'All',
+  sic_advisor_requested: 'All',
 });
 
 function onSubmit(isValid, isMounted = false) {
@@ -229,6 +236,30 @@ const onLobChange = (e, isOnMounted = false) => {
         </div>
 
         <ComboBox
+          v-if="filters.lob === quoteTypeCodeEnum.Car"
+          v-model="filters.tiers"
+          label="Tiers"
+          placeholder="Search by Tiers"
+          :options="
+            Object.keys(filterOptions.tiers).map(key => ({
+              value: key,
+              label: filterOptions.tiers[key],
+            }))
+          "
+        />
+        <x-select
+          v-if="filters.lob === quoteTypeCodeEnum.Car"
+          v-model="filters.isCommercial"
+          label="Commercial"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+          ]"
+        />
+
+        <ComboBox
           v-model="filters.assignmentTypes"
           label="Assignment Type"
           placeholder="Select any option"
@@ -246,6 +277,18 @@ const onLobChange = (e, isOnMounted = false) => {
               filters.lob === 'Travel' ? segment.value !== 'sic-revival' : true,
             )
           "
+          :single="true"
+        />
+        <ComboBox
+          v-if="filters.lob === quoteTypeCodeEnum.Car"
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
           :single="true"
         />
       </div>

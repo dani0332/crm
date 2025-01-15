@@ -13,6 +13,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\Tier;
 use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
@@ -51,6 +52,8 @@ class LeadDistributionReportService extends BaseService
             'segment_filter' => $request->segment_filter,
             'sic_advisor_requested' => $request->sic_advisor_requested,
             'page' => $request->page,
+            'tiers' => $request->tiers,
+            'isCommercial' => $request->isCommercial,
         ];
     }
 
@@ -63,8 +66,9 @@ class LeadDistributionReportService extends BaseService
             return $this->applyFiltersForCar($carQuery, $filters);
         }
 
-        if($lob == quoteTypeCode::Health) {
+        if ($lob == quoteTypeCode::Health) {
             $healthQuery = $this->getHealthQuoteQuery($lob);
+
             return $this->applyFilters($healthQuery, $filters);
         }
 
@@ -77,26 +81,26 @@ class LeadDistributionReportService extends BaseService
     private function getHealthQuoteQuery($lob)
     {
         $healthQuery = HealthQuote::query()
-                            ->select([
-                                'health_team_type AS team_name',
-                                DB::raw("SUM(CASE WHEN assignment_type IN (1, 2) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned"),
-                                DB::raw("SUM(CASE WHEN assignment_type IN (3, 4) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned"),
-                                DB::raw("SUM(CASE WHEN advisor_id IS NULL THEN 1 ELSE 0 END) AS unassigned_leads"),
-                                DB::raw("SUM(CASE WHEN source = 'IMCRM' THEN 1 ELSE 0 END) AS lead_created"),
-                                DB::raw('COUNT(*) AS total_leads'),
-                                DB::raw(`
+            ->select([
+                'health_team_type AS team_name',
+                DB::raw('SUM(CASE WHEN assignment_type IN (1, 2) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned'),
+                DB::raw('SUM(CASE WHEN assignment_type IN (3, 4) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned'),
+                DB::raw('SUM(CASE WHEN advisor_id IS NULL THEN 1 ELSE 0 END) AS unassigned_leads'),
+                DB::raw("SUM(CASE WHEN source = 'IMCRM' THEN 1 ELSE 0 END) AS lead_created"),
+                DB::raw('COUNT(*) AS total_leads'),
+                DB::raw(`
                                     (
-                                        SUM(CASE WHEN assignment_type IN (1, 2) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) + 
-                                        SUM(CASE WHEN assignment_type IN (3, 4) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) + 
+                                        SUM(CASE WHEN assignment_type IN (1, 2) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) +
+                                        SUM(CASE WHEN assignment_type IN (3, 4) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) +
                                         SUM(CASE WHEN advisor_id IS NULL THEN 1 ELSE 0 END)
                                     ) AS received_leads`),
-                            ])
-                            ->whereNotIn('quote_status_id', [9, 35])
-                            ->where('source', '!=', 'Renewal_upload')
-                            ->whereBetween('created_at', ['2025-01-14 00:00:00', '2025-01-14 23:59:59'])
-                            ->whereNotIn('health_team_type', ['RM-NB', 'RM-SPEED', 'EBP'])
-                            ->groupBy('health_team_type')
-                            ->orderBy('health_team_type');
+            ])
+            ->whereNotIn('quote_status_id', [9, 35])
+            ->where('source', '!=', 'Renewal_upload')
+            ->whereBetween('created_at', ['2025-01-14 00:00:00', '2025-01-14 23:59:59'])
+            ->whereNotIn('health_team_type', ['RM-NB', 'RM-SPEED', 'EBP'])
+            ->groupBy('health_team_type')
+            ->orderBy('health_team_type');
 
         if (auth()->user()->hasAnyRole([RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])) {
             $healthQuery->where('advisor_id', auth()->user()->id);
@@ -104,6 +108,7 @@ class LeadDistributionReportService extends BaseService
             $userIds = $this->getEligibleUserIds($lob);
             $healthQuery->whereIn('advisor_id', $userIds);
         }
+
         return $healthQuery;
     }
 
@@ -178,8 +183,8 @@ class LeadDistributionReportService extends BaseService
 
         $query->addSelect(
             DB::raw(strtr(
-                '(SUM(CASE WHEN :table.assignment_type in (1,2,3,4) AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
-                SUM(CASE WHEN :table.advisor_id IS NULL THEN 1 ELSE 0 END)) AS received_leads',
+                '(SUM(CASE WHEN :table.assignment_type IN (1,2,3,4) AND :table.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
+                     + SUM(CASE WHEN :table.advisor_id IS NULL THEN 1 ELSE 0 END)) AS received_leads',
                 $bindings
             )),
             DB::raw(strtr(
@@ -256,6 +261,15 @@ class LeadDistributionReportService extends BaseService
     {
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
 
+        $tiers = Tier::query()
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
         $lobs = $this->getUserProducts(auth()->user()->id)
             ->pluck('name', 'name')
             ->toArray();
@@ -263,7 +277,8 @@ class LeadDistributionReportService extends BaseService
         return [
             'lob' => $lobs,
             'maxDays' => $maxDays,
-            'assignmentTypes' => AssignmentTypeEnum::withLabels()
+            'assignmentTypes' => AssignmentTypeEnum::withLabels(),
+            'tiers' => $tiers,
         ];
     }
 
@@ -335,6 +350,9 @@ class LeadDistributionReportService extends BaseService
         $query->filterBySegment()
             ->when($freshLoad || ! empty($filters->createdAtDates), function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
+            })
+            ->when(isset($filters->tiers) && count($filters->tiers) > 0, function ($query) use ($filters) {
+                $query->whereIn('car_quote_request.tier_id', $filters->tiers);
             })
             ->when(! empty($filters->assignmentTypes) && $filters->assignmentTypes !== 'All', function ($q) use ($filters) {
                 $q->where('car_quote_request.assignment_type', $filters->assignmentTypes);
