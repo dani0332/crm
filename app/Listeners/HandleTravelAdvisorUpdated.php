@@ -55,8 +55,6 @@ class HandleTravelAdvisorUpdated
             return;
         }
 
-
-
         $oldAdvisorId = $event->oldAdvisorId;
 
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
