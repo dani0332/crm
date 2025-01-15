@@ -194,11 +194,12 @@ class SendUpdateLogController extends Controller
 
         $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog, $quoteType);
 
-        if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
-            $paymentEntityModel->load(['plan']);
-
+        if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health]) && ! $realQuote?->insly_id) {
+            $paymentEntityModel->load(['plan', 'plan.insuranceProvider']);
+            $insuranceProviderId = $paymentEntityModel?->plan?->insuranceProvider?->id;
         } else {
             checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
+            $insuranceProviderId = $realQuote?->insurance_provider_id ?? $realQuote?->insuranceProvider?->id ?? null;
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
@@ -241,8 +242,10 @@ class SendUpdateLogController extends Controller
             'vatValue' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0,
             'isPaidEditable' => $this->isSplitPaymentFullyPaid($sendUpdatePayments->first()),
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
+            'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
             'isSentOrBooked' => $isSentOrBooked,
+            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog),
         ]);
     }
 

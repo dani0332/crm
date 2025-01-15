@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\BusinessInsuranceType;
 use App\Models\Lookup;
 use Illuminate\Database\Seeder;
 
@@ -46,6 +48,11 @@ class SUAdditionalCRNSubTypesSeeder extends Seeder
             ],
         ];
 
+        $businessInsuranceTypes = [
+            quoteBusinessTypeCode::groupMedical,
+            quoteBusinessTypeCode::carFleet,
+        ];
+
         foreach ($quoteTypes as $quoteTypeId) {
             foreach ($endorsementsSubTypes as $endorsementCode => $endorsementDetails) {
                 Lookup::firstOrCreate([
@@ -58,6 +65,25 @@ class SUAdditionalCRNSubTypesSeeder extends Seeder
                 ], [
                     'description' => $endorsementDetails['description'],
                 ]);
+            }
+
+            if ($quoteTypeId == QuoteTypeId::Business) {
+                foreach ($businessInsuranceTypes as $businessTypeCode) {
+                    $businessInsuranceTypeId = BusinessInsuranceType::where('code', $businessTypeCode)->first()->id;
+
+                    foreach ($endorsementsSubTypes as $endorsementCode => $endorsementDetails) {
+                        Lookup::firstOrCreate([
+                            'quote_type_id' => QuoteTypeId::Business,
+                            'business_insurance_type_id' => $businessInsuranceTypeId,
+                            'key' => $endorsementDetails['key'],
+                            'text' => $endorsementDetails['text'],
+                            'code' => $endorsementCode,
+                            'parent_id' => $parent->id,
+                        ], [
+                            'description' => $endorsementDetails['description'],
+                        ]);
+                    }
+                }
             }
 
             //        The same seeder is being used to rename some of the already created send update subtypes.

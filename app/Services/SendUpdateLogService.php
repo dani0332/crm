@@ -788,7 +788,7 @@ class SendUpdateLogService
                 'policy_expiry_date' => $sendUpdateLog->expiry_date,
                 'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
                 'frequency' => PaymentFrequency::UPFRONT,
-                'insurance_provider_id' => ($checkInslyMigratedLead) ? $sendUpdateLog->insurance_provider_id : $payment->insurance_provider_id,
+                'insurance_provider_id' => ($checkInslyMigratedLead) ? $sendUpdateLog?->insurance_provider_id : $payment->insurance_provider_id,
             ]);
 
             $splitPayments->first()->fill([
@@ -860,7 +860,7 @@ class SendUpdateLogService
             'price_vat_applicable' => abs($preparedDetailsForEndorsement['payment']->total_price),
             'price_with_vat' => abs($sendUpdateLog->price_with_vat),
             'insly_migrated' => $quoteDetails->insly_migrated,
-            'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+            'insurance_provider_id' => $preparedDetailsForEndorsement['payment']->insurance_provider_id, // TODO:: Need to verify this field
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
         ];
 
@@ -1014,7 +1014,7 @@ class SendUpdateLogService
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
                         'policy_expiry_date' => $sendUpdateLog->expiry_date,
-                        //                        'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
+                        // 'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
                     ]);
                 }
                 // Cases for Correct Policy Details End
@@ -1254,7 +1254,7 @@ class SendUpdateLogService
 
     public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
     {
-        $this->updatePriceAndDiscount($sendUpdateLog, $payment);
+        app(CentralService::class)->synchronizePaymentInformation($sendUpdateLog, $payment);
     }
 
     public function updatePaymentTotalPrice($payment, $totalPrice): void
@@ -1400,7 +1400,7 @@ class SendUpdateLogService
         }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
-            return [$insuranceProviderId, $plan_id];
+            return [$quote?->insurance_provider_id, $plan_id];
         }
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
@@ -1427,8 +1427,7 @@ class SendUpdateLogService
         $quote = app(getServiceObject($request->quoteType))->getEntityPlain($request->quoteRefId);
 
         if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD ||
-            ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option?->code == SendUpdateLogStatusEnum::PPE) ||
-            $request->inslyMigrated) {
+            ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option?->code == SendUpdateLogStatusEnum::PPE)) {
             $insuranceProviderId = $sendUpdate->insurance_provider_id;
             $planId = $sendUpdate->plan_id ?? null;
         } else {
@@ -1445,20 +1444,27 @@ class SendUpdateLogService
         return SendUpdateLogRepository::updateInsurerDetails($sendUpdate, $bookingDetails);
     }
 
-    public function isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId): bool
+    public function isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId, $category, $quote): bool
     {
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
-            $policyDetails['plan_id'] = $planId;
-        }
+        // For CPD, all fields are mandatory, and for EF PPE, only expiry date is mandatory.
+        if ($category == SendUpdateLogStatusEnum::EF) {
+            return ! is_null($policyDetails['expiry_date']);
+        } else {
+            // if legacy lead and planId is not available, because plandId is optional.
+            if (! ($quote->insly_id || $quote->insly_migrated) && ! is_null($planId)) {
+                if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+                    $policyDetails['plan_id'] = $planId;
+                }
+            }
+            $policyDetails['insurance_provider_id'] = $insuranceProviderId;
 
-        $policyDetails['insurance_provider_id'] = $insuranceProviderId;
+            $filledValues = array_filter($policyDetails, function ($value) {
+                return ! is_null($value) && $value !== '';
+            });
 
-        $filledValues = array_filter($policyDetails, function ($value) {
-            return ! is_null($value) && $value !== '';
-        });
-
-        if (count($policyDetails) === count($filledValues)) {
-            return true;
+            if (count($policyDetails) === count($filledValues)) {
+                return true;
+            }
         }
 
         return false;
@@ -1491,5 +1497,39 @@ class SendUpdateLogService
     public function commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId): bool
     {
         return app(CentralService::class)->commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId);
+    }
+
+    public function sendUpdateStatuses(): array
+    {
+        return [
+            SendUpdateLogStatusEnum::NEW_REQUEST,
+            SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
+            SendUpdateLogStatusEnum::TRANSACTION_DECLINE,
+            SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+            SendUpdateLogStatusEnum::UPDATE_ISSUED,
+            SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
+            SendUpdateLogStatusEnum::UPDATE_BOOKED,
+
+        ];
+    }
+
+    /*
+     * This method is used to check if the main button should be disabled or not, for Tap Payment integration.
+     * @param $sendUpdateLog - Send Update Log
+     * @return string
+     */
+    public function disableMainBtn($sendUpdateLog): string
+    {
+        if (in_array($sendUpdateLog->category?->code, [
+            SendUpdateLogStatusEnum::EF,
+            SendUpdateLogStatusEnum::CI,
+            SendUpdateLogStatusEnum::CIR,
+        ]) && empty($sendUpdateLog->endorsement_number) && auth()->user()->can(PermissionsEnum::TAP_BETA_ACCESS)) {
+            return 'Endorsement Number is required before proceeding.';
+        }
+
+        return '';
     }
 }

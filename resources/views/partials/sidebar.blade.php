@@ -103,7 +103,8 @@ use App\Enums\PermissionsEnum;
                 PermissionsEnum::YachtQuotesList,
                 PermissionsEnum::JetskiQuotesList,
                 PermissionsEnum::UtmLeadsSalesReport,
-                PermissionsEnum::CAR_REVIVAL_QUOTE_LIST
+                PermissionsEnum::CAR_REVIVAL_QUOTE_LIST,
+                PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST
                 ])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
@@ -122,9 +123,18 @@ use App\Enums\PermissionsEnum;
                                 </ul>
                             </li>
                             @endcanany
-                            @can(PermissionsEnum::HealthQuotesList)
-                            <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
-                            @endcan
+
+                            <li><a>Health<span class="fa fa-chevron-down" style="color: white;"></span></a>
+                                <ul class="nav child_menu">
+                                    @can(PermissionsEnum::HealthQuotesList)
+                                    <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
+                                    @endcan
+
+                                    @can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST)
+                                    <li><a href={{ url('quotes/health-revival') }}>Health Revival Quotes</a></li>
+                                    @endcan
+                                </ul>
+                            </li>
                             @can(PermissionsEnum::TravelQuotesList)
                             <li><a href="{{ url('quotes/travel') }}">Travel Quotes</a></li>
                             @endcan

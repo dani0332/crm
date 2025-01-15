@@ -14,7 +14,7 @@ RUN install-php-extensions mbstring pdo_mysql zip exif pcntl memcached
 RUN pecl install redis \
     && docker-php-ext-enable redis
 # Install node 21
-RUN curl -sL https://deb.nodesource.com/setup_21.x -o /tmp/nodesource_setup.sh
+RUN curl -sL https://deb.nodesource.com/setup_22.x -o /tmp/nodesource_setup.sh
 RUN bash /tmp/nodesource_setup.sh
 #RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
 #    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
@@ -43,7 +43,8 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     supervisor \
     nodejs \
-    yarn
+    yarn \
+    ghostscript
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
 RUN docker-php-ext-install -j$(nproc) gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb
@@ -51,7 +52,8 @@ RUN pecl install mongodb && docker-php-ext-enable mongodb
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 
 # Install papertrail
-RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz && \
+RUN --mount=type=cache,target=/tmp \
+wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz && \
 tar xzf ./remote_syslog*.tar.gz && \
 cp /var/www/remote_syslog/remote_syslog /usr/local/bin
 
@@ -70,7 +72,7 @@ useradd -u 1000 -ms /bin/bash -g www www
 
 RUN doppler configure set token ${IMCRM_TOKEN}
 
-RUN \
+RUN --mount=type=cache,target=/tmp \
   wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
   cd /tmp/ && tar -zxvf newrelic-php5-*-linux.tar.gz && cd .. && \
   export NR_INSTALL_USE_CP_NOT_LN=1 && \

@@ -533,6 +533,9 @@ if (! function_exists('getBase64FileInfo')) {
 if (! function_exists('sanitizeFileName')) {
     function sanitizeFileName($fileName)
     {
+        // Remove any Unicode control characters, including non-breaking spaces
+        $fileName = preg_replace('/[\x{00}-\x{1F}\x{7F}\x{A0}]/u', '', $fileName);
+
         // Remove any Unicode control characters
         $fileName = preg_replace('/[[:cntrl:]]/', '', $fileName);
 
@@ -1205,6 +1208,12 @@ if (! function_exists('getAssignmentTypeText')) {
             case 4:
                 $assignmentText = 'Manual ReAssigned';
                 break;
+            case 5:
+                $assignmentText = 'Bought Lead';
+                break;
+            case 6:
+                $assignmentText = 'ReAssigned as Bought Lead';
+                break;
             default:
                 break;
         }
@@ -1308,7 +1317,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer.first_name as client_first_name',
                 'customer.last_name as client_last_name',
                 'customer.email as client_email',
-                'customer.mobile_no as client_phone_number',
+                "{$table}.mobile_no as client_phone_number",
                 'customer_addresses.type as courier_address_type',
                 'customer_addresses.office_number as courier_address_office_number',
                 'customer_addresses.floor_number as courier_address_floor_number',
@@ -1536,7 +1545,7 @@ if (! function_exists('getInsuranceProvider')) {
             }
         }
 
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes) && isset($payment)) {
             $planRelationName = strtolower($quoteType).'Plan';
             $payment->load($planRelationName);
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
@@ -1547,5 +1556,14 @@ if (! function_exists('getInsuranceProvider')) {
         }
 
         return $insuranceProvider;
+    }
+}
+
+if (! function_exists('isCHSAdvisor')) {
+    function isCHSAdvisor($userId)
+    {
+        $user = User::select('id')->chs()->first();
+
+        return $user?->id == $userId;
     }
 }

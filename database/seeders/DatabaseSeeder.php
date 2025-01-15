@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,12 +16,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
-            QuoteStatusSeeder::class,
+            // HealthRevivalQuotesSeeder::class,
+            // QuoteStatusSeeder::class,
             LookupSeeder::class,
-            SUAdditionalCRNSubTypesSeeder::class,
-            CallBackNotificationDataMigrationSeeder::class,
-            //DocumentTypeSeeder::class,
-            // SendUpdateAdditionalSubType::class,
+            TravelRenewalTeamSeeder::class,
         ]);
     }
 }

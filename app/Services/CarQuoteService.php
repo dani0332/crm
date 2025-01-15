@@ -49,7 +49,11 @@ class CarQuoteService extends BaseService
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService)
+    public function __construct(HttpRequestService $httpService,
+        LeadAllocationService $leadAllocationService,
+        SendEmailCustomerService $sendEmailCustomerService,
+        ApplicationStorageService $applicationStorageService,
+        ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -65,6 +69,8 @@ class CarQuoteService extends BaseService
                 DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
                 // 'cqr.email',
                 // 'cqr.mobile_no',
+                'cqr.company_name AS car_company_name',
+                'cqr.company_address AS car_company_address',
                 DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
                 'cqr.car_value',
                 'cqr.additional_notes',
@@ -181,7 +187,9 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 1 THEN "System Assigned"
                 WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
                 WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
-                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned"
+                WHEN cqr.assignment_type = 5 THEN "Bought Lead"
+                WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
                 'c.insured_first_name',
                 'c.insured_last_name',
@@ -329,6 +337,8 @@ class CarQuoteService extends BaseService
             'email' => $request->email,
             'address' => $request->address,
             'mobileNo' => $request->mobile_no,
+            'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
             'dob' => $request->dob,
             'nationalityId' => $request->nationality_id,
             'uaeLicenseHeldForId' => $request->uae_license_held_for_id,
@@ -378,6 +388,12 @@ class CarQuoteService extends BaseService
         }
         if ($request->dob) {
             $carQuote->dob = $request->dob;
+        }
+        if ($request->company_name) {
+            $carQuote->company_name = $request->company_name;
+        }
+        if ($request->company_address) {
+            $carQuote->company_address = $request->company_address;
         }
         if ($request->nationality_id) {
             $carQuote->nationality_id = $request->nationality_id;
@@ -630,6 +646,8 @@ class CarQuoteService extends BaseService
             'first_name' => 'input|text|required|ss:1',
             'last_name' => 'input|text|required|ss:2',
             'dob' => 'input|text|title|required',
+            'company_name' => 'input|text|max:250',
+            'company_address' => 'input|text|max:1000',
             'customer_age' => 'readonly|none',
             'mobile_no' => 'input|title|number|required|ss:4',
             'email' => 'input|email|required|ss:3',
@@ -1013,8 +1031,12 @@ class CarQuoteService extends BaseService
                     }
                 } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('cqr.quote_status_id', $request[$item]);
-                } elseif ($item == 'assignment_type' && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->where('cqr.assignment_type', $request[$item]);
+                } elseif ($item == 'assignment_type' && ! empty($request[$item])) {
+                    if (is_array($request[$item])) {
+                        $this->query->whereIn('cqr.assignment_type', $request[$item]);
+                    } elseif ($request[$item] !== 'all') {
+                        $this->query->where('cqr.assignment_type', $request[$item]);
+                    }
                 } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('cqr.tier_id', $request[$item]);
                 } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
@@ -1847,7 +1869,7 @@ class CarQuoteService extends BaseService
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
 
         //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD];
 
         // Get the allocation record for the new advisor
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
@@ -1865,62 +1887,6 @@ class CarQuoteService extends BaseService
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
-        }
-    }
-
-    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
-    {
-        if ($advisorAllocationRecord === null || $lead === null) {
-            return;
-        }
-
-        // Determine if the lead was system-assigned or manually assigned
-        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
-
-        // Update allocation counts based on assignment type
-        if ($isSystemAssigned) {
-            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
-        } else {
-            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
-        }
-
-        // Increment the total allocation count and update timestamps
-        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
-        $advisorAllocationRecord->last_allocated = now()->timestamp;
-        $advisorAllocationRecord->updated_at = now();
-
-        // Save the updated allocation record
-        $advisorAllocationRecord->save();
-    }
-
-    private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
-    {
-        // Check if there is a previous advisor and the lead assignment date is today
-        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
-            if ($previousAdvisorAllocationRecord !== null) {
-                // Determine if the previous assignment was system-assigned
-                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
-
-                info('Previous assignment type is : '.$isSystemAssigned);
-
-                // Update allocation counts based on assignment type (if applicable)
-                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('About to deduct from auto assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('About to deduct from manual assignment count for previous advisor');
-                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-                }
-
-                // Decrement the total allocation count (if it's greater than 0) and update timestamps
-                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
-                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
-                    $previousAdvisorAllocationRecord->updated_at = now();
-                }
-
-                // Save the updated allocation record
-                $previousAdvisorAllocationRecord->save();
-            }
         }
     }
 
@@ -2254,7 +2220,7 @@ class CarQuoteService extends BaseService
             'customer_id' => $lead->customer_id,
         ])->first();
 
-        if (! $existingAddress) {
+        if (empty($existingAddress?->type)) {
             info('Sending address notification to customer for lead : '.$lead->uuid);
             // only trigger bird flow if address is not already added
             $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);
