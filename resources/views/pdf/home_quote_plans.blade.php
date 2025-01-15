@@ -240,14 +240,14 @@
             vertical-align: middle;
             border-left: none;
             border-top: none;
-            width: 250px;
-            min-width: 250px;
-            height: 250px;
+            width: 200px;
+            min-width: 200px;
+            height: 100px;
         }
 
         .alfred img {
             width: 100%;
-            max-width: 250px;
+            max-width: 200px;
             height: auto;
             display: inline-block;
             vertical-align: middle;
