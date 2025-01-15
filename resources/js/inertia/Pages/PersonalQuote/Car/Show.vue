@@ -1640,6 +1640,14 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
+
+const isCompanyCar = computed(() => {
+  return page.props.record.registration_type === page.props.carRegistrationType.COMPANY;
+});
+
+const isPrivateCar = computed(() => {
+  return isCompanyCar && page.props.record.vehicle_use == page.props.carVehicleUse.PRIVATE;
+});
 </script>
 
 <template>
@@ -1859,7 +1867,7 @@ const allowStatusUpdate = computed(() => {
                 <dt class="font-medium">BATCH</dt>
                 <dd>{{ record.quote_batch_id_text }}</dd>
               </div>
-              <div v-if="record.registration_type == page.props.carRegistrationType.PERSONAL" class="grid sm:grid-cols-2">
+              <div v-if="!isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER AGE</dt>
                 <dd>{{ record.customer_age }}</dd>
               </div>
@@ -1867,7 +1875,7 @@ const allowStatusUpdate = computed(() => {
                 <dt class="font-medium">LEAD SOURCE</dt>
                 <dd>{{ record.source }}</dd>
               </div>
-              <div v-if="record.registration_type == page.props.carRegistrationType.COMPANY" class="grid sm:grid-cols-2">
+              <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">Vehicle use</dt>
                 <dd>{{ record.vehicle_use }}</dd>
               </div>
@@ -2106,7 +2114,7 @@ const allowStatusUpdate = computed(() => {
       </Collapsible>
     </div>
 
-    <div v-if="record.registration_type == page.props.carRegistrationType.COMPANY && record.vehicle_use == page.props.carVehicleUse.PRIVATE" 
+    <div v-if="isPrivateCar" 
     class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -2350,11 +2358,13 @@ const allowStatusUpdate = computed(() => {
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
-                  <dd>{{ record.first_name }}</dd>
+                  <dd v-if="isPrivateCar">{{ record.customer_first_name }}</dd>
+                  <dd v-else>{{ record.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">LAST NAME</dt>
-                  <dd>{{ record.last_name }}</dd>
+                  <dd v-if="isPrivateCar">{{ record.customer_last_name }}</dd>
+                  <dd v-else>{{ record.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MOBILE NUMBER</dt>
@@ -2452,7 +2462,7 @@ const allowStatusUpdate = computed(() => {
                     />
                   </dd>
                 </div>
-                <div v-if="record.registration_type == page.props.carRegistrationType.COMPANY" class="grid sm:grid-cols-2">
+                <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                   <dt class="font-medium">BUSINESS ACTIVITY</dt>
                   <dd>{{ businessActivities.filter(i => i.id == record.business_activity_id )[0]?.name }}</dd>
                 </div>
