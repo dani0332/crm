@@ -233,7 +233,7 @@ trait QuoteModelTrait
             (request('isRequestedForAnAdvisor', false) ||
             $this->sic_advisor_requested == 1 ||
             $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
-            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD);
+            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD);
     }
 
     public function startAllocation()
