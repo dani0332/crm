@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
-use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendFTCEmailJob;
 use App\Models\TravelQuote;
@@ -56,7 +55,7 @@ class HandleTravelAdvisorUpdated
             return;
         }
 
-        
+
 
         $oldAdvisorId = $event->oldAdvisorId;
 
