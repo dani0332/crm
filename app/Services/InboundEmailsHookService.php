@@ -16,6 +16,7 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\Traits\Inboundable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
