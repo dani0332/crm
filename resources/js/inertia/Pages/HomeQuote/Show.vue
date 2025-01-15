@@ -836,7 +836,7 @@ const possessionTypeText = computed(() => {
     item => item.id === id,
   );
 
-  return matchedItem ? matchedItem.description : '';
+  return matchedItem ? matchedItem.text : '';
 });
 
 const accommodationTypeText = computed(() => {
