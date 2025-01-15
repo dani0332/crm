@@ -74,13 +74,13 @@ class HomeEmailService extends BaseService
                 info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: ".now());
                 if (! empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($lead, $response);
-                    info("sendHomeOCBIntroEmail - Run-ID: {$response->headers['Run-Id']} for HomeQuote Ref-ID: {$homeQuote->id} | Time: ".now());
+                    info("sendHomeOCBIntroEmail - Run-ID: ".$response->headers['Run-Id'] ?? ' ' ." for HomeQuote Ref-ID: {$homeQuote->id} | Time: ".now());
                 }
             }
 
             return $response ?? null;
         } catch (\Exception $e) {
-            info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} | Message: {$e->getMessage()} | Time: ".now());
+            info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} | Message: {$e->getMessage()} Line: {$e->getLine()} | Time: ".now());
 
             return false;
         }
