@@ -220,10 +220,13 @@
 
         .provider {
             border: 1px solid #bfbfbf;
+            font-size: 15px;
+            line-height: 28px;
             font-weight: 400;
-            /* Normal weight for provider text */
             color: #4ea4a8;
             vertical-align: middle;
+            max-height: 50px;
+            height: 50px;
         }
 
         .spacer {
