@@ -131,16 +131,6 @@ class Kernel extends ConsoleKernel
 
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 
-        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('10:50')
-        //     ->onOneServer()
-        //     ->withoutOverlapping()
-        //     ->onSuccess(function (Stringable $output) {
-        //         info('----------- Business Data Migrations Completed -----------'.$output);
-        //     })
-        //     ->onFailure(function (Stringable $output) {
-        //         info('----------- Business Data Migrations Failed -----------'.$output);
-        //     });
-
     }
 
     /**
