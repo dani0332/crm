@@ -671,8 +671,8 @@ const onAddUpdate = () => {
               </div>
               <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURER AML STATUS</dt>
-                  <dd>N/A</dd>
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>N/A</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
