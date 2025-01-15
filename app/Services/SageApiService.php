@@ -555,9 +555,15 @@ class SageApiService
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
 
         $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
+        info($payment->code . ' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment . " And collection type is : ". $payment->collection_type);
         if ($payment->collection_type == PaymentCollectionTypeEnum::INSURER && $hasAnyCCPayment) {
             info('Skipping Policy Book & Authorizing payment for '. $payment->code);
-            return $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
+            $successMessage= $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
+            if (! $successMessage) {
+                return back()->with('error', 'Error in approving payment - Book Policy');
+            }
+            info($payment->code. ' Policy Book : postBookPolicyToSage : handleSplitPaymentApproval : '.json_encode($successMessage));
+            return back()->with('success', 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!');
         }
         //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
@@ -2127,6 +2133,6 @@ class SageApiService
             'send_update_id' => null,
             'collection_type' => $payment->collection_type,
         ]);
-        return app(CentralController::class)->splitPaymentsApprove($data);
+        return app(PaymentRepository::class)->handlePaymentApprove($data);
     }
 }

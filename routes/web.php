@@ -83,7 +83,9 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Jobs\ProcessCCPaymentJob;
 use App\Models\CarQuote;
+use App\Models\CcPaymentProcess;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\TravelQuote;
@@ -757,4 +759,12 @@ Route::get('tap-pay-checkout-api/{code}/{quoteTypeId}', function(){
     app(PaymentRepository::class)->handlePaymentApprove($data);
 
     echo "Payment Capture";
+});
+
+
+Route::get('/test/{id}', function(){
+    $ccProcessData = CcPaymentProcess::find(request()->id);
+    $ccProcess = new ProcessCCPaymentJob($ccProcessData);
+    $ccProcess->handle();
+    echo "Done";
 });

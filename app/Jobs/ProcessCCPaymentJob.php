@@ -2,11 +2,17 @@
 
 namespace App\Jobs;
 
+use App\Enums\PaymentCollectionTypeEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Models\CcPaymentProcess;
+use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,7 +22,7 @@ use Illuminate\Queue\SerializesModels;
 
 class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, GenericQueriesAllLobs;
 
     protected $paymentRecord;
     public $tries = 1;
@@ -51,18 +57,33 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 $this->paymentRecord->amount_captured,
                 true
             );
+            $payment= PaymentSplits::find($this->paymentRecord->payment_splits_id)->payment;
+            if (!$payment) {
+                info("CC Payments Job Failed for Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id} - Error: Payment not found");
+                return;
+            }
+            $splitPayments = $payment->paymentSplits;
+            $hasAnyCCPayment = $splitPayments->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
+
+            if (in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) && $payment->collection_type == PaymentCollectionTypeEnum::INSURER && $hasAnyCCPayment) {
+                $quote = $this->getQuoteObject($this->paymentRecord->quote_type, $this->paymentRecord->quoteable_id);
+                // We can trigger sage & book policy entry from here
+                if ($quote){
+                    $request = new \stdClass;
+                    $request->quote_id = $quote->id; // TODO :  Lead ID
+                    $request->modelType = $this->paymentRecord->quote_type;
+                    $request->model_type = $this->paymentRecord->quote_type;
+                    $request->is_send_policy = false;
+                    $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+                    $request->transaction_payment_status = null;
+                    return (new SageApiService)->postBookPolicyToSage($request, $quote);
+                } else {
+                    info("CC Payments Job Failed for Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id} - Error: Quote not found");
+                }
+            }
+
             info("CC Payments Job Ended For Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id}");
-
-            // We can trigger sage & book policy entry from here
-            $request = new \stdClass;
-            $request->quote_id = $quote->id; // TODO :  Lead ID
-            $request->modelType = self::TYPE; // TODO : LOB Name like Car, health, Travel
-            $request->model_type = self::TYPE; // TODO : LOB Name like Car, health, Travel
-            $request->is_send_policy = false;
-            $request->send_policy_type = SendPolicyTypeEnum::SAGE;
-            $request->transaction_payment_status = null;
-
-            return (new SageApiService)->postBookPolicyToSage($request, $quote);
+    
         } catch (\Exception $exception) {
             // Handle the exception here
             info("CC Payments Job Failed for Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id} - Error: ".$exception->getMessage());
