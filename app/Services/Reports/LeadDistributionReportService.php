@@ -11,7 +11,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
-use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
 use App\Models\UserManager;
@@ -66,50 +65,10 @@ class LeadDistributionReportService extends BaseService
             return $this->applyFiltersForCar($carQuery, $filters);
         }
 
-        if ($lob == quoteTypeCode::Health) {
-            $healthQuery = $this->getHealthQuoteQuery($lob);
-
-            return $this->applyFilters($healthQuery, $filters);
-        }
-
         // Build query for Personal Quotes
         $personalQuoteQuery = $this->getPersonalQuoteQuery($lob);
 
         return $this->applyFilters($personalQuoteQuery, $filters);
-    }
-
-    private function getHealthQuoteQuery($lob)
-    {
-        $healthQuery = HealthQuote::query()
-            ->select([
-                'health_team_type AS team_name',
-                DB::raw('SUM(CASE WHEN assignment_type IN (1, 2) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned'),
-                DB::raw('SUM(CASE WHEN assignment_type IN (3, 4) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned'),
-                DB::raw('SUM(CASE WHEN advisor_id IS NULL THEN 1 ELSE 0 END) AS unassigned_leads'),
-                DB::raw("SUM(CASE WHEN source = 'IMCRM' THEN 1 ELSE 0 END) AS lead_created"),
-                DB::raw('COUNT(*) AS total_leads'),
-                DB::raw(`
-                                    (
-                                        SUM(CASE WHEN assignment_type IN (1, 2) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) +
-                                        SUM(CASE WHEN assignment_type IN (3, 4) AND advisor_id IS NOT NULL THEN 1 ELSE 0 END) +
-                                        SUM(CASE WHEN advisor_id IS NULL THEN 1 ELSE 0 END)
-                                    ) AS received_leads`),
-            ])
-            ->whereNotIn('quote_status_id', [9, 35])
-            ->where('source', '!=', 'Renewal_upload')
-            ->whereBetween('created_at', ['2025-01-14 00:00:00', '2025-01-14 23:59:59'])
-            ->whereNotIn('health_team_type', ['RM-NB', 'RM-SPEED', 'EBP'])
-            ->groupBy('health_team_type')
-            ->orderBy('health_team_type');
-
-        if (auth()->user()->hasAnyRole([RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])) {
-            $healthQuery->where('advisor_id', auth()->user()->id);
-        } elseif (! $this->hasAdminPrivileges()) {
-            $userIds = $this->getEligibleUserIds($lob);
-            $healthQuery->whereIn('advisor_id', $userIds);
-        }
-
-        return $healthQuery;
     }
 
     private function getCarQuoteQuery($lob)
@@ -317,6 +276,7 @@ class LeadDistributionReportService extends BaseService
 
         // Map LOBs to their respective table and join conditions
         $joinConditions = [
+            quoteTypeCode::Health => ['health_quote_request', 'health_quote_request.uuid', 'personal_quotes.uuid'],
             quoteTypeCode::Home => ['home_quote_request', 'home_quote_request.uuid', 'personal_quotes.uuid'],
             quoteTypeCode::Life => ['life_quote_request', 'life_quote_request.uuid', 'personal_quotes.uuid'],
             quoteTypeCode::Travel => ['travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid'],
