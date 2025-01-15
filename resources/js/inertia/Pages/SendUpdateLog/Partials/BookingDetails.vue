@@ -61,6 +61,7 @@ const props = defineProps({
   },
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
+  disableMainBtn: String,
 });
 
 const state = reactive({
@@ -2344,35 +2345,38 @@ watch(
                 Edit
               </x-button>
 
-              <template v-if="isLackingPayment">
+              <template
+                v-if="props.updateBtn && (isLackingPayment || disableMainBtn)"
+              >
                 <div>
                   <x-tooltip>
                     <x-button
                       class="focus:ring-2 focus:ring-black"
                       size="sm"
                       color="orange"
-                      v-if="props.updateBtn"
                       :loading="loader.sendUpdateSectionBtn"
                       @click="sendUpdateValidation"
-                      :disabled="sendUpdatePermissionCheck || isLackingPayment"
+                      :disabled="isLackingPayment || disableMainBtn"
                     >
                       {{ props.updateBtn }}
                     </x-button>
                     <template #tooltip>
-                      <span>
-                        Action Needed: Please revise payment details to reflect
-                        plan changes.
+                      <span class="custom-tooltip-content">
+                        {{
+                          disableMainBtn
+                            ? disableMainBtn
+                            : 'Action Needed: Please revise payment details to reflect plan changes.'
+                        }}
                       </span>
                     </template>
                   </x-tooltip>
                 </div>
               </template>
-              <template v-else>
+              <template v-else-if="props.updateBtn">
                 <x-button
                   class="focus:ring-2 focus:ring-black"
                   size="sm"
                   color="orange"
-                  v-if="props.updateBtn"
                   :loading="loader.sendUpdateSectionBtn"
                   @click="sendUpdateValidation"
                   :disabled="sendUpdatePermissionCheck"

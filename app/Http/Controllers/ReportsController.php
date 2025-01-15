@@ -17,7 +17,6 @@ use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\UserManager;
-use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ConversionAsAtReportService;
 use App\Services\DropdownSourceService;
 use App\Services\Reports\AdvisorConversionReportService;
@@ -50,7 +49,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        $this->middleware('readonly_db');
+        // $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -130,12 +129,20 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function renderRevivalConversionReport(Request $request)
+    public function renderRevivalConversionReport(Request $request, ReportService $reportService)
     {
-        $reportData = CarRevivalQuoteRepository::getReportsData($request);
+
+        $allowedLobs = [
+            QuoteTypeId::Car => QuoteTypes::CAR->value,
+            QuoteTypeId::Health => QuoteTypes::HEALTH->value,
+        ];
+
+        $reportData = $reportService->getRevivalReportsData($request);
 
         return inertia('Reports/RevivalConversion', [
             'reportsData' => $reportData,
+            'allowedLobs' => $allowedLobs,
+            'quoteTypeIdEnum' => QuoteTypeId::asArray(),
         ]);
     }
 

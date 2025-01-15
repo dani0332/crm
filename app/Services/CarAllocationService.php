@@ -55,6 +55,44 @@ class CarAllocationService extends AllocationService
         $this->resetProps();
     }
 
+    private function verifyPreChecks(CarQuote $lead, bool $overrideAssignment): bool
+    {
+        info(self::class." - Processing Car ILA for uuid: {$lead->uuid}", [
+            'uuid' => $lead->uuid,
+            'payment_status_id' => $lead->payment_status_id,
+            'source' => $lead->source,
+            'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
+            'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+            'sic_flow_enabled' => $lead->sic_flow_enabled,
+            'sic_advisor_requested' => $lead->sic_advisor_requested,
+            'quote_status_id' => $lead->quote_status_id,
+        ]);
+
+        $continueAssignment = false;
+
+        if (! $overrideAssignment && ! empty($lead->advisor_id)) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is already assigned to advisor with ID: {$lead->advisor_id}, skipping assignment");
+        } elseif ($lead->isFakeOrDuplicate()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
+        } elseif ($lead->hasExemptedSource()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has exempted source {$lead->source}, skipping assignment");
+        } elseif ($lead->isRenewalTierEmailSent()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has renewal tier email sent, skipping assignment");
+        } elseif ($lead->isRenewalUpload()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is Renwal Upload, skipping assignment");
+        } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment");
+            $continueAssignment = true;
+        } elseif ($lead->isSICFlowDisabled()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow disabled, continuing assignment");
+            $continueAssignment = true;
+        } else {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} does not meet any criteria, skipping assignment");
+        }
+
+        return $continueAssignment;
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         // Check if Dubai Now exclusion should be applied
@@ -68,27 +106,13 @@ class CarAllocationService extends AllocationService
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
         }
 
-        // Create a query to retrieve a car lead based on the provided quote ID and filters.
-        $carQuoteQuery = CarQuote::where('uuid', $quoteId)
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', $exemptedLeadSources)
-            ->where('is_renewal_tier_email_sent', 0)
-            ->where(function ($query) {
-                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                    ->orWhere(function ($query) {
-                        $query->where('sic_flow_enabled', 1)
-                            ->where(function ($query) {
-                                $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-                                    ->orWhere('sic_advisor_requested', 1);
-                            });
-                    });
-            });
+        $lead = CarQuote::where('uuid', $quoteId)->first();
 
-        if (! $overrideAdvisorId) {
-            $carQuoteQuery->whereNull('advisor_id');
+        if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
+            return null;
         }
 
-        return $carQuoteQuery->first();
+        return $lead;
     }
 
     public function getTier($tierId)
