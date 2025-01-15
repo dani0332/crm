@@ -240,7 +240,6 @@ trait GenericQueriesAllLobs
     {
         // dd($record);
         info('Quote Code: '.$record->code.' fn: bookPolicyPayload called');
-        $infoMessage = 'Quote Code: '.$record->code.' ';
         $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
@@ -267,7 +266,6 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
-        $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails.' IEQD: '.empty($quoteDocuments);
         $bookPolicyDetails['policyCancelled'] = false;
         $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
@@ -285,7 +283,6 @@ trait GenericQueriesAllLobs
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
                 $isAllRequiredDocumentUploaded = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $quoteType, $record);
-                $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
                 if ($isAllRequiredDocumentUploaded) {
                     $bookPolicyDetails['sendButton'] = true;
                     $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
@@ -294,15 +291,12 @@ trait GenericQueriesAllLobs
                 if ($bookPolicyDetails['sendButton']) {
                     $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
-                    $infoMessage .= ' TDC: '.count($taxDocuments).' UDC: '.$taxDocumentsCount;
                     if ($taxDocumentsCount == count($taxDocuments)) {
                         $bookPolicyDetails['editButton'] = true;
                         $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
-                        $infoMessage .= ' BDS '.$areBookingDetailsFilled;
 
                         if ($areBookingDetailsFilled) {
                             $isMainLead = $this->checkMainLead($record, $quoteType);
-                            $infoMessage .= ' IML '.$isMainLead;
                             if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
                                 $bookPolicyDetails['bookButton'] = true;
                                 $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
@@ -320,9 +314,6 @@ trait GenericQueriesAllLobs
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
-        info($infoMessage);
-        info('Quote Code: '.$record->code.' Policy Booking Details: ', $bookPolicyDetails);
-
         return $bookPolicyDetails;
     }
 
