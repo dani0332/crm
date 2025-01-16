@@ -15,7 +15,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
-use App\Http\Controllers\V2\CentralController;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Jobs\BookPolicyOnSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
@@ -537,7 +536,7 @@ class SageApiService
 
             return $returnMessage;
         }
-        
+
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
@@ -555,17 +554,17 @@ class SageApiService
         // This block is for collection type INSURER and having any Credit Card Payment
         // This specific block is added to handle tap payments
         $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
-        info($payment->code . ' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment . " And collection type is : ". $payment->collection_type);
+        info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type);
         if ($payment->collection_type == PaymentCollectionTypeEnum::INSURER && $hasAnyCCPayment) {
-            info('Skipping Policy Book & Authorizing payment for '. $payment->code);
-            $successMessage= $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
+            info('Skipping Policy Book & Authorizing payment for '.$payment->code);
+            $successMessage = $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
             if (! $successMessage) {
                 return ['status' => false, 'message' => 'Error in approving payment - Book Policy'];
 
                 return back()->with('error', 'Error in approving payment - Book Policy');
             }
-            info($payment->code. ' Policy Book : postBookPolicyToSage : handleSplitPaymentApproval : '.json_encode($successMessage));
-            
+            info($payment->code.' Policy Book : postBookPolicyToSage : handleSplitPaymentApproval : '.json_encode($successMessage));
+
             QuoteTag::updateOrCreate(
                 [
                     'quote_type_id' => $quoteTypeId,
@@ -576,6 +575,7 @@ class SageApiService
                     'value' => 1,
                 ]
             );
+
             return ['status' => false, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
         }
 
@@ -2132,7 +2132,7 @@ class SageApiService
         info('handleSplitPaymentApproval called from sage api service: '.$quote->code);
         $modelType = QuoteTypes::getName($quoteTypeId)->value;
         $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
-    
+
         $data = new SplitPaymentApproveRequest([
             'modelType' => $modelType,
             'quote_id' => $quote->id,
@@ -2147,6 +2147,7 @@ class SageApiService
             'send_update_id' => null,
             'collection_type' => $payment->collection_type,
         ]);
+
         return app(PaymentRepository::class)->handlePaymentApprove($data);
     }
 }

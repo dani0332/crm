@@ -133,6 +133,5 @@ final class PaymentTooltip extends Enum
     const PAYMENT_LOCKED = 'This lead is now locked as the policy has been booked. If changes are needed, please make them through the \'Send Update\' section via \'Correction of Policy\'';
     const GOTO_AML_AND_KYC_PAGE = 'Click to initiate AML screening and complete the KYC process.';
     const CREDIT_APPROVAL_PAYMENT_METHOD_DISABLED_MESSAGE = 'Selection is disabled due to Credit Approval applied. Please remove Credit Approval to modify';
-
     const DISABLED_COMMISSION = "This field is now locked because the payment has been successfully captured. If any changes are required, please proceed by booking the policy, then go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'.";
 }

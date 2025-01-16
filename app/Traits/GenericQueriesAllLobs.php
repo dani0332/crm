@@ -23,7 +23,6 @@ use App\Models\BrokerCommission;
 use App\Models\Customer;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
-use App\Models\PaymentMethod;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
@@ -317,6 +316,7 @@ trait GenericQueriesAllLobs
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
+
         return $bookPolicyDetails;
     }
 
@@ -767,7 +767,7 @@ trait GenericQueriesAllLobs
         $isGIGInsuranceProvider = $insuranceProvider !== null && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
 
         $isTapCaptureProcessStart = false;
-        if ($quote){
+        if ($quote) {
             $isTapCaptureProcessStart = QuoteTag::where([
                 'quote_type_id' => $quoteTypeId,
                 'quote_uuid' => $quote->uuid,
@@ -775,32 +775,33 @@ trait GenericQueriesAllLobs
                 'value' => 1,
             ])->select('id')->exists();
         }
-    
+
         return [
             $brokerCommission ? true : false,
             $isSplitFrequencyHidden,
             $brokerCommission,
             $isGIGInsuranceProvider,
-            $isTapCaptureProcessStart
+            $isTapCaptureProcessStart,
         ];
     }
-    
+
     private function isCommissionDisabled($payment)
     {
         if ($payment && $payment->collection_type == CollectionTypeEnum::INSURER) {
             $paymentSplits = $payment->paymentSplits;
             if ($paymentSplits->isNotEmpty()) {
-                $hasAnyCCPayment =  $paymentSplits->contains(function ($split) {
+                $hasAnyCCPayment = $paymentSplits->contains(function ($split) {
                     return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id == PaymentStatusEnum::PAID;
                 });
                 if ($hasAnyCCPayment) {
                     return [
                         true,
-                        PaymentTooltip::DISABLED_COMMISSION
+                        PaymentTooltip::DISABLED_COMMISSION,
                     ];
                 }
             }
         }
+
         return [false, ''];
     }
 }

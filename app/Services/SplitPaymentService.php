@@ -560,10 +560,10 @@ class SplitPaymentService
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
             $paymentMethodEndPoint = 'checkout';
-            if ( $payment->insuranceProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP){
+            if ($payment->insuranceProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP) {
                 $paymentMethodEndPoint = 'tap';
             }
-            
+
             $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.$paymentMethodEndPoint;
 
             $paymentParams = [
@@ -716,7 +716,7 @@ class SplitPaymentService
             if ($existingReceipts->count() === 0 && $isFromJob && $payment->collection_type == CollectionTypeEnum::BROKER) {
                 $this->createReceipt($modelType, $quoteId, $paymentSplit, $sendUpdateId, $isFromJob);
             }
-            
+
         }
 
         if (! $paymentSplit->payment->is_approved &&
