@@ -10,6 +10,7 @@ use App\Rules\ValidateBase64;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
+// This validation belongs to API side while we upload document from ECOM side
 class QuoteDocumentRequest extends FormRequest
 {
     use GenericQueriesAllLobs;
