@@ -81,7 +81,7 @@ const docForm = reactive({
 });
 
 const uploadFile = (doc, filesWithInfo) => {
-  console.log(' Upload Quote Docs Method');
+  
   successStatus.value[doc.id] = false;
   errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
@@ -117,7 +117,7 @@ const uploadFile = (doc, filesWithInfo) => {
       });
     })
     .catch(error => {
-      console.log(error.response.data);
+
       errorMsg.value[doc.id] =
         error.response.data.message || 'File upload failed';
       notification.error({
