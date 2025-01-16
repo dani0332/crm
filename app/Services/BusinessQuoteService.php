@@ -315,7 +315,7 @@ class BusinessQuoteService extends BaseService
             && ! isset($request->previous_quote_policy_number)
             && ! isset($request->insurer_tax_invoice_number)
             && ! isset($request->insurer_commission_tax_invoice_number)
-            && ! isset($request->policy_expiry_date) 
+            && ! isset($request->policy_expiry_date)
             && ! isset($request->policy_expiry_date_end)
         ) {
             $dateFrom = Carbon::parse($request['created_at_start'])->startOfDay()->toDateTimeString();
