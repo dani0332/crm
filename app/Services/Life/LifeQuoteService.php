@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Life;
 
-use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
@@ -23,6 +22,12 @@ use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use App\Services\BaseService;
+use App\Services\CapiRequestService;
+use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PersonalQuoteLobs;
+use App\Enums\quoteStatusCode;
+use App\Services\Life\QuoteStatusService;
 
 class LifeQuoteService extends BaseService
 {
@@ -30,125 +35,98 @@ class LifeQuoteService extends BaseService
 
     use AddPremiumAllLobs;
     use RolePermissionConditions;
+    use GenericQueriesAllLobs;
+    use PersonalQuoteLobs;
 
-    protected $leadAllocationService;
+    public const TYPE = quoteTypeCode::Life;
+    public const TYPE_ID = QuoteTypeId::Life;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function getData($forExport = false, $forTotalLeadsCount = false)
     {
-        $this->leadAllocationService = $leadAllocationService;
-        $this->query = DB::table('personal_quotes as pq')
-            ->select(
-                'pq.id',
-                'pq.uuid',
-                'pq.code',
-                DB::raw('DATE_FORMAT(pq.created_at, "%d-%m-%y %H:%i") as created_at'),
-                DB::raw('DATE_FORMAT(pq.updated_at, "%d-%m-%y %H:%i") as updated_at'),
-                'pq.first_name',
-                'pq.last_name',
-                'pq.email',
-                'pq.mobile_no',
-                'pq.gender',
-                'pq.aml_status',
-                'pq.transaction_approved_at',
-                DB::raw('DATE_FORMAT(pq.dob, "%d-%m-%Y") as dob'),
-                'lqr.is_smoker',
-                'lqr.others_info',
-                'lqr.sum_insured_value',
-                'pq.source',
-                'pq.premium',
-                'pq.policy_number',
-                'pq.price_with_vat',
-                'pq.price_vat_applicable',
-                'pq.price_vat_not_applicable',
-                'lqr.sum_insured_currency_id',
-                'ct.TEXT AS sum_insured_currency_id_text',
-                'lqr.marital_status_id',
-                'ms.TEXT AS marital_status_id_text',
-                'lqr.purpose_of_insurance_id',
-                'lip.TEXT AS purpose_of_insurance_id_text',
-                'lqr.children_id',
-                'lc.TEXT AS children_id_text',
-                'lqr.tenure_of_insurance_id',
-                'lit.TEXT AS tenure_of_insurance_id_text',
-                'pq.quote_status_id',
-                'qs.text as quote_status_id_text',
-                'pq.advisor_id',
-                'u.name as advisor_id_text',
-                'lqr.number_of_years_id',
-                'liy.TEXT AS number_of_years_id_text',
-                'pq.nationality_id',
-                'n.TEXT AS nationality_id_text',
-                DB::raw('DATE_FORMAT(pqd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
-                'pqd.transapp_code',
-                'ls.text as lost_reason',
-                'lqr.previous_quote_id',
-                'pq.renewal_batch',
-                'pq.previous_quote_policy_number',
-                'pq.policy_expiry_date',
-                'pq.device',
-                DB::raw('DATE_FORMAT(pq.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
-                'pq.policy_start_date',
-                'pq.previous_quote_policy_premium',
-                'pq.customer_id',
-                'pq.parent_duplicate_quote_id',
-                'pq.risk_score',
-                'pq.kyc_decision',
-                'pq.insurance_provider_id',
-                'ip.text AS insurance_provider_text',
-                'pq.insly_migrated',
-                'pq.policy_issuance_status_id',
-                'pq.insurer_quote_number',
-                'pq.policy_issuance_date',
-                'pqd.insly_id',
-                'lu.text as transaction_type_text',
-                'u1.name as previous_advisor_id_text',
-                'c.insured_first_name',
-                'c.insured_last_name',
-                'c.emirates_id_number',
-                'c.emirates_id_expiry_date',
-                'c.receive_marketing_updates',
-                'qrem.entity_id',
-                'ent.code as entity_code',
-                'ent.trade_license_no',
-                'ent.company_name',
-                'ent.company_address',
-                'qrem.entity_type_code',
-                'ent.industry_type_code',
-                'ent.emirate_of_registration_id',
-                'pqd.lost_reason_id',
-                DB::raw('IF(EXISTS (
-                    SELECT *
-                    FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Life.' AND quote_request_id = pq.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
+        $quotes = $this->getQuotes($forExport, $forTotalLeadsCount);
+        $quoteStatuses = $this->getPersonalQuoteStatuses(self::TYPE_ID)->get();
+        $advisors = $this->getPersonalQuoteAdvisors(self::TYPE);
+        $authorizedDays = $this->getPaymentAuthorisedDays();
+        $renewalBatches = $this->getRenewalBaches();
 
-            )
-            ->leftJoin('life_quote_request as lqr', 'lqr.personal_quote_id', 'pq.id')
-            ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', 'pq.id')
-            ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
-            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqd.lost_reason_id')
-            ->leftJoin('marital_status as ms', 'ms.id', '=', 'lqr.marital_status_id')
-            ->leftJoin('life_insurance_purpose as lip', 'lip.id', '=', 'lqr.purpose_of_insurance_id')
-            ->leftJoin('life_children as lc', 'lc.id', '=', 'lqr.children_id')
-            ->leftJoin('life_insurance_tenure as lit', 'lit.id', '=', 'lqr.tenure_of_insurance_id')
-            ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'pq.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'pq.advisor_id')
-            ->leftJoin('users as u1', 'u1.id', '=', 'pqd.previous_advisor_id')
-            ->leftJoin('nationality as n', 'n.id', '=', 'pq.nationality_id')
-            ->leftJoin('lookups as lu', 'lu.id', '=', 'pq.transaction_type_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
-            ->leftJoin('renewal_batches as rb', 'rb.id', '=', 'pq.renewal_batch_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'pq.payment_status_id')
-            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
-            ->leftJoin('customer as c', 'pq.customer_id', 'c.id')
-            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
-                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Life));
-                $entityMappingJoin->on('qrem.quote_request_id', '=', 'pq.id');
+        return compact('quotes', 'quoteStatuses', 'advisors', 'renewalBatches', 'authorizedDays');
+    }
+
+    private function getQuotes($forExport = false, $forTotalLeadsCount = false)
+    {
+        $query = $this->getQuery($forExport, $forTotalLeadsCount);
+
+        return ($forExport) ? $query->get() : $query->simplePaginate(15)->withQueryString();
+    }
+
+    public function getQuery($forExport = false, $forTotalLeadsCount = false)
+    {
+        $query = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE)->with([
+            'advisor',
+            'quoteStatus',
+            'nationality',
+            'quoteDetail.lostReason:id,text',
+            'renewalBatchModel',
+            'paymentStatus',
+            'payments',
+        ])
+            ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
             })
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
-            ->where('pq.quote_type_id', QuoteTypeId::Life);
+            ->when(! empty(request()->advisor_assigned_date), function ($query) {
+                $dateArray = request()->advisor_assigned_date;
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                });
+            })
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+
+        $this->adjustQueryByInsurerInvoiceFilters($query);
+
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+
+        return $query;
+    }
+
+    public function getCardsViewData()
+    {
+        $quotes = [];
+
+        $quoteStatuses = $this->getPersonalQuoteStatuses(self::TYPE_ID)
+            ->whereIn('text', [quoteStatusCode::NEWLEAD, quoteStatusCode::QUOTED, quoteStatusCode::FOLLOWEDUP, quoteStatusCode::NEGOTIATION])
+            ->get()->toArray();
+
+        foreach ($quoteStatuses as &$quoteStatus) {
+            $quotes[] = $this->getQuotesAgainstQuoteStatus($quoteStatus);
+        }
+        return [
+            'quotes' => $quotes,
+            'quoteType' => self::TYPE,
+        ];
+    }
+
+    private function getQuotesAgainstQuoteStatus($quoteStatus)
+    {
+        $query = $this->getQuery();
+        $query->where('quote_status_id', $quoteStatus['id']);
+        $quoteStatus['data']['total_leads'] = $query->count();
+        $quoteStatus['data']['total_premium'] = $query->sum('price_with_vat');
+        $quoteStatus['data']['leads_list'] = $query->paginate(10);
+
+        return $quoteStatus;
+    }
+
+    public function getCardsViewLoadMore($data)
+    {
+        $quoteStatus = [
+            'id' => $data['status']
+        ];
+        return $this->getQuotesAgainstQuoteStatus($quoteStatus)['data'];
     }
 
     public function saveLifeQuote(Request $request)

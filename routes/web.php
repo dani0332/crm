@@ -192,8 +192,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
         Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
 
+        Route::get('personal-quotes/life/cards', [LifeController::class, 'cardsView'])->name('life-quotes-card');
+        Route::post('personal-quotes/life/load-more-cards', [LifeController::class, 'getCardsViewLoadMore'])->name('life-quotes-load-more-cards');
         Route::resource('personal-quotes/life', LifeController::class)->names(generateRouteNames('life-quotes'));
-        Route::get('quotes/life/cards', [LifeController::class, 'cardsView'])->name('life-quotes-card');
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 

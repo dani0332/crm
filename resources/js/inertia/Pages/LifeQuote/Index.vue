@@ -5,7 +5,6 @@ defineProps({
   renewalBatches: Array,
   advisors: Array,
   authorizedDays: Number,
-  dropdownSource: Object,
 });
 
 const page = usePage();
@@ -121,23 +120,11 @@ const tableHeader = reactive([
 ]);
 
 const advisorOptions = computed(() => {
-  let options = page.props.advisors.map(advisor => ({
+  return page.props.advisors.map(advisor => ({
     value: advisor.id,
-    label: advisor.name,
-  }));
-
-  options.push({
-    value: '-1',
-    label: 'UnAssigned',
-  });
-
-  return options;
-});
-
-const leadStatuses = computed(() => {
-  return page.props.dropdownSource.quote_status_id.map(status => ({
-    value: status.id,
-    label: status.text,
+    label: advisor.roles[0].name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
+      : advisor.name,
   }));
 });
 
@@ -411,7 +398,7 @@ watch(
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3 flex">
-        <Link href="/quotes/life/cards">
+        <Link href="/personal-quotes/life/cards">
           <x-button
             size="sm"
             color="#1d83bc"
@@ -503,7 +490,12 @@ watch(
             v-model="filters.quote_status_id"
             name="quote_status_id"
             placeholder="Search by Lead Status"
-            :options="leadStatuses"
+            :options="
+              quoteStatuses.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
           />
         </x-field>
         <x-field label="Policy Expiry Start Date">
@@ -722,9 +714,6 @@ watch(
       </template>
       <template #item-nationality="{ nationality }">
         {{ nationality?.code }}
-      </template>
-      <template #item-transapp_code="{ quote_detail }">
-        {{ quote_detail?.transapp_code }}
       </template>
       <template #item-lost_reason="{ quote_detail }">
         {{ quote_detail?.lost_reason?.text }}

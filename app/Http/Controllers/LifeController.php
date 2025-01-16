@@ -30,7 +30,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
-use App\Services\LifeQuoteService;
+use App\Services\Life\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -40,6 +40,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\ResponseFactory;
+use App\Http\Requests\LifeCardLoadMoreRequest;
 
 class LifeController extends Controller
 {
@@ -71,22 +72,11 @@ class LifeController extends Controller
      *
      * @throws RuntimeException
      */
-    public function index(Request $request)
+    public function index()
     {
-        $gridData = $this->lifeQuoteService->getGridData($this->genericModel, $request);
-        $lifeQuotes = $gridData->simplePaginate(10)->withQueryString();
-        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
-        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $data = $this->lifeQuoteService->getData();
 
-        return inertia('LifeQuote/Index', [
-            'quotes' => $lifeQuotes,
-            'dropdownSource' => $dropdownSource,
-            'advisors' => $advisors,
-            'renewalBatches' => $renewalBatches,
-            'authorizedDays' => intval($authorizedDays->value),
-        ]);
+        return inertia('LifeQuote/Index', $data);
     }
 
     /**
@@ -366,23 +356,15 @@ class LifeController extends Controller
         return redirect('/personal-quotes/life'.'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
     }
 
-    public function cardsView(Request $request)
+    public function cardsView()
     {
-        $dropdownSourceService = app(DropdownSourceService::class);
-        $leadStatuses = $dropdownSourceService->getDropdownSource('quote_status_id', self::TYPE_ID);
-        $leadStatuses = $leadStatuses->filter(function ($item) {
-            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION;
-        })->toArray();
+        $data = $this->lifeQuoteService->getCardsViewData();
 
-        $leadStatuses = array_map(function ($item) use ($request) {
-            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id'], $request);
+        return inertia('LifeQuote/Cards', $data);
+    }
 
-            return $item;
-        }, $leadStatuses);
-
-        return inertia('LifeQuote/Cards', [
-            'quotes' => array_values($leadStatuses),
-            'quoteType' => self::TYPE,
-        ]);
+    public function getCardsViewLoadMore(LifeCardLoadMoreRequest $request)
+    {
+        return $this->lifeQuoteService->getCardsViewLoadMore($request->validated());
     }
 }

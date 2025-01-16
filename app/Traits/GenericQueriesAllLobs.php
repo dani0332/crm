@@ -24,6 +24,9 @@ use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
+use App\Services\Reports\RenewalBatchReportService;
 
 trait GenericQueriesAllLobs
 {
@@ -734,5 +737,15 @@ trait GenericQueriesAllLobs
         ];
 
         return in_array($lead_status_id, $skipStatus);
+    }
+
+    public function getPaymentAuthorisedDays()
+    {
+        return intval(ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->value('value'));
+    }
+
+    public function getRenewalBaches()
+    {
+        return app(RenewalBatchReportService::class)->getAllNonMotorBatches();
     }
 }
