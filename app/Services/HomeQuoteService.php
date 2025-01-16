@@ -1157,7 +1157,7 @@ class HomeQuoteService extends BaseService
      */
     private function generateHomeSALPdf(array $data): string
     {
-        return PDF::loadView('pdf.home-sal-light-theme', compact('data'))
+        return PDF::loadView('pdf.home-sal', compact('data'))
             ->setOptions([
                 'defaultFont' => 'DejaVu Sans',
                 'isRemoteEnabled' => true, // Enable remote images
