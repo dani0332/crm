@@ -7,6 +7,7 @@ use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -619,6 +620,7 @@ class AMLService
                 ],
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
                 'chassisNumber' => $chassisNumber ?? '',
+                'gender' => $this->getGender($quoteDetails),
             ];
 
             info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
@@ -679,5 +681,18 @@ class AMLService
         $quoteObject[$quoteTypeId]['model']::where('id', $quoteDetails->id)->update($insurerAMLStatus);
         info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
 
+    }
+
+    private function getGender($quoteDetails): string
+    {
+        $gender = '';
+        if (in_array($quoteDetails->gender, [GenericRequestEnum::MALE_SINGLE, GenericRequestEnum::MALE_SINGLE_VALUE, strtolower(GenericRequestEnum::MALE_SINGLE), strtolower(GenericRequestEnum::MALE_SINGLE_VALUE)])) {
+            $gender = GenericRequestEnum::MALE_SINGLE;
+        }
+        if (in_array($quoteDetails->gender, [GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_SHORT_VALUE, strtolower(GenericRequestEnum::FEMALE), strtolower(GenericRequestEnum::FEMALE_SHORT_VALUE)])) {
+            $gender = GenericRequestEnum::FEMALE;
+        }
+
+        return $gender;
     }
 }
