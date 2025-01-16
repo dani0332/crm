@@ -135,6 +135,6 @@ trait QuoteAllocatable
 
     public function isRevivalRepliedOrPaid()
     {
-        return in_array($this->source , [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID]);
+        return in_array($this->source, [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID]);
     }
 }

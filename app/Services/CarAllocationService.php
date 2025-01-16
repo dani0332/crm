@@ -89,7 +89,7 @@ class CarAllocationService extends AllocationService
         } elseif ($lead->isRevivalRepliedOrPaid()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is a Revival lead, continuing assignment");
             $continueAssignment = true;
-         } else {
+        } else {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} does not meet any criteria, skipping assignment");
         }
 
