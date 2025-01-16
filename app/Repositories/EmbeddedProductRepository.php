@@ -240,7 +240,10 @@ class EmbeddedProductRepository extends BaseRepository
             if ($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
 
                 if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
-                    return CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->count() == 0;
+                    $address = CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->first();
+
+                    return empty($address?->type);
+
                 }
 
                 $paymentDate = Carbon::parse($payment->getAttributes()['captured_at']);

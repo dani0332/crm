@@ -2022,8 +2022,8 @@ class SageApiService
         }
 
         if (in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED])) {
-            info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.' start assignAdvisor Quote Status ID : '.$quote->quote_status_id);
-            $this->assignAdvisor($quote, $quoteTypeId);
+            info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.' start updateStatusesAndAllocate Quote Status ID : '.$quote->quote_status_id);
+            $this->updateStatusesAndAllocate($quote, $quoteTypeId);
         }
 
     }
@@ -2102,7 +2102,7 @@ class SageApiService
         }
     }
 
-    public function assignAdvisor($quote, $quoteTypeId)
+    public function updateStatusesAndAllocate($quote, $quoteTypeId)
     {
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - start');
 

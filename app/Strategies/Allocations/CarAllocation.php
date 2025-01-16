@@ -43,6 +43,17 @@ class CarAllocation implements Allocation
                 return $this->carAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
+            info('Processing record for Quote Allocation with uuid: '.$lead->uuid, [
+                'uuid' => $lead->uuid,
+                'payment_status_id' => $lead->payment_status_id,
+                'source' => $lead->source,
+                'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+            ]);
+
             if ($lead->isAllocationInProgress()) {
                 info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
 

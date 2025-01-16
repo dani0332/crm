@@ -252,6 +252,7 @@ class SendUpdateLogController extends Controller
             'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
             'isSentOrBooked' => $isSentOrBooked,
+            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog),
         ]);
     }
 
