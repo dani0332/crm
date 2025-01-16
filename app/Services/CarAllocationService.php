@@ -641,7 +641,7 @@ class CarAllocationService extends AllocationService
             ->toArray();
     }
 
-    public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
+    public function processLeadAssignment(CarQuote $lead, $userId, $tier, $assignmentType): void
     {
         info('About to assign car lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
 
@@ -682,6 +682,9 @@ class CarAllocationService extends AllocationService
 
         // Reset Buy Lead Advisor flag and Buy Lead Request object.
         $this->resetProps();
+
+        // sync advisor id and assignment date with personal quote to reflect in reports immediately
+        $lead->syncLeadWithPersonalQuote();
 
         info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
     }

@@ -9,11 +9,11 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
-use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
@@ -157,6 +157,7 @@ class LeadDistributionReportService extends BaseService
     private function getPersonalQuoteQuery($lob)
     {
         $lobId = $this->getLobId($lob);
+        $quoteType = QuoteTypes::from($lob);
         $parentTeam = $this->getProductByName($lob);
 
         $personalQuoteQuery = PersonalQuote::query()
@@ -170,10 +171,14 @@ class LeadDistributionReportService extends BaseService
             ->groupBy('teams.name')
             ->orderBy('teams.name');
 
-        // Apply user-specific filters if necessary
-        if (! $this->hasAdminPrivileges()) {
-            $userIds = $this->getUserIdsForAccess($lob);
-            $personalQuoteQuery->whereIn('personal_quotes.advisor_id', $userIds);
+
+        if (auth()->user()->hasAnyRole($quoteType->advisorRoles())) {
+            $personalQuoteQuery->where('personal_quotes.advisor_id', auth()->user()->id);
+        } else {
+            if (! $this->hasAdminPrivileges()) {
+                $userIds = $this->walkTree(auth()->user()->id);
+                $personalQuoteQuery->whereIn('personal_quotes.advisor_id', $userIds);
+            }
         }
 
         $this->addSelect($personalQuoteQuery, 'personal_quotes');
@@ -188,20 +193,6 @@ class LeadDistributionReportService extends BaseService
             : $lob;
 
         return QuoteTypeRepository::where('code', $mappedLob)->value('id');
-    }
-
-    private function getUserIdsForAccess($lob)
-    {
-        $userIds = $this->walkTree(auth()->user()->id, $lob);
-
-        if (auth()->user()->isManagerORDeputy()) {
-            $userIds = UserManager::where('manager_id', auth()->user()->id)
-                ->whereIn('user_id', $userIds)
-                ->pluck('user_id')
-                ->toArray();
-        }
-
-        return $userIds;
     }
 
     public function getFilterOptions()

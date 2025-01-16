@@ -12,6 +12,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use Carbon\Carbon;
@@ -291,5 +292,30 @@ trait QuoteModelTrait
                 $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
             });
         }
+    }
+
+    public function syncLeadWithPersonalQuote()
+    {
+        info('Syncing lead with personal quote', ['code' => $this->code]);
+        $personalQuote = PersonalQuote::where('code', $this->code)->first();
+
+        if (! $personalQuote) {
+            return;
+        }
+        $personalQuote->update([
+            'advisor_id' => $this->advisor_id,
+            'assignment_type' => $this->assignment_type,
+            'quote_batch_id' => $this->quote_batch_id,
+        ]);
+        info('Lead synced with personal quote', ['uuid' => $this->uuid]);
+        
+        $personalQuoteDetail = $personalQuote->quoteDetail();
+        if($personalQuoteDetail) {
+            $personalQuoteDetail->update([
+                'advisor_assigned_date' => now(),
+            ]);
+            info('Lead synced with personal quote detail', ['uuid' => $this->uuid]);
+        }
+       
     }
 }

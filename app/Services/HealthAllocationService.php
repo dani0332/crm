@@ -279,6 +279,9 @@ class HealthAllocationService extends AllocationService
 
         // Reset Buy Lead Advisor flag and Buy Lead Request object.
         $this->resetProps();
+
+        // sync advisor id and assignment date with personal quote to reflect in reports immediately
+        $lead->syncLeadWithPersonalQuote();
     }
 
     public function updateQuoteDetail($leadId)
