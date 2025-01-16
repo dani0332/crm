@@ -678,6 +678,16 @@
                 'title' => 'Single Article Limit for contents (SAL)',
                 'type' => 'content',
             ],
+            [
+                'code' => 'keysAndLocks',
+                'title' => 'Keys and Locks',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'contentsInTheOpen',
+                'title' => 'Contents in the Open',
+                'type' => 'content',
+            ],
 
             ['code' => 'spacer', 'title' => ''],
 
@@ -706,6 +716,11 @@
             [
                 'code' => 'singleArticleLimitForPersonalBelongingsSal',
                 'title' => 'Single article limit for personal belongings (SAL)',
+                'type' => 'personalBelonging',
+            ],
+            [
+                'code' => 'personalMoneyAndCreditCards',
+                'title' => 'Personal money and credit cards',
                 'type' => 'personalBelonging',
             ],
 
@@ -766,6 +781,16 @@
             [
                 'code' => 'lossOfRentOrCostOfAlternativeAccommodationForBuilding',
                 'title' => 'Loss of rent or cost of alternative accommodation for Building',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'homeAssistance',
+                'title' => 'Home assistance',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'visitorsPersonalEffects',
+                'title' => 'Visitor\'s personal effects',
                 'type' => 'additionalCover',
             ],
 
