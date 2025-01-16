@@ -675,6 +675,8 @@ const isAllPaymentAuthorized = () => {
   if (payment){
     const paidStatusIds = [
       paymentStatusEnum.AUTHORISED,
+      paymentStatusEnum.CAPTURED,
+      paymentStatusEnum.PAID
     ];
     const ccPayments = filterCCPayments(payment);
 
