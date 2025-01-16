@@ -101,6 +101,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
+            table-layout: fixed;
         }
 
         tbody {
@@ -304,20 +305,16 @@
 
         .text-heading {
             color: #ffffff;
-            background-color: #2f8ec4;
             height: 50px;
-            width: 100%;
             display: flex;
-            vertical-align: middle;
-            padding: 0;
-            margin: 0;
+            align-items: center;
             font-size: 20px;
             font-weight: 700;
         }
 
         .text-heading p {
             margin: 0;
-            padding-left: 10px;
+            padding-left: 12px;
         }
 
         .heading-desc {
@@ -453,10 +450,16 @@
             z-index: 9999;
         }
 
-        table td {
-            border: 1px solid #ddd;
-            padding: 8px;
+        table td,
+        table th {
+            max-width: 208px;
+            width: 208px;
+            height: auto;
+            padding: 4px 12px;
             text-align: center;
+            vertical-align: middle;
+            word-wrap: break-word;
+            white-space: normal;
         }
 
         main {
@@ -935,12 +938,10 @@
 
                         {{-- Only display the heading if there is data below it --}}
                         @if ($hasDataBelow)
-                            <tr style="page-break-inside: avoid; page-break-before: auto;">
-                                <td colspan="{{ sizeof($planIds) + 1 }}" class="text-heading">
-                                    <p class="text-left !font-bold">{{ $feature['title'] }}</p>
-                                </td>
-                                <td colspan="{{ sizeof($planIds) }}" class="heading-desc">
-                                    {{ $feature['description'] ?? '' }}
+                            <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
+                                <td colspan="{{ sizeof($planIds) + 1 }}">
+                                    <p class="text-left !font-bold" style="color: #ffffff; padding-left: 12px;">
+                                        {{ $feature['title'] }}</p>
                                 </td>
                             </tr>
                         @endif
