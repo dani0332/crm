@@ -45,6 +45,48 @@
             text-decoration-line: underline !important;
         }
 
+        @media (prefers-color-scheme: dark) {
+            .dark-border-_0e0d0d {
+                border-color: #0e0d0d !important;
+            }
+
+            .dark-important-bg-slate-800 {
+                background-color: #1e293b !important;
+            }
+
+            .dark-bg-gray-800 {
+                background-color: #1f2937 !important;
+            }
+
+            .dark-bg-slate-800 {
+                background-color: #1e293b !important;
+            }
+
+            .dark-bg-slate-900 {
+                background-color: #0f172a !important;
+            }
+
+            .dark-bg-none {
+                background-image: none !important;
+            }
+
+            .dark-important-text-slate-200 {
+                color: #e2e8f0 !important;
+            }
+
+            .dark-important-text-white {
+                color: #fff !important;
+            }
+
+            .dark-text-slate-200 {
+                color: #e2e8f0 !important;
+            }
+
+            .dark-text-slate-600 {
+                color: #475569 !important;
+            }
+        }
+
         @media (max-width: 600px) {
             .sm-important-my-1 {
                 margin-top: 4px !important;
@@ -178,11 +220,12 @@
     </style>
 </head>
 
-<body
+<body class="light-bg-slate-900"
     style="margin: 0; width: 100%; background-color: #fff; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word">
     <div role="article" aria-roledescription="email" aria-label lang="en">
-        <div style="background-color: #fff; padding: 26px 12px; font-family: Verdana, Geneva, sans-serif; color: #333">
-            <table
+        <div class="light-bg-slate-800 light-important-text-slate-200"
+            style="background-color: #F1F5F9; padding: 26px 12px; font-family: Verdana , Geneva , sans-serif; color: #333333">
+            <table class="light-border-_0e0d0d light-bg-slate-900"
                 style="margin-left: auto; margin-right: auto; width: 100%; max-width: 625px; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; border: 1px solid #c7d0d4; background-color: #fff; padding-top: 8px"
                 cellpadding="0" cellspacing="0" role="presentation">
                 <tbody>
@@ -221,23 +264,23 @@
                                     <tbody>
                                         <td
                                             style="width: 60%; padding-right: 12px; vertical-align: top; max-width: calc(100% - 176px)">
-                                            <p class="sm-text-12px sm-important-text-10px"
-                                                style="font-family: inherit; font-size: 14px; color: #333">
+                                            <p class="light-text-slate-200 sm-text-12px sm-important-text-10px"
+                                                style="font-family: inherit; font-size: 14px; color: #333333">
                                                 <span>Dear {{ $data['customer_name'] }},</span>
                                             </p>
-                                            <p class="sm-text-12px sm-important-text-10px sm-important-my-1"
-                                                style="margin-top: 20px; margin-bottom: 20px; font-family: inherit; font-size: 14px; color: #333">
+                                            <p class="light-text-slate-200 sm-text-12px sm-important-text-10px sm-important-my-1"
+                                                style="margin-top: 20px; margin-bottom: 20px; font-family: inherit; font-size: 14px; color: #333333">
                                                 Thank you for choosing Alfred!
                                             </p>
-                                            <p class="sm-text-12px sm-important-text-10px sm-important-leading-3_5"
-                                                style="font-family: inherit; font-size: 14px; color: #333; line-height: 20px">
+                                            <p class="light-text-slate-200 sm-text-12px sm-important-text-10px sm-important-leading-3_5"
+                                                style="font-family: inherit; font-size: 14px; color: #333333; line-height: 20px">
                                                 We've successfully received your declaration form for valuable item(s)
                                                 with your chosen home insurance plan.<br>
                                                 Each item that's valued at AED 40,000 or more has been recorded for
                                                 comprehensive coverage.
                                             </p>
-                                            <p class="sm-text-12px sm-important-text-10px sm-important-my-1 sm-important-leading-3_5"
-                                                style="margin-top: 20px; margin-bottom: 20px; font-family: inherit; font-size: 14px; color: #333; line-height: 20px">
+                                            <p class="light-text-slate-200 sm-text-12px sm-important-text-10px sm-important-my-1 sm-important-leading-3_5"
+                                                style="margin-top: 20px; margin-bottom: 20px; font-family: inherit; font-size: 14px; color: #333333; line-height: 20px">
                                                 Below, you'll find a summary of the declared items:</p>
                                         </td>
                                         <td
@@ -253,8 +296,8 @@
                                         role="presentation">
                                         <tbody>
                                             <td>
-                                                <p class="sm-text-12px sm-text-base"
-                                                    style="margin-top: 4px; margin-bottom: 4px; display: inline-block; padding: 4px; font-family: inherit; font-weight: 700; color: #333; font-size: 22px">
+                                                <p class="light-text-slate-200 sm-text-12px sm-text-base"
+                                                    style="margin-top: 4px; margin-bottom: 4px; display: inline-block; padding: 4px; font-family: inherit; font-weight: 700; color: #333333; font-size: 22px">
                                                     Declared single article items
                                                 </p>
                                             </td>
@@ -266,26 +309,27 @@
                                             </td>
                                         </tbody>
                                     </table>
-                                    <div style="border-radius: 8px; background-color: #F7F7F7; padding: 12px">
-                                        <table
-                                            style="min-width: 100%; table-layout: auto; border-collapse: collapse; vertical-align: middle; font-size: 14px; color: #333"
+                                    <div class="light-bg-gray-800"
+                                        style="border-radius: 8px; background-color: #F7F7F7; padding: 12px">
+                                        <table class="light-text-slate-200"
+                                            style="min-width: 100%; table-layout: auto; border-collapse: collapse; vertical-align: middle; font-size: 14px; color: #5D697B"
                                             cellpadding="0" cellspacing="0" role="presentation">
                                             <thead>
                                                 <tr style="background-color: #DBEEFF">
-                                                    <th class="sm-text-8px"
-                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700; color: #333">
+                                                    <th class="sm-text-8px light-text-slate-600"
+                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
                                                         Item description
                                                     </th>
-                                                    <th class="sm-text-8px"
-                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700; color: #333">
+                                                    <th class="sm-text-8px light-text-slate-600"
+                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
                                                         Item value (AED)
                                                     </th>
-                                                    <th class="sm-text-8px"
-                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700; color: #333">
+                                                    <th class="sm-text-8px light-text-slate-600"
+                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
                                                         Purchase date
                                                     </th>
-                                                    <th class="sm-text-8px"
-                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700; color: #333">
+                                                    <th class="sm-text-8px light-text-slate-600"
+                                                        style="border: 1.5px solid #5d697b; padding: 8px; text-align: left; font-size: 14px; font-weight: 700">
                                                         Invoice/serial number
                                                     </th>
                                                 </tr>
@@ -294,19 +338,19 @@
                                                 @foreach ($data['items'] as $item)
                                                     <tr>
                                                         <td class="sm-text-8px"
-                                                            style="width: 40%; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px; color: #333">
+                                                            style="width: 40%; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
                                                             {{ $item->description }}
                                                         </td>
                                                         <td class="sm-text-8px"
-                                                            style="width: 20%; max-width: 108px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px; color: #333">
+                                                            style="width: 20%; max-width: 108px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
                                                             {{ $item->value }}
                                                         </td>
                                                         <td class="sm-text-8px"
-                                                            style="width: 20%; max-width: 113px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px; color: #333">
+                                                            style="width: 20%; max-width: 113px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
                                                             {{ $item->purchase_date }}
                                                         </td>
                                                         <td class="sm-text-8px"
-                                                            style="width: 20%; max-width: 96px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px; color: #333">
+                                                            style="width: 20%; max-width: 96px; border: 1.5px solid #5d697b; padding: 8px; font-size: 14px">
                                                             {{ $item->invoice_number }}
                                                         </td>
                                                     </tr>
@@ -328,8 +372,8 @@
                                         </p>
                                     </a>
                                 </div>
-                                <p class="sm-text-12px"
-                                    style="margin-top: 16px; margin-bottom: 16px; font-family: inherit; font-size: 14px; color: #333">
+                                <p class="light-text-slate-200 sm-text-12px"
+                                    style="margin-top: 16px; margin-bottom: 16px; font-family: inherit; font-size: 14px; color: #333333">
                                     Please note that the final price may vary after the insurer has reviewed
                                     your profile, declared item(s) and documents.
                                 </p>
@@ -346,20 +390,20 @@
                                         </p>
                                     </a>
                                 </div> --}}
-                                <p class="sm-text-12px"
-                                    style="margin-top: 16px; margin-bottom: 16px; font-family: inherit; font-size: 14px; color: #333; line-height: 18px">
+                                <p class="light-text-slate-200 sm-text-12px"
+                                    style="margin-top: 16px; margin-bottom: 16px; font-family: inherit; font-size: 14px; color: #333333; line-height: 18px">
                                     Thank you for choosing InsuranceMarket.ae.<br>
                                     We look forward to serving you.</p>
-                                <p class="sm-text-12px"
-                                    style="margin-top: 16px; margin-bottom: 16px; font-family: inherit; font-size: 14px; color: #333">
+                                <p class="light-text-slate-200 sm-text-12px"
+                                    style="margin-top: 16px; margin-bottom: 16px; font-family: inherit; font-size: 14px; color: #333333">
                                     For any queries or support, reach me directly via WhatsApp or Email.</p>
-                                <p class="sm-text-12px"
-                                    style="margin-top: 16px; margin-bottom: 16px; font-family: inherit; font-size: 14px; color: #333">
+                                <p class="light-text-slate-200 sm-text-12px"
+                                    style="margin-top: 16px; margin-bottom: 16px; font-family: inherit; font-size: 14px; color: #333333">
                                     I'm here to ensure your insurance process is seamless and
                                     satisfying.
                                 </p>
                                 <div>
-                                    <div
+                                    <div class="light-important-bg-slate-800 sm-w-auto light-bg-none"
                                         style="margin-bottom: 24px; margin-top: 16px; box-sizing: border-box; display: inline-block; width: 100%; border-radius: 6px; border: 1px solid #dbeeff; padding: 8px; vertical-align: middle; line-height: 1.25; background: linear-gradient(to right, #D7F1FF, #FFEFE2); background-color: transparent">
                                         <table cellpadding="0" cellspacing="0" role="presentation">
                                             <tbody>
@@ -387,13 +431,13 @@
                                                                     </td>
                                                                     <td class="sm-table-cell" style="display: none">
                                                                         @if (isset($data['advisor_name']))
-                                                                            <p class="sm-text-12px"
-                                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                                            <p class="light-text-slate-200 sm-text-12px"
+                                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                                 Name: {{ $data['advisor_name'] }}
                                                                             </p>
                                                                         @else
-                                                                            <p class="sm-text-12px xs-text-10px"
-                                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                                            <p class="light-text-slate-200 sm-text-12px xs-text-10px"
+                                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                                 Name: Customer Happiness Center
                                                                             </p>
                                                                         @endif
@@ -405,12 +449,12 @@
                                                     <td class="sm-w-full sm-block sm-pt-0 sm-text-xs"
                                                         style="padding: 8px; font-size: 14px; line-height: 1.25">
                                                         @if (isset($data['advisor_name']))
-                                                            <p class="sm-text-12px sm-hidden"
-                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                            <p class="light-text-slate-200 sm-text-12px sm-hidden"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                 Name: {{ $data['advisor_name'] }}
                                                             </p>
-                                                            <p class="sm-text-12px"
-                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                            <p class="light-text-slate-200 sm-text-12px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                 Email:
                                                                 <a href="mailto:{{ $data['advisor_email'] }}"
                                                                     style="color: inherit; text-decoration-line: none">
@@ -418,8 +462,8 @@
                                                                 </a>
                                                             </p>
                                                             @if (isset($data['advisor_mobile_no']))
-                                                                <p class="sm-text-12px"
-                                                                    style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                                <p class="light-text-slate-200 sm-text-12px"
+                                                                    style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                     Mobile number:
                                                                     <a href="tel:{{ $data['mobile_no_without_spaces'] }}"
                                                                         style="color: inherit; text-decoration-line: none;">{{ $data['advisor_mobile_no'] }}</a>
@@ -434,31 +478,31 @@
                                                                 </p>
                                                             @endif
                                                             @if (isset($data['advisor_landline_no']))
-                                                                <p class="sm-text-12px"
-                                                                    style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                                <p class="light-text-slate-200 sm-text-12px"
+                                                                    style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                     Direct line:
                                                                     <a href="tel:{{ $data['advisor_landline_no'] }}"
                                                                         style="color: inherit; text-decoration-line: none;">{{ $data['advisor_landline_no'] }}</a>
                                                                 </p>
                                                             @endif
-                                                            <p class="sm-text-12px"
-                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                            <p class="light-text-slate-200 sm-text-12px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                 Happiness center: 800 ALFRED (800 253 733)
                                                             </p>
                                                         @else
-                                                            <p class="sm-text-12px sm-hidden xs-text-10px"
-                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                            <p class="light-text-slate-200 sm-text-12px sm-hidden xs-text-10px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                 Name: Customer Happiness Center
                                                             </p>
-                                                            <p class="sm-text-12px xs-text-10px"
-                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                            <p class="light-text-slate-200 sm-text-12px xs-text-10px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                 Email:
                                                                 <a href="mailto:askalfred@insurancemarket.ae"
                                                                     class="hover-underline"
                                                                     style="color: inherit; text-decoration-line: none;">askalfred@insurancemarket.ae</a>
                                                             </p>
-                                                            <p class="sm-text-12px xs-text-10px"
-                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #333">
+                                                            <p class="light-text-slate-200 sm-text-12px xs-text-10px"
+                                                                style="margin-top: 0; margin-bottom: 0; font-family: inherit; font-size: 14px; color: #3F4856">
                                                                 Happiness center:
                                                                 <a href="https://wa.me/971800253733" target="_blank"
                                                                     class="hover-underline"
@@ -477,25 +521,25 @@
                                     </div>
                                 </div>
                             </div>
-                            <div
-                                style="overflow: hidden; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; background-color: #fff; font-family: Verdana, Geneva, sans-serif">
+                            <div class="light-bg-slate-800 light-important-text-white"
+                                style="overflow: hidden; border-bottom-right-radius: 15px; border-bottom-left-radius: 15px; background-color: #f5f5f5; font-family: Verdana , Geneva , sans-serif">
                                 <div class="sm-px-4" style="padding: 14px 28px 6px"><img
                                         src="https://cdn.alfred.ae/assets/logo/im/IM-23k.png" alt="Insurance Market"
                                         style="vertical-align: middle; line-height: 1; border: 0; width: 100%; max-width: 250px;">
                                 </div>
                                 <hr style="margin: 0; border-color: #e5e5e5">
                                 <div class="sm-px-4" style="padding: 14px 28px 0">
-                                    <p class="sm-text-12px"
-                                        style="margin-bottom: 8px; font-family: inherit; font-weight: 700; color: #333; font-size: 11px">
+                                    <p class="light-text-slate-200 sm-text-12px"
+                                        style="margin-bottom: 8px; font-family: inherit; font-weight: 700; color: #333333; font-size: 11px">
                                         Contact us:
                                     </p>
-                                    <p class="sm-text-12px sm-text-10px"
-                                        style="margin-top: 0; font-family: inherit; color: #333; font-size: 10px">
+                                    <p class="light-text-slate-200 sm-text-12px sm-text-10px"
+                                        style="margin-top: 0; font-family: inherit; color: #333333; font-size: 10px">
                                         27th Floor, Control Tower, Motor City, Dubai, UAE. PO Box 26423 <br>
                                         Toll Free Number: 800 ALFRED (800-253-733) <br>
                                         askalfred@insurancemarket.ae<br>
                                         <a href="https://www.insurancemarket.ae" target="_blank"
-                                            style="color: #333; text-decoration-line: none;">insurancemarket.ae</a>
+                                            style="color: #333333; text-decoration-line: none;">insurancemarket.ae</a>
                                     </p>
                                     <div style="display: inline-block;">
                                         <a href="https://www.instagram.com/insurancemarket.ae/" target="_blank"
@@ -523,8 +567,8 @@
                                                 style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0; margin-right: 10px; height: 20px; width: 20px;">
                                         </a>
                                     </div>
-                                    <p class="sm-text-12px sm-hidden"
-                                        style="margin-top: 12px; font-family: inherit; color: #333; font-size: 10px">
+                                    <p class="light-text-slate-200 sm-text-12px sm-hidden"
+                                        style="margin-top: 12px; font-family: inherit; color: #333333; font-size: 10px">
                                         InsuranceMarket.ae is committed to quality service. Contact us with
                                         concerns at<br>
                                         quality.assurance@insurancemarket.ae. This email is confidential; if
@@ -532,24 +576,24 @@
                                         us immediately. Do not share or rely on its contents without
                                         authorization. We are not liable for any harm from this email's use.
                                         To stop receiving our emails, simply unsubscribe <a
-                                            href="{% unsubscribeLink %}"
-                                            style="color: #333; text-decoration-line: underline">here</a>.</p>
-                                    <p class="sm-text-12px sm-text-10px sm-block"
-                                        style="margin-top: 12px; display: none; font-family: inherit; color: #333; font-size: 10px">
+                                            class="light-important-text-slate-200" href="{% unsubscribeLink %}"
+                                            style="color: #333333; text-decoration-line: underline">here</a>.</p>
+                                    <p class="light-text-slate-200 sm-text-12px sm-text-10px sm-block"
+                                        style="margin-top: 12px; display: none; font-family: inherit; color: #333333; font-size: 10px">
                                         InsuranceMarket.ae is committed to quality service. Contact us with
                                         concerns at quality.assurance@insurancemarket.ae. This email is
                                         confidential; if received in error, please delete it and notify us
                                         immediately. Do not share or rely on its contents without authorization.
                                         We are not liable for any harm from this email's use.
                                         To stop receiving our emails, simply unsubscribe <a
-                                            href="{% unsubscribeLink %}"
-                                            style="color: #333; text-decoration-line: underline">here</a>.</p>
+                                            class="light-important-text-slate-200" href="{% unsubscribeLink %}"
+                                            style="color: #333333; text-decoration-line: underline">here</a>.</p>
                                     <img src="https://cdn.alfred.ae/assets/others/emails/Metro%20-%20Email%20footer.png"
                                         width="100%" height="auto" class="sm-object-cover sm-object-right sm-h-9"
                                         alt="metro"
                                         style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0">
-                                    <p class="sm-text-12px sm-text-7_5px"
-                                        style="margin-bottom: 0; margin-top: 0; font-family: inherit; color: #333; font-size: 8px">
+                                    <p class="light-text-slate-200 sm-text-12px sm-text-7_5px"
+                                        style="margin-bottom: 0; margin-top: 0; font-family: inherit; color: #333333; font-size: 8px">
                                         InsuranceMarket.ae has been awarded naming rights to the InsuranceMarket
                                         Metro Station, located between Mall of the Emirates and Dubai Internet
                                         City. This milestone firmly places Alfred on Dubai's map and strengthens
@@ -561,12 +605,12 @@
                                         style="max-width: 100%; vertical-align: middle; line-height: 1; border: 0; height: 4px; width: 100%">
                                 </div>
                                 <div class="sm-px-4" style="padding: 8px 28px 14px">
-                                    <p class="sm-text-12px sm-text-7_5px"
+                                    <p class="light-text-slate-200 sm-text-12px sm-text-7_5px"
                                         style="margin-bottom: 12px; margin-top: 0; font-family: inherit; font-size: 8px; color: #626262">
                                         InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage
                                         Services LLC</p>
-                                    <p class="sm-text-12px sm-text-7_5px"
-                                        style="margin-top: 0; font-family: inherit; color: #333; font-size: 8px">
+                                    <p class="light-text-slate-200 sm-text-12px sm-text-7_5px"
+                                        style="margin-top: 0; font-family: inherit; color: #333333; font-size: 8px">
                                         UAE Central Bank Registration No. 85<br>
                                         Registered Member of Gulf Insurance Federation, number 3<br>
                                         Registered Member of Emirates Insurance Association, number B6<br>
