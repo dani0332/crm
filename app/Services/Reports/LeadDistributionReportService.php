@@ -165,7 +165,7 @@ class LeadDistributionReportService extends BaseService
             ->leftJoin('user_team', 'user_team.user_id', '=', 'personal_quotes.advisor_id')
             ->leftJoin('teams', 'teams.id', '=', 'user_team.team_id')
             ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->whereNotIn('personal_quotes.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL])
             ->where('personal_quotes.quote_type_id', $lobId)
             ->where('teams.parent_team_id', $parentTeam->id)
             ->groupBy('teams.name')
