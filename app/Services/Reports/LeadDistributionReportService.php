@@ -176,7 +176,7 @@ class LeadDistributionReportService extends BaseService
             $personalQuoteQuery->where('personal_quotes.advisor_id', auth()->user()->id);
         } else {
             if (! $this->hasAdminPrivileges()) {
-                $userIds = $this->walkTree(auth()->user()->id);
+                $userIds = $this->walkTree(auth()->user()->id, $quoteType->value);
                 $personalQuoteQuery->whereIn('personal_quotes.advisor_id', $userIds);
             }
         }
