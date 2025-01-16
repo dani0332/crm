@@ -858,7 +858,7 @@
                     @foreach ($planIds as $planId)
                         <th>
                             <p class="text-center" style="font-size: 16px">
-                                AED {{ $plans[$planId]->actualPremium ?? '' }}
+                                AED {{ number_format($plans[$planId]->actualPremium ?? 0, 2) }}
                             </p>
                         </th>
                     @endforeach
@@ -870,7 +870,7 @@
                     @foreach ($planIds as $planId)
                         <th>
                             <p class="text-center" style="font-size: 16px">
-                                AED {{ $plans[$planId]->vat ?? '' }}
+                                AED {{ number_format($plans[$planId]->vat ?? 0, 2) }}
                             </p>
                         </th>
                     @endforeach
@@ -891,13 +891,14 @@
                                         $buyNowText = $buyNow;
                                     }
                                     $totalPrice = ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0);
+                                    $totalPriceFormatted = number_format($totalPrice, 2);
                                 @endphp
                                 <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">
                                     {{ $buyNowText }}
                                     <br>
                                     <small style="font-size: 10px; font-weight: normal; line-height: 1.2;">AED</small>
                                     <strong
-                                        style="font-size: 16px; font-weight: bold; line-height: 1.2;">{{ $totalPrice }}</strong>
+                                        style="font-size: 16px; font-weight: bold; line-height: 1.2;">{{ $totalPriceFormatted }}</strong>
                                 </a>
                             </p>
                         </th>
