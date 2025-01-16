@@ -229,7 +229,7 @@ class TravelAllocationService extends AllocationService
         $this->resetProps();
 
         // sync advisor id and assignment date with personal quote to reflect in reports immediately
-        $lead->syncLeadWithPersonalQuote();
+        //$lead->syncLeadWithPersonalQuote();
     }
 
     public function updateQuoteDetail($leadId)

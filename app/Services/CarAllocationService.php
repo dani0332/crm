@@ -684,7 +684,7 @@ class CarAllocationService extends AllocationService
         $this->resetProps();
 
         // sync advisor id and assignment date with personal quote to reflect in reports immediately
-        $lead->syncLeadWithPersonalQuote();
+        //$lead->syncLeadWithPersonalQuote();
 
         info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
     }
