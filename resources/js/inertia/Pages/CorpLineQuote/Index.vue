@@ -658,7 +658,8 @@ watch(() => {
               filters.payment_due_date ||
               filters.booking_date ||
               filters.company_name ||
-              filters.advisor_assigned_date
+              filters.advisor_assigned_date ||
+              (filters.policy_expiry_date && filters.policy_expiry_date_end)
                 ? []
                 : [isRequired]
             "
@@ -676,7 +677,8 @@ watch(() => {
               filters.payment_due_date ||
               filters.booking_date ||
               filters.company_name ||
-              filters.advisor_assigned_date
+              filters.advisor_assigned_date ||
+              (filters.policy_expiry_date && filters.policy_expiry_date_end)
                 ? []
                 : [isRequired]
             "
