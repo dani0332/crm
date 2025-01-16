@@ -175,20 +175,7 @@ const calculateTotalSum = (data, key) => {
 };
 
 const onLobChange = (e, isOnMounted = false) => {
-  if (
-    [
-      quoteTypeCodeEnum.Car,
-      quoteTypeCodeEnum.Health,
-      quoteTypeCodeEnum.CORPLINE,
-      quoteTypeCodeEnum.GroupMedical,
-    ].includes(filters.lob)
-  ) {
-    if (filters.lob == quoteTypeCodeEnum.Health) {
-      quoteSegments = quoteSegments.filter(
-        segment => segment.value !== 'sic-revival',
-      );
-    }
-  }
+  onSubmit(true, isOnMounted);
 };
 </script>
 
@@ -274,7 +261,11 @@ const onLobChange = (e, isOnMounted = false) => {
           placeholder="Select Segment"
           :options="
             quoteSegments?.filter(segment =>
-              filters.lob === 'Travel' ? segment.value !== 'sic-revival' : true,
+              [quoteTypeCodeEnum.Health, quoteTypeCodeEnum.Travel].includes(
+                filters.lob,
+              )
+                ? segment.value !== 'sic-revival'
+                : true,
             )
           "
           :single="true"
@@ -303,7 +294,15 @@ const onLobChange = (e, isOnMounted = false) => {
     <DataTable
       table-class-name="tablefixed"
       :loading="loaders.table"
-      :headers="tableHeader"
+      :headers="
+        tableHeader.filter(header => {
+          if (filters.lob !== quoteTypeCodeEnum.Car) {
+            return header.value !== 'tier_name';
+          } else {
+            return header.value !== 'team_name';
+          }
+        })
+      "
       :items="reportData.data || []"
       border-cell
       hide-rows-per-page
