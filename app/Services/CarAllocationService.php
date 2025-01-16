@@ -86,7 +86,10 @@ class CarAllocationService extends AllocationService
         } elseif ($lead->isSICFlowDisabled()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow disabled, continuing assignment");
             $continueAssignment = true;
-        } else {
+        } elseif ($lead->isRevivalRepliedOrPaid()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is a Revival lead, continuing assignment");
+            $continueAssignment = true;
+         } else {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} does not meet any criteria, skipping assignment");
         }
 
