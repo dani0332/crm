@@ -908,17 +908,42 @@
             </thead>
             <tbody>
                 @php $featCount = 0 @endphp
-                @foreach ($features as $feature)
+                @foreach ($features as $index => $feature)
                     {{-- heading row --}}
                     @if (@$feature['code'] == 'heading')
-                        <tr style="page-break-inside: avoid; page-break-before: auto;">
-                            <td colspan="{{ sizeof($planIds) + 1 }}" class="text-heading">
-                                <p class="text-left !font-bold">{{ $feature['title'] }}</p>
-                            </td>
-                            <td colspan="{{ sizeof($planIds) }}" class="heading-desc">
-                                {{ $feature['description'] ?? '' }}
-                            </td>
-                        </tr>
+                        {{-- Check if there is any data under this heading --}}
+                        @php
+                            $hasDataBelow = false;
+                            // Loop through the features below this heading until the next heading or spacer
+                            for ($i = $index + 1; $i < count($features); $i++) {
+                                // Stop checking if we encounter another heading or spacer
+                                if ($features[$i]['code'] == 'heading' || $features[$i]['code'] == 'spacer') {
+                                    break;
+                                }
+
+                                // Check if the feature has data for any plan
+                                foreach ($planIds as $planId) {
+                                    if (
+                                        isset($plans[$planId]->{$features[$i]['type']}->{$features[$i]['code']}->value)
+                                    ) {
+                                        $hasDataBelow = true;
+                                        break 2; // Exit both loops if data is found
+                                    }
+                                }
+                            }
+                        @endphp
+
+                        {{-- Only display the heading if there is data below it --}}
+                        @if ($hasDataBelow)
+                            <tr style="page-break-inside: avoid; page-break-before: auto;">
+                                <td colspan="{{ sizeof($planIds) + 1 }}" class="text-heading">
+                                    <p class="text-left !font-bold">{{ $feature['title'] }}</p>
+                                </td>
+                                <td colspan="{{ sizeof($planIds) }}" class="heading-desc">
+                                    {{ $feature['description'] ?? '' }}
+                                </td>
+                            </tr>
+                        @endif
                         @php continue; @endphp
                     @endif
 
@@ -1011,7 +1036,6 @@
                             href="{{ $websitURL . '/home-insurance/quote/' . $quote->uuid }}">View all quotes</a>
                     </td>
                 </tr>
-                {{-- <p style="margin-bottom: 50px"></p> --}}
             </tbody>
         </table>
         <div class="disclaimer-container"

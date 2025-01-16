@@ -674,9 +674,9 @@ const onCopyText = text => {
 };
 
 const onExportPlans = () => {
-  if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
     notification.error({
-      title: 'Please select 2 to 5 plans to download PDF.',
+      title: 'Please select 1 to 5 plans to download PDF.',
       position: 'top',
     });
     return;
