@@ -60,7 +60,7 @@ class LeadDistributionReportService extends BaseService
     {
         // Build query for Car LOB
         if ($lob === quoteTypeCode::Car) {
-            $carQuery = $this->getCarQuoteQuery($lob);
+            $carQuery = $this->getCarQuoteQuery();
 
             return $this->applyFiltersForCar($carQuery, $filters);
         }
@@ -71,30 +71,36 @@ class LeadDistributionReportService extends BaseService
         return $this->applyFilters($personalQuoteQuery, $filters);
     }
 
-    private function getCarQuoteQuery($lob)
+    private function getCarQuoteQuery()
     {
-        $parentTeam = $this->getProductByName($lob);
-        // Base query for car quotes with necessary joins
-        $carQuoteQuery = CarQuote::query()
-            ->select('teams.name AS team_name')
-            ->leftJoin('user_team', 'user_team.user_id', '=', 'car_quote_request.advisor_id')
-            ->leftJoin('teams', 'teams.id', '=', 'user_team.team_id')
+        $carQuoteQuery = CarQuote::leftJoin('tiers', 'tiers.id', '=', 'car_quote_request.tier_id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->select(DB::raw('(
+                (SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
+                + SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
+                + SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END))) AS received_leads,
+
+                SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) AS lead_created, COUNT(*) AS total_leads,
+
+                SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned,
+
+                SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned,
+
+                SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END) AS unassigned_leads'), 'tiers.name AS tier_name')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-            ->where('teams.parent_team_id', $parentTeam->id)
-            ->groupBy('teams.name')
-            ->orderBy('teams.name');
+            ->groupBy('tiers.name')
+            ->orderBy('tiers.name');
 
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $carQuoteQuery->where('car_quote_request.advisor_id', auth()->user()->id);
-        } elseif (! $this->hasAdminPrivileges()) {
-            $userIds = $this->getEligibleUserIds($lob);
-            $carQuoteQuery->whereIn('car_quote_request.advisor_id', $userIds);
+        } else {
+            if (! auth()->user()->hasRole(RolesEnum::LeadPool) && ! auth()->user()->hasRole(RolesEnum::MotorHead)) {
+                $userIds = $this->walkTree(auth()->user()->id);
+                $carQuoteQuery->whereIn('car_quote_request.advisor_id', $userIds);
+            }
         }
-
-        $this->addSelect($carQuoteQuery, 'car_quote_request');
 
         return $carQuoteQuery;
     }
@@ -108,24 +114,6 @@ class LeadDistributionReportService extends BaseService
             RolesEnum::Admin,
             RolesEnum::Engineering,
         ]);
-    }
-
-    // Extracts eligible user IDs based on their roles and manager hierarchy
-    private function getEligibleUserIds($lob)
-    {
-        $userIds = $this->walkTree(auth()->user()->id, $lob);
-
-        if (auth()->user()->isManagerORDeputy()) {
-            $userIds = UserManager::where('manager_id', auth()->user()->id)
-                ->get()
-                ->filter(function ($user) use ($userIds) {
-                    return in_array($user->user_id, $userIds);
-                })
-                ->pluck('user_id')
-                ->toArray();
-        }
-
-        return $userIds;
     }
 
     private function getBindings(string $table)
