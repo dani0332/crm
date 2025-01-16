@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
@@ -38,7 +39,6 @@ class LeadDistributionReportService extends BaseService
 
         $filters = $this->getFilters($request);
         $reportDataQuery = $this->buildQuery($lob, $filters);
-
         return $reportDataQuery->paginate(15)->withQueryString();
     }
 
@@ -238,7 +238,9 @@ class LeadDistributionReportService extends BaseService
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');
-
+        if($lob == quoteTypeCode::Health){
+            $query->whereIn('teams.name', [TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED, TeamNameEnum::EBP, TeamNameEnum::PCP]);
+        }
         $query->when(in_array($lob, [quoteTypeCode::Travel, quoteTypeCode::Health]), function ($q) use ($lob) {
             $segmentMap = [
                 quoteTypeCode::Travel => QuoteTypeId::Travel,
