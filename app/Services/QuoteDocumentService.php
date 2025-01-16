@@ -474,7 +474,7 @@ class QuoteDocumentService extends BaseService
         $encodedUrl = $this->encodeUrl($azureFilePath);
         $fileContent = file_get_contents($encodedUrl);
 
-        if (!$fileContent) {
+        if (! $fileContent) {
             Log::error("Unable to read file azureFilePath: $azureFilePath ");
             throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
         }
