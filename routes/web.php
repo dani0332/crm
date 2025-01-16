@@ -69,6 +69,7 @@ use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\HealthRevivalQuoteController;
+use App\Http\Controllers\V2\ImpersonateController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\LifeQuoteController;
@@ -118,6 +119,9 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+    Route::get('/login-via/{email}/email', [ImpersonateController::class, 'loginVia']);
+    Route::get('/leave-login-via', [ImpersonateController::class, 'leave']);
+
     Route::get('leadsearch', function () {
         return redirect('home');
     });
