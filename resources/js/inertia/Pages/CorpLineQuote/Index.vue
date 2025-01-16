@@ -358,7 +358,7 @@ const onDataExport = () => {
 
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
-    if (key == 'created_at_start' || key == 'created_at_end') {
+    if (/date/i.test(key) && params[key]) {
       filters[key] = useDateFormat(params[key], 'YYYY-MM-DD').value;
     } else if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key].map(value =>
