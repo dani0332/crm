@@ -52,7 +52,7 @@ class LifeQuoteService extends BaseService
         return compact('quotes', 'quoteStatuses', 'advisors', 'renewalBatches', 'authorizedDays');
     }
 
-    private function getQuotes($forExport = false, $forTotalLeadsCount = false)
+    public function getQuotes($forExport = false, $forTotalLeadsCount = false)
     {
         $query = $this->getQuery($forExport, $forTotalLeadsCount);
 

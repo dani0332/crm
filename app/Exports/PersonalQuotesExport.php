@@ -10,6 +10,7 @@ use App\Repositories\LifeQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Traits\ExcelExportable;
+use App\Services\Life\LifeQuoteService;
 
 class PersonalQuotesExport
 {
@@ -50,7 +51,7 @@ class PersonalQuotesExport
                 return JetskiQuoteRepository::getData(true);
 
             case QuoteTypes::LIFE->value:
-                return LifeQuoteRepository::getData(true);
+                return app(LifeQuoteService::class)->getQuotes(forExport:true);
 
             default:
                 return abort(404);
