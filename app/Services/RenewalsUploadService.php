@@ -1029,7 +1029,6 @@ class RenewalsUploadService
             }
 
             $this->updateCustomer($quote, $customerData);
-
             $quoteData = $this->getNonEmptyValues([
                 'first_name' => $customerData['first_name'],
                 'last_name' => $customerData['last_name'],
@@ -1055,6 +1054,8 @@ class RenewalsUploadService
                 'previous_advisor_id' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
                 'has_ncd_supporting_documents' => $data['nc_letter'],
             ]);
+
+            $quoteData['is_gcc_standard'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
 
             /*
              * API refresh plans when quote_updated_at have latest date
