@@ -1954,7 +1954,7 @@ const onAddUpdate = () => {
     <div
       v-if="
         (!$page.props.can.isAdvisor ||
-        hasRole(rolesEnum.SuperManagerLeadAllocation) && !can(permissionsEnum.VIEW_ALL_LEADS))
+        hasRole(rolesEnum.SuperManagerLeadAllocation)) && !can(permissionsEnum.VIEW_ALL_LEADS)
       "
       class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
     >
