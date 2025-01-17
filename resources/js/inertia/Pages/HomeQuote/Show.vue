@@ -853,6 +853,20 @@ const accommodationTypeText = computed(() => {
   return matchedItem ? matchedItem.text : '';
 });
 
+const ownerOccupancyText = computed(() => {
+  const id = page.props?.quote?.home_quote?.accommodation_type_id;
+
+  if (!id || !page.props?.lookUpData?.ownerOccupancies?.length) {
+    return '';
+  }
+
+  const matchedItem = page.props.lookUpData.ownerOccupancies.find(
+    item => item.id === id,
+  );
+
+  return matchedItem ? matchedItem.text : '';
+});
+
 const confirmSendEmail = () => {
   console.log('confirmSendEmail');
   processingOCBEmailNB.value = true;
@@ -1202,6 +1216,10 @@ const viewPlanDetailsLoader = ref({});
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF PROPERTY</dt>
                 <dd>{{ accommodationTypeText }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TYPE OF OWNER'S OCCUPANCY</dt>
+                <dd>{{ ownerOccupancyText }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS CONTENTS</dt>
