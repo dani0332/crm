@@ -136,7 +136,7 @@ class TravelAllocationService extends AllocationService
 
     public function fetchAvailableAdvisor($isReassignmentJob = false, $teamId = null, $quoteUUID = null, ?TravelQuote $lead = null, ?ProcessTrackerService $tracker = null)
     {
-        Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$quoteUUID}");
+        Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$lead->uuid}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -160,7 +160,7 @@ class TravelAllocationService extends AllocationService
             $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $lead);
 
             if ($eligibleUser) {
-                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$quoteUUID}");
+                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$lead->uuid}");
 
                 $user = User::find($eligibleUser->user_id);
 
