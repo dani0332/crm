@@ -15,7 +15,6 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\ApplicationStorageService;
-use App\Services\CarAllocationService;
 use Illuminate\Console\Command;
 
 class QuoteAllocation extends Command
