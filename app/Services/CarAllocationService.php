@@ -78,7 +78,7 @@ class CarAllocationService extends AllocationService
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has exempted source {$lead->source}, skipping assignment");
         } elseif ($lead->isRenewalTierEmailSent()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has renewal tier email sent, skipping assignment");
-        } elseif ($lead->isRenewalUpload()) {
+        } elseif ($lead->isRenewalUpload() && $lead->isSICFlowDisabled()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is Renwal Upload, skipping assignment");
         } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment");
