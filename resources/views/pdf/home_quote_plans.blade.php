@@ -214,22 +214,19 @@
 
         .alfred {
             text-align: right;
-            padding-right: 10px;
-            padding-bottom: 10px;
-            vertical-align: middle;
+            padding: 0;
+            width: 100px;
+            min-width: 100px;
+            height: 100px;
             border-left: none;
             border-top: none;
-            width: 200px;
-            min-width: 200px;
-            height: 100px;
         }
 
         .alfred img {
             width: 100%;
-            max-width: 200px;
-            height: auto;
-            display: inline-block;
-            vertical-align: middle;
+            max-width: 100px;
+            height: 100px;
+            display: block;
         }
 
         .quote-info {
