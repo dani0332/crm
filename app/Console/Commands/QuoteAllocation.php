@@ -115,7 +115,6 @@ class QuoteAllocation extends Command
             })
             ->take($chunkSize);
 
-        dd($leads->toRawSql());
         info('leads fetch query is : '.$leads->toRawSql());
 
         // Get the teamId once before the loop
