@@ -3,8 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentTypeCode;
-use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
@@ -14,6 +12,7 @@ use App\Rules\ValidateBase64;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
+// This validation belongs to IMCRM Side document upload
 class QuotesDocumentRequest extends FormRequest
 {
     use GenericQueriesAllLobs;
@@ -99,8 +98,6 @@ class QuotesDocumentRequest extends FormRequest
             $this->validateMemberDetails($validator, $quote);
         }
 
-        $this->validatePaymentStatus($validator, $quote);
-
         if (! empty($quote)) {
             $uploadedDocuments = $quote->documents->where('document_type_code', request()->document_type_code)->count();
         }
@@ -125,27 +122,6 @@ class QuotesDocumentRequest extends FormRequest
         $memberExists = $quote->customerMembers()->where('id', request('member_detail_id'))->exists();
         if (! $memberExists) {
             $validator->errors()->add('member_detail_id', 'Invalid member detail id provided');
-        }
-    }
-
-    protected function validatePaymentStatus($validator, $quote)
-    {
-        $quote_source = data_get($quote, 'source', '');
-
-        if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
-            if (isset($quote->payment_status_id) &&
-                ! in_array($quote->payment_status_id, [
-                    PaymentStatusEnum::AUTHORISED,
-                    PaymentStatusEnum::CAPTURED,
-                    PaymentStatusEnum::PARTIAL_CAPTURED,
-                ])
-            ) {
-                $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized, captured or partial captured.');
-            }
-        } elseif (request()->quoteType != strtolower(quoteTypeCode::Travel)) {
-            if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
-                $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
-            }
         }
     }
 }
