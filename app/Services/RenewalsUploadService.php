@@ -360,9 +360,7 @@ class RenewalsUploadService
      */
     public function getPlans($id)
     {
-        info('FetchPlans FN: getPlans from ken api for id: '.$id);
-
-        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true);
+        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true, true);
 
         if (isset($quotePlans->quotes)) {
             return true;
@@ -455,7 +453,6 @@ class RenewalsUploadService
      */
     public function fetchQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
-        info('FetchPlans FN: fetchRenewalPlans individual lead plan process started for policy_number: '.$renewalQuoteProcess->policy_number);
         $leadData = (object) $renewalQuoteProcess->data;
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
@@ -470,7 +467,6 @@ class RenewalsUploadService
             }
 
             if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
-                info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
                 $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
 
                 if (is_int($planResponse) && $planResponse == 200) {
@@ -489,9 +485,7 @@ class RenewalsUploadService
                 }
             }
 
-            info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
             $plansResponse = $this->getPlans($quote->uuid);
-            info('FetchPlans FN: getPlans from ken api response completed.');
             if ($plansResponse === true) {
                 info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
                 //update status to plans fetched
@@ -736,7 +730,6 @@ class RenewalsUploadService
         $renewalUploadLead = $renewalQuoteProcess->renewalUploadLead;
 
         $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'].' EndDate: '.$data['end_date'];
-        info($logPrefix.' Quote creation started');
 
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType, $renewalUploadLead) {
             $detailData = [];
@@ -1248,8 +1241,6 @@ class RenewalsUploadService
             }
         }
 
-        info($logPrefix.' car plan detail with addons fetched');
-
         $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
 
         $addons = [
@@ -1285,8 +1276,6 @@ class RenewalsUploadService
         }
 
         $planData['plans'][] = $plan;
-
-        info($logPrefix.' setup create plan data is completed.');
 
         info($logPrefix.' PlanData: '.json_encode($planData));
 
@@ -1328,7 +1317,7 @@ class RenewalsUploadService
                 ]);
                 info('fn: renewalBatchEmailProcess renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
 
-                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true) : [];
+                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, true) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 $emailTemplateId = $this->getEmailTemplateId($carQuote, $quotePlansCount);
 
