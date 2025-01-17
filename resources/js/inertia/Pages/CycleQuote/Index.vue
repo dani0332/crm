@@ -700,7 +700,7 @@ const validateDateRange = () => {
     </x-form>
 
     <Transition name="fade">
-      <div v-if="quotesSelected?.length > 0" class="mb-4">
+      <div v-if="quotesSelected?.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)" class="mb-4">
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"

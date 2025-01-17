@@ -683,7 +683,7 @@ const formatDate = dateString =>
       </div>
     </x-form>
 
-    <section v-if="quotesSelected.length > 0" class="mb-4">
+    <section v-if="quotesSelected.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)" class="mb-4">
       <div
         class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
         v-if="isManualAllocationAllowed == true"
