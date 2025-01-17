@@ -97,18 +97,20 @@ class QuoteAllocation extends Command
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
-            ->where(function ($q) {
-                $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-            })
-            ->orWhere->leadAllocationFailed()
-            ->orWhere(function ($query) {
-                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                    ->where(function ($sq) {
-                        $sq->where(function ($q) {
-                            $q->sicFlowDisabled();
-                        })->orWhere(function ($query) {
-                            $query->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                        });
+            ->where(function ($query) {
+                $query->where(function ($q) {
+                    $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                })
+                    ->orWhere->leadAllocationFailed()
+                    ->orWhere(function ($query) {
+                        $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                            ->where(function ($sq) {
+                                $sq->where(function ($q) {
+                                    $q->sicFlowDisabled();
+                                })->orWhere(function ($query) {
+                                    $query->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                                });
+                            });
                     });
             })
             ->take($chunkSize);
