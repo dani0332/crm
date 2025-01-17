@@ -1024,13 +1024,13 @@ class CentralService extends BaseService
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => 'tap',
         ];
 
-        $voidPaymentURL = '/payment/'.$paymentGateways[$payment->payment_gateway_id].'/cancel';
+        $voidPaymentURL = '/payment/'.$paymentGateways[$payment->payment_gateway_id].'/void';
         $payload = [
             'quoteUID' => $request->quote_uuid,
             'quoteTypeId' => $request->quote_type_id,
             'payments' => [
                 [
-                    'codeRefid' => $request->payment_code,
+                    'codeRef' => $request->payment_code,
                 ],
             ],
         ];
