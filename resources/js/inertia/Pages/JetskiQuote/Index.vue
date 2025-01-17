@@ -534,7 +534,12 @@ watch(
     >
       <template #item-uuid="{ code, uuid }">
         <Link
-          v-if="canAny([permissionsEnum.JetskiQuotesShow, permissionsEnum.VIEW_ALL_LEADS])"
+          v-if="
+            canAny([
+              permissionsEnum.JetskiQuotesShow,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="route('jetski-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >

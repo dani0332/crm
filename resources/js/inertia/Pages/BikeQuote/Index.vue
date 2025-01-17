@@ -590,7 +590,12 @@ watch(
       <template #item-uuid="{ code, uuid }">
         <!-- :href="`/personal-quotes/bike/${uuid}`" -->
         <Link
-          v-if="canAny([permissionsEnum.BikeQuotesShow, permissionsEnum.VIEW_ALL_LEADS])"
+          v-if="
+            canAny([
+              permissionsEnum.BikeQuotesShow,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           class="text-primary-500 hover:underline"
           :href="route('bike-quotes-show', uuid)"
         >

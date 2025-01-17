@@ -401,7 +401,11 @@ const allowStatusUpdate = computed(() => {
       >
         <Link
           v-if="
-            quoteDetails?.insly_id && canAny([permissionsEnum.VIEW_LEGACY_DETAILS, permissionsEnum.VIEW_ALL_LEADS])
+            quoteDetails?.insly_id &&
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="`/legacy-policy/${quoteDetails?.insly_id}`"
           preserve-scroll
@@ -414,7 +418,10 @@ const allowStatusUpdate = computed(() => {
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
             quote.previous_quote_policy_number != null &&
-            canAny([permissionsEnum.VIEW_LEGACY_DETAILS, permissionsEnum.VIEW_ALL_LEADS])
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(

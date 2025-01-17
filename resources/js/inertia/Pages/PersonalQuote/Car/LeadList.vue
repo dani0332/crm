@@ -992,7 +992,10 @@ const onExport = (url, isLoading = false) => {
     </x-form>
 
     <Transition name="fade" v-if="!hasRole(rolesEnum.CarAdvisor)">
-      <div v-if="quotesSelected.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)" class="mb-4">
+      <div
+        v-if="quotesSelected.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)"
+        class="mb-4"
+      >
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"

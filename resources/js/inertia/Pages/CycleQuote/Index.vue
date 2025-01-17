@@ -700,7 +700,12 @@ const validateDateRange = () => {
     </x-form>
 
     <Transition name="fade">
-      <div v-if="quotesSelected?.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)" class="mb-4">
+      <div
+        v-if="
+          quotesSelected?.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)
+        "
+        class="mb-4"
+      >
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
@@ -722,7 +727,12 @@ const validateDateRange = () => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
-          v-if="canAny([permissionsEnum.CycleQuotesShow, permissionsEnum.VIEW_ALL_LEADS])"
+          v-if="
+            canAny([
+              permissionsEnum.CycleQuotesShow,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="route('cycle-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >

@@ -1853,7 +1853,13 @@ const onAddUpdate = () => {
 
       <template #default v-if="readOnlyMode.isDisable === true">
         <Link
-          v-if="quote?.insly_id && canAny([permissionsEnum.VIEW_LEGACY_DETAILS, permissionsEnum.VIEW_ALL_LEADS])"
+          v-if="
+            quote?.insly_id &&
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="`/legacy-policy/${quote.insly_id}`"
           preserve-scroll
         >
@@ -1954,7 +1960,8 @@ const onAddUpdate = () => {
     <div
       v-if="
         (!$page.props.can.isAdvisor ||
-        hasRole(rolesEnum.SuperManagerLeadAllocation)) && !can(permissionsEnum.VIEW_ALL_LEADS)
+          hasRole(rolesEnum.SuperManagerLeadAllocation)) &&
+        !can(permissionsEnum.VIEW_ALL_LEADS)
       "
       class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
     >

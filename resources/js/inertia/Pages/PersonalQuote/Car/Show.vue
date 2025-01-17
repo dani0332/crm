@@ -1650,7 +1650,13 @@ const allowStatusUpdate = computed(() => {
       </template>
       <template #default>
         <Link
-          v-if="record?.insly_id && canAny([permissionEnum.VIEW_LEGACY_DETAILS, permissionEnum.VIEW_ALL_LEADS])"
+          v-if="
+            record?.insly_id &&
+            canAny([
+              permissionEnum.VIEW_LEGACY_DETAILS,
+              permissionEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="`/legacy-policy/${record.insly_id}`"
           preserve-scroll
         >

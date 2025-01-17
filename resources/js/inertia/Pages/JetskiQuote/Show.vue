@@ -96,7 +96,12 @@ const dateFormat = date =>
               placement="bottom"
             >
               <LeadEditBtnReuseTemplate
-                v-if="canAny([permissionsEnum.JetskiQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
+                v-if="
+                  canAny([
+                    permissionsEnum.JetskiQuotesEdit,
+                    permissionsEnum.VIEW_ALL_LEADS,
+                  ])
+                "
                 :isDisabled="true"
               />
               <template #tooltip
@@ -107,7 +112,12 @@ const dateFormat = date =>
             </x-tooltip>
             <template v-else>
               <LeadEditBtnReuseTemplate
-                v-if="canAny([permissionsEnum.JetskiQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
+                v-if="
+                  canAny([
+                    permissionsEnum.JetskiQuotesEdit,
+                    permissionsEnum.VIEW_ALL_LEADS,
+                  ])
+                "
               />
             </template>
             <Link

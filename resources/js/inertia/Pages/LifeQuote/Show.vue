@@ -529,7 +529,10 @@ const onAddUpdate = () => {
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            canAny([permissionsEnum.VIEW_LEGACY_DETAILS, permissionsEnum.VIEW_ALL_LEADS])
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -575,7 +578,12 @@ const onAddUpdate = () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="canAny([permissionsEnum.LifeQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
+            v-if="
+              canAny([
+                permissionsEnum.LifeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -586,7 +594,12 @@ const onAddUpdate = () => {
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="canAny([permissionsEnum.LifeQuotesEdit, permissionsEnum.VIEW_ALL_LEADS])"
+            v-if="
+              canAny([
+                permissionsEnum.LifeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
           />
         </template>
       </div>
