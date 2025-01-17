@@ -7,6 +7,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -230,6 +231,7 @@ class YachtQuoteController extends Controller
             'payments' => $quote?->payments,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
         ]);
     }
 

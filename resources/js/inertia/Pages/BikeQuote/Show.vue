@@ -57,6 +57,7 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
 });
 
 const assumptionState = reactive({
@@ -1288,6 +1289,7 @@ const fetchUpdatedQuote = async () => {
       "
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
+      :paymentGatewayEnum="paymentGatewayEnum"
     />
 
     <QuotePayments

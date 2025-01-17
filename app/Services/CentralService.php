@@ -1009,7 +1009,7 @@ class CentralService extends BaseService
         }
     }
 
-    public function voidPayment($request)
+    public function voidPayment($request): array
     {
         $payment = Payment::where('code', $request->payment_code)->first();
         if (! $payment) {
@@ -1024,7 +1024,13 @@ class CentralService extends BaseService
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => 'tap',
         ];
 
-        $voidPaymentURL = '/payment/'.$paymentGateways[$payment->payment_gateway_id].'/void';
+        if ($payment->payment_gateway_id !== PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP) {
+            info('fn:voidPayment - Payment gateway not supported - Payment Gateway: '.$paymentGateways[$payment->payment_gateway_id].' Payment Code:'.$request->payment_code);
+
+            return ['status' => false, 'message' => 'Payment gateway not supported'];
+        }
+
+        $voidPaymentURL = '/payment/'.$paymentGateways[$payment->payment_gateway_id].'/cancel';
         $payload = [
             'quoteUID' => $request->quote_uuid,
             'quoteTypeId' => $request->quote_type_id,
@@ -1040,6 +1046,10 @@ class CentralService extends BaseService
         $response = Marshall::request($voidPaymentURL, 'post', $payload);
         info('fn:voidPayment - Payment Code:'.$request->payment_code.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment response:'.json_encode($response));
 
-        return ['status' => true, 'message' => 'void payment processed'];
+        if (! empty($response)) {
+            return ['status' => false, 'message' => 'Something went wrong'];
+        }
+
+        return ['status' => true, 'message' => 'Void payment processed'];
     }
 }

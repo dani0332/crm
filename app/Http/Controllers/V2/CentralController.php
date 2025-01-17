@@ -617,7 +617,7 @@ class CentralController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
-    public function voidPayment(Request $request)
+    public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
     {
         $response = app(CentralService::class)->voidPayment($request);
 

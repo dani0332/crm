@@ -43,6 +43,7 @@ const props = defineProps({
   isCommVatNotAppEnabled: Boolean,
   isSentOrBooked: Boolean,
   disableMainBtn: String,
+  paymentGatewayEnum: Array,
 });
 
 const page = usePage();
@@ -626,6 +627,7 @@ const isLegacyPolicy = computed(() => {
       :insuranceProviders="props.insuranceProviders"
       :quoteDocuments="props.quoteDocuments"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
     />
 
     <LazyPolicyDetails

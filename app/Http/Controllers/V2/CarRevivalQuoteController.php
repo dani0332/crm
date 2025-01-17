@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
@@ -160,7 +161,7 @@ class CarRevivalQuoteController extends Controller
             'storageUrl' => $storageUrl,
             'paymentStatusEnum' => $paymentStatusEnum,
             'paymentTooltipEnum' => $paymentTooltipEnum,
-
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
         ]);
     }
 

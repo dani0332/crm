@@ -42,6 +42,7 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
 });
 
 const page = usePage();
@@ -1303,6 +1304,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quoteSubType="quoteTypeCodeEnum.CORPLINE"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
     />
 
     <PaymentTable

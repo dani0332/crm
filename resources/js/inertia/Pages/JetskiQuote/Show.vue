@@ -28,6 +28,7 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
 });
 
 const page = usePage();

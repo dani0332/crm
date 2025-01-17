@@ -96,6 +96,7 @@ defineProps({
   lockLeadSectionsDetails: Object,
   customerAddressData: Object,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -3656,6 +3657,7 @@ const allowStatusUpdate = computed(() => {
       :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
     />
     <PaymentTable
       v-else

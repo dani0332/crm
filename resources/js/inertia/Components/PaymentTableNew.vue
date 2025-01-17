@@ -68,6 +68,10 @@ const props = defineProps({
     type: Array,
     default: [],
   },
+  paymentGatewayEnum: {
+      type: Array,
+      default: []
+  }
 });
 
 // All reactive properties are defined here
@@ -3300,6 +3304,14 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
 // voidPaymentModal
 const voidPaymentModel = ref(false);
 const voidPaymentProcess = ref(false);
+const isVoidPaymentEnabled = computed(() => {
+  return (
+    can(permissionEnum.PAYMENTS_VOID) &&
+    props.payments[0].payment_status_id === page.props.paymentStatusEnum.AUTHORISED &&
+    props.payments[0].payment_gateway_id === props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+  );
+});
+
 const voidPayment = () => {
     voidPaymentProcess.value = true;
     let data = {
@@ -3753,7 +3765,7 @@ const voidPayment = () => {
                               Approve
                             </x-button>
                           </template>
-                          <template v-if="can(permissionEnum.PAYMENTS_VOID) && item.payment_status_id === paymentStatusEnum.AUTHORISED">
+                          <template v-if="isVoidPaymentEnabled">
                               <x-button
                                   size="xs"
                                   color="orange"

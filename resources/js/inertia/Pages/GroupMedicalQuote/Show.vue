@@ -36,6 +36,7 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
 });
 
 const page = usePage();
@@ -1119,6 +1120,7 @@ const allowStatusUpdate = computed(() => {
       quoteSubType="Group Medical"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
     />
 
     <PolicyDetail
