@@ -92,10 +92,10 @@
         }
 
         table {
-            min-width: 100%;
+            min-width: 1150px;
             text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 100%;
+            max-width: 1200px;
             border-spacing: 0;
             border-radius: 10px;
             width: 100%;
@@ -200,12 +200,12 @@
         .provider {
             border: 1px solid #bfbfbf;
             font-size: 15px;
-            line-height: 20px;
+            line-height: 28px;
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
-            max-height: 40px;
-            height: 40px;
+            max-height: 50px;
+            height: 50px;
         }
 
         .spacer {
@@ -256,7 +256,7 @@
         .btn-all-quotes {
             background-color: #1d83bc;
             color: #ffffff;
-            padding: 8px;
+            padding: 10px;
             margin-top: 10px;
             text-align: center;
             text-decoration: none;
@@ -270,7 +270,7 @@
         .btn-buy {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 4px 12px;
+            padding: 4px 20px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -302,7 +302,7 @@
 
         .text-heading {
             color: #ffffff;
-            height: 40px;
+            height: 50px;
             display: flex;
             align-items: center;
             font-size: 20px;
@@ -320,7 +320,7 @@
         }
 
         .provider-logo {
-            width: 80px;
+            width: 100px;
         }
 
         .no-border {
@@ -449,10 +449,10 @@
 
         table td,
         table th {
-            max-width: 160px;
-            width: 160px;
+            max-width: 208px;
+            width: 208px;
             height: auto;
-            padding: 4px 8px;
+            padding: 4px 12px;
             text-align: center;
             vertical-align: middle;
             word-wrap: break-word;
@@ -460,7 +460,7 @@
         }
 
         main {
-            padding: 20px;
+            padding: 40px;
         }
 
         .head-caption {
@@ -528,18 +528,22 @@
         } else {
             $selectedPlanIds = [];
         }
+        //  'selectedPlanIds','hasAdultAndSeniorMember'
 
         foreach ($quotePlans->quotes->plans as &$quotePlan) {
+            // Skip if the plan ID is not in the selected $planIds
             if (!isset($quotePlan->id) || !in_array($quotePlan->id, $planIds)) {
                 continue;
             }
 
+            // Add the plan to the $plans array
             $plans[$quotePlan->id] = $quotePlan;
             $quotePlan->total = 0;
             if (!isset($quotePlan->vat)) {
                 $quotePlan->vat = 0;
             }
 
+            // Loop over benefits to safely decode
             foreach ($benefits as $benefit) {
                 $quotePlan->{$benefit} = [];
                 if (isset($quotePlan->benefits->{$benefit})) {
@@ -551,6 +555,7 @@
                 }
             }
 
+            // Check if 'exclusion', 'inclusion', 'content', 'personalBelonging', and 'additionalCover' exist before decoding
             $quotePlan->exclusion = isset($quotePlan->benefits->exclusion)
                 ? json_decode(
                     collect($quotePlan->benefits->exclusion)
@@ -601,16 +606,21 @@
 
             $discountPremium = $vat = [];
 
+            // Discount Premium and VAT new Implementation
             $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
 
             foreach ($quotePlan->benefits as &$benefit) {
                 $benefit = (object) $benefit;
+                // Set default value to excluded
                 $benefit->value = 'Excluded';
+
+                // Set default values
                 $benefit->price = 0;
                 $benefit->vat = 0;
             }
         }
 
+        // Filter $plans to only include selected plans
         $plans = array_filter(
             $plans,
             function ($planId) use ($planIds) {
@@ -619,6 +629,7 @@
             ARRAY_FILTER_USE_KEY,
         );
 
+        // Sort the filtered plans by 'isRenewal' in descending order and update $planIds
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
 
         $features = [
@@ -894,38 +905,23 @@
                         <th>
                             <p class="text-center" style="text-align: center; margin: 0; padding: 0;">
                                 @php
-                                    if (isset($plans[$planId])) {
-                                        if (isset($selectedPlanIds) && in_array($planId, $selectedPlanIds)) {
-                                            $buyNowfullLink = '#';
-                                            $buyNowText = 'Selected';
-                                        } else {
-                                            $buyNowfullLink = $buyNowLink . $planId;
-                                            $buyNowText = $buyNow;
-                                        }
-
-                                        $totalPrice =
-                                            ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0);
-                                        $totalPriceFormatted = number_format($totalPrice, 2);
-
-                                        if ($plans[$planId]->actualPremium) {
-                                            echo '<a target="_blank" class="btn-buy" href="' .
-                                                $buyNowfullLink .
-                                                '">' .
-                                                $buyNowText .
-                                                '<br>' .
-                                                '<small style="font-size: 10px; font-weight: normal; line-height: 1.2;">AED</small>' .
-                                                '<strong style="font-size: 16px; font-weight: bold; line-height: 1.2;">' .
-                                                $totalPriceFormatted .
-                                                '</strong>' .
-                                                '</a>';
-                                        } else {
-                                            echo 'N/A';
-                                        }
+                                    if (in_array($planId, $selectedPlanIds)) {
+                                        $buyNowfullLink = '#';
+                                        $buyNowText = 'Selected';
                                     } else {
-                                        // Handle the case where $plans[$planId] does not exist
-                                        echo 'N/A';
+                                        $buyNowfullLink = $buyNowLink . $planId;
+                                        $buyNowText = $buyNow;
                                     }
+                                    $totalPrice = ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0);
+                                    $totalPriceFormatted = number_format($totalPrice, 2);
                                 @endphp
+                                <a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}">
+                                    {{ $buyNowText }}
+                                    <br>
+                                    <small style="font-size: 10px; font-weight: normal; line-height: 1.2;">AED</small>
+                                    <strong
+                                        style="font-size: 16px; font-weight: bold; line-height: 1.2;">{{ $totalPriceFormatted }}</strong>
+                                </a>
                             </p>
                         </th>
                     @endforeach
@@ -939,25 +935,31 @@
             <tbody>
                 @php $featCount = 0 @endphp
                 @foreach ($features as $index => $feature)
+                    {{-- heading row --}}
                     @if (@$feature['code'] == 'heading')
+                        {{-- Check if there is any data under this heading --}}
                         @php
                             $hasDataBelow = false;
+                            // Loop through the features below this heading until the next heading or spacer
                             for ($i = $index + 1; $i < count($features); $i++) {
+                                // Stop checking if we encounter another heading or spacer
                                 if ($features[$i]['code'] == 'heading' || $features[$i]['code'] == 'spacer') {
                                     break;
                                 }
 
+                                // Check if the feature has data for any plan
                                 foreach ($planIds as $planId) {
                                     if (
                                         isset($plans[$planId]->{$features[$i]['type']}->{$features[$i]['code']}->value)
                                     ) {
                                         $hasDataBelow = true;
-                                        break 2;
+                                        break 2; // Exit both loops if data is found
                                     }
                                 }
                             }
                         @endphp
 
+                        {{-- Only display the heading if there is data below it --}}
                         @if ($hasDataBelow)
                             <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
                                 <td colspan="{{ sizeof($planIds) + 1 }}">
@@ -969,6 +971,7 @@
                         @php continue; @endphp
                     @endif
 
+                    {{-- spacer row --}}
                     @if (@$feature['code'] == 'spacer')
                         <tr style="page-break-inside: avoid;">
                             <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
@@ -978,6 +981,7 @@
                         @php continue; @endphp
                     @endif
 
+                    {{-- feature rows --}}
                     <?php $planIterate = 0; ?>
                     <tr class="<?php echo 'row_' . $featCount; ?> {{ $feature['row_class'] ?? '' }}"
                         style="page-break-inside: avoid;">
