@@ -26,6 +26,8 @@ class ImpersonateController extends Controller
             abort_if($user->email === Auth::user()->email, 403, 'You cannot impersonate yourself');
 
             Auth::user()->impersonate($user);
+            $user->last_login = now();
+            $user->save();
         }
 
         return redirect('/home');
