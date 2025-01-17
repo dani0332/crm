@@ -48,6 +48,7 @@ class RolePermissionSeeder extends Seeder
         // }
         // $this->addReceiveNotificationsPermission();
         // $this->searchModulePermissions();
+        $this->paymentsVoid();
     }
 
     private function addReceiveNotificationsPermission()
@@ -91,6 +92,15 @@ class RolePermissionSeeder extends Seeder
                     $role->givePermissionTo($searchAcrossLOBsPermission);
                 }
             }
+        }
+    }
+
+    private function paymentsVoid(): void
+    {
+        $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_VOID, 'web');
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+        if ($role && ! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
         }
     }
 }

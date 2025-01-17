@@ -3189,7 +3189,7 @@ watch(
   },
 );
 
-// verifiy if verify option is enabled
+// verify if verify option is enabled
 const isVerifiedEnabled = computed(() => {
   if (
     paymentMethodsModels.value[splitPaymentNo.value] === 'CC' ||
@@ -3263,7 +3263,7 @@ const transactionActionText = computed(() => {
   }
 });
 
-// verifiy if split payment deletion is enabled
+// verify if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
   const isNotUpfront =
     paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
@@ -3296,6 +3296,50 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
     splitPayment.sr_no > 1
   );
 };
+
+// voidPaymentModal
+const voidPaymentModel = ref(false);
+const voidPaymentProcess = ref(false);
+const voidPayment = () => {
+    voidPaymentProcess.value = true;
+    let data = {
+        quote_type_id: page.props.quoteTypeId,
+        quote_id: props.quoteRequest.id,
+        quote_uuid: props.quoteRequest.uuid,
+        payment_id: props.payments[0].id,
+        payment_code: props.payments[0].code,
+    };
+
+    axios
+    .post(`/payments/${props.quoteType}/void-payment`, data)
+    .then(res => {
+        if (res.status === false) {
+            notification.error({
+                title: res.message,
+                position: 'top',
+            });
+            voidPaymentProcess.value = false;
+            return;
+        }
+
+        voidPaymentProcess.value = false;
+        voidPaymentModel.value = false;
+        notification.success('Processed');
+    })
+    .catch(err => {
+        console.log(err);
+        voidPaymentProcess.value = false;
+        if (err.response.data) {
+            notification.error({
+                title: err.response.data[0],
+                position: 'top',
+            });
+        } else {
+            notification.error('Void authorized payment process failed');
+        }
+    });
+}
+
 </script>
 
 <template>
@@ -3708,6 +3752,16 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                             >
                               Approve
                             </x-button>
+                          </template>
+                          <template v-if="can(permissionEnum.PAYMENTS_VOID) && item.payment_status_id === paymentStatusEnum.AUTHORISED">
+                              <x-button
+                                  size="xs"
+                                  color="orange"
+                                  outlined
+                                  @click="voidPaymentModel = true"
+                              >
+                                  Void
+                              </x-button>
                           </template>
                         </div>
                       </td>
@@ -6185,6 +6239,30 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
             </x-form>
           </div>
         </div>
+        <x-modal
+            v-model="voidPaymentModel"
+            size="lg"
+            title="Void Authorized Payment"
+            show-close
+            backdrop
+        >
+            <x-form :auto-focus="false">
+                <div class="text-lg text-center">
+                    <span> Are you sure to void this payment?</span>
+                </div>
+                <div class="mt-2 text-center">
+                    <x-button
+                        size="sm"
+                        color="orange"
+                        class="mt-4 text-center"
+                        :loading="voidPaymentProcess"
+                        @click="voidPayment"
+                    >
+                        <span>Confirm</span>
+                    </x-button>
+                </div>
+            </x-form>
+        </x-modal>
       </template>
     </Collapsible>
   </div>

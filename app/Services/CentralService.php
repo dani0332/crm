@@ -10,6 +10,7 @@ use App\Enums\HealthPlanTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
@@ -22,6 +23,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
+use App\Facades\Marshall;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
@@ -1005,5 +1007,39 @@ class CentralService extends BaseService
                 info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
         }
+    }
+
+    public function voidPayment($request)
+    {
+        $payment = Payment::where('code', $request->payment_code)->first();
+        if (! $payment) {
+            info('fn:voidPayment - Payment not found. - Payment Code:'.$request->payment_code);
+
+            return ['status' => false, 'message' => 'Payment not found'];
+        }
+
+        info('fn:voidPayment - Payment found. - Payment Code:'.$request->payment_code);
+        $paymentGateways = [
+            PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT => 'checkout',
+            PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => 'tap',
+        ];
+
+        $voidPaymentURL = '/payment/'.$paymentGateways[$payment->payment_gateway_id].'/cancel';
+        $payload = [
+            'quoteUID' => $request->quote_uuid,
+            'quoteTypeId' => $request->quote_type_id,
+            'payments' => [
+                [
+                    'codeRefid' => $request->payment_code,
+                ],
+            ],
+        ];
+
+        info('fn:voidPayment - Payment Code:'.$request->payment_code.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment payload:'.json_encode($payload));
+
+        $response = Marshall::request($voidPaymentURL, 'post', $payload);
+        info('fn:voidPayment - Payment Code:'.$request->payment_code.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment response:'.json_encode($response));
+
+        return ['status' => true, 'message' => 'void payment processed'];
     }
 }
