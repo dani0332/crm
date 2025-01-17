@@ -192,6 +192,8 @@ class HandleInertiaRequests extends Middleware
                 PermissionsEnum::RENEWAL_BATCH_REPORT,
                 PermissionsEnum::CONVERSION_AS_AT_REPORT,
                 PermissionsEnum::MANAGEMENT_REPORT,
+                PermissionsEnum::VIEW_ALL_LEADS,
+                PermissionsEnum::VIEW_ALL_REPORTS
             ],
             PermissionsEnum::getAdvisorConversionReportPermissions(),
             PermissionsEnum::getAdvisorDistributionReportPermissions()
