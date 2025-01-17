@@ -854,7 +854,7 @@ const accommodationTypeText = computed(() => {
 });
 
 const ownerOccupancyText = computed(() => {
-  const id = page.props?.quote?.home_quote?.accommodation_type_id;
+  const id = page.props?.quote?.home_quote?.owner_occupancy_type_id;
 
   if (!id || !page.props?.lookUpData?.ownerOccupancies?.length) {
     return '';
