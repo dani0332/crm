@@ -338,11 +338,30 @@ class HandleInertiaRequests extends Middleware
                     (auth()->user()->hasAnyPermission(
                         PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                        PermissionsEnum::HEALTH_QUOTES_ACCESS
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                        PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST
                     ) || (userHasProduct(quoteTypeCode::Health) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Health Quotes',
                     route('health.index'),
-                    fn ($s) => $s->attributes(['icon' => 'health'])
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'health'])
+                        ->addIf(
+                            auth()->user()->hasAnyPermission(
+                                PermissionsEnum::HealthQuotesList,
+                                PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
+                                PermissionsEnum::HEALTH_QUOTES_ACCESS
+                            ),
+                            'Health Quotes',
+                            route('health.index'),
+                            fn ($s) => $s->attributes(['icon' => 'health'])
+                        )
+
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST),
+                            'Health Revival Quotes',
+                            route('health-revival-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'health'])
+                        ),
                 )
                 ->addIf(
                     (auth()->user()->can(PermissionsEnum::TravelQuotesList)
@@ -613,6 +632,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::RENEWAL_BATCHES_LIST),
                         'Renewal Batches',
                         route('renewal-batches-list'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
+                        'Process Tracker',
+                        route('process-tracker.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

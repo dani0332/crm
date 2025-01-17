@@ -15,27 +15,33 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::TAP_BETA_ACCESS,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         try {
             //permission for upload Health Rates and Coverages
-            $uploadHealthRatesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_RATES)->first();
-            if (! $uploadHealthRatesPermission) {
-                Permission::create([
-                    'name' => PermissionsEnum::UPLOAD_HEALTH_RATES,
-                    'guard_name' => 'web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-            $uploadHealthCoveragesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_COVERAGES)->first();
-            if (! $uploadHealthCoveragesPermission) {
-                Permission::create([
-                    'name' => PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
-                    'guard_name' => 'web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
+            // $uploadHealthRatesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_RATES)->first();
+            // if (! $uploadHealthRatesPermission) {
+            //     Permission::create([
+            //         'name' => PermissionsEnum::UPLOAD_HEALTH_RATES,
+            //         'guard_name' => 'web',
+            //         'created_at' => now(),
+            //         'updated_at' => now(),
+            //     ]);
+            // }
+            // $uploadHealthCoveragesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_COVERAGES)->first();
+            // if (! $uploadHealthCoveragesPermission) {
+            //     Permission::create([
+            //         'name' => PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+            //         'guard_name' => 'web',
+            //         'created_at' => now(),
+            //         'updated_at' => now(),
+            //     ]);
+            // }
             $viewAllLeadsPermission = Permission::where('name', PermissionsEnum::VIEW_ALL_LEADS)->first();
             if (! $viewAllLeadsPermission) {
                 Permission::create([
@@ -59,7 +65,7 @@ class RolePermissionSeeder extends Seeder
             throw $th;
         }
         // $this->addReceiveNotificationsPermission();
-        $this->searchModulePermissions();
+        // $this->searchModulePermissions();
     }
 
     private function addReceiveNotificationsPermission()

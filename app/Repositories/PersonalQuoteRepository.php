@@ -86,7 +86,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUploadDocument($id, $file, $data)
     {
         try {
-
+            $fileName = $file->getClientOriginalName();
             info('fn: fetchUploadDocument called');
             $quoteType = '';
             $insuranceProviderId = null;
@@ -180,12 +180,12 @@ class PersonalQuoteRepository extends BaseRepository
             } catch (\Exception $exception) {
                 info('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
 
-                return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
+                return ['status' => false, 'message' => $fileName.' :  '.($exception->getMessage() ?? 'Error uploading file')];
             }
         } catch (\Exception $exception) {
             info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
 
-            return ['status' => true, 'message' => 'Document upload failed, please try again'];
+            return ['status' => true, 'message' => $fileName.' :  Document upload failed, please try again'];
         }
     }
 
