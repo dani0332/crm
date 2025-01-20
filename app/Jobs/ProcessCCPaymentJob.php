@@ -42,7 +42,8 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
     {
         $ccPaymentProcess = CcPaymentProcess::find($this->ccPaymentProcessId);
 
-        if ($ccPaymentProcess->status === PaymentProcessJobEnum::IN_PROCESS) {
+        if ($ccPaymentProcess->status === PaymentProcessJobEnum::QUEUED) {
+            $ccPaymentProcess->update(['status' => PaymentProcessJobEnum::IN_PROCESS]);
             $splitPaymentCode = $ccPaymentProcess->splitPayment->code;
             info("CC Payment Job Started: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
 
@@ -60,7 +61,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 info("CC Payment Job Failed: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}, Error: {$exception->getMessage()}");
             }
         } else {
-            info("CC Payment Job Not In Process: Child payment code: {$ccPaymentProcess->splitPayment->code}, Status: {$ccPaymentProcess->status}");
+            info("CC Payment Job Not In Queued: Child payment code: {$ccPaymentProcess->splitPayment->code}, Status: {$ccPaymentProcess->status}");
         }
     }
 
