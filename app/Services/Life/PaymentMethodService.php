@@ -2,8 +2,8 @@
 
 namespace App\Services\Life;
 
-use App\Services\BaseService;
 use App\Models\PaymentMethod;
+use App\Services\BaseService;
 
 class PaymentMethodService extends BaseService
 {

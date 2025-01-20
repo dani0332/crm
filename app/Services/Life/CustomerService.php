@@ -2,9 +2,9 @@
 
 namespace App\Services\Life;
 
-use App\Services\BaseService;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Services\BaseService;
 
 class CustomerService extends BaseService
 {

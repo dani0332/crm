@@ -6,11 +6,10 @@ use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
-use App\Repositories\LifeQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
-use App\Traits\ExcelExportable;
 use App\Services\Life\LifeQuoteService;
+use App\Traits\ExcelExportable;
 
 class PersonalQuotesExport
 {
@@ -51,7 +50,7 @@ class PersonalQuotesExport
                 return JetskiQuoteRepository::getData(true);
 
             case QuoteTypes::LIFE->value:
-                return app(LifeQuoteService::class)->getQuotes(forExport:true);
+                return app(LifeQuoteService::class)->getQuotes(forExport: true);
 
             default:
                 return abort(404);

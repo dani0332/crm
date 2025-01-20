@@ -2,56 +2,48 @@
 
 namespace App\Services\Life;
 
+use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\LookupsEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Models\ApplicationStorage;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
+use App\Services\BaseService;
+use App\Services\CapiRequestService;
+use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\QuoteDocumentService;
+use App\Services\SplitPaymentService;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PersonalQuoteLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use App\Services\BaseService;
-use App\Services\CapiRequestService;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\PersonalQuoteLobs;
-use App\Enums\quoteStatusCode;
-use App\Services\Life\QuoteStatusService;
-use App\Enums\CustomerTypeEnum;
-use App\Services\Life\InsuranceProviderService;
-use App\Services\CentralService;
-use App\Services\Life\UserService;
-use App\Enums\LookupsEnum;
-use App\Services\Life\CustomerMemberService;
-use App\Services\Life\NationalityService;
-use App\Services\Life\EmbeddedProductService;
-use App\Services\CRUDService;
-use App\Services\Life\SendUpdateLogService;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;
-use App\Services\QuoteDocumentService;
-use App\Enums\AMLStatusCode;
-use App\Enums\TravelQuoteEnum;
-use App\Enums\PaymentTooltip;
-use App\Services\SplitPaymentService;
-use App\Services\Life\CustomerService;
 
 class LifeQuoteService extends BaseService
 {
     protected $query;
 
     use AddPremiumAllLobs;
-    use RolePermissionConditions;
     use GenericQueriesAllLobs;
     use PersonalQuoteLobs;
+    use RolePermissionConditions;
 
     public const TYPE = quoteTypeCode::Life;
     public const TYPE_ID = QuoteTypeId::Life;
@@ -119,6 +111,7 @@ class LifeQuoteService extends BaseService
         foreach ($quoteStatuses as &$quoteStatus) {
             $quotes[] = $this->getQuotesAgainstQuoteStatus($quoteStatus);
         }
+
         return [
             'quotes' => $quotes,
             'quoteType' => self::TYPE,
@@ -139,8 +132,9 @@ class LifeQuoteService extends BaseService
     public function getCardsViewLoadMore($data)
     {
         $quoteStatus = [
-            'id' => $data['status']
+            'id' => $data['status'],
         ];
+
         return $this->getQuotesAgainstQuoteStatus($quoteStatus)['data'];
     }
 
@@ -394,7 +388,7 @@ class LifeQuoteService extends BaseService
         $formOptions = $this->getFormOptions();
 
         return array_merge($formOptions, [
-            'quote' => $quote
+            'quote' => $quote,
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
@@ -13,6 +14,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
@@ -22,11 +24,9 @@ use App\Repositories\PaymentRepository;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
-use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;
-use App\Services\Reports\RenewalBatchReportService;
 
 trait GenericQueriesAllLobs
 {

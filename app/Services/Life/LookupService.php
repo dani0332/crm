@@ -2,8 +2,8 @@
 
 namespace App\Services\Life;
 
-use App\Models\Lookup;
 use App\Enums\LookupsEnum;
+use App\Models\Lookup;
 use App\Services\BaseService;
 use App\Services\SendUpdateLogService;
 

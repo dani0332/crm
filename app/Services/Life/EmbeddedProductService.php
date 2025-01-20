@@ -2,19 +2,19 @@
 
 namespace App\Services\Life;
 
-use Carbon\Carbon;
-use App\Enums\RolesEnum;
-use App\Models\QuoteType;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
-use App\Services\BaseService;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CustomerAddress;
 use App\Models\EmbeddedProduct;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\EmbeddedProductEnum;
 use App\Models\EmbeddedTransaction;
-use App\Traits\GenericQueriesAllLobs;
+use App\Models\QuoteType;
+use App\Services\BaseService;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 
 class EmbeddedProductService extends BaseService
 {

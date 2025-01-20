@@ -5,14 +5,14 @@ namespace App\Http\Controllers;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Http\Requests\LifeCardLoadMoreRequest;
+use App\Http\Requests\LifeQuoteRequest;
 use App\Repositories\PaymentRepository;
 use App\Services\CRUDService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\LookupService;
 use App\Traits\GenericQueriesAllLobs;
 use Inertia\ResponseFactory;
-use App\Http\Requests\LifeCardLoadMoreRequest;
-use App\Http\Requests\LifeQuoteRequest;
 
 class LifeController extends Controller
 {
@@ -88,6 +88,7 @@ class LifeController extends Controller
         /* End - Temporarily adding for correcting historic data  */
 
         $data = $this->lifeQuoteService->getShowData($uuid);
+
         return inertia('LifeQuote/Show', $data);
     }
 
@@ -100,6 +101,7 @@ class LifeController extends Controller
     public function edit($uuid)
     {
         $data = $this->lifeQuoteService->getEditData($uuid);
+
         return inertia('LifeQuote/Form', $data);
     }
 

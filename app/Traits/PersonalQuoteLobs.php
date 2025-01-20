@@ -8,7 +8,6 @@ use App\Models\User;
 
 trait PersonalQuoteLobs
 {
-
     public function getPersonalQuoteAdvisors($quoteType)
     {
         if ($quoteType == QuoteTypes::PET->value) {

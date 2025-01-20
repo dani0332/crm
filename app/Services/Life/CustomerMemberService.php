@@ -2,9 +2,9 @@
 
 namespace App\Services\Life;
 
-use App\Services\BaseService;
 use App\Enums\CustomerTypeEnum;
 use App\Models\CustomerMembers;
+use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
 
 class CustomerMemberService extends BaseService

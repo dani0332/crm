@@ -3,8 +3,8 @@
 namespace App\Services\Life;
 
 use App\Enums\QuoteTypes;
-use App\Services\BaseService;
 use App\Models\User;
+use App\Services\BaseService;
 
 class UserService extends BaseService
 {
