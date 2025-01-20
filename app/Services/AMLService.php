@@ -620,7 +620,7 @@ class AMLService
                 ],
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
                 'chassisNumber' => $chassisNumber ?? '',
-                'gender' => $this->getGender($quoteDetails),
+                'gender' => $this->formatGender($insuredDetails?->gender),
             ];
 
             info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
@@ -683,13 +683,13 @@ class AMLService
 
     }
 
-    private function getGender($quoteDetails): string
+    private function formatGender($gender): string
     {
         $gender = '';
-        if (in_array($quoteDetails->gender, [GenericRequestEnum::MALE_SINGLE, GenericRequestEnum::MALE_SINGLE_VALUE, strtolower(GenericRequestEnum::MALE_SINGLE), strtolower(GenericRequestEnum::MALE_SINGLE_VALUE)])) {
+        if (in_array($gender, [GenericRequestEnum::MALE_SINGLE, GenericRequestEnum::MALE_SINGLE_VALUE, strtolower(GenericRequestEnum::MALE_SINGLE), strtolower(GenericRequestEnum::MALE_SINGLE_VALUE)])) {
             $gender = GenericRequestEnum::MALE_SINGLE;
         }
-        if (in_array($quoteDetails->gender, [GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_SHORT_VALUE, strtolower(GenericRequestEnum::FEMALE), strtolower(GenericRequestEnum::FEMALE_SHORT_VALUE)])) {
+        if (in_array($gender, [GenericRequestEnum::FEMALE, GenericRequestEnum::FEMALE_SHORT_VALUE, strtolower(GenericRequestEnum::FEMALE), strtolower(GenericRequestEnum::FEMALE_SHORT_VALUE)])) {
             $gender = GenericRequestEnum::FEMALE;
         }
 
