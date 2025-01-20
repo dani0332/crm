@@ -44,7 +44,7 @@ class InstallmentReportService extends ManagementReport
                 DB::raw('IFNULL(personal_quotes.price_vat_applicable, 0) / IFNULL(p.total_payments, 1) as price_vat_applicable'),
                 DB::raw('IFNULL(personal_quotes.vat, 0) / IFNULL(p.total_payments, 1) as vat'),
                 DB::raw('IFNULL(personal_quotes.price_vat_not_applicable, 0) / IFNULL(p.total_payments, 1) as price_vat_not_applicable'),
-                'ps.discount_value as discount',
+                DB::raw('IFNULL(p.discount_value, 0) / IFNULL(p.total_payments, 1) as discount'),
                 'ps.payment_amount as total_price',
                 DB::raw('IFNULL(p.commission_vat_applicable, 0) / IFNULL(p.total_payments, 1) as commission_vat_applicable'),
                 DB::raw('CASE WHEN ps.sr_no=1 THEN IFNULL(p.commission_vat, 0) ELSE 0 END as commission_vat'),
