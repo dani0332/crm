@@ -922,7 +922,7 @@ class HomeQuoteService extends BaseService
             $apiUserName = config('constants.KEN_API_USER');
             $apiPassword = config('constants.KEN_API_PWD');
 
-            $discountedPremium = $request->actual_premium;
+            $discountedPremium = $request->plan['actual_premium'];
 
             $homePlanData = [
                 'quoteUID' => $request->plan['quote_uuid'],
