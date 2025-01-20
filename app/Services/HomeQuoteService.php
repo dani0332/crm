@@ -1161,6 +1161,13 @@ class HomeQuoteService extends BaseService
      */
     private function generateHomeSALPdf(array $data): string
     {
+        // Convert all strings in the $data array to UTF-8
+        array_walk_recursive($data, function (&$value) {
+            if (is_string($value)) {
+                $value = mb_convert_encoding($value, 'UTF-8', 'auto');
+            }
+        });
+
         return PDF::loadView('pdf.home-sal', compact('data'))
             ->setOptions([
                 'defaultFont' => 'DejaVu Sans',
