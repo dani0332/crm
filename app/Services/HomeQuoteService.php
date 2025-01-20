@@ -1175,7 +1175,6 @@ class HomeQuoteService extends BaseService
                 'defaultFont' => 'DejaVu Sans',
                 'isRemoteEnabled' => true,
                 'defaultTimeout' => 60,
-                'debug' => true,
             ])
             ->setPaper('A4')
             ->output();
