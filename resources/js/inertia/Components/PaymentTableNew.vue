@@ -3325,17 +3325,15 @@ const voidPayment = () => {
     axios
     .post(`/payments/${props.quoteType}/void-payment`, data)
     .then(res => {
-        if (res.status === false) {
-            notification.error({
-                title: res.message,
-                position: 'top',
-            });
-            voidPaymentProcess.value = false;
-            return;
-        }
-
         voidPaymentProcess.value = false;
         voidPaymentModel.value = false;
+        if (res.data.status === false) {
+            notification.error({
+                title: res.data.message,
+                position: 'top',
+            });
+            return;
+        }
         notification.success('Processed');
     })
     .catch(err => {
