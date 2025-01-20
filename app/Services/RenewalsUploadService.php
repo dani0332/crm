@@ -360,7 +360,7 @@ class RenewalsUploadService
      */
     public function getPlans($id)
     {
-        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true, true);
+        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true, false, true);
 
         if (isset($quotePlans->quotes)) {
             return true;
