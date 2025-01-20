@@ -85,15 +85,18 @@ class SearchService extends BaseService
             $baseQuery->orderBy($baseTable.'.'.(request()->sortBy ?? 'updated_at'), request()->sortType ?? 'desc');
 
             if ($isExport) {
+                $excelExportColumns = [];
                 if (! request()->has('insured_name')) {
                     $baseQuery->leftJoin('customer', 'personal_quotes.customer_id', 'customer.id');
+                    $excelExportColumns = array_merge($excelExportColumns, ['customer.first_name as customer_first_name', 'customer.last_name as customer_last_name']);
                 }
 
                 if (! request()->has('department')) {
                     $baseQuery->leftJoin('users', 'personal_quotes.advisor_id', 'users.id');
                 }
 
-                if (! request()->has('payment_status') && request()->has('date_type') && ! in_array(request()->date_type, ['payment_due_date', 'payment_date'])) {
+                $paymentsDateFilters = ['payment_due_date', 'payment_date'];
+                if (! request()->has('payment_status') && ! (request()->has('date_type') && in_array(request()->date_type, $paymentsDateFilters) && request()->has('date_range'))) {
                     if ($isEndorsementList) {
                         $baseQuery->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
                     } else {
@@ -107,7 +110,7 @@ class SearchService extends BaseService
                     $baseQuery->leftJoin('insurance_provider', 'payments.insurance_provider_id', 'insurance_provider.id');
                 }
 
-                $excelExportColumns = ['customer.first_name as customer_first_name', 'customer.last_name as customer_last_name', 'users.name as advisor_name', 'payments.total_price', 'insurance_provider.text as insurance_provider'];
+                $excelExportColumns = array_merge($excelExportColumns, ['payments.total_price', 'insurance_provider.text as insurance_provider']);
                 $baseQuery->select(array_merge($selectColumns, $excelExportColumns));
 
                 return $baseQuery->get();
