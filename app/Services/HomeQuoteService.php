@@ -1170,8 +1170,12 @@ class HomeQuoteService extends BaseService
 
         return PDF::loadView('pdf.home-sal', compact('data'))
             ->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'dpi' => 150,
                 'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => true, // Enable remote images
+                'isRemoteEnabled' => true,
+                'defaultTimeout' => 60,
+                'debug' => true,
             ])
             ->setPaper('A4')
             ->output();
