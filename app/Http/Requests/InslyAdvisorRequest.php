@@ -34,6 +34,8 @@ class InslyAdvisorRequest extends FormRequest
                     $userId = $advisor['user_id'];
                     $exists = InslyAdvisor::where('name', $value)
                         ->where('user_id', '!=', $userId)
+                        ->select('id')
+                        ->limit(1)
                         ->exists();
 
                     if ($exists) {
