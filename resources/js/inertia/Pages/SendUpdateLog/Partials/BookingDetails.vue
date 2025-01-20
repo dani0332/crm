@@ -2345,21 +2345,18 @@ watch(
                 Edit
               </x-button>
 
-              <template v-if="isLackingPayment || disableMainBtn">
+              <template
+                v-if="props.updateBtn && (isLackingPayment || disableMainBtn)"
+              >
                 <div>
                   <x-tooltip>
                     <x-button
                       class="focus:ring-2 focus:ring-black"
                       size="sm"
                       color="orange"
-                      v-if="props.updateBtn"
                       :loading="loader.sendUpdateSectionBtn"
                       @click="sendUpdateValidation"
-                      :disabled="
-                        sendUpdatePermissionCheck ||
-                        isLackingPayment ||
-                        disableMainBtn
-                      "
+                      :disabled="isLackingPayment || disableMainBtn"
                     >
                       {{ props.updateBtn }}
                     </x-button>
@@ -2375,12 +2372,11 @@ watch(
                   </x-tooltip>
                 </div>
               </template>
-              <template v-else>
+              <template v-else-if="props.updateBtn">
                 <x-button
                   class="focus:ring-2 focus:ring-black"
                   size="sm"
                   color="orange"
-                  v-if="props.updateBtn"
                   :loading="loader.sendUpdateSectionBtn"
                   @click="sendUpdateValidation"
                   :disabled="sendUpdatePermissionCheck"

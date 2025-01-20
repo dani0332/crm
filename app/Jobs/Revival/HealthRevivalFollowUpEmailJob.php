@@ -98,7 +98,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         if (! in_array($healthQuote->payment_status_id, $paymentStatusArray) && ! in_array($healthQuote->source, $leadSourceArray) && ! in_array($healthQuote->quote_status_id, $leadStatusArray) && empty($healthQuote->advisor_id)) {
 
             $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
-            $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
+            $response = Ken::renewalRequest('/get-health-quote-plans-order-priority', 'post', [
                 'quoteUID' => $healthQuote->uuid,
                 'isModified' => true,
             ]);
@@ -237,7 +237,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
             $emailData->fromEmail = ApplicationStorage::where('key_name', $key)->value('value');
             $emailData->lob = QuoteTypes::HEALTH->id();
-            $response = Ken::request('/get-health-cheapest-plans', 'post', [
+            $response = Ken::renewalRequest('/get-health-cheapest-plans', 'post', [
                 'quoteUID' => $lead->uuid,
                 'isPlanTypes' => true,
             ]);
@@ -317,7 +317,6 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
             }
 
             info($this->logPrefix.'Email Sent - UUID - '.$emailData->uuid.' Follow Up Count: '.$revivalRecord->follow_up_email_count);
-            $this->rotateRevival($revivalRecord->uuid);
         } else {
             info($this->logPrefix.'Email NOT Sent - UUID - '.$emailData->uuid);
         }
@@ -355,40 +354,5 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         }
 
         return $benefitsTypes;
-    }
-    //DTT Temp Code
-    private function rotateRevival($uuid)
-    {
-        $revivalRecord = DttRevival::where('uuid', $uuid)->first();
-        $today = Carbon::today();
-
-        $afterTwoDays = Carbon::parse($revivalRecord->created_at)->addDays(2)->startOfDay();
-        $afterFourDays = Carbon::parse($revivalRecord->created_at)->addDays(4)->startOfDay();
-        $afterFiveDays = Carbon::parse($revivalRecord->created_at)->addDays(5)->startOfDay();
-        $afterEightDays = Carbon::parse($revivalRecord->created_at)->addDays(8)->startOfDay();
-        $afterTwelveDays = Carbon::parse($revivalRecord->created_at)->addDays(12)->startOfDay();
-        $afterSixteenDays = Carbon::parse($revivalRecord->created_at)->addDays(16)->startOfDay();
-
-        if ($revivalRecord->previous_health_plan_type == 1) {
-            if ($today->eq($afterTwoDays)) {
-                $revivalRecord->update(['created_at' => Carbon::now()->subDays(5)->toDateString()]);
-            } elseif ($today->eq($afterFiveDays)) {
-                $revivalRecord->update(['created_at' => Carbon::now()->subDays(8)->toDateString()]);
-            } elseif ($today->eq($afterEightDays)) {
-                $revivalRecord->update(['created_at' => Carbon::now()->subDays(12)->toDateString()]);
-            } elseif ($today->eq($afterTwelveDays)) {
-                $revivalRecord->update(['created_at' => Carbon::now()->subDays(16)->toDateString()]);
-            } elseif ($today->eq($afterSixteenDays)) {
-                $revivalRecord->update(['created_at' => Carbon::now()->subDays(20)->toDateString()]);
-            }
-        }
-
-        if ($revivalRecord->previous_health_plan_type == false) {
-            if ($today->eq($afterTwoDays)) {
-                $revivalRecord->update(['created_at' => Carbon::now()->subDays(4)->toDateString()]);
-            } elseif ($today->eq($afterFourDays)) {
-                $revivalRecord->update(['created_at' => Carbon::now()->subDays(6)->toDateString()]);
-            }
-        }
     }
 }

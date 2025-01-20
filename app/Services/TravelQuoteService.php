@@ -276,8 +276,8 @@ class TravelQuoteService extends BaseService
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
 
-            info(self::class.' - saveTravelQuote: Going to dispatch OCB Email for Travel');
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
         }
 
         return $response;
@@ -553,37 +553,6 @@ class TravelQuoteService extends BaseService
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }
 
-        $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $isAdmin = Auth::user()->hasRole('ADMIN');
-            if ($isAdmin || $isManagerORDeputy == '1') {
-                if ($column == 6) {
-                    $column = 'tqr.created_at';
-                }
-                if ($column == 7) {
-                    $column = 'tqr.updated_at';
-                }
-                if ($column == 8) {
-                    $column = 'tqrd.next_followup_date';
-                }
-            } else {
-                if ($column == 5) {
-                    $column = 'tqr.created_at';
-                }
-                if ($column == 6) {
-                    $column = 'tqr.updated_at';
-                }
-                if ($column == 7) {
-                    $column = 'tqrd.next_followup_date';
-                }
-            }
-
-            return $this->query->orderBy($column, $direction);
-        } else {
-            return $this->query->orderBy('tqr.created_at', 'DESC');
-        }
     }
 
     private function parseDate($date, $isStartOfDay)
