@@ -685,7 +685,6 @@ class AMLService
 
     private function formatGender($gender): string
     {
-        $gender = '';
         if (in_array($gender, [GenericRequestEnum::MALE_SINGLE, GenericRequestEnum::MALE_SINGLE_VALUE, strtolower(GenericRequestEnum::MALE_SINGLE), strtolower(GenericRequestEnum::MALE_SINGLE_VALUE)])) {
             $gender = GenericRequestEnum::MALE_SINGLE;
         }
