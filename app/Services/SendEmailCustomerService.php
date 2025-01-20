@@ -23,6 +23,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use League\CommonMark\Extension\SmartPunct\Quote;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -597,7 +598,7 @@ class SendEmailCustomerService extends BaseService
         $body = [
             'subject' => $this->appEnv == EnvEnum::PRODUCTION ? $emailData->subject : $this->appEnv.' - '.$emailData->subject,
             'sender' => [
-                'email' => 'no-reply@alert.insurancemarket.email',
+                'email' => $emailData->fromEmail ?? 'no-reply@alert.insurancemarket.email',
                 'name' => 'InsuranceMarket.ae',
             ],
             'params' => $emailData,
@@ -611,7 +612,13 @@ class SendEmailCustomerService extends BaseService
             'templateId' => $emailData->templateId,
         ];
 
-        $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO);
+        if ($emailData->lob == QuoteTypeId::Health) {
+
+            $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_HEALTH_REPLY_TO);
+        } else {
+            $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO);
+        }
+
         $body['replyTo'] = [
             'email' => $replyToEmail,
             'name' => 'InsuranceMarket.ae',
@@ -649,7 +656,6 @@ class SendEmailCustomerService extends BaseService
                 $msg = $response->msg;
             }
             info('RM Intro Email Error for HEA-'.$quoteUuid.' - Response Code: '.$response->status.' - Message: '.$msg);
-
         } elseif ($response && isset($response->message)) {
 
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
