@@ -486,13 +486,20 @@ class UserController extends Controller
     {
         // Remove existing advisors associated with the user
         $user->advisors()->delete();
-
+        $newAdvisors = [];
         // Iterate over the advisors from the request
         foreach ($request->advisors as $advisorData) {
-            // Create or find the advisor in the database
-            InslyAdvisor::firstOrCreate(
-                ['name' => $advisorData['name'], 'user_id' => $advisorData['user_id']],
-            );
+            // Collect data for new advisors
+             $newAdvisors[] = [
+                'name' => $advisorData['name'],
+                'user_id' => $advisorData['user_id'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+        // Bulk insert new advisors
+        if (!empty($newAdvisors)) {
+            InslyAdvisor::insert($newAdvisors);
         }
 
         // Redirect back with a success message

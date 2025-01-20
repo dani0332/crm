@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\InslyAdvisor;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,14 +23,28 @@ class InslyAdvisorRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'advisors' => 'required|array',
-            'advisors.*.name' => [
+        ];
+
+        foreach ($this->input('advisors') as $index => $advisor) {
+            $rules["advisors.$index.name"] = [
                 'required',
                 'string',
-                Rule::unique('insly_advisors', 'name')->ignore(request()->user_id, 'user_id'),
-            ],
-        ];
+                function ($attribute, $value, $fail) use ($advisor) {
+                    $userId = $advisor['user_id'];
+                    $exists = InslyAdvisor::where('name', $value)
+                        ->where('user_id', '!=', $userId)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('The ' . $attribute . ' has already been taken.');
+                    }
+                },
+            ];
+        }
+
+        return $rules;
     }
 
     /**
