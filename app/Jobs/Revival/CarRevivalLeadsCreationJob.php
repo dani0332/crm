@@ -144,7 +144,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $revivalCarQuoteUUID);
 
-                $listQuotePlans = app(CarQuoteService::class)->getPlans($revivalCarQuoteUUID, true, true, true);
+                $listQuotePlans = app(CarQuoteService::class)->getPlans($revivalCarQuoteUUID, true, true, false, true);
 
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
