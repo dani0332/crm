@@ -207,7 +207,7 @@ class SendUpdateLogController extends Controller
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
         $isEditDisabledForQueuedBooking = $this->sendUpdateLogService->isEditDisabledForQueuedBooking($sendUpdateLog);
 
-        $insurance_provider_id = $bookingDetails['insurance_provider_id'] ?? null;
+        $insurance_provider_id = $insuranceProviderId ?? $bookingDetails['insurance_provider_id'] ?? null;
         @[$isCreditCardEnabled, $isSplitFrequencyHidden, $brokerCommission, $isGIGInsuranceProvider] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $insurance_provider_id, $quote->business_type_of_insurance_id);
         $bookingDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
         $bookingDetails['isSplitFrequencyHidden'] = $isSplitFrequencyHidden;
@@ -252,7 +252,7 @@ class SendUpdateLogController extends Controller
             'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
             'isSentOrBooked' => $isSentOrBooked,
-            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog),
+            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments[0], $brokerCommission),
         ]);
     }
 

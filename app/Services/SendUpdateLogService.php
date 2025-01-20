@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
@@ -1521,7 +1523,7 @@ class SendUpdateLogService
      * @param $sendUpdateLog - Send Update Log
      * @return string
      */
-    public function disableMainBtn($sendUpdateLog): string
+    public function disableMainBtn($sendUpdateLog, $payment = [], $brokerCommission = null): string
     {
         if (in_array($sendUpdateLog->category?->code, [
             SendUpdateLogStatusEnum::EF,
@@ -1529,6 +1531,16 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::CIR,
         ]) && empty($sendUpdateLog->endorsement_number) && auth()->user()->can(PermissionsEnum::TAP_BETA_ACCESS)) {
             return 'Endorsement Number is required before proceeding.';
+        }
+
+        if (! empty($payment) && $payment->paymentSplits->isNotEmpty() && $brokerCommission) {
+            $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
+                return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id != PaymentStatusEnum::PAID;
+            });
+
+            if ($hasUnpaidCCPayment) {
+                return 'The payment status is not yet Authorised.';
+            }
         }
 
         return '';
