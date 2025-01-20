@@ -30,7 +30,6 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   vatPercentage: Number,
-  quoteRequest: Object,
   payments: Array,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
@@ -313,8 +312,8 @@ const leadStatusForm = useForm({
   quote_uuid: page.props.quote.uuid,
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
-  notes: page.props.quote.life_quote_request_detail?.notes || null,
-  lostReason: page.props.quote.lost_reason_id || null,
+  notes: page.props.quote.quote_detail?.notes || null,
+  lostReason: page.props.quote.quote_detail?.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -353,19 +352,18 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.insured_first_name || '',
-  insured_last_name: page.props.quote?.insured_last_name || '',
-  emirates_id_number: page.props.quote?.emirates_id_number || null,
+  insured_first_name: page.props.quote?.customer.insured_first_name || '',
+  insured_last_name: page.props.quote?.customer.insured_last_name || '',
+  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
   emirates_id_expiry_date: page.props.quote?.emirates_id_expiry_date || null,
 
-  entity_id: page.props.quote?.entity_id ?? null,
-  trade_license_no: page.props.quote?.trade_license_no ?? null,
-  company_name: page.props.quote?.company_name ?? null,
-  company_address: page.props.quote?.company_address ?? null,
-  entity_type_code: page.props.quote?.entity_type_code ?? 'Parent',
-  industry_type_code: page.props.quote?.industry_type_code ?? null,
-  emirate_of_registration_id:
-    page.props.quote?.emirate_of_registration_id ?? null,
+  entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
+  trade_license_no: page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ?? null,
+  company_name: page.props.quote?.quote_request_entity_mapping?.entity?.company_name ?? null,
+  company_address: page.props.quote?.quote_request_entity_mapping?.entity?.company_address ?? null,
+  entity_type_code: page.props.quote?.quote_request_entity_mapping?.entity_type_code ?? 'Parent',
+  industry_type_code: page.props.quote?.quote_request_entity_mapping?.entity?.industry_type_code ?? null,
+  emirate_of_registration_id: page.props.quote?.quote_request_entity_mapping?.entity?.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
@@ -673,7 +671,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
-                <dd>{{ quote.advisor_id_text }}</dd>
+                <dd>{{ quote.advisor?.name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
@@ -685,17 +683,17 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUM INSURED VALUE</dt>
-                <dd>{{ quote.sum_insured_value }}</dd>
+                <dd>{{ quote.life_quote?.sum_insured_value }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
                 <dd>
-                  {{ quote.next_followup_date }}
+                  {{ quote.quote_detail?.next_followup_date }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSAPP CODE</dt>
-                <dd>{{ quote.transapp_code }}</dd>
+                <dd>{{ quote.quote_detail?.transapp_code }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
@@ -704,7 +702,7 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>
-                  {{ quote.lost_reason }}
+                  {{ quote.quote_detail?.lost_reason?.text }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -713,23 +711,23 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENCY</dt>
-                <dd>{{ quote.sum_insured_currency_id_text }}</dd>
+                <dd>{{ quote.life_quote?.currency?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PURPOSE OF INSURANCE</dt>
-                <dd>{{ quote.purpose_of_insurance_id_text }}</dd>
+                <dd>{{ quote.life_quote?.purpose_of_insurance?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF INSURANCE</dt>
-                <dd>{{ quote.tenure_of_insurance_id_text }}</dd>
+                <dd>{{ quote.life_quote?.insurance_tenure?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TENURE OF COVER</dt>
-                <dd>{{ quote.number_of_years_id_text }}</dd>
+                <dd>{{ quote.life_quote?.number_of_years?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">OTHERS INFO</dt>
-                <dd>{{ quote.others_info }}</dd>
+                <dd>{{ quote.life_quote?.others_info }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY EXPIRY DATE</dt>
@@ -886,7 +884,7 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
                   <dd>
-                    {{ quote.receive_marketing_updates ? 'Yes' : 'No' }}
+                    {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
@@ -919,15 +917,15 @@ const onAddUpdate = () => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MARITAL STATUS</dt>
-                  <dd>{{ quote.marital_status_id_text }}</dd>
+                  <dd>{{ quote.life_quote?.marital_status?.text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">CHILDREN</dt>
-                  <dd>{{ quote.children_id_text }}</dd>
+                  <dd>{{ quote.life_quote?.children?.text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">IS SMOKER</dt>
-                  <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
+                  <dd>{{ quote.life_quote?.is_smoker ? 'Yes' : 'No' }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Life'" />
               </dl>
@@ -1213,7 +1211,7 @@ const onAddUpdate = () => {
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :quoteRequest="quoteRequest"
+      :quoteRequest="quote"
       :paymentStatusEnum="page.props.paymentStatusEnum"
       :paymentTooltipEnum="paymentTooltipEnum"
       :paymentMethods="
@@ -1247,7 +1245,7 @@ const onAddUpdate = () => {
 
     <QuoteDocument
       :document-types="documentTypes"
-      :quote-documents="quoteRequest.documents || []"
+      :quote-documents="quote?.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.insly_id"

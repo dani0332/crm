@@ -28,6 +28,25 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteLobs;
 use App\Enums\quoteStatusCode;
 use App\Services\Life\QuoteStatusService;
+use App\Enums\CustomerTypeEnum;
+use App\Services\Life\InsuranceProviderService;
+use App\Services\CentralService;
+use App\Services\Life\UserService;
+use App\Enums\LookupsEnum;
+use App\Services\Life\CustomerMemberService;
+use App\Services\Life\NationalityService;
+use App\Services\Life\EmbeddedProductService;
+use App\Services\CRUDService;
+use App\Services\Life\SendUpdateLogService;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
+use App\Services\QuoteDocumentService;
+use App\Enums\AMLStatusCode;
+use App\Enums\TravelQuoteEnum;
+use App\Enums\PaymentTooltip;
+use App\Services\SplitPaymentService;
+use App\Services\Life\CustomerService;
 
 class LifeQuoteService extends BaseService
 {
@@ -172,50 +191,194 @@ class LifeQuoteService extends BaseService
         return $this->query->where('pq.uuid', $id)->first();
     }
 
-    public function getEntityPlain($id)
+    public function getQuoteBy($column, $value)
     {
-        return PersonalQuote::where('id', $id)->with([
-            'advisor',
-            'quoteStatus',
-            'nationality',
-            'lifeQuote' => function ($q) {
-                $q->with([
-                    'children',
-                    'currency',
-                    'maritalStatus',
-                    'purposeOfInsurance',
-                    'insuranceTenure',
-                    'numberOfYears',
-                ]);
-            },
-            'quoteDetail.lostReason:id,text',
-            'quoteDetail.previousAdvisor',
-            'paymentStatus',
-            'customer.additionalContactInfo',
-            'transactionType',
-            'insuranceProvider',
-            'payments' => function ($q) {
-                $q->with([
-                    'paymentMethod',
-                    'paymentStatus',
-                    'paymentSplits' => function ($q) {
-                        $q->with([
-                            'paymentStatus',
-                            'paymentMethod',
-                            'documents',
-                            'verifiedByUser',
-                            'processJob',
-                        ])->orderBy('sr_no', 'asc');
-                    },
-                ]);
-            },
-            'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            },
-            'quoteRequestEntityMapping' => function ($entityMapping) {
-                $entityMapping->with('entity');
-            },
-        ])->first();
+        $quote = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE)
+            ->where($column, $value)
+            ->with([
+                'advisor',
+                'quoteStatus',
+                'nationality',
+                'lifeQuote' => function ($q) {
+                    $q->with([
+                        'children',
+                        'currency',
+                        'maritalStatus',
+                        'purposeOfInsurance',
+                        'insuranceTenure',
+                        'numberOfYears',
+                    ]);
+                },
+                'quoteDetail.lostReason:id,text',
+                'quoteDetail.previousAdvisor',
+                'paymentStatus',
+                'customer.additionalContactInfo',
+                'transactionType',
+                'insuranceProvider',
+                'payments' => function ($q) {
+                    $q->with([
+                        'paymentMethod',
+                        'paymentStatus',
+                        'paymentSplits' => function ($q) {
+                            $q->with([
+                                'paymentStatus',
+                                'paymentMethod',
+                                'documents',
+                                'verifiedByUser',
+                                'processJob',
+                            ])->orderBy('sr_no', 'asc');
+                        },
+                    ]);
+                },
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+                'quoteRequestEntityMapping' => function ($entityMapping) {
+                    $entityMapping->with('entity');
+                },
+            ])
+            ->select([
+                'personal_quotes.*',
+                'policy_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
+                \DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Life.' AND quote_request_id = personal_quotes.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
+            ])
+            ->firstOrFail();
+
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+
+        return $quote;
+    }
+
+    public function getShowData($uuid)
+    {
+        $quote = $this->getQuoteBy('uuid', $uuid);
+
+        $payments = $quote->payments;
+        $insuranceProviders = app(InsuranceProviderService::class)->byQuoteTypeMapping(self::TYPE_ID);
+        $duplicateAllowedLobs = app(CentralService::class)->duplicateAllowedLobsList(self::TYPE, $quote->code);
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(self::TYPE, $quote);
+
+        $advisors = app(UserService::class)->getPersonalQuoteAdvisors(self::TYPE);
+        $memberRelations = app(LookupService::class)->getBy('key', LookupsEnum::MEMBER_RELATION);
+        $membersDetails = app(CustomerMemberService::class)->getBy($quote->id, self::TYPE);
+        $quoteStatuses = app(QuoteStatusService::class)->byQuoteTypeId(self::TYPE_ID)->get();
+        $lostReasons = app(LostReasonService::class)->getAllOrderedBy('text', 'asc');
+        $nationalities = app(NationalityService::class)->getActive();
+        $embeddedProducts = app(EmbeddedProductService::class)->byQuoteTypeId(self::TYPE_ID, $quote->id);
+        $industryType = app(LookupService::class)->getBy('key', LookupsEnum::COMPANY_TYPE);
+        $activities = app(ActivityService::class)->getQuoteActivities(self::TYPE_ID, $quote->id);
+
+        $uboDetails = app(CustomerMemberService::class)->getBy($quote->id, self::TYPE, CustomerTypeEnum::Entity);
+        $uboRelations = app(LookupService::class)->getBy('key', LookupsEnum::UBO_RELATION);
+        $emirates = app(EmirateService::class)->getActive();
+
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::LIFE->id(), $quoteStatuses);
+
+        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            })->values();
+        }
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = app(LookupService::class)->getSendUpdateOptions(QuoteTypes::LIFE->id());
+            $sendUpdateLogs = app(SendUpdateLogService::class)->byQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
+        $activitiesData = [];
+        foreach ($activities as $activity) {
+            $activitiesData[] = [
+                'id' => $activity->id,
+                'uuid' => $activity->uuid,
+                'title' => $activity->title,
+                'description' => $activity->description,
+                'quote_request_id' => $activity->quote_request_id,
+                'quote_type_id' => $activity->quote_type_id,
+                'quote_uuid' => $activity->quote_uuid,
+                'client_name' => $activity->client_name,
+                'due_date' => $activity->due_date,
+                'assignee' => $activity->assignee->name,
+                'assignee_id' => $activity->assignee_id,
+                'status' => $activity->status,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
+                'user_id' => $activity?->user_id,
+            ];
+        }
+
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Life);
+
+        $isQuoteDocumentEnabled = app(BaseService::class)->quoteDocumentEnabled(QuoteTypes::LIFE->value);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+
+        return [
+            'documentTypes' => $documentTypes,
+            'storageUrl' => storageUrl(),
+            'quoteType' => QuoteTypes::LIFE,
+            'quoteTypeId' => QuoteTypeId::Life,
+            'quoteStatuses' => $quoteStatuses,
+            'quote' => $quote,
+            'amlStatusName' => $amlStatusName,
+            'record' => $quote,
+            'activities' => $activitiesData,
+            'advisors' => $advisors,
+            'allowedDuplicateLOB' => $duplicateAllowedLobs,
+            'customerAdditionalContacts' => app(CustomerService::class)->getAdditionalContacts($quote->customer_id, $quote->mobile_no),
+            'lostReasons' => $lostReasons,
+            'modelType' => QuoteTypes::LIFE,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
+            'embeddedProducts' => $embeddedProducts,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'nationalities' => $nationalities,
+            'memberRelations' => $memberRelations,
+            'membersDetails' => $membersDetails,
+            'industryType' => $industryType,
+            'emirates' => $emirates,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
+            'paymentMethods' => app(PaymentMethodService::class)->getAll(),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'payments' => $payments,
+            'insuranceProviders' => $insuranceProviders,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'enums' => [
+                'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+            ],
+            'bookPolicyDetails' => $bookPolicyDetails,
+            'vatPercentage' => $vatPercentage,
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
+        ];
     }
 
     public function getSelectedLostReason($id)

@@ -2705,7 +2705,7 @@ const uploadDocument = (doc, files, count) => {
           ) {
             quoteDocuments = data.props.quoteDocuments;
           } else {
-            quoteDocuments = data.props.quoteRequest.documents;
+            quoteDocuments = data.props.quote.documents;
           }
           //quoteDocuments = [...quoteDocuments].reverse();
           // Sort the array by the "id" property in descending order

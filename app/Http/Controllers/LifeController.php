@@ -8,7 +8,6 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -29,11 +28,9 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
 use App\Services\CRUDService;
-use App\Services\DropdownSourceService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
-use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -156,124 +153,13 @@ class LifeController extends Controller
     public function show($uuid)
     {
         /* Start - Temporarily adding for correcting historic data  */
-        $quote = $this->lifeQuoteService->getEntity($uuid);
+        $quote = $this->lifeQuoteService->getQuoteBy('uuid', $uuid);
         abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
         /* End - Temporarily adding for correcting historic data  */
 
-        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($quote->id);
-        $payments = $paymentEntityModel->payments;
-
-        $quoteType = strtolower($this->genericModel->modelType);
-        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $quote->code);
-        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-        $advisors->load(['roles']);
-
-        $this->lifeQuoteService->fillData();
-
-        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
-        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
-        })->values();
-        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::LIFE->id(), $quoteStatuses);
-
-        if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-            })->values();
-        }
-
-        $fields = $this->lifeQuoteService->fieldsToDisplay($this->lifeQuoteService->getFieldsToShow(), $quote);
-        $customTitles = [];
-        foreach ($fields as $property => $value) {
-            if (in_array('title', $value)) {
-                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
-            } else {
-                $customTitles[$property] = ucwords(str_replace('_', ' ', $property));
-            }
-        }
-
-        $isQuoteDocumentEnabled = $this->lifeQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
-        $quoteDocuments = $this->lifeQuoteService->getQuoteDocuments($this->genericModel->modelType, $quote->id);
-        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Life);
-        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
-
-        $customerAdditionalContacts = $this->lifeQuoteService->getAdditionalContacts($quote->customer_id, $quote->mobile_no);
-        $activities = $this->lifeQuoteService->getActivityByLeadId($quote->id, strtolower($this->genericModel->modelType));
-        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::LIFE->id(), $quote->id);
-        $nationalities = NationalityRepository::withActive()->get();
-        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-        $membersDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name);
-        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-        $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
-        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::LIFE->id());
-        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
-        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
-
-        $sendUpdateOptions = [];
-        $sendUpdateLogs = [];
-        $sendUpdateEnum = (object) [];
-
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quote);
-
-        if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Life);
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
-            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        }
-
-        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
-        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-
-        return inertia('LifeQuote/Show', [
-            'documentTypes' => $documentTypes,
-            'storageUrl' => storageUrl(),
-            'quoteType' => QuoteTypes::LIFE,
-            'quoteTypeId' => QuoteTypeId::Life,
-            'quoteStatuses' => $quoteStatuses,
-            'quote' => $quote,
-            'amlStatusName' => $amlStatusName,
-            'record' => $quote,
-            'activities' => $activities,
-            'advisors' => $advisors,
-            'allowedDuplicateLOB' => $allowedDuplicateLOB,
-            'customerAdditionalContacts' => $customerAdditionalContacts,
-            'lostReasons' => $this->lookupService->getLostReasons(),
-            'modelType' => QuoteTypes::LIFE,
-            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
-            'embeddedProducts' => $embeddedProducts,
-            'customerTypeEnum' => CustomerTypeEnum::asArray(),
-            'nationalities' => $nationalities,
-            'memberRelations' => $memberRelations,
-            'membersDetails' => $membersDetails,
-            'industryType' => $industryType,
-            'emirates' => $emirates,
-            'UBOsDetails' => $uboDetails,
-            'UBORelations' => $uboRelations,
-            'paymentMethods' => (new LookupService)->getPaymentMethods(),
-            'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'quoteRequest' => $paymentEntityModel,
-            'payments' => $payments,
-            'insuranceProviders' => $insuranceProviders,
-            'permissions' => [
-                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-            ],
-            'enums' => [
-                'travelQuoteEnum' => TravelQuoteEnum::asArray(),
-            ],
-            'bookPolicyDetails' => $bookPolicyDetails,
-            'vatPercentage' => $vatPercentage,
-            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($payments),
-            'sendUpdateEnum' => $sendUpdateEnum,
-            'sendUpdateOptions' => $sendUpdateOptions,
-            'sendUpdateLogs' => $sendUpdateLogs,
-            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'linkedQuoteDetails' => $linkedQuoteDetails,
-            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
-            'paymentDocument' => $paymentDocument,
-        ]);
+        $data = $this->lifeQuoteService->getShowData($uuid);
+        return inertia('LifeQuote/Show', $data);
     }
 
     /**
