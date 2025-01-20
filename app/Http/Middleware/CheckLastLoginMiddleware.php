@@ -19,9 +19,7 @@ class CheckLastLoginMiddleware
     {
         $specialUsers = getAutomationUser();
         if (auth()->user()) {
-            $impersonateManager = app('impersonate');
-
-            if (in_array(auth()->user()->email, $specialUsers) || $impersonateManager->isImpersonating()) {
+            if (in_array(auth()->user()->email, $specialUsers) || app('impersonate')->isImpersonating()) {
                 return $next($request);
             }
 
