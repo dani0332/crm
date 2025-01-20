@@ -924,9 +924,21 @@ class HomeQuoteService extends BaseService
 
             $discountedPremium = $request->plan['actual_premium'];
 
+            if (isset($request->plan['is_create'])) {
+                if ($request->plan['is_create'] == 1) {
+                    $discountedPremium = $request->plan['actual_premium'];
+                    $isUpdate = false;
+                } else {
+                    $discountedPremium = $request->plan['discounted_premium'];
+                    $isUpdate = true;
+                }
+            } else {
+                $discountedPremium = $request->plan['actual_premium'];
+            }
+
             $homePlanData = [
                 'quoteUID' => $request->plan['quote_uuid'],
-                'update' => true,
+                'update' => $isUpdate,
                 'url' => strval($request->plan['current_url']),
                 'ipAddress' => request()->ip(),
                 'userAgent' => request()->header('User-Agent'),

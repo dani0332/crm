@@ -39,6 +39,7 @@ const planForm = useForm({
     props.plan.listQuotePlanBenefitsExclusions || [],
   listQuotePlanBenefitsPolicyDetails:
     props.plan.listQuotePlanBenefitsPolicyDetails || [],
+  is_create: 0,
 });
 
 console.log('planForm', planForm);
