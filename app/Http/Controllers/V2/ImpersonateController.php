@@ -38,6 +38,6 @@ class ImpersonateController extends Controller
 
         Auth::user()->leaveImpersonation();
 
-        return redirect('/home');
+        return redirect('/admin/users');
     }
 }
