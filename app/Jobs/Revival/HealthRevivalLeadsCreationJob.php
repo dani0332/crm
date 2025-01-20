@@ -146,7 +146,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM;
 
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                    $response = Ken::request('/get-health-cheapest-plans', 'post', [
+                    $response = Ken::renewalRequest('/get-health-cheapest-plans', 'post', [
                         'quoteUID' => $capiResponse->quoteUID,
                         'isPlanTypes' => true,
                     ]);
@@ -161,7 +161,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     $emailData->subject = 'Renew your health insurance policy today! '.$healthQuote->code;
                 } else {
 
-                    $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
+                    $response = Ken::renewalRequest('/get-health-quote-plans-order-priority', 'post', [
                         'quoteUID' => $healthQuote->uuid,
                         'isModified' => true,
                     ]);
