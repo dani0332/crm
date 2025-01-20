@@ -2947,7 +2947,13 @@ const hasAnyAuthorisedPendingCA = computed(() => {
 const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
-      const paymentMethodCC = filterCCPayments(payment);
+      return 'approve';
+      /*
+       As discussed with Angie, there is no capture button in current flow, but there is an enhancement coming where capture button will be enabled for certain insurers
+
+      Commenting below code for now, will be enabled in future
+      */
+      /*const paymentMethodCC = filterCCPayments(payment);
       if (
         payment.collection_type === 'insurer' &&
         hasAnyAuthorisedPendingCA.value(payment)
@@ -2961,7 +2967,7 @@ const getCaptureOption = computed(() => {
       ) {
         return 'approve';
       }
-      return paymentMethodCC.length > 0 ? 'capture' : 'approve';
+      return paymentMethodCC.length > 0 ? 'capture' : 'approve';*/
     }
     return;
   };
