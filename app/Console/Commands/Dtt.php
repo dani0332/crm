@@ -48,8 +48,6 @@ class Dtt extends Command
      */
     public function handle()
     {
-        info('----------- Dtt Command Started -----------');
-
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             info('DTT is not enabled from cms');
@@ -148,7 +146,5 @@ class Dtt extends Command
         } else {
             info($logPrefix.'------No lead Found------');
         }
-
-        info('----------- Dtt Command Ended -----------');
     }
 }
