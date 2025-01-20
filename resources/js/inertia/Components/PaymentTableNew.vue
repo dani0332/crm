@@ -865,10 +865,7 @@ const handlePaymentTypes = count => {
       paymentMethodsForm.frequency === paymentFrequencyEnum.MONTHLY)
   ) {
     paymentTypesWithoutCheck = paymentTypesFiltered.value.filter(
-      item =>
-        ![
-          page.props.paymentMethodsEnum?.Cheque,
-        ].includes(item.value),
+      item => ![page.props.paymentMethodsEnum?.Cheque].includes(item.value),
     );
   }
 
@@ -1773,6 +1770,11 @@ const editPaymentModal = (
   sr_no,
   capture_approval,
 ) => {
+  if (!isAmlVerified() || !isKycVerified()) {
+    console.log('open AML and KYC Verification Modal');
+    openAmlVerificationModal();
+    return;
+  }
   if (
     sr_no === 0 &&
     payment.payment_status.id === props.paymentStatusEnum.PAID &&
@@ -2772,23 +2774,29 @@ const shouldProcessUpdate = payment => {
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   const isCarQuote = props.quoteType === 'Car';
-  const isGIGInsuranceProvider = page.props?.bookPolicyDetails?.isGIGInsuranceProvider  
-    || page.props?.bookingDetails?.isGIGInsuranceProvider || false;
+  const isGIGInsuranceProvider =
+    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
+    page.props?.bookingDetails?.isGIGInsuranceProvider ||
+    false;
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
-  let isAMlAndKycTravelComplete = isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
-  if (isInsurer && isGIGInsuranceProvider && (isCarQuote || isTravelQuote) && hasAnyCCSplitPayment()) {
-    isInsurerAmlCleared = insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared
-    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate
+  let isAMlAndKycTravelComplete =
+    isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
+  if (
+    isInsurer &&
+    isGIGInsuranceProvider &&
+    (isCarQuote || isTravelQuote) &&
+    hasAnyCCSplitPayment()
+  ) {
+    isInsurerAmlCleared =
+      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
   }
 
-  return (
-    hasPayments &&
-    isTotalPriceMatching &&
+  return hasPayments /*&& isTotalPriceMatching &&
     isAMlAndKycTravelComplete &&
-    isInsurerAmlCleared
-  );
+    isInsurerAmlCleared*/;
 };
 
 const getValidStatuses = paymentSplitRec => {
@@ -2943,6 +2951,13 @@ const getCaptureOption = computed(() => {
       if (
         payment.collection_type === 'insurer' &&
         hasAnyAuthorisedPendingCA.value(payment)
+      ) {
+        return 'approve';
+      } else if (
+        !isAmlVerified() ||
+        !isKycVerified() ||
+        !isInsurerAmlVerified() ||
+        !isTotalAmountMismatched()
       ) {
         return 'approve';
       }
@@ -3277,9 +3292,72 @@ const splitPaymentTotalPrice = (
   return formatAmount(total);
 };
 
+const disableMainPaymentApproval = computed(() => {
+  return (
+    isAmlVerified() &&
+    isKycVerified() &&
+    (!isInsurerAmlVerified() || !isTotalAmountMismatched())
+  );
+});
+
+const amlAndKycTooltip = computed(() => {
+  if (isAmlVerified() && !isKycVerified()) return null;
+  if (!isAmlVerified()) {
+    return page.props.paymentTooltipEnum.PENDING_AML_CLEARANCE;
+  } else if (!isInsurerAmlVerified()) {
+    return page.props.paymentTooltipEnum.PENDING_INSURER_AML_CLEARANCE;
+  } else if (!isKycVerified()) {
+    return page.props.paymentTooltipEnum.PENDING_KYC_CLEARANCE;
+  } else if (!isTotalAmountMismatched()) {
+    return page.props.paymentTooltipEnum.TOTAL_AMOUNT_MISMATCHED;
+  }
+});
+
+const isTotalAmountMismatched = () => {
+  const totalPriceRounded =
+    Math.round(props.payments[0]?.total_price * 100) / 100;
+  const calculatedTotal =
+    Math.round(
+      (props.payments[0].total_amount + props.payments[0].discount_value) * 100,
+    ) / 100;
+  console.log(
+    ' totalPriceRounded === calculatedTotal ',
+    totalPriceRounded,
+    calculatedTotal,
+    totalPriceRounded === calculatedTotal,
+  );
+  return totalPriceRounded === calculatedTotal;
+};
+
+const isKycVerified = () => {
+  //Bypass KYC if its travel and insurer is other than GIG and payment is non CC
+
+  let isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
+  let isGIGInsuranceProvider =
+    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
+    page.props?.bookingDetails?.isGIGInsuranceProvider ||
+    false;
+  let paymentMethodCC =
+    props.payments[0].payment_methods_code ===
+    page.props.paymentMethodsEnum.CreditCard;
+  if (isTravelQuote && !isGIGInsuranceProvider && !paymentMethodCC) {
+    return true;
+  }
+
+  return props.quoteRequest.kyc_decision === 'Complete';
+};
+
 const isAmlVerified = () => {
-  //Bypass Travel Quote Type for aml verification
-  if (props.quoteType === quoteTypeCodeEnum.Travel) {
+  //Bypass AML if its travel and insurer is other than GIG and payment is non CC
+  let isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
+  let isGIGInsuranceProvider =
+    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
+    page.props?.bookingDetails?.isGIGInsuranceProvider ||
+    false;
+  let paymentMethodCC =
+    props.payments[0].payment_methods_code ===
+    page.props.paymentMethodsEnum.CreditCard;
+  if (isTravelQuote && !isGIGInsuranceProvider && !paymentMethodCC) {
     return true;
   }
 
@@ -3287,6 +3365,36 @@ const isAmlVerified = () => {
     props.quoteRequest.aml_status ===
     page.props.amlStatusEnum.AMLScreeningCleared
   );
+};
+
+const isInsurerAmlVerified = () => {
+  //Bypass Insurer AML if its travel and insurer is other than GIG and payment is non CC
+
+  let isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
+  let isGIGInsuranceProvider =
+    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
+    page.props?.bookingDetails?.isGIGInsuranceProvider ||
+    false;
+  let isPaymentMethodCC =
+    props.payments[0].payment_methods_code ===
+    page.props.paymentMethodsEnum.CreditCard;
+
+  let insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
+  let isInsurerAmlCleared =
+    insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+
+  if (isTravelQuote && !isGIGInsuranceProvider && !isPaymentMethodCC) {
+    //Bypass Insurer AML if its travel and insurer is other than GIG and payment is non CC
+    return true;
+  } else if (isTravelQuote && isGIGInsuranceProvider && isPaymentMethodCC) {
+    // Insurer AML is required if its travel and insurer is GIG and payment is CC
+    return isInsurerAmlCleared;
+  } else if (isPaymentMethodCC) {
+    // Insurer AML is required if its non travel and payment is CC
+    return isInsurerAmlCleared;
+  }
+
+  return true;
 };
 
 const openAmlVerificationModal = () => {
@@ -3384,12 +3492,10 @@ const hasAnyCCPayment = () => {
 const hasAnyCCSplitPayment = () => {
   if (props.payments.length > 0) {
     const paymentSplits = props.payments[0].payment_splits;
-    return paymentSplits.some(
-      item => item.payment_method.code === 'CC'
-    );
+    return paymentSplits.some(item => item.payment_method.code === 'CC');
   }
   return false;
-}
+};
 
 const isCCPaymentDisabled = option => {
   return (
@@ -3793,23 +3899,48 @@ const isCCPaymentDisabled = option => {
                             >
                               Capture
                             </x-button>
-                            <x-button
-                              v-if="
-                                getCaptureOption(item) === 'approve' &&
-                                getCaptureValidation(item)
-                              "
-                              size="xs"
-                              color="orange"
-                              outlined
-                              @click="
-                                getCaptureValidation(item)
-                                  ? editPaymentModal(item, 0, 0, 2)
-                                  : alertCapture(item)
-                              "
-                              :disabled="isApproveConfirmed"
-                            >
-                              Approve
-                            </x-button>
+
+                            <template v-if="disableMainPaymentApproval">
+                              <x-tooltip placement="right">
+                                <x-button
+                                  v-if="
+                                    getCaptureOption(item) === 'approve' &&
+                                    getCaptureValidation(item)
+                                  "
+                                  size="xs"
+                                  color="orange"
+                                  outlined
+                                  :disabled="
+                                    isApproveConfirmed ||
+                                    disableMainPaymentApproval
+                                  "
+                                >
+                                  Approve
+                                </x-button>
+                                <template #tooltip>
+                                  <span>{{ amlAndKycTooltip }}</span>
+                                </template>
+                              </x-tooltip>
+                            </template>
+                            <template v-else>
+                              <x-button
+                                v-if="
+                                  getCaptureOption(item) === 'approve' &&
+                                  getCaptureValidation(item)
+                                "
+                                size="xs"
+                                color="orange"
+                                outlined
+                                @click="
+                                  getCaptureValidation(item)
+                                    ? editPaymentModal(item, 0, 0, 2)
+                                    : alertCapture(item)
+                                "
+                                :disabled="isApproveConfirmed"
+                              >
+                                Approve
+                              </x-button>
+                            </template>
                           </template>
                         </div>
                       </td>
@@ -5944,73 +6075,6 @@ const isCCPaymentDisabled = option => {
                 </div>
               </div>
             </div>
-            <div
-              class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
-              v-if="isAmlApprovalRequired"
-            >
-              <div
-                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
-              >
-                <div class="modal-confirm-header text-base text-white bg-white">
-                  <div
-                    class="flex flex-row-reverse text-lg font-semibold px-6 py-4"
-                  >
-                    <div class="flex items-center space-x-2">
-                      <span
-                        @click="closeAmlConfirmModal"
-                        class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
-                      >
-                        <!-- Cross icon -->
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          tabindex="0"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          class="w-4 h-4 text-gray-800"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          ></path>
-                        </svg>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div class="w-full h-full mt-2 flex flex-col items-center">
-                  <div
-                    class="text-lg font-bold px-6 flex justify-between items-start"
-                  >
-                    <div class="text-left">
-                      <span>Please complete the AML screening to proceed.</span>
-                    </div>
-                  </div>
-                  <Link
-                    :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
-                  >
-                    <x-tooltip>
-                      <x-button
-                        v-if="can(permissionEnum.AMLList)"
-                        size="lg"
-                        color="orange"
-                        class="px-4 py-4 mt-4"
-                        :loading="paymentMethodsForm.processing"
-                      >
-                        <span>Go to AML & KYC page</span></x-button
-                      >
-                      <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </Link>
-                </div>
-              </div>
-            </div>
           </x-form>
 
           <div
@@ -6180,6 +6244,74 @@ const isCCPaymentDisabled = option => {
           </div>
         </x-modal>
 
+        <!--  Clear AML KYC Screening         -->
+        <div
+          v-if="isAmlApprovalRequired"
+          class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+        >
+          <div
+            class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+          >
+            <div class="modal-confirm-header text-base text-white bg-white">
+              <div
+                class="flex flex-row-reverse text-lg font-semibold px-6 py-4"
+              >
+                <div class="flex items-center space-x-2">
+                  <span
+                    @click="closeAmlConfirmModal"
+                    class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+                  >
+                    <!-- Cross icon -->
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      tabindex="0"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      class="w-4 h-4 text-gray-800"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      ></path>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="w-full h-full mt-2 flex flex-col items-center">
+              <div
+                class="text-lg font-bold px-6 flex justify-between items-start"
+              >
+                <div class="text-left">
+                  <span>Please complete the AML screening to proceed.</span>
+                </div>
+              </div>
+              <Link
+                :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+              >
+                <x-tooltip>
+                  <x-button
+                    v-if="can(permissionEnum.AMLList)"
+                    size="lg"
+                    color="orange"
+                    class="px-4 py-4 mt-4"
+                    :loading="paymentMethodsForm.processing"
+                  >
+                    <span>Go to AML & KYC page</span></x-button
+                  >
+                  <template #tooltip>
+                    <span>{{ paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE }}</span>
+                  </template>
+                </x-tooltip>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <!--  Clear AML KYC Screening         -->
         <div
           class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
           v-if="isRetryModalOpen"

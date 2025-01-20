@@ -135,4 +135,9 @@ final class PaymentTooltip extends Enum
     const CREDIT_APPROVAL_PAYMENT_METHOD_DISABLED_MESSAGE = 'Selection is disabled due to Credit Approval applied. Please remove Credit Approval to modify';
 
     const DISABLED_COMMISSION = "This field is now locked because the payment has been successfully captured. If any changes are required, please proceed by booking the policy, then go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'.";
+    const PENDING_INSURER_AML_CLEARANCE = 'You cannot proceed with transaction approval until the Insurer AML status is cleared.';
+    const PENDING_AML_CLEARANCE = 'You cannot proceed with transaction approval until AML status is Cleared.';
+    const PENDING_KYC_CLEARANCE = 'You cannot proceed with transaction approval until KYC  is completed.';
+    const TOTAL_AMOUNT_MISMATCHED = 'Please revise payment details to reflect plan changes.';
+
 }
