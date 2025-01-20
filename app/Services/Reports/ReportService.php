@@ -29,8 +29,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ReportService extends BaseService
 {
@@ -592,9 +592,9 @@ class ReportService extends BaseService
     public function getPaymentAuthorisedSummary($request)
     {
 
-        $user = Auth::user();
-
+        $user = auth()->user();
         $userTeams = $user->getUserTeams($user->id);
+        $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $expiryDays = $authorizedDays->value;
 
@@ -626,32 +626,23 @@ class ReportService extends BaseService
             QuoteTypes::JETSKI,
         ];
 
-        foreach ($leadTables as $role => $details) {
-            if ($userRole->hasRole($role)) {
-                $query = DB::table($details['table'])
-                    ->select(
-                        'users.id as advisor_id',
-                        'users.name as advisor_name',
-                        DB::raw('COUNT(*) as total_leads'),
-                        DB::raw('SUM('.$details['table'].'.premium) as total_premium'),
-                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
-                    )
-                    ->distinct()
-                    ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
-                    ->join('users', 'users.id', $details['table'].'.advisor_id')
-                    ->join('user_team', 'user_team.user_id', 'users.id')
-                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->where($details['table'].'.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                    ->whereIn('teams.name', $userTeams)
-                    ->groupBy('users.id', 'users.name')
-                    ->orderBy('total_leads', 'desc');
-
-                if ($details['quoteType']) {
-                    $query->where($details['table'].'.quote_type_id', $details['quoteType']);
+        $allowedLOBs = [];
+        if (isset($request->quoteType)) {
+            $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+            $allowedLOBs[] = $lobTable[ucfirst($quoteType)];
+        } else {
+            $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
+            foreach ($quoteTypes as $quoteType) {
+                if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
+                    $allowedLOBs[] = $lobTable[$quoteType->value];
+                } elseif (in_array(RolesEnum::Admin, $userRoles)) {
+                    $allowedLOBs[] = $lobTable[$quoteType->value];
+                } else {
+                    continue;
                 }
             }
         }
+
         $dataCollection = collect();
         foreach ($allowedLOBs as $details) {
             $premiumColumn = $details['table'].'.premium';

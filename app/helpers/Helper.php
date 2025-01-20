@@ -1318,7 +1318,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer.first_name as client_first_name',
                 'customer.last_name as client_last_name',
                 'customer.email as client_email',
-                'customer.mobile_no as client_phone_number',
+                "{$table}.mobile_no as client_phone_number",
                 'customer_addresses.type as courier_address_type',
                 'customer_addresses.office_number as courier_address_office_number',
                 'customer_addresses.floor_number as courier_address_floor_number',

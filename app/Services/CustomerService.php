@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
+use App\Models\CustomerMembers;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
@@ -398,5 +399,12 @@ class CustomerService extends BaseService
                 }
             }
         }
+    }
+
+    public function getPrimaryCustomerById($id, $memberId = null)
+    {
+        $customer = CustomerMembers::find($id);
+
+        return $customer && $customer->id == $memberId;
     }
 }

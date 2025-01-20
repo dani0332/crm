@@ -1526,7 +1526,7 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::EF,
             SendUpdateLogStatusEnum::CI,
             SendUpdateLogStatusEnum::CIR,
-        ]) && empty($sendUpdateLog->endorsement_number)) {
+        ]) && empty($sendUpdateLog->endorsement_number) && auth()->user()->can(PermissionsEnum::TAP_BETA_ACCESS)) {
             return 'Endorsement Number is required before proceeding.';
         }
 
