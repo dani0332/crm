@@ -86,6 +86,9 @@ class CarAllocationService extends AllocationService
         } elseif ($lead->isSICFlowDisabled()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow disabled, continuing assignment");
             $continueAssignment = true;
+        } elseif ($lead->isRevivalRepliedOrPaid()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is a Revival lead, continuing assignment");
+            $continueAssignment = true;
         } else {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} does not meet any criteria, skipping assignment");
         }
@@ -678,7 +681,7 @@ class CarAllocationService extends AllocationService
         }
 
         if ($assignmentType === AssignmentTypeEnum::SYSTEM_REASSIGNED && $this->isBuyLeadAdvisor) {
-            $assignmentType = AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+            $assignmentType = AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD;
         }
 
         //Store the previous Assignment Type
