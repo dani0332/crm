@@ -6,6 +6,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\WorkflowTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Http\Requests\PaymentDocumentRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Models\CustomerMembers;
@@ -123,6 +124,10 @@ class QuoteDocumentController extends Controller
         }
 
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
+
+        if ($request->document_type_code === DocumentTypeCode::TRVLPAS) {
+            $this->stopHapexReminder($quote);
+        }
 
         // update quote status - production process
         app(CentralService::class)->updateQuoteInformation($quoteType, $request->quote_id);
@@ -324,6 +329,7 @@ class QuoteDocumentController extends Controller
 
     public function stopHapexReminder($quote)
     {
+        info(' fn:'.__FUNCTION__.' Quote UUID : '.$quote->uuid);
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
 
         return true;
