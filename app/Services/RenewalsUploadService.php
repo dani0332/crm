@@ -1317,7 +1317,7 @@ class RenewalsUploadService
                 ]);
                 info('fn: renewalBatchEmailProcess renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
 
-                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, true) : [];
+                $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, true) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 $emailTemplateId = $this->getEmailTemplateId($carQuote, $quotePlansCount);
 
