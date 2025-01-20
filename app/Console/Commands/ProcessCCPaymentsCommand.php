@@ -43,7 +43,7 @@ class ProcessCCPaymentsCommand extends Command
                     foreach ($pendingCCRecords as $pendingCCRecord) {
                         ProcessCCPaymentJob::dispatch($pendingCCRecord->id);
                         $pendingCCRecord->update(['status' => PaymentProcessJobEnum::IN_PROCESS]);
-                        info('Child payment code: '.$pendingCCRecord->splitPayment->code. ' CC Payments Job ProcessCcPayments dispatched');
+                        info('Child payment code: '.$pendingCCRecord->splitPayment->code.' CC Payments Job ProcessCcPayments dispatched');
                     }
                 });
         } else {

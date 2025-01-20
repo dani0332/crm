@@ -25,7 +25,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param int $ccPaymentProcessId
+     * @param  int  $ccPaymentProcessId
      * @return void
      */
     public function __construct($ccPaymentProcessId)
@@ -66,11 +66,9 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 
     /**
      * Get the unique ID for the job.
-     *
-     * @return string
      */
     public function uniqueId(): string
     {
-        return "cc-payment-process-id-" .$this->ccPaymentProcessId;
+        return 'cc-payment-process-id-'.$this->ccPaymentProcessId;
     }
 }
