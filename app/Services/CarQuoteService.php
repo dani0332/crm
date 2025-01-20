@@ -1869,7 +1869,7 @@ class CarQuoteService extends BaseService
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
 
         //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD];
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
 
         // Get the allocation record for the new advisor
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
@@ -2220,7 +2220,7 @@ class CarQuoteService extends BaseService
             'customer_id' => $lead->customer_id,
         ])->first();
 
-        if (! $existingAddress) {
+        if (empty($existingAddress?->type)) {
             info('Sending address notification to customer for lead : '.$lead->uuid);
             // only trigger bird flow if address is not already added
             $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);

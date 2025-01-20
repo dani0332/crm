@@ -13,6 +13,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -22,8 +23,8 @@ use App\Models\BrokerCommission;
 use App\Models\Customer;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
-use App\Models\PaymentMethod;
 use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\PaymentRepository;
@@ -271,11 +272,12 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        @[$isCreditCardEnabled, $isSplitFrequencyHidden, $brokerCommission, $isGIGInsuranceProvider] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id);
+        @[$isCreditCardEnabled, $isSplitFrequencyHidden, $brokerCommission, $isGIGInsuranceProvider, $isTapCaptureProcessStart] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id, $record);
         $bookPolicyDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
         $bookPolicyDetails['isSplitFrequencyHidden'] = $isSplitFrequencyHidden;
         $bookPolicyDetails['brokerCommission'] = $brokerCommission;
         $bookPolicyDetails['isGIGInsuranceProvider'] = $isGIGInsuranceProvider;
+        $bookPolicyDetails['isTapCaptureProcessStart'] = $isTapCaptureProcessStart;
         [$isCommissionDisabled, $commissionTooltip] = $this->isCommissionDisabled($payment);
         $bookPolicyDetails['isCommissionDisabled'] = $isCommissionDisabled;
         $bookPolicyDetails['commissionTooltip'] = $commissionTooltip;
@@ -314,6 +316,7 @@ trait GenericQueriesAllLobs
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
+
         return $bookPolicyDetails;
     }
 
@@ -744,18 +747,16 @@ trait GenericQueriesAllLobs
         return in_array($lead_status_id, $skipStatus);
     }
 
-    public function getCreditCardAndSplitFrequencyStatus($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId)
+    public function getCreditCardAndSplitFrequencyStatus($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId, $quote = null)
     {
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $brokerCommissionQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)->active();
 
         if (in_array($quoteTypeId, [QuoteTypes::getId(QuoteTypes::BUSINESS), QuoteTypes::getId(QuoteTypes::CORPLINE), QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)])) {
-            $brokerCommissionQuery->where('business_type_of_insurance_id', $businessTypeOfInsuranceId)
-                ->where('quote_type_id', QuoteTypeId::Business);
-        } else {
-            $brokerCommissionQuery->where('quote_type_id', $quoteTypeId);
+            $quoteTypeId = QuoteTypeId::Business;
+            $brokerCommissionQuery->where('business_type_of_insurance_id', $businessTypeOfInsuranceId);
         }
-
+        $brokerCommissionQuery->where('quote_type_id', $quoteTypeId);
         $brokerCommission = $brokerCommissionQuery->first();
         $insuranceProvider = InsuranceProvider::whereIn('code', [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE])
             ->where('id', $insuranceProviderId)
@@ -764,31 +765,43 @@ trait GenericQueriesAllLobs
 
         $isSplitFrequencyHidden = $insuranceProvider !== null;
         $isGIGInsuranceProvider = $insuranceProvider !== null && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
-    
+
+        $isTapCaptureProcessStart = false;
+        if ($quote) {
+            $isTapCaptureProcessStart = QuoteTag::where([
+                'quote_type_id' => $quoteTypeId,
+                'quote_uuid' => $quote->uuid,
+                'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START,
+                'value' => 1,
+            ])->select('id')->exists();
+        }
+
         return [
             $brokerCommission ? true : false,
             $isSplitFrequencyHidden,
             $brokerCommission,
-            $isGIGInsuranceProvider
+            $isGIGInsuranceProvider,
+            $isTapCaptureProcessStart,
         ];
     }
-    
+
     private function isCommissionDisabled($payment)
     {
         if ($payment && $payment->collection_type == CollectionTypeEnum::INSURER) {
             $paymentSplits = $payment->paymentSplits;
             if ($paymentSplits->isNotEmpty()) {
-                $hasAnyCCPayment =  $paymentSplits->contains(function ($split) {
+                $hasAnyCCPayment = $paymentSplits->contains(function ($split) {
                     return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id == PaymentStatusEnum::PAID;
                 });
                 if ($hasAnyCCPayment) {
                     return [
                         true,
-                        PaymentTooltip::DISABLED_COMMISSION
+                        PaymentTooltip::DISABLED_COMMISSION,
                     ];
                 }
             }
         }
+
         return [false, ''];
     }
 }

@@ -203,6 +203,7 @@ const bpForm = useForm({
     page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
   isCommissionDisabled: page.props?.bookPolicyDetails?.isCommissionDisabled,
   commissionTooltip: page.props?.bookPolicyDetails?.commissionTooltip,
+  isTapCaptureProcessStart: page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
 });
 
 let is_lacking_payment = ref(
@@ -442,6 +443,9 @@ const disableCommissionVatApplicable = computed(() => {
   return !bp.isEditing || bpForm.commission_vat_not_applicable > 0;
 });
 const showSendAndBookPolicyButtonBlock = computed(() => {
+  if (bpForm.isTapCaptureProcessStart || !isAllPaymentAuthorized()) {
+    return false;
+  }
   const { quote_status_id } = props.quote;
   const {
     TransactionApproved,
@@ -660,20 +664,28 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
+const filterCCPayments = payment => {
+  return payment.payment_splits.filter(
+    item => item.payment_method.code === 'CC',
+  );
+};
+
 const isAllPaymentAuthorized = () => {
   const payment = getPayment()
   if (payment){
     const paidStatusIds = [
-      props.paymentStatusEnum.AUTHORISED,
+      paymentStatusEnum.AUTHORISED,
+      paymentStatusEnum.CAPTURED,
+      paymentStatusEnum.PAID
     ];
+    const ccPayments = filterCCPayments(payment);
 
-    return payment.payment_splits.every(split =>
+    return ccPayments.every(split =>
       paidStatusIds.includes(split.payment_status_id)
     );
   }
   return false
 };
-
 </script>
 
 <template>
@@ -1340,7 +1352,7 @@ const isAllPaymentAuthorized = () => {
               <template
                 v-else-if="
                   props.quote.quote_status_id ==
-                  page.props.quoteStatusEnum.PolicyBooked
+                  page.props.quoteStatusEnum.PolicyBooked || !isAllPaymentAuthorized()
                 "
               >
                 <x-tooltip>
@@ -1353,7 +1365,9 @@ const isAllPaymentAuthorized = () => {
                   </x-button>
                   <template #tooltip>
                     <span>{{
+                      props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked ?
                       "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
+                      : "The payment status is not yet Authorised"
                     }}</span>
                   </template>
                 </x-tooltip>
@@ -1368,7 +1382,9 @@ const isAllPaymentAuthorized = () => {
                   </x-button>
                   <template #tooltip>
                     <span>{{
+                      props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked ?
                       'The button is not accessible because policy has been booked'
+                      : "The payment status is not yet Authorised"
                     }}</span>
                   </template>
                 </x-tooltip>

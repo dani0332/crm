@@ -728,10 +728,9 @@ Route::get('/add-batch-number', function () {
 
 // });
 
-
-Route::get('tap-pay-checkout-api/{code}/{quoteTypeId}', function(){
+Route::get('tap-pay-checkout-api/{code}/{quoteTypeId}', function () {
     $quoteTypeId = request()->quoteTypeId;
-    if ($quoteTypeId == 8){
+    if ($quoteTypeId == 8) {
         $quote = TravelQuote::where('uuid', request()->code)->first();
     } else {
         $quote = CarQuote::where('uuid', request()->code)->first();
@@ -740,9 +739,9 @@ Route::get('tap-pay-checkout-api/{code}/{quoteTypeId}', function(){
     $paymentSplits = PaymentSplits::where('code', $quote->code)->get();
 
     $modelType = QuoteTypes::getName($quoteTypeId)->value;
-    // premium_authorized need to confirm this in case of broker cc payment we are targetting collection amount 
+    // premium_authorized need to confirm this in case of broker cc payment we are targetting collection amount
     $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
-    $data = new \stdClass();
+    $data = new \stdClass;
     $data->modelType = $modelType;
     $data->quote_id = $quote->id;
     $data->plan_id = $payment->plan_id;
@@ -758,13 +757,12 @@ Route::get('tap-pay-checkout-api/{code}/{quoteTypeId}', function(){
 
     app(PaymentRepository::class)->handlePaymentApprove($data);
 
-    echo "Payment Capture";
+    echo 'Payment Capture';
 });
 
-
-Route::get('/test/{id}', function(){
+Route::get('/test/{id}', function () {
     $ccProcessData = CcPaymentProcess::find(request()->id);
     $ccProcess = new ProcessCCPaymentJob($ccProcessData);
     $ccProcess->handle();
-    echo "Done";
+    echo 'Done';
 });

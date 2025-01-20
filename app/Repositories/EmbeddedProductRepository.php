@@ -240,7 +240,10 @@ class EmbeddedProductRepository extends BaseRepository
             if ($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
 
                 if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
-                    return CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->count() == 0;
+                    $address = CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->first();
+
+                    return empty($address?->type);
+
                 }
 
                 $paymentDate = Carbon::parse($payment->getAttributes()['captured_at']);
@@ -807,7 +810,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
             ],
         ];
-        $paymentGatewayEndpoint = $data['payment_gateway_id'] == PaymentGatewayIdEnum::TAP_PAYMENT_GATEWAY ? 'tap' : 'checkout';
+        $paymentGatewayEndpoint = $data['payment_gateway_id'] == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP ? 'tap' : 'checkout';
         info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/cancel', 'post', $planData);
 

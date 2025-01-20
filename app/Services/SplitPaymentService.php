@@ -8,6 +8,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
@@ -559,10 +560,10 @@ class SplitPaymentService
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
             $paymentMethodEndPoint = 'checkout';
-            if ( $payment->insuranceProvider->payment_gateway_id == PaymentGatewayIdEnum::TAP_PAYMENT_GATEWAY){
+            if ($payment->insuranceProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP) {
                 $paymentMethodEndPoint = 'tap';
             }
-            
+
             $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.$paymentMethodEndPoint;
 
             $paymentParams = [
@@ -715,7 +716,7 @@ class SplitPaymentService
             if ($existingReceipts->count() === 0 && $isFromJob && $payment->collection_type == CollectionTypeEnum::BROKER) {
                 $this->createReceipt($modelType, $quoteId, $paymentSplit, $sendUpdateId, $isFromJob);
             }
-            
+
         }
 
         if (! $paymentSplit->payment->is_approved &&
@@ -918,6 +919,10 @@ class SplitPaymentService
             if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 info('Master payment code: '.$payment->code.' updating payment paid at for lead');
                 $quoteModel->payment_paid_at = now();
+
+                // Update lead source for revival quotes after payment is paid
+                $isRevival = $quoteModel->source == LeadSourceEnum::REVIVAL || $quoteModel->source == LeadSourceEnum::REVIVAL_REPLIED;
+                $payment->paymentable_type == HealthQuote::class && $isRevival && $quoteModel->source = LeadSourceEnum::REVIVAL_PAID;
             }
             $quoteModel->save();
             // Log after successfully saving the quote model
