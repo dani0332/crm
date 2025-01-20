@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Models\InslyAdvisor;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class InslyAdvisorRequest extends FormRequest
 {
@@ -38,7 +37,7 @@ class InslyAdvisorRequest extends FormRequest
                         ->exists();
 
                     if ($exists) {
-                        $fail('The ' . $attribute . ' has already been taken.');
+                        $fail('The '.$attribute.' has already been taken.');
                     }
                 },
             ];

@@ -490,7 +490,7 @@ class UserController extends Controller
         // Iterate over the advisors from the request
         foreach ($request->advisors as $advisorData) {
             // Collect data for new advisors
-             $newAdvisors[] = [
+            $newAdvisors[] = [
                 'name' => $advisorData['name'],
                 'user_id' => $advisorData['user_id'],
                 'created_at' => now(),
@@ -498,7 +498,7 @@ class UserController extends Controller
             ];
         }
         // Bulk insert new advisors
-        if (!empty($newAdvisors)) {
+        if (! empty($newAdvisors)) {
             InslyAdvisor::insert($newAdvisors);
         }
 
