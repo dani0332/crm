@@ -16,7 +16,8 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $paymentRecord;
+    protected $ccPaymentProcess;
+    private $ccPaymentProcessId;
     public $tries = 1;
     public $timeout = 120; // 2 minutes
     public $uniqueFor = 125;
@@ -24,11 +25,12 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
     /**
      * Create a new job instance.
      *
+     * @param int $ccPaymentProcessId
      * @return void
      */
-    public function __construct(CcPaymentProcess $paymentRecord)
+    public function __construct($ccPaymentProcessId)
     {
-        $this->paymentRecord = $paymentRecord;
+        $this->ccPaymentProcessId = $ccPaymentProcessId;
     }
 
     /**
@@ -38,26 +40,37 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle()
     {
-        $quoteInfo = $this->paymentRecord->quote_type.'-'.$this->paymentRecord->quoteable_id;
-        info("CC Payments Job Started For Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id}");
-        try {
-            $this->paymentRecord->update(['status' => PaymentProcessJobEnum::INPROCESS]);
-            app(SplitPaymentService::class)->processSplitPaymentApprove(
-                $this->paymentRecord->quote_type,
-                $this->paymentRecord->quoteable_id,
-                $this->paymentRecord->payment_splits_id,
-                $this->paymentRecord->amount_captured,
-                true
-            );
-            info("CC Payments Job Ended For Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id}");
-        } catch (\Exception $exception) {
-            // Handle the exception here
-            info("CC Payments Job Failed for Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id} - Error: ".$exception->getMessage());
+        $ccPaymentProcess = CcPaymentProcess::find($this->ccPaymentProcessId);
+
+        if ($ccPaymentProcess->status === PaymentProcessJobEnum::IN_PROCESS) {
+            $splitPaymentCode = $ccPaymentProcess->splitPayment->code;
+            info("CC Payment Job Started: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
+
+            try {
+                app(SplitPaymentService::class)->processSplitPaymentApprove(
+                    $ccPaymentProcess->quote_type,
+                    $ccPaymentProcess->quoteable_id,
+                    $ccPaymentProcess->payment_splits_id,
+                    $ccPaymentProcess->amount_captured,
+                    true
+                );
+
+                info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
+            } catch (\Exception $exception) {
+                info("CC Payment Job Failed: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}, Error: {$exception->getMessage()}");
+            }
+        } else {
+            info("CC Payment Job Not In Process: Child payment code: {$ccPaymentProcess->splitPayment->code}, Status: {$ccPaymentProcess->status}");
         }
     }
 
+    /**
+     * Get the unique ID for the job.
+     *
+     * @return string
+     */
     public function uniqueId(): string
     {
-        return $this->paymentRecord->payment_splits_id;
+        return "cc-payment-process-id-" .$this->ccPaymentProcessId;
     }
 }
