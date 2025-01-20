@@ -31,6 +31,7 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PolicyIssuanceStatus;
+use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
@@ -131,6 +132,7 @@ class HandleInertiaRequests extends Middleware
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
+            'impersonatingUser' => User::find(app('impersonate')?->getImpersonatorId()),
         ];
     }
 

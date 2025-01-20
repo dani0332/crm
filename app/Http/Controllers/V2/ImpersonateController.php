@@ -19,20 +19,23 @@ class ImpersonateController extends Controller
         ]);
     }
 
-    public function loginVia(string $email)
+    public function loginAs($id)
     {
-        $user = User::whereEmail($email)->first();
-        if ($user) {
-            abort_if($user->email === Auth::user()->email, 403, 'You cannot impersonate yourself');
+        abort_if(app('impersonate')->isImpersonating(), 403, 'You are already impersonating a user');
 
-            Auth::user()->impersonate($user);
-        }
+        $user = User::findOrFail($id);
+
+        abort_if($user->email === Auth::user()->email, 403, 'You cannot impersonate yourself');
+
+        Auth::user()->impersonate($user);
 
         return redirect('/home');
     }
 
     public function leave()
     {
+        abort_unless(app('impersonate')->isImpersonating(), 403, 'You are not impersonating a user');
+
         Auth::user()->leaveImpersonation();
 
         return redirect('/home');

@@ -119,8 +119,8 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
-    Route::get('/login-via/{email}/email', [ImpersonateController::class, 'loginVia']);
-    Route::get('/leave-login-via', [ImpersonateController::class, 'leave']);
+    Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
+    Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
 
     Route::get('leadsearch', function () {
         return redirect('home');

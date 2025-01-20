@@ -6,7 +6,9 @@ const props = defineProps({
 const page = usePage();
 const params = useUrlSearchParams('history');
 const can = permission => useCan(permission);
+const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 
 const filters = reactive({
@@ -128,6 +130,15 @@ onMounted(() => {
       >
         {{ id }}
       </Link>
+    </template>
+    <template #item-name="item">
+      {{ item.name }}
+      <x-tooltip placement="top" v-if="hasRole(rolesEnum.Engineering)">
+        <a :href="route('login-as.id.login', item.id)">
+          <x-icon icon="loginAs" class="text-success-600 ml-2" />
+        </a>
+        <template #tooltip> Login As {{ item.name }} </template>
+      </x-tooltip>
     </template>
     <template #item-email="item">
       <Link
