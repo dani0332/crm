@@ -978,9 +978,9 @@ class HomeQuoteService extends BaseService
         $isAllowed = false;
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
-            $bikePayment = Payment::where('code', '=', $quote->code)->first();
-            if (! empty($bikePayment->captured_at)) {
-                $paymentCapturedAt = $bikePayment->captured_at;
+            $homePayment = Payment::where('code', '=', $quote->code)->first();
+            if (! empty($homePayment->captured_at)) {
+                $paymentCapturedAt = $homePayment->captured_at;
                 $today = Carbon::today();
 
                 $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
@@ -990,7 +990,7 @@ class HomeQuoteService extends BaseService
                     info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' and captured days diff is ' . $paymentCapturedAt);
                     $isAllowed = true;
                 } elseif (Auth::user()->hasRole(RolesEnum::HomeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
-                    info($logPrefix . ' plan modify allowed to bike manager for uuid ' . $quote->uuid . ' and captured days diff is ' . $paymentCapturedAt);
+                    info($logPrefix . ' plan modify allowed to home manager for uuid ' . $quote->uuid . ' and captured days diff is ' . $paymentCapturedAt);
                     $isAllowed = true;
                 }
             }
