@@ -11,9 +11,11 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Jobs\SendFTCEmailJob;
 use App\Models\BrokerInvoiceNumber;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -82,6 +84,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         DB::beginTransaction();
         try {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+            $sendFTCEmail = false;
             info('Starting payment creation process for Quote: '.$quoteModel->code);
             $masterPayment = (object) $request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
@@ -128,9 +131,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
 
+            if ($masterPayment->insurer_payment_link && $masterPayment->payment_methods == PaymentMethodsEnum::InsurerPaymentLink) {
+                $paymentInformation['insurer_payment_link'] = $masterPayment->insurer_payment_link;
+                // if payment method is insurer link payment lead status should be payment pending
+                $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+                $sendFTCEmail = true;
+            }
+
             if ($masterPayment->reference) {
                 $paymentInformation['reference'] = $masterPayment->reference;
             }
+
             if ($masterPayment->payment_methods != PaymentMethodsEnum::CreditCard && $masterPayment->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
                 $paymentInformation['authorized_at'] = now();
             }
@@ -153,6 +164,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             $quoteModel->save();
             DB::commit();
+
+            if($sendFTCEmail){
+                SendFTCEmailJob::dispatch($quoteModel->uuid, QuoteTypes::HEALTH)->delay(now()->addSeconds(5));
+            }
+
+
             info('Payment creation process completed successfully for Payment Code: '.$paymentInformation['code']);
 
             return ['status' => 'success', 'message' => 'Payment Added'];

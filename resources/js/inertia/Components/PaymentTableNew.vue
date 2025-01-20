@@ -2091,6 +2091,7 @@ const paymentMethodsForm = useForm({
   paymentCode: '',
   status: 'create',
   approvalModal: '',
+  insurerPaymentLink: '',
 });
 
 const validateViewPayment = isValid => {
@@ -2208,6 +2209,7 @@ const validatePaymentAmount = isValid => {
 };
 
 const addPayment = isValid => {
+  debugger;
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
@@ -2268,6 +2270,7 @@ const addPayment = isValid => {
 
   data.payment = {
     collection_type: paymentMethodsForm.collection_type,
+    insurer_payment_link: paymentMethodsForm.insurerPaymentLink,
     payment_methods: mainPaymentMethod,
     reference: paymentMethodsForm.payment_reference,
     payment_no: paymentMethodsForm.payment_no,
@@ -3189,6 +3192,8 @@ watch(
     totalPrice.value = newValue;
   },
 );
+
+// check Payment Method
 
 // verifiy if verify option is enabled
 const isVerifiedEnabled = computed(() => {
@@ -4558,6 +4563,29 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                   </span>
                 </x-field>
               </div>
+              <div class="col-span-2" v-if="paymentMethodsModels[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink ">
+                <x-tooltip>
+                  <span class="border-b-2 border-dotted border-black text-sm"
+                    >INSURER PAYMENT LINK - {{ paymentMethodsModels[1] }}</span
+                  >
+                  <template #tooltip>
+                    <span>{{ paymentTooltipEnum.PAYMENT_LIST_IPL }}</span>
+                  </template>
+                </x-tooltip>
+                <x-field class="w-full">
+                  <span v-if="isFieldReadonly">
+                    {{ paymentMethodsModels[1] }}
+                  </span>
+                  <x-input
+                    v-if="!isFieldReadonly"
+                    class="w-full"
+                    @change="()=>{alert('wedwew')}"
+                    placeholder="Enter valid url e.g: https://imcrm.alfred.ae/login"
+                    v-model="paymentMethodsForm.insurerPaymentLink"
+                    :disabled="false"
+                  />
+                </x-field>
+              </div>
             </div>
             <x-divider class="mb-4 mt-10" />
 
@@ -5713,8 +5741,9 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                 </div>
                 <div
                   v-if="
-                    paymentMethodsForm.status == 'create' ||
-                    paymentMethodsForm.status == 'edit'
+                    paymentMethodsModels[1] !== page.props.paymentMethodsEnum?.InsurerPaymentLink &&
+                   ( paymentMethodsForm.status == 'create' ||
+                    paymentMethodsForm.status == 'edit')
                   "
                 >
                   <x-button
@@ -5731,6 +5760,9 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                     }}
                   </x-button>
                 </div>
+                <template v-if="paymentMethodsModels[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink">
+                  <InsurerPaymentLink :paymentForm="paymentMethodsForm"/>
+                </template>
               </div>
             </template>
 
