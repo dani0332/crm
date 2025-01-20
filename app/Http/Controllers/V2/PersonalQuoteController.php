@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\WorkflowTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePrimaryContactRequest;
 use App\Http\Requests\PersonalQuotePaymentRequest;
@@ -14,8 +14,8 @@ use App\Http\Requests\QuotesDocumentRequest;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\CentralService;
 use App\Services\CustomerService;
-use App\Traits\GenericQueriesAllLobs;
 use App\Services\SIBService;
+use App\Traits\GenericQueriesAllLobs;
 
 class PersonalQuoteController extends Controller
 {
