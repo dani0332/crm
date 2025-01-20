@@ -599,7 +599,7 @@ watch(
             class="w-full"
           />
         </x-field>
-        <x-field label="BUILDING VALUE AED" required v-if="showBuildingField">
+        <x-field label="BUILDING VALUE IN AED" required v-if="showBuildingField">
           <x-input
             v-model="quoteForm.building_aed"
             type="number"
