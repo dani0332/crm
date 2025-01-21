@@ -410,11 +410,35 @@ const calculateCommission = () => {
         let commissionVatNotApplicable = Number(
           bookingDetailsForm.commission_vat_not_applicable,
         );
-        bookingDetailsForm.commission_percentage = convertToNegative(
-          (Number(commissionVatApplicable + commissionVatNotApplicable) /
-            total_price_with_vat_and_not_vat_applicable) *
+
+        let commissionPercentage = convertToNegative(
+            (Number(commissionVatApplicable + commissionVatNotApplicable) /
+                total_price_with_vat_and_not_vat_applicable) *
             100,
         );
+
+        // TAP PAYMENT FLAG.
+        if (commissionPercentage > 0 && bookingDetailsForm.commission_vat_applicable && props.bookingDetails?.brokerCommission) {
+          const brokerCommission = props.bookingDetails?.brokerCommission;
+          const brokerCommMinPer = brokerCommission ? brokerCommission.commission_percentage_min : null;
+          const brokerCommMaxPer = brokerCommission ? brokerCommission.commission_percentage_max : null;
+
+          if ((brokerCommMinPer > 0 && commissionPercentage < brokerCommMinPer) || (brokerCommMaxPer > 0 && commissionPercentage > brokerCommMaxPer)) {
+            notification.error({
+              title: 'The commission amount you entered is outside the permitted range.',
+              position: 'top',
+            });
+            bookingDetailsForm.setError({
+              commission_vat_applicable:
+                  'The commission amount you entered is outside the permitted range.',
+            });
+            bookingDetailsForm.commission_vat_applicable = commissionPercentage = null;
+            return;
+          } else {
+            bookingDetailsForm.clearErrors('commission_vat_applicable');
+          }
+        }
+        bookingDetailsForm.commission_percentage = commissionPercentage;
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -2142,6 +2166,7 @@ watch(
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
                     size="xs"
+                    :error="bookingDetailsForm.errors.commission_vat_applicable"
                     :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
