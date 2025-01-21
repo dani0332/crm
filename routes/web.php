@@ -424,7 +424,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             'index' => 'admin.sic-health-config.index',
             'store' => 'admin.sic-health-config.store',
         ]);
-
+        Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
