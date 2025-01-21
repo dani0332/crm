@@ -364,7 +364,7 @@ class CentralController extends Controller
     public function storeNewPayment(StorePaymentRequest $request)
     {
         dd($request->all());
-        dd("hold on");
+        dd('hold on');
         $response = PaymentRepository::createNewPayment($request);
         if ($response['status'] == 'success') {
             return redirect()->back()->with('success', $response['message']);
