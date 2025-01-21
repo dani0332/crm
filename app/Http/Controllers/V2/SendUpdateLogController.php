@@ -32,6 +32,7 @@ use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
+use App\Services\InsuranceProviderService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -208,11 +209,11 @@ class SendUpdateLogController extends Controller
         $isEditDisabledForQueuedBooking = $this->sendUpdateLogService->isEditDisabledForQueuedBooking($sendUpdateLog);
 
         $insurance_provider_id = $bookingDetails['insurance_provider_id'] ?? null;
-        @[$isCreditCardEnabled, $isSplitFrequencyHidden, $brokerCommission, $isGIGInsuranceProvider] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $insurance_provider_id, $quote->business_type_of_insurance_id);
+        @[$isCreditCardEnabled, $brokerCommission, $isGIGInsuranceProvider, , $isMultiplePaymentsEnabled] = app(InsuranceProviderService::class)->getPaymentConfiguration($quoteType, $insurance_provider_id, $quote->business_type_of_insurance_id);
         $bookingDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
-        $bookingDetails['isSplitFrequencyHidden'] = $isSplitFrequencyHidden;
         $bookingDetails['brokerCommission'] = $brokerCommission;
         $bookingDetails['isGIGInsuranceProvider'] = $isGIGInsuranceProvider;
+        $bookingDetails['isMultiplePaymentsEnabled'] = $isMultiplePaymentsEnabled;
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
