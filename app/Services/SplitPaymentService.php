@@ -1188,8 +1188,8 @@ class SplitPaymentService
         }
     }
 
-   /**
-     * Check if the commission fields in booking details section is disabled 
+    /**
+     * Check if the commission fields in booking details section is disabled
      *
      * @return array
      */

@@ -2,13 +2,10 @@
 
 namespace App\Traits;
 
-use App\Enums\CollectionTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
