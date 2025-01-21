@@ -40,14 +40,19 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle()
     {
+        info("CC Payment Job Started: {$this->ccPaymentProcessId}");
         $ccPaymentProcess = CcPaymentProcess::find($this->ccPaymentProcessId);
 
         if ($ccPaymentProcess->status === PaymentProcessJobEnum::QUEUED) {
-            $ccPaymentProcess->update(['status' => PaymentProcessJobEnum::IN_PROCESS]);
             $splitPaymentCode = $ccPaymentProcess->splitPayment->code;
-            info("CC Payment Job Started: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
+            $previousStatus = $ccPaymentProcess->status;
+
+            // Update status to IN_PROCESS
+            $ccPaymentProcess->update(['status' => PaymentProcessJobEnum::IN_PROCESS]);
+            info("Status changed from {$previousStatus} to {$ccPaymentProcess->status}: for Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
 
             try {
+                // Process the split payment approval
                 app(SplitPaymentService::class)->processSplitPaymentApprove(
                     $ccPaymentProcess->quote_type,
                     $ccPaymentProcess->quoteable_id,
@@ -58,10 +63,13 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 
                 info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
             } catch (\Exception $exception) {
+                // Log the failure and update the status to FAILED
                 info("CC Payment Job Failed: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}, Error: {$exception->getMessage()}");
+                CcPaymentProcess::where('payment_splits_id', $ccPaymentProcess->payment_splits_id)
+                    ->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
             }
         } else {
-            info("CC Payment Job Not In Queued: Child payment code: {$ccPaymentProcess->splitPayment->code}, Status: {$ccPaymentProcess->status}");
+            info("Skipping CC Payment Job: Not in QUEUED status. Current status: {$ccPaymentProcess->status}, Child payment code: {$ccPaymentProcess->splitPayment->code}");
         }
     }
 
