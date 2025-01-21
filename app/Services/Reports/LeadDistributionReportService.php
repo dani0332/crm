@@ -167,7 +167,6 @@ class LeadDistributionReportService extends BaseService
             ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('personal_quotes.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL])
             ->where('personal_quotes.quote_type_id', $lobId)
-            ->where('teams.parent_team_id', $parentTeam->id)
             ->groupBy('teams.name')
             ->orderBy('teams.name');
 
@@ -239,7 +238,9 @@ class LeadDistributionReportService extends BaseService
         $lob = $filters->lob ?? '';
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');
         if($lob == quoteTypeCode::Health){
-            $query->whereIn('teams.name', [TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED, TeamNameEnum::EBP, TeamNameEnum::PCP]);
+            $query->where(function($q) {
+                $q->whereIn('teams.name', [TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED, TeamNameEnum::EBP, TeamNameEnum::PCP])->orWhereNull('teams.name');
+            });
         }
         $query->when(in_array($lob, [quoteTypeCode::Travel, quoteTypeCode::Health]), function ($q) use ($lob) {
             $segmentMap = [
