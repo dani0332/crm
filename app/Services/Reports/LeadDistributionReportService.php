@@ -252,7 +252,7 @@ class LeadDistributionReportService extends BaseService
             ->when($freshLoad || isset($filters->createdAtDates), function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('personal_quotes.created_at', [$startDate, $endDate]);
             })
-            ->when(isset($filters->assignmentTypes) && $filters->assignmentTypes !== 'All', function ($q) use ($filters) {
+            ->when(isset($filters->assignmentTypes) && strtolower($filters->assignmentTypes) !== 'all', function ($q) use ($filters) {
                 $q->where('personal_quotes.assignment_type', $filters->assignmentTypes);
             });
 
