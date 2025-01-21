@@ -782,7 +782,6 @@ class CRUDController extends Controller
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
             $insuranceProvidersByQuoteType = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CAR->id());
-            $commercialRules = $this->leadAllocationService->isCommercialVehicles($record);
             $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
@@ -870,7 +869,6 @@ class CRUDController extends Controller
                 'hasPolicyIssuedStatus',
                 'insuranceProvidersByQuoteType',
                 'vatPercentage',
-                'commercialRules',
                 'clientInquiryLogs',
                 'policyIssuanceStatus',
                 'bookPolicyDetails',

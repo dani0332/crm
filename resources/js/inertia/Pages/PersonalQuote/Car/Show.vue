@@ -84,7 +84,6 @@ defineProps({
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   vatPercentage: Number,
-  commercialRules: Boolean,
 
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
@@ -1542,11 +1541,7 @@ const handlePlanSelected = plan => {
 };
 
 const isPlanDetailEnabled = computed(() => {
-  if (page.props.commercialRules) {
-    // Check rules for commercial
-    return true;
-  }
-  if (page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD) {
+  if (page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD && !isCompanyCar) {
     return page.props.record.vehicle_type_id_text == 'BIKE';
   }
   return false;

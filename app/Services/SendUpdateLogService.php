@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -1394,15 +1395,11 @@ class SendUpdateLogService
     public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
     {
         $insuranceProviderId = $plan_id = null;
-        $isCommercial = false;
-        if ($quoteTypeId == QuoteTypeId::Car) {
-            $isCommercial = app(LeadAllocationService::class)->isCommercialVehicles($quote);
-        }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
             return [$insuranceProviderId, $plan_id];
         }
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quoteServiceFile = getServiceObject($quoteType);
             $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);
