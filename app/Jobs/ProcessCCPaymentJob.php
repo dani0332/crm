@@ -65,17 +65,19 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
             } catch (\Exception $exception) {
                 // Log the failure and update the status to FAILED
                 info("CC Payment Job Failed: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}, Error: {$exception->getMessage()}");
-                CcPaymentProcess::where('payment_splits_id', $ccPaymentProcess->payment_splits_id)
-                    ->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
             }
         } else {
             info("Skipping CC Payment Job: Not in QUEUED status. Current status: {$ccPaymentProcess->status}, Child payment code: {$ccPaymentProcess->splitPayment->code}");
         }
     }
 
-    /**
-     * Get the unique ID for the job.
-     */
+    public function failed(\Throwable $exception): void
+    {
+        $ccPaymentProcess = CcPaymentProcess::find($this->ccPaymentProcessId);
+        $ccPaymentProcess->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
+        info("CC Payment Job failed for: {$ccPaymentProcess->splitPayment->code}, Error: {$exception->getMessage()}");
+    }
+
     public function uniqueId(): string
     {
         return 'cc-payment-process-id-'.$this->ccPaymentProcessId;
