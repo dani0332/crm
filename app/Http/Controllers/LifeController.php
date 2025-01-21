@@ -2,15 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\LifeCardLoadMoreRequest;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Repositories\PaymentRepository;
-use App\Services\CRUDService;
 use App\Services\Life\LifeQuoteService;
-use App\Services\LookupService;
 use App\Traits\GenericQueriesAllLobs;
 use Inertia\ResponseFactory;
 
@@ -19,24 +15,15 @@ class LifeController extends Controller
     use GenericQueriesAllLobs;
 
     protected $lifeQuoteService;
-    protected $lookupService;
-    protected $crudService;
-    protected $genericModel;
-
-    public const TYPE = quoteTypeCode::Life;
-    public const TYPE_ID = QuoteTypeId::Life;
 
     /**
      * TravelController constructor.
      *
      * @param  LifeQuoteService  $service
      */
-    public function __construct(LifeQuoteService $lifeQuoteService, LookupService $lookupService, CRUDService $crudService)
+    public function __construct(LifeQuoteService $lifeQuoteService)
     {
         $this->lifeQuoteService = $lifeQuoteService;
-        $this->genericModel = $this->lifeQuoteService->getGenericModel(self::TYPE);
-        $this->lookupService = $lookupService;
-        $this->crudService = $crudService;
     }
 
     /**
