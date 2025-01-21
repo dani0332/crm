@@ -378,7 +378,7 @@ class BaseService
         // Check if there is a previous advisor and the lead assignment date is today
         if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay() && $previousAdvisorAllocationRecord !== null) {
             // if someone's bought lead is re assigning then mark his buy_leas_status to disabled
-            if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD])) {
+            if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD])) {
                 $previousAdvisorAllocationRecord->buy_lead_status = false;
             }
 
@@ -395,7 +395,7 @@ class BaseService
             }
 
             // Decrement the total allocation count (if it's greater than 0) and update timestamps
-            if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD])) {
+            if (in_array($previousAssignmentType, [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD])) {
                 if ($previousAdvisorAllocationRecord->buy_lead_allocation_count > 0) {
                     $previousAdvisorAllocationRecord->buy_lead_allocation_count = $previousAdvisorAllocationRecord->buy_lead_allocation_count - 1;
                     $previousAdvisorAllocationRecord->updated_at = now();

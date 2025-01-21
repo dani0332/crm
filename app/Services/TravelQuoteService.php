@@ -7,6 +7,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -31,8 +32,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
 
@@ -75,9 +76,19 @@ class TravelQuoteService extends BaseService
             'qs.id as quote_status_id',
             'qs.text as quote_status_id_text',
             'u.id as advisor_id',
-            'u.name as advisor_id_text',
+            DB::raw("
+                CASE
+                    WHEN u.email = '".PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL."' THEN 'Auto Issued'
+                    ELSE u.name
+                END as advisor_id_text
+            "),
             'tqr.previous_advisor_id',
-            'uadv.name AS previous_advisor_id_text',
+            DB::raw("
+                CASE
+                    WHEN uadv.email = '".PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_EMAIL."' THEN 'Auto Issued'
+                    ELSE uadv.name
+                END as previous_advisor_id_text
+            "),
             'tqr.payment_status_id',
             'ps.text AS payment_status_id_text',
             'tqr.plan_id',
@@ -265,8 +276,8 @@ class TravelQuoteService extends BaseService
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
 
-            info(self::class.' - saveTravelQuote: Going to dispatch OCB Email for Travel');
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
+            info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
         }
 
         return $response;
@@ -542,37 +553,6 @@ class TravelQuoteService extends BaseService
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }
 
-        $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $isAdmin = Auth::user()->hasRole('ADMIN');
-            if ($isAdmin || $isManagerORDeputy == '1') {
-                if ($column == 6) {
-                    $column = 'tqr.created_at';
-                }
-                if ($column == 7) {
-                    $column = 'tqr.updated_at';
-                }
-                if ($column == 8) {
-                    $column = 'tqrd.next_followup_date';
-                }
-            } else {
-                if ($column == 5) {
-                    $column = 'tqr.created_at';
-                }
-                if ($column == 6) {
-                    $column = 'tqr.updated_at';
-                }
-                if ($column == 7) {
-                    $column = 'tqrd.next_followup_date';
-                }
-            }
-
-            return $this->query->orderBy($column, $direction);
-        } else {
-            return $this->query->orderBy('tqr.created_at', 'DESC');
-        }
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -585,17 +565,6 @@ class TravelQuoteService extends BaseService
                 return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
             }
         }
-    }
-
-    public function updateChildRecord($id)
-    {
-        TravelQuoteRequestDetail::updateOrCreate(
-            ['travel_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
     }
 
     private function getQuerySuffix($item)
@@ -949,10 +918,8 @@ class TravelQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::TRAVEL, TravelQuoteRequestDetail::class, 'travel_quote_request_id');
         }
 
         return $result;

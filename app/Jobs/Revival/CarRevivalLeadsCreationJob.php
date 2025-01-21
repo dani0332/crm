@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Revival;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
@@ -144,7 +144,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $revivalCarQuoteUUID);
 
-                $listQuotePlans = app(CarQuoteService::class)->getPlans($revivalCarQuoteUUID, true, true);
+                $listQuotePlans = app(CarQuoteService::class)->getPlans($revivalCarQuoteUUID, true, true, false, true);
 
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
@@ -181,6 +181,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $emailData->advisorName = $advisor[0];
                 $emailData->advisorEmail = $advisor[1];
                 $emailData->tag = 'dtt-initial-email';
+                $emailData->lob = QuoteTypes::CAR->id();
 
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
 

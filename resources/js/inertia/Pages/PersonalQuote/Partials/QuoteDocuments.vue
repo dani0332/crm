@@ -148,6 +148,10 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
     docForm.setError({ error: useFileUploadErrorMessage(doc, rejectReason) });
     return false;
   }
+  let docFiles = [];
+  files.forEach(file => {
+    docFiles.push(file.file);
+  });
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -155,7 +159,7 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
       quote_type_id: doc.quote_type_id,
       document_type_code: doc.code,
       folder_path: doc.folder_path,
-      file: files[0].file,
+      files: docFiles,
       member_detail_id: memberId || null,
     }))
     .post(url, {
@@ -508,6 +512,7 @@ const getS3TempUrl = async docURL => {
                     documentTypeCodeEnum.SEND_UPDATE_AUDIT_RECORD &&
                   !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
                 "
+                :multiple="true"
               />
               <div v-if="isSendUpdatePage">
                 <a
