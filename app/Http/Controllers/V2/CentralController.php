@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -12,8 +14,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
-use App\Enums\AMLStatusCode;
-use App\Enums\InsuranceProvidersEnum;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
@@ -53,6 +53,7 @@ use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
@@ -62,7 +63,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\AML;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
@@ -620,18 +620,18 @@ class CentralController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
-    public function getInsurerAMLResponse(Request $request) 
+    public function getInsurerAMLResponse(Request $request)
     {
         $insurerAMLFailureStatus = [
-            AMLStatusCode::InsurerAMLScreeningPending, 
-            AMLStatusCode::InsurerAMLScreeningFailed
+            AMLStatusCode::InsurerAMLScreeningPending,
+            AMLStatusCode::InsurerAMLScreeningFailed,
         ];
 
         $response = ['status' => false, 'message' => ''];
-        if(in_array($request->insurer_aml_status, $insurerAMLFailureStatus)) {
+        if (in_array($request->insurer_aml_status, $insurerAMLFailureStatus)) {
             $resposneMessage = 'GIG server connection issue. Please check API logs for details of the error';
 
-            if($request->insurer_aml_status == AMLStatusCode::InsurerAMLScreeningFailed) {
+            if ($request->insurer_aml_status == AMLStatusCode::InsurerAMLScreeningFailed) {
                 $insurerAMLScreeningResponse = AML::where([
                     'quote_type_id' => $request->quoteType,
                     'quote_request_id' => $request->quoteRequestId,
@@ -639,10 +639,12 @@ class CentralController extends Controller
                 ])->latest()->first();
 
                 $amlResponse = json_decode($insurerAMLScreeningResponse->results);
+
                 return ['status' => true, 'message' => $amlResponse->message ?? $resposneMessage];
             }
             $response = ['status' => true, 'message' => $resposneMessage];
         }
+
         return $response;
     }
 }
