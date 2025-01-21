@@ -39,6 +39,7 @@ class LeadDistributionReportService extends BaseService
 
         $filters = $this->getFilters($request);
         $reportDataQuery = $this->buildQuery($lob, $filters);
+
         return $reportDataQuery->paginate(15)->withQueryString();
     }
 
@@ -170,13 +171,12 @@ class LeadDistributionReportService extends BaseService
             ->groupBy('teams.name')
             ->orderBy('teams.name');
 
-
         if (auth()->user()->hasAnyRole($quoteType->advisorRoles())) {
-            $personalQuoteQuery->where('personal_quotes.advisor_id', auth()->user()->id);
+            $personalQuoteQuery->where('teams.parent_team_id', $parentTeam->id)->where('personal_quotes.advisor_id', auth()->user()->id);
         } else {
             if (! $this->hasAdminPrivileges()) {
                 $userIds = $this->walkTree(auth()->user()->id, $quoteType->value);
-                $personalQuoteQuery->whereIn('personal_quotes.advisor_id', $userIds);
+                $personalQuoteQuery->where('teams.parent_team_id', $parentTeam->id)->whereIn('personal_quotes.advisor_id', $userIds);
             }
         }
 
@@ -237,8 +237,8 @@ class LeadDistributionReportService extends BaseService
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');
-        if($lob == quoteTypeCode::Health){
-            $query->where(function($q) {
+        if ($lob == quoteTypeCode::Health) {
+            $query->where(function ($q) {
                 $q->whereIn('teams.name', [TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED, TeamNameEnum::EBP, TeamNameEnum::PCP])->orWhereNull('teams.name');
             });
         }
