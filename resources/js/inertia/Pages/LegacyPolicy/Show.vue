@@ -409,13 +409,15 @@ const dateFormat = date => {
             <dd>{{ policy.premium }}</dd>
           </div>
 
-          <!-- <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Sales Person</dt>
-            <dd>{{ policy.policy?.renewer_person }}</dd>
-          </div> -->
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Sales Person</dt>
-            <dd>{{ policy.policy?.renewer_person }}</dd>
+            <dd>
+              {{
+                policy.policy?.renewer_person == null
+                  ? policy?.quote?.broker
+                  : policy.policy?.renewer_person
+              }}
+            </dd>
           </div>
         </dl>
       </div>
