@@ -11,7 +11,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\TeamNameEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
@@ -168,15 +167,21 @@ class LeadDistributionReportService extends BaseService
             ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('personal_quotes.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL])
             ->where('personal_quotes.quote_type_id', $lobId)
+            ->where(function ($q) use ($parentTeam) {
+                $q->where('teams.parent_team_id', $parentTeam->id);
+                $q->when($this->hasAdminPrivileges(), function ($sq) {
+                    $sq->orWhereNull('teams.parent_team_id');
+                });
+            })
             ->groupBy('teams.name')
             ->orderBy('teams.name');
 
         if (auth()->user()->hasAnyRole($quoteType->advisorRoles())) {
-            $personalQuoteQuery->where('teams.parent_team_id', $parentTeam->id)->where('personal_quotes.advisor_id', auth()->user()->id);
+            $personalQuoteQuery->where('personal_quotes.advisor_id', auth()->user()->id);
         } else {
             if (! $this->hasAdminPrivileges()) {
                 $userIds = $this->walkTree(auth()->user()->id, $quoteType->value);
-                $personalQuoteQuery->where('teams.parent_team_id', $parentTeam->id)->whereIn('personal_quotes.advisor_id', $userIds);
+                $personalQuoteQuery->whereIn('personal_quotes.advisor_id', $userIds);
             }
         }
 
@@ -237,11 +242,6 @@ class LeadDistributionReportService extends BaseService
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');
-        if ($lob == quoteTypeCode::Health) {
-            $query->where(function ($q) {
-                $q->whereIn('teams.name', [TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED, TeamNameEnum::EBP, TeamNameEnum::PCP])->orWhereNull('teams.name');
-            });
-        }
         $query->when(in_array($lob, [quoteTypeCode::Travel, quoteTypeCode::Health]), function ($q) use ($lob) {
             $segmentMap = [
                 quoteTypeCode::Travel => QuoteTypeId::Travel,
