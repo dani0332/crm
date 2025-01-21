@@ -61,7 +61,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
             );
 
             info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
-            
+
         } else {
             info("Skipping CC Payment Job: Not in QUEUED status. Current status: {$ccPaymentProcess->status}, Child payment code: {$ccPaymentProcess->splitPayment->code}");
         }
