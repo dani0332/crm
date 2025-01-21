@@ -1599,6 +1599,12 @@ const isCPD = computed(() => {
   );
 });
 
+// use in insurer payment link
+const updateFromInsurerPaymentLink = (closePaymentModal = false) => {
+  closePaymentModal && (createPaymentModal.value = !createPaymentModal.value);
+}
+
+
 const addPaymentModal = () => {
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.price_with_vat) {
@@ -1878,6 +1884,7 @@ const initializePaymentForm = (
   paymentMethodsForm.payment_no = payment.total_payments;
   oldTotalPayments.value = payment.total_payments;
   paymentMethodsForm.frequency = payment.frequency;
+  paymentMethodsForm.insurerPaymentLink = payment.insurer_payment_link
   showDiscountOptions.value = true;
   paymentMethodsForm.discount_reason =
     payment.discount_reason !== null ? payment.discount_reason : '';
@@ -4501,8 +4508,8 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                   <sup
                     v-if="isDiscountError"
                     class="text-sm text-red-500 dark:text-red-400"
-                    >{{ discountError }}</sup
-                  >
+                    >{{ discountError }}
+                  </sup>
                 </x-field>
               </div>
               <div
@@ -4579,10 +4586,9 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                   <x-input
                     v-if="!isFieldReadonly"
                     class="w-full"
-                    @change="()=>{alert('wedwew')}"
                     placeholder="Enter valid url e.g: https://imcrm.alfred.ae/login"
                     v-model="paymentMethodsForm.insurerPaymentLink"
-                    :disabled="false"
+                    :disabled="isMasterPaymentPaid"
                   />
                 </x-field>
               </div>
@@ -4736,6 +4742,27 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                     <span class="text-sm">
                       <span
                         class="border-b-2 border-dotted border-black text-sm"
+                        >Insurer Payment Link</span
+                      >
+                      <sup
+                        v-if="!isViewEnabled && !isCreditApprovalView"
+                        class="text-red-500"
+                        >*</sup
+                      >
+                    </span>
+                    <template #tooltip>
+                      <span v-if="isFieldReadonly">{{
+                        paymentTooltipEnum.TOTAL_AMOUNT_SPLIT_VIEW
+                      }}</span>
+                      <span v-else>{{ paymentTooltipEnum.TOTAL_AMOUNT }}</span>
+                    </template>
+                  </x-tooltip>
+                </div>
+                <div class="w-1/5 px-2">
+                  <x-tooltip>
+                    <span class="text-sm">
+                      <span
+                        class="border-b-2 border-dotted border-black text-sm"
                         >TOTAL AMOUNT</span
                       >
                       <sup
@@ -4821,6 +4848,13 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
               <template v-if="isViewEnabled">
                 <div class="flex w-full custombreak">
                   <div class="w-1/6 px-2 text-center">{{ splitPaymentNo }}</div>
+
+                  <div class="w-1/5 px-2">
+                    {{
+                      getPaymentTypeLabel(paymentMethodsModels[splitPaymentNo])
+                    }}
+                    <p>{{ checkDetailModels[splitPaymentNo] }}</p>
+                  </div>
 
                   <div class="w-1/5 px-2">
                     {{
@@ -5730,7 +5764,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
             </template>
             <template v-else>
               <div class="w-full md:col-span-4 flex justify-end">
-                <div v-if="paymentMethodsForm.status == 'edit'" class="mr-4">
+                <div v-if="paymentMethodsForm.status == 'edit' && paymentMethodsModels[1] !== page.props.paymentMethodsEnum?.InsurerPaymentLink" class="mr-4">
                   <x-button
                     @click="createPaymentModal = !createPaymentModal"
                     tabindex="0"
@@ -5761,7 +5795,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                   </x-button>
                 </div>
                 <template v-if="paymentMethodsModels[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink">
-                  <InsurerPaymentLink :paymentForm="paymentMethodsForm"/>
+                  <InsurerPaymentLink :paymentForm="paymentMethodsForm" :payments="payments" @updateOnParent="(e) => updateFromInsurerPaymentLink(e)"/>
                 </template>
               </div>
             </template>

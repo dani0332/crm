@@ -165,8 +165,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->save();
             DB::commit();
 
-            if ($sendFTCEmail) {
-                SendFTCEmailJob::dispatch($quoteModel->uuid, QuoteTypes::HEALTH)->delay(now()->addSeconds(5));
+            if($sendFTCEmail){
+                SendFTCEmailJob::dispatch($quoteModel->uuid, QuoteTypes::HEALTH, $masterPayment->insurer_payment_link)->delay(now()->addSeconds(5));
             }
 
             info('Payment creation process completed successfully for Payment Code: '.$paymentInformation['code']);
@@ -186,6 +186,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $masterPayment = (object) $request->payment;
+            $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+            $sendFTCEmail = false;
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
                 info('Payment does not exist for Payment Code: '.$request->paymentCode);
@@ -228,6 +230,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($masterPayment->reference) {
                     $paymentInformation['reference'] = $masterPayment->reference;
                 }
+
+                if ($masterPayment->insurer_payment_link) {
+                    $paymentInformation['insurer_payment_link'] = $masterPayment->insurer_payment_link;
+                    // if payment method is insurer link payment lead status should be payment pending
+                    $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+                    $quoteModel->save();
+                    $sendFTCEmail = $payment->insurer_payment_link != $masterPayment->insurer_payment_link;
+                }
+
                 if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
                     $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
                 } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
@@ -237,6 +248,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->update($paymentInformation);
             // Log payment update
             info('Payment updated successfully for Payment Code: '.$request->paymentCode);
+
+            // sending ftc email again if insurer payment link is updated
+            if ($sendFTCEmail) {
+                SendFTCEmailJob::dispatch($quoteModel->uuid, QuoteTypes::HEALTH, $masterPayment->insurer_payment_link)->delay(now()->addSeconds(5));
+            }
 
             //Update split payments start
             if (! empty($request->trashedFilesModal)) {
