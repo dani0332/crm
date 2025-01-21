@@ -165,7 +165,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->save();
             DB::commit();
 
-            if($sendFTCEmail){
+            if ($sendFTCEmail) {
                 SendFTCEmailJob::dispatch($quoteModel->uuid, QuoteTypes::HEALTH, $masterPayment->insurer_payment_link)->delay(now()->addSeconds(5));
             }
 

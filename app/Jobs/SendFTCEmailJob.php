@@ -26,7 +26,7 @@ class SendFTCEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(string $quoteUUID, QuoteTypes $quoteType, string $paymentLink = "")
+    public function __construct(string $quoteUUID, QuoteTypes $quoteType, string $paymentLink = '')
     {
         $this->quoteUUID = $quoteUUID;
         $this->quoteType = $quoteType;
@@ -40,7 +40,7 @@ class SendFTCEmailJob implements ShouldQueue
     {
         // Define eligible SIC types
         $nonEligibleSICTypes = [QuoteTypes::BIKE->id(), QuoteTypes::HOME->id()];
-        $insurerPaymentLinkCondition = $this->paymentLink != "";
+        $insurerPaymentLinkCondition = $this->paymentLink != '';
 
         try {
             info(self::class." - Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid {$this->quoteUUID}");
@@ -64,7 +64,7 @@ class SendFTCEmailJob implements ShouldQueue
                     $data = [
                         'quoteUID' => $this->quoteUUID,
                         'quoteTypeId' => (int) $this->quoteType->id(),
-                        'isSic' => ! $insurerPaymentLinkCondition ? false:true,
+                        'isSic' => ! $insurerPaymentLinkCondition ? false : true,
                     ];
 
                     Marshall::request('/payment/send-payment-auth-email', 'post', $data);
