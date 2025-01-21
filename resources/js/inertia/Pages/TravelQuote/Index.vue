@@ -110,6 +110,8 @@ const tableHeader = [
     value: 'sic_advisor_requested',
   },
   { text: 'Advisor Assigned Date And Time', value: 'advisor_assigned_date' },
+  { text: 'API ISSUANCE STATUS', value: 'api_issuance_status' },
+  { text: 'INSURER API STATUS', value: 'insurer_api_status' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {
