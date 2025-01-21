@@ -24,6 +24,7 @@ use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelPlanUpdateManualProcessRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
@@ -49,6 +50,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 use RuntimeException;
@@ -576,5 +578,14 @@ class TravelController extends Controller
     public function travelPlanUpdateManualProcess(TravelPlanUpdateManualProcessRequest $request)
     {
         app(TravelQuoteService::class)->travelPlanModify($request->validated());
+    }
+
+    public function sendEmailOneClickBuy(Request $request)
+    {
+        Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
+
+        SendTravelOCBIntroEmailJob::dispatch($request->quote_uuid);
+
+        return response()->json(['success' => 'OCB email sent to customer']);
     }
 }
