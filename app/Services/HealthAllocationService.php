@@ -269,9 +269,6 @@ class HealthAllocationService extends AllocationService
             };
         }
 
-        // sync advisor id and assignment date with personal quote to reflect in reports immediately
-        //$lead->syncLeadWithPersonalQuote();
-
         Haystack::build()
             ->addJob(new GetQuotePlansJob($lead))
             ->then(function () use ($lead, $isReassignment, $previousUserId) {

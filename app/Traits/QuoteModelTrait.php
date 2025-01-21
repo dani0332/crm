@@ -294,29 +294,4 @@ trait QuoteModelTrait
             });
         }
     }
-
-    public function syncLeadWithPersonalQuote()
-    {
-        info('Syncing lead with personal quote', ['code' => $this->code]);
-        $personalQuote = PersonalQuote::where('code', $this->code)->first();
-
-        if (! $personalQuote) {
-            return;
-        }
-        $personalQuote->update([
-            'advisor_id' => $this->advisor_id,
-            'assignment_type' => $this->assignment_type,
-            'quote_batch_id' => $this->quote_batch_id,
-        ]);
-        info('Lead synced with personal quote', ['uuid' => $this->uuid]);
-
-        $personalQuoteDetail = $personalQuote->quoteDetail();
-        if ($personalQuoteDetail) {
-            $personalQuoteDetail->update([
-                'advisor_assigned_date' => now(),
-            ]);
-            info('Lead synced with personal quote detail', ['uuid' => $this->uuid]);
-        }
-
-    }
 }

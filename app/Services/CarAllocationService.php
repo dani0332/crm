@@ -683,9 +683,6 @@ class CarAllocationService extends AllocationService
         // Reset Buy Lead Advisor flag and Buy Lead Request object.
         $this->resetProps();
 
-        // sync advisor id and assignment date with personal quote to reflect in reports immediately
-        //$lead->syncLeadWithPersonalQuote();
-
         info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
     }
 
