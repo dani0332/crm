@@ -3,6 +3,7 @@
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -1565,5 +1566,12 @@ if (! function_exists('isCHSAdvisor')) {
         $user = User::select('id')->chs()->first();
 
         return $user?->id == $userId;
+    }
+}
+
+if (! function_exists('isProduction')) {
+    function isProduction()
+    {
+        return config('constants.APP_ENV') == EnvEnum::PRODUCTION;
     }
 }
