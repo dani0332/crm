@@ -74,7 +74,7 @@ class HomeEmailService extends BaseService
                 info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: " . now());
                 if (!empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($lead, $response);
-                    // info("sendHomeOCBIntroEmail - Run-ID: " . json_encode($response->headers['Run-Id']) . " for HomeQuote Ref-ID: {$homeQuote->id} | Time: " . now());
+                    info("sendHomeOCBIntroEmail - Run-ID: " . json_encode($response->headers['Run-Id']) . " for HomeQuote Ref-ID: {$homeQuote->id} | Time: " . now());
                 }
             }
 
