@@ -12,6 +12,8 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
+use App\Enums\AMLStatusCode;
+use App\Enums\InsuranceProvidersEnum;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
@@ -60,6 +62,7 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\AML;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
@@ -615,5 +618,31 @@ class CentralController extends Controller
         $zip->close();
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    public function getInsurerAMLResponse(Request $request) 
+    {
+        $insurerAMLFailureStatus = [
+            AMLStatusCode::InsurerAMLScreeningPending, 
+            AMLStatusCode::InsurerAMLScreeningFailed
+        ];
+
+        $response = ['status' => false, 'message' => ''];
+        if(in_array($request->insurer_aml_status, $insurerAMLFailureStatus)) {
+            $resposneMessage = 'GIG server connection issue. Please check API logs for details of the error';
+
+            if($request->insurer_aml_status == AMLStatusCode::InsurerAMLScreeningFailed) {
+                $insurerAMLScreeningResponse = AML::where([
+                    'quote_type_id' => $request->quoteType,
+                    'quote_request_id' => $request->quoteRequestId,
+                    'screening_type' => 'INSURER_'.InsuranceProvidersEnum::AXA,
+                ])->latest()->first();
+
+                $amlResponse = json_decode($insurerAMLScreeningResponse->results);
+                return ['status' => true, 'message' => $amlResponse->message ?? $resposneMessage];
+            }
+            $response = ['status' => true, 'message' => $resposneMessage];
+        }
+        return $response;
     }
 }

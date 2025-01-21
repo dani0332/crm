@@ -3296,6 +3296,36 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
     splitPayment.sr_no > 1
   );
 };
+
+const fetchInsurerAMLStatus = async () => {
+  if (props.quoteRequest?.payments[0]?.payment_gateway_id == 3) {
+    NProgress.start();
+    const response = await axios.get(
+      route('insurer-aml-status-logs'),
+      {
+        params: {
+          quoteRequestId: props.quoteRequest.id,
+          quoteType: page.props.quoteTypeId,
+          insurerAMLStatus: props.quoteRequest.insurer_aml_status
+        },
+      },
+    );
+    NProgress.done();
+    console.log('insurerAMLStatus:', response.data);
+    if (response.data?.status) {
+      notification.error({
+        title: response.data?.message,
+        position: 'top',
+        timeout: 5000,
+      });
+    }
+  }
+}
+
+onBeforeMount(() => {
+  fetchInsurerAMLStatus();
+});
+
 </script>
 
 <template>

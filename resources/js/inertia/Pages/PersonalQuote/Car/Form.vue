@@ -65,7 +65,7 @@ const quoteForm = useForm({
   trim: props.quote?.trim || null,
   additional_notes: props.quote?.additional_notes || '',
   car_model_id: props.quote?.car_model_id || null,
-  chassis_number: props.quote?.chassis_number || '',
+  chassis_number: props.quote?.chassis_number || null,
   year_of_manufacture: props.quote?.year_of_manufacture || null,
   emirate_of_registration_id: props.quote?.emirate_of_registration_id || null,
   car_type_insurance_id: props.quote?.car_type_insurance_id || null,
@@ -171,7 +171,7 @@ function onSubmit(isValid) {
     isEmptyField.value = false;
   }
 
-  if (chassisNumberValidate('blur')) {
+  if (quoteForm.chassis_number && chassisNumberValidate('blur')) {
     isError.value = true;
   }
 
@@ -285,27 +285,27 @@ const chassisNumberDisabled = computed(() => {
   return disallowedStatus.includes(props?.quote?.quote_status_id);
 });
 
-const chassisNumberValidate = type => {
-  const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
-  const lengthValid =
-    quoteForm.chassis_number.length >= 8 &&
-    quoteForm.chassis_number.length <= 17;
-  const isAlphanumeric = regex.test(quoteForm.chassis_number);
+const chassisNumberValidate = eventType => {
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
 
-  if (type === 'blur') {
+  if (eventType == 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (!regex.test(key) && key !== 'Backspace' && key !== 'Delete' && key !== 'ArrowLeft' && key !== 'ArrowRight') {
+      event.preventDefault();
+    } 
+  }
+
+  if (eventType == 'blur') {
+    const lengthValid = quoteForm.chassis_number.length >= 8 && quoteForm.chassis_number.length <= 17;
+    const isAlphanumeric = regex.test(quoteForm.chassis_number);
     if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
-      quoteForm.setError({
-        chassis_number:
-          'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
-      });
+      quoteForm.errors.chassis_number = 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+      event.preventDefault();
       return true;
     } else {
       quoteForm.clearErrors('chassis_number');
       return false;
-    }
-  } else if (type === 'change') {
-    if (quoteForm.chassis_number && lengthValid && isAlphanumeric) {
-      quoteForm.clearErrors('chassis_number'); // Clear error only if validation passes
     }
   }
 };
@@ -610,13 +610,13 @@ const gender = computed(() => {
                 and choose 'Cancellation from Inception and Reissuance'
               </template>
             </x-tooltip>
-            <x-input
-              :disabled="chassisNumberDisabled"
-              v-model="quoteForm.chassis_number"
-              class="w-full"
-              type="text"
-              placeholder="Enter Chassis Number"
-            />
+              <x-input
+                :disabled="chassisNumberDisabled"
+                v-model="quoteForm.chassis_number"
+                class="w-full"
+                type="text"
+                placeholder="Enter Chassis Number"
+              />
           </template>
           <template v-else>
             <x-field label="CHASSIS NUMBER">
@@ -625,8 +625,8 @@ const gender = computed(() => {
                 class="w-full"
                 type="text"
                 placeholder="Enter Chassis Number"
+                @keypress="chassisNumberValidate('keypress')"
                 @blur="chassisNumberValidate('blur')"
-                @keypress="chassisNumberValidate('change')"
                 :error="quoteForm.errors.chassis_number"
               />
             </x-field>

@@ -494,34 +494,27 @@ const applyScreeningIdNumMasking = () => {
   insuredFormDetails.screening_id_number = screeningIdNumber;
 };
 
-const validatePassportNumber = type => {
-  const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
-  const lengthValid =
-    insuredFormDetails.screening_id_number?.length >= 8 &&
-    insuredFormDetails.screening_id_number?.length <= 9;
-  const isAlphanumeric = regex.test(insuredFormDetails.screening_id_number);
+const validatePassportNumber = eventType => {
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
 
-  if (type === 'blur') {
-    if (
-      insuredFormDetails.screening_id_number &&
-      (!lengthValid || !isAlphanumeric)
-    ) {
-      insuredFormDetails.setError({
-        screening_id_number:
-          'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.',
-      });
+  if (eventType == 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (!regex.test(key) && key !== 'Backspace' && key !== 'Delete' && key !== 'ArrowLeft' && key !== 'ArrowRight') {
+      event.preventDefault();
+    } 
+  }
+
+  if (eventType == 'blur') {
+    const lengthValid = insuredFormDetails.screening_id_number.length >= 8 && insuredFormDetails.screening_id_number.length <= 9;
+    const isAlphanumeric = regex.test(insuredFormDetails.screening_id_number);
+    if (insuredFormDetails.screening_id_number && (!lengthValid || !isAlphanumeric)) {
+      insuredFormDetails.errors.screening_id_number = 'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.';
+      event.preventDefault();
       return true;
     } else {
       insuredFormDetails.clearErrors('screening_id_number');
       return false;
-    }
-  } else if (type === 'change') {
-    if (
-      insuredFormDetails.screening_id_number &&
-      lengthValid &&
-      isAlphanumeric
-    ) {
-      insuredFormDetails.clearErrors('screening_id_number');
     }
   }
 };
@@ -534,30 +527,27 @@ const chassisNumberDisabled = computed(() => {
   return disallowedStatus.includes(props?.quoteDetails?.quote_status_id);
 });
 
-const chassisNumberValidate = type => {
-  const regex = /^[A-Za-z0-9]+$/; // Allow only alphanumeric characters
-  const lengthValid =
-    insuredFormDetails.chassis_number.length >= 8 &&
-    insuredFormDetails.chassis_number.length <= 17;
-  const isAlphanumeric = regex.test(insuredFormDetails.chassis_number);
+const chassisNumberValidate = eventType => {
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
 
-  if (type === 'blur') {
-    if (
-      insuredFormDetails.chassis_number &&
-      (!lengthValid || !isAlphanumeric)
-    ) {
-      insuredFormDetails.setError({
-        chassis_number:
-          'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.',
-      });
+  if (eventType == 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (!regex.test(key) && key !== 'Backspace' && key !== 'Delete' && key !== 'ArrowLeft' && key !== 'ArrowRight') {
+      event.preventDefault();
+    } 
+  }
+
+  if (eventType == 'blur') {
+    const lengthValid = insuredFormDetails.chassis_number.length >= 8 && insuredFormDetails.chassis_number.length <= 17;
+    const isAlphanumeric = regex.test(insuredFormDetails.chassis_number);
+    if (insuredFormDetails.chassis_number && (!lengthValid || !isAlphanumeric)) {
+      insuredFormDetails.errors.chassis_number = 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+      event.preventDefault();
       return true;
     } else {
       insuredFormDetails.clearErrors('chassis_number');
       return false;
-    }
-  } else if (type === 'change') {
-    if (insuredFormDetails.chassis_number && lengthValid && isAlphanumeric) {
-      insuredFormDetails.clearErrors('chassis_number'); // Clear error only if validation passes
     }
   }
 };
@@ -632,7 +622,7 @@ watch(() => {
                 "
                 :rules="[isRequired, rules.passportNumberCheck]"
                 @blur="validatePassportNumber('blur')"
-                @keypress="validatePassportNumber('change')"
+                @keypress="validatePassportNumber('keypress')"
                 :error="insuredFormDetails.errors.screening_id_number"
               />
             </template>
@@ -737,14 +727,14 @@ watch(() => {
                     Update', and choose 'Cancellation from Inception and
                     Reissuance'
                   </template>
+                  <x-input
+                    :disabled="chassisNumberDisabled"
+                    v-model="insuredFormDetails.chassis_number"
+                    placeholder="Chassis Number"
+                    type="text"
+                    class="w-full"
+                  />
                 </x-tooltip>
-                <x-input
-                  :disabled="chassisNumberDisabled"
-                  v-model="insuredFormDetails.chassis_number"
-                  placeholder="Chassis Number"
-                  type="text"
-                  class="w-full"
-                />
               </div>
             </template>
             <x-field label="Chassis Number" required v-else>
@@ -755,7 +745,7 @@ watch(() => {
                 class="w-full"
                 :rules="[isRequired, rules.chassisNumberCheck]"
                 @blur="chassisNumberValidate('blur')"
-                @keypress="chassisNumberValidate('change')"
+                @keypress="chassisNumberValidate('keypress')"
                 :error="insuredFormDetails.errors.chassis_number"
               />
             </x-field>
