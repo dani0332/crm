@@ -1535,7 +1535,7 @@ class SendUpdateLogService
 
         $isTransactionApproved = $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED ||
             app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
-        $payment = $payment[0];
+        $payment = $payment[0] ?? null;
         if (! empty($payment) && $payment->paymentSplits->isNotEmpty() && $brokerCommission && $isTransactionApproved) {
             $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
                 return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id != PaymentStatusEnum::PAID;
