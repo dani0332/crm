@@ -23,6 +23,7 @@ use App\Models\CustomerInsured;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\HomeQuoteRequestDetail;
 use App\Models\JetskiQuote;
 use App\Models\KycLog;
 use App\Models\LifeQuote;
@@ -31,7 +32,6 @@ use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
-use App\Models\HomeQuoteRequestDetail;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
@@ -580,7 +580,7 @@ class AMLService
                 'model' => HomeQuote::class,
                 'detailModel' => HomeQuoteRequestDetail::class,
                 'foreignKey' => 'home_quote_request_id',
-            ]
+            ],
         ];
 
         $requestQuoteDetails = $detailsReference[$quoteTypeId]['detailModel']::where($detailsReference[$quoteTypeId]['foreignKey'], $quoteDetails->id)->first();
