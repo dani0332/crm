@@ -9,6 +9,6 @@ class EmirateService extends BaseService
 {
     public function getActive()
     {
-        return Emirate::where('is_active', 1)->select('id', 'text')->get();
+        return Emirate::withActive()->select('id', 'text')->get();
     }
 }

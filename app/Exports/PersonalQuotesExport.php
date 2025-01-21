@@ -50,7 +50,7 @@ class PersonalQuotesExport
                 return JetskiQuoteRepository::getData(true);
 
             case QuoteTypes::LIFE->value:
-                return app(LifeQuoteService::class)->getQuotes(forExport: true);
+                return app(LifeQuoteService::class)->getLifeQuotes(isExportRequest: true);
 
             default:
                 return abort(404);

@@ -34,11 +34,9 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   insuranceProviders: Array,
-  enums: Object,
   permissions: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,

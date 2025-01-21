@@ -9,6 +9,6 @@ class MaritalStatusService extends BaseService
 {
     public function getActive()
     {
-        return MartialStatus::where('is_active', 1)->select('id', 'text')->get();
+        return MartialStatus::withActive()->select('id', 'text')->get();
     }
 }

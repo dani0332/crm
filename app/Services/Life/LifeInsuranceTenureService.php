@@ -9,6 +9,6 @@ class LifeInsuranceTenureService extends BaseService
 {
     public function getActive()
     {
-        return LifeInsuranceTenure::where('is_active', 1)->select('id', 'text')->get();
+        return LifeInsuranceTenure::withActive()->select('id', 'text')->get();
     }
 }

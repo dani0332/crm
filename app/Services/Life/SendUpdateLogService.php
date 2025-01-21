@@ -2,23 +2,22 @@
 
 namespace App\Services\Life;
 
-use App\Enums\QuoteTypeId;
+use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Enums\QuoteTypeId;
 
 class SendUpdateLogService extends BaseService
 {
     use GenericQueriesAllLobs;
 
-    public function linkedQuoteDetails($quoteTypeCode, $quote)
+    public function linkedQuoteDetails($quote)
     {
-        $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
-        $quoteModel = $this->getModelObject($quoteTypeCode);
-        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get();
+        $childRecords = PersonalQuote::where('parent_duplicate_quote_id', $quote->code)->get();
 
-        $_return = [
-            'quote_type_id' => $quoteTypeId,
+        $quoteDetails = [
+            'quote_type_id' => QuoteTypeId::Life,
             'parent_lead_ref_id' => '',
             'uuid' => '',
             'childLeadsCount' => $childRecords->count(),
@@ -27,16 +26,16 @@ class SendUpdateLogService extends BaseService
         ];
 
         if (! empty($quote->parent_duplicate_quote_id)) {
-            $_return['parent_lead_ref_id'] = $quote->parent_duplicate_quote_id;
-            $_return['uuid'] = explode('-', $quote->parent_duplicate_quote_id)[1];
+            $quoteDetails['parent_lead_ref_id'] = $quote->parent_duplicate_quote_id;
+            $quoteDetails['uuid'] = explode('-', $quote->parent_duplicate_quote_id)[1];
         }
 
         if ($childRecords->count() <= 1) {
-            $_return['childLeads'] = $childRecords->value('code');
-            $_return['childLeadsUuid'] = $childRecords->value('uuid');
+            $quoteDetails['childLeads'] = $childRecords->value('code');
+            $quoteDetails['childLeadsUuid'] = $childRecords->value('uuid');
         }
 
-        return $_return;
+        return $quoteDetails;
     }
 
     public function byQuoteUuid($uuid)

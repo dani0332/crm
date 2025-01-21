@@ -741,7 +741,9 @@ trait GenericQueriesAllLobs
 
     public function getPaymentAuthorisedDays()
     {
-        return intval(ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->value('value'));
+        $paymentAuthorisedDays = intval(ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->value('value'));
+
+        return intval($paymentAuthorisedDays ?? 0);
     }
 
     public function getRenewalBaches()

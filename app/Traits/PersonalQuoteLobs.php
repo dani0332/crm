@@ -10,13 +10,11 @@ trait PersonalQuoteLobs
 {
     public function getPersonalQuoteAdvisors($quoteType)
     {
-        if ($quoteType == QuoteTypes::PET->value) {
-            $roles = [strtoupper($quoteType).'_ADVISOR', strtoupper($quoteType).'_RENEWAL_ADVISOR', strtoupper($quoteType).'_NEW_BUSINESS_ADVISOR'];
-        } elseif ($quoteType == QuoteTypes::CAR->value) {
-            $roles = [strtoupper($quoteType).'_ADVISOR', strtoupper($quoteType).'_DEPUTY_MANAGER'];
-        } else {
-            $roles = [strtoupper($quoteType).'_ADVISOR'];
-        }
+        $roleSuffix = strtoupper($quoteType);
+
+        $roles = $quoteType == QuoteTypes::PET->value
+            ? ["{$roleSuffix}_ADVISOR", "{$roleSuffix}_RENEWAL_ADVISOR", "{$roleSuffix}_NEW_BUSINESS_ADVISOR"]
+            : ["{$roleSuffix}_ADVISOR"];
 
         return User::with(['roles' => fn ($q) => $q->whereIn('name', $roles)])
             ->whereHas('roles', function ($q) use ($roles) {

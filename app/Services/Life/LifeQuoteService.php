@@ -10,12 +10,10 @@ use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Enums\TravelQuoteEnum;
 use App\Models\ApplicationStorage;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
@@ -34,7 +32,6 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
 
 class LifeQuoteService extends BaseService
 {
@@ -45,30 +42,27 @@ class LifeQuoteService extends BaseService
     use PersonalQuoteLobs;
     use RolePermissionConditions;
 
-    public const TYPE = quoteTypeCode::Life;
-    public const TYPE_ID = QuoteTypeId::Life;
-
-    public function getData($forExport = false, $forTotalLeadsCount = false)
+    public function getLifeQuoteData($isExportRequest = false, $isTotalLeadCountRequest = false)
     {
-        $quotes = $this->getQuotes($forExport, $forTotalLeadsCount);
-        $quoteStatuses = $this->getPersonalQuoteStatuses(self::TYPE_ID)->get();
-        $advisors = $this->getPersonalQuoteAdvisors(self::TYPE);
+        $quotes = $this->getLifeQuotes($isExportRequest, $isTotalLeadCountRequest);
+        $quoteStatuses = $this->getPersonalQuoteStatuses(QuoteTypeId::Life)->get();
+        $advisors = $this->getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $authorizedDays = $this->getPaymentAuthorisedDays();
         $renewalBatches = $this->getRenewalBaches();
 
         return compact('quotes', 'quoteStatuses', 'advisors', 'renewalBatches', 'authorizedDays');
     }
 
-    public function getQuotes($forExport = false, $forTotalLeadsCount = false)
+    public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
     {
-        $query = $this->getQuery($forExport, $forTotalLeadsCount);
+        $query = $this->getLifeQuoteQuery($isExportRequest, $isTotalLeadCountRequest);
 
-        return ($forExport) ? $query->get() : $query->simplePaginate(15)->withQueryString();
+        return ($isExportRequest) ? $query->get() : $query->simplePaginate(15)->withQueryString();
     }
 
-    public function getQuery($forExport = false, $forTotalLeadsCount = false)
+    public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false)
     {
-        $query = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE)->with([
+        $query = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE->value)->with([
             'advisor',
             'quoteStatus',
             'nationality',
@@ -77,19 +71,19 @@ class LifeQuoteService extends BaseService
             'paymentStatus',
             'payments',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when(auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->user()->id);
             })
             ->when(! empty(request()->advisor_assigned_date), function ($query) {
-                $dateArray = request()->advisor_assigned_date;
-                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
-                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-                $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
-                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                $advisorAssignedDateRange = request()->advisor_assigned_date;
+                $advisorAssignedDateFrom = Carbon::parse($advisorAssignedDateRange[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $advisorAssignedDateTo = Carbon::parse($advisorAssignedDateRange[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('quoteDetail', function ($subQuery) use ($advisorAssignedDateFrom, $advisorAssignedDateTo) {
+                    $subQuery->whereBetween('advisor_assigned_date', [$advisorAssignedDateFrom, $advisorAssignedDateTo]);
                 });
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount);
+            ->filter(! $isExportRequest , $isTotalLeadCountRequest)
+            ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
@@ -102,25 +96,25 @@ class LifeQuoteService extends BaseService
 
     public function getCardsViewData()
     {
-        $quotes = [];
+        $lifeQuotes = [];
 
-        $quoteStatuses = $this->getPersonalQuoteStatuses(self::TYPE_ID)
+        $quoteStatuses = $this->getPersonalQuoteStatuses(QuoteTypeId::Life)
             ->whereIn('text', [quoteStatusCode::NEWLEAD, quoteStatusCode::QUOTED, quoteStatusCode::FOLLOWEDUP, quoteStatusCode::NEGOTIATION])
             ->get()->toArray();
 
         foreach ($quoteStatuses as &$quoteStatus) {
-            $quotes[] = $this->getQuotesAgainstQuoteStatus($quoteStatus);
+            $lifeQuotes[] = $this->getLifeQuotesAgainstQuoteStatus($quoteStatus);
         }
 
         return [
-            'quotes' => $quotes,
-            'quoteType' => self::TYPE,
+            'quotes' => $lifeQuotes,
+            'quoteType' => QuoteTypes::LIFE->value,
         ];
     }
 
-    private function getQuotesAgainstQuoteStatus($quoteStatus)
+    private function getLifeQuotesAgainstQuoteStatus($quoteStatus)
     {
-        $query = $this->getQuery();
+        $query = $this->getLifeQuoteQuery();
         $query->where('quote_status_id', $quoteStatus['id']);
         $quoteStatus['data']['total_leads'] = $query->count();
         $quoteStatus['data']['total_premium'] = $query->sum('price_with_vat');
@@ -135,12 +129,12 @@ class LifeQuoteService extends BaseService
             'id' => $data['status'],
         ];
 
-        return $this->getQuotesAgainstQuoteStatus($quoteStatus)['data'];
+        return $this->getLifeQuotesAgainstQuoteStatus($quoteStatus)['data'];
     }
 
     public function saveLifeQuote($data)
     {
-        $quoteData = [
+        $lifeQuote = [
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
             'email' => $data['email'],
@@ -161,13 +155,13 @@ class LifeQuoteService extends BaseService
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
-            'quoteTypeId' => self::TYPE_ID,
+            'quoteTypeId' => QuoteTypeId::Life,
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'createdById' => auth()->user()->id,
         ];
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $quoteData);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $lifeQuote);
 
         return $response;
     }
@@ -179,7 +173,7 @@ class LifeQuoteService extends BaseService
 
     public function getQuoteBy($column, $value)
     {
-        $quote = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE)
+        $lifeQuote = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE->value)
             ->where($column, $value)
             ->with([
                 'advisor',
@@ -228,7 +222,7 @@ class LifeQuoteService extends BaseService
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
-                \DB::raw('IF(EXISTS (
+                DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
                     WHERE quote_type_id = '.QuoteTypeId::Life.' AND quote_request_id = personal_quotes.id),
@@ -237,103 +231,78 @@ class LifeQuoteService extends BaseService
             ])
             ->firstOrFail();
 
-        $data = ! empty($quote) ? $quote->toArray() : [];
-        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
-        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        $data = ! empty($lifeQuote) ? $lifeQuote->toArray() : [];
+        $lifeQuote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $lifeQuote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $lifeQuote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
-        return $quote;
+        return $lifeQuote;
     }
 
     public function getShowData($uuid)
     {
-        $quote = $this->getQuoteBy('uuid', $uuid);
+        $lifeQuote = $this->getQuoteBy('uuid', $uuid);
 
-        $payments = $quote->payments;
-        $insuranceProviders = app(InsuranceProviderService::class)->byQuoteTypeMapping(self::TYPE_ID);
-        $duplicateAllowedLobs = app(CentralService::class)->duplicateAllowedLobsList(self::TYPE, $quote->code);
-        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(self::TYPE, $quote);
+        $payments = $lifeQuote->payments;
+        $insuranceProviders = app(InsuranceProviderService::class)->byQuoteTypeMapping(QuoteTypeId::Life);
+        $duplicateAllowedLobs = app(CentralService::class)->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $lifeQuote->code);
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($lifeQuote);
 
-        $advisors = app(UserService::class)->getPersonalQuoteAdvisors(self::TYPE);
+        $advisors = $this->getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $memberRelations = app(LookupService::class)->getBy('key', LookupsEnum::MEMBER_RELATION);
-        $membersDetails = app(CustomerMemberService::class)->getBy($quote->id, self::TYPE);
-        $quoteStatuses = app(QuoteStatusService::class)->byQuoteTypeId(self::TYPE_ID)->get();
+        $membersDetails = app(CustomerMemberService::class)->getBy($lifeQuote->id, QuoteTypes::LIFE->value);
+        $quoteStatuses = $this->getPersonalQuoteStatuses(QuoteTypeId::Life)->get();
         $lostReasons = app(LostReasonService::class)->getAllOrderedBy('text', 'asc');
         $nationalities = app(NationalityService::class)->getActive();
-        $embeddedProducts = app(EmbeddedProductService::class)->byQuoteTypeId(self::TYPE_ID, $quote->id);
+        $embeddedProducts = app(EmbeddedProductService::class)->byQuoteTypeId(QuoteTypeId::Life, $lifeQuote->id);
         $industryType = app(LookupService::class)->getBy('key', LookupsEnum::COMPANY_TYPE);
-        $activities = app(ActivityService::class)->getQuoteActivities(self::TYPE_ID, $quote->id);
+        $activities = app(ActivityService::class)->getQuoteActivities(QuoteTypeId::Life, $lifeQuote->id);
 
-        $uboDetails = app(CustomerMemberService::class)->getBy($quote->id, self::TYPE, CustomerTypeEnum::Entity);
+        $uboDetails = app(CustomerMemberService::class)->getBy($lifeQuote->id, QuoteTypes::LIFE->value, CustomerTypeEnum::Entity);
         $uboRelations = app(LookupService::class)->getBy('key', LookupsEnum::UBO_RELATION);
         $emirates = app(EmirateService::class)->getActive();
 
         $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
             return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
         })->values();
-        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::LIFE->id(), $quoteStatuses);
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($lifeQuote, QuoteTypeId::Life, $quoteStatuses);
 
         if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();
         }
-        $sendUpdateOptions = [];
-        $sendUpdateLogs = [];
-        $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
-        if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = app(LookupService::class)->getSendUpdateOptions(QuoteTypes::LIFE->id());
-            $sendUpdateLogs = app(SendUpdateLogService::class)->byQuoteUuid($quote->uuid);
-            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        }
+        [$hasPolicyIssuedStatus, $sendUpdateOptions, $sendUpdateLogs, $sendUpdateEnum] = $this->prepareSendUpdateData($lifeQuote);
 
-        $activitiesData = [];
-        foreach ($activities as $activity) {
-            $activitiesData[] = [
-                'id' => $activity->id,
-                'uuid' => $activity->uuid,
-                'title' => $activity->title,
-                'description' => $activity->description,
-                'quote_request_id' => $activity->quote_request_id,
-                'quote_type_id' => $activity->quote_type_id,
-                'quote_uuid' => $activity->quote_uuid,
-                'client_name' => $activity->client_name,
-                'due_date' => $activity->due_date,
-                'assignee' => $activity->assignee->name,
-                'assignee_id' => $activity->assignee_id,
-                'status' => $activity->status,
-                'quote_status_id' => $activity->quote_status_id,
-                'quote_status' => $activity?->quoteStatus,
-                'user_id' => $activity?->user_id,
-            ];
-        }
+        $activitiesData = $this->prepareActivitiesData($activities);
 
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Life);
 
         $isQuoteDocumentEnabled = app(BaseService::class)->quoteDocumentEnabled(QuoteTypes::LIFE->value);
-        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
-        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
-        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $lifeQuote->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($lifeQuote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($lifeQuote);
+        $amlStatusName = AMLStatusCode::getName($lifeQuote->aml_status);
+        $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($lifeQuote->customer_id, $lifeQuote->mobile_no);
+        $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($lifeQuote->payments);
 
         return [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
-            'quoteType' => QuoteTypes::LIFE,
+            'quoteType' => QuoteTypes::LIFE->value,
             'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
-            'quote' => $quote,
+            'quote' => $lifeQuote,
             'amlStatusName' => $amlStatusName,
-            'record' => $quote,
+            'record' => $lifeQuote,
             'activities' => $activitiesData,
             'advisors' => $advisors,
             'allowedDuplicateLOB' => $duplicateAllowedLobs,
-            'customerAdditionalContacts' => app(CustomerService::class)->getAdditionalContacts($quote->customer_id, $quote->mobile_no),
+            'customerAdditionalContacts' => $customerAdditionalContacts,
             'lostReasons' => $lostReasons,
-            'modelType' => QuoteTypes::LIFE,
+            'modelType' => QuoteTypes::LIFE->value,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
             'embeddedProducts' => $embeddedProducts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
@@ -351,12 +320,9 @@ class LifeQuoteService extends BaseService
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
-            'enums' => [
-                'travelQuoteEnum' => TravelQuoteEnum::asArray(),
-            ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'vatPercentage' => $vatPercentage,
-            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'isNewPaymentStructure' => $isNewPaymentStructure,
             'sendUpdateEnum' => $sendUpdateEnum,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
@@ -450,7 +416,9 @@ class LifeQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+
+        info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getPlainQuoteBy('id', $leadId);
@@ -493,7 +461,56 @@ class LifeQuoteService extends BaseService
     public function correctHistoricData($quote)
     {
         /* Start - Temporarily adding for correcting historic data  */
-        app(PaymentService::class)->updatePriceVatApplicableAndVat($quote, self::TYPE);
+        app(PaymentService::class)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
         /* End - Temporarily adding for correcting historic data  */
+    }
+
+    private function prepareActivitiesData($activities)
+    {
+        $activitiesData = [];
+
+        foreach ($activities as $activity) {
+            $activitiesData[] = [
+                'id' => $activity->id,
+                'uuid' => $activity->uuid,
+                'title' => $activity->title,
+                'description' => $activity->description,
+                'quote_request_id' => $activity->quote_request_id,
+                'quote_type_id' => $activity->quote_type_id,
+                'quote_uuid' => $activity->quote_uuid,
+                'client_name' => $activity->client_name,
+                'due_date' => $activity->due_date,
+                'assignee' => $activity->assignee->name,
+                'assignee_id' => $activity->assignee_id,
+                'status' => $activity->status,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
+                'user_id' => $activity?->user_id,
+            ];
+        }
+
+        return $activitiesData;
+    }
+
+    private function prepareSendUpdateData($quote)
+    {
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = app(LookupService::class)->getSendUpdateOptions(QuoteTypeId::Life);
+            $sendUpdateLogs = app(SendUpdateLogService::class)->byQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
+        return [
+            $hasPolicyIssuedStatus,
+            $sendUpdateOptions,
+            $sendUpdateLogs,
+            $sendUpdateEnum,
+        ];
     }
 }

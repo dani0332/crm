@@ -9,6 +9,6 @@ class LifeNumberOfYearsService extends BaseService
 {
     public function getActive()
     {
-        return LifeNumberOfYears::where('is_active', 1)->select('id', 'text')->get();
+        return LifeNumberOfYears::withActive()->select('id', 'text')->get();
     }
 }

@@ -9,6 +9,6 @@ class LifeChildrenService extends BaseService
 {
     public function getActive()
     {
-        return LifeChildren::where('is_active', 1)->select('id', 'text')->get();
+        return LifeChildren::withActive()->select('id', 'text')->get();
     }
 }

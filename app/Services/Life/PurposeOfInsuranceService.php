@@ -9,6 +9,6 @@ class PurposeOfInsuranceService extends BaseService
 {
     public function getActive()
     {
-        return LifePurposeOfInsurance::where('is_active', 1)->select('id', 'text')->get();
+        return LifePurposeOfInsurance::withActive()->select('id', 'text')->get();
     }
 }

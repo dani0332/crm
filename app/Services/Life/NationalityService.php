@@ -9,6 +9,6 @@ class NationalityService extends BaseService
 {
     public function getActive()
     {
-        return Nationality::where('is_active', 1)->select('id', 'text')->get();
+        return Nationality::withActive()->select('id', 'text')->get();
     }
 }

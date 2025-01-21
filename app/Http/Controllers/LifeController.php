@@ -33,7 +33,7 @@ class LifeController extends Controller
      */
     public function index()
     {
-        $data = $this->lifeQuoteService->getData();
+        $data = $this->lifeQuoteService->getLifeQuoteData();
 
         return inertia('LifeQuote/Index', $data);
     }
