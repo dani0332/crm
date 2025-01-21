@@ -9,7 +9,7 @@ const props = defineProps({
 
 const permissionsEnum = props.plan.permissionsEnum;
 
-const emit = defineEmits([]);
+const emit = defineEmits(['onLoadAvailablePlansData']);
 
 console.log('props.plan', props.plan);
 const notification = useToast();
