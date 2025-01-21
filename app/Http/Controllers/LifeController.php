@@ -71,7 +71,7 @@ class LifeController extends Controller
         /* Start - Temporarily adding for correcting historic data  */
         $quote = $this->lifeQuoteService->getQuoteBy('uuid', $uuid);
         abort_if(! $quote, 404);
-        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
+        $quote = $this->lifeQuoteService->correctHistoricData($quote);
         /* End - Temporarily adding for correcting historic data  */
 
         $data = $this->lifeQuoteService->getShowData($uuid);

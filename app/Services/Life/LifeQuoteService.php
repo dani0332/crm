@@ -489,4 +489,11 @@ class LifeQuoteService extends BaseService
 
         return 'true';
     }
+
+    public function correctHistoricData($quote)
+    {
+        /* Start - Temporarily adding for correcting historic data  */
+        app(PaymentService::class)->updatePriceVatApplicableAndVat($quote, self::TYPE);
+        /* End - Temporarily adding for correcting historic data  */
+    }
 }
