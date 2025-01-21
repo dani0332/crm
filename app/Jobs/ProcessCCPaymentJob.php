@@ -51,21 +51,17 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
             $ccPaymentProcess->update(['status' => PaymentProcessJobEnum::IN_PROCESS]);
             info("Status changed from {$previousStatus} to {$ccPaymentProcess->status}: for Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
 
-            try {
-                // Process the split payment approval
-                app(SplitPaymentService::class)->processSplitPaymentApprove(
-                    $ccPaymentProcess->quote_type,
-                    $ccPaymentProcess->quoteable_id,
-                    $ccPaymentProcess->payment_splits_id,
-                    $ccPaymentProcess->amount_captured,
-                    true
-                );
+            // Process the split payment approval
+            app(SplitPaymentService::class)->processSplitPaymentApprove(
+                $ccPaymentProcess->quote_type,
+                $ccPaymentProcess->quoteable_id,
+                $ccPaymentProcess->payment_splits_id,
+                $ccPaymentProcess->amount_captured,
+                true
+            );
 
-                info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
-            } catch (\Exception $exception) {
-                // Log the failure and update the status to FAILED
-                info("CC Payment Job Failed: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}, Error: {$exception->getMessage()}");
-            }
+            info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
+            
         } else {
             info("Skipping CC Payment Job: Not in QUEUED status. Current status: {$ccPaymentProcess->status}, Child payment code: {$ccPaymentProcess->splitPayment->code}");
         }
