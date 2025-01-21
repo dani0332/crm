@@ -47,4 +47,20 @@ class KenService
 
         return $response->json();
     }
+
+    public function renewalRequest($path, $method = 'post', $data = [])
+    {
+        $url = config('constants.KEN2_API_ENDPOINT').$path;
+        $response = $this->client->withBody(json_encode($data), 'application/json')
+            ->send($method, $url)->onError(function ($response) use ($data, $url) {
+                info('KEN Service Exception', ['data' => $data, 'url' => $url]);
+                if (isset($response->json()['msg'])) {
+                    vAbort($response->json()['msg']);
+                } else {
+                    vAbort('KEN Service Exception');
+                }
+            });
+
+        return $response->json();
+    }
 }
