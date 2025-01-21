@@ -553,20 +553,20 @@ const dateFormat = date => {
         </DataTable>
         <!-- Display the total customer payable outside the DataTable -->
         <table>
-         <thead>
-          <tr>
-            <th>Total Gross Premium:</th>
-            <td class="custom-table">
-              {{ calculateGrossPremium.toFixed(2) }} AED
-            </td>
-            <th>Total Tax:</th>
-            <td class="custom-table">{{ calculateTax.toFixed(2) }} AED</td>
-            <th>Total Customer Payable:</th>
-            <td class="custom-table">
-              {{ calculateTotalCustomerPayable.toFixed(2) }} AED
-            </td>
-          </tr>
-         </thead>
+          <thead>
+            <tr>
+              <th>Total Gross Premium:</th>
+              <td class="custom-table">
+                {{ calculateGrossPremium.toFixed(2) }} AED
+              </td>
+              <th>Total Tax:</th>
+              <td class="custom-table">{{ calculateTax.toFixed(2) }} AED</td>
+              <th>Total Customer Payable:</th>
+              <td class="custom-table">
+                {{ calculateTotalCustomerPayable.toFixed(2) }} AED
+              </td>
+            </tr>
+          </thead>
         </table>
       </template>
       <!-- Invoices -->

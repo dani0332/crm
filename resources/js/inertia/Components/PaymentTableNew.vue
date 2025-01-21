@@ -872,7 +872,10 @@ const handlePaymentTypes = count => {
     paymentFrequencyEnum.MONTHLY,
   ];
 
-  if (count >= 2 && frequenciesToFilterForCount.includes(paymentMethodsForm.frequency)) {
+  if (
+    count >= 2 &&
+    frequenciesToFilterForCount.includes(paymentMethodsForm.frequency)
+  ) {
     paymentTypesWithoutCheck = filterPaymentTypes(paymentTypesFiltered.value, [
       page.props.paymentMethodsEnum.Cheque,
     ]);
@@ -888,17 +891,20 @@ const handlePaymentTypes = count => {
   }
 
   if (paymentMethodsForm.collection_type === 'insurer') {
-    const frequenciesToFilter = isMultiPaymentsEnabled.value ? frequenciesToFilterForCount : frequenciesToFilterForInsurer;
+    const frequenciesToFilter = isMultiPaymentsEnabled.value
+      ? frequenciesToFilterForCount
+      : frequenciesToFilterForInsurer;
 
     if (count >= 2 || !isMultiPaymentsEnabled.value) {
       if (frequenciesToFilter.includes(paymentMethodsForm.frequency)) {
-        paymentTypesWithoutCheck = filterPaymentTypes(paymentTypesWithoutCheck, [
-          page.props.paymentMethodsEnum.CreditCard,
-        ]);
+        paymentTypesWithoutCheck = filterPaymentTypes(
+          paymentTypesWithoutCheck,
+          [page.props.paymentMethodsEnum.CreditCard],
+        );
       }
     }
   }
-  
+
   return paymentTypesWithoutCheck;
 };
 
@@ -2779,15 +2785,24 @@ const shouldProcessUpdate = payment => {
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   const isCarQuote = props.quoteType === 'Car';
-  const isGIGInsuranceProvider = page.props?.bookPolicyDetails?.isGIGInsuranceProvider  
-    || page.props?.bookingDetails?.isGIGInsuranceProvider || false;
+  const isGIGInsuranceProvider =
+    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
+    page.props?.bookingDetails?.isGIGInsuranceProvider ||
+    false;
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
-  let isAMlAndKycTravelComplete = isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
-  if (isInsurer && isGIGInsuranceProvider && (isCarQuote || isTravelQuote) && hasAnyCCSplitPayment()) {
-    isInsurerAmlCleared = insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared
-    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate
+  let isAMlAndKycTravelComplete =
+    isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
+  if (
+    isInsurer &&
+    isGIGInsuranceProvider &&
+    (isCarQuote || isTravelQuote) &&
+    hasAnyCCSplitPayment()
+  ) {
+    isInsurerAmlCleared =
+      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
   }
 
   return (
@@ -3378,12 +3393,10 @@ const hasAnyCCPayment = () => {
 const hasAnyCCSplitPayment = () => {
   if (props.payments.length > 0) {
     const paymentSplits = props.payments[0].payment_splits;
-    return paymentSplits.some(
-      item => item.payment_method.code === 'CC'
-    );
+    return paymentSplits.some(item => item.payment_method.code === 'CC');
   }
   return false;
-}
+};
 
 const isCCPaymentDisabled = option => {
   return (
