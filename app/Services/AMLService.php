@@ -31,6 +31,7 @@ use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
+use App\Models\HomeQuoteRequestDetail;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
@@ -563,6 +564,7 @@ class AMLService
             'paymentable_id' => $quoteDetails->id,
         ])->first();
 
+        // TODO:: confirm with the business before enabling the LOBs
         $detailsReference = [
             QuoteTypes::CAR->id() => [
                 'model' => CarQuote::class,
@@ -574,6 +576,11 @@ class AMLService
                 'detailModel' => TravelQuoteRequestDetail::class,
                 'foreignKey' => 'travel_quote_request_id',
             ],
+            QuoteTypes::HOME->id() => [
+                'model' => HomeQuote::class,
+                'detailModel' => HomeQuoteRequestDetail::class,
+                'foreignKey' => 'home_quote_request_id',
+            ]
         ];
 
         $requestQuoteDetails = $detailsReference[$quoteTypeId]['detailModel']::where($detailsReference[$quoteTypeId]['foreignKey'], $quoteDetails->id)->first();

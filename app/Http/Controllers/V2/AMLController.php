@@ -467,7 +467,8 @@ class AMLController extends Controller
                     ];
                 }
 
-                if (in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id()])) {
+                // TODO:: confirm with the business before enabling the LOBs
+                if (in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id(), QuoteTypes::HOME->id()])) {
                     session()->put('insurerAMLScreeningResponse');
                     InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
                     $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
