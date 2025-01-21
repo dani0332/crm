@@ -1584,7 +1584,7 @@ class HealthQuoteService extends BaseService
     public function renewalCreatePlan($planData)
     {
         $apiCreds = [
-            'apiEndPoint' => config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans',
+            'apiEndPoint' => config('constants.KEN2_API_ENDPOINT').'/save-manual-health-quote-plans',
             'apiToken' => config('constants.KEN_API_TOKEN'),
             'apiTimeout' => config('constants.KEN_API_TIMEOUT'),
             'apiUserName' => config('constants.KEN_API_USER'),
