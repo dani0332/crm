@@ -308,6 +308,15 @@ const onLobChange = (e, isOnMounted = false) => {
       hide-rows-per-page
       hide-footer
     >
+      <template #item-team_name="{ team_name }">
+        {{
+          team_name
+            ? team_name
+            : filters.lob === quoteTypeCodeEnum.Health
+              ? 'SIC 1.0'
+              : ''
+        }}
+      </template>
       <template
         v-for="header in tableHeader"
         :key="header.value"
