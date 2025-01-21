@@ -92,18 +92,25 @@ class QuoteAllocation extends Command
         }
 
         $leads = CarQuote::whereNull('advisor_id')
-            ->select('uuid', 'payment_status_id')
-            ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->select('uuid', 'payment_status_id', 'source', 'is_renewal_tier_email_sent', 'lead_allocation_failed_at', 'sic_flow_enabled', 'sic_advisor_requested', 'quote_status_id')
+            ->where('created_at', '<=', $to)
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
-            ->where('is_renewal_tier_email_sent', 0)
             ->where(function ($query) {
-                $query->leadAllocationFailed()
-                    ->orWhere(function ($q) {
-                        $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowDisabled();
-                    })->orWhere(function ($query) {
-                        $query->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                $query->where(function ($q) {
+                    $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                })
+                    ->orWhere->leadAllocationFailed()
+                    ->orWhere(function ($query) {
+                        $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                            ->where(function ($sq) {
+                                $sq->where(function ($q) {
+                                    $q->sicFlowDisabled();
+                                })->orWhere(function ($query) {
+                                    $query->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                                });
+                            });
                     });
             })
             ->take($chunkSize);

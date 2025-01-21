@@ -224,7 +224,7 @@ class QuoteDocumentService extends BaseService
                     $documentType->id
                 )->afterCommit();
             } else {
-                info('Watermkark job not dispatched - Ref: '.$quote->code);
+                info('Watermark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
