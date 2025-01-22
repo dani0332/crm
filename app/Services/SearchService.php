@@ -332,8 +332,8 @@ class SearchService extends BaseService
             if (! request()->has('su_code') && ! $isSendUpdateFilter) {
                 if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters)) && ! request()->has('payment_status')) {
                     $query->join('payments', 'personal_quotes.code', 'payments.code');
+                    $query->where('payments.insurer_tax_number', request()->insurer_tax_invoice_number);
                 }
-                $query->where('payments.insurer_tax_number', request()->insurer_tax_invoice_number);
             } else {
                 $query->where('send_update_logs.insurer_tax_invoice_number', request()->insurer_tax_invoice_number);
             }
