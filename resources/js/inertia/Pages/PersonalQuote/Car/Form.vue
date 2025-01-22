@@ -319,6 +319,7 @@ const chassisNumberRule = v => {
   if (v && (!lengthValid || !isAlphanumeric)) {
     return 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
   }
+  return true;
 };
 
 const gender = computed(() => {
