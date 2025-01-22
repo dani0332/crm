@@ -235,6 +235,17 @@ const typeOfCoverageYouNeedOptions = computed(() => {
 });
 
 const handleCoverageChange = () => {
+  // Safeguard: Check if coverageTypes and quoteForm are valid
+  if (!coverageTypes || !Array.isArray(coverageTypes)) {
+    console.error('coverageTypes is not defined or not an array');
+    return;
+  }
+
+  if (!quoteForm || typeof quoteForm !== 'object') {
+    console.error('quoteForm is not defined or not an object');
+    return;
+  }
+
   console.log('Coverage changed:', quoteForm.type_of_coverage_you_need);
 
   // Reset field visibility to false
@@ -242,75 +253,71 @@ const handleCoverageChange = () => {
   showContentsField.value = false;
   showPersonalBelongingsField.value = false;
 
-  console.log('showContentsField.value:', showContentsField.value);
+  console.log('showContentsField.value (after reset):', showContentsField.value);
 
   // Determine the selected coverage type
-  const selectedCoverage = coverageTypes.length
-    ? coverageTypes.find(
-        coverage => coverage.id === quoteForm.type_of_coverage_you_need,
-      )
-    : null;
+  const selectedCoverage = coverageTypes.find(
+    coverage => coverage.id === quoteForm?.type_of_coverage_you_need,
+  );
 
-  if (!selectedCoverage) return;
-
-  // Set field visibility based on the selected coverage type
-  switch (selectedCoverage.id) {
-    case 1: // Building only
-      showBuildingField.value = true;
-      break;
-    case 2: // Contents only
-      showContentsField.value = true;
-      break;
-    case 3: // Building and Contents
-      showBuildingField.value = true;
-      showContentsField.value = true;
-      break;
-    case 4: // Building, Contents, and Personal Belongings
-      showBuildingField.value = true;
-      showContentsField.value = true;
-      showPersonalBelongingsField.value = true;
-      break;
-    case 5: // Contents and Personal Belongings
-      showContentsField.value = true;
-      showPersonalBelongingsField.value = true;
-      break;
+  if (!selectedCoverage) {
+    console.warn('No matching coverage type found');
+    return;
   }
 
-  console.log('showContentsField.value:', showContentsField.value);
+  // Define a mapping object for coverage types and their visibility rules
+  const coverageVisibilityMap = {
+    9: { showBuildingField: true }, // Building only
+    10: { showContentsField: true }, // Contents only
+    11: { showBuildingField: true, showContentsField: true }, // Building and Contents
+    12: { showBuildingField: true, showContentsField: true, showPersonalBelongingsField: true }, // Building, Contents, and Personal Belongings
+    13: { showContentsField: true, showPersonalBelongingsField: true }, // Contents and Personal Belongings
+  };
+
+  // Apply visibility rules based on the selected coverage type
+  const visibilityRules = coverageVisibilityMap[selectedCoverage.id] || {};
+  if (visibilityRules.showBuildingField) showBuildingField.value = true;
+  if (visibilityRules.showContentsField) showContentsField.value = true;
+  if (visibilityRules.showPersonalBelongingsField) showPersonalBelongingsField.value = true;
+
+  console.log('showContentsField.value (after visibility update):', showContentsField.value);
 
   // Reset AED fields only if the field is not visible and not in edit mode
-  if (!isEdit.value) {
+  const resetAEDFields = () => {
     if (!showBuildingField.value) quoteForm.building_aed = null;
     if (!showContentsField.value) quoteForm.contents_aed = null;
-    if (!showPersonalBelongingsField.value)
-      quoteForm.personal_belongings_aed = null;
-  } else {
-    // For edit mode, preserve initial values from the database
-    if (buildingAED.value && showBuildingField.value) {
+    if (!showPersonalBelongingsField.value) quoteForm.personal_belongings_aed = null;
+  };
+
+  const preserveAEDFields = () => {
+    if (buildingAED?.value && showBuildingField.value) {
       quoteForm.building_aed = buildingAED.value;
     } else {
       quoteForm.building_aed = null;
     }
-    if (contentsAED.value && showContentsField.value) {
+    if (contentsAED?.value && showContentsField.value) {
       quoteForm.contents_aed = contentsAED.value;
     } else {
       quoteForm.contents_aed = null;
     }
-    if (personalBelongingsAED.value && showPersonalBelongingsField.value) {
+    if (personalBelongingsAED?.value && showPersonalBelongingsField.value) {
       quoteForm.personal_belongings_aed = personalBelongingsAED.value;
     } else {
       quoteForm.personal_belongings_aed = null;
     }
+  };
+
+  if (!isEdit?.value) {
+    resetAEDFields();
+  } else {
+    preserveAEDFields();
   }
 
-  console.log('showContentsField.value:', showContentsField.value);
+  console.log('showContentsField.value (final):', showContentsField.value);
   console.log('Final values:');
   console.log('quoteForm.building_aed:', quoteForm.building_aed);
   console.log('quoteForm.contents_aed:', quoteForm.contents_aed);
-  console.log(
-    'quoteForm.personal_belongings_aed:',
-    quoteForm.personal_belongings_aed,
-  );
+  console.log('quoteForm.personal_belongings_aed:', quoteForm.personal_belongings_aed);
 };
 
 const setCoverageBasedOnBooleans = () => {

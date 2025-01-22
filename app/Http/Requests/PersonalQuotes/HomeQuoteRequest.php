@@ -37,8 +37,8 @@ class HomeQuoteRequest extends FormRequest
             'sub_area_id' => 'required',
             'type_of_coverage_you_need' => 'required',
             'have_claimed_losses' => 'required|boolean',
-            'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
-            'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
+            'ilivein_accommodation_type_id' => 'required',
+            'iam_possesion_type_id' => 'required',
             'owner_occupancy_type_id' => 'required_if:iam_possesion_type_id,2',
 
             'addressObj' => 'required|array',
@@ -88,10 +88,8 @@ class HomeQuoteRequest extends FormRequest
             'have_claimed_losses.boolean' => 'The claims field must be true or false.',
 
             'ilivein_accommodation_type_id.required' => 'You must select the type of property you live in.',
-            'ilivein_accommodation_type_id.exists' => 'The selected property type is invalid.',
 
             'iam_possesion_type_id.required' => 'You must select your ownership status.',
-            'iam_possesion_type_id.exists' => 'The selected ownership status is invalid.',
 
             'owner_occupancy_type_id.required_if' => 'The owner occupancy type is required if you are renting out your property.',
 
