@@ -11,6 +11,7 @@ defineProps({
     default: 'bike',
   },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
@@ -37,6 +38,7 @@ let availableFilters = {
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
+  insurer_aml_status: [],
   advisor_id: [],
   page: 1,
   previous_quote_policy_number_text: '',
@@ -155,6 +157,7 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DOB', value: 'dob' },
   { text: 'LEAD STATUS', value: 'quote_status' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display'},
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
@@ -330,6 +333,14 @@ watch(
   },
   { deep: true },
 );
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
+
 </script>
 
 <template>
@@ -435,6 +446,12 @@ watch(
             "
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"

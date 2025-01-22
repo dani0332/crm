@@ -38,6 +38,7 @@ use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -79,6 +80,7 @@ class PetQuoteController extends Controller
             'renewalBatches' => $renewalBatches,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : PetQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 

@@ -24,6 +24,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
@@ -49,6 +50,7 @@ class JetskiQuoteController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 

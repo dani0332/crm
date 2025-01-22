@@ -39,6 +39,7 @@ use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -78,6 +79,7 @@ class CycleQuoteController extends Controller
             'advisors' => $advisors,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : CycleQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 

@@ -15,6 +15,7 @@ defineProps({
     default: 0,
   },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -37,6 +38,7 @@ let availableFilters = {
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
+  insurer_aml_status: [],
   page: 1,
   previous_quote_policy_number_text: '',
   payment_status: [],
@@ -121,6 +123,7 @@ const tableHeader = ref([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
     text: 'CREATED DATE',
@@ -383,6 +386,14 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
+
 </script>
 
 <template>
@@ -569,6 +580,12 @@ const validateDateRange = () => {
             "
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Advisor" v-if="isAllowed">
           <ComboBox
             v-model="filters.advisors"

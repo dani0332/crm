@@ -30,6 +30,7 @@ class PersonalQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
         'renewal_batch' => FilterTypes::EXACT,
         'quote_status_id' => FilterTypes::IN,
+        'insurer_aml_status' => FilterTypes::IN,
         'is_ecommerce' => FilterTypes::EXACT,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
         'previous_quote_policy_number_text' => FilterTypes::EXACT,
