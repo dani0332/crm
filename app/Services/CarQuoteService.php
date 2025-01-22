@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BirdFlowStatusEnum;
@@ -16,7 +17,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\AMLStatusCode;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;

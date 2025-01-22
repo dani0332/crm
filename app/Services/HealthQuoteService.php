@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
@@ -17,7 +18,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\AMLStatusCode;
 use App\Facades\Ken;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;

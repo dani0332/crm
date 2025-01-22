@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\PermissionsEnum;
@@ -9,7 +10,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\AMLStatusCode;
 use App\Models\Customer;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;

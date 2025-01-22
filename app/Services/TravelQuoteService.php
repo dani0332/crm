@@ -181,7 +181,7 @@ class TravelQuoteService extends BaseService
                     WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                     ELSE insurer_aml_status
                 END AS insurer_aml_status_display
-            ')
+            '),
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')

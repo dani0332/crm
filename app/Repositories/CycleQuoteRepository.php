@@ -105,7 +105,7 @@ class CycleQuoteRepository extends BaseRepository
                         WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                         ELSE insurer_aml_status
                     END AS insurer_aml_status_display
-                ')
+                '),
             ]);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
