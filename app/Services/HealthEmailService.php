@@ -100,7 +100,7 @@ class HealthEmailService extends BaseService
                 return $currentPlan->discountPremium;
             }
 
-            if (property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
                 return $currentPlan->ratesPerCopay?->discountPremium ?? 0;
             }
         };
@@ -110,7 +110,7 @@ class HealthEmailService extends BaseService
                 return $currentPlan->vat;
             }
 
-            if (property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
                 return $currentPlan->ratesPerCopay?->vat ?? 0;
             }
         };
