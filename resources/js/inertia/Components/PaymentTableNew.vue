@@ -2697,9 +2697,10 @@ const uploadDocument = (doc, files, count) => {
         },
         onSuccess: data => {
           let quoteDocuments = [];
-          if (
+          if (props.quoteType === 'Home') {
+            quoteDocuments = data.props.quote.documents;
+          } else if (
             quoteTypesToCheck.includes(props.quoteType) ||
-            props.quoteType === 'Home' ||
             props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
           ) {
@@ -3030,10 +3031,7 @@ const setPaymentInitialPrice = () => {
 };
 
 const setPlanDetail = () => {
-  if (
-    props.quoteType == 'Business' ||
-    props.isPlanDetailEnabled
-  ) {
+  if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == 'Home') {
     initalPlanDetails = props.quoteRequest.insurance_provider;
