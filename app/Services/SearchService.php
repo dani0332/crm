@@ -57,7 +57,7 @@ class SearchService extends BaseService
 
                 $selectColumns = array_merge($selectColumns, $suSelectColumns);
                 PersonalQuote::applyRequestTableJoins($baseQuery, request());
-                $this->searchQuoteQueryFilters($baseQuery, request(), true);
+                $this->searchQuoteQueryFilters($baseQuery, request(), $isEndorsementList);
                 $selectColumns = $this->getFilteredCompanyCases(request(), $selectColumns);
 
             } else {
