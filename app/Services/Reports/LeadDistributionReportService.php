@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
@@ -167,8 +168,13 @@ class LeadDistributionReportService extends BaseService
             ->whereNotIn('personal_quotes.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('personal_quotes.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL])
             ->where('personal_quotes.quote_type_id', $lobId)
-            ->where(function ($q) use ($parentTeam) {
-                $q->where('teams.parent_team_id', $parentTeam->id);
+            ->where(function ($q) use ($parentTeam, $lob) {
+                $q->where(function ($query) use ($parentTeam, $lob) {
+                    $query->where('teams.parent_team_id', $parentTeam->id);
+                    $query->when($lob === quoteTypeCode::Health, function ($query) {
+                        $query->whereIn('teams.name', [TeamNameEnum::EBP, TeamNameEnum::RM_SPEED, TeamNameEnum::RM_NB]);
+                    });
+                });
                 $q->when($this->hasAdminPrivileges(), function ($sq) {
                     $sq->orWhereNull('teams.parent_team_id');
                 });
