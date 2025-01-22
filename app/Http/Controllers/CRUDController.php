@@ -517,7 +517,7 @@ class CRUDController extends Controller
                 'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             ]);
         }
-        if ($request->has('chassis_number')) {
+        if ($request->has('chassis_number') && $request->chassis_number !== null) {
             $this->validate($request, [
                 'chassis_number' => 'string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/'],
                 ['chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',

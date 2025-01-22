@@ -628,10 +628,10 @@ class CentralController extends Controller
         ];
 
         $response = ['status' => false, 'message' => ''];
-        if (in_array($request->insurer_aml_status, $insurerAMLFailureStatus)) {
+        if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
             $resposneMessage = 'GIG server connection issue. Please check API logs for details of the error';
 
-            if ($request->insurer_aml_status == AMLStatusCode::InsurerAMLScreeningFailed) {
+            if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
                 $insurerAMLScreeningResponse = AML::where([
                     'quote_type_id' => $request->quoteType,
                     'quote_request_id' => $request->quoteRequestId,
