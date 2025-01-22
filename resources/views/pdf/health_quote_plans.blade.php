@@ -266,7 +266,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            margin: 0 auto;
+            margin: 20px auto;
         }
 
         .provider-logo {
@@ -275,7 +275,7 @@
             object-fit: contain;
             display: block;
             position: absolute;
-            top: 55%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
         }
