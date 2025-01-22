@@ -97,11 +97,13 @@ class SearchService extends BaseService
                     $baseQuery->leftJoin('users', 'personal_quotes.advisor_id', 'users.id');
                 }
 
-                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters)) && ! request()->has('payment_status')) {
-                    if ($isEndorsementList) {
-                        $baseQuery->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
-                    } else {
-                        $baseQuery->leftJoin('payments', 'personal_quotes.code', 'payments.code');
+                if (! request()->has('insurer_tax_invoice_number')) {
+                    if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters)) && ! request()->has('payment_status')) {
+                        if ($isEndorsementList) {
+                            $baseQuery->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
+                        } else {
+                            $baseQuery->leftJoin('payments', 'personal_quotes.code', 'payments.code');
+                        }
                     }
                 }
 
