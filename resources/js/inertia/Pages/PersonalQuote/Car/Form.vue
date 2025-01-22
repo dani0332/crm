@@ -171,10 +171,6 @@ function onSubmit(isValid) {
     isEmptyField.value = false;
   }
 
-  if (quoteForm.chassis_number && chassisNumberValidate('blur')) {
-    return false;
-  }
-
   if (!isValid) return;
 
   quoteForm.clearErrors();
@@ -309,11 +305,20 @@ const chassisNumberValidate = eventType => {
     const isAlphanumeric = regex.test(quoteForm.chassis_number);
     if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
       quoteForm.errors.chassis_number = 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
-      return true;
     } else {
       quoteForm.clearErrors('chassis_number');
-      return false;
     }
+  }
+};
+
+const chassisNumberRule = (v) => {
+  const regex = /^[a-zA-Z0-9]*$/; 
+  const lengthValid =
+      v.length >= 8 &&
+      v.length <= 17;
+  const isAlphanumeric = regex.test(v);
+  if (v && (!lengthValid || !isAlphanumeric)) {
+      return 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
   }
 };
 
@@ -632,6 +637,7 @@ const gender = computed(() => {
                 class="w-full"
                 type="text"
                 placeholder="Enter Chassis Number"
+                :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
                 @keypress="chassisNumberValidate('keypress')"
                 @blur="chassisNumberValidate('blur')"
                 :error="quoteForm.errors.chassis_number"
