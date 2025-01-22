@@ -500,16 +500,28 @@ const validatePassportNumber = eventType => {
   if (eventType == 'keypress') {
     const event = window.event || event;
     const key = event.key;
-    if (!regex.test(key) && key !== 'Backspace' && key !== 'Delete' && key !== 'ArrowLeft' && key !== 'ArrowRight') {
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
       event.preventDefault();
-    } 
+    }
   }
 
   if (eventType == 'blur') {
-    const lengthValid = insuredFormDetails.screening_id_number.length >= 8 && insuredFormDetails.screening_id_number.length <= 9;
+    const lengthValid =
+      insuredFormDetails.screening_id_number.length >= 8 &&
+      insuredFormDetails.screening_id_number.length <= 9;
     const isAlphanumeric = regex.test(insuredFormDetails.screening_id_number);
-    if (insuredFormDetails.screening_id_number && (!lengthValid || !isAlphanumeric)) {
-      insuredFormDetails.errors.screening_id_number = 'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.';
+    if (
+      insuredFormDetails.screening_id_number &&
+      (!lengthValid || !isAlphanumeric)
+    ) {
+      insuredFormDetails.errors.screening_id_number =
+        'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.';
       event.preventDefault();
       return true;
     } else {
@@ -533,16 +545,28 @@ const chassisNumberValidate = eventType => {
   if (eventType == 'keypress') {
     const event = window.event || event;
     const key = event.key;
-    if (!regex.test(key) && key !== 'Backspace' && key !== 'Delete' && key !== 'ArrowLeft' && key !== 'ArrowRight') {
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
       event.preventDefault();
-    } 
+    }
   }
 
   if (eventType == 'blur') {
-    const lengthValid = insuredFormDetails.chassis_number.length >= 8 && insuredFormDetails.chassis_number.length <= 17;
+    const lengthValid =
+      insuredFormDetails.chassis_number.length >= 8 &&
+      insuredFormDetails.chassis_number.length <= 17;
     const isAlphanumeric = regex.test(insuredFormDetails.chassis_number);
-    if (insuredFormDetails.chassis_number && (!lengthValid || !isAlphanumeric)) {
-      insuredFormDetails.errors.chassis_number = 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+    if (
+      insuredFormDetails.chassis_number &&
+      (!lengthValid || !isAlphanumeric)
+    ) {
+      insuredFormDetails.errors.chassis_number =
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
       event.preventDefault();
       return true;
     } else {

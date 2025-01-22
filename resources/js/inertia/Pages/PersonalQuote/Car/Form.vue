@@ -291,16 +291,25 @@ const chassisNumberValidate = eventType => {
   if (eventType == 'keypress') {
     const event = window.event || event;
     const key = event.key;
-    if (!regex.test(key) && key !== 'Backspace' && key !== 'Delete' && key !== 'ArrowLeft' && key !== 'ArrowRight') {
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
       event.preventDefault();
-    } 
+    }
   }
 
   if (eventType == 'blur') {
-    const lengthValid = quoteForm.chassis_number.length >= 8 && quoteForm.chassis_number.length <= 17;
+    const lengthValid =
+      quoteForm.chassis_number.length >= 8 &&
+      quoteForm.chassis_number.length <= 17;
     const isAlphanumeric = regex.test(quoteForm.chassis_number);
     if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
-      quoteForm.errors.chassis_number = 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+      quoteForm.errors.chassis_number =
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
       event.preventDefault();
       return true;
     } else {
@@ -610,13 +619,13 @@ const gender = computed(() => {
                 and choose 'Cancellation from Inception and Reissuance'
               </template>
             </x-tooltip>
-              <x-input
-                :disabled="chassisNumberDisabled"
-                v-model="quoteForm.chassis_number"
-                class="w-full"
-                type="text"
-                placeholder="Enter Chassis Number"
-              />
+            <x-input
+              :disabled="chassisNumberDisabled"
+              v-model="quoteForm.chassis_number"
+              class="w-full"
+              type="text"
+              placeholder="Enter Chassis Number"
+            />
           </template>
           <template v-else>
             <x-field label="CHASSIS NUMBER">
