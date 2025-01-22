@@ -15,6 +15,8 @@ class SearchService extends BaseService
 {
     use TeamHierarchyTrait;
 
+    public $paymentsDateFilters = ['payment_due_date', 'payment_date'];
+
     public function getSearchLeads($isEndorsementList = false, $isExport = false)
     {
         if (! empty(request()->except('list'))) {
@@ -95,8 +97,7 @@ class SearchService extends BaseService
                     $baseQuery->leftJoin('users', 'personal_quotes.advisor_id', 'users.id');
                 }
 
-                $paymentsDateFilters = ['payment_due_date', 'payment_date'];
-                if (! request()->has('payment_status') && ! (request()->has('date_type') && in_array(request()->date_type, $paymentsDateFilters) && request()->has('date_range'))) {
+                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters)) && ! request()->has('payment_status')) {
                     if ($isEndorsementList) {
                         $baseQuery->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
                     } else {
@@ -327,7 +328,7 @@ class SearchService extends BaseService
 
         if (request()->has('insurer_tax_invoice_number') && ! isset(request()->code)) {
             if (! request()->has('su_code') && ! $isSendUpdateFilter) {
-                if (! (request()->has('date_type') && in_array($request->date_type, ['payment_due_date', 'payment_date'])) && ! request()->has('payment_status')) {
+                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters)) && ! request()->has('payment_status')) {
                     $query->join('payments', 'personal_quotes.code', 'payments.code');
                 }
                 $query->where('payments.insurer_tax_number', request()->insurer_tax_invoice_number);
