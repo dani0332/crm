@@ -91,6 +91,7 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->registration_location = 'Registration Location';
             $firstRow->previous_advisor = 'Previous Advisor Email';
             $firstRow->notes = 'Notes';
+            $firstRow->is_gcc = 'Is GCC';
             $firstRow->errors = 'Errors';
             $exportLeads->push($firstRow);
         }

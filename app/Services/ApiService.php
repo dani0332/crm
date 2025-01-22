@@ -2,11 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\TeamNameEnum;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
@@ -279,53 +277,6 @@ class ApiService
         info("------ Triggered Job for First OCB email when 0 Plans : {$request->quoteUuid} ------");
 
         return apiResponse(null, Response::HTTP_OK, 'Email triggered successfully!');
-    }
-    public function sicReplyToILA($lead)
-    {
-
-        info('sicReplyToILA - Request received');
-
-        $uuid = $lead->uuid;
-        if (empty($lead)) {
-            info('UpdateLeadSource - UUID - '.$uuid.' - not found');
-
-            return false;
-        }
-        if ($this->isLeadAllocationEndpointDisabled()) {
-            Log::info('Lead allocation endpoint disabled');
-
-            return false;
-        }
-        if (empty($lead->advisor_id)) {
-            // advisor not assigned
-            // assign advisor to the lead either Oragnic or Unassisted 2.0 advisor
-            $isPaymentAuthorised = $lead->payment_status_id;
-            if ($isPaymentAuthorised == PaymentStatusEnum::AUTHORISED) {
-                // payment is authorised, so assign Unassisted 2.0 advisor
-                $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-                if ($teamId == 0) {
-                    $teamId = 63; // Unassisted 2.0 team Id on IMCRM on Production
-                }
-                $request = AssignLeadRequest::create('/api/imcrm/assign-quote', 'POST', [
-                    'quoteTypeId' => QuoteTypeId::Car,
-                    'quoteUUID' => $uuid,
-                    'teamId' => $teamId,
-                ]);
-                $this->processAssignLead($request);
-            } else {
-                // payment is not authorised, so assign Organic advisor
-                $teamId = getTeamId(TeamNameEnum::ORGANIC);
-                if ($teamId == 0) {
-                    $teamId = 26; // Organic team Id on IMCRM on Production
-                }
-                $request = AssignLeadRequest::create('/api/imcrm/assign-quote', 'POST', [
-                    'quoteTypeId' => QuoteTypeId::Car,
-                    'quoteUUID' => $uuid,
-                    'teamId' => $teamId,
-                ]);
-                $this->processAssignLead($request);
-            }
-        }
     }
 
     public function sendHealthApplyNowEmail(SendHealthApplyNowEmailRequest $request)

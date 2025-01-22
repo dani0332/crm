@@ -98,7 +98,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         if (! in_array($healthQuote->payment_status_id, $paymentStatusArray) && ! in_array($healthQuote->source, $leadSourceArray) && ! in_array($healthQuote->quote_status_id, $leadStatusArray) && empty($healthQuote->advisor_id)) {
 
             $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
-            $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
+            $response = Ken::renewalRequest('/get-health-quote-plans-order-priority', 'post', [
                 'quoteUID' => $healthQuote->uuid,
                 'isModified' => true,
             ]);
@@ -237,7 +237,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
             $emailData->fromEmail = ApplicationStorage::where('key_name', $key)->value('value');
             $emailData->lob = QuoteTypes::HEALTH->id();
-            $response = Ken::request('/get-health-cheapest-plans', 'post', [
+            $response = Ken::renewalRequest('/get-health-cheapest-plans', 'post', [
                 'quoteUID' => $lead->uuid,
                 'isPlanTypes' => true,
             ]);

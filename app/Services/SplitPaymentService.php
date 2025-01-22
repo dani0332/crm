@@ -654,7 +654,7 @@ class SplitPaymentService
 
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             // Log message for creating Sage receipt
-            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage recipt id: '.$paymentSplit->sage_reciept_id);
+            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage receipt id: '.$paymentSplit->sage_reciept_id);
 
             if (isSageEnabled() && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object

@@ -1298,10 +1298,14 @@ class CarQuoteService extends BaseService
         return $carQuote;
     }
 
-    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false)
+    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        if ($useKen2Endpoint) {
+            $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
+        } else {
+            $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        }
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
@@ -1405,7 +1409,7 @@ class CarQuoteService extends BaseService
     public function renewalCreatePlan($planData)
     {
         $apiCreds = [
-            'apiEndPoint' => config('constants.KEN_API_ENDPOINT').'/save-manual-car-quote-plan',
+            'apiEndPoint' => config('constants.KEN2_API_ENDPOINT').'/save-manual-car-quote-plan',
             'apiToken' => config('constants.KEN_API_TOKEN'),
             'apiTimeout' => config('constants.KEN_API_TIMEOUT'),
             'apiUserName' => config('constants.KEN_API_USER'),
@@ -1551,9 +1555,9 @@ class CarQuoteService extends BaseService
         return CarQuote::where('parent_duplicate_quote_id', $code)->first();
     }
 
-    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false)
+    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
     {
-        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled);
+        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled, $useKen2Endpoint);
 
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
@@ -1869,7 +1873,7 @@ class CarQuoteService extends BaseService
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
 
         //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD];
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
 
         // Get the allocation record for the new advisor
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
