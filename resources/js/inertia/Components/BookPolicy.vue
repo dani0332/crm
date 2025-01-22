@@ -692,7 +692,7 @@ const isAllPaymentAuthorized = () => {
       paidStatusIds.includes(split.payment_status_id),
     );
   }
-  return false;
+  return true;
 };
 </script>
 
