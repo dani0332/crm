@@ -787,6 +787,132 @@
             ],
 
             ['code' => 'spacer', 'title' => ''],
+
+            // For High Value Plans
+            // Content And Personal Belonging
+            ['code' => 'heading', 'title' => 'Content And Personal Belonging'],
+            [
+                'code' => 'claimExcessDeductibles',
+                'title' => 'Claim Excess / Deductibles',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'fursAndSportingEquipmentMarquees',
+                'title' => 'Furs & Sporting equipment, Marquees',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'newAcquisitionsCover',
+                'title' => 'New Acquisitions cover',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'presentsAndGift',
+                'title' => 'Presents & Gift',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'valuablesCoinsStampsMedalsGoldSilverAndPlatedArticles',
+                'title' => 'Valuables - Coins stamps, medals, gold, silver and plated articles',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'TheftForcibleEntryOrExit',
+                'title' => 'Theft (Forcible entry or exit)',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
+                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'spoilageOfFoodInFreezer',
+                'title' => 'Spoilage of food in freezer',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'replacementOfKeysAndLocks',
+                'title' => 'Replacement of keys and locks',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'contentsInTheOpen',
+                'title' => 'Contents in the Open',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+
+            ['code' => 'spacer', 'title' => ''],
+
+            // Fine Art And Collectible
+            ['code' => 'heading', 'title' => 'Fine Art And Collectible'],
+            [
+                'code' => 'claimExcessDeductibles',
+                'title' => 'Claim Excess / Deductibles',
+                'type' => 'fineArtAndCollectible',
+            ],
+            [
+                'code' => 'emergencyEvacuation',
+                'title' => 'Emergency evacuation',
+                'type' => 'fineArtAndCollectible',
+            ],
+            [
+                'code' => 'defectiveTitle',
+                'title' => 'Defective title',
+                'type' => 'fineArtAndCollectible',
+            ],
+            [
+                'code' => 'nonSpecifiedPairsAndSets',
+                'title' => 'Non specified pairs and sets',
+                'type' => 'fineArtAndCollectible',
+            ],
+            [
+                'code' => 'newAcquisitionsCover',
+                'title' => 'New Acquisitions cover',
+                'type' => 'fineArtAndCollectible',
+            ],
+            [
+                'code' => 'singleArticleLimitForUnspecifiedItems',
+                'title' => 'Single article limit for unspecified items',
+                'type' => 'fineArtAndCollectible',
+            ],
+            [
+                'code' => 'sumInsured',
+                'title' => 'Sum Insured',
+                'type' => 'fineArtAndCollectible',
+            ],
+
+            ['code' => 'spacer', 'title' => ''],
+
+            // Jewllery And Valuable
+            ['code' => 'heading', 'title' => 'Jewllery And Valuable'],
+            [
+                'code' => 'claimExcessDeductibles',
+                'title' => 'Claim Excess / Deductibles',
+                'type' => 'jewlleryAndValuable',
+            ],
+            [
+                'code' => 'nonSpecifiedPairsAndSets',
+                'title' => 'Non specified pairs and sets',
+                'type' => 'jewlleryAndValuable',
+            ],
+            [
+                'code' => 'newAcquisitionsCover',
+                'title' => 'New Acquisitions cover',
+                'type' => 'jewlleryAndValuable',
+            ],
+            [
+                'code' => 'singleArticleLimitForUnspecifiedItems',
+                'title' => 'Single article limit for unspecified items',
+                'type' => 'jewlleryAndValuable',
+            ],
+            [
+                'code' => 'sumInsured',
+                'title' => 'Sum Insured',
+                'type' => 'jewlleryAndValuable',
+            ],
+
+            ['code' => 'spacer', 'title' => ''],
         ];
 
     @endphp
