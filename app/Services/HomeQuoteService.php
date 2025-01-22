@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\AMLStatusCode;
 use App\Models\Customer;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
@@ -130,7 +131,16 @@ class HomeQuoteService extends BaseService
             'hqr.policy_booking_date',
             'hqr.insly_migrated',
             'hqr.aml_status',
-            'c.gender'
+            'c.gender',
+            DB::raw('
+                CASE
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE insurer_aml_status
+                END AS insurer_aml_status_display
+            ')
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
@@ -386,6 +396,10 @@ class HomeQuoteService extends BaseService
                     $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
                 }
             }
+        }
+
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('hqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'hqr');

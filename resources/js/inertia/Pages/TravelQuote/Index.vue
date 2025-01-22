@@ -106,6 +106,7 @@ const tableHeader = [
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'AML Status', value: 'aml_status' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display'},
   { text: 'ADVISOR', value: 'advisor_id_text' },
   {
     text: 'ADVISOR REQUESTED',

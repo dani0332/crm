@@ -72,6 +72,7 @@ const tableHeader = [
   { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'LEAD COST', value: 'cost_per_lead' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
   { text: 'ECOMMERCE', value: 'is_ecommerce' },
   { text: 'TIER NAME', value: 'tier_id_text' },

@@ -6,11 +6,13 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\AMLStatusCode;
 use App\Facades\Capi;
 use App\Models\LifeQuote;
 use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class LifeQuoteRepository extends BaseRepository
 {
@@ -87,6 +89,18 @@ class LifeQuoteRepository extends BaseRepository
             })
             ->filter()
             ->withFakeLeadCriteria()
+            ->select([
+                '*',
+                DB::raw('
+                CASE
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE insurer_aml_status
+                END AS insurer_aml_status_display
+            ')
+            ])
             ->orderBy('life_quote_request.created_at', 'desc');
 
         $this->adjustQueryByInsurerInvoiceFilters($query);

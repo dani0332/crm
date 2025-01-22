@@ -32,6 +32,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -66,6 +67,7 @@ class LifeQuoteController extends Controller
             'advisors' => $advisors,
             'renewalBatches' => $renewalBatches,
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 

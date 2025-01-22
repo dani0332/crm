@@ -268,6 +268,7 @@ class CRUDController extends Controller
         // $count = $gridData->count();
         $count = 0;
         $hasOtherFilters = count(array_diff_key($request->all(), ['page' => ''])) > 0;
+        $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
@@ -300,6 +301,7 @@ class CRUDController extends Controller
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
+                'insurerAMLStatus' => $insurerAMLStatus,
             ]);
         }
 
@@ -320,6 +322,7 @@ class CRUDController extends Controller
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HomeQuoteRepository::getData(true, true),
                 'authorizedDays' => intval($authorizedDays->value),
+                'insurerAMLStatus' => $insurerAMLStatus,
             ]);
         }
 
@@ -347,7 +350,6 @@ class CRUDController extends Controller
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
             $productTeam = $this->getProductByName(quoteTypeCode::Car);
             $teams = $this->getTeamsByProductId($productTeam->id);
-            $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,

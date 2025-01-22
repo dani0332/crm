@@ -7,6 +7,7 @@ defineProps({
   quotes: Object,
   isManualAllocationAllowed: Boolean,
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 
 const canExport = ref(false);
@@ -50,6 +51,7 @@ const filters = reactive({
   created_at_start: new Date().toISOString() || '',
   created_at_end: new Date().toISOString() || '',
   leadStatus: [],
+  insurer_aml_status: [],
   advisor_id: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -83,6 +85,7 @@ const tableHeader = [
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'leadStatus' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display'},
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
@@ -404,6 +407,14 @@ watch(
   },
   { deep: true },
 );
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
+
 </script>
 
 <template>
@@ -541,6 +552,12 @@ watch(
             :options="leadStatusOptions"
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"

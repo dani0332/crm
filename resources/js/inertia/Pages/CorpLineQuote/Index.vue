@@ -10,6 +10,7 @@ defineProps({
     default: 0,
   },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -60,6 +61,7 @@ const filters = reactive({
   created_at_start: new Date().toISOString() || '',
   created_at_end: new Date().toISOString() || '',
   quote_status_id: [],
+  insurer_aml_status: [],
   advisor_id: [],
   business_type_of_insurance_id: [],
   company_name: '',
@@ -139,6 +141,7 @@ const tableHeader = ref([
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display', is_active: true },
   {
     text: 'CREATED DATE',
     value: 'created_at',
@@ -505,6 +508,14 @@ watch(() => {
     filters.created_at_end = '';
   }
 });
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
+
 </script>
 
 <template>
@@ -689,6 +700,12 @@ watch(() => {
             :options="leadStatusOptions"
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"

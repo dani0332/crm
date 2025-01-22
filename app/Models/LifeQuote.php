@@ -30,6 +30,7 @@ class LifeQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
         'renewal_batch' => FilterTypes::EXACT,
         'quote_status_id' => FilterTypes::IN,
+        'insurer_aml_status' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
         'renewal_batch_id' => FilterTypes::IN,
         'source' => FilterTypes::EXACT,
