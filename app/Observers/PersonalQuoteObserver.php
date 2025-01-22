@@ -83,7 +83,7 @@ class PersonalQuoteObserver
         if (
             isset($dirty['quote_status_id']) &&
             in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]) &&
-            in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Jetski])
+            in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Home])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => $personalQuote->quote_type_id, 'quoteUID' => $personalQuote->uuid]);
             MAWelcomeJob::dispatch(
@@ -121,7 +121,7 @@ class PersonalQuoteObserver
 
         if (
             isset($dirty['quote_status_id']) && $this->removeStaleFromLead($personalQuote->quote_status_id)
-            && in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht])
+            && in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home])
         ) {
             PersonalQuote::withoutEvents(function () use ($personalQuote) {
                 $personalQuote->update(['stale_at' => null]);
