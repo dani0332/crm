@@ -577,17 +577,6 @@ class TravelQuoteService extends BaseService
         }
     }
 
-    public function updateChildRecord($id)
-    {
-        TravelQuoteRequestDetail::updateOrCreate(
-            ['travel_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
-    }
-
     private function getQuerySuffix($item)
     {
         switch ($item) {
@@ -939,10 +928,8 @@ class TravelQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::TRAVEL, TravelQuoteRequestDetail::class, 'travel_quote_request_id');
         }
 
         return $result;
