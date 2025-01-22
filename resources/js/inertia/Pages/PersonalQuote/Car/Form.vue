@@ -308,7 +308,8 @@ const chassisNumberValidate = eventType => {
       quoteForm.chassis_number.length <= 17;
     const isAlphanumeric = regex.test(quoteForm.chassis_number);
     if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
-      quoteForm.errors.chassis_number = 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+      quoteForm.errors.chassis_number =
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
       return true;
     } else {
       quoteForm.clearErrors('chassis_number');
