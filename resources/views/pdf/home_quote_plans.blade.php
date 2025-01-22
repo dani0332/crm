@@ -619,7 +619,13 @@
             ARRAY_FILTER_USE_KEY,
         );
 
-        $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
+        $planIds = collect($plans)
+            ->filter(function ($plan) {
+                return !$plan->isDisabled;
+            })
+            ->sortByDesc('isRenewal')
+            ->pluck('id')
+            ->toArray();
 
         $features = [
             // Content
