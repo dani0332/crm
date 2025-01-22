@@ -89,7 +89,7 @@ trait PersonalQuoteObservable
             'lead-status-update-myalfred-we'
         );
 
-        if ($personalQuote->quote_type_id === QuoteTypeId::Bike) {
+        if ($personalQuote->isBike()) {
             try {
                 EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             } catch (Exception $e) {
