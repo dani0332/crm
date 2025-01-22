@@ -173,6 +173,12 @@ class LeadDistributionReportService extends BaseService
                     $sq->orWhereNull('teams.parent_team_id');
                 });
             })
+            ->when($lob === quoteTypeCode::GroupMedical, function ($q) {
+                $q->where('business_type_of_insurance_id', 5); // 5 is the id for group medical
+            })
+            ->when($lob === quoteTypeCode::CORPLINE, function ($q) {
+                $q->where('business_type_of_insurance_id', '!=', 5); // other than 5 is the id for corpline
+            })
             ->groupBy('teams.name')
             ->orderBy('teams.name');
 
