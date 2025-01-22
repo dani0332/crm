@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Traits\QuoteTraits\PersonalQuotable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PersonalQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, PersonalQuotable, QuoteModelTrait;
 
     protected $guarded = [];
     public $allowedColumns = [
