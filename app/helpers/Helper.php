@@ -1558,20 +1558,6 @@ if (! function_exists('getInsuranceProvider')) {
 
         return $insuranceProvider;
     }
-
-    if (! function_exists('isSageEnabled')) {
-        function isSageEnabled()
-        {
-            return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-        }
-    }
-
-    if (! function_exists('isSageRetryTimeoutEnabled')) {
-        function isSageRetryTimeoutEnabled()
-        {
-            return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
-        }
-    }
 }
 
 if (! function_exists('isCHSAdvisor')) {

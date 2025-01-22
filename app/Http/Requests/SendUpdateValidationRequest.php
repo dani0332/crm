@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -170,7 +171,7 @@ class SendUpdateValidationRequest extends FormRequest
                 }
             }
 
-            if (! isSageEnabled()) {
+            if (! (new SageApiService)->isSageEnabled()) {
                 return ['status' => false, 'message' => 'Sage300 is not enabled'];
             }
 

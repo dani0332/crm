@@ -33,7 +33,7 @@ class SageProcessesCommand extends Command
     {
         info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Started');
 
-        if (isSageEnabled()) {
+        if ((new SageApiService)->isSageEnabled()) {
             (new SageApiService)->scheduleSageProcesses();
         } else {
             info('cmd:SageProcessesCommand - Sage is not enabled');

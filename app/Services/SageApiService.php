@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -525,7 +526,7 @@ class SageApiService
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
         // check sage is enabled or not
-        if (! isSageEnabled()) {
+        if (! $this->isSageEnabled()) {
             info('Policy Book : postBookPolicyToSage : Sage is not enabled');
             $returnMessage['message'] = 'Sage is not enabled';
 
@@ -2032,7 +2033,7 @@ class SageApiService
     {
         $processLockKey = SageEnum::SAGE_PROCESS_LOCK_KEY;
         $status[] = SageEnum::SAGE_PROCESS_PENDING_STATUS;
-        if (isSageRetryTimeoutEnabled()) {
+        if ((new SageApiService)->isSageRetryTimeoutEnabled()) {
             $status[] = SageEnum::SAGE_PROCESS_TIMEOUT_STATUS;
         }
         $sageProcessCommandLock = Cache::lock($processLockKey, 20);
@@ -2097,6 +2098,15 @@ class SageApiService
         }
 
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - end');
+    }
+
+    public function isSageEnabled()
+    {
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
+    }
+    public function isSageRetryTimeoutEnabled()
+    {
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
     }
 
 }

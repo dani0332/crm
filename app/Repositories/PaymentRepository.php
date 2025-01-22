@@ -21,6 +21,7 @@ use App\Models\QuoteDocument;
 use App\Models\User;
 use App\Services\CentralService;
 use App\Services\PaymentLinkService;
+use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -541,7 +542,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
 
                 //create sage receipt
-                if (isSageEnabled()) {
+                if ((new SageApiService)->isSageEnabled()) {
                     $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
                     if ($sageResponse['status'] == 'success') {
                         $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
