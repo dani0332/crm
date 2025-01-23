@@ -92,7 +92,7 @@ class QuoteDocumentService extends BaseService
     {
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
-        //load quote document with provided detail
+        // load quote document with provided detail
         $quote->load(['documents' => function ($q) use ($data) {
             $q->where([
                 'doc_name' => $data['doc_name'],
@@ -100,10 +100,10 @@ class QuoteDocumentService extends BaseService
             ]);
         }]);
 
-        //check for document and delete if found
+        // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
-            //Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
+            // Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
 
             return response()->json(['message' => 'document deleted successfully']);
         }
@@ -208,7 +208,7 @@ class QuoteDocumentService extends BaseService
                     $quoteDocument->id, $data['quote_uuid'], $documentType->id
                 )->afterCommit();
             } else {
-                info('Watermkark job not dispatched - Ref: '.$quote->code);
+                info('Watermark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;

@@ -76,19 +76,19 @@ class CarAllocationService extends AllocationService
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has exempted source {$lead->source}, skipping assignment");
-        } elseif ($lead->isRenewalTierEmailSent()) {
-            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has renewal tier email sent, skipping assignment");
-        } elseif ($lead->isRenewalUpload()) {
-            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is Renwal Upload, skipping assignment");
         } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment");
             $continueAssignment = true;
-        } elseif ($lead->isSICFlowDisabled()) {
-            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow disabled, continuing assignment");
+        } elseif ($lead->isRenewalTierEmailSent()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has renewal tier email sent, skipping assignment");
+        } elseif ($lead->isSICFlowDisabled() && ! $lead->isRenewalUpload()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow disabled and not Renewal Upload, skipping assignment");
             $continueAssignment = true;
         } elseif ($lead->isRevivalRepliedOrPaid()) {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is a Revival lead, continuing assignment");
             $continueAssignment = true;
+        } elseif ($lead->isRenewalUpload()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is Renewal Upload, skipping assignment");
         } else {
             info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} does not meet any criteria, skipping assignment");
         }
@@ -684,7 +684,7 @@ class CarAllocationService extends AllocationService
             $assignmentType = AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD;
         }
 
-        //Store the previous Assignment Type
+        // Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
 
         // Store the previous advisor ID.

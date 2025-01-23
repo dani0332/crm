@@ -45,7 +45,7 @@ class CarQuoteFactory extends Factory
             'policy_expiry_date' => $this->faker->dateTime('now'),
             'tier_id' => $this->faker->randomElement(($tierIds)),
             'quote_batch_id' => $this->faker->randomElement(($quoteBatchIds)),
-            //'advisor_id' => $this->faker->randomElement($users),
+            // 'advisor_id' => $this->faker->randomElement($users),
         ];
     }
 }
