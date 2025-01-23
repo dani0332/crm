@@ -244,8 +244,11 @@ class ReportsController extends Controller
         } else {
             // Managers can see only advisors assigned to them
             $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
-            $advisorIdsByTeam = UserManager::where('manager_id', auth()->user()->id)
-                ->whereIn('user_id', $teamUsers)->pluck('user_id')->toArray();
+            $advisorIdsByTeamQuery = UserManager::whereIn('user_id', $teamUsers);
+            if(!auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])) {
+                $advisorIdsByTeamQuery->where('manager_id', auth()->user()->id);
+            }
+            $advisorIdsByTeam = $advisorIdsByTeamQuery->pluck('user_id')->toArray();
         }
 
         return User::whereIn('id', $advisorIdsByTeam)

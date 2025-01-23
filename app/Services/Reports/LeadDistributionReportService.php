@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
@@ -47,7 +48,11 @@ class LeadDistributionReportService extends BaseService
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $query->where('car_quote_request.advisor_id', auth()->user()->id);
         } else {
-            if (! auth()->user()->hasRole(RolesEnum::LeadPool) && ! auth()->user()->hasRole(RolesEnum::MotorHead)) {
+            if (
+                ! auth()->user()->hasRole(RolesEnum::LeadPool) 
+                && ! auth()->user()->hasRole(RolesEnum::MotorHead) 
+                && ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])
+            ) {
                 $userIds = $this->walkTree(auth()->user()->id);
                 $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
             }

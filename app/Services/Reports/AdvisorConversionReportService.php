@@ -117,6 +117,8 @@ class AdvisorConversionReportService extends BaseService
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ])
+            &&
+            ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
@@ -246,6 +248,8 @@ class AdvisorConversionReportService extends BaseService
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ])
+            &&
+            ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {

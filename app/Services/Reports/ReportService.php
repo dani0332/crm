@@ -7,6 +7,7 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -253,9 +254,12 @@ class ReportService extends BaseService
 
         $allowedLOBs = [];
         foreach ($quoteTypes as $quoteType) {
-            if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
-                $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
-            } elseif (in_array(RolesEnum::Admin, $userRoles)) {
+            if (
+                in_array($quoteType->name.'_ADVISOR', $userRoles) 
+                || in_array($quoteType->name.'_MANAGER', $userRoles) 
+                || in_array(RolesEnum::Admin, $userRoles)
+                || (auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS]) && userHasProduct($quoteType))
+            ) {
                 $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
             } else {
                 continue;

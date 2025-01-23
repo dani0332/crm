@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
@@ -52,7 +53,7 @@ class AdvisorPerformanceReportService extends BaseService
             ->groupBy('car_quote_request.advisor_id')
             ->orderBy('users.email');
 
-        if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
+        if (! auth()->user()->hasRole(RolesEnum::LeadPool) && ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])) {
             $userIds = $this->walkTree(auth()->user()->id);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
