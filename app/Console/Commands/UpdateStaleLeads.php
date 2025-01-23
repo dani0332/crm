@@ -85,7 +85,7 @@ class UpdateStaleLeads extends Command
 
         info('------------------- Update Stale Leads Command Started At: '.now().' -------------------');
 
-        $lostReasonId = QuoteStatusEnum::LOSTREASONID; //Stale for more than 90 days
+        $lostReasonId = QuoteStatusEnum::LOSTREASONID; // Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
             info('------------------- Update Stale Leads Command - Updating - '.now().' : '.$eligibleQuoteType.' -------------------');

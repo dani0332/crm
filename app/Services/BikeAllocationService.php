@@ -443,7 +443,7 @@ class BikeAllocationService extends AllocationService
     {
         info('About to assign bike lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
 
-        //Store the previous Assignment Type
+        // Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
 
         // Store the previous advisor ID.

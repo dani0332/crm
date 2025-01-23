@@ -27,7 +27,7 @@ class EntityRepository extends BaseRepository
             'country_of_corporation',
             'website',
             'id_expiry_date',
-            //'id_issuance_place',//todo: column not available in db
+            // 'id_issuance_place',//todo: column not available in db
             'id_issuance_authority',
         ]);
 
