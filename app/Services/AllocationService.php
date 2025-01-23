@@ -116,7 +116,7 @@ class AllocationService extends BaseService
             BuyLeadRequestLog::reAssign($quoteTypeId, $lead, $newAdvisorId, $previousAdvisorId);
         }
 
-        //Constants for system assigned types
+        // Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
 
         // Get the allocation record for the new advisor

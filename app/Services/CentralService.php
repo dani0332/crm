@@ -329,7 +329,7 @@ class CentralService extends BaseService
         $response = [];
         $requestData = $data;
 
-        //switch for quote type
+        // switch for quote type
         switch (ucfirst($quoteType)) {
             case QuoteTypes::CAR->value:
                 $endpoint = '/process-car-quote-plan';
