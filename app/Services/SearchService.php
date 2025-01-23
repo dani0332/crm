@@ -326,29 +326,28 @@ class SearchService extends BaseService
             $query->whereIn('personal_quotes.advisor_id', request()->advisors);
         }
 
-        if (request()->has('insurer_tax_invoice_number') && ! isset(request()->code)) {
-            if (! request()->has('su_code') && ! $isSendUpdateFilter) {
-                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))
-                    && ! request()->has('payment_status') && ! request()->has('insurer_commission_tax_invoice_number')) {
+        if ((request()->has('insurer_tax_invoice_number') || request()->has('insurer_commission_tax_invoice_number'))
+            && ! isset(request()->code) && ! request()->has('payment_status')
+            && ! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))) {
 
-                    $query->join('payments', 'personal_quotes.code', 'payments.code');
+            if (! request()->has('su_code') && ! $isSendUpdateFilter) {
+                $query->join('payments', 'personal_quotes.code', 'payments.code');
+
+                if (request()->has('insurer_tax_invoice_number')) {
                     $query->where('payments.insurer_tax_number', request()->insurer_tax_invoice_number);
                 }
-            } else {
-                $query->where('send_update_logs.insurer_tax_invoice_number', request()->insurer_tax_invoice_number);
-            }
-        }
 
-        if (request()->has('insurer_commission_tax_invoice_number') && ! isset(request()->code)) {
-            if (! request()->has('su_code') && ! $isSendUpdateFilter) {
-                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))
-                    && ! request()->has('payment_status') && ! request()->has('insurer_tax_invoice_number')) {
-
-                    $query->join('payments', 'personal_quotes.code', 'payments.code');
+                if (request()->has('insurer_commission_tax_invoice_number')) {
                     $query->where('payments.insurer_commmission_invoice_number', request()->insurer_commission_tax_invoice_number);
                 }
             } else {
-                $query->where('send_update_logs.insurer_commission_invoice_number', request()->insurer_commission_tax_invoice_number);
+                if (request()->has('insurer_tax_invoice_number')) {
+                    $query->where('send_update_logs.insurer_tax_invoice_number', request()->insurer_tax_invoice_number);
+                }
+
+                if (request()->has('insurer_commission_tax_invoice_number')) {
+                    $query->where('send_update_logs.insurer_commission_invoice_number', request()->insurer_commission_tax_invoice_number);
+                }
             }
         }
 
