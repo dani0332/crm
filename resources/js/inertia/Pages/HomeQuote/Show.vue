@@ -637,41 +637,98 @@ const onTogglePlans = toggle => {
 
 const planDetails = ref(null);
 
-const getPlanDetails = async item => {
-  console.log('getPlanDetails', item);
-
-  // Set loading state for the specific plan
-  viewPlanDetailsLoader.value[item.id] = true;
-  console.log(
-    'Loading state set for plan:',
-    item.id,
-    viewPlanDetailsLoader.value,
-  );
-
-  try {
-    const response = await axios.get(
-      `/home/${page.props.quote.uuid}/plan_details/${item.id}`,
-    );
-    console.log('Plan Details:', response.data);
-
-    // Update plan details and open modal
-    planDetails.value = response.data;
-    modals.planDetails = true;
-  } catch (err) {
-    console.error(err);
+const getPlanDetails = async (item) => {
+  if (!item?.id) {
+    console.error('Invalid item provided: Missing ID');
     notification.error({
       title: 'Error',
-      message: 'Plan Details Not Found',
+      message: 'Invalid plan selected',
+      position: 'top',
+    });
+    return;
+  }
+
+  viewPlanDetailsLoader.value[item.id] = true;
+  console.log(`Loading state set for plan: ${item.id}`, viewPlanDetailsLoader.value);
+
+  try {
+    if (!availableAllPlans.value || !Array.isArray(availableAllPlans.value)) {
+      throw new Error('Plans data is not available or invalid');
+    }
+
+    const selectedPlan = availableAllPlans.value.find((plan) => plan.id === item.id);
+    if (!selectedPlan) {
+      throw new Error(`Plan with ID ${item.id} not found`);
+    }
+
+    const {
+      name = '',
+      providerCode = '',
+      providerName = '',
+      actualPremium = '',
+      discountPremium = '',
+      benefits = {},
+      isDisabled = false,
+      isManualPlan = false,
+      vat = '',
+      insurerQuoteNo = '',
+      isRatingAvailable = false,
+      excess = '',
+      policyWordings = [],
+    } = selectedPlan;
+
+    const {
+      building = '',
+      content = '',
+      personalBelonging = '',
+      contentAndPersonalBelonging = '',
+      fineArtAndCollectible = '',
+      jewlleryAndValuable = '',
+      exclusion = [],
+      additionalCover = [],
+    } = benefits;
+
+    const planDetailsData = {
+      listQuotePlanName: name,
+      providerCode,
+      providerName,
+      actualPremium,
+      discountPremium,
+      listQuotePlanBenefitsInclusions: {
+        buildings: building,
+        contents: content,
+        personalBelongings: personalBelonging,
+        contentAndPersonalBelonging,
+        fineArtAndCollectible,
+        jewlleryAndValuable,
+      },
+      listQuotePlanBenefitsExclusions: exclusion,
+      listQuotePlanBenefitsAditionalCovers: additionalCover,
+      is_disabled: isDisabled,
+      is_manual_update: isManualPlan,
+      vat,
+      insurer_quote_no: insurerQuoteNo,
+      isRatingAvailable,
+      excess,
+      id: item.id,
+      listQuotePlanBenefitsPolicyDetails: policyWordings,
+      listQuotePlanBenefitsPolicyDetailLink: policyWordings[0]?.link || '',
+      permissionsEnum: permissionEnum,
+    };
+
+    planDetails.value = planDetailsData;
+    modals.planDetails = true;
+
+  } catch (error) {
+    console.error('Failed to fetch plan details:', error);
+    notification.error({
+      title: 'Error',
+      message: error.message || 'Failed to fetch plan details',
       position: 'top',
     });
   } finally {
-    // Reset loading state for the specific plan
     viewPlanDetailsLoader.value[item.id] = false;
-    console.log(
-      'Loading state reset for plan:',
-      item.id,
-      viewPlanDetailsLoader.value,
-    );
+    console.log(`Loading state reset for plan: ${item.id}`, viewPlanDetailsLoader.value);
   }
 };
 
