@@ -130,7 +130,7 @@ class CarQuoteRepository extends BaseRepository
         app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $data['quote_uuid'], $quoteStatus, [], $data['notes']);
         $quote = $this->where('uuid', $data['quote_uuid'])->first();
 
-        //set followup id coming from kyo
+        // set followup id coming from kyo
         $quote->carQuoteRequestDetail->updateOrCreate(
             ['car_quote_request_id' => $quote->id],
             ['followup_id' => $data['followup_id']]
