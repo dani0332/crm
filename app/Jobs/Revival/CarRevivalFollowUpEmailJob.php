@@ -68,8 +68,8 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $created_at = $this->dttRevival->created_at;
         $lead = CarQuote::where('uuid', $this->dttRevival->uuid)->first();
 
-        //Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
-        //or if the source is Revival Paid or if the lead is assigned to an advisor
+        // Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
+        // or if the source is Revival Paid or if the lead is assigned to an advisor
         if ($lead && ! empty($created_at) && ! in_array($lead->quote_status_id, $leadStatusArray) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
             $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
             $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();

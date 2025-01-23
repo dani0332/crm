@@ -36,7 +36,7 @@ class HealthQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
-            //PD Revert
+            // PD Revert
             // return $query->count();
             return 0;
         }

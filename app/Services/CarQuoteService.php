@@ -130,8 +130,8 @@ class CarQuoteService extends BaseService
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
-                //'ppip.text AS prefill_plan_provider_id_text',
-                //'prefill_plan.text AS prefill_plan_id_text',
+                // 'ppip.text AS prefill_plan_provider_id_text',
+                // 'prefill_plan.text AS prefill_plan_id_text',
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
                 'cqr.year_of_manufacture AS year_of_manufacture_text',
@@ -203,9 +203,9 @@ class CarQuoteService extends BaseService
                 'ent.company_address',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
-                //'cqr.prefill_plan_id',
-                //'cqr.prefill_plan_selected_at',
-                //'cqr.plan_selected_at'
+                // 'cqr.prefill_plan_id',
+                // 'cqr.prefill_plan_selected_at',
+                // 'cqr.plan_selected_at'
                 'cqr.enquiry_count',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'cqr.policy_booking_date',
@@ -242,8 +242,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
-            //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
-            //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
+            // ->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
+            // ->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
@@ -1827,18 +1827,18 @@ class CarQuoteService extends BaseService
         $carLostChangeStatus = true;
         $allowQuoteLogAction = true;
 
-        //mo can only change status when status is car sold / uncontactable, based on condition below
+        // mo can only change status when status is car sold / uncontactable, based on condition below
         if (! isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
             $carLostChangeStatus = false;
             $allowQuoteLogAction = false;
         }
 
         if (isCarLostStatus($lead->quote_status_id)) {
-            //when status is car sold / uncontactable, default lead status change is blocked, will allow agains validations below
+            // when status is car sold / uncontactable, default lead status change is blocked, will allow agains validations below
             $carLostChangeStatus = false;
             $allowQuoteLogAction = false;
 
-            //validations for Car Advisor / Deputy Manager Role
+            // validations for Car Advisor / Deputy Manager Role
             if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
                 $allowQuoteLogAction = false;
 
@@ -1848,7 +1848,7 @@ class CarQuoteService extends BaseService
                 }
             }
 
-            //validations for MO role
+            // validations for MO role
             if (auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                 $carLostChangeStatus = false;
                 if (isCarLostStatus($lead->quote_status_id) && $paymentEntityModel?->carLostQuoteLog?->status == GenericRequestEnum::PENDING) {
@@ -1872,7 +1872,7 @@ class CarQuoteService extends BaseService
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
 
-        //Constants for system assigned types
+        // Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
 
         // Get the allocation record for the new advisor

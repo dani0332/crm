@@ -495,7 +495,7 @@ class ReportService extends BaseService
                 ->orderBy('total_leads', 'desc');
         }
 
-        //FILTERS
+        // FILTERS
         if (isset($request->teams)) {
             $teamIds = $request->teams;
             $query->whereIn('users.id', function ($subQuery) use ($teamIds) {
