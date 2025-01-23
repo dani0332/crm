@@ -185,10 +185,10 @@ class ReportsController extends Controller
     {
         $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob);
         if (! auth()->user()->hasAnyRole([
-                RolesEnum::SeniorManagement,
-                RolesEnum::Admin,
-                RolesEnum::Engineering,
-            ])
+            RolesEnum::SeniorManagement,
+            RolesEnum::Admin,
+            RolesEnum::Engineering,
+        ])
             &&
             ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])
         ) {
@@ -248,7 +248,7 @@ class ReportsController extends Controller
             // Managers can see only advisors assigned to them
             $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
             $advisorIdsByTeamQuery = UserManager::whereIn('user_id', $teamUsers);
-            if(!auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])) {
+            if (! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])) {
                 $advisorIdsByTeamQuery->where('manager_id', auth()->user()->id);
             }
             $advisorIdsByTeam = $advisorIdsByTeamQuery->pluck('user_id')->toArray();

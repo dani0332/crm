@@ -50,7 +50,7 @@ class RetentionReportService extends BaseService
     public function getReportData($request, $isExport = false)
     {
         // If the model object is not found or the user is not an advisor or manager and no permission, return an empty array
-        if ($this->getQuoteType($request) == null || (! $this->isAdvisorManager() && !auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS]))) {
+        if ($this->getQuoteType($request) == null || (! $this->isAdvisorManager() && ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS]))) {
             return [[], []];
         }
 

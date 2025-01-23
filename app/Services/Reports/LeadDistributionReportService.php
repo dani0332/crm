@@ -49,8 +49,8 @@ class LeadDistributionReportService extends BaseService
             $query->where('car_quote_request.advisor_id', auth()->user()->id);
         } else {
             if (
-                ! auth()->user()->hasRole(RolesEnum::LeadPool) 
-                && ! auth()->user()->hasRole(RolesEnum::MotorHead) 
+                ! auth()->user()->hasRole(RolesEnum::LeadPool)
+                && ! auth()->user()->hasRole(RolesEnum::MotorHead)
                 && ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])
             ) {
                 $userIds = $this->walkTree(auth()->user()->id);

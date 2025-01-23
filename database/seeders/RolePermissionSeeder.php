@@ -23,7 +23,7 @@ class RolePermissionSeeder extends Seeder
             'updated_at' => now(),
         ]);
         try {
-            //permission for upload Health Rates and Coverages
+            // permission for upload Health Rates and Coverages
             // $uploadHealthRatesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_RATES)->first();
             // if (! $uploadHealthRatesPermission) {
             //     Permission::create([

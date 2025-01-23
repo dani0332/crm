@@ -255,8 +255,8 @@ class ReportService extends BaseService
         $allowedLOBs = [];
         foreach ($quoteTypes as $quoteType) {
             if (
-                in_array($quoteType->name.'_ADVISOR', $userRoles) 
-                || in_array($quoteType->name.'_MANAGER', $userRoles) 
+                in_array($quoteType->name.'_ADVISOR', $userRoles)
+                || in_array($quoteType->name.'_MANAGER', $userRoles)
                 || in_array(RolesEnum::Admin, $userRoles)
                 || (auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS]) && userHasProduct($quoteType))
             ) {
