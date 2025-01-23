@@ -70,12 +70,14 @@ class HomeEmailService extends BaseService
                 $homeQuote->save();
                 $lead->quote_status_id = QuoteStatusEnum::Quoted;
                 $lead->save();
-                info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote Ref-ID: {$homeQuote->id} | Time: ".now());
+                info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote Ref-ID: {$homeQuote->uuid} | Time: ".now());
                 info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: ".now());
-                if (! empty($response->headers['Run-Id'])) {
+                if ($response && $response->status_code === 200) {
                     $this->createQuoteFlowDetails($lead, $response);
-                    // info("sendHomeOCBIntroEmail - Run-ID: " . json_encode($response->headers['Run-Id']) . " for HomeQuote Ref-ID: {$homeQuote->id} | Time: " . now());
-                    info("sendHomeOCBIntroEmail - Run Id case executed for HomeQuote Ref-ID: {$homeQuote->id} | Time: ".now());
+                    info("sendHomeOCBIntroEmail - Quote flow details created for HomeQuote Ref-ID: {$homeQuote->uuid} | Time: ".now());
+                }
+                else {
+                    info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} having response status code: {$response?->status_code}");
                 }
             }
 
