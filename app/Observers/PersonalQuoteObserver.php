@@ -3,16 +3,18 @@
 namespace App\Observers;
 
 use App\Models\PersonalQuote;
+use App\Observers\Traits\Observable;
 use App\Observers\Traits\PersonalQuoteObservable;
 use App\Traits\GenericQueriesAllLobs;
 
 class PersonalQuoteObserver
 {
-    use GenericQueriesAllLobs, PersonalQuoteObservable;
+    use GenericQueriesAllLobs, Observable, PersonalQuoteObservable;
 
     public function updating(PersonalQuote $quote): void
     {
-        info("PersonalQuoteObserver - Updating - Ref ID: {$quote->uuid} | Time: ".now());
+        info("PersonalQuoteObserver - Updating - Ref ID: {$quote->uuid}");
+
         if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
             $quote->quote_status_date = now();
         }
@@ -25,7 +27,7 @@ class PersonalQuoteObserver
      */
     public function updated(PersonalQuote $personalQuote): void
     {
-        info("PersonalQuoteObserver - Updated - Ref ID: {$personalQuote->uuid} | Time: ".now());
+        $this->printChangeLog($personalQuote);
 
         if ($personalQuote->isDirty('quote_status_id')) {
             $this->handleQuoteStatusChange($personalQuote);
