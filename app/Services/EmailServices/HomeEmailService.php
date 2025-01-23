@@ -75,8 +75,7 @@ class HomeEmailService extends BaseService
                 if ($response && $response->status_code === 200) {
                     $this->createQuoteFlowDetails($lead, $response);
                     info("sendHomeOCBIntroEmail - Quote flow details created for HomeQuote Ref-ID: {$homeQuote->uuid} | Time: ".now());
-                }
-                else {
+                } else {
                     info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} having response status code: {$response?->status_code}");
                 }
             }
