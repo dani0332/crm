@@ -141,7 +141,11 @@ const tableHeader = ref([
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
-  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   {
     text: 'CREATED DATE',
     value: 'created_at',
@@ -515,7 +519,6 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
-
 </script>
 
 <template>

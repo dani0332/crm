@@ -176,7 +176,7 @@ const tableHeader = [
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'quote_status' },
-  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display'},
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'CREATED DATE', value: 'created_at' },
@@ -303,7 +303,6 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
-
 </script>
 
 <template>

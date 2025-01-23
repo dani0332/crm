@@ -94,7 +94,11 @@ const tableHeader = ref([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
-  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
     text: 'CREATED DATE',
@@ -398,7 +402,6 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
-
 </script>
 
 <template>

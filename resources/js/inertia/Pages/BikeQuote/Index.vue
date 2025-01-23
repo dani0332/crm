@@ -157,7 +157,7 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DOB', value: 'dob' },
   { text: 'LEAD STATUS', value: 'quote_status' },
-  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display'},
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
@@ -340,7 +340,6 @@ const insurerAMLStatusOption = computed(() => {
     label: value,
   }));
 });
-
 </script>
 
 <template>
