@@ -566,6 +566,8 @@ const selectedPlanIds = computed(() => {
     : [];
 });
 
+const availableAllPlans = ref([]);
+
 const onLoadAvailablePlansData = async () => {
   const url = `/quotes/home/available-plans/${page.props.quote.uuid}`;
   const data = {
@@ -583,6 +585,7 @@ const onLoadAvailablePlansData = async () => {
 
       // If you need to update the table and store the ids
       availablePlansTable.data = homePlans.quotes.plans;
+      availableAllPlans.value = homePlans.quotes.plans;
       homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
       console.log('homePlansIds :', homePlansIds);
     } else {
@@ -634,15 +637,21 @@ const onTogglePlans = toggle => {
 
 const planDetails = ref(null);
 
-const getPlanDetails = async (item) => {
+const getPlanDetails = async item => {
   console.log('getPlanDetails', item);
 
   // Set loading state for the specific plan
   viewPlanDetailsLoader.value[item.id] = true;
-  console.log('Loading state set for plan:', item.id, viewPlanDetailsLoader.value);
+  console.log(
+    'Loading state set for plan:',
+    item.id,
+    viewPlanDetailsLoader.value,
+  );
 
   try {
-    const response = await axios.get(`/home/${page.props.quote.uuid}/plan_details/${item.id}`);
+    const response = await axios.get(
+      `/home/${page.props.quote.uuid}/plan_details/${item.id}`,
+    );
     console.log('Plan Details:', response.data);
 
     // Update plan details and open modal
@@ -658,10 +667,13 @@ const getPlanDetails = async (item) => {
   } finally {
     // Reset loading state for the specific plan
     viewPlanDetailsLoader.value[item.id] = false;
-    console.log('Loading state reset for plan:', item.id, viewPlanDetailsLoader.value);
+    console.log(
+      'Loading state reset for plan:',
+      item.id,
+      viewPlanDetailsLoader.value,
+    );
   }
 };
-
 
 const { copy, copied } = useClipboard();
 const onCopyText = text => {
@@ -736,7 +748,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest' ,'quote'],
+    only: ['payments', 'quoteRequest', 'quote'],
   });
   onLoadAvailablePlansData();
 };
@@ -1269,7 +1281,9 @@ const viewPlanDetailsLoader = ref({});
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CLAIM HISTORY</dt>
-                <dd>{{ quote?.home_quote?.has_claimed_losses ? 'Yes' : 'No' }}</dd>
+                <dd>
+                  {{ quote?.home_quote?.has_claimed_losses ? 'Yes' : 'No' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
