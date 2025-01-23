@@ -13,7 +13,7 @@ class AddSageFlagApplicationStorage extends Seeder
      */
     public function run(): void
     {
-        //SAGE_ENABLED FOR PAYMENTS
+        // SAGE_ENABLED FOR PAYMENTS
         $sageFlag = ApplicationStorage::where('key_name', 'SAGE_ENABLED')->get();
         if (count($sageFlag) == 0) {
             DB::table('application_storage')->insert([[

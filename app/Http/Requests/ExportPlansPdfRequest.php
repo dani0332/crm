@@ -39,7 +39,7 @@ class ExportPlansPdfRequest extends FormRequest
         $quoteType = ucfirst(request()->quoteType);
         $rules = [
             'quote_uuid' => ['required', new ValidateQuoteObject],
-            //'plan_ids' => (request()->quoteType == 'travel' || $quoteType == quoteTypeCode::Health) ? 'required|array|min:1|max:5' : 'required|array|min:3|max:5',
+            // 'plan_ids' => (request()->quoteType == 'travel' || $quoteType == quoteTypeCode::Health) ? 'required|array|min:1|max:5' : 'required|array|min:3|max:5',
             'plan_ids' => 'required|array|min:1|max:5',
             'addons' => 'nullable|array',
             'hasAdultAndSeniorMember' => 'nullable',

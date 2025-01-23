@@ -48,12 +48,12 @@ class CarQuoteKYCStatus extends BaseModel
                 switch ($status) {
                     case '1':
                     case '3':
-                        $quoteStatusId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'missing_documents_requested']); //12;
+                        $quoteStatusId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'missing_documents_requested']); // 12;
                         $carQuote->pa_id = null;
 
                         break;
                     case '2':
-                        $quoteStatusId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'kyc_cleared']); //11;
+                        $quoteStatusId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'kyc_cleared']); // 11;
                         break;
                     default:
                         break;

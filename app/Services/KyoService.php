@@ -13,11 +13,11 @@ class KyoService
     {
         $this->baseUrl = env('KYO_END_POINT');
 
-        $this->client = Http:://withBasicAuth(config('constants.KEN_API_USER'), config('constants.KEN_API_PWD'))->
+        $this->client = Http::// withBasicAuth(config('constants.KEN_API_USER'), config('constants.KEN_API_PWD'))->
         withHeaders([
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
-            //'x-api-token' => config('constants.KEN_API_TOKEN'),
+            // 'x-api-token' => config('constants.KEN_API_TOKEN'),
 
         ])->timeout(100);
     }
