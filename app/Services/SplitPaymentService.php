@@ -16,6 +16,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -660,7 +661,7 @@ class SplitPaymentService
 
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             // Log message for creating Sage receipt
-            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage recipt id: '.$paymentSplit->sage_reciept_id);
+            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage receipt id: '.$paymentSplit->sage_reciept_id);
 
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
             if ($isSageEnabled && empty($paymentSplit->sage_reciept_id)) {
@@ -1185,5 +1186,30 @@ class SplitPaymentService
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
             $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         }
+    }
+
+    /**
+     * Check if the commission fields in booking details section is disabled
+     *
+     * @return array
+     */
+    public function checkCommissionStatus($payment)
+    {
+        if ($payment && $payment->collection_type == CollectionTypeEnum::INSURER) {
+            $paymentSplits = $payment->paymentSplits;
+            if ($paymentSplits->isNotEmpty()) {
+                $hasPaidCreditCardPayment = $paymentSplits->contains(function ($split) {
+                    return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id == PaymentStatusEnum::PAID;
+                });
+                if ($hasPaidCreditCardPayment) {
+                    return [
+                        true,
+                        PaymentTooltip::DISABLED_COMMISSION,
+                    ];
+                }
+            }
+        }
+
+        return [false, ''];
     }
 }

@@ -93,10 +93,11 @@ const dateToDMYWithTime = date => {
   return '';
 };
 
-const commissionErrorMessage = 'The commission amount you entered is outside the permitted range.';
+const commissionErrorMessage =
+  'The commission amount you entered is outside the permitted range.';
 const bp = reactive({
   isEditing: false,
-  isAllowedToUpdateCommission: true
+  isAllowedToUpdateCommission: true,
 });
 
 const currentDate = computed(() => {
@@ -203,7 +204,8 @@ const bpForm = useForm({
     page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
   isCommissionDisabled: page.props?.bookPolicyDetails?.isCommissionDisabled,
   commissionTooltip: page.props?.bookPolicyDetails?.commissionTooltip,
-  isTapCaptureProcessStart: page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
+  isTapCaptureProcessStart:
+    page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
 });
 
 let is_lacking_payment = ref(
@@ -314,18 +316,24 @@ const calculateCommissionPercentage = (
   totalPriceWithoutVat,
 ) => {
   if (totalCommissionWithoutVat > 0) {
-    let totalCommissionInPercentage = (totalCommissionWithoutVat / totalPriceWithoutVat) * 100;
+    let totalCommissionInPercentage =
+      (totalCommissionWithoutVat / totalPriceWithoutVat) * 100;
     let brokerCommission = props.bookPolicyDetails.brokerCommission;
-    let commission_percentage_min = brokerCommission?.commission_percentage_min || 0;
-    let commission_percentage_max = brokerCommission?.commission_percentage_max || 0;
+    let commission_percentage_min =
+      brokerCommission?.commission_percentage_min || 0;
+    let commission_percentage_max =
+      brokerCommission?.commission_percentage_max || 0;
     if (commission_percentage_min != 0 && commission_percentage_max != 0) {
-      if (totalCommissionInPercentage < commission_percentage_min || totalCommissionInPercentage > commission_percentage_max) {
+      if (
+        totalCommissionInPercentage < commission_percentage_min ||
+        totalCommissionInPercentage > commission_percentage_max
+      ) {
         bp.isAllowedToUpdateCommission = false;
-      } else{
+      } else {
         bp.isAllowedToUpdateCommission = true;
       }
-  }
-  return useRoundIt(totalCommissionInPercentage);
+    }
+    return useRoundIt(totalCommissionInPercentage);
   } else {
     return 0;
   }
@@ -339,7 +347,7 @@ const calculateCommission = () => {
   let totalCommissionWithoutVat =
     Number(bpForm.commission_vat_not_applicable) +
     Number(bpForm.commission_vat_applicable);
-    
+
   if (totalCommissionWithoutVat > 0) {
     bpForm.vat_on_commission = calculateVatOnCommission(
       bpForm.commission_vat_applicable,
@@ -370,7 +378,7 @@ let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {
   let toolTip = null;
-  if (bpForm.isCommissionDisabled){
+  if (bpForm.isCommissionDisabled) {
     return bpForm.commissionTooltip;
   }
   if (bpForm.commission_vat_applicable > 0) {
@@ -395,7 +403,7 @@ const commissionVatNotApplicableTooltip = computed(() => {
 });
 const commissionVatApplicableTooltip = computed(() => {
   let toolTip = null;
-  if (bpForm.isCommissionDisabled){
+  if (bpForm.isCommissionDisabled) {
     return bpForm.commissionTooltip;
   }
   if (bpForm.commission_vat_not_applicable > 0) {
@@ -671,20 +679,20 @@ const filterCCPayments = payment => {
 };
 
 const isAllPaymentAuthorized = () => {
-  const payment = getPayment()
-  if (payment){
+  const payment = getPayment();
+  if (payment) {
     const paidStatusIds = [
       paymentStatusEnum.AUTHORISED,
       paymentStatusEnum.CAPTURED,
-      paymentStatusEnum.PAID
+      paymentStatusEnum.PAID,
     ];
     const ccPayments = filterCCPayments(payment);
 
     return ccPayments.every(split =>
-      paidStatusIds.includes(split.payment_status_id)
+      paidStatusIds.includes(split.payment_status_id),
     );
   }
-  return false
+  return true;
 };
 </script>
 
@@ -949,9 +957,18 @@ const isAllPaymentAuthorized = () => {
                         @change="calculateCommission"
                         placeholder="Commission VAT NOT APPLICABLE"
                         class="w-full"
-                        :disabled="disableCommissionVatNotApplicable || bpForm.isCommissionDisabled"
+                        :disabled="
+                          disableCommissionVatNotApplicable ||
+                          bpForm.isCommissionDisabled
+                        "
                       />
-                      <div v-if="!disableCommissionVatNotApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
+                      <div
+                        v-if="
+                          !disableCommissionVatNotApplicable &&
+                          !bp.isAllowedToUpdateCommission
+                        "
+                        class="x-input-footer text-xs mt-1"
+                      >
                         <p class="text-error-500 dark:text-error-400">
                           {{ commissionErrorMessage }}
                         </p>
@@ -971,7 +988,13 @@ const isAllPaymentAuthorized = () => {
                       class="w-full"
                       :disabled="disableCommissionVatNotApplicable"
                     />
-                    <div v-if="!disableCommissionVatNotApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
+                    <div
+                      v-if="
+                        !disableCommissionVatNotApplicable &&
+                        !bp.isAllowedToUpdateCommission
+                      "
+                      class="x-input-footer text-xs mt-1"
+                    >
                       <p class="text-error-500 dark:text-error-400">
                         {{ commissionErrorMessage }}
                       </p>
@@ -1019,9 +1042,18 @@ const isAllPaymentAuthorized = () => {
                         @change="calculateCommission"
                         placeholder="Commission VAT APPLICABLE"
                         class="w-full"
-                        :disabled="disableCommissionVatApplicable || bpForm.isCommissionDisabled"
+                        :disabled="
+                          disableCommissionVatApplicable ||
+                          bpForm.isCommissionDisabled
+                        "
                       />
-                      <div v-if="!disableCommissionVatApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
+                      <div
+                        v-if="
+                          !disableCommissionVatApplicable &&
+                          !bp.isAllowedToUpdateCommission
+                        "
+                        class="x-input-footer text-xs mt-1"
+                      >
                         <p class="text-error-500 dark:text-error-400">
                           {{ commissionErrorMessage }}
                         </p>
@@ -1042,7 +1074,13 @@ const isAllPaymentAuthorized = () => {
                       class="w-full"
                       :disabled="disableCommissionVatApplicable"
                     />
-                    <div v-if="!disableCommissionVatApplicable && !bp.isAllowedToUpdateCommission" class="x-input-footer text-xs mt-1">
+                    <div
+                      v-if="
+                        !disableCommissionVatApplicable &&
+                        !bp.isAllowedToUpdateCommission
+                      "
+                      class="x-input-footer text-xs mt-1"
+                    >
                       <p class="text-error-500 dark:text-error-400">
                         {{ commissionErrorMessage }}
                       </p>
@@ -1192,11 +1230,11 @@ const isAllPaymentAuthorized = () => {
                 color="emerald"
                 size="sm"
                 @click.prevent="
-                    () => {
-                      bp.isEditing = true;
-                      calculateCommission()
-                    }
-                  "
+                  () => {
+                    bp.isEditing = true;
+                    calculateCommission();
+                  }
+                "
                 :disabled="
                   isDisabled ||
                   disableIfPolicyFailedAndNoBookingFailedEditPermission
@@ -1352,7 +1390,8 @@ const isAllPaymentAuthorized = () => {
               <template
                 v-else-if="
                   props.quote.quote_status_id ==
-                  page.props.quoteStatusEnum.PolicyBooked || !isAllPaymentAuthorized()
+                    page.props.quoteStatusEnum.PolicyBooked ||
+                  !isAllPaymentAuthorized()
                 "
               >
                 <x-tooltip>
@@ -1365,9 +1404,10 @@ const isAllPaymentAuthorized = () => {
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked ?
-                      "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
-                      : "The payment status is not yet Authorised"
+                      props.quote.quote_status_id ==
+                      page.props.quoteStatusEnum.PolicyBooked
+                        ? "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
+                        : 'The payment status is not yet Authorised'
                     }}</span>
                   </template>
                 </x-tooltip>
@@ -1382,9 +1422,10 @@ const isAllPaymentAuthorized = () => {
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyBooked ?
-                      'The button is not accessible because policy has been booked'
-                      : "The payment status is not yet Authorised"
+                      props.quote.quote_status_id ==
+                      page.props.quoteStatusEnum.PolicyBooked
+                        ? 'The button is not accessible because policy has been booked'
+                        : 'The payment status is not yet Authorised'
                     }}</span>
                   </template>
                 </x-tooltip>

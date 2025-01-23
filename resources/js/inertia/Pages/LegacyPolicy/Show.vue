@@ -409,13 +409,15 @@ const dateFormat = date => {
             <dd>{{ policy.premium }}</dd>
           </div>
 
-          <!-- <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Sales Person</dt>
-            <dd>{{ policy.policy?.renewer_person }}</dd>
-          </div> -->
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Sales Person</dt>
-            <dd>{{ policy.policy?.renewer_person }}</dd>
+            <dd>
+              {{
+                policy.policy?.renewer_person == null
+                  ? policy?.quote?.broker
+                  : policy.policy?.renewer_person
+              }}
+            </dd>
           </div>
         </dl>
       </div>
@@ -551,18 +553,20 @@ const dateFormat = date => {
         </DataTable>
         <!-- Display the total customer payable outside the DataTable -->
         <table>
-          <tr>
-            <th>Total Gross Premium:</th>
-            <td class="custom-table">
-              {{ calculateGrossPremium.toFixed(2) }} AED
-            </td>
-            <th>Total Tax:</th>
-            <td class="custom-table">{{ calculateTax.toFixed(2) }} AED</td>
-            <th>Total Customer Payable:</th>
-            <td class="custom-table">
-              {{ calculateTotalCustomerPayable.toFixed(2) }} AED
-            </td>
-          </tr>
+          <thead>
+            <tr>
+              <th>Total Gross Premium:</th>
+              <td class="custom-table">
+                {{ calculateGrossPremium.toFixed(2) }} AED
+              </td>
+              <th>Total Tax:</th>
+              <td class="custom-table">{{ calculateTax.toFixed(2) }} AED</td>
+              <th>Total Customer Payable:</th>
+              <td class="custom-table">
+                {{ calculateTotalCustomerPayable.toFixed(2) }} AED
+              </td>
+            </tr>
+          </thead>
         </table>
       </template>
       <!-- Invoices -->
