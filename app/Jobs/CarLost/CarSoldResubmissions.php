@@ -66,7 +66,7 @@ class CarSoldResubmissions implements ShouldQueue
         $to = $storage[ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TO]->value;
         $cc = $storage[ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_CC]->value;
 
-        //group all cc recipients, advisors -> managers,
+        // group all cc recipients, advisors -> managers,
         $cc = implode(',', array_merge([$cc], $advisors, $managers));
 
         $templateId = $storage[ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TEMPLATE]->value;

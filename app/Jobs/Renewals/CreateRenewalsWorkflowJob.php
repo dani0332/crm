@@ -51,7 +51,7 @@ class CreateRenewalsWorkflowJob implements ShouldQueue
         if (isset($response->success) && $response->success) {
             info('workflow created successfully for batch: '.$this->renewalsBatchEmail->batch);
         } else {
-            //todo: send email or something
+            // todo: send email or something
             info('workflow creation failed for batch: '.$this->renewalsBatchEmail->batch);
         }
 

@@ -135,7 +135,7 @@ class TravelQuoteService extends BaseService
             'tqr.risk_score',
             'tqr.kyc_decision',
             'tqr.is_documents_valid',
-            //'tqr.prefill_plan_id',
+            // 'tqr.prefill_plan_id',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -567,17 +567,6 @@ class TravelQuoteService extends BaseService
         }
     }
 
-    public function updateChildRecord($id)
-    {
-        TravelQuoteRequestDetail::updateOrCreate(
-            ['travel_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
-    }
-
     private function getQuerySuffix($item)
     {
         switch ($item) {
@@ -929,10 +918,8 @@ class TravelQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::TRAVEL, TravelQuoteRequestDetail::class, 'travel_quote_request_id');
         }
 
         return $result;
@@ -1091,10 +1078,10 @@ class TravelQuoteService extends BaseService
         $duplicateLead->save();
 
         if ($duplicateLead) {
-            //update morph relation in payments table
+            // update morph relation in payments table
             $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
 
-            //update morph relation in quote_documents table,which are associated with split payments
+            // update morph relation in quote_documents table,which are associated with split payments
             Payment::where('code', $newLeadCode)->with('paymentSplits')->get()->each(function ($payment) use ($duplicateLead) {
                 $payment->paymentSplits->each(function ($split) use ($duplicateLead) {
                     $split->documents()->update(['quote_documentable_id' => $duplicateLead->id]);

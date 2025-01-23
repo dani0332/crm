@@ -684,7 +684,7 @@ class CarAllocationService extends AllocationService
             $assignmentType = AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD;
         }
 
-        //Store the previous Assignment Type
+        // Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
 
         // Store the previous advisor ID.
