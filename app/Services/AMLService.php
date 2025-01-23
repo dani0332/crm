@@ -558,41 +558,11 @@ class AMLService
 
     public function amlScreeningGIG($request, $quoteTypeId, $quoteDetails, $customerType)
     {
-        $chassisNumber = '';
+        $modelObjectAgainstQuoteType = $this->getModelObject(QuoteTypes::getName($quoteTypeId)->value);
         $paymentDetails = Payment::with('insuranceProvider')->where([
             'paymentable_type' => $quoteDetails->getMorphClass(),
             'paymentable_id' => $quoteDetails->id,
         ])->first();
-
-        // TODO:: confirm with the business before enabling the LOBs
-        $detailsReference = [
-            QuoteTypes::CAR->id() => [
-                'model' => CarQuote::class,
-                'detailModel' => CarQuoteRequestDetail::class,
-                'foreignKey' => 'car_quote_request_id',
-            ],
-            QuoteTypes::TRAVEL->id() => [
-                'model' => TravelQuote::class,
-                'detailModel' => TravelQuoteRequestDetail::class,
-                'foreignKey' => 'travel_quote_request_id',
-            ],
-            QuoteTypes::HOME->id() => [
-                'model' => HomeQuote::class,
-                'detailModel' => HomeQuoteRequestDetail::class,
-                'foreignKey' => 'home_quote_request_id',
-            ],
-        ];
-
-        $requestQuoteDetails = $detailsReference[$quoteTypeId]['detailModel']::where($detailsReference[$quoteTypeId]['foreignKey'], $quoteDetails->id)->first();
-        if ($quoteTypeId == QuoteTypes::CAR->id()) {
-            $requestQuoteDetails->chassis_number = $request['chassis_number'];
-            if ($requestQuoteDetails->isDirty()) {
-                $requestQuoteDetails->save();
-                $requestQuoteDetails->refresh();
-                // TODO:: Reminder need to call update premium API
-            }
-            $chassisNumber = $requestQuoteDetails?->chassis_number;
-        }
 
         if ($paymentDetails?->insuranceProvider?->code !== InsuranceProvidersEnum::AXA) {
             info('fn:amlScreeningGIG - Insurance provider not found. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
@@ -626,7 +596,7 @@ class AMLService
                     'expiryDate' => $insuredPersonDetails?->customer?->emirates_id_expiry_date ?? null,
                 ],
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
-                'chassisNumber' => $chassisNumber ?? '',
+                'chassisNumber' => $request['chassis_number'] ?? '',
                 'gender' => $this->formatGender($insuredDetails?->gender),
             ];
 
@@ -635,12 +605,12 @@ class AMLService
 
             info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
             $screeningResponse['screening_type'] = $screeningType;
-            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $detailsReference, $customerType, $insuredPersonDetails, $screeningResponse);
+            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
 
         } catch (Exception $exception) {
             info('fn:amlScreeningGIG - GIG Screening failed - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Error: '.$exception->getMessage());
             $screeningResponse = ['status' => AMLStatusCode::AMLPending, 'message' => $exception->getMessage(), 'screening_type' => $screeningType];
-            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $detailsReference, $customerType, $insuredPersonDetails, $screeningResponse);
+            $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
 
             return false;
         }
@@ -685,7 +655,7 @@ class AMLService
         KycLog::insert($kycLogDetails);
         info('fn:amlScreeningGIG - AML Screening GIG Potential Matches inserted into kyc_logs table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
 
-        $quoteObject[$quoteTypeId]['model']::where('id', $quoteDetails->id)->update($insurerAMLStatus);
+        $quoteObject::where('id', $quoteDetails->id)->update($insurerAMLStatus);
         info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
 
     }

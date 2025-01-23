@@ -28,8 +28,10 @@ use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
 use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
+use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\Emirate;
 use App\Models\Entity;
@@ -467,18 +469,33 @@ class AMLController extends Controller
                     ];
                 }
 
-                // TODO:: confirm with the business before enabling the LOBs
-                if (in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id(), QuoteTypes::HOME->id()])) {
-                    session()->put('insurerAMLScreeningResponse');
-                    InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
-                    $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                    if (! empty($insurerAMLScreeningResponse)) {
-                        $insurerAMLScreeningResponse = [
-                            'status' => $getInsurerScreeningResponse['status'],
-                            'message' => $getInsurerScreeningResponse['message'],
-                        ];
+                if ($quoteTypeId == QuoteTypes::CAR->id()) {
+                    $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteRequestId)->first();
+                    $carQuoteRequestDetails->chassis_number = $AMLCheckRequest->chassis_number;
+                    if ($carQuoteRequestDetails->isDirty()) {
+                        $carQuoteRequestDetails->save();
+                        if (isTapEnabled()) {
+                            info('AML Screening Bridger - Tap Enabled - update premium API called - Ref-ID: '.$quoteRequestId);
+                            // TODO:: Reminder need to call update premium API
+                        }
                     }
-                    session()->forget('insurerAMLScreeningResponse');
+                }
+
+                if (isTapEnabled()) {
+                    info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start - Ref-ID: '.$quoteRequestId);
+                    if (in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id(), QuoteTypes::HOME->id()])) {
+                        session()->put('insurerAMLScreeningResponse');
+                        InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
+                        $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
+                        if (! empty($insurerAMLScreeningResponse)) {
+                            $insurerAMLScreeningResponse = [
+                                'status' => $getInsurerScreeningResponse['status'],
+                                'message' => $getInsurerScreeningResponse['message'],
+                            ];
+                        }
+                        session()->forget('insurerAMLScreeningResponse');
+                    }
+                    info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process completed - Ref-ID: '.$quoteRequestId);
                 }
 
                 if (empty($getMemberOrUBODetails->toArray())) {
@@ -606,6 +623,12 @@ class AMLController extends Controller
             'id_type' => $request->id_type,
             'id_number' => $request->id_number,
         ])->first();
+
+        if (! $insuredPersonDetails) {
+            $customerDetails = CustomerDetail::with(['customer:id,code,dob,gender,insured_first_name as first_name,insured_last_name as last_name,nationality_id'])
+                ->where(['id_type' => $request->id_type, 'id_number' => str_replace('-', '', $request->id_number)])->first();
+            $insuredPersonDetails = $customerDetails?->customer;
+        }
 
         if ($insuredPersonDetails) {
             return response()->json(['status' => true, 'response' => $insuredPersonDetails, 'message' => 'Customer found with the entered ID number']);

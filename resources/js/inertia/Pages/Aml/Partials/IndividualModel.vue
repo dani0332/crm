@@ -116,7 +116,6 @@ const insuredFormDetails = useForm({
   id_issuance_authority:
     props.entityDetails?.entity?.id_issuance_authority ?? null,
 
-  insured_id: props.insuredPersonDetails?.insured?.id ?? null,
   screening_id_type: props.insuredPersonDetails?.insured?.id_type ?? null,
   screening_id_number: props.insuredPersonDetails?.insured?.id_number ?? null,
 
@@ -417,7 +416,6 @@ const submitInsuredPersonSearch = () => {
           let response = res.data.response;
           insuredPersonDetailsFound.value = true;
 
-          insuredFormDetails.insured_id = response?.id;
           insuredFormDetails.insured_first_name = response?.first_name;
           insuredFormDetails.insured_last_name = response?.last_name;
           insuredFormDetails.nationality_id = response?.nationality_id;
