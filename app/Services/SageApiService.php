@@ -580,7 +580,7 @@ class SageApiService
             return ['status' => false, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
         }
 
-        //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
+        // Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
         $isTotalPriceZero = $payment->total_price == 0;

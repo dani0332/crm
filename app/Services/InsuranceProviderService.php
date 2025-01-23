@@ -206,7 +206,7 @@ class InsuranceProviderService extends BaseService
      * @param  object|null  $quote
      * @return array
      */
-    public function getPaymentConfiguration($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId=null, $quote = null)
+    public function getPaymentConfiguration($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId = null, $quote = null)
     {
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $brokerCommissionQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)->active();

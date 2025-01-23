@@ -321,6 +321,7 @@ class CentralService extends BaseService
 
             @[$isCreditCardEnabled] = app(InsuranceProviderService::class)->getPaymentConfiguration($quoteType, $quote->insurance_provider_id, $quote->business_type_of_insurance_id);
             $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
+
             return true;
         });
     }
@@ -956,7 +957,7 @@ class CentralService extends BaseService
         }
     }
 
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null,  $isCreditCardEnabled = true)
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true)
     {
         info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {

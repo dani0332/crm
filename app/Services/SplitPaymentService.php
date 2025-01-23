@@ -1159,7 +1159,7 @@ class SplitPaymentService
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
                 }
-                if (!$isCreditCardEnabled && $paymentSplit->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->collection_type == CollectionTypeEnum::INSURER  && !in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED] )) {
+                if (! $isCreditCardEnabled && $paymentSplit->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->collection_type == CollectionTypeEnum::INSURER && ! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
                     $paymentSplit->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
                 }
                 if ($paymentSplit->isDirty()) {

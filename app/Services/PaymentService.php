@@ -41,7 +41,7 @@ class PaymentService extends BaseService
         $payment->total_price = $priceWithVat;
         $this->setTotalAmount($payment);
 
-        if (!$isCreditCardEnabled && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->collection_type == CollectionTypeEnum::INSURER && !in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED] )) {
+        if (! $isCreditCardEnabled && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->collection_type == CollectionTypeEnum::INSURER && ! in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
             $payment->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
         }
 
