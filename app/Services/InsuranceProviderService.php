@@ -206,7 +206,7 @@ class InsuranceProviderService extends BaseService
      * @param  object|null  $quote
      * @return array
      */
-    public function getPaymentConfiguration($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId, $quote = null)
+    public function getPaymentConfiguration($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId=null, $quote = null)
     {
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $brokerCommissionQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)->active();
@@ -224,10 +224,12 @@ class InsuranceProviderService extends BaseService
 
         $isGIGInsuranceProvider = false;
         $isMultiplePaymentsEnabled = false;
+        $isGIGOrQICProvider = false;
 
         if ($insuranceProvider) {
             $isGIGInsuranceProvider = $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
             $isMultiplePaymentsEnabled = $insuranceProvider->multiple_payments;
+            $isGIGOrQICProvider = $isGIGInsuranceProvider || $insuranceProvider->code == InsurerProviderEnum::QATAR_INSURANCE;
         }
 
         $isTapCaptureProcessStart = false;
@@ -246,6 +248,7 @@ class InsuranceProviderService extends BaseService
             $isGIGInsuranceProvider,
             $isTapCaptureProcessStart,
             $isMultiplePaymentsEnabled,
+            $isGIGOrQICProvider,
         ];
     }
 }

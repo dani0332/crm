@@ -264,12 +264,13 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        @[$isCreditCardEnabled, $brokerCommission, $isGIGInsuranceProvider, $isTapCaptureProcessStart, $isMultiplePaymentsEnabled] = app(InsuranceProviderService::class)->getPaymentConfiguration($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id, $record);
+        @[$isCreditCardEnabled, $brokerCommission, $isGIGInsuranceProvider, $isTapCaptureProcessStart, $isMultiplePaymentsEnabled, $isGIGOrQICProvider] = app(InsuranceProviderService::class)->getPaymentConfiguration($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id, $record);
         $bookPolicyDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
         $bookPolicyDetails['brokerCommission'] = $brokerCommission;
         $bookPolicyDetails['isGIGInsuranceProvider'] = $isGIGInsuranceProvider;
         $bookPolicyDetails['isTapCaptureProcessStart'] = $isTapCaptureProcessStart;
         $bookPolicyDetails['isMultiplePaymentsEnabled'] = $isMultiplePaymentsEnabled;
+        $bookPolicyDetails['isGIGOrQICProvider'] = $isGIGOrQICProvider;
         [$isCommissionDisabled, $commissionTooltip] = app(SplitPaymentService::class)->checkCommissionStatus($payment);
         $bookPolicyDetails['isCommissionDisabled'] = $isCommissionDisabled;
         $bookPolicyDetails['commissionTooltip'] = $commissionTooltip;

@@ -2,10 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\CollectionTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Models\Payment;
+use App\Services\InsuranceProviderService;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Enums\PaymentStatusEnum;
 
 class PlanDetailsRequest extends FormRequest
 {
@@ -55,6 +59,14 @@ class PlanDetailsRequest extends FormRequest
 
             if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
+            }
+
+            @[$isCreditCardEnabled] = app(InsuranceProviderService::class)->getPaymentConfiguration(request()->quoteType, request()->insurance_provider_id, $quoteModel->business_type_of_insurance_id);
+            if (! $isCreditCardEnabled) {
+                $payment = Payment::where('code', request()->code)->first();
+                if ($payment && $payment->isPaymentAuthorized() && $payment->collection_type == CollectionTypeEnum::INSURER) {
+                    $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
+                }
             }
         });
     }

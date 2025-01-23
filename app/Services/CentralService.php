@@ -318,8 +318,9 @@ class CentralService extends BaseService
             $quote = $repository::where('code', $code)->firstOrFail();
 
             $quote->update($data->toArray());
-            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id);
 
+            @[$isCreditCardEnabled] = app(InsuranceProviderService::class)->getPaymentConfiguration($quoteType, $quote->insurance_provider_id, $quote->business_type_of_insurance_id);
+            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
             return true;
         });
     }
@@ -955,7 +956,7 @@ class CentralService extends BaseService
         }
     }
 
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null)
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null,  $isCreditCardEnabled = true)
     {
         info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {
@@ -967,8 +968,8 @@ class CentralService extends BaseService
             if ($insuranceProviderId) {
                 $payment->insurance_provider_id = $insuranceProviderId;
             }
-            app(PaymentService::class)->processMasterPayment($payment, $quoteObject);
-            app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment);
+            app(PaymentService::class)->processMasterPayment($payment, $quoteObject, $isCreditCardEnabled);
+            app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment, $isCreditCardEnabled);
 
             return $this->isLackingPayment($payment);
         }

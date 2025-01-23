@@ -27,7 +27,9 @@ final class PaymentTooltip extends Enum
     const PAYMENT_ADD_DELETE_DOCUMENT = 'Any uploaded documents cannot be deleted once the payment status marks as \'Paid\'.';
     const PAYMENT_DISCOUNT_PROOF_TITLE = 'Use this field to attach the approved discount proof. Ensure the proof includes approval from the Chief Marketing Officer, Chief Finance Officer, or General Manager. This document is crucial for verifying the discount and for record accuracy.';
     const PAYMENT_DISCOUNT_PROOF_VIEW = 'Review the proof of discount here. Ensure all relevant documents are present for complete transparency.';
-
+    const PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT= 'The Total Price exceeds the Authorised Amount. Please request your manager to cancel the payment authorisation and ask the customer to reauthorise the updated plan price';
+    const PAYMENT_AUTHORISED_CANNOT_EDIT = 'Payment is authorised and cannot be edited. Please request your manager to cancel the payment authorisation and ask the customer to reauthorise the updated plan price.';
+    const PAYMENT_REVISED_ACTION_NEEDED = 'Action Needed: Please revise payment details to reflect plan changes';
     //Main section
     const COLLECTION_DATE = 'The date when the payment is due or when it was collected. Ensure to update this date accurately to maintain proper payment records.';
     const TOTAL_PRICE = 'The entire amount due before any potential discounts. Remember, VAT is exempt for Life Insurance policies.';

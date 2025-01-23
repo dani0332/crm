@@ -3082,6 +3082,8 @@ const allowStatusUpdate = computed(() => {
                         selectedPlansIds: selectedPlanIds,
                         planType: 'normalPlans',
                       }"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
                     />
                     <x-button
                       v-else
@@ -3172,6 +3174,8 @@ const allowStatusUpdate = computed(() => {
                           selectedPlansIds: selectedPlanIds,
                           planType: 'seniorPlans',
                         }"
+                        :insuranceProviderId="item.id"
+                        :code="quote.code"
                       />
                       <x-button
                         v-else

@@ -1135,7 +1135,7 @@ class SplitPaymentService
      * If the collection amount is greater than or equal to the payment amount, the payment split's status is set to PAID, otherwise, it is set to PARTIALLY_PAID
      * This method trigger when policy details section update
      */
-    public function updateSplitPaymentStatusAndAmount($payment)
+    public function updateSplitPaymentStatusAndAmount($payment, $isCreditCardEnabled = true)
     {
         info('Quote Code: '.$payment->code.' fn: Updating child payment status');
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
@@ -1158,6 +1158,9 @@ class SplitPaymentService
                     } else {
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
+                }
+                if (!$isCreditCardEnabled && $paymentSplit->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->collection_type == CollectionTypeEnum::INSURER  && !in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED] )) {
+                    $paymentSplit->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
                 }
                 if ($paymentSplit->isDirty()) {
                     $paymentSplit->save();

@@ -5,6 +5,7 @@ import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+import { time } from 'highcharts';
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -159,11 +160,10 @@ const showLackingPayment = () => {
   if (is_lacking_payment.value && props.payments.length > 0) {
     notification.error(
       {
-        title:
-          'Action Needed: Please revise payment details to reflect plan changes.',
+        title: props.paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED,
         position: 'top',
-      },
-      50000,
+        timeout: 5000,
+      }
     );
   }
 };
@@ -1809,6 +1809,15 @@ const editPaymentModal = (
     return false;
   }
 
+  if (isEditPaymentEnabled()){
+    notification.error({
+      title: props.paymentTooltipEnum.PAYMENT_AUTHORISED_CANNOT_EDIT,
+      position: 'top',
+      timeout: 10000,
+    });
+    return false;
+  }
+
   resetPaymentForm();
   initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
   handleCollectionTypeChange();
@@ -3371,6 +3380,12 @@ const isMultiPaymentsEnabled = ref(
     false,
 );
 
+const isGIGOrQICProvider  = ref(
+  page.props?.bookPolicyDetails?.isGIGOrQICProvider ||
+    page.props?.bookingDetails?.isGIGOrQICProvider ||
+    false,
+);
+
 watch(
   () => page.props?.bookPolicyDetails?.isCreditCardEnabled,
   newVal => {
@@ -3409,6 +3424,15 @@ const isCCPaymentDisabled = option => {
 const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
   return paymentTypes.filter(item => !methodsToExclude.includes(item.value));
 };
+
+const isEditPaymentEnabled = () => {
+  return(
+    !isMultiPaymentsEnabled.value 
+    && isGIGOrQICProvider.value 
+    && props.payments[0].payment_status_id === props.paymentStatusEnum.AUTHORISED
+  )
+};
+
 </script>
 
 <template>
@@ -3770,8 +3794,7 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
                                 <template #content>!</template>
                               </x-badge>
                               <template #tooltip>
-                                Action Needed: Please revise payment <br />
-                                details to reflect plan changes.
+                                {{isEditPaymentEnabled() ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT :  paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED}}
                               </template>
                             </x-tooltip>
                           </template>

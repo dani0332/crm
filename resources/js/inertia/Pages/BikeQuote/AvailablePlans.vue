@@ -619,6 +619,8 @@ onMounted(() => {
               :plan="item"
               :quoteType="'Bike'"
               :uuid="quote.uuid"
+              :insuranceProviderId="item.id"
+              :code="quote.code"
             />
 
             <x-button v-else size="xs" color="orange" outlined :disabled="true">
