@@ -132,7 +132,13 @@ class Kernel extends ConsoleKernel
         $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('sync:courier-quotes-once')->everyFifteenMinutes()->onOneServer()->withoutOverlapping();
+        $schedule->command('sync:courier-quotes-once')
+        ->everyTenMinutes()
+        ->onOneServer()
+        ->withoutOverlapping(5)
+        ->onSuccess(function (Stringable $output) {
+                info('SyncCourierQuoteOnce - Syncing process completed successfully at: ' . now() . ' ' .$output);
+            });
 
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 

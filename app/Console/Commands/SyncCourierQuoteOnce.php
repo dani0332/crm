@@ -272,7 +272,5 @@ class SyncCourierQuoteOnce extends Command
             // Add a 1-second delay before moving to the next RefId
             sleep(1);
         }
-
-        $this->info('SyncCourierQuoteOnce - Syncing process completed successfully at: '.now());
     }
 }
