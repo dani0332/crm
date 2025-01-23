@@ -6,22 +6,8 @@
     <title>Plans Comparison PDF</title>
 
     <style>
-        @font-face {
-            font-family: 'Prompt';
-            src: url('{{ public_path('fonts/Prompt-Regular.ttf') }}') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-        }
-
-        @font-face {
-            font-family: 'Prompt';
-            src: url('{{ public_path('fonts/Prompt-Bold.ttf') }}') format('truetype');
-            font-weight: bold;
-            font-style: normal;
-        }
-
         * {
-            font-family: 'Prompt', sans-serif;
+            font-family: "DejaVu Sans", sans-serif !important;
         }
 
         @page {
@@ -36,11 +22,13 @@
         }
 
         body {
-            line-height: 1.6;
+            /* line-height: 1.6; */
+            line-height: 1;
             margin: 0;
             padding: 0;
             font-size: 12px;
             font-weight: 400;
+            font-family: "DejaVu Sans", sans-serif !important;
         }
 
         div,
@@ -927,7 +915,7 @@
                     style="max-height: 50px; height: 50px;" />
             </div>
             <h3
-                style="margin: 0; padding-top: 10px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
+                style="margin: 0; padding-top: 5px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
                 Your tailor made home insurance <br />comparison table
             </h3>
             {{-- <h3
