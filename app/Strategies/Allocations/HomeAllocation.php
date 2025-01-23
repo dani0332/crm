@@ -15,6 +15,7 @@ class HomeAllocation extends BaseAllocation
     private const CONTENTS_VALUE_THRESHOLD = 100000;
     private const PERSONAL_BELONGINGS_VALUE_THRESHOLD = 100000;
     private const BUILDING_VALUE_THRESHOLD = 5000000;
+    private const SHORT_TERM_CODE = 'short_term';
 
     protected function fetchAdvisor(int $onlineStatus, ?string $uuid = null)
     {
@@ -172,9 +173,19 @@ class HomeAllocation extends BaseAllocation
      */
     private function isPropertyRentedForHolidayHome(string $uuid): bool
     {
-        $homeRented = HomeQuote::where('uuid', $uuid)
-            ->value('owner_occupancy_type_id');
+        $result = DB::table('home_quotes')
+            ->join('home_lookups', 'home_lookups.id', '=', 'home_quotes.owner_occupancy_type_id')
+            ->where('home_quotes.uuid', $uuid)
+            ->where('home_lookups.code', self::SHORT_TERM_CODE)
+            ->select('home_quotes.owner_occupancy_type_id', 'home_lookups.id as short_term_id')
+            ->first();
 
-        return $homeRented === 2; // 2 represents a short term or holiday home
+        if (!$result) {
+            info('No matching record found for UUID: ' . $uuid);
+            return false;
+        }
+
+        // Compare the owner_occupancy_type_id with the short_term_id
+        return $result->owner_occupancy_type_id === $result->short_term_id;
     }
 }
