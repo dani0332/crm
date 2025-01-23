@@ -254,6 +254,7 @@ class SendUpdateLogController extends Controller
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
             'isSentOrBooked' => $isSentOrBooked,
             'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $brokerCommission),
+            'disableCommissionFields' => $this->sendUpdateLogService->disableCommissionFields($sendUpdatePayments),
         ]);
     }
 

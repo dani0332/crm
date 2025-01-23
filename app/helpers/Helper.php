@@ -25,6 +25,7 @@ use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
@@ -1565,5 +1566,15 @@ if (! function_exists('isCHSAdvisor')) {
         $user = User::select('id')->chs()->first();
 
         return $user?->id == $userId;
+    }
+}
+
+if (! function_exists('isTapEnabled')) {
+    function isTapEnabled($processType = []): bool
+    {
+        $isTapEnabled = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION);
+        // $tapAuthorizedEmails = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS);
+
+        return $isTapEnabled;
     }
 }

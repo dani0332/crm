@@ -1533,19 +1533,26 @@ class SendUpdateLogService
             return 'Endorsement Number is required before proceeding.';
         }
 
-        $isTransactionApproved = $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED ||
-            app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
-        $payment = $payment[0] ?? null;
-        if (! empty($payment) && $payment->paymentSplits->isNotEmpty() && $brokerCommission && $isTransactionApproved) {
-            $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
-                return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id != PaymentStatusEnum::PAID;
-            });
+        if (isTapEnabled()) {
+            $isTransactionApproved = $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED ||
+                app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+            $payment = $payment[0] ?? null;
+            if (! empty($payment) && $payment->paymentSplits->isNotEmpty() && $brokerCommission && $isTransactionApproved) {
+                $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
+                    return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id != PaymentStatusEnum::PAID;
+                });
 
-            if ($hasUnpaidCCPayment) {
-                return 'The payment status is not yet Authorised.';
+                if ($hasUnpaidCCPayment) {
+                    return 'The payment status is not yet Authorised.';
+                }
             }
         }
 
         return '';
+    }
+
+    public function disableCommissionFields($payment = [])
+    {
+        return app(SplitPaymentService::class)->checkCommissionStatus($payment[0] ?? null);
     }
 }
