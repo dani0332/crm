@@ -302,6 +302,7 @@ class SearchService extends BaseService
                     $query->join('payments', 'personal_quotes.code', 'payments.code');
                 }
             }
+            /* TODO:: when date_type is null or available in_array then payment join is not applied */
             $query->whereIn('payments.payment_status_id', request()->payment_status);
         }
 
@@ -330,6 +331,11 @@ class SearchService extends BaseService
             && ! isset(request()->code) && ! request()->has('payment_status')
             && ! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))) {
 
+            /*
+            TODO:: explode the code when filters insurer_commission_tax_invoice_number, insurer_tax_invoice_number, list=leads, su_code
+            THEN:: payment is not applied
+            NEED TO REMOVE CONDITION:: su_code
+            */
             if (! request()->has('su_code') && ! $isSendUpdateFilter) {
                 $query->join('payments', 'personal_quotes.code', 'payments.code');
 
