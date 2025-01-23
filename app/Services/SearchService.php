@@ -97,13 +97,12 @@ class SearchService extends BaseService
                     $baseQuery->leftJoin('users', 'personal_quotes.advisor_id', 'users.id');
                 }
 
-                if (! request()->has('insurer_tax_invoice_number')) {
-                    if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters)) && ! request()->has('payment_status')) {
-                        if ($isEndorsementList) {
-                            $baseQuery->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
-                        } else {
-                            $baseQuery->leftJoin('payments', 'personal_quotes.code', 'payments.code');
-                        }
+                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters)) && ! request()->has('payment_status')
+                    && ! request()->has('insurer_tax_invoice_number') && ! request()->has('insurer_commission_tax_invoice_number')) {
+                    if ($isEndorsementList) {
+                        $baseQuery->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
+                    } else {
+                        $baseQuery->leftJoin('payments', 'personal_quotes.code', 'payments.code');
                     }
                 }
 
@@ -265,12 +264,11 @@ class SearchService extends BaseService
         }
 
         if (request()->has('date_type') && request()->has('date_range')) {
-            $paymentsDateFilters = ['payment_due_date', 'payment_date'];
             $baseTableDateFilters = ['created_at', 'policy_booking_date', 'policy_start_date', 'policy_expiry_date', 'transaction_approved_at'];
             $startDate = date('Y-m-d 00:00:00', strtotime($request->date_range[0]));
             $endDate = date('Y-m-d 23:59:59', strtotime($request->date_range[1]));
 
-            if (in_array($request->date_type, $paymentsDateFilters)) {
+            if (in_array($request->date_type, $this->paymentsDateFilters)) {
                 if ($isSendUpdateFilter) {
                     $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
                 } else {
@@ -297,7 +295,7 @@ class SearchService extends BaseService
         }
 
         if (request()->has('payment_status') && ! isset(request()->code)) {
-            if (request()->has('date_type') && ! in_array($request->date_type, ['payment_due_date', 'payment_date'])) {
+            if (request()->has('date_type') && ! in_array($request->date_type, $this->paymentsDateFilters)) {
                 if ($isSendUpdateFilter) {
                     $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
                 } else {
@@ -330,7 +328,9 @@ class SearchService extends BaseService
 
         if (request()->has('insurer_tax_invoice_number') && ! isset(request()->code)) {
             if (! request()->has('su_code') && ! $isSendUpdateFilter) {
-                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters)) && ! request()->has('payment_status')) {
+                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))
+                    && ! request()->has('payment_status') && ! request()->has('insurer_commission_tax_invoice_number')) {
+
                     $query->join('payments', 'personal_quotes.code', 'payments.code');
                     $query->where('payments.insurer_tax_number', request()->insurer_tax_invoice_number);
                 }
@@ -341,10 +341,12 @@ class SearchService extends BaseService
 
         if (request()->has('insurer_commission_tax_invoice_number') && ! isset(request()->code)) {
             if (! request()->has('su_code') && ! $isSendUpdateFilter) {
-                if (! (request()->has('date_type') && in_array($request->date_type, ['payment_due_date', 'payment_date'])) && ! request()->has('payment_status')) {
+                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))
+                    && ! request()->has('payment_status') && ! request()->has('insurer_tax_invoice_number')) {
+
                     $query->join('payments', 'personal_quotes.code', 'payments.code');
+                    $query->where('payments.insurer_commmission_invoice_number', request()->insurer_commission_tax_invoice_number);
                 }
-                $query->where('payments.insurer_commmission_invoice_number', request()->insurer_commission_tax_invoice_number);
             } else {
                 $query->where('send_update_logs.insurer_commission_invoice_number', request()->insurer_commission_tax_invoice_number);
             }
