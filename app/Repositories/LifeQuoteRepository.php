@@ -49,7 +49,7 @@ class LifeQuoteRepository extends BaseRepository
         $response = Capi::request('/api/v1-save-life-quote', 'post', $lifeData);
 
         if (isset($response->quoteUID)) {
-            //todo: make sure if this is required to update, or api is handling this as well
+            // todo: make sure if this is required to update, or api is handling this as well
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
             $quote->update(['premium' => $lifeData['premium']]);
         }

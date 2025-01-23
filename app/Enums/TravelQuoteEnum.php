@@ -21,7 +21,7 @@ final class TravelQuoteEnum extends Enum
     const IN_BOUND = 'inbound';
     const OUT_BOUND = 'outbound';
 
-    //Alliance Travel Direction code
+    // Alliance Travel Direction code
     const ALLIANCE_IN_BOUND = 'inbound';
     const ALLIANCE_OUT_BOUND = 'outbound';
 }

@@ -192,7 +192,7 @@ class RenewalBatchReportService extends BaseService
         // get all available segments list
         $segments = array_merge(['all'], RenewalBatch::SGEMENT_TYPES_LIST);
         $car = $this->getProductByName(quoteTypeCode::Car);
-        //teams listing as per auth roles
+        // teams listing as per auth roles
         if ($authUserIsCEO || $authUserIsAccounts) {
             $authUserSubTeams = Team::where('is_active', true)
                 ->where('type', TeamTypeEnum::SUB_TEAM)

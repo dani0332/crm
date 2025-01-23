@@ -64,7 +64,7 @@ class QuoteDocumentRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            //check for quote records if exists
+            // check for quote records if exists
             if (! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid)) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
             }
@@ -73,7 +73,7 @@ class QuoteDocumentRequest extends FormRequest
              * documents can be attached to a member for health quote type
              */
             if (in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && isset($quote->id) && ! empty(request()->member_detail_id)) {
-                //check for quote records if exists
+                // check for quote records if exists
                 if (! $quote->customerMembers()->where('id', request()->member_detail_id)->first()) {
                     $validator->errors()->add('member_detail_id', 'Invalid member detail id provided');
                 }
@@ -85,12 +85,12 @@ class QuoteDocumentRequest extends FormRequest
 
             $quote_source = data_get($quote, 'source', '');
             if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
-                //validate if payment is authorized capture or partial capture
+                // validate if payment is authorized capture or partial capture
                 if (isset($quote->payment_status_id) && ! in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
                     $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized, captured or partial captured.');
                 }
             } else {
-                //validate if payment is authorized
+                // validate if payment is authorized
                 if (request()->quoteType != strtolower(quoteTypeCode::Travel)) {
                     if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
                         $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
@@ -98,7 +98,7 @@ class QuoteDocumentRequest extends FormRequest
                 }
             }
 
-            //check for maximum number of files uploaded against selected quote and document type
+            // check for maximum number of files uploaded against selected quote and document type
             if ($this->documentType && $quote && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
                 $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
             }

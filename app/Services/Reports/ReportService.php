@@ -584,7 +584,7 @@ class ReportService extends BaseService
 
         info('totalPremiumQuery took '.number_format($endTime - $startTime, 4).' seconds to run');
 
-        //dd($totalPremiumQuery->toSql(), $totalPremiumQuery->getBindings());
+        // dd($totalPremiumQuery->toSql(), $totalPremiumQuery->getBindings());
         // Execute the query and return the result
         return $result;
     }
