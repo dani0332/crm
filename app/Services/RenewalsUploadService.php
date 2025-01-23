@@ -536,7 +536,7 @@ class RenewalsUploadService
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
-                //start file import
+                // start file import
                 if ($renewalsUploadLead->quote_type == QuoteTypeShortCode::HEA) {
                     $renewalsUpload = new UploadAndUpdateHealthImport($renewalsUploadLead);
                 } else {
@@ -1679,7 +1679,7 @@ class RenewalsUploadService
                         info('CQF VALIDATION - Quote Found for Update - '.$lead->policy_number);
                     }
                 }
-                //If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
+                // If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
                 if ($lead->quote_type != quoteTypeCode::TRA && $lead->quote_type != QuoteTypeShortCode::HEA) {
                     if (! $leadData->insurer) {
                         $leadValidationErrors->push('Insurance Provider is required');

@@ -23,7 +23,7 @@ class RenewalHealthUpdateFailedValidationExport implements FromCollection, WithS
     {
         $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewaUploadLead->id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
         $exportLeads = collect();
-       
+
         $firstRow = (object) [];
         $firstRow->customer_name = 'Customer Name';
         $firstRow->email = 'Customer Email';
@@ -37,12 +37,12 @@ class RenewalHealthUpdateFailedValidationExport implements FromCollection, WithS
         $firstRow->member_names = 'Member Names';
         $firstRow->member_dob = "Customer's DOB";
         $firstRow->member_nationality = "Customer's Nationality";
-        $firstRow->gender = "Gender";
-        $firstRow->member_category = "Member Category";
-        $firstRow->member_emirate_of_visa = "Emirate of Visa";
-        $firstRow->payment_link = "Payment Link";
-        $firstRow->previous_policy_premium = "Previous Policy Premium";
-        $firstRow->notes = "Notes";
+        $firstRow->gender = 'Gender';
+        $firstRow->member_category = 'Member Category';
+        $firstRow->member_emirate_of_visa = 'Emirate of Visa';
+        $firstRow->payment_link = 'Payment Link';
+        $firstRow->previous_policy_premium = 'Previous Policy Premium';
+        $firstRow->notes = 'Notes';
         $exportLeads->push($firstRow);
         foreach ($failedLeads as $lead) {
             if ($lead->data) {
