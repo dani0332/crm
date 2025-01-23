@@ -8,6 +8,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -240,7 +241,7 @@ class SplitPaymentService
                 }
                 $premium = 0;
                 if ($modelType == quoteTypeCode::Health) {
-                    //Get Ecommerce Health Premium
+                    // Get Ecommerce Health Premium
                     $ecomDetail = app(HealthQuoteService::class)->getEcomDetails($modelObject);
                     if (isset($ecomDetail['priceWithVAT'])) {
                         $premium = $ecomDetail['priceWithVAT'];
@@ -291,7 +292,7 @@ class SplitPaymentService
                 if ((! in_array(ucfirst($modelType), $ecomModels)) && $childPayments->count() == 1) {
                     Log::info('MigratePayment::Plan Detail migration for Payment Code: '.$payment->code.' Model Type: '.ucfirst($modelType));
                     if (isset($payment->insurance_provider_id) && $payment->insurance_provider_id > 0) {
-                        //get vat from settings
+                        // get vat from settings
                         $vat = 0;
                         $priceVatApplicable = $grandTotal;
                         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
@@ -328,8 +329,8 @@ class SplitPaymentService
                 $payment->total_amount = $grandTotal;
                 $payment->collection_type = 'broker';
 
-                if ($payment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
-                    $payment->payment_status_id = PaymentStatusEnum::NEW; //new
+                if ($payment->payment_status_id == PaymentStatusEnum::DRAFT) { // draft
+                    $payment->payment_status_id = PaymentStatusEnum::NEW; // new
                 } elseif (
                     ($payment->payment_status_id == PaymentStatusEnum::CAPTURED || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED)
                     && $premium > 0
@@ -343,7 +344,7 @@ class SplitPaymentService
                         }
                     }
                     if ($capturedAmount > 0 && $premium > $capturedAmount) {
-                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid
+                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; // partially paid
                     }
                 }
 
@@ -354,13 +355,13 @@ class SplitPaymentService
                     $payment_sr_no = 1;
                     foreach ($childPayments as $childPayment) {
 
-                        if ($childPayment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
-                            $childPayment->payment_status_id = PaymentStatusEnum::NEW; //new
+                        if ($childPayment->payment_status_id == PaymentStatusEnum::DRAFT) { // draft
+                            $childPayment->payment_status_id = PaymentStatusEnum::NEW; // new
                         }
                         // Create a new SplitPayment record
                         $collectionAmount = 0;
-                        if ($childPayment->payment_status_id == PaymentStatusEnum::PAID || $childPayment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
-                        || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $childPayment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
+                        if ($childPayment->payment_status_id == PaymentStatusEnum::PAID || $childPayment->payment_status_id == PaymentStatusEnum::CAPTURED // if paid or captured
+                        || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $childPayment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID // if partial paid or captured
                         ) {
                             $collectionAmount = $childPayment->captured_amount;
                             $parentCollectionAmount += $childPayment->captured_amount;
@@ -392,12 +393,12 @@ class SplitPaymentService
 
                         $payment_sr_no++;
                         // Delete the child payment from the old table
-                        ////$childPayment->delete();
+                        // //$childPayment->delete();
                     }
                     if ($payment->code == $code) {
 
                         if ($premium > 0 && $parentCollectionAmount > 0 && $premium > $parentCollectionAmount) {
-                            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid
+                            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; // partially paid
                         } elseif ($payment->frequency == 'upfront') {
                             $payment->payment_status_id = $childPayment->payment_status_id;
                         }
@@ -424,17 +425,13 @@ class SplitPaymentService
         try {
             $quote = $this->getQuoteObject($modelType, $quoteId);
             $quote->load(['customer', 'advisor']);
-
-            $data = $this->prepareReceiptData($quote, $splitPayment, $modelType);
-
+            $data = $this->prepareReceiptData($quote, $splitPayment, $modelType, $send_update_id);
             $documentType = $this->getDocumentType($modelType);
             $data['document_type_code'] = $documentType;
             $data['quote_uuid'] = $quote->uuid;
-
             if ($send_update_id > 0) {
                 $quote = SendUpdateLog::find($send_update_id);
             }
-
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
@@ -451,7 +448,7 @@ class SplitPaymentService
         }
     }
 
-    private function prepareReceiptData($quote, $splitPayment, $modelType)
+    private function prepareReceiptData($quote, $splitPayment, $modelType, $send_update_id)
     {
         $data = [];
         $data['order_amount'] = number_format($splitPayment->collection_amount, 2, '.', ',');
@@ -474,9 +471,8 @@ class SplitPaymentService
         if ($splitPayment->captured_at != null) {
             $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->captured_at));
         }
-
-        $data['insurance_company'] = $this->getInsuranceCompany($quote, $modelType);
-
+        $data['insurance_company'] = $this->getInsuranceCompany($quote, $send_update_id);
+        info('Insurance company for '.$quote->code.' is '.$data['insurance_company']);
         $splitPayment->load(['payment', 'paymentMethod']);
         $data['payment_method'] = $splitPayment->paymentMethod->name;
         $data['remarks'] = $splitPayment->payment->notes;
@@ -516,21 +512,15 @@ class SplitPaymentService
         }
     }
 
-    private function getInsuranceCompany($quote, $modelType)
+    private function getInsuranceCompany($quote, $send_update_id)
     {
-        if (in_array($modelType, [QuoteTypes::BUSINESS->value, QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::HOME->value])) {
-            $quote->load(['insuranceProviderDetails']);
-
-            return $quote->insuranceProviderDetails->text;
-        } elseif (in_array($modelType, [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value])) {
-            $quote->load(['plan']);
-
-            return $quote->plan->text;
-        } else {
-            $quote->load(['insuranceProvider']);
-
-            return $quote->insuranceProvider->text;
+        if ($send_update_id > 0) {
+            $quote = SendUpdateLog::find($send_update_id);
         }
+        $quote->load(['payments.insuranceProvider']);
+        $payment = $quote->payments()->first();
+
+        return $payment->insuranceProvider->text;
     }
 
     private function getTypeOfInsurance($quote, $modelType)
@@ -664,7 +654,7 @@ class SplitPaymentService
 
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             // Log message for creating Sage receipt
-            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage recipt id: '.$paymentSplit->sage_reciept_id);
+            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage receipt id: '.$paymentSplit->sage_reciept_id);
 
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
             if ($isSageEnabled && empty($paymentSplit->sage_reciept_id)) {
@@ -713,7 +703,7 @@ class SplitPaymentService
                         $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
                     }
                 }
-                //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
+                // $paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
             }
 
             $existingReceipts = QuoteDocument::where(['payment_split_id' => $splitPaymentId, 'document_type_text' => DocumentTypeEnum::RECEIPT])->get();
@@ -922,6 +912,10 @@ class SplitPaymentService
             if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 info('Master payment code: '.$payment->code.' updating payment paid at for lead');
                 $quoteModel->payment_paid_at = now();
+
+                // Update lead source for revival quotes after payment is paid
+                $isRevival = $quoteModel->source == LeadSourceEnum::REVIVAL || $quoteModel->source == LeadSourceEnum::REVIVAL_REPLIED;
+                $payment->paymentable_type == HealthQuote::class && $isRevival && $quoteModel->source = LeadSourceEnum::REVIVAL_PAID;
             }
             $quoteModel->save();
             // Log after successfully saving the quote model
@@ -1013,7 +1007,7 @@ class SplitPaymentService
             $priceWithoutVat = $splitPaymentAmount;
         }
 
-        return [$priceWithoutVat, $vat];
+        return [round($priceWithoutVat, 2), round($vat, 2)];
     }
 
     // function to calculate the price vat for master payment
@@ -1086,7 +1080,7 @@ class SplitPaymentService
             $this->updateMasterPaymentForMultipleSplits($masterPayment);
         }
 
-        //get the sum of all the split payments to update the total amount in master payment
+        // get the sum of all the split payments to update the total amount in master payment
         $masterPayment->total_amount = $masterPayment->paymentSplits()->sum('payment_amount');
         $masterPayment->saveQuietly();
 
@@ -1098,7 +1092,7 @@ class SplitPaymentService
         $masterPayment->total_payments = 1;
         $masterPayment->frequency = PaymentFrequency::UPFRONT;
 
-        //if first split payment is authorized then update total price and total amount to first split payment
+        // if first split payment is authorized then update total price and total amount to first split payment
         $firstSplitPayment = $masterPayment->paymentSplits()->where(['code' => $masterPayment->code, 'sr_no' => '1'])->first();
         if (isset($firstSplitPayment)) {
             $masterPayment->payment_methods_code = $firstSplitPayment->payment_method;
@@ -1125,6 +1119,43 @@ class SplitPaymentService
         // Delete the payment split
         $paymentSplit->delete();
         info('Deleted Payment Split For Code: '.$paymentSplit->code.' Split Payment: '.$paymentSplit->id.'-'.$paymentSplit->sr_no);
+    }
+
+    /**
+     * For each payment split, if the parent payment's frequency is UPFRONT and its status is PAID,
+     * the method updates the payment split's payment amount to match the parent payment's total amount and logs this update.
+     * If the collection amount is greater than or equal to the payment amount, the payment split's status is set to PAID, otherwise, it is set to PARTIALLY_PAID
+     * This method trigger when policy details section update
+     */
+    public function updateSplitPaymentStatusAndAmount($payment)
+    {
+        info('Quote Code: '.$payment->code.' fn: Updating child payment status');
+        $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
+        if (! $paymentSplits->isEmpty()) {
+            foreach ($paymentSplits as $paymentSplit) {
+                info('Quote Code: '.$payment->code.' Updating TA for Split Payment frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
+                if ($payment->frequency == PaymentFrequency::UPFRONT && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::NEW, PaymentStatusEnum::OVERDUE])) {
+                    info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
+                    if ($paymentSplit->payment_amount != $payment->total_amount) {
+                        $paymentSplit->payment_amount = $payment->total_amount;
+                    }
+                }
+                if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
+                    // Format both amounts to 2 decimal places
+                    $collectionAmount = round($paymentSplit->collection_amount, 2);
+                    $paymentAmount = round($paymentSplit->payment_amount, 2);
+
+                    if ($collectionAmount >= $paymentAmount) {
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                    } else {
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                    }
+                }
+                if ($paymentSplit->isDirty()) {
+                    $paymentSplit->save();
+                }
+            }
+        }
     }
 
     private function createPolicyIssuanceAutomation($quote, $quoteType, $payment)

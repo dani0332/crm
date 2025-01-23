@@ -27,6 +27,7 @@ use App\Http\Requests\UpdateTravelRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\TravelPlan;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -111,6 +112,9 @@ class TravelController extends Controller
                 'isManagerORDeputy' => $isManager,
             ],
             'authorizedDays' => intval($authorizedDays->value),
+            'amlStatuses' => AMLStatusCode::getStatuses(),
+            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),
+            'travelPlans' => TravelPlan::all(),
         ]);
     }
 
@@ -125,9 +129,9 @@ class TravelController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::TRAVEL->value, $record);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);

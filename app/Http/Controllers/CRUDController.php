@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
@@ -223,7 +224,7 @@ class CRUDController extends Controller
         }
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
         $tiers = Tier::where('is_active', 1)->get();
-        //Checking if the loggedIn user is Renewal User
+        // Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $this->crudService->fillRenewalData($this->genericModel);
@@ -262,7 +263,7 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         // inertia rendering for health quote
-        //PD Revert
+        // PD Revert
         // $count = $gridData->count();
         $count = 0;
         $hasOtherFilters = count(array_diff_key($request->all(), ['page' => ''])) > 0;
@@ -297,6 +298,7 @@ class CRUDController extends Controller
                 'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Health),
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
                 'authorizedDays' => intval($authorizedDays->value),
+                'assignmentTypes' => AssignmentTypeEnum::withLabels(),
             ]);
         }
 
@@ -361,6 +363,7 @@ class CRUDController extends Controller
                 'isBetaUser' => $isBetaUser,
                 'teams' => $teams,
                 'authorizedDays' => intval($authorizedDays->value),
+                'assignmentTypes' => AssignmentTypeEnum::withLabels(),
             ]);
         }
 
@@ -547,7 +550,7 @@ class CRUDController extends Controller
     public function show($id, Request $request)
     {
         if (strrpos(request()->getRequestUri(), '/') === strlen(request()->getRequestUri()) - 1) {
-            //Fix for trailing slash when loading plans through jQuery
+            // Fix for trailing slash when loading plans through jQuery
             return redirect(request()->url());
         }
         $quoteType = strtolower($this->genericModel->modelType);
@@ -556,9 +559,9 @@ class CRUDController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
 
@@ -1985,7 +1988,6 @@ class CRUDController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyPending,
             ]);
         }
-
         // store policy issuer
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         if ($payment) {
@@ -1993,12 +1995,10 @@ class CRUDController extends Controller
             $payment->save();
         }
 
-        // update status policy issued of req fulfilled
-        $this->updatePriceAndDiscount($quoteModel);
-        $this->updateQuoteStatus($request->modelType, $request->quote_id);
-
+        $centralService = app(CentralService::class);
+        $centralService->synchronizePaymentInformation($quoteModel);
+        $centralService->updateQuoteInformation($request->modelType, $request->quote_id);
         info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
-
         if (in_array($quoteModel->quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer])) {
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($quoteModel, $payment, $request->modelType);
             info('Quote Code: '.$quoteModel->code.' BIN Generated for transactional leads');
@@ -2154,7 +2154,7 @@ class CRUDController extends Controller
     {
         Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
 
-        //get Car quote by uuid using model
+        // get Car quote by uuid using model
         $carQuote = CarQuote::where('uuid', $request->quote_uuid)->first();
 
         $previousAdvisor = null;

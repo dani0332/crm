@@ -279,6 +279,24 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
+        if (auth()->user()->can(PermissionsEnum::BUY_LEADS)) {
+            $nav = $nav->add('Buy Leads', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        true,
+                        'Buy Leads Request',
+                        route('buy-leads.request.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        true,
+                        'Buy Leads Tracking',
+                        route('buy-leads.request.tracking'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
+        }
+
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', route('activities.index'));
         }
@@ -319,11 +337,30 @@ class HandleInertiaRequests extends Middleware
                     auth()->user()->hasAnyPermission(
                         PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                        PermissionsEnum::HEALTH_QUOTES_ACCESS
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                        PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST,
                     ),
-                    'Health Quotes',
+                    'Health',
                     route('health.index'),
-                    fn ($s) => $s->attributes(['icon' => 'health'])
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'health'])
+                        ->addIf(
+                            auth()->user()->hasAnyPermission(
+                                PermissionsEnum::HealthQuotesList,
+                                PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
+                                PermissionsEnum::HEALTH_QUOTES_ACCESS
+                            ),
+                            'Health Quotes',
+                            route('health.index'),
+                            fn ($s) => $s->attributes(['icon' => 'health'])
+                        )
+
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST),
+                            'Health Revival Quotes',
+                            route('health-revival-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'health'])
+                        ),
                 )
                 ->addIf(
                     auth()->user()->can(PermissionsEnum::TravelQuotesList),
@@ -595,6 +632,18 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
+                        'Process Tracker',
+                        route('process-tracker.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
+                        'Buy Lead Config',
+                        route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->hasAnyPermission([
                             PermissionsEnum::RULE_CONFIG_LIST,
                             PermissionsEnum::QUAD_CONFIG_LIST,
@@ -651,6 +700,7 @@ class HandleInertiaRequests extends Middleware
                             )
                     );
             });
+
         }
 
         if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {

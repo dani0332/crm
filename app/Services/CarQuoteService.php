@@ -49,7 +49,11 @@ class CarQuoteService extends BaseService
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService)
+    public function __construct(HttpRequestService $httpService,
+        LeadAllocationService $leadAllocationService,
+        SendEmailCustomerService $sendEmailCustomerService,
+        ApplicationStorageService $applicationStorageService,
+        ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -65,6 +69,8 @@ class CarQuoteService extends BaseService
                 DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
                 // 'cqr.email',
                 // 'cqr.mobile_no',
+                'cqr.company_name AS car_company_name',
+                'cqr.company_address AS car_company_address',
                 DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
                 'cqr.car_value',
                 'cqr.additional_notes',
@@ -124,8 +130,8 @@ class CarQuoteService extends BaseService
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
-                //'ppip.text AS prefill_plan_provider_id_text',
-                //'prefill_plan.text AS prefill_plan_id_text',
+                // 'ppip.text AS prefill_plan_provider_id_text',
+                // 'prefill_plan.text AS prefill_plan_id_text',
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
                 'cqr.year_of_manufacture AS year_of_manufacture_text',
@@ -181,7 +187,9 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 1 THEN "System Assigned"
                 WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
                 WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
-                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned"
+                WHEN cqr.assignment_type = 5 THEN "Bought Lead"
+                WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
                 'c.insured_first_name',
                 'c.insured_last_name',
@@ -195,9 +203,9 @@ class CarQuoteService extends BaseService
                 'ent.company_address',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
-                //'cqr.prefill_plan_id',
-                //'cqr.prefill_plan_selected_at',
-                //'cqr.plan_selected_at'
+                // 'cqr.prefill_plan_id',
+                // 'cqr.prefill_plan_selected_at',
+                // 'cqr.plan_selected_at'
                 'cqr.enquiry_count',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'cqr.policy_booking_date',
@@ -234,8 +242,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
-            //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
-            //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
+            // ->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
+            // ->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
@@ -329,6 +337,8 @@ class CarQuoteService extends BaseService
             'email' => $request->email,
             'address' => $request->address,
             'mobileNo' => $request->mobile_no,
+            'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
             'dob' => $request->dob,
             'nationalityId' => $request->nationality_id,
             'uaeLicenseHeldForId' => $request->uae_license_held_for_id,
@@ -378,6 +388,12 @@ class CarQuoteService extends BaseService
         }
         if ($request->dob) {
             $carQuote->dob = $request->dob;
+        }
+        if ($request->company_name) {
+            $carQuote->company_name = $request->company_name;
+        }
+        if ($request->company_address) {
+            $carQuote->company_address = $request->company_address;
         }
         if ($request->nationality_id) {
             $carQuote->nationality_id = $request->nationality_id;
@@ -630,6 +646,8 @@ class CarQuoteService extends BaseService
             'first_name' => 'input|text|required|ss:1',
             'last_name' => 'input|text|required|ss:2',
             'dob' => 'input|text|title|required',
+            'company_name' => 'input|text|max:250',
+            'company_address' => 'input|text|max:1000',
             'customer_age' => 'readonly|none',
             'mobile_no' => 'input|title|number|required|ss:4',
             'email' => 'input|email|required|ss:3',
@@ -1013,8 +1031,12 @@ class CarQuoteService extends BaseService
                     }
                 } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('cqr.quote_status_id', $request[$item]);
-                } elseif ($item == 'assignment_type' && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->where('cqr.assignment_type', $request[$item]);
+                } elseif ($item == 'assignment_type' && ! empty($request[$item])) {
+                    if (is_array($request[$item])) {
+                        $this->query->whereIn('cqr.assignment_type', $request[$item]);
+                    } elseif ($request[$item] !== 'all') {
+                        $this->query->where('cqr.assignment_type', $request[$item]);
+                    }
                 } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('cqr.tier_id', $request[$item]);
                 } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
@@ -1276,10 +1298,14 @@ class CarQuoteService extends BaseService
         return $carQuote;
     }
 
-    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false)
+    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        if ($useKen2Endpoint) {
+            $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
+        } else {
+            $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        }
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
@@ -1383,7 +1409,7 @@ class CarQuoteService extends BaseService
     public function renewalCreatePlan($planData)
     {
         $apiCreds = [
-            'apiEndPoint' => config('constants.KEN_API_ENDPOINT').'/save-manual-car-quote-plan',
+            'apiEndPoint' => config('constants.KEN2_API_ENDPOINT').'/save-manual-car-quote-plan',
             'apiToken' => config('constants.KEN_API_TOKEN'),
             'apiTimeout' => config('constants.KEN_API_TIMEOUT'),
             'apiUserName' => config('constants.KEN_API_USER'),
@@ -1529,9 +1555,9 @@ class CarQuoteService extends BaseService
         return CarQuote::where('parent_duplicate_quote_id', $code)->first();
     }
 
-    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false)
+    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
     {
-        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled);
+        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled, $useKen2Endpoint);
 
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
@@ -1801,18 +1827,18 @@ class CarQuoteService extends BaseService
         $carLostChangeStatus = true;
         $allowQuoteLogAction = true;
 
-        //mo can only change status when status is car sold / uncontactable, based on condition below
+        // mo can only change status when status is car sold / uncontactable, based on condition below
         if (! isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
             $carLostChangeStatus = false;
             $allowQuoteLogAction = false;
         }
 
         if (isCarLostStatus($lead->quote_status_id)) {
-            //when status is car sold / uncontactable, default lead status change is blocked, will allow agains validations below
+            // when status is car sold / uncontactable, default lead status change is blocked, will allow agains validations below
             $carLostChangeStatus = false;
             $allowQuoteLogAction = false;
 
-            //validations for Car Advisor / Deputy Manager Role
+            // validations for Car Advisor / Deputy Manager Role
             if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
                 $allowQuoteLogAction = false;
 
@@ -1822,7 +1848,7 @@ class CarQuoteService extends BaseService
                 }
             }
 
-            //validations for MO role
+            // validations for MO role
             if (auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                 $carLostChangeStatus = false;
                 if (isCarLostStatus($lead->quote_status_id) && $paymentEntityModel?->carLostQuoteLog?->status == GenericRequestEnum::PENDING) {
@@ -1846,8 +1872,8 @@ class CarQuoteService extends BaseService
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
 
-        //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+        // Constants for system assigned types
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
 
         // Get the allocation record for the new advisor
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
@@ -2198,7 +2224,7 @@ class CarQuoteService extends BaseService
             'customer_id' => $lead->customer_id,
         ])->first();
 
-        if (! $existingAddress) {
+        if (empty($existingAddress?->type)) {
             info('Sending address notification to customer for lead : '.$lead->uuid);
             // only trigger bird flow if address is not already added
             $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);

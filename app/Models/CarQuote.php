@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\FilterTypes;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -463,5 +465,26 @@ class CarQuote extends BaseModel
     public function insuranceProviderDetails()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
+
+    public function hasExemptedSource()
+    {
+        // Check if Dubai Now exclusion should be applied
+        $shouldIncludeDubaiNow = getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
+
+        // List of exempted lead sources
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
+
+        // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
+        if ($shouldIncludeDubaiNow) {
+            $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
+        }
+
+        return in_array($this->source, $exemptedLeadSources);
+    }
+
+    public function isRenewalTierEmailSent()
+    {
+        return $this->is_renewal_tier_email_sent == 1;
     }
 }

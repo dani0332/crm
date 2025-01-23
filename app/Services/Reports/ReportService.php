@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -14,8 +15,10 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
+use App\Models\HealthQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
+use App\Models\QuoteBatches;
 use App\Models\QuoteType;
 use App\Models\Team;
 use App\Models\Tier;
@@ -26,7 +29,6 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -582,7 +584,7 @@ class ReportService extends BaseService
 
         info('totalPremiumQuery took '.number_format($endTime - $startTime, 4).' seconds to run');
 
-        //dd($totalPremiumQuery->toSql(), $totalPremiumQuery->getBindings());
+        // dd($totalPremiumQuery->toSql(), $totalPremiumQuery->getBindings());
         // Execute the query and return the result
         return $result;
     }
@@ -590,9 +592,9 @@ class ReportService extends BaseService
     public function getPaymentAuthorisedSummary($request)
     {
 
-        $user = Auth::user();
-
+        $user = auth()->user();
         $userTeams = $user->getUserTeams($user->id);
+        $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $expiryDays = $authorizedDays->value;
 
@@ -640,6 +642,7 @@ class ReportService extends BaseService
                 }
             }
         }
+
         $dataCollection = collect();
         foreach ($allowedLOBs as $details) {
             $premiumColumn = $details['table'].'.premium';
@@ -676,8 +679,8 @@ class ReportService extends BaseService
             }
 
             if (isset($request->expireDate)) {
-                $expireDate = Carbon::parse($request->expireDate)->startOfDay();
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $expireDate);
+                $date = Carbon::parse($request->expireDate)->startOfDay();
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $date);
             }
 
             if (isset($request->todayDate)) {
@@ -749,5 +752,115 @@ class ReportService extends BaseService
         ];
 
         return $pagination;
+    }
+
+    public function getRevivalReportsData($request)
+    {
+        $source = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
+
+        $data = [];
+        if (empty($request->lob)) {
+            return $data;
+        }
+        $carInsurancetypeId = $request->car_type_insurance_id;
+        $leadSource = $request->lead_source;
+
+        if ($request->lob == QuoteTypeId::Health) {
+            $model = HealthQuote::query();
+            $tableName = 'health_quote_request';
+            $query = $model
+                ->select(
+                    'dtt_revivals.revival_quote_batch_id as quote_batch_id',
+                    DB::raw('COUNT(CASE  WHEN quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE NULL END) as transaction_approved'),
+                    DB::raw('COUNT(CASE  WHEN email_sent = 1 THEN 1 ELSE NULL END) as email_sent_count'),
+                    DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
+                )
+                ->leftjoin('dtt_revivals', 'dtt_revivals.uuid', $tableName.'.uuid')
+                ->whereNotNull(['dtt_revivals.revival_quote_batch_id'])
+                ->orderBy('dtt_revivals.revival_quote_batch_id', 'desc');
+            if (! empty($request->type_of_plan)) {
+                $query->where('health_plan_type_id', $request->type_of_plan);
+            }
+        }
+
+        if ($request->lob == QuoteTypeId::Car) {
+
+            $model = CarQuote::query();
+            $tableName = 'car_quote_request';
+            $query = $model
+                ->select(
+                    'dtt_revivals.revival_quote_batch_id as quote_batch_id',
+                    DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as conversion_captured'),
+                    DB::raw('COUNT(CASE  WHEN source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE NULL END) as total_revived'),
+                    DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' and  quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE NULL END) as captured'),
+                    DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' and  quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE NULL END) as authorized'),
+
+                    DB::raw('COUNT(CASE  WHEN email_sent = 1 THEN 1 ELSE NULL END) as email_sent_count'),
+                    DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
+                )
+                ->leftjoin('dtt_revivals', 'dtt_revivals.uuid', $tableName.'.uuid')
+                ->whereNotNull(['dtt_revivals.revival_quote_batch_id'])
+                ->orderBy('dtt_revivals.revival_quote_batch_id', 'desc');
+
+            if (! empty($carInsurancetypeId)) {
+                $query->where('car_type_insurance_id', $carInsurancetypeId);
+            }
+        }
+
+        if (! empty($leadSource)) {
+            $query->where('source', $leadSource);
+        } else {
+            $query->whereIn('source', $source);
+        }
+        $record = $query->groupBy('dtt_revivals.revival_quote_batch_id')->get()->toArray();
+
+        if ($request->lob == QuoteTypeId::Health) {
+
+            foreach ($record as $item) {
+
+                $batch = QuoteBatches::find($item['quote_batch_id'])->name;
+                // response rate of customer
+                $rs['quote_batch_id'] = $batch;
+                $rs['email_sent_count'] = $item['email_sent_count'];
+                $rs['reply_received_count'] = $item['reply_received_count'];
+                $rs['ratio'] = $item['email_sent_count'] > 0 ? round(($item['reply_received_count'] / $item['email_sent_count']) * 100, 2).'%' : null;
+                $data['emailConversionReportHealth'][] = $rs;
+
+                // transaction approved
+                $rs['quote_batch_id'] = $batch;
+                $rs['transaction_approved'] = $item['transaction_approved'];
+                $rs['email_sent_count'] = $item['email_sent_count'];
+                $rs['ratio'] = $item['transaction_approved'] > 0 ? round(($item['transaction_approved'] / $item['email_sent_count']) * 100, 2).'%' : null;
+                $data['transactionApprovedReport'][] = $rs;
+            }
+        }
+        if ($request->lob == QuoteTypeId::Car) {
+            foreach ($record as $item) {
+
+                // conversion rate
+                $batch = QuoteBatches::find($item['quote_batch_id'])->name;
+                $c['quote_batch_id'] = $batch;
+                $c['conversion_captured'] = $item['conversion_captured'];
+                $c['total_revived'] = $item['email_sent_count'];
+                $c['ratio'] = $item['conversion_captured'] > 0 ? round(($item['conversion_captured'] / $item['email_sent_count']) * 100, 2).'%' : null;
+                $data['conversionRate'][] = $c;
+
+                // auth to capture
+                $ac['quote_batch_id'] = $batch;
+                $ac['authorized'] = $item['authorized'];
+                $ac['captured'] = $item['captured'];
+                $ac['ratio'] = $item['authorized'] > 0 ? round(($item['captured'] / $item['authorized']) * 100, 2).'%' : null;
+                $data['leadConversionReport'][] = $ac;
+
+                // response rate of customer
+                $rs['quote_batch_id'] = $batch;
+                $rs['email_sent_count'] = $item['email_sent_count'];
+                $rs['reply_received_count'] = $item['reply_received_count'];
+                $rs['ratio'] = $item['email_sent_count'] > 0 ? round(($item['reply_received_count'] / $item['email_sent_count']) * 100, 2).'%' : null;
+                $data['emailConversionReportCar'][] = $rs;
+            }
+        }
+
+        return $data;
     }
 }

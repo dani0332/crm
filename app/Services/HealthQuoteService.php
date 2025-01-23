@@ -62,7 +62,7 @@ class HealthQuoteService extends BaseService
         $this->httpService = $httpService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
-            //'hqr.prefill_plan_id',
+            // 'hqr.prefill_plan_id',
             'hqr.uuid',
             'hqr.code',
             'hqr.first_name',
@@ -165,10 +165,12 @@ class HealthQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             DB::raw('(CASE
-            WHEN hqr.assignment_type = 1 THEN "System Assigned"
-            WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
-            WHEN hqr.assignment_type = 3 THEN "Manual Assigned"
-            WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                WHEN hqr.assignment_type = 1 THEN "System Assigned"
+                WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
+                WHEN hqr.assignment_type = 3 THEN "Manual Assigned"
+                WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned"
+                WHEN hqr.assignment_type = 5 THEN "Bought Lead"
+                WHEN hqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
             'ihp.code as plan_provider_code',
             'ihp.code as plan_provider_code',
             'hqr.health_plan_co_payment_id',
@@ -242,6 +244,7 @@ class HealthQuoteService extends BaseService
                 ]);
                 $payment->orderBy('created_at');
             },
+            'plan',
         ])->first();
     }
 
@@ -482,7 +485,7 @@ class HealthQuoteService extends BaseService
 
         // payment_status_id filter
         if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('payment_status_id', $request->payment_status);
+            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
         }
 
         // is_cold filter
@@ -499,7 +502,7 @@ class HealthQuoteService extends BaseService
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
-        if (isset($request->assignment_type) && ! empty($request->assignment_type)) {
+        if (isset($request->assignment_type) && ! empty($request->assignment_type) && $request->assignment_type !== 'all') {
             $this->query->where('hqr.assignment_type', $request->assignment_type);
         }
         if (isset($request->first_name) && $request->first_name != '') {
@@ -656,7 +659,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->premium = $request->premium;
-        //check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
+        // check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
             $healthQuote->quote_updated_at = Carbon::now();
             $updateMemberDetails = [
@@ -1212,7 +1215,7 @@ class HealthQuoteService extends BaseService
         }
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
-        //check if team is assigned and status not qualified yet so mark it qualified.
+        // check if team is assigned and status not qualified yet so mark it qualified.
         if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
             HealthQuote::where('id', $lead->id)->update([
                 'quote_status_id' => QuoteStatusEnum::Qualified,
@@ -1293,8 +1296,8 @@ class HealthQuoteService extends BaseService
 
         info('Previous assignment type is : '.$previousAssignmentType);
 
-        //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+        // Constants for system assigned types
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
         // Get the allocation record for the new advisor
@@ -1584,7 +1587,7 @@ class HealthQuoteService extends BaseService
     public function renewalCreatePlan($planData)
     {
         $apiCreds = [
-            'apiEndPoint' => config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans',
+            'apiEndPoint' => config('constants.KEN2_API_ENDPOINT').'/save-manual-health-quote-plans',
             'apiToken' => config('constants.KEN_API_TOKEN'),
             'apiTimeout' => config('constants.KEN_API_TIMEOUT'),
             'apiUserName' => config('constants.KEN_API_USER'),
@@ -1717,7 +1720,7 @@ class HealthQuoteService extends BaseService
             $maxAmount = $payment->premium_captured - $payment->premium_refunded;
             if ($maxAmount >= $request->amount) {
                 $paymentAction = new PaymentAction;
-                $paymentAction->payment_code = $payment->code; //$embededTransaction->code;
+                $paymentAction->payment_code = $payment->code; // $embededTransaction->code;
                 $paymentAction->is_fulfilled = 0;
                 $paymentAction->action_type = 'REFUND';
                 $paymentAction->reason = $request->reason;
