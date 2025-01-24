@@ -136,8 +136,8 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.insured[0].first_name || '',
-  insured_last_name: page.props.quote?.insured[0].last_name || '',
+  insured_first_name: page.props.quote?.insured[0]?.first_name || '',
+  insured_last_name: page.props.quote?.insured[0]?.last_name || '',
   emirates_id_number: page.props.quote?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer.emirates_id_expiry_date || null,
