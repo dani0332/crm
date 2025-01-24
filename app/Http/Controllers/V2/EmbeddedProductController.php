@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\PermissionsEnum;
 use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
 use Exception;
 use Illuminate\Http\Request;
@@ -166,6 +169,7 @@ class EmbeddedProductController extends Controller
                 'detail' => $ep,
                 'transactions' => $dataset,
             ],
+            'ep_enums' => EmbeddedProductEnum::asArray(),
         ]);
     }
 
@@ -226,5 +230,16 @@ class EmbeddedProductController extends Controller
         $embeddedProducts = EmbeddedProductRepository::byQuoteType($request->quote_type_id, $request->quote_id);
 
         return response()->json($embeddedProducts);
+    }
+
+    public function reSyncCourier(string $code)
+    {
+        $et = EmbeddedTransaction::whereCode($code)->firstOrFail();
+
+        SyncCourierQuoteWithMacrm::dispatch($et->quoteRequest, $et->quote_type_id);
+
+        return response()->json([
+            'message' => 'Re-syncing Request Submitted Successfully. Please Wait for the process to complete.',
+        ]);
     }
 }
