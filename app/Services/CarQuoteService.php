@@ -1270,7 +1270,7 @@ class CarQuoteService extends BaseService
         }])
             ->where('uuid', $uuid)->first();
 
-        $plans = $this->getPlans($carQuote->uuid, true, true);
+        $plans = $this->getPlans($carQuote->uuid, true, true, true);
 
         $totalPlans = is_countable($plans) ? count($plans) : 0;
 
