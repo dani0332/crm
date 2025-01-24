@@ -197,7 +197,7 @@ class EmbeddedProduct
                     $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
                 });
             })
-            ->when(isset($filters['sync_status']) && $filters['sync_status'] !== CourierSyncStatusEnum::ALL, function ($query) use ($filters) {
+            ->when(isset($filters['sync_status']), function ($query) use ($filters) {
                 $query->filterBySyncStatus(CourierSyncStatusEnum::tryFrom($filters['sync_status']));
             });
 

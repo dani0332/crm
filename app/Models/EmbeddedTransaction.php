@@ -89,14 +89,16 @@ class EmbeddedTransaction extends Model
 
     public function scopeFilterBySyncStatus($query, CourierSyncStatusEnum $status)
     {
+        if($status === CourierSyncStatusEnum::ALL) {
+            return $query;
+        }
+
         if ($status === CourierSyncStatusEnum::SYNCED) {
-            return $query->whereNotNull('courier_synced_at');
+            $query->whereNotNull('courier_synced_at');
+        } elseif($status === CourierSyncStatusEnum::FAILED) {
+            $query->whereNotNull('courier_sync_failed_at');
+        } else {
+            $query->whereNull('courier_synced_at')->whereNull('courier_sync_failed_at');
         }
-
-        if ($status === CourierSyncStatusEnum::FAILED) {
-            return $query->whereNotNull('courier_sync_failed_at');
-        }
-
-        return $query->whereNull('courier_synced_at')->whereNull('courier_sync_failed_at');
     }
 }
