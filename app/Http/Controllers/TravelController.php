@@ -91,6 +91,7 @@ class TravelController extends Controller
         $searchProperties = array_flip($this->genericModel->searchProperties);
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
         $insurerApiStatus = PolicyIssuanceEnum::getInsurerAPIStatuses();
+        $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
@@ -102,6 +103,7 @@ class TravelController extends Controller
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
             'insurerApiStatus' => $insurerApiStatus,
+            'issuanceStatuses' => $issuanceStatuses,
             'dropdownSource' => $dropdownSource,
             'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,

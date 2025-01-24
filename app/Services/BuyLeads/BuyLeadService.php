@@ -96,7 +96,7 @@ class BuyLeadService
             return 'System is unable to process your request.';
         }
 
-        return [$cost, $requestType];
+        return [$cost, $requestType, $config->segment];
     }
 
     public function requestBuyLeads(RequestBuyLeadsRequest $request)
@@ -110,7 +110,7 @@ class BuyLeadService
             return $configCost;
         }
 
-        [$cost, $requestType] = $configCost;
+        [$cost, $requestType, $segment] = $configCost;
 
         BuyLeadRequest::create([
             'quote_type_id' => $request->getQuoteTypeId(),
@@ -120,6 +120,7 @@ class BuyLeadService
             'request_type' => $requestType,
             'expires_at' => now()->endOfDay(),
             'department_id' => Auth::user()->department_id,
+            'segment' => $segment,
         ]);
 
         return null;
