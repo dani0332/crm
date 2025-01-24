@@ -83,7 +83,7 @@ class EmbeddedTransaction extends Model
 
     public function isSyncFailed()
     {
-        return ! empty($this->courier_sync_failed_at);
+        return ! empty($this->courier_sync_failed_at) && empty($this->courier_sync_started_at);
     }
 
     public function isSyncPending()
