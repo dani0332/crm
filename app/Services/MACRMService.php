@@ -2,57 +2,16 @@
 
 namespace App\Services;
 
+use App\Services\Traits\Macrmable;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class MACRMService
 {
-    private static function retryLogic(Exception $exception): bool
-    {
-        info(self::class.'::retryLogic ', [
-            'message' => 'API failed',
-            'error' => $exception->getMessage(),
-            'code' => $exception->getCode(),
-            'line' => $exception->getLine(),
-        ]);
-
-        $shouldRetry = $exception->getCode() !== 422;
-
-        if ($shouldRetry) {
-            info(self::class.'::retryLogic - Going to Retry Request...');
-        }
-
-        return $shouldRetry;
-    }
-
-    private static function handleResponse(Response $response, string $endpoint): array
-    {
-        if ($response->status() === 404) {
-            $responseBody = json_decode($response->body(), true);
-            if (($responseBody['message'] ?? '') === 'Courier not found.') {
-                info(self::class." - Specific failure: Courier not found for endpoint {$endpoint}");
-
-                return [
-                    'ok' => false,
-                    'object' => [
-                        'success' => true,
-                        'message' => 'Courier not found',
-                        'data' => ['status' => 'Pending'],
-                    ],
-                ];
-            }
-        }
-
-        if (! $response->successful()) {
-            info(self::class." - API request failed with status: {$response->status()} and response: ".$response->body());
-        }
-
-        return ['ok' => $response->successful(), 'object' => $response->json()];
-    }
+    use Macrmable;
 
     private static function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
     {
@@ -76,25 +35,8 @@ class MACRMService
         } catch (Exception $e) {
             info(self::class." - Exception occurred during API call: {$e->getMessage()}");
 
-            return ['ok' => false, 'object' => null];
+            return ['ok' => false, 'object' => null, 'message' => $e->getMessage()];
         }
-    }
-
-    private static function verifySyncPreChecks($lead, $quoteTypeId, $leadData)
-    {
-        if (! $leadData) {
-            info("No lead data found for UUID: {$lead->uuid} and QuoteTypeId: {$quoteTypeId}. Sync aborted.");
-
-            return false;
-        }
-
-        if (empty($leadData['payment']['captured_at'])) {
-            info("Payment Not captured for courier, for UUID: {$lead->uuid} and QuoteTypeId: {$quoteTypeId}. Sync aborted.");
-
-            return false;
-        }
-
-        return true;
     }
 
     public static function syncCourierQuote($quote, $quoteTypeId)
@@ -108,13 +50,15 @@ class MACRMService
 
             info("Syncing Courier Quote with MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
 
-            // Send the request using the sendRequest method with 'POST' method
-            ['ok' => $ok, 'object' => $response] = self::sendRequest('/couriers/submit-eps', $leadData, 'POST');
+            ['ok' => $ok, 'object' => $response, 'message' => $message] = self::sendRequest('/couriers/submit-eps', $leadData);
+
+            $refId = self::getRefId($leadData);
+            self::saveSyncResponse($refId, $ok, $response, $message);
 
             if ($ok) {
-                info(self::class." - Synced Courier Quote with MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response['message']}");
+                info(self::class." - Synced Courier Quote with MACRM for UUID: {$quote->uuid}, RefId: {$refId} and QuoteTypeId: {$quoteTypeId} with message: {$message}");
             } else {
-                info(self::class." - Courier Quote Syncing with MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response['message']}");
+                info(self::class." - Courier Quote Syncing with MACRM Failed for UUID: {$quote->uuid}, RefId: {$refId} and QuoteTypeId: {$quoteTypeId} with message: {$message}");
             }
 
             return $ok;
@@ -148,7 +92,7 @@ class MACRMService
             info("Cancelling Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
             ['ok' => $ok, 'object' => $response] = self::sendRequest('/couriers/cancel-courier-status', [
                 'ref_id' => $refId,
-            ], 'POST');
+            ]);
 
             if ($ok) {
                 info(self::class." - Canceled Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: ".($response['message'] ?? 'No message provided'));
