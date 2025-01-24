@@ -70,7 +70,7 @@ class HealthAllocation implements Allocation
             }
 
             if ($advisor->id == $lead->advisor_id) {
-                info('Advisor is same as previous advisor. Skipping for now.');
+                info('Advisor is same as previous advisor. Skipping for now. for lead : '.$lead->uuid);
                 $lead->endAllocation();
                 $this->healthAllocationService->endBuyLeadProcessing();
 

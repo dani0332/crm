@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\BuyLeads;
 
+use App\Enums\BuyLeadSegment;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,6 +30,7 @@ class BuyLeadConfigUpsertRequest extends FormRequest
             'department_id' => 'required|exists:departments,id',
             'value' => 'required|numeric|min:0',
             'volume' => 'required|numeric|min:0',
+            'segment' => ['required', Rule::enum(BuyLeadSegment::class)],
         ];
     }
 
