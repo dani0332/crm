@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -48,5 +49,40 @@ class EmbeddedTransaction extends Model
     public function travelQuote()
     {
         return $this->belongsTo(TravelQuote::class, 'code', 'code');
+    }
+
+    public function courierSyncStatusInfo(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return [
+                    'status' => $this->getSyncStatus(),
+                    'is_failed' => $this->isSyncFailed(),
+                    'is_pending' => $this->isSyncPending(),
+                    'message' => $this->courier_sync_message ?? 'This transaction is pending for sync',
+                ];
+            }
+        );
+    }
+
+    public function getSyncStatus()
+    {
+        if ($this->courier_sync_failed_at) {
+            return 'Failed';
+        } elseif ($this->courier_synced_at) {
+            return 'Synced';
+        }
+
+        return 'Pending';
+    }
+
+    public function isSyncFailed()
+    {
+        return ! empty($this->courier_sync_failed_at);
+    }
+
+    public function isSyncPending()
+    {
+        return empty($this->courier_synced_at) && empty($this->courier_sync_failed_at);
     }
 }
