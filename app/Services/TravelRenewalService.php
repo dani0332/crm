@@ -116,8 +116,8 @@ class TravelRenewalService extends BaseService
                 'destinationIds' => $destinationIds,
                 'emiratesIdNumber' => $customer->emirates_id_number ?? null,
                 'emiratesIdExpiryDate' => $customer->emirates_id_expiry_date ?? null,
-                'insuredFirstName' => $customer->insured_first_name ?? null,
-                'insuredLastName' => $customer->insured_last_name ?? null,
+                'insuredFirstName' => $customer->insured_first_name ?? null, // TODO:: Need to update the insurer details
+                'insuredLastName' => $customer->insured_last_name ?? null, // TODO:: Need to update the insurer details
                 'isEcommerce' => $quote->is_ecommerce ?? null,
                 'startDate' => $policyStartDate,
                 'policyExpiryDate' => Carbon::parse($newPolicyExpiryDate)->format('Y-m-d'),

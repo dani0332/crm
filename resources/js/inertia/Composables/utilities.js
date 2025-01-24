@@ -433,3 +433,29 @@ export const validateField = (form, fieldValue, errorField, validationRule) => {
     return true;
   }
 };
+export const applyEmiratesNumberMasking = (emiratesId) => {
+    let emiratesIDNumber = emiratesId.replace(/\D/g, '');
+    if (emiratesIDNumber?.length > 15) {
+        emiratesIDNumber = emiratesIDNumber.substring(0, 15); // Limit to 15 characters
+    }
+    if (emiratesIDNumber?.length <= 3) {
+        emiratesIDNumber = emiratesIDNumber.replace(/(\d{3})(\d{0,})/, '$1-$2');
+    } else if (emiratesIDNumber?.length <= 7) {
+        emiratesIDNumber = emiratesIDNumber.replace(
+            /(\d{3})(\d{4})(\d{0,})/,
+            '$1-$2-$3',
+        );
+    } else if (emiratesIDNumber?.length <= 13) {
+        emiratesIDNumber = emiratesIDNumber.replace(
+            /(\d{3})(\d{4})(\d{7})(\d{0,})/,
+            '$1-$2-$3-$4',
+        );
+    } else {
+        emiratesIDNumber = emiratesIDNumber.replace(
+            /(\d{3})(\d{4})(\d{7})(\d{1,})/,
+            '$1-$2-$3-$4',
+        );
+    }
+
+    return emiratesIDNumber;
+};

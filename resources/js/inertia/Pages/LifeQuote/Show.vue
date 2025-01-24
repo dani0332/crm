@@ -3,6 +3,7 @@ import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -44,7 +45,7 @@ defineProps({
   paymentDocument: Array,
   amlStatusName: String,
 });
-const { isRequired } = useRules();
+const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
 const modelClass = 'App\\Models\\LifeQuote';
@@ -342,7 +343,7 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
-
+// TODO:: Need to verify the insurer details
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -508,6 +509,10 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+    customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
+
 </script>
 
 <template>
@@ -914,8 +919,9 @@ const onAddUpdate = () => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="applyEmiratesIdNumMasking(customerProfileForm.emirates_id_number)"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />

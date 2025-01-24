@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -208,7 +209,7 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
 
 const { copy, copied } = useClipboard();
 
-const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+const { isRequired, isEmail, isNumber, isMobileNo, emiratesNumber } = useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -1476,7 +1477,7 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
-
+// TODO:: Need to verify the insurer details
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -1834,6 +1835,10 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+    customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
+
 </script>
 
 <template>
@@ -2296,8 +2301,9 @@ const onAddUpdate = () => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="applyEmiratesIdNumMasking(customerProfileForm.emirates_id_number)"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />

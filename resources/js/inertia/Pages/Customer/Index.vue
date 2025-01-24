@@ -31,7 +31,7 @@ const tableHeader = [
   { text: 'CUSTOMER ID', value: 'uuid' },
   { text: 'REF-ID', value: 'code' },
   { text: 'NAME', value: 'first_name' },
-  { text: 'INSURED NAME', value: 'insured_first_name' },
+  { text: 'INSURED NAME', value: 'insured_first_name' }, // TODO:: Need to verify the insurer details
   { text: 'CREATED AT', value: 'created_at' },
   { text: 'UPDATED AT', value: 'updated_at' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
@@ -94,7 +94,7 @@ function onReset() {
             { value: 'email', label: 'Email Address' },
             { value: 'first_name', label: 'Customer Name' },
             { value: 'entity_name', label: 'Entity Name' },
-            { value: 'insured_first_name', label: 'Insured Name' },
+            { value: 'insured_first_name', label: 'Insured Name' }, // TODO:: Need to verify the insurer details
             { value: 'mobile_no', label: 'Mobile Number' },
             { value: 'uuid', label: 'Customer ID' },
           ]"
@@ -168,6 +168,7 @@ function onReset() {
         {{ getQuoteType(quote_type_id) }}
       </template>
 
+<!--  TODO:: Need to update the insurer details-->
       <template #item-insured_first_name="{ customer }">
         {{ customer?.insured_first_name }}
       </template>

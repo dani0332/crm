@@ -405,6 +405,7 @@ class SukoonDemocranceService
      */
     private function prepareUserDetails($quote, $transaction)
     {
+        // TODO:: Need to update the insured details relation
         $shortCode = $transaction->product->embeddedProduct->short_code;
 
         if (! empty($quote->quoteRequestEntityMapping)) {

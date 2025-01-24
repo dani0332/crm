@@ -57,9 +57,11 @@ use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
+use App\Models\CustomerInsured;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
@@ -162,12 +164,33 @@ class CentralController extends Controller
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
+        // TODO:: Insured mapping verified
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
+            $emiratesDetails = [
+                str_replace('-', '', $customerProfileRequest->emirates_id_number),
+                $customerProfileRequest->emirates_id_expiry_date,
+            ];
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
+            $customer->update($emiratesDetails);
 
-            $customer->update($customerProfileRequest->only([
-                'insured_first_name', 'insured_last_name', 'emirates_id_number', 'emirates_id_expiry_date',
-            ]));
+            $insuredPersonDetails = Insured::updateOrCreate([
+                'id_type' => 'emiratesId',
+                'id_number' => $customerProfileRequest->emirates_id_number,
+            ], [
+                'first_name' => $customerProfileRequest->insured_first_name,
+                'last_name' => $customerProfileRequest->insured_last_name,
+                'dob' => $customer->dob,
+                'nationality_id' => $customer->nationality_id,
+                'gender' => $customer->screening_gender,
+            ]);
+
+            CustomerInsured::updateOrCreate([
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id,
+            ], [
+                'customer_id' => $customerProfileRequest->customer_id,
+                'insured_id' => $insuredPersonDetails->id,
+            ]);
         }
 
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {

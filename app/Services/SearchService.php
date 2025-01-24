@@ -186,6 +186,7 @@ class SearchService extends BaseService
             $query->where('personal_quotes.code', request()->code);
         }
 
+        // TODO:: Need to update the filter against insured name
         if (request()->has('insured_name') && ! isset(request()->code)) {
             $query->join('customer', 'personal_quotes.customer_id', 'customer.id');
             $query->where(DB::raw("CONCAT(customer.insured_first_name, ' ', customer.insured_last_name)"), 'like', '%'.request()->insured_name.'%');

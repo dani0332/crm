@@ -41,6 +41,7 @@ class BridgerAMLJob implements ShouldQueue
      */
     public function handle(BridgerInsightService $bridgerInsightService): void
     {
+        // TODO:: Insured Mapping verified
         try {
             $bridgerInsightService->searchAMLResult(
                 $this->bridgerAPIToken,

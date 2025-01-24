@@ -42,6 +42,7 @@ class CustomerRepository extends BaseRepository
         $filterValue = request()->get('search_value');
         $filterType = request()->get('search_type');
         $filterColumns = ['email', 'first_name', 'entity_name', 'insured_first_name', 'mobile_no', 'uuid'];
+        // TODO:: Need to verify this filters against insured first name
 
         if (in_array($filterType, $filterColumns) && (! empty($filterType) && ! empty($filterValue))) {
 

@@ -21,8 +21,8 @@ class MDX extends EmbeddedProduct
             $firstName = $quoteObject->first_name ?? '';
             $lastName = $quoteObject->last_name ?? '';
         } else {
-            $firstName = $quoteObject->customer->insured_first_name ?? '';
-            $lastName = $quoteObject->customer->insured_last_name ?? '';
+            $firstName = $quoteObject->customer->insured_first_name ?? ''; // TODO:: Need to update the insurer details
+            $lastName = $quoteObject->customer->insured_last_name ?? ''; // TODO:: Need to update the insurer details
         }
 
         $data = [

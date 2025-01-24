@@ -67,6 +67,7 @@ class BridgerInsightService
 
     public function searchAMLResult($bridgerAPIToken, $memberUboDetails, $quoteDetails, $quoteTypeId, $customerType, $loginCustomerEmail)
     {
+        // TODO:: Insured Mapping verified
         if ($bridgerAPIToken['status']) {
             $quoteId = $quoteDetails->id;
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();

@@ -386,6 +386,7 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
+        // TODO:: Insured Mapping verified
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
@@ -424,29 +425,16 @@ class AMLController extends Controller
             $insurerAMLScreeningResponse = [];
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
-
-                $insuredPersonDetails = Insured::where([
+                $insuredPersonDetails = Insured::updateOrCreate([
                     'id_type' => $AMLCheckRequest->screening_id_type,
                     'id_number' => $AMLCheckRequest->screening_id_number,
-                ])->first();
-
-                if (! $insuredPersonDetails) {
-                    $insuredPersonDetails = Insured::create([
-                        'first_name' => $AMLCheckRequest->insured_first_name,
-                        'last_name' => $AMLCheckRequest->insured_last_name,
-                        'dob' => $AMLCheckRequest->dob,
-                        'nationality_id' => $AMLCheckRequest->nationality_id,
-                        'gender' => $AMLCheckRequest->screening_gender,
-                        'id_type' => $AMLCheckRequest->screening_id_type,
-                        'id_number' => $AMLCheckRequest->screening_id_number,
-                    ]);
-                } else {
-                    $insuredPersonDetails->first_name = $AMLCheckRequest->insured_first_name;
-                    $insuredPersonDetails->last_name = $AMLCheckRequest->insured_last_name;
-                    $insuredPersonDetails->dob = $AMLCheckRequest->dob;
-                    $insuredPersonDetails->nationality_id = $AMLCheckRequest->nationality_id;
-                    $insuredPersonDetails->gender = $AMLCheckRequest->screening_gender;
-                }
+                ], [
+                    'first_name' => $AMLCheckRequest->insured_first_name,
+                    'last_name' => $AMLCheckRequest->insured_last_name,
+                    'dob' => $AMLCheckRequest->dob,
+                    'nationality_id' => $AMLCheckRequest->nationality_id,
+                    'gender' => $AMLCheckRequest->screening_gender,
+                ]);
 
                 CustomerInsured::updateOrCreate([
                     'quote_type_id' => $quoteTypeId,
@@ -693,6 +681,7 @@ class AMLController extends Controller
 
     private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType)
     {
+        // TODO :: Insured mapping verified
         foreach ($membersDetails as $memberDetail) {
             BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, auth()->user()->email);
         }

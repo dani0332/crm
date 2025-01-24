@@ -44,13 +44,14 @@ class PersonalQuoteStatusRequest extends FormRequest
     }
 
     /**
-     * validate quote record and maximum number of alread uploaded files
+     * validate quote record and maximum number of already uploaded files
      */
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
 
             $quoteObject = PersonalQuote::where('uuid', request()->quote_uuid)->firstOrFail();
+            // TODO:: Need to check quoteObject customer_id exists in insured_customer table against this quote request id
 
             $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
                 'insured_first_name',

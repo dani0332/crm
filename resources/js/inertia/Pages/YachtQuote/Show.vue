@@ -4,6 +4,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -52,7 +53,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
-const { isRequired } = useRules();
+const { isRequired, emiratesNumber } = useRules();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -89,6 +90,7 @@ const isProfileUpdateAllow = computed(() => {
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
+// TODO:: Need to verify the insurer details
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -243,6 +245,10 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+    customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
+
 </script>
 
 <template>
@@ -613,8 +619,9 @@ const onAddUpdate = () => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="applyEmiratesIdNumMasking(customerProfileForm.emirates_id_number)"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />

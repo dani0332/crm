@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -131,6 +132,7 @@ const {
   policy_start_date,
   isEmail,
   isMobileNo,
+  emiratesNumber,
 } = useRules();
 const confirmDeleteData = reactive({
   docs: null,
@@ -1200,7 +1202,7 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
-
+// TODO:: Need to verify the insurer details
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -1505,6 +1507,10 @@ function capitalizeString(str) {
   if (!str) return 'N/A';
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
+
+const applyEmiratesIdNumMasking = emiratesId =>
+    customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
+
 </script>
 
 <template>
@@ -2149,8 +2155,9 @@ function capitalizeString(str) {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="applyEmiratesIdNumMasking(customerProfileForm.emirates_id_number)"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />

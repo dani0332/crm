@@ -87,8 +87,8 @@ class EmbeddedProduct
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
             } else {
-                $firstName = $customer->insured_first_name ?? '';
-                $lastName = $customer->insured_last_name ?? '';
+                $firstName = $customer->insured_first_name ?? ''; // TODO:: Need to update the insurer details
+                $lastName = $customer->insured_last_name ?? ''; // TODO:: Need to update the insurer details
             }
 
             $item->id = $item->id;

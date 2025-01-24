@@ -149,6 +149,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
             if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelLeadTransactionApproved == false) {
+                // TODO:: Need to check quoteObject customer_id exists in insured_customer table against this quote request id
                 $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
                     'insured_first_name',
                     'insured_last_name',

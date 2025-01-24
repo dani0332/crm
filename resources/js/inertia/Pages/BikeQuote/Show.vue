@@ -5,6 +5,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -64,7 +65,7 @@ const assumptionState = reactive({
 });
 
 const page = usePage();
-const { isRequired } = useRules();
+const { isRequired, emiratesNumber } = useRules();
 
 const modelClass = 'App\\Models\\PersonalQuote';
 
@@ -162,7 +163,7 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
-
+// TODO:: Need to verify the insurer details
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -343,6 +344,9 @@ const fetchUpdatedQuote = async () => {
     });
   }
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+    customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
 </script>
 
 <template>
@@ -822,8 +826,9 @@ const fetchUpdatedQuote = async () => {
               <dd>
                 <x-input
                   v-model="customerProfileForm.emirates_id_number"
-                  :rules="[isRequired]"
-                  placeholder="EMIRATES ID NUMBER"
+                  :rules="[isRequired, emiratesNumber]"
+                  placeholder="xxx-xxxx-xxxxxxx-x"
+                  @input="applyEmiratesIdNumMasking(customerProfileForm.emirates_id_number)"
                   class="w-full"
                   :disabled="!isProfileUpdateAllow"
                 />
