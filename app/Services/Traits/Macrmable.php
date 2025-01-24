@@ -104,6 +104,22 @@ trait Macrmable
             'courier_sync_failed_at' => $ok ? null : now(),
             'courier_sync_message' => $message,
             'courier_sync_response' => $response,
+            'courier_sync_started_at' => null,
+        ]);
+    }
+
+    private static function endSyncProcessing(string $refId)
+    {
+        $embeddedTransaction = EmbeddedTransaction::where('code', $refId)->first();
+
+        if (! $embeddedTransaction) {
+            info(self::class."::endSyncProcessing - Embedded Transaction not found for RefId: {$refId}");
+
+            return;
+        }
+
+        $embeddedTransaction->update([
+            'courier_sync_started_at' => null,
         ]);
     }
 }
