@@ -105,11 +105,11 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         $quote = LifeQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote?->payments;

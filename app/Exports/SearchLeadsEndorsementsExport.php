@@ -29,9 +29,14 @@ class SearchLeadsEndorsementsExport extends BaseReportsExport implements WithTit
 
     public function map($row): array
     {
+        $customerName = $this->notAvailable;
+        if (isset($row?->customer_first_name) || isset($row?->customer_last_name)) {
+            $customerName = ($row?->customer_first_name ?? null).' '.($row?->customer_last_name ?? null);
+        }
+
         return [
             $row->code,
-            ($row->customer_first_name.' '.$row->customer_last_name) ?? $this->notAvailable,
+            $customerName,
             $row->company_name ?? $this->notAvailable,
             ((request()->list == 'leads') ? $row->quote_status : $row->status) ?? $this->notAvailable,
             $row->total_price ?? $this->notAvailable,
