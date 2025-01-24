@@ -238,7 +238,7 @@ class EmbeddedProductController extends Controller
     {
         $et = EmbeddedTransaction::whereCode($code)->firstOrFail();
 
-        if($et->isSyncInProgress()) {
+        if ($et->isSyncInProgress()) {
             return response()->json([
                 'message' => 'Request is already in progress. Please wait for the process to complete.',
             ]);
