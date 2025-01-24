@@ -68,13 +68,17 @@ class EmbeddedTransaction extends Model
 
     public function getSyncStatus()
     {
+        $statusEnum = CourierSyncStatusEnum::PENDING;
+
         if ($this->courier_sync_failed_at) {
-            return 'Failed';
+            $statusEnum = CourierSyncStatusEnum::FAILED;
         } elseif ($this->courier_synced_at) {
-            return 'Synced';
+            $statusEnum = CourierSyncStatusEnum::SYNCED;
+        } elseif ($this->courier_sync_started_at) {
+            $statusEnum = CourierSyncStatusEnum::IN_PROGRESS;
         }
 
-        return 'Pending';
+        return $statusEnum->label();
     }
 
     public function isSyncFailed()
@@ -97,6 +101,8 @@ class EmbeddedTransaction extends Model
             $query->whereNotNull('courier_synced_at');
         } elseif ($status === CourierSyncStatusEnum::FAILED) {
             $query->whereNotNull('courier_sync_failed_at');
+        } elseif ($status === CourierSyncStatusEnum::IN_PROGRESS) {
+            $query->whereNotNull('courier_sync_started_at');
         } else {
             $query->whereNull('courier_synced_at')->whereNull('courier_sync_failed_at');
         }
