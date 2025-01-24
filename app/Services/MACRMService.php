@@ -23,7 +23,7 @@ class MACRMService
                 )
                 ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 90000, fn (Exception $exception) => self::retryLogic($exception))
+                ->retry(3, 90000, fn (Exception $exception) => self::retryLogic($exception), false)
                 ->beforeSending(fn () => info(self::class."::sendRequest - Calling MACRM API via {$method} request to {$endpoint}"))
                 ->when(
                     $method === 'GET',
