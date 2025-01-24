@@ -26,4 +26,11 @@ class PersonalQuoteService extends BaseService
             },
         ])->first();
     }
+
+    public function getEntity($quoteTypeId, $quoteUuid)
+    {
+        return PersonalQuote::where('quote_type_id', $quoteTypeId)
+            ->where('uuid', $quoteUuid)
+            ->first();
+    }
 }
