@@ -18,10 +18,7 @@ class SyncCourierQuoteWithMacrm implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public $quote, public $quoteTypeId)
-    {
-        //
-    }
+    public function __construct(public $quote, public $quoteTypeId) {}
 
     /**
      * Execute the job.
