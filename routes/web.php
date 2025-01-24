@@ -251,6 +251,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
         Route::resource('products', EmbeddedProductController::class, ['names' => 'embedded-products']);
         Route::get('get-by-quote', [EmbeddedProductController::class, 'getByQuote'])->name('embedded-products.get-by-quote');
+        Route::post('/courier/transaction/{code}/re-sync', [EmbeddedProductController::class, 'reSyncCourier'])->name('embedded-products.courier.re-sync');
     });
 
     Route::resource('legacy-policy', LegacyPolicyController::class);
