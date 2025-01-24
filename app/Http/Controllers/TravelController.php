@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -40,6 +41,7 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -254,6 +256,12 @@ class TravelController extends Controller
         $access = $this->travelQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
         $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($record, self::TYPE);
+
+        $insuranceProvider = $record?->plan?->insuranceProvider ?? $record->insuranceProvider;
+        if ($insuranceProvider->code === InsuranceProvidersEnum::ALNC) {
+            $travelType = $record->direction_code === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND ? TravelQuoteEnum::ALLIANCE_OUT_BOUND : TravelQuoteEnum::ALLIANCE_IN_BOUND;
+            $record->days_cover_for = (new AllianceInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
+        }
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,

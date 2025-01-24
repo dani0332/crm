@@ -729,7 +729,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return Http::timeout(20)->withHeaders($headers)->post($url, $payload);
     }
 
-    private function calculateCoverDaysForExpiryDate($quote, $travelType): mixed
+    public function calculateCoverDaysForExpiryDate($quote, $travelType): mixed
     {
         $coverDays = $quote->days_cover_for;
         $isInboundLead = $travelType === TravelQuoteEnum::ALLIANCE_IN_BOUND;
