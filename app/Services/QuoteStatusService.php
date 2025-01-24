@@ -80,10 +80,24 @@ class QuoteStatusService
 
     public function markQuoteAsStale($quoteTypeId, $quoteRequestId)
     {
-        $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
+        $quoteType = QuoteType::findOrFail($quoteTypeId);
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
-        if (isset($updateQuote->quote_status_id) && ! empty($updateQuote->quote_status_id) && $updateQuote->quote_status_id == QuoteStatusEnum::FollowedUp) {
-            $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
+
+        if (!empty($updateQuote->quote_status_id)) {
+            switch ($updateQuote->quote_status_id) {
+                case QuoteStatusEnum::NewLead:
+                    $updateQuote->quote_status_id = QuoteStatusEnum::Quoted;
+                    $updateQuote->save();
+                    $personalQuote = app(PersonalQuoteService::class)->getEntity($quoteTypeId, $quoteRequestId);
+                    $personalQuote->quote_status_id = QuoteStatusEnum::Quoted;
+                    $personalQuote->save();
+                    return $updateQuote;
+                case QuoteStatusEnum::Quoted:
+                    $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
+                    break;
+                default:
+                    return $updateQuote;
+            }
             $updateQuote->save();
         }
 
