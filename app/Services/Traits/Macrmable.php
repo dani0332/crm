@@ -2,10 +2,10 @@
 
 namespace App\Services\Traits;
 
-use Exception;
-use Illuminate\Support\Arr;
 use App\Models\EmbeddedTransaction;
+use Exception;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Arr;
 
 trait Macrmable
 {
@@ -34,7 +34,7 @@ trait Macrmable
         $status = $response->status();
 
         // Log response details
-        info(self::class."::handleResponse - ", [
+        info(self::class.'::handleResponse - ', [
             'endpoint' => $endpoint,
             'status' => $status,
             'response' => $response->body(),
