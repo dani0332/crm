@@ -74,7 +74,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('InstantAlfredNotification:cron')->everyMinute()->onOneServer()->withoutOverlapping();
 
-        //send leads which are resubmitted for car sold approval yesterday
+        // send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
             ->daily()
             ->withoutOverlapping()->onOneServer()

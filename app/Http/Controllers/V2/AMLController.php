@@ -290,7 +290,7 @@ class AMLController extends Controller
             LookupsEnum::MEMBER_RELATION,
         ])->get()->groupBy('key');
 
-        //lookups , loop through each key, replace - with _ and update key
+        // lookups , loop through each key, replace - with _ and update key
         $lookups = $lookups->mapWithKeys(function ($item, $key) {
             return [str_replace('-', '_', $key) => $item];
         });

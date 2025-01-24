@@ -278,7 +278,7 @@ class CustomerRepository extends BaseRepository
             'id_type',
             'id_issuance_date',
             'mode_of_contact',
-            //'transaction_value',
+            // 'transaction_value',
             'mode_of_delivery',
             'employment_sector',
             'customer_tenure',

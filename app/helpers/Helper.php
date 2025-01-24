@@ -691,7 +691,7 @@ if (! function_exists('addDaysExcludeWeekend')) {
 if (! function_exists('getIMLogo')) {
     function getIMLogo($isPDF = false)
     {
-        $imLogo = 'images/im_logo_21k-hi.png';
+        $imLogo = 'images/logo-new.png';
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }

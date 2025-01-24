@@ -63,7 +63,7 @@ class HealthQuoteService extends BaseService
         $this->httpService = $httpService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
-            //'hqr.prefill_plan_id',
+            // 'hqr.prefill_plan_id',
             'hqr.uuid',
             'hqr.code',
             'hqr.first_name',
@@ -675,7 +675,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->premium = $request->premium;
-        //check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
+        // check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
             $healthQuote->quote_updated_at = Carbon::now();
             $updateMemberDetails = [
@@ -1231,7 +1231,7 @@ class HealthQuoteService extends BaseService
         }
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
-        //check if team is assigned and status not qualified yet so mark it qualified.
+        // check if team is assigned and status not qualified yet so mark it qualified.
         if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
             HealthQuote::where('id', $lead->id)->update([
                 'quote_status_id' => QuoteStatusEnum::Qualified,
@@ -1312,7 +1312,7 @@ class HealthQuoteService extends BaseService
 
         info('Previous assignment type is : '.$previousAssignmentType);
 
-        //Constants for system assigned types
+        // Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
@@ -1736,7 +1736,7 @@ class HealthQuoteService extends BaseService
             $maxAmount = $payment->premium_captured - $payment->premium_refunded;
             if ($maxAmount >= $request->amount) {
                 $paymentAction = new PaymentAction;
-                $paymentAction->payment_code = $payment->code; //$embededTransaction->code;
+                $paymentAction->payment_code = $payment->code; // $embededTransaction->code;
                 $paymentAction->is_fulfilled = 0;
                 $paymentAction->action_type = 'REFUND';
                 $paymentAction->reason = $request->reason;
