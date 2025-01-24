@@ -26,12 +26,6 @@ const personalBelongingsAED = computed(
   () => props.quote?.home_quote?.personal_belongings_value_id || null,
 );
 
-console.log(
-  'contentsAED: ',
-  contentsAED.value,
-  props.quote?.home_quote?.contents_value_id,
-);
-
 console.log('PROPS: ', page.props);
 
 const quoteForm = useForm({
@@ -68,8 +62,6 @@ const quoteForm = useForm({
   },
 });
 
-console.log('quoteForm.contents_aed:', quoteForm.contents_aed);
-
 console.log('quoteForm:', quoteForm);
 
 const isEdit = computed(() => {
@@ -103,11 +95,6 @@ function onSubmit(isValid) {
     quoteForm.has_personal_belongings = !!quoteForm.personal_belongings_aed;
     quoteForm.has_building = !!quoteForm.building_aed;
 
-    console.log('Form validation passed.');
-    console.log('Submitting form data:', quoteForm);
-
-    console.log('Is edit mode:', isEdit.value);
-
     const action = isEdit.value
       ? route('home-quotes-update', props.quote.uuid)
       : route('home-quotes-store');
@@ -139,7 +126,6 @@ function onSubmit(isValid) {
 }
 
 function handleSuccess() {
-  console.log('Form submitted successfully.');
   // Additional logic on successful submission
 }
 
@@ -164,7 +150,6 @@ function handleError(errors) {
 }
 
 function handleFinish() {
-  console.log('Form submission process completed.');
   // Cleanup actions if needed
 }
 
@@ -187,8 +172,26 @@ const claimOptions = computed(() => {
     { value: '0', label: 'No' },
   ];
 });
+
 const showTypeOfOwnerOccupancy = computed(() => {
-  return quoteForm.iam_possesion_type_id === 2;
+  if (
+    !page.props?.lookUpData?.possessionType ||
+    !Array.isArray(page.props.lookUpData.possessionType)
+  ) {
+    console.error('possessionType is not defined or not an array');
+    return false;
+  }
+
+  const possessionType = page.props.lookUpData.possessionType.find(
+    item => item.code === 'landlord_renting_out',
+  );
+
+  if (!possessionType) {
+    console.warn('No possession type found with code: landlord_renting_out');
+    return false;
+  }
+
+  return quoteForm.iam_possesion_type_id === possessionType.id;
 });
 
 const handleConditionalFields = () => {
@@ -235,7 +238,6 @@ const typeOfCoverageYouNeedOptions = computed(() => {
 });
 
 const handleCoverageChange = () => {
-  // Safeguard: Check if coverageTypes and quoteForm are valid
   if (!coverageTypes || !Array.isArray(coverageTypes)) {
     console.error('coverageTypes is not defined or not an array');
     return;
@@ -246,14 +248,10 @@ const handleCoverageChange = () => {
     return;
   }
 
-  console.log('Coverage changed:', quoteForm.type_of_coverage_you_need);
-
   // Reset field visibility to false
   showBuildingField.value = false;
   showContentsField.value = false;
   showPersonalBelongingsField.value = false;
-
-  console.log('showContentsField.value (after reset):', showContentsField.value);
 
   // Determine the selected coverage type
   const selectedCoverage = coverageTypes.find(
@@ -270,7 +268,11 @@ const handleCoverageChange = () => {
     9: { showBuildingField: true }, // Building only
     10: { showContentsField: true }, // Contents only
     11: { showBuildingField: true, showContentsField: true }, // Building and Contents
-    12: { showBuildingField: true, showContentsField: true, showPersonalBelongingsField: true }, // Building, Contents, and Personal Belongings
+    12: {
+      showBuildingField: true,
+      showContentsField: true,
+      showPersonalBelongingsField: true,
+    }, // Building, Contents, and Personal Belongings
     13: { showContentsField: true, showPersonalBelongingsField: true }, // Contents and Personal Belongings
   };
 
@@ -278,15 +280,15 @@ const handleCoverageChange = () => {
   const visibilityRules = coverageVisibilityMap[selectedCoverage.id] || {};
   if (visibilityRules.showBuildingField) showBuildingField.value = true;
   if (visibilityRules.showContentsField) showContentsField.value = true;
-  if (visibilityRules.showPersonalBelongingsField) showPersonalBelongingsField.value = true;
-
-  console.log('showContentsField.value (after visibility update):', showContentsField.value);
+  if (visibilityRules.showPersonalBelongingsField)
+    showPersonalBelongingsField.value = true;
 
   // Reset AED fields only if the field is not visible and not in edit mode
   const resetAEDFields = () => {
     if (!showBuildingField.value) quoteForm.building_aed = null;
     if (!showContentsField.value) quoteForm.contents_aed = null;
-    if (!showPersonalBelongingsField.value) quoteForm.personal_belongings_aed = null;
+    if (!showPersonalBelongingsField.value)
+      quoteForm.personal_belongings_aed = null;
   };
 
   const preserveAEDFields = () => {
@@ -312,18 +314,10 @@ const handleCoverageChange = () => {
   } else {
     preserveAEDFields();
   }
-
-  console.log('showContentsField.value (final):', showContentsField.value);
-  console.log('Final values:');
-  console.log('quoteForm.building_aed:', quoteForm.building_aed);
-  console.log('quoteForm.contents_aed:', quoteForm.contents_aed);
-  console.log('quoteForm.personal_belongings_aed:', quoteForm.personal_belongings_aed);
 };
 
 const setCoverageBasedOnBooleans = () => {
   if (props.quote?.home_quote?.possession_type_id) {
-    console.log('Setting coverage based on booleans...');
-
     if (props.quote?.home_quote) {
       props.quote.home_quote.has_building = quoteForm.has_building;
       props.quote.home_quote.has_contents = quoteForm.has_contents;
@@ -350,8 +344,6 @@ const setCoverageBasedOnBooleans = () => {
         }
       });
 
-      console.log('Selected coverage:', selectedCoverage);
-
       if (selectedCoverage) {
         quoteForm.type_of_coverage_you_need = selectedCoverage;
         handleCoverageChange();
@@ -366,21 +358,24 @@ const isMatchingCoverage = (
   has_contents,
   has_personal_belongings,
 ) => {
-  console.log(
-    'isMatchingCoverage:',
-    coverage,
-    has_building,
-    has_contents,
-    has_personal_belongings,
-  );
-  switch (coverage.id) {
+  const coverageCaseMap = {
+    [coverageTypes[0]?.id]: 1, // Building only
+    [coverageTypes[1]?.id]: 2, // Contents only
+    [coverageTypes[2]?.id]: 3, // Building and Contents
+    [coverageTypes[3]?.id]: 4, // Building, Contents, and Personal Belongings
+    [coverageTypes[4]?.id]: 5, // Contents and Personal Belongings
+  };
+
+  const caseNumber = coverageCaseMap[coverage.id];
+
+  switch (caseNumber) {
     case 1: // Building only
       return has_building && !has_contents && !has_personal_belongings;
     case 2: // Contents only
       return !has_building && has_contents && !has_personal_belongings;
     case 3: // Building and Contents
       return has_building && has_contents && !has_personal_belongings;
-    case 4: // Building, Contents and Personal Belongings
+    case 4: // Building, Contents, and Personal Belongings
       return has_building && has_contents && has_personal_belongings;
     case 5: // Contents and Personal Belongings
       return !has_building && has_contents && has_personal_belongings;
@@ -424,8 +419,9 @@ const accommodationTypeOptions = computed(() => {
 });
 
 const typeOfOwnerOccupancyOptions = computed(() => {
-    quoteForm.owner_occupancy_type_id = page.props?.quote?.home_quote?.owner_occupancy_type_id;
-    return page.props?.lookUpData?.ownerOccupancies?.length
+  quoteForm.owner_occupancy_type_id =
+    page.props?.quote?.home_quote?.owner_occupancy_type_id;
+  return page.props?.lookUpData?.ownerOccupancies?.length
     ? page.props.lookUpData.ownerOccupancies.map(item => ({
         value: item.id,
         label: item.text,
@@ -606,7 +602,11 @@ watch(
             class="w-full"
           />
         </x-field>
-        <x-field label="BUILDING VALUE IN AED" required v-if="showBuildingField">
+        <x-field
+          label="BUILDING VALUE IN AED"
+          required
+          v-if="showBuildingField"
+        >
           <x-input
             v-model="quoteForm.building_aed"
             type="number"
