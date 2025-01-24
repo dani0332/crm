@@ -81,12 +81,51 @@ function successResponse() {
   }
 }
 
+const checkForPossesionTypeIdValidation = () => {
+  const possessionTypeId = quoteForm.iam_possesion_type_id;
+  const coverageTypeId = quoteForm.type_of_coverage_you_need;
+
+  const coverageTypes = page.props?.lookUpData?.coverages || [];
+
+  const coverageType = coverageTypes.find(
+    coverage => coverage.id === coverageTypeId,
+  );
+
+  // If no coverage type is found, show an error
+  if (!coverageType) {
+    showToast('error', 'Error', 'Invalid coverage type selected.');
+    return false;
+  }
+
+  // Check if the possessionTypeId is in the applicableForPossessionTypes array
+  const isPossessionTypeValid = coverageType.applicableForPossessionTypes.includes(
+    possessionTypeId,
+  );
+
+  // If the possession type is not valid, show an error
+  if (!isPossessionTypeValid) {
+    showToast(
+      'error',
+      'Error',
+      'Please select an appropriate coverage type for the chosen ownership status.',
+    );
+    return false;
+  }
+
+  // If everything is valid, return true
+  return true;
+};
+
 function onSubmit(isValid) {
   console.log('onSubmit:', quoteForm);
   try {
     if (!isFormValid() || !isValid) {
       console.info('Form validation failed.');
       return;
+    }
+
+    if (!checkForPossesionTypeIdValidation()) {
+      return; // Stop submission if validation fails for possession type (ownership status)
     }
 
     // Ensure fields are included in the payload with true/false values
