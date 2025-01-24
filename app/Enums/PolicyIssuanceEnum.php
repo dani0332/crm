@@ -92,12 +92,18 @@ final class PolicyIssuanceEnum extends Enum
         return $status ? $statuses[$status] : '';
     }
 
-    public static function getAPIIssuanceStatuses($status = null)
+    public static function getAPIIssuanceStatuses($status = null, bool $getAll = false)
     {
         $statuses = [
             self::POLICY_ISSUANCE_API_STATUS_YES_ID => self::POLICY_ISSUANCE_API_STATUS_YES,
             self::POLICY_ISSUANCE_API_STATUS_NO_ID => self::POLICY_ISSUANCE_API_STATUS_NO,
         ];
+
+        if ($getAll) {
+            $statuses['blank'] = 'Blank';
+
+            return $statuses;
+        }
 
         return $status ? $statuses[$status] : '';
     }
