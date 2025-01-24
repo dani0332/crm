@@ -103,7 +103,7 @@ trait Macrmable
         return $leadData['payment.ref_id'] ?? null;
     }
 
-    private static function saveSyncResponse(string $refId, bool $ok, array $response, ?string $message = 'Unknown Error')
+    private static function saveSyncResponse(string $refId, bool $ok, ?array $response = null, ?string $message = 'Unknown Error')
     {
         $embeddedTransaction = EmbeddedTransaction::where('code', $refId)->first();
 
