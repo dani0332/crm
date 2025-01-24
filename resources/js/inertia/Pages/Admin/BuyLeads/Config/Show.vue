@@ -2,14 +2,16 @@
 const props = defineProps({
   departments: Array,
   lobs: Array,
+  segments: Array,
 });
 
 const notification = useToast();
-const { isRequired } = useRules();
+const { isRequired, isRequiredNumber } = useRules();
 
 const buyForm = useForm({
   quote_type: '',
   department_id: '',
+  segment: '',
   value: '',
   volume: '',
 });
@@ -62,6 +64,7 @@ const fetchValues = () => {
       if (config) {
         buyForm.value = config.value;
         buyForm.volume = config.volume;
+        buyForm.segment = config.segment;
       }
       fetchLoader.value = false;
     })
@@ -93,7 +96,7 @@ watch(
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid sm:grid-cols-2 gap-4">
+    <div class="grid sm:grid-cols-3 gap-4">
       <x-field label="Line of Business" required>
         <x-select
           placeholder="Select LOB"
@@ -112,6 +115,19 @@ watch(
           :rules="[isRequired]"
         ></x-select>
       </x-field>
+      <x-field label="Segment">
+        <x-select
+          placeholder="Select Segment"
+          :options="props.segments"
+          filterable
+          v-model="buyForm.segment"
+          :disabled="
+            fetchLoader || !buyForm.department_id || !buyForm.quote_type
+          "
+          :loading="fetchLoader"
+          :rules="[isRequired]"
+        ></x-select>
+      </x-field>
     </div>
     <p class="font-medium">Lead Pricing</p>
     <div class="grid sm:grid-cols-2 gap-4">
@@ -122,8 +138,10 @@ watch(
           <x-input
             v-model="buyForm.value"
             class="!mb-0"
-            :disabled="fetchLoader"
-            :rules="[isRequired]"
+            :disabled="
+              fetchLoader || !buyForm.department_id || !buyForm.quote_type
+            "
+            :rules="[isRequiredNumber]"
           >
             <template #suffix>
               <div
@@ -146,8 +164,10 @@ watch(
           <x-input
             v-model="buyForm.volume"
             class="!mb-0"
-            :disabled="fetchLoader"
-            :rules="[isRequired]"
+            :disabled="
+              fetchLoader || !buyForm.department_id || !buyForm.quote_type
+            "
+            :rules="[isRequiredNumber]"
           >
             <template #suffix>
               <div

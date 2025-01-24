@@ -192,7 +192,7 @@ class HealthAllocationService extends AllocationService
     {
         info(self::class."::getBLAdvisorByStatus - trying to get advisors for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
 
-        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::HEALTH, $lead->isValueLead());
+        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::HEALTH, $lead->isSIC(QuoteTypes::HEALTH), $lead->isValueLead());
 
         $advisor = $this->getAdvisorBaseQuery($status, $leadTeam)
             ->when($lead->isValueLead(), function ($q) {
@@ -210,7 +210,7 @@ class HealthAllocationService extends AllocationService
 
         if ($advisor) {
             info(self::class."::getBLAdvisorByStatus - found Advisor : {$advisor->user_id} for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
-            $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::HEALTH, $advisor->user_id, $lead->isValueLead());
+            $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::HEALTH, $lead->isSIC(QuoteTypes::HEALTH), $advisor->user_id, $lead->isValueLead());
             if ($this->buyLeadRequest) {
                 $this->buyLeadRequest->startProcessing();
                 $this->isBuyLeadAdvisor = true;
@@ -240,6 +240,8 @@ class HealthAllocationService extends AllocationService
     {
         if ($lead->advisor_id === $advisor->id) {
             info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
+
+            $this->endBuyLeadProcessing();
 
             return;
         }

@@ -446,6 +446,22 @@ class TravelQuoteService extends BaseService
         if (isset($request->policy_number) && $request->policy_number != '') {
             $this->query->where('tqr.policy_number', $request->policy_number);
         }
+        if (! empty($request->api_issuance_status_id)) {
+            $apiIssuanceStatusIds = (array) $request->api_issuance_status_id;
+
+            $this->query->when(in_array('blank', $apiIssuanceStatusIds), function ($query) use ($apiIssuanceStatusIds) {
+                $query->where(function ($subQuery) use ($apiIssuanceStatusIds) {
+                    $subQuery->whereNull('tqr.api_issuance_status_id')
+                        ->orWhere('tqr.api_issuance_status_id', '');
+
+                    if (count($apiIssuanceStatusIds) > 1) {
+                        $subQuery->orWhereIn('tqr.api_issuance_status_id', $apiIssuanceStatusIds);
+                    }
+                });
+            }, function ($query) use ($apiIssuanceStatusIds) {
+                $query->whereIn('tqr.api_issuance_status_id', $apiIssuanceStatusIds);
+            });
+        }
         if (isset($request->insurer_api_status_id) && $request->insurer_api_status_id != '') {
             $this->query->whereIn('tqr.insurer_api_status_id', $request->insurer_api_status_id);
         }
