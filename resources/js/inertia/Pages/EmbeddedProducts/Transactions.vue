@@ -29,11 +29,13 @@ const filters = reactive({
   months: '',
 });
 
+const getLink = (quote_uuid, quote_type_id, ref_id) =>
+  buildCdbidLink(quote_uuid, quote_type_id, ref_id);
+
 const page = usePage();
 
 const tableHeader = [
   { text: 'EP Ref-ID', value: 'ref_id' },
-  { text: 'Sync Status', value: 'sync_status' },
   { text: 'Advisor Name', value: 'advisor_name' },
   { text: 'Payment Date', value: 'payment_date', sortable: true },
   { text: 'Plan Commencement Date', value: 'plan_start_date' },
@@ -43,6 +45,7 @@ const tableHeader = [
   { text: 'DOB', value: 'dob' },
   { text: 'AGE', value: 'age' },
   { text: 'PASSPORT', value: 'passport_number' },
+  { text: 'Sync Status', value: 'sync_status', sortable: true },
   { text: 'NATIONALITY', value: 'nationality' },
   { text: 'Vehicle', value: 'vehicle' },
   { text: 'Contact Number', value: 'contact_number' },
@@ -315,6 +318,17 @@ watch(
         </Link>
       </template>
 
+      <template #item-ref_id="item">
+        <SanitizeHtml
+          v-if="item.quote_request"
+          :html="
+            getLink(item.quote_request?.uuid, item.quote_type_id, item.ref_id)
+          "
+          class="text-primary-500 hover:underline"
+          :key="item.ref_id"
+        />
+      </template>
+
       <template #item-sync_status="item">
         <x-tooltip>
           <label class="border-b-2 border-dotted border-black uppercase">{{
@@ -326,7 +340,7 @@ watch(
             }}</span>
           </template>
         </x-tooltip>
-        <button class="ml-1" title="Retry Sync" @click="reSync(item.code)">
+        <button class="ml-4" title="Retry Sync" @click="reSync(item.ref_id)">
           <x-spinner
             v-if="isSyncing && item?.sync_status?.is_failed"
             size="sm"
