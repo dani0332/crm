@@ -41,9 +41,9 @@ class MACRMService
 
     public static function syncCourierQuote($quote, $quoteTypeId)
     {
-        try {
-            $leadData = getCourierQuote($quote, $quoteTypeId);
+        $leadData = getCourierQuote($quote, $quoteTypeId);
 
+        try {
             if (! self::verifySyncPreChecks($quote, $quoteTypeId, $leadData)) {
                 return false;
             }
@@ -63,6 +63,7 @@ class MACRMService
 
             return $ok;
         } catch (Exception $e) {
+            self::endSyncProcessing(self::getRefId($leadData));
             // Log the exception with a detailed message
             info(self::class." - An error occurred while syncing Courier Quote for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}. Error: {$e->getMessage()}");
 
