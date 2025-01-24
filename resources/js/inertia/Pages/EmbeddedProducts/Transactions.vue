@@ -142,6 +142,17 @@ function reSync(code) {
   axios
     .post(route('embedded-products.courier.re-sync', code), {})
     .then(res => {
+      router.get(
+        route(
+          'embedded-products.reports.certificates',
+          page.props.embeddedProduct.detail.id,
+        ),
+        {
+          replace: true,
+          preserveScroll: true,
+          preserveState: true,
+        },
+      );
       notification.success({
         title: res?.data?.message,
         position: 'top',
