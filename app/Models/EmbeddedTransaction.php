@@ -60,7 +60,9 @@ class EmbeddedTransaction extends Model
                     'status' => $this->getSyncStatus(),
                     'is_failed' => $this->isSyncFailed(),
                     'is_pending' => $this->isSyncPending(),
-                    'message' => $this->courier_sync_message ?? 'This transaction is pending for sync',
+                    'message' => $this->isSyncInProgress() ? 'Sync In Progress' : (
+                        $this->courier_sync_message ?? 'This transaction is pending for sync'
+                    ),
                 ];
             }
         );
@@ -70,12 +72,12 @@ class EmbeddedTransaction extends Model
     {
         $statusEnum = CourierSyncStatusEnum::PENDING;
 
-        if ($this->courier_sync_failed_at) {
+        if ($this->courier_sync_started_at) {
+            $statusEnum = CourierSyncStatusEnum::IN_PROGRESS;
+        } elseif ($this->courier_sync_failed_at) {
             $statusEnum = CourierSyncStatusEnum::FAILED;
         } elseif ($this->courier_synced_at) {
             $statusEnum = CourierSyncStatusEnum::SYNCED;
-        } elseif ($this->courier_sync_started_at) {
-            $statusEnum = CourierSyncStatusEnum::IN_PROGRESS;
         }
 
         return $statusEnum->label();
@@ -89,6 +91,11 @@ class EmbeddedTransaction extends Model
     public function isSyncPending()
     {
         return empty($this->courier_synced_at) && empty($this->courier_sync_failed_at);
+    }
+
+    public function isSyncInProgress()
+    {
+        return ! empty($this->courier_sync_started_at);
     }
 
     public function scopeFilterBySyncStatus($query, CourierSyncStatusEnum $status)
