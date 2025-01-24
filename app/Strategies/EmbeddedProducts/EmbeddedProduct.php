@@ -2,6 +2,7 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
+use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
@@ -195,6 +196,9 @@ class EmbeddedProduct
                     $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
                     $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
                 });
+            })
+            ->when(isset($filters['sync_status']) && $filters['sync_status'] !== CourierSyncStatusEnum::ALL, function ($query) use ($filters) {
+                $query->filterBySyncStatus(CourierSyncStatusEnum::tryFrom($filters['sync_status']));
             });
 
         $sortBy = 'embedded_transactions.id';

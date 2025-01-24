@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PermissionsEnum;
 use App\Exports\EmbeddedProductReport;
@@ -170,6 +171,7 @@ class EmbeddedProductController extends Controller
                 'transactions' => $dataset,
             ],
             'ep_enums' => EmbeddedProductEnum::asArray(),
+            'sync_statuses' => CourierSyncStatusEnum::withLabels(),
         ]);
     }
 
