@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\TeamHierarchyTrait;
@@ -136,7 +137,9 @@ class UserRepository extends BaseRepository
             RolesEnum::CarRevivalAdvisor,
         ];
 
-        return User::role($roles)
+        $existingRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
+
+        return User::role($existingRoles)
             ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
