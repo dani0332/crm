@@ -109,6 +109,10 @@ class EmbeddedProduct
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
             $item->emirates_id_number = $customer->emirates_id_number ?? '';
 
+            if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
+                $item->sync_status = $item->courier_sync_status_info;
+            }
+
             if ($isAlfredProtect) {
                 $item->plan_type = EmbeddedProductEnum::{$item->product->embeddedProduct->short_code}()->value;
                 $item->tax_invoice_no = $item->tax_invoice_no ?? '';
