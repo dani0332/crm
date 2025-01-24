@@ -238,6 +238,15 @@ class EmbeddedProductController extends Controller
     {
         $et = EmbeddedTransaction::whereCode($code)->firstOrFail();
 
+        if($et->isSyncInProgress()) {
+            return response()->json([
+                'message' => 'Request is already in progress. Please wait for the process to complete.',
+            ]);
+        }
+
+        $et->courier_sync_started_at = now();
+        $et->save();
+
         SyncCourierQuoteWithMacrm::dispatch($et->quoteRequest, $et->quote_type_id);
 
         return response()->json([
