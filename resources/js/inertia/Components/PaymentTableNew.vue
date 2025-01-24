@@ -479,6 +479,7 @@ const handleDeclinedChange = () => {
   isDeclineClicked.value = true;
   isApproveClicked.value = false;
   isDeclineCustomReason.value = false;
+  isApproveNotChecked.value = false;
   handleDeclinedReasonChange();
   return true;
 };
