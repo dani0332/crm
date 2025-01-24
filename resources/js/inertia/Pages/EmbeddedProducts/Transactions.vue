@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   embeddedProduct: Object,
+  ep_enums: Object,
 });
 
 const dateFormat = date =>
@@ -11,6 +12,7 @@ const serverOptions = ref({
   sortBy: 'id',
   sortType: 'desc',
 });
+const notification = useToast();
 
 const loader = reactive({
   table: false,
@@ -29,6 +31,7 @@ const page = usePage();
 
 const tableHeader = [
   { text: 'EP Ref-ID', value: 'ref_id' },
+  { text: 'Sync Status', value: 'sync_status' },
   { text: 'Advisor Name', value: 'advisor_name' },
   { text: 'Payment Date', value: 'payment_date', sortable: true },
   { text: 'Plan Commencement Date', value: 'plan_start_date' },
@@ -126,6 +129,28 @@ function exportReport() {
     page.props.embeddedProduct.detail.id,
   );
   window.open(url + '?' + new URLSearchParams(data).toString());
+}
+
+const isSyncing = ref(false);
+function reSync(code) {
+  isSyncing.value = true;
+  axios
+    .post(route('embedded-products.courier.re-sync', code), {})
+    .then(res => {
+      notification.success({
+        title: res?.data?.message,
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      notification.error({
+        title: err?.message,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      isSyncing.value = false;
+    });
 }
 
 onMounted(() => {
@@ -252,7 +277,15 @@ watch(
     <DataTable
       v-model:server-options="serverOptions"
       table-class-name=""
-      :headers="tableHeader"
+      :headers="
+        tableHeader.filter(header => {
+          if (header.value === 'sync_status') {
+            return embeddedProduct.detail.short_code === ep_enums.COURIER;
+          }
+
+          return true;
+        })
+      "
       :loading="loader.table"
       :items="embeddedProduct.transactions.data || []"
       border-cell
@@ -266,6 +299,32 @@ watch(
         >
           {{ id }}
         </Link>
+      </template>
+
+      <template #item-sync_status="item">
+        <x-tooltip>
+          <label class="border-b-2 border-dotted border-black uppercase">{{
+            item?.sync_status?.status
+          }}</label>
+          <template #tooltip>
+            <span class="custom-tooltip-content">{{
+              item?.sync_status?.message
+            }}</span>
+          </template>
+        </x-tooltip>
+        <button class="ml-1" title="Retry Sync" @click="reSync(item.code)">
+          <x-spinner
+            v-if="isSyncing && item?.sync_status?.is_failed"
+            size="sm"
+            class="text-primary"
+          />
+          <x-icon
+            v-if="!isSyncing && item?.sync_status?.is_failed"
+            icon="reset"
+            color="green"
+            size="lg"
+          />
+        </button>
       </template>
 
       <template #item-company_name="{ insurance_provider }">
