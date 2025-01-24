@@ -260,7 +260,7 @@ class TravelController extends Controller
         $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($record, self::TYPE);
 
         $insuranceProvider = $record?->plan?->insuranceProvider ?? $record->insuranceProvider;
-        if ($insuranceProvider->code === InsuranceProvidersEnum::ALNC) {
+        if ($insuranceProvider?->code === InsuranceProvidersEnum::ALNC) {
             $travelType = $record->direction_code === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND ? TravelQuoteEnum::ALLIANCE_OUT_BOUND : TravelQuoteEnum::ALLIANCE_IN_BOUND;
             $record->days_cover_for = (new AllianceInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
         }
