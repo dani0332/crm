@@ -1639,6 +1639,19 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
+
+const convertToNumber = (value, decimalPlace = 2) => {
+  // Step 1: Round to (decimalPlace + 2) decimal places
+  const roundToExtra= Math.round(value * Math.pow(10, decimalPlace + 2)) / Math.pow(10, decimalPlace + 2);
+
+  // Step 2: Round to (decimalPlace + 1) decimal places
+  const roundToOneLess= Math.round(roundToExtra * Math.pow(10, decimalPlace + 1)) / Math.pow(10, decimalPlace + 1);
+
+  // Step 3: Round to (decimalPlace) decimal places
+  const roundToFinal= Math.round(roundToOneLess * Math.pow(10, decimalPlace)) / Math.pow(10, decimalPlace);
+
+  return roundToFinal;
+}
 </script>
 
 <template>
@@ -3396,9 +3409,7 @@ const allowStatusUpdate = computed(() => {
             </template>
             <template #item-premiumWithVat="item">
               {{
-                parseFloat(
-                  item.discountPremium + item.vat + getAddonVat(item),
-                ).toFixed(2)
+                convertToNumber(item.discountPremium + item.vat + getAddonVat(item))
               }}
             </template>
             <template #item-action="item">
