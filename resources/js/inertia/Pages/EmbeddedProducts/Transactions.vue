@@ -2,6 +2,7 @@
 defineProps({
   embeddedProduct: Object,
   ep_enums: Object,
+  sync_statuses: Object,
 });
 
 const dateFormat = date =>
@@ -24,6 +25,7 @@ const filters = reactive({
   email: '',
   name: '',
   date_of_purchase: '',
+  sync_status: 'all',
   months: '',
 });
 
@@ -259,6 +261,18 @@ watch(
             month-picker
             model-type="yyyy-MM"
             format="MM-yyyy"
+          />
+        </x-field>
+        <x-field
+          label="Sync Status"
+          v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
+        >
+          <ComboBox
+            v-model="filters.sync_status"
+            placeholder="Select Sync Status"
+            :options="sync_statuses"
+            class="w-full"
+            :single="true"
           />
         </x-field>
       </div>
