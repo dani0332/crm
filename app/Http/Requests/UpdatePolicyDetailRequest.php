@@ -177,10 +177,10 @@ class UpdatePolicyDetailRequest extends FormRequest
         $startDate = Carbon::parse(request()->quote_policy_start_date);
 
         if ($quoteTypeId !== QuoteTypeId::Travel) {
-            $maxStartDate = Carbon::now()->addMonths(2)->endOfDay();
+            $maxStartDate = Carbon::now()->addMonths(3)->endOfDay();
 
             if ($startDate > $maxStartDate) {
-                $validator->errors()->add('quote_policy_start_date', 'Please select a date within the next two months.');
+                $validator->errors()->add('quote_policy_start_date', 'Please select a date within the next three months.');
             }
         }
     }
