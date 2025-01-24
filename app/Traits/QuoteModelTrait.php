@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
@@ -87,7 +88,7 @@ trait QuoteModelTrait
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
-                ])->where("{$alias}.source", 'like', '%'.LeadSourceEnum::INSURANCE_MARKET.'%');
+                ])->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -95,7 +96,7 @@ trait QuoteModelTrait
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                })->where("{$alias}.source", 'like', '%'.LeadSourceEnum::INSURANCE_MARKET.'%');
+                })->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
                 $query->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,
