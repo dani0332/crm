@@ -225,14 +225,12 @@ const approveProofDocument = props.paymentDocument.find(
 );
 
 let initalPlanDetails = [];
-if (
-  props.quoteType == 'Business' ||
-  props.quoteType == 'Home' ||
-  props.isPlanDetailEnabled
-) {
+if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
   initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (props.quoteType == 'Home') {
+  initalPlanDetails = props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Bike') {
