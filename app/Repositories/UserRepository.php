@@ -138,6 +138,10 @@ class UserRepository extends BaseRepository
         ];
 
         $existingRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
+        $nonExistingRoles = array_diff($roles, $existingRoles);
+        if ($nonExistingRoles) {
+            info('Roles are not exists -> ['.implode(', ', $nonExistingRoles).'].');
+        }
 
         return User::role($existingRoles)
             ->select('name', 'id')
