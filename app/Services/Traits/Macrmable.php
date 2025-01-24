@@ -34,45 +34,31 @@ trait Macrmable
         $status = $response->status();
 
         // Log response details
-        info(self::class.'::handleResponse - ', [
+        info(self::class.'::handleResponse', [
             'endpoint' => $endpoint,
             'status' => $status,
             'response' => $response->body(),
         ]);
 
-        if ($response->successful()) {
-            return [
-                'ok' => true,
-                'object' => $responseBody,
-                'message' => $responseMessage,
-            ];
-        }
-
-        if ($response->serverError()) {
-            return [
-                'ok' => false,
-                'object' => $responseBody,
-                'message' => 'Server error: '.$responseMessage,
-            ];
-        }
-
-        if ($status === 404 && $responseMessage === 'Courier not found.') {
-            return [
-                'ok' => false,
-                'object' => [
-                    'success' => true,
-                    'message' => $responseMessage,
-                    'data' => ['status' => 'Pending'],
-                ],
-                'message' => $responseMessage,
-            ];
-        }
-
-        return [
+        $result = [
             'ok' => false,
             'object' => $responseBody,
             'message' => $responseMessage,
         ];
+
+        if ($response->successful()) {
+            $result['ok'] = true;
+        } elseif ($response->serverError()) {
+            $result['message'] = "Server error: {$responseMessage}";
+        } elseif ($status === 404 && $responseMessage === 'Courier not found.') {
+            $result['object'] = [
+                'success' => true,
+                'message' => $responseMessage,
+                'data' => ['status' => 'Pending'],
+            ];
+        }
+
+        return $result;
     }
 
     private static function verifySyncPreChecks($lead, $quoteTypeId, $leadData)
