@@ -80,7 +80,7 @@ class LifeQuoteRepository extends BaseRepository
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::LIFE->id())->where('uuid', $uuid)->firstOrFail();
 
-            //check the columns to be updated in personal quotes.
+            // check the columns to be updated in personal quotes.
             $quoteData = Arr::only($data, $this->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
             $quote->update($quoteData);

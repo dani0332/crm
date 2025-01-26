@@ -2,15 +2,15 @@
 
 namespace App\Services\Life;
 
-use App\Services\BaseService;
 use App\Models\Payment;
+use App\Services\BaseService;
 use App\Services\SplitPaymentService;
 
 class PaymentService extends BaseService
 {
     public function updatePriceVatApplicableAndVat($quote, $quoteType)
     {
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         info('Start - Temporarily adding for correcting historic data'.$quote->uuid);
         /* calculate price and vat for payments for old payment data  where price_vat_applicable is not available */
         $quotePayment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
@@ -42,6 +42,6 @@ class PaymentService extends BaseService
             }
         }
         info('End - Temporarily adding for correcting historic data '.$quote->uuid);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
     }
 }

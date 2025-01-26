@@ -82,7 +82,7 @@ class LifeQuoteService extends BaseService
                     $subQuery->whereBetween('advisor_assigned_date', [$advisorAssignedDateFrom, $advisorAssignedDateTo]);
                 });
             })
-            ->filter(! $isExportRequest , $isTotalLeadCountRequest)
+            ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
@@ -386,7 +386,7 @@ class LifeQuoteService extends BaseService
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->getPlainQuoteBy('uuid', $uuid);
 
-            //check the columns to be updated in personal quotes.
+            // check the columns to be updated in personal quotes.
             $quoteData = Arr::only($data, app(PersonalQuote::class)->allowedColumns());
             $quoteData['updated_by_id'] = auth()->user()->id;
             $quote->update($quoteData);
@@ -464,9 +464,9 @@ class LifeQuoteService extends BaseService
 
     public function correctHistoricData($quote)
     {
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         app(PaymentService::class)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
     }
 
     private function prepareActivitiesData($activities)

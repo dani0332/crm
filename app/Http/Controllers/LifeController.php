@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\QuoteTypes;
 use App\Http\Requests\LifeCardLoadMoreRequest;
 use App\Http\Requests\LifeQuoteRequest;
-use App\Repositories\PaymentRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Inertia\ResponseFactory;
@@ -68,11 +66,11 @@ class LifeController extends Controller
 
     public function show($uuid)
     {
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         $quote = $this->lifeQuoteService->getQuoteBy('uuid', $uuid);
         abort_if(! $quote, 404);
         $quote = $this->lifeQuoteService->correctHistoricData($quote);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $data = $this->lifeQuoteService->getShowData($uuid);
 

@@ -2,11 +2,11 @@
 
 namespace App\Services\Life;
 
+use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
-use App\Enums\QuoteTypeId;
 
 class SendUpdateLogService extends BaseService
 {
