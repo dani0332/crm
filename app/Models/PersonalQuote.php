@@ -166,7 +166,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function getDobAttribute($value)
     {
-        $date_time_format = config('constants.DATE_FORMAT');
+        $date_time_format = config('constants.DATE_FORMAT_ONLY');
 
         return Carbon::parse($value)->format($date_time_format);
     }
