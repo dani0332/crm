@@ -178,7 +178,7 @@ trait GenericQueriesAllLobs
     {
         $customer = CustomerService::getCustomerByEmail($customerData['email']);
 
-        //create new customer if not exists
+        // create new customer if not exists
         if (! isset($customer->id)) {
             $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
 

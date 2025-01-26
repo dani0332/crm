@@ -58,7 +58,7 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             // 'visibility' => 'public',
-            'bucket_endpoint' => true, //add this
+            'bucket_endpoint' => true, // add this
         ],
         'insly_documents' => [
             'driver' => 's3',
@@ -69,7 +69,7 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             // 'visibility' => 'public',
-            'bucket_endpoint' => true, //add this
+            'bucket_endpoint' => true, // add this
         ],
         // RYU Container for Azure
         'azureForRyu' => [

@@ -129,9 +129,7 @@ class InslyDetailRepository extends BaseRepository
         if ($inslyPolicyIssueDate) {
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
-
         $appUrl = config('constants.APP_URL');
-
         if (! empty($policy)) {
             $policyNumber = $policy['policy']['policy_no'];
             $coverage = $policy['policy']['coverage'];
@@ -215,7 +213,6 @@ class InslyDetailRepository extends BaseRepository
 
                 // create lead in case no record found
                 $payLoad = $this->prePareData($policy, $quoteType, $isPersonalQuote);
-
                 info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
                 info('InslyLead - created Lead Id : '.json_encode($id));
