@@ -64,7 +64,11 @@ class LifeQuote extends Model implements AuditableContract
     public function getAuditables()
     {
         return [
-            'auditable_type' => self::class,
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => self::class, 'key' => 'personal_quote_id'],
+            ],
         ];
     }
     public function getDobAttribute($value)

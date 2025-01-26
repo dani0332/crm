@@ -393,9 +393,13 @@ class LifeQuoteService extends BaseService
 
             // check the columns to be updated in life quote request.
             if ($quote->lifeQuote) {
-                $quote->lifeQuote()->update(Arr::only($data, app(LifeQuote::class)->allowedColumns()));
+                $lifeQuoteData = Arr::only($data, app(LifeQuote::class)->allowedColumns());
+                $quote->lifeQuote->fill($lifeQuoteData);
+                $quote->lifeQuote->save();
             } else {
-                $quote->lifeQuote()->create(Arr::only($data, app(LifeQuote::class)->allowedColumns()));
+                $lifeQuoteData = Arr::only($data, app(LifeQuote::class)->allowedColumns());
+                $lifeQuote = $quote->lifeQuote()->create($lifeQuoteData);
+                $lifeQuote->audit();
             }
 
             return $quote;
