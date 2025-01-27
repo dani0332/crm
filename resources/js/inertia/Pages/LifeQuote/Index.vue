@@ -736,12 +736,17 @@ watch(
       </template>
       <template #item-tenure_of_insurance="item">
         <p>
-          {{ item?.insurance_tenure?.text ?? '' }}
+          {{ item?.life_quote?.insurance_tenure?.text ?? '' }}
         </p>
       </template>
       <template #item-number_of_years="item">
         <p>
-          {{ item?.number_of_years?.text ?? '' }}
+          {{ item?.life_quote?.number_of_years?.text ?? '' }}
+        </p>
+      </template>
+      <template #item-sum_insured_value="item">
+        <p>
+          {{ item?.life_quote?.sum_insured_value ?? '' }}
         </p>
       </template>
     </DataTable>

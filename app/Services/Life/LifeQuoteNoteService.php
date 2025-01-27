@@ -2,7 +2,7 @@
 
 namespace App\Services\Life;
 
-use App\Models\LifeQuote;
+use App\Models\PersonalQuote;
 use App\Services\BaseService;
 
 class LifeQuoteNoteService extends BaseService
@@ -10,10 +10,10 @@ class LifeQuoteNoteService extends BaseService
     /**
      * Get the notes for a life quote.
      *
-     * @param LifeQuote $quote The life quote.
+     * @param PersonalQuote $quote The life quote.
      * @return \Illuminate\Pagination\LengthAwarePaginator
      */
-    public function getNotes(LifeQuote $quote)
+    public function getNotes(PersonalQuote $quote)
     {
         return $quote->notes()
             ->with([
