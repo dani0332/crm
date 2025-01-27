@@ -52,6 +52,9 @@ class SplitPaymentService
     use HandlesDeadlockRetries;
     use SageLoggable;
 
+    private const AFIA_WEBSITE_DOMAIN_CONFIG_KEY = 'constants.AFIA_WEBSITE_DOMAIN';
+    private const HOME_INSURANCE_BASE_PATH = '/home-insurance/quote/';
+
     public function calculateDiscount($totalSplitPayments, $discountValue)
     {
         $discount = 0;
@@ -596,9 +599,7 @@ class SplitPaymentService
 
             if ($request->modelType == QuoteTypes::HOME->value) {
                 // Home Insurance Payment Link Generation as it does not have embedded product yet
-                $afiaWebDomain = config('constants.AFIA_WEBSITE_DOMAIN'); // Afia Website Domain
-                $basePath = '/home-insurance/quote/'; // Base Path for Home Insurance Quote
-                $paymentLinkURL = rtrim($afiaWebDomain, '/') . $basePath . $quoteModel->uuid . '/payment/status'; // Payment Link URL
+                $paymentLinkURL = $this->generateHomeEcomPaymentURL($quoteModel->uuid);
             }
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
@@ -1185,5 +1186,17 @@ class SplitPaymentService
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
             $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         }
+    }
+
+    private function generateHomeEcomPaymentUrl(string $uuid): string
+    {
+        $afiaWebDomain = config(self::AFIA_WEBSITE_DOMAIN_CONFIG_KEY);
+        if (empty($afiaWebDomain)) {
+            info('AFIA website domain is not configured.', ['uuid' => $uuid]);
+            return '';
+        }
+        $basePath = self::HOME_INSURANCE_BASE_PATH;
+        $paymentLinkUrl = rtrim($afiaWebDomain, '/') . $basePath . $uuid . '/payment/status';
+        return $paymentLinkUrl;
     }
 }
