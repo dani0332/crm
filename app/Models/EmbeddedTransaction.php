@@ -114,4 +114,10 @@ class EmbeddedTransaction extends Model
             $query->whereNull('courier_synced_at')->whereNull('courier_sync_failed_at');
         }
     }
+
+    public function scopeSyncFailed($q)
+    {
+        $q->where('courier_sync_failed_at', '<=', now()->subHour());
+
+    }
 }
