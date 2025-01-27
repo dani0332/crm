@@ -222,7 +222,10 @@ watch(
               Date of issuance
             </span>
             <template #tooltip>
-              <span class="custom-tooltip-content">This is the date on which the EP product was issued and sent to the client by the system</span>
+              <span class="custom-tooltip-content"
+                >This is the date on which the EP product was issued and sent to
+                the client by the system</span
+              >
             </template>
           </x-tooltip>
           <x-field>
