@@ -23,10 +23,13 @@ const flattenLeads = (leadsTypes) => {
     if (Array.isArray(leadsList)) {
       leadsList.forEach((lead) => {
         lead.nationality_text = lead.nationality?.text || '';
-        lead.insurance_tenure_text = lead.insurance_tenure?.text || '';
+        lead.insurance_tenure_text = lead?.life_quote?.insurance_tenure?.text || '';
+        lead.age = lead.life_quote?.age || '';
+        lead.sum_insured_value = lead.life_quote?.sum_insured_value || '';
 
         delete lead.nationality;
         delete lead.insurance_tenure;
+        delete lead.life_quote;
       });
     }
   });

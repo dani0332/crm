@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
@@ -22,6 +23,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use League\CommonMark\Extension\SmartPunct\Quote;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -455,7 +457,7 @@ class SendEmailCustomerService extends BaseService
         $isEmailSent = 0;
         try {
             $appEnv = config('constants.APP_ENV');
-            //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
+            // Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
             if ($source == 'CORPORATE') {
                 $emailTemplateId = (int) config('constants.SIB_CORPORATE_TEMPLATE');
             } else {
@@ -596,7 +598,7 @@ class SendEmailCustomerService extends BaseService
         $body = [
             'subject' => $this->appEnv == EnvEnum::PRODUCTION ? $emailData->subject : $this->appEnv.' - '.$emailData->subject,
             'sender' => [
-                'email' => 'no-reply@alert.insurancemarket.email',
+                'email' => $emailData->fromEmail ?? 'no-reply@alert.insurancemarket.email',
                 'name' => 'InsuranceMarket.ae',
             ],
             'params' => $emailData,
@@ -610,7 +612,13 @@ class SendEmailCustomerService extends BaseService
             'templateId' => $emailData->templateId,
         ];
 
-        $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO);
+        if ($emailData->lob == QuoteTypeId::Health) {
+
+            $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_HEALTH_REPLY_TO);
+        } else {
+            $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO);
+        }
+
         $body['replyTo'] = [
             'email' => $replyToEmail,
             'name' => 'InsuranceMarket.ae',
@@ -648,7 +656,6 @@ class SendEmailCustomerService extends BaseService
                 $msg = $response->msg;
             }
             info('RM Intro Email Error for HEA-'.$quoteUuid.' - Response Code: '.$response->status.' - Message: '.$msg);
-
         } elseif ($response && isset($response->message)) {
 
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
@@ -859,6 +866,7 @@ class SendEmailCustomerService extends BaseService
                         'mobileNo' => $emailData->advisorMobileNo,
                         'landLine' => $emailData->advisorLandlineNo,
                         'profilePicture' => $emailData->profilePicture,
+                        'isChsAdvisor' => $emailData->isChsAdvisor,
                     ],
                 ],
                 'tags' => [
@@ -917,7 +925,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendSICNotificationToAdvisor($lead, $user)
+    public function sendSICNotificationToAdvisor($lead, $user, $quoteType)
     {
         info('sendSICNotificationToAdvisor ---- Start');
 
@@ -926,12 +934,22 @@ class SendEmailCustomerService extends BaseService
 
             $subject = $subjectEnvTag.'CALL NOW! Customer with REF-ID '.$lead->code.' has requested for an advisor right now!';
 
+            $quoteTypeCode = strtolower($quoteType);
+
+            if ($quoteType == quoteTypeCode::Business) {
+                $path = "quotes/business/$lead->uuid";
+            } elseif (checkPersonalQuotes($quoteType)) {
+                $path = "personal-quotes/$quoteTypeCode/$lead->uuid";
+            } else {
+                $path = "quotes/$quoteTypeCode/$lead->uuid";
+            }
+
             $htmlContent = '<html>
             <head></head>
             <body>
               <p>Dear <b>'.$user->name.'</b>,</p>
               <p>
-                  A customer with REF-ID <a href="'.$this->appUrl.'/quotes/car/'.$lead->uuid.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
+                  A customer with REF-ID <a href="'.$this->appUrl.'/'.$path.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
               </p>
               <p>
                 Please call the customer urgently as they have requested for an advisor right now.
@@ -1370,7 +1388,7 @@ class SendEmailCustomerService extends BaseService
             'currentInsurer' => $currentInsurer ? $currentInsurer->text : null,
             'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.'/?assignAdvisor=true'),
-            'assignmentType' => $this->getAssignmentTypeText($healthQuote->assignment_type),
+            'assignmentType' => getAssignmentTypeText($healthQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor),
@@ -1387,29 +1405,6 @@ class SendEmailCustomerService extends BaseService
 
             return $this->buildCommonEmailData($lead, $advisor, $previousAdvisor, $request, $emailTemplateId);
         }
-    }
-
-    private function getAssignmentTypeText($assignmentType)
-    {
-        $assignmentText = '';
-        switch ($assignmentType) {
-            case 1:
-                $assignmentText = 'System Assigned';
-                break;
-            case 2:
-                $assignmentText = 'System ReAssigned';
-                break;
-            case 3:
-                $assignmentText = 'Manual Assigned';
-                break;
-            case 4:
-                $assignmentText = 'Manual ReAssigned';
-                break;
-            default:
-                break;
-        }
-
-        return $assignmentText;
     }
 
     private function getPlanBuyNowLink($plan, $uuid)

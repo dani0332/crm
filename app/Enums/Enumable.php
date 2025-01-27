@@ -11,14 +11,11 @@ trait Enumable
         return Str::title(Str::lower(str_replace('_', ' ', $this->name)));
     }
 
-    public static function withLabels($quoteTypeId = null): array
+    public static function withLabels(): array
     {
         $values = [];
-        $caseList = collect(self::cases());
-        if ($quoteTypeId == QuoteTypeId::Health) {
-            $caseList = collect($caseList)->whereNotIn('value', QuoteSegmentEnum::SIC_REVIVAL->value);
-        }
-        foreach ($caseList as $case) {
+
+        foreach (self::cases() as $case) {
             $values[] = [
                 'value' => $case->value,
                 'label' => $case->label(),

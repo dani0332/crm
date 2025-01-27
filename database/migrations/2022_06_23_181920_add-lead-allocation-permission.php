@@ -11,7 +11,7 @@ class AddLeadAllocationPermission extends Migration
      */
     public function up()
     {
-        //lead-allocation-view
+        // lead-allocation-view
         $datetime = date('Y-m-d H:i:s');
         $permission = DB::table('permissions')->where('name', 'lead-allocation-view')->first();
         if ($permission === null) {

@@ -23,6 +23,7 @@ const quoteForm = useForm({
   mobile_no: props.quote.mobile_no,
   premium: props.quote.premium,
   company_name: props.quote.business_company_name,
+  company_address: props.quote.business_company_address,
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
   group_medical_type_id: props.selectedGmType,
@@ -146,13 +147,21 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="COMPANY NAME" required>
+        <x-field label="COMPANY NAME">
           <x-input
             v-model="quoteForm.company_name"
             type="text"
-            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.company_name"
+          />
+        </x-field>
+
+        <x-field label="COMPANY ADDRESS">
+          <x-input
+            v-model="quoteForm.company_address"
+            type="text"
+            class="w-full"
+            :error="quoteForm.errors.company_address"
           />
         </x-field>
 

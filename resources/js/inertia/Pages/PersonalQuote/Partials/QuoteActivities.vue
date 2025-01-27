@@ -256,7 +256,6 @@ onMounted(() => {
         <x-textarea
           v-model="activityForm.description"
           label="Description*"
-          :rules="[rules.isRequired]"
           :adjust-to-text="false"
           class="w-full"
         />

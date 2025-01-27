@@ -53,6 +53,14 @@ class ReAssignBikeLeadsJob implements ShouldQueue
         foreach ($leads as $lead) {
             info('--------------- ReAssignment processing current lead : '.$lead->uuid.' ---------------');
 
+            if ($lead->isAllocationInProgress()) {
+                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                continue;
+            }
+
+            $lead->startAllocation();
+
             // Find the appropriate tier for the lead
             $tier = $this->findTier($lead);
 
@@ -85,6 +93,8 @@ class ReAssignBikeLeadsJob implements ShouldQueue
                 // Log that tier was not found for the lead and skip processing
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
             }
+
+            $lead->endAllocation();
 
             info('--------------- ReAssignment processing ended for current lead : '.$lead->uuid.' ---------------');
         }

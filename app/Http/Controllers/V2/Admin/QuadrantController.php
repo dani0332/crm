@@ -8,6 +8,7 @@ use App\Http\Requests\QuadrantRequest;
 use App\Models\Quadrant;
 use App\Models\Tier;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Str;
 
 class QuadrantController extends Controller
 {
@@ -67,6 +68,8 @@ class QuadrantController extends Controller
     public function store(QuadrantRequest $request)
     {
         $data = $request->except('quad_users', 'quad_tiers');
+
+        $data['code'] = Str::replace(' ', '_', Str::squish(Str::upper($data['name'])));
 
         $response = Quadrant::create($data);
 

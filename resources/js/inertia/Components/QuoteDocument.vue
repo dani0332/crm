@@ -1,10 +1,10 @@
 <script setup>
+import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
 
 defineProps({
   quote: Object,
   quoteDocuments: Object,
-  paymentStatusEnum: Object,
   documentTypes: Object,
   storageUrl: String,
   expanded: {
@@ -37,6 +37,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -100,7 +101,9 @@ const uploadFile = (doc, filesWithInfo) => {
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
   formData.append('quote_type', usePage().props.quoteType);
-  formData.append('file', files[0].file);
+  files.forEach(file => {
+    formData.append('files[]', file.file);
+  });
 
   uploadingStatus.value[doc.id] = true;
 
@@ -113,12 +116,18 @@ const uploadFile = (doc, filesWithInfo) => {
       });
     })
     .catch(error => {
-      console.log(error);
       errorMsg.value[doc.id] =
         error.response.data.message || 'File upload failed';
       notification.error({
         title: 'File upload failed',
         position: 'top',
+      });
+      let errorMessages = error.response.data.errors;
+      Object.keys(errorMessages).forEach(function (key) {
+        notification.error({
+          title: errorMessages[key][0] ?? errorMessages[key],
+          position: 'top',
+        });
       });
     })
     .finally(() => {
@@ -186,9 +195,11 @@ onMounted(() => {
 
 const getS3TempUrl = async docURL => {
   try {
+    NProgress.start();
     const response = await axios.post('/quotes/documents/get-s3-temp-url', {
       docURL,
     });
+    NProgress.done();
     // Check if the request was successful and the response contains the URL
     if (response.status === 200 && response.data.url) {
       // Open the URL in a new tab
@@ -367,6 +378,12 @@ const getS3TempUrl = async docURL => {
           :value="index"
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
+          :key="index"
+          :disabled="
+            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
+            !quote.insurance_provider_id &&
+            !quote.plan_id
+          "
         >
           <div
             v-for="documentType in docType"
@@ -418,6 +435,7 @@ const getS3TempUrl = async docURL => {
                   documentType.code == documentTypeCodeEnum.AUDIT &&
                   !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
                 "
+                :multiple="true"
                 @change="uploadFile(documentType, $event)"
               />
 

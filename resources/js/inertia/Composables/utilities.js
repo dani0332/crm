@@ -207,7 +207,8 @@ export const setQueryStringFilters = (params, filters) => {
 };
 
 export const saveQueryParams = () => {
-  let { component, url } = router.page;
+  const page = usePage();
+  let { component, url } = page;
   let routes = [
     'HealthQuote/Index',
     'PetQuote/Index',
@@ -225,12 +226,14 @@ export const saveQueryParams = () => {
 };
 
 export const removedSavedParams = () => {
-  let { component } = router.page;
+  const page = usePage();
+  let { component } = page;
   localStorage.removeItem(component);
 };
 
 export const getSavedQueryParams = () => {
-  let { component } = router.page;
+  const page = usePage();
+  let { component } = page;
   const savedParams = localStorage.getItem(component);
   if (savedParams) {
     let routerInfo = JSON.parse(savedParams);
@@ -391,6 +394,34 @@ export const getIp = async () => {
   }
 };
 
+export const resolveUserStatusText = statusId => {
+  switch (parseInt(statusId)) {
+    case 1:
+      return 'Online';
+    case 2:
+      return 'Offline';
+    case 3:
+      return 'Unavailable';
+    case 4:
+      return 'Sick';
+    case 5:
+      return 'On leave';
+    default:
+      return 'Unavailable';
+  }
+};
+
+export const getStatusModal = () =>
+  reactive({
+    show: false,
+    loader: false,
+    data: {
+      id: 0,
+      userId: 0,
+      reason: 1,
+      loader: false,
+    },
+  });
 //Function to validate single field in form before submit
 export const validateField = (form, fieldValue, errorField, validationRule) => {
   const validationError = validationRule(fieldValue);

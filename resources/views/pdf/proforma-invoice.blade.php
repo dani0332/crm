@@ -368,6 +368,8 @@
 
 @php
     use App\Enums\ApplicationStorageEnums;
+    use App\Models\CustomerAddress;
+    use App\Services\CustomerAddressService;
     use App\Enums\PaymentCollectionTypeEnum;
     use App\Enums\PaymentStatusEnum;
     use App\Enums\QuoteTypeShortCode;
@@ -387,10 +389,16 @@
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->collection_date)->format($dateFormat);
     $customer = $quote->customer;
     $customerName =  ucwords($customer->insured_first_name .' '. $customer->insured_last_name);
+    $quoteAddress = CustomerAddress::where([
+        'quote_uuid' => $quote->uuid,
+        'customer_id' => $quote->customer_id,
+    ])->first();
+    $customerAddress = isset($quoteAddress) ? app(CustomerAddressService::class)->fetchFullAddress($quoteAddress) : '';
     $customerDetail =  $customer->detail;
     $vat = 0;
     $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
     $entity = null;
+    $quoteTypeName = explode('-', $quote->code)[0];
 
     if($isRequestFromSendUpdateLogPage){
         $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
@@ -399,7 +407,7 @@
         $totalAmount =   $subTotal + $vat;
 
     }else{
-
+        $entity = $quote?->quoteRequestEntityMapping?->entity;
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
             $carQuoteDetails = $quote->carQuoteRequestDetail;
             $subTotal =  $carQuoteDetails->actual_premium;
@@ -410,10 +418,6 @@
             $vat =  $proformaPaymentRequest->price_vat;
             $totalAmount =  $subTotal + $vat;
         }
-        if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
-            $entity = $quote?->quoteRequestEntityMapping?->entity;
-        }
-
     }
 
 @endphp
@@ -581,11 +585,19 @@
             <tr>
 
                 <td class="customer">
-                    {{--   temp code to be removed in next deployment --}}
-                    @if($quote->code != 'BUS-AD8GZJ6Y')
+                    @if(in_array($quoteTypeName, [QuoteTypeShortCode::BUS, QuoteTypeShortCode::CAR, QuoteTypeShortCode::HOM, QuoteTypeShortCode::YAC]) && (!empty($quote->company_name) || !empty($quote->company_address)))
+                        {{ $quote->company_name ?? '' }} </br>
+                        {{ $quote->company_address ?? '' }} </br>
+                    @elseif($entity && (!empty($entity->company_name) || !empty($entity->company_address)))
+                        {{ $entity->company_name ?? '' }} </br>
+                        {{ $entity->company_address ?? '' }} </br>
+                    @elseif($customerName && !empty($customerName))
                         {{ $customerName }} </br>
+                        {{ $quote->address ?: $customerAddress }}
+                    @else
+                        {{ $customerDetail->employer_company_name ?? '' }} </br>
+                        {{ $quote->address ?? '' }}
                     @endif
-
                 </td>
 
                 <th class="date">
@@ -597,25 +609,6 @@
                 </td>
 
             </tr>
-            <tr>
-
-                <td class="customer">
-                    @if($entity)
-                        {{ $entity?->company_name }} </br>
-                    {{ $entity?->company_address }} </br>
-                    @elseif(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS)
-                        {{ $quote?->company_name }} </br>
-                    @else
-                        {{ $customerDetail?->employer_company_name }}
-                        {{ $quote->address ?? '' }}
-                    @endif
-
-                </td>
-            </tr>
-            <tr>
-                <td class="customer"></td>
-            </tr>
-
             </tbody>
         </table>
 

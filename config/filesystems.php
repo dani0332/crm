@@ -42,6 +42,13 @@ return [
             'visibility' => 'public',
         ],
 
+        'temp' => [
+            'driver' => 'local',
+            'root' => storage_path('/temp'),
+            'url' => env('APP_URL').'/storage',
+            'visibility' => 'public',
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -51,7 +58,7 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             // 'visibility' => 'public',
-            'bucket_endpoint' => true, //add this
+            'bucket_endpoint' => true, // add this
         ],
         'insly_documents' => [
             'driver' => 's3',
@@ -62,7 +69,7 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             // 'visibility' => 'public',
-            'bucket_endpoint' => true, //add this
+            'bucket_endpoint' => true, // add this
         ],
         // RYU Container for Azure
         'azureForRyu' => [
@@ -79,9 +86,9 @@ return [
             'url' => env('AZURE_IM_STORAGE_URL'),
             'prefix' => null,
         ],
-        'pdmigrations' => [
+        'instantchat' => [
             'driver' => 'local',
-            'root' => storage_path('PDMigrations'),
+            'root' => storage_path('InstantChat'),
         ],
     ],
 

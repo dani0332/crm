@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Enums\AMLStatusCode;
 use App\Repositories\TravelQuoteRepository;
 use App\Traits\ExcelExportable;
 
@@ -21,13 +22,20 @@ class TravelQuoteExport
             'FIRST NAME',
             'LAST NAME',
             'LEAD STATUS',
+            'AML STATUS',
+            'ADVISOR REQUESTED',
             'ADVISOR',
+            'ADVISOR ASSIGNED DATE AND TIME',
+            'API ISSUANCE STATUS',
+            'INSURER API STATUS',
             'CREATED DATE',
             'LAST MODIFIED DATE',
             'DOB',
             'TRANSAPP CODE',
             'LOST REASON',
             'SOURCE',
+            'PROVIDER NAME',
+            'PLAN NAME',
             'PREMIUM',
             'POLICY NUMBER',
             'DESTINATION',
@@ -53,13 +61,20 @@ class TravelQuoteExport
             $quote->first_name,
             $quote->last_name,
             optional($quote->quoteStatus)->text,
+            AMLStatusCode::getName($quote->aml_status) ?? '',
+            $quote->sic_advisor_requested == '0' ? 'No' : 'Yes',
             optional($quote->advisor)->name,
+            $quote->travelQuoteRequestDetail->advisor_assigned_date ?? '',
+            $quote->api_issuance_status ? $quote->api_issuance_status : '',
+            $quote->insurer_api_status ? $quote->insurer_api_status : '',
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             date(config('constants.datetime_format'), strtotime($quote->dob)),
             optional($quote->travelQuoteRequestDetail)->transapp_code,
             optional($quote->travelQuoteRequestDetail)->lostReason?->text,
             $quote->source,
+            $quote->insuranceProvider->text ?? '',
+            $quote->plan->text ?? '',
             $quote->premium,
             $quote->policy_number,
             optional($quote->destination)->text,

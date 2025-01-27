@@ -31,7 +31,9 @@ class SaleSummaryReportExport extends BaseReportsExport
             'Total VAT',
             'Price (VAT not applicable)',
             'Discount',
-            'Commission',
+            'Commission (VAT applicable)',
+            'VAT ON Commission',
+            'Commission (VAT Not applicable)',
             'Total Endorsement Amount',
             'Total Price',
         ];
@@ -65,6 +67,8 @@ class SaleSummaryReportExport extends BaseReportsExport
             $this->resolveNumberFormat($quote->price_vat_not_applicable ?? 0),
             $this->resolveNumberFormat($quote->discount ?? 0),
             $this->resolveNumberFormat($quote->commission_vat_applicable ?? 0),
+            $this->resolveNumberFormat($quote->commission_vat ?? 0),
+            $this->resolveNumberFormat($quote->commission_vat_not_applicable ?? 0),
             $this->resolveNumberFormat($quote->endorsements_amount ?? 0),
             $this->resolveNumberFormat($quote->total_price ?? 0),
         ];
@@ -72,11 +76,11 @@ class SaleSummaryReportExport extends BaseReportsExport
 
     public static function afterSheet(AfterSheet $event)
     {
-        $commonColumns = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+        $commonColumns = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
 
         $sumCoumns = ['B', ...$commonColumns];
         if (in_array($event->getConcernable()->groupByColumn, ['advisor'])) {
-            $sumCoumns = [...$commonColumns, 'L'];
+            $sumCoumns = [...$commonColumns, 'N'];
         }
         self::performSum($event, $sumCoumns);
     }

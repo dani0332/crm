@@ -30,32 +30,25 @@ class CorplineDataMigration extends Command
     public function handle()
     {
         $filePaths = [
-            'corpline-1.xlsx',
-            'corpline-2.xlsx',
-            'corpline-3.xlsx',
-            'corpline-4.xlsx',
-            'corpline-5.xlsx',
-            'corpline-6.xlsx',
-            'corpline-7.xlsx',
-            'corpline-8.xlsx',
-            'corpline-9.xlsx',
+            'instant_alfred_car.csv',
+            // 'instant_alfred_health.csv',
         ];
 
         foreach ($filePaths as $filePath) {
-            if (! Storage::disk('pdmigrations')->exists($filePath)) {
+            if (! Storage::disk('instantchat')->exists($filePath)) {
                 Log::error('File does not exist: '.$filePath);
 
                 continue;
             }
 
-            $fullPath = Storage::disk('pdmigrations')->path($filePath);
+            $fullPath = Storage::disk('instantchat')->path($filePath);
 
             try {
-                Log::info('Business Quote data migrations started.');
+                Log::info('InstantChatMigrationCSV - data migrations started.');
 
                 Excel::import(new BusinessQuoteImport, $fullPath);
 
-                Log::info('Business Quote data migrations succeeded.');
+                Log::info('InstantChatMigrationCSV - data migrations succeeded.');
             } catch (\Exception $e) {
                 Log::error('Error importing file: '.$e->getMessage());
             }

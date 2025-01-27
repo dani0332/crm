@@ -15,6 +15,7 @@ defineProps({
   isBetaUser: Boolean,
   teams: Object,
   authorizedDays: Number,
+  assignmentTypes: Object,
 });
 
 const page = usePage();
@@ -99,14 +100,6 @@ const ecommerceOptions = [
   { value: '', label: 'Please select is ecommerce' },
   { value: 'Yes', label: 'Yes' },
   { value: 'No', label: 'No' },
-];
-
-const assignmentTypeOptions = [
-  { value: '', label: 'Please select is assignment type' },
-  { value: 1, label: 'System Assigned' },
-  { value: 2, label: 'System ReAssigned' },
-  { value: 3, label: 'Manual Assigned' },
-  { value: 4, label: 'Manual ReAssigned' },
 ];
 
 const filteredTableHeader = computed(() => {
@@ -776,7 +769,7 @@ const onExport = (url, isLoading = false) => {
           v-model="filters.assignment_type"
           label="Assignment Type"
           placeholder="Please select assignment type"
-          :options="assignmentTypeOptions"
+          :options="assignmentTypes"
           :single="true"
           class="w-full"
         />

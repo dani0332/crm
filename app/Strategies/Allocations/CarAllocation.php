@@ -3,12 +3,9 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
-use App\Factories\AllocationFactory;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
-use App\Services\SendEmailCustomerService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
 
@@ -17,15 +14,19 @@ class CarAllocation implements Allocation
     private $carAllocationService;
     private $allocationId;
     private $teamId;
+    private bool $evaluateTierOnly = false;
+    private bool $overrideAdvisorId = false;
 
-    public function __construct(CarAllocationService $carAllocationService, $allocationId, $teamId)
+    public function __construct(CarAllocationService $carAllocationService, $allocationId, $teamId, bool $evaluateTierOnly = false, bool $overrideAdvisorId = false)
     {
         $this->carAllocationService = $carAllocationService;
         $this->allocationId = $allocationId;
         $this->teamId = $teamId;
+        $this->evaluateTierOnly = $evaluateTierOnly;
+        $this->overrideAdvisorId = $overrideAdvisorId;
     }
 
-    public function executeSteps($overrideAdvisorId = false, $teamId = false, $evaluateTierOnly = false)
+    public function executeSteps()
     {
         $response = [
             'advisorId' => 0,
@@ -34,32 +35,52 @@ class CarAllocation implements Allocation
         ];
 
         try {
-            $lead = $this->fetchLead($overrideAdvisorId);
+            $lead = $this->fetchLead();
 
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
 
-                return AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+                return $this->carAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
+
+            info('Processing record for Quote Allocation with uuid: '.$lead->uuid, [
+                'uuid' => $lead->uuid,
+                'payment_status_id' => $lead->payment_status_id,
+                'source' => $lead->source,
+                'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
+                'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+                'sic_flow_enabled' => $lead->sic_flow_enabled,
+                'sic_advisor_requested' => $lead->sic_advisor_requested,
+                'quote_status_id' => $lead->quote_status_id,
+            ]);
+
+            if ($lead->isAllocationInProgress()) {
+                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+
+                return $this->carAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
+            }
+
+            $lead->startAllocation();
 
             $tier = $this->determineTier($lead);
 
             if ($tier) {
-                $response = $this->processTier($lead, $tier, $evaluateTierOnly);
+                $response = $this->processTier($lead, $tier);
             } else {
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
 
                 $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
 
-                $response = AllocationFactory::createResponse(0, 'Tier not found', Response::HTTP_NOT_FOUND);
+                $response = $this->carAllocationService->createResponse(0, 'Tier not found', Response::HTTP_NOT_FOUND);
             }
         } catch (\Throwable $th) {
             $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+            $this->carAllocationService->endBuyLeadProcessing();
 
             $message = $th->getMessage() ?? '';
             info('exception occurred in car lead allocation with error : '.$message);
             info('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
-            $response = AllocationFactory::createResponse(0, 'exception occurred in car lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            $response = $this->carAllocationService->createResponse(0, 'exception occurred in car lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return $response;
@@ -83,50 +104,52 @@ class CarAllocation implements Allocation
         return $tier;
     }
 
-    private function processTier($lead, $tier, $evaluateTierOnly)
+    private function processTier($lead, $tier)
     {
         info('Tier identified. Proceeding to finalize the tier for lead : '.$lead->uuid.' with UUID : '.$lead->uuid.' and tier name : '.$tier->name);
 
-        if ($evaluateTierOnly) {
+        if ($this->evaluateTierOnly) {
             info('Evaluate tier only. Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
             $lead->tier_id = $tier->id;
             $lead->save();
 
-            return AllocationFactory::createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier->id);
+            $lead->endAllocation();
+
+            return $this->carAllocationService->createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier->id);
         }
 
         info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
-        $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $lead);
+        $availableUsers = $this->findAvailableUsers($tier, $lead->source, $lead);
         $rules = $this->findRules($lead);
         $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
 
         if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
             info('Advisor is same as previous advisor. Skipping for now.');
 
-            return AllocationFactory::createResponse($advisorId, 'Advisor is same as previous advisor. Skipping for now', Response::HTTP_OK);
+            $lead->endAllocation();
+            $this->carAllocationService->endBuyLeadProcessing();
+
+            return $this->carAllocationService->createResponse($advisorId, 'Advisor is same as previous advisor. Skipping for now', Response::HTTP_OK);
         }
 
         if ($advisorId && $advisorId != 0) {
             $this->assignLead($lead, $advisorId, $tier);
 
-            if ($lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($lead, $advisorId);
-            }
-
-            return AllocationFactory::createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
+            return $this->carAllocationService->createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
         } else {
             $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+            $this->carAllocationService->endBuyLeadProcessing();
 
             info('Advisor not found. Skipping for now.');
             $this->updateLeadTier($lead, $tier);
 
-            return AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
+            return $this->carAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
         }
     }
 
-    protected function fetchLead($overrideAdvisorId): mixed
+    protected function fetchLead(): mixed
     {
-        return $this->carAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
+        return $this->carAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId);
     }
 
     protected function getTier($tierId)
@@ -143,9 +166,9 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId, $leadSource, $lead): array|Collection
+    protected function findAvailableUsers($tier, $leadSource, $lead): array|Collection
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $this->teamId);
+        return $this->carAllocationService->getEligibleUserForAllocation($tier, null, false, $leadSource, $this->teamId, $lead);
     }
 
     protected function findRules($lead)
@@ -155,7 +178,7 @@ class CarAllocation implements Allocation
 
     protected function finalizeAdvisors($lead, $tier, $users, $rules): int
     {
-        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, $this->teamId);
+        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, $this->teamId, $tier);
     }
 
     protected function assignLead($lead, $userId, $tier): void
