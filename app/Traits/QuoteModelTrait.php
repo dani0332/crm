@@ -157,11 +157,12 @@ trait QuoteModelTrait
 
     public function isBuyLeadApplicable(): bool
     {
-        return (! $this->isStale() && ! $this->isPaid()) &&
-            (request('isRequestedForAnAdvisor', false) ||
-            $this->sic_advisor_requested == 1 ||
-            $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
-            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD);
+        // If lead is not stale and not paid, or previously lead is bought lead or reassigned as bought lead
+
+        return (! $this->isStale() && ! $this->isPaid()) || in_array(
+            $this->assignment_type,
+            [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]
+        );
     }
 
     public function getForeignKey()
