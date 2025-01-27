@@ -37,6 +37,7 @@ class Kernel extends ConsoleKernel
         Commands\ProcessCCPaymentsCommand::class,
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
+        Commands\TravelRenewalLeads::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
@@ -73,7 +74,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('InstantAlfredNotification:cron')->everyMinute()->onOneServer()->withoutOverlapping();
 
-        //send leads which are resubmitted for car sold approval yesterday
+        // send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
             ->daily()
             ->withoutOverlapping()->onOneServer()
@@ -120,9 +121,13 @@ class Kernel extends ConsoleKernel
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
 
+        $schedule->command('DttHealth')->timezone('Asia/Dubai')->dailyAt('09:03')->onOneServer()->withoutOverlapping();
+        $schedule->command('DttHealthFollowUp')->timezone('Asia/Dubai')->dailyAt('11:48')->onOneServer()->withoutOverlapping();
+
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();
@@ -139,7 +144,6 @@ class Kernel extends ConsoleKernel
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
 
-        $schedule->command('sync:courier-quotes-once')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
     }
 
     /**

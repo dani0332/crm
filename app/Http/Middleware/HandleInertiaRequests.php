@@ -11,6 +11,7 @@ use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
+use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
@@ -225,13 +226,13 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD),
                         'Health',
-                        route('lead-allocation.index'),
+                        route('lead-allocation.index', ['userBlStatus' => LeadAllocationUserBLStatusFiltersEnum::BUY_LEAD_DISABLED->value]),
                         fn ($s) => $s->attributes(['icon' => 'health'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD),
                         'Car',
-                        route('car-lead-allocation.index'),
+                        route('car-lead-allocation.index', ['userBlStatus' => LeadAllocationUserBLStatusFiltersEnum::BUY_LEAD_DISABLED->value]),
                         fn ($s) => $s->attributes(['icon' => 'car'])
                     )
                     ->addIf(
@@ -279,6 +280,24 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
+        if (auth()->user()->can(PermissionsEnum::BUY_LEADS)) {
+            $nav = $nav->add('Buy Leads', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        true,
+                        'Buy Leads Request',
+                        route('buy-leads.request.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        true,
+                        'Buy Leads Tracking',
+                        route('buy-leads.request.tracking'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
+        }
+
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', route('activities.index'));
         }
@@ -319,11 +338,30 @@ class HandleInertiaRequests extends Middleware
                     auth()->user()->hasAnyPermission(
                         PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                        PermissionsEnum::HEALTH_QUOTES_ACCESS
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                        PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST,
                     ),
-                    'Health Quotes',
+                    'Health',
                     route('health.index'),
-                    fn ($s) => $s->attributes(['icon' => 'health'])
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'health'])
+                        ->addIf(
+                            auth()->user()->hasAnyPermission(
+                                PermissionsEnum::HealthQuotesList,
+                                PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
+                                PermissionsEnum::HEALTH_QUOTES_ACCESS
+                            ),
+                            'Health Quotes',
+                            route('health.index'),
+                            fn ($s) => $s->attributes(['icon' => 'health'])
+                        )
+
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST),
+                            'Health Revival Quotes',
+                            route('health-revival-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'health'])
+                        ),
                 )
                 ->addIf(
                     auth()->user()->can(PermissionsEnum::TravelQuotesList),
@@ -372,7 +410,37 @@ class HandleInertiaRequests extends Middleware
                     );
             });
         }
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::UPLOAD_HEALTH_RATES,
+            PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+        ])) {
+            $nav = $nav->add('Upload Rates & Coverages', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::UPLOAD_HEALTH_RATES,
+                            PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+                        ]),
+                        'Health',
+                        route('upload-rates'),
+                        fn ($s) => $s
+                            ->attributes(['icon' => 'health'])
+                            ->addIf(
+                                auth()->user()->hasPermissionTo(PermissionsEnum::UPLOAD_HEALTH_COVERAGES),
+                                'Coverages',
+                                route('upload-coverages'),
+                                fn ($s) => $s->attributes(['icon' => 'health'])
+                            )
+                            ->addIf(
+                                auth()->user()->hasPermissionTo(PermissionsEnum::UPLOAD_HEALTH_RATES),
+                                'Rates',
+                                route('upload-rates'),
+                                fn ($s) => $s->attributes(['icon' => 'health'])
+                            ),
 
+                    );
+            });
+        }
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,
@@ -564,6 +632,18 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
+                        'Process Tracker',
+                        route('process-tracker.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
+                        'Buy Lead Config',
+                        route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->hasAnyPermission([
                             PermissionsEnum::RULE_CONFIG_LIST,
                             PermissionsEnum::QUAD_CONFIG_LIST,
@@ -620,6 +700,7 @@ class HandleInertiaRequests extends Middleware
                             )
                     );
             });
+
         }
 
         if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {

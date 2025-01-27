@@ -47,7 +47,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
             [
-                'value' => 1,
+                'value' => 0,
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -56,7 +56,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
             [
-                'value' => 1,
+                'value' => 0,
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -76,6 +76,15 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_TRAVEL_RENEWALS_OCB],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/968e6273-9965-473b-a258-2a069c8fb7da/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::PROCESS_CC_PAYMENTS_ENABLED],
@@ -88,6 +97,15 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         $this->seedHomeAdvisors();
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_RENEWALS_SWITCH],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL],
             [
@@ -171,6 +189,14 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_RENEWALS_DAYS_THRESHOLD],
+            [
+                'value' => '1',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }

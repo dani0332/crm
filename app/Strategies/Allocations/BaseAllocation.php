@@ -99,7 +99,7 @@ abstract class BaseAllocation extends AllocationService
             })
             ->whereIn('r.name', $roles)
             ->where('la.quote_type_id', $this->getQuoteTypeId())
-            ->where('users.is_active', true)
+            ->activeUser()
             ->orderBy('la.last_allocated', 'asc');
     }
 
@@ -140,7 +140,6 @@ abstract class BaseAllocation extends AllocationService
             $previousUserId = $this->lead->advisor_id;
             $this->lead->advisor_id = $advisor->id;
             $this->lead->assignment_type = $assignmentType;
-            $this->lead->quote_updated_at = now();
             $quoteBatch = QuoteBatches::latest()->first();
             $this->lead->quote_batch_id = $quoteBatch->id;
             $this->lead->save();

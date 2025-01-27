@@ -2,8 +2,9 @@
 
 namespace App\Traits;
 
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -13,12 +14,13 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
+use App\Traits\QuoteTraits\QuoteAllocatable;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable;
+    use Filterable, QuoteAllocatable;
 
     /**
      * @return mixed|void
@@ -82,7 +84,11 @@ trait QuoteModelTrait
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                });
+                })->whereNotIn("{$alias}.source", [
+                    LeadSourceEnum::REVIVAL,
+                    LeadSourceEnum::REVIVAL_REPLIED,
+                    LeadSourceEnum::REVIVAL_PAID,
+                ])->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -90,15 +96,9 @@ trait QuoteModelTrait
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                });
-            })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias, $quoteTypeId) {
-                $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_tags.quote_type_id', $quoteTypeId);
-                })->whereIn("{$alias}.source", [
+                })->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
+            })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
+                $query->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
@@ -127,7 +127,11 @@ trait QuoteModelTrait
         if ($not) {
             $q->whereNotIn("{$q->getModel()->getTable()}.uuid", $subQuery);
         } else {
-            $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery);
+            $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery)->whereNotIn("{$q->getModel()->getTable()}.source", [
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+            ]);
         }
     }
 
@@ -146,68 +150,19 @@ trait QuoteModelTrait
         return ! $this->isSIC($quoteType);
     }
 
-    public function markLeadAllocationFailed()
+    public function isStale()
     {
-        if ($this->lead_allocation_failed_at) {
-            return; // Already marked as failed
-        }
-
-        self::withoutEvents(function () {
-            $this->update([
-                'lead_allocation_failed_at' => now(),
-            ]);
-        });
+        return ! empty($this->stale_at);
     }
 
-    public function markLeadAllocationPassed()
+    public function isBuyLeadApplicable(): bool
     {
-        if (! $this->lead_allocation_failed_at || ! $this->advisor_id) {
-            return; // Already marked as passed or advisor not assigned
-        }
+        // If lead is not stale and not paid, or previously lead is bought lead or reassigned as bought lead
 
-        self::withoutEvents(function () {
-            $this->update([
-                'lead_allocation_failed_at' => null,
-            ]);
-        });
-    }
-
-    public function scopeLeadAllocationFailed($q)
-    {
-        $q->whereNotNull('lead_allocation_failed_at');
-    }
-
-    public function scopeSicFlowEnabled($q, bool $enabled = true, bool $or = false)
-    {
-        if ($or) {
-            $q->orWhere('sic_flow_enabled', $enabled);
-
-            return;
-        }
-
-        $q->where('sic_flow_enabled', $enabled);
-    }
-
-    public function scopeOrSicFlowEnabled($q)
-    {
-        $q->sicFlowEnabled(or: true);
-    }
-
-    public function scopeSicFlowDisabled($q)
-    {
-        $q->sicFlowEnabled(false);
-    }
-
-    public function scopeOrSicFlowDisabled($q)
-    {
-        $q->sicFlowEnabled(false, true);
-    }
-
-    public function scopeRequestedAdvisorOrPaymentAuthorized($q)
-    {
-        $q->where(function ($sq) {
-            $sq->where('sic_advisor_requested', 1)->orWhere('payment_status_id', PaymentStatusEnum::AUTHORISED);
-        });
+        return (! $this->isStale() && ! $this->isPaid()) || in_array(
+            $this->assignment_type,
+            [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]
+        );
     }
 
     public function getForeignKey()
@@ -227,13 +182,11 @@ trait QuoteModelTrait
             QuoteTypeId::Travel => 'travel_quote_request',
         ];
 
-        if ($request->hasAny($applicableFilters) && $request->has('line_of_business')) {
-            if (isset($quoteTypes[$request->line_of_business])) {
-                $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
-                    $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
-                    $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
-                });
-            }
+        if ($request->hasAny($applicableFilters) && $request->has('line_of_business') && isset($quoteTypes[$request->line_of_business])) {
+            $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
+                $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
+                $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
+            });
         }
     }
 }

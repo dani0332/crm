@@ -49,7 +49,7 @@ class UnconSubmissionReminder implements ShouldQueue
     {
         info('UnconSubmissionReminder - Uncontactable Submission reminder job started');
 
-        //get next uncontactable batch
+        // get next uncontactable batch
         $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
 
         if (! isset($upcomingBatch->id)) {
@@ -60,7 +60,7 @@ class UnconSubmissionReminder implements ShouldQueue
 
         info('UnconSubmissionReminder - Upcoming batch found: '.$upcomingBatch->name.' with deadline date: '.$upcomingBatch->deadline->deadline_date);
 
-        //include next 3 more batches for information
+        // include next 3 more batches for information
         $nextBatches = RenewalBatch::whereHas('deadline', function ($q) use ($upcomingBatch) {
             $q->where('quote_status_id', QuoteStatusEnum::Uncontactable)
                 ->whereDate('deadline_date', '>', $upcomingBatch->deadline->deadline_date);
@@ -98,7 +98,7 @@ class UnconSubmissionReminder implements ShouldQueue
                 $q->whereIn('name', $teams);
             })->whereHas('roles', function ($q) {
                 $q->whereIn('name', [RolesEnum::CarAdvisor]);
-            })->withActive()->with(['managers' => function ($q) {
+            })->activeUser()->with(['managers' => function ($q) {
                 $q->where('is_active', 1);
             }])->get();
 
@@ -108,7 +108,7 @@ class UnconSubmissionReminder implements ShouldQueue
                 continue;
             }
 
-            //extract unique manager emails
+            // extract unique manager emails
             $managers = $advisors->pluck('managers.*.email')
                 ->push('april.pascual@insurancemarket.ae')
                 ->flatten()->unique()->toArray();

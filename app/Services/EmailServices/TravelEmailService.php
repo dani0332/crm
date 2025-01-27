@@ -4,6 +4,7 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
@@ -224,14 +225,16 @@ class TravelEmailService extends BaseService
         return $emailData;
     }
 
-    private function triggerSICWorkflow(TravelQuote $lead, $emailData)
+    private function triggerSICWorkflow(TravelQuote $lead, $emailData, bool $forceSicWorkflow = false)
     {
-        if (! $lead->sic_flow_enabled) {
+        if (! $lead->sic_flow_enabled || $forceSicWorkflow) {
             $sicEventName = getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_ENABLE);
             if ($sicEventName) {
                 $apiResponse = SIBService::createWorkflowEvent($sicEventName, $lead, eventData: $emailData);
-                $lead->sic_flow_enabled = true;
-                $lead->save();
+                if (! $lead->sic_flow_enabled) {
+                    $lead->sic_flow_enabled = true;
+                    $lead->save();
+                }
                 info(self::class." - SIC workflow event triggered for lead: {$lead->uuid} and {$sicEventName}: {$lead->sic_flow_enabled}");
                 info(self::class." - SIC workflow response: {$apiResponse}");
             } else {
@@ -242,7 +245,7 @@ class TravelEmailService extends BaseService
         }
     }
 
-    public function sendTravelOCBIntroEmail(TravelQuote $lead, $previousAdvisorId, bool $triggerSICWorkFlow = false, bool $handleZeroPlans = false)
+    public function sendTravelOCBIntroEmail(TravelQuote $lead, $previousAdvisorId, bool $triggerSICWorkFlow = false, bool $handleZeroPlans = false, bool $forceSicWorkflow = false)
     {
         $plans = $this->getPlans($lead, $handleZeroPlans);
 
@@ -267,8 +270,8 @@ class TravelEmailService extends BaseService
         }
 
         // trigger SIC workflow
-        if ($triggerSICWorkFlow) {
-            $this->triggerSICWorkflow($lead, $emailData);
+        if ($triggerSICWorkFlow || $forceSicWorkflow) {
+            $this->triggerSICWorkflow($lead, $emailData, $forceSicWorkflow);
         }
 
         if ($lead->advisor_id) {
@@ -300,6 +303,23 @@ class TravelEmailService extends BaseService
         return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user, QuoteTypes::TRAVEL->value);
     }
 
+    public function SendOCBTravelRenewalIntroEmail(TravelQuote $lead)
+    {
+        $advisor = User::where('id', $lead->advisor_id)->first();
+
+        $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_RENEWALS_OCB);
+        $travelRenewalEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_TRAVEL_RENEWALS_OCB)->first();
+        if ($travelRenewalEvent) {
+            $response = app(BirdService::class)->triggerWebHookRequest($travelRenewalEvent->value, $emailData);
+            info("SendOCBTravelRenewalIntroEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+            $lead->quote_status_id = QuoteStatusEnum::Quoted;
+            $lead->save();
+
+            return $response->status_code;
+        } else {
+            info("SendOCBTravelRenewalIntroEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+        }
+    }
     public function sendTravelAllianceFailedAllocationEmail($lead)
     {
         $advisor = User::where('id', $lead->advisor_id)->first();

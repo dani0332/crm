@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\QuoteTypes;
 use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
@@ -45,6 +46,10 @@ class CarLeadAllocationController extends Controller
             $isRenewalLeadAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LEAD_ALLOCATION');
             $isFIFO = $this->applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
             $data = $this->carLeadAllocationService->getGridData();
+            if (request()->has('userBlStatus') && request('userBlStatus') !== LeadAllocationUserBLStatusFiltersEnum::ALL->value) {
+                $userBlStatus = LeadAllocationUserBLStatusFiltersEnum::from(request('userBlStatus'));
+                $data = $userBlStatus->applyFilter($data);
+            }
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
                 $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
@@ -60,6 +65,7 @@ class CarLeadAllocationController extends Controller
                 'todayTotalLeadCount' => $todayTotalLeadCount,
                 'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
                 'quoteType' => QuoteTypes::CAR->value,
+                'userBLStatuses' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
                 'data' => $data,
             ]);
         } else {

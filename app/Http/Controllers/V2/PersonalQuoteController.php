@@ -36,15 +36,28 @@ class PersonalQuoteController extends Controller
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
-        $response = PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->all());
-        if (! $response['status'] || $response['status'] == false) {
-            return back()->with('error', $response['message']);
+        $files = request()->file('files');
+        $responses = collect();
+
+        foreach ($files as $file) {
+            info(' fn:'.__FUNCTION__.' Quote ID : '.$quoteId.' - Upload Document : '.$file->getClientOriginalName());
+
+            $response = PersonalQuoteRepository::uploadDocument($quoteId, $file, $request->all());
+            $responses->push($response); // collect all responses
+
+            info(' fn:'.__FUNCTION__.' Quote ID : '.$quoteId.' - Upload Document : '.$file->getClientOriginalName().' - Status : '.$response['status'].' - message : '.$response['message']);
         }
 
-        // update status policy issued of req fulfilled
-        $this->updateQuoteStatus($request->folder_path, $quoteId);
+        $hasErrors = $responses->where('status', false)->count();
+        $errors = $responses->where('status', false)->pluck('message')->toArray();
 
-        return back()->with('message', $response['message']);
+        if ($hasErrors) {
+            return back()->with('error', implode(', ', $errors));
+        }
+
+        app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);
+
+        return back()->with('message', 'All files uploaded successfully');
     }
 
     /**

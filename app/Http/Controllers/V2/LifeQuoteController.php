@@ -83,7 +83,7 @@ class LifeQuoteController extends Controller
         /* Start - Temporarily adding for correcting historic data  */
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $quoteShowData = app(LifeQuoteService::class)->getLifeQuoteShowData($quote);
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);

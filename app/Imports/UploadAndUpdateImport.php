@@ -112,7 +112,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
         $columns = [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'nullable|max:255'],
-            'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'nullable|max:20|regex:/^[0-9]+$/'],
+            'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'nullable|max:20'],
             'quote_type' => ['index' => 3, 'title' => 'Insurance Type', 'rules' => 'required|required|max:4'],
             'insurer' => ['index' => 4, 'title' => 'Insurance Provider', 'rules' => 'required|max:100'],
             'product_type' => ['index' => 5, 'title' => 'Product Type', 'rules' => 'required|max:100'],
@@ -159,6 +159,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             'registration_location' => ['index' => 38, 'title' => 'Registration Location', 'rules' => ['max:100']],
             'previous_advisor' => ['index' => 39, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
             'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:500'],
+            'is_gcc' => ['index' => 41, 'title' => 'Is GCC', 'rules' => 'max:3'],
         ];
 
         if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
@@ -206,7 +207,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                     }
                 }
 
-                //todo: convert this to bulk insert
+                // todo: convert this to bulk insert
                 foreach ($failed as $failedRecord) {
                     RenewalQuoteProcess::create($failedRecord);
                 }
