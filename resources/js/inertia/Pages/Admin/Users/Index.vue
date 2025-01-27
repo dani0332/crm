@@ -136,7 +136,7 @@ onMounted(() => {
       <x-tooltip
         placement="top"
         v-if="
-          can(permissionsEnum.IMPERSONATE) &&
+          can(permissionsEnum.ENABLE_IMPERSONATION) &&
           !impersonatingUser &&
           authUserId !== item.id
         "

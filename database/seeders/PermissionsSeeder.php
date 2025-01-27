@@ -24,7 +24,7 @@ class PermissionsSeeder extends Seeder
 
     private function impersonate()
     {
-        Permission::findOrCreate(PermissionsEnum::IMPERSONATE, 'web');
+        Permission::findOrCreate(PermissionsEnum::ENABLE_IMPERSONATION, 'web');
     }
 
     private function leadAllocationDashboards()
