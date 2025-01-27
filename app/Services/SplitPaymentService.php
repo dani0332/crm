@@ -594,6 +594,13 @@ class SplitPaymentService
 
             info('Request object for ' . $quoteModel->uuid . ' is ' . json_encode($invoiceRequestData));
 
+            if ($request->modelType == QuoteTypes::HOME->value) {
+                // Home Insurance Payment Link Generation as it does not have embedded product yet
+                $afiaWebDomain = config('constants.AFIA_WEBSITE_DOMAIN'); // Afia Website Domain
+                $basePath = '/home-insurance/quote/'; // Base Path for Home Insurance Quote
+                $paymentLinkURL = rtrim($afiaWebDomain, '/') . $basePath . $quoteModel->uuid . '/payment/status'; // Payment Link URL
+            }
+
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
     }
