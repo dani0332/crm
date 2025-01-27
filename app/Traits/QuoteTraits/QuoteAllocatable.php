@@ -93,7 +93,9 @@ trait QuoteAllocatable
 
     public function scopeSicFlowDisabled($q)
     {
-        $q->sicFlowEnabled(false);
+        $q->where(function ($query) {
+            $query->sicFlowEnabled(false)->orWhereNull('sic_flow_enabled');
+        });
     }
 
     public function isSICFlowEnabled()

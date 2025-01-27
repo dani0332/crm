@@ -92,13 +92,13 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
         $healthQuote = HealthQuote::where('uuid', $item->uuid)->first();
 
-        //Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
-        //or if the source is Revival Paid or if the lead is assigned to an advisor
+        // Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
+        // or if the source is Revival Paid or if the lead is assigned to an advisor
 
         if (! in_array($healthQuote->payment_status_id, $paymentStatusArray) && ! in_array($healthQuote->source, $leadSourceArray) && ! in_array($healthQuote->quote_status_id, $leadStatusArray) && empty($healthQuote->advisor_id)) {
 
             $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
-            $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
+            $response = Ken::renewalRequest('/get-health-quote-plans-order-priority', 'post', [
                 'quoteUID' => $healthQuote->uuid,
                 'isModified' => true,
             ]);
@@ -226,8 +226,8 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $emailData = new \stdClass;
         $created_at = $item->created_at;
 
-        //Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
-        //or if the source is Revival Paid or if the lead is assigned to an advisor
+        // Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
+        // or if the source is Revival Paid or if the lead is assigned to an advisor
         if (! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && ! in_array($lead->quote_status_id, $leadStatusArray) && empty($lead->advisor_id)) {
             $customerName = $lead->first_name.' '.$lead->last_name;
             $emailData->customerName = $customerName;
@@ -237,7 +237,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 
             $emailData->fromEmail = ApplicationStorage::where('key_name', $key)->value('value');
             $emailData->lob = QuoteTypes::HEALTH->id();
-            $response = Ken::request('/get-health-cheapest-plans', 'post', [
+            $response = Ken::renewalRequest('/get-health-cheapest-plans', 'post', [
                 'quoteUID' => $lead->uuid,
                 'isPlanTypes' => true,
             ]);

@@ -27,7 +27,7 @@ class CcPaymentProcess extends Model
 
     public function splitPayment()
     {
-        return $this->belongsTo(PaymentSplits::class);
+        return $this->belongsTo(PaymentSplits::class, 'payment_splits_id', 'id');
     }
 
     public function getQuoteTypeAttribute($value)

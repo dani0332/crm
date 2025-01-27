@@ -489,6 +489,7 @@ const handleDeclinedChange = () => {
   isDeclineClicked.value = true;
   isApproveClicked.value = false;
   isDeclineCustomReason.value = false;
+  isApproveNotChecked.value = false;
   handleDeclinedReasonChange();
   return true;
 };
@@ -2339,10 +2340,12 @@ const addPayment = isValid => {
             location.reload();
           }, 500);
         },
-        onError: res => {
-          notification.error({
-            title: res.error,
-            position: 'top',
+        onError: errors => {
+          Object.keys(errors).forEach(function (key) {
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
           });
         },
       });
