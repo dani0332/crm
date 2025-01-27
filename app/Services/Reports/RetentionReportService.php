@@ -86,7 +86,7 @@ class RetentionReportService extends BaseService
         $query = PersonalQuote::query()
             ->selectRaw("renewal_batch_id, renewal_batch, MONTHNAME({$this->monthColumnName}) as `month`,
                 users.name as `advisor_name`,
-                count(*) as total,
+                COUNT(DISTINCT(personal_quotes.id)) AS total,
                 SUM(CASE WHEN quote_status_id = ".QuoteStatusEnum::Lost.' THEN 1 ELSE 0 END) as lost,
                 SUM(CASE WHEN quote_status_id IN ('.QuoteStatusEnum::Fake.', '.QuoteStatusEnum::Duplicate.') THEN 1 ELSE 0 END) as invalid,
                 SUM(CASE WHEN quote_status_id = '.QuoteStatusEnum::PolicyBooked.' THEN 1 ELSE 0 END) as sales, advisor_id')
