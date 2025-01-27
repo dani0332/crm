@@ -540,51 +540,39 @@
             }
 
             $quotePlan->exclusion = isset($quotePlan->benefits->exclusion)
-                ? json_decode(
-                    collect($quotePlan->benefits->exclusion)
-                        ->keyBy('code')
-                        ->toJson(),
-                )
+                ? json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson())
                 : [];
 
             $quotePlan->inclusion = isset($quotePlan->benefits->inclusion)
-                ? json_decode(
-                    collect($quotePlan->benefits->inclusion)
-                        ->keyBy('code')
-                        ->toJson(),
-                )
+                ? json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson())
                 : [];
 
             $quotePlan->content = isset($quotePlan->benefits->content)
-                ? json_decode(
-                    collect($quotePlan->benefits->content)
-                        ->keyBy('code')
-                        ->toJson(),
-                )
+                ? json_decode(collect($quotePlan->benefits->content)->keyBy('code')->toJson())
                 : [];
 
             $quotePlan->personalBelonging = isset($quotePlan->benefits->personalBelonging)
-                ? json_decode(
-                    collect($quotePlan->benefits->personalBelonging)
-                        ->keyBy('code')
-                        ->toJson(),
-                )
+                ? json_decode(collect($quotePlan->benefits->personalBelonging)->keyBy('code')->toJson())
                 : [];
 
             $quotePlan->additionalCover = isset($quotePlan->benefits->additionalCover)
-                ? json_decode(
-                    collect($quotePlan->benefits->additionalCover)
-                        ->keyBy('code')
-                        ->toJson(),
-                )
+                ? json_decode(collect($quotePlan->benefits->additionalCover)->keyBy('code')->toJson())
                 : [];
 
             $quotePlan->building = isset($quotePlan->benefits->building)
-                ? json_decode(
-                    collect($quotePlan->benefits->building)
-                        ->keyBy('code')
-                        ->toJson(),
-                )
+                ? json_decode(collect($quotePlan->benefits->building)->keyBy('code')->toJson())
+                : [];
+
+            $quotePlan->contentAndPersonalBelonging = isset($quotePlan->benefits->contentAndPersonalBelonging)
+                ? json_decode(collect($quotePlan->benefits->contentAndPersonalBelonging)->keyBy('code')->toJson())
+                : [];
+
+            $quotePlan->fineArtAndCollectible = isset($quotePlan->benefits->fineArtAndCollectible)
+                ? json_decode(collect($quotePlan->benefits->fineArtAndCollectible)->keyBy('code')->toJson())
+                : [];
+
+            $quotePlan->jewlleryAndValuable = isset($quotePlan->benefits->jewlleryAndValuable)
+                ? json_decode(collect($quotePlan->benefits->jewlleryAndValuable)->keyBy('code')->toJson())
                 : [];
 
             $discountPremium = $vat = [];
