@@ -1253,28 +1253,28 @@
                 </td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 16px;">UAE Central Bank Registration number 85</td>
-                <td class="text-right" style="font-size: 16px;">27th Floor, Control Tower, Motor City</td>
+                <td class="text-left" style="font-size: 14px;">UAE Central Bank Registration number 85</td>
+                <td class="text-right" style="font-size: 14px;">27th Floor, Control Tower, Motor City</td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 16px;">Registered member of the Emirates Insurance Association
+                <td class="text-left" style="font-size: 14px;">Registered member of the Emirates Insurance Association
                 </td>
-                <td class="text-right" style="font-size: 16px;">Dubai, United Arab Emirates, P.O Box 26423</td>
+                <td class="text-right" style="font-size: 14px;">Dubai, United Arab Emirates, P.O Box 26423</td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 16px;">Department of Economy & Tourism in Dubai Trade License
+                <td class="text-left" style="font-size: 14px;">Department of Economy & Tourism in Dubai Trade License
                     number 238534</td>
-                <td class="text-right" style="font-size: 16px;">Tel: <a href="tel:+800253733"
+                <td class="text-right" style="font-size: 14px;">Tel: <a href="tel:+800253733"
                         style="color: #fff; text-decoration: none;">800 ALFRED (800-253-733)</a></td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 16px;">Holder of Health Insurance Intermediary Permit ID
+                <td class="text-left" style="font-size: 14px;">Holder of Health Insurance Intermediary Permit ID
                     Number BRK-00003 from Dubai Health Authority</td>
-                <td class="text-right" style="font-size: 16px;"><a href="https://insurancemarket.ae"
+                <td class="text-right" style="font-size: 14px;"><a href="https://insurancemarket.ae"
                         style="color: #fff; text-decoration: none;">www.insurancemarket.ae</a></td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 16px;">Registered member of Insurance Business Group under the
+                <td class="text-left" style="font-size: 14px;">Registered member of Insurance Business Group under the
                     Dubai Chamber of Commerce and Industry</td>
             </tr>
         </table>
