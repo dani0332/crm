@@ -67,6 +67,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const can = permission => useCan(permission);
 const modelClass = 'App\\Models\\HomeQuote';
+const personalModelClass = 'App\\Models\\PersonalQuote';
 const processingOCBEmailNB = ref(false);
 
 console.log('SHOW PROPS', page.props);
@@ -2208,7 +2209,7 @@ const viewPlanDetailsLoader = ref({});
       :quoteCode="$page.props.quote.code"
     />
 
-    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
+    <ApiLogs :type="personalModelClass" :id="$page.props.quote.id" />
 
     <LeadHistory :quote="$page.props.quote" />
 
