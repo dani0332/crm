@@ -43,6 +43,19 @@ class HealthAllocationService extends AllocationService
 
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
+        $lead = HealthQuote::where('uuid', $quoteId)->first();
+        info("Processing Health record for Quote Allocation with uuid: {$lead->uuid}", [
+            'uuid' => $lead->uuid,
+            'payment_status_id' => $lead->payment_status_id,
+            'sic_advisor_requested' => $lead->sic_advisor_requested,
+            'quote_status_id' => $lead->quote_status_id,
+            'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+            'sic_flow_enabled' => $lead->sic_flow_enabled,
+            'price_starting_from' => $lead->price_starting_from,
+            'plan_id' => $lead->plan_id,
+            'source' => $lead->source,
+        ]);
+        
         $healthQuoteQuery = HealthQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->where(function ($query) {
@@ -59,6 +72,8 @@ class HealthAllocationService extends AllocationService
         if (! $overrideAdvisorId) {
             $healthQuoteQuery->whereNull('health_quote_request.advisor_id');
         }
+
+        info($healthQuoteQuery->toRawSql());
 
         return $healthQuoteQuery->first();
     }
