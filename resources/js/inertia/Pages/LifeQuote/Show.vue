@@ -500,7 +500,7 @@ const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
 const getBMITag = () => {
-    const bmi = page.props.quote.bmi;
+    const bmi = page.props.quote.life_quote?.bmi;
     
     const bmiRanges = [
       { min: 0, max: 15.99, text: "High Risk-Underweight", color: "red" },
@@ -910,7 +910,7 @@ const getBMITag = () => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">AGE</dt>
-                  <dd>{{ quote.age }}</dd>
+                  <dd>{{ quote.life_quote?.age }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
@@ -952,16 +952,16 @@ const getBMITag = () => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">HEIGHT</dt>
-                  <dd>{{ quote.height }} CM</dd>
+                  <dd>{{ quote.life_quote?.height }} CM</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">WEIGHT</dt>
-                  <dd>{{ quote.weight }} KG</dd>
+                  <dd>{{ quote.life_quote?.weight }} KG</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="quote.age && quote.age >= 20">
+                <div class="grid sm:grid-cols-2" v-if="quote.life_quote?.age && quote.life_quote?.age >= 20">
                   <dt class="font-medium">BMI</dt>
                   <dd>
-                    {{quote.bmi}}
+                    {{quote.life_quote?.bmi}}
                     <span
                       :class="`inline-block px-2 py-1 text-xs font-medium rounded-full bg-${getBMITag().color}-100 text-${getBMITag().color}-800`"
                     >
