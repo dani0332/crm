@@ -136,27 +136,37 @@ function exportReport() {
   window.open(url + '?' + new URLSearchParams(data).toString());
 }
 
-const isSyncing = ref(false);
+const syncingRecords = ref([]);
+
 function reSync(code) {
-  isSyncing.value = true;
+  syncingRecords.value = [...syncingRecords.value, code];
   axios
     .post(route('embedded-products.courier.re-sync', code), {})
     .then(res => {
-      router.get(
-        route(
-          'embedded-products.reports.certificates',
-          page.props.embeddedProduct.detail.id,
-        ),
-        {
-          replace: true,
-          preserveScroll: true,
-          preserveState: true,
-        },
-      );
-      notification.success({
-        title: res?.data?.message,
-        position: 'top',
-      });
+      if (syncingRecords.value.length <= 1 && res?.data?.ok) {
+        router.get(
+          route(
+            'embedded-products.reports.certificates',
+            page.props.embeddedProduct.detail.id,
+          ),
+          {
+            replace: true,
+            preserveScroll: true,
+            preserveState: true,
+          },
+        );
+      }
+      if (res?.data?.ok) {
+        notification.success({
+          title: res?.data?.message,
+          position: 'top',
+        });
+      } else {
+        notification.warning({
+          title: res?.data?.message,
+          position: 'top',
+        });
+      }
     })
     .catch(err => {
       notification.error({
@@ -165,7 +175,9 @@ function reSync(code) {
       });
     })
     .finally(() => {
-      isSyncing.value = false;
+      syncingRecords.value = syncingRecords.value.filter(
+        record => record !== code,
+      );
     });
 }
 
@@ -351,18 +363,16 @@ watch(
             }}</span>
           </template>
         </x-tooltip>
-        <button class="ml-4" title="Retry Sync" @click="reSync(item.ref_id)">
+        <button class="ml-3" title="Sync" @click="reSync(item.ref_id)">
           <x-spinner
-            v-if="isSyncing && item?.sync_status?.is_failed"
+            v-if="
+              syncingRecords.includes(item.ref_id) &&
+              item?.sync_status?.is_syncable
+            "
             size="sm"
             class="text-primary"
           />
-          <x-icon
-            v-if="!isSyncing && item?.sync_status?.is_failed"
-            icon="reset"
-            color="green"
-            size="lg"
-          />
+          <x-icon v-else icon="reset" color="green" size="sm" />
         </button>
       </template>
 

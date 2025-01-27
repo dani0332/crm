@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CourierSyncStatusEnum;
+use App\Enums\RolesEnum;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -58,6 +59,7 @@ class EmbeddedTransaction extends Model
             get: function () {
                 return [
                     'status' => $this->getSyncStatus(),
+                    'is_syncable' => $this->isSyncable(),
                     'is_failed' => $this->isSyncFailed(),
                     'is_pending' => $this->isSyncPending(),
                     'message' => $this->isSyncInProgress() ? 'Sync In Progress' : (
@@ -66,6 +68,11 @@ class EmbeddedTransaction extends Model
                 ];
             }
         );
+    }
+
+    public function isSyncable()
+    {
+        return $this->isSyncFailed() || $this->isSyncPending() || $this->isSynced() || auth()->user()->hasRole(RolesEnum::Engineering);
     }
 
     public function getSyncStatus()
@@ -91,6 +98,11 @@ class EmbeddedTransaction extends Model
     public function isSyncPending()
     {
         return empty($this->courier_synced_at) && empty($this->courier_sync_failed_at);
+    }
+
+    public function isSynced()
+    {
+        return ! empty($this->courier_synced_at) && empty($this->courier_sync_failed_at) && empty($this->courier_sync_started_at);
     }
 
     public function isSyncInProgress()
