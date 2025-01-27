@@ -1003,12 +1003,12 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName)
+    function getAppStorageValueByKey($keyName, $default = false)
     {
         $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
         if (! $query) {
-            return false;
+            return $default;
         }
 
         return $query->value;
