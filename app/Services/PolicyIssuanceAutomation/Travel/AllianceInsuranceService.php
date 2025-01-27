@@ -218,7 +218,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $nationalityTraveller[] = $member->nationality->alliance_nationality_id;
         }
 
-
         $endPoint = '/v1/quote/'.$travelType.'/finalise';
         $payload = [
             'quote_id' => $selectedPlan?->insurer_quote_id,
