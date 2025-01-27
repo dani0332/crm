@@ -716,6 +716,36 @@
                 'title' => ' Damage to Services (Pipes and Cables)',
                 'type' => 'building',
             ],
+            [
+                'code' => 'traceAndAccess',
+                'title' => 'Trace & Access',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'damageToTheGarden',
+                'title' => 'Damage to the garden',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'emergencyAccess',
+                'title' => 'Emergency access',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'theftForcibleEntryOrExit',
+                'title' => 'Theft (Forcible entry or exit)',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
+                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'temporaryRemoval',
+                'title' => 'Temporary Removal',
+                'type' => 'building',
+            ],
 
             ['code' => 'spacer', 'title' => ''],
 
@@ -759,6 +789,36 @@
             [
                 'code' => 'visitorsPersonalEffects',
                 'title' => 'Visitor\'s personal effects',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'lossOfPassportDrivingLicenseWorkPermitResidencePermit',
+                'title' => 'Loss of Passport, Driving License, Work permit, Residence Permit',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'moneyAndCreditCards',
+                'title' => 'Money & Credit Cards',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'domesticHelpCover',
+                'title' => 'Domestic Help Cover',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'defenseCostLegalAssistance',
+                'title' => 'Defense Cost / Legal assistance',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'thirdPartyLiabilityCover',
+                'title' => 'Third Party Liability Cover',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'fatalInjuryBenefitProvidedDeathEnsuesWithin3MonthsOfSuchInjury',
+                'title' => 'Fatal injury benefit (provided death ensues within 3 months of such injury)',
                 'type' => 'additionalCover',
             ],
 
