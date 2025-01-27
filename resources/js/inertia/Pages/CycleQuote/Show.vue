@@ -50,6 +50,7 @@ const props = defineProps({
   paymentDocument: Array,
   amlStatusName: String,
   paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const page = usePage();
@@ -1022,6 +1023,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <QuotePayments

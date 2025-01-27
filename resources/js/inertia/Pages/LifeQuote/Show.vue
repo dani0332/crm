@@ -44,6 +44,7 @@ defineProps({
   paymentDocument: Array,
   amlStatusName: String,
   paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -1328,6 +1329,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <EmbeddedProducts

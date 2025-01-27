@@ -690,6 +690,8 @@ class CRUDController extends Controller
         $puaTypeEnum = PuaEnum::asArray();
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
         $paymentGatewayEnum = PaymentGatewayIdEnum::asArray();
+        $isFuncsEnabled = ['tapIntegration' => isTapEnabled()];
+
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
             $isCommercialVehicles = false;
@@ -873,7 +875,8 @@ class CRUDController extends Controller
                 'paymentDocument',
                 'customerAddressData',
                 'amlStatusName',
-                'paymentGatewayEnum'
+                'paymentGatewayEnum',
+                'isFuncsEnabled',
             ]));
         }
 
@@ -917,6 +920,7 @@ class CRUDController extends Controller
                 'isNewPaymentStructure',
                 'hasPolicyIssuedStatus',
                 'paymentGatewayEnum',
+                'isFuncEnabled',
             ]));
         }
 
@@ -1035,6 +1039,7 @@ class CRUDController extends Controller
                 'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
                 'paymentDocument' => $paymentDocument,
                 'paymentGatewayEnum' => $paymentGatewayEnum,
+                'isFuncsEnabled' => $isFuncsEnabled,
             ]);
         }
 
@@ -1192,6 +1197,7 @@ class CRUDController extends Controller
                 'clientInquiryLogs' => $clientInquiryLogs,
                 'paymentDocument' => $paymentDocument,
                 'paymentGatewayEnum' => $paymentGatewayEnum,
+                'isFuncsEnabled' => $isFuncsEnabled,
             ]);
         } else {
             return view('shared.show', compact([

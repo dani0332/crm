@@ -64,6 +64,7 @@ defineProps({
   amlStatusName: String,
   access: Object,
   paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -3246,6 +3247,7 @@ const allowStatusUpdate = computed(() => {
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PaymentTable

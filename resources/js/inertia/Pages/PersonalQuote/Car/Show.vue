@@ -97,7 +97,9 @@ defineProps({
   customerAddressData: Object,
   amlStatusName: String,
   paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
+
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
@@ -3658,6 +3660,7 @@ const allowStatusUpdate = computed(() => {
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
     <PaymentTable
       v-else
