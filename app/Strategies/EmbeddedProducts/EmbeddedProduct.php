@@ -26,7 +26,7 @@ class EmbeddedProduct
         return [
             'EP REF-ID',
             'ADVISOR NAME',
-            'PAYMENT DATE',
+            'Date of Issuance',
             'PLAN COMMENCEMENT DATE',
             'PLAN END DATE',
             'CERTIFICATE NUMBER',

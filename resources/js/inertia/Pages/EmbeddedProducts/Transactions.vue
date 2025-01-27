@@ -30,7 +30,7 @@ const page = usePage();
 const tableHeader = [
   { text: 'EP Ref-ID', value: 'ref_id' },
   { text: 'Advisor Name', value: 'advisor_name' },
-  { text: 'Payment Date', value: 'payment_date', sortable: true },
+  { text: 'Date of Issuance', value: 'payment_date', sortable: true },
   { text: 'Plan Commencement Date', value: 'plan_start_date' },
   { text: 'Plan End Date', value: 'plan_end_date' },
   { text: 'Full Name', value: 'name' },
@@ -216,16 +216,26 @@ watch(
             placeholder="Type here"
           />
         </x-field>
-        <x-field label="Date of issuance">
-          <DatePicker
-            v-model="filters.date_of_purchase"
-            name="date_of_purchase"
-            class="w-full"
-            model-type="yyyy-MM-dd"
-            range
-            max-range="30"
-          />
-        </x-field>
+        <div>
+          <x-tooltip>
+            <span class="border-b-2 border-dotted border-black text-sm">
+              Date of issuance
+            </span>
+            <template #tooltip>
+              <span class="custom-tooltip-content">This is the date on which the EP product was issued and sent to the client by the system</span>
+            </template>
+          </x-tooltip>
+          <x-field>
+            <DatePicker
+              v-model="filters.date_of_purchase"
+              name="date_of_purchase"
+              class="w-full"
+              model-type="yyyy-MM-dd"
+              range
+              max-range="30"
+            />
+          </x-field>
+        </div>
         <x-field label="Months">
           <DatePicker
             v-model="filters.months"

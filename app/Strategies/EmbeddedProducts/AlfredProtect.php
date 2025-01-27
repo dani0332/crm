@@ -72,7 +72,7 @@ class AlfredProtect extends EmbeddedProduct
         return [
             'EP REF-ID',
             'ADVISOR NAME',
-            'PAYMENT DATE',
+            'Date of Issuance',
             'PLAN COMMENCEMENT DATE',
             'PLAN END DATE',
             'Plan Type',
