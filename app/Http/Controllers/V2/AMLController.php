@@ -471,7 +471,13 @@ class AMLController extends Controller
 
                 if (isTapEnabled()) {
                     info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start - Ref-ID: '.$quoteRequestId);
-                    if (in_array($quoteTypeId, [QuoteTypes::CAR->id(), QuoteTypes::TRAVEL->id(), QuoteTypes::HOME->id()])) {
+                    $enableInsurerScreening = [
+                        QuoteTypes::CAR->id(),
+                        QuoteTypes::HOME->id(),
+                        QuoteTypes::TRAVEL->id(),
+                        QuoteTypes::BIKE->id(),
+                    ];
+                    if (in_array($quoteTypeId, $enableInsurerScreening)) {
                         session()->put('insurerAMLScreeningResponse');
                         InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
                         $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
