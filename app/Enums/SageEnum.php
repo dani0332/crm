@@ -11,9 +11,9 @@ use BenSampo\Enum\Enum;
  */
 final class SageEnum extends Enum
 {
-    /* Sage Processes Locks Enums*/
+    /* Sage Processes Locks Enums */
     const SAGE_PROCESS_LOCK_KEY = 'sage-processes-run-lock';
-    /* Sage Processes Locks Enums*/
+    /* Sage Processes Locks Enums */
 
     /* Sage Processes Status Enums */
     const SAGE_PROCESS_PENDING_STATUS = 'pending';
