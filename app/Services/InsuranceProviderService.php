@@ -2,13 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\InsurerProviderEnum;
-use App\Enums\QuoteTagEnums;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Models\BrokerCommission;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteTag;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;

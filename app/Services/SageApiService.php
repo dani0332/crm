@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentCollectionTypeEnum;
 use App\Enums\PaymentFrequency;
-use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;

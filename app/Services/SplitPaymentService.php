@@ -1207,12 +1207,12 @@ class SplitPaymentService
                 if ($hasPaidCreditCardPayment) {
                     return [
                         'isCommissionDisabled' => true,
-                        'disabledCommissionTooltip'=> PaymentTooltip::DISABLED_COMMISSION,
+                        'disabledCommissionTooltip' => PaymentTooltip::DISABLED_COMMISSION,
                     ];
                 }
             }
         }
 
-        return ["isCommissionDisabled" => false, "disabledCommissionTooltip" => ''];
+        return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 }

@@ -22,9 +22,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CustomerService;
-use App\Services\InsuranceProviderService;
 use App\Services\QuoteDocumentService;
-use App\Services\SplitPaymentService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
@@ -233,7 +231,7 @@ trait GenericQueriesAllLobs
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
-    
+
         info('Quote Code: '.$record->code.' fn: bookPolicyPayload called');
         $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update

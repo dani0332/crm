@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Enums\PaymentCollectionTypeEnum;
-use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;

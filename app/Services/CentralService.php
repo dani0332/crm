@@ -1016,13 +1016,13 @@ class CentralService extends BaseService
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $brokerCommission = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId);
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
-    
+
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
         $isGIGOrQICProvider = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE]);
-    
+
         $isTapCaptureProcessStart = $quote ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId) : false;
-    
+
         $tapConfiguration = [
             'isCreditCardEnabled' => $brokerCommission ? true : false,
             'brokerCommission' => $brokerCommission,
@@ -1031,12 +1031,12 @@ class CentralService extends BaseService
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'isGIGOrQICProvider' => $isGIGOrQICProvider,
         ];
-    
+
         if ($payment) {
             $commissionInfo = app(SplitPaymentService::class)->checkCommissionStatus($payment);
             $tapConfiguration = array_merge($tapConfiguration, $commissionInfo);
         }
-    
+
         return $tapConfiguration;
     }
 }
