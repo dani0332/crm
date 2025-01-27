@@ -11,7 +11,7 @@ use BenSampo\Enum\Enum;
  */
 final class SageEnum extends Enum
 {
-    /* Sage Processes Status Enums*/
+    /* Sage Processes Status Enums */
     const SAGE_PROCESS_PENDING_STATUS = 'pending';
     const SAGE_PROCESS_PROCESSING_STATUS = 'processing';
     const SAGE_PROCESS_FAILED_STATUS = 'failed';

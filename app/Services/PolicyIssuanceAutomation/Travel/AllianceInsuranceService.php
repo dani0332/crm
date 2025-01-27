@@ -525,7 +525,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
-        } elseif (! $policyIssuance) { /*&& $quote->insurer_api_status_id*/
+        } elseif (! $policyIssuance) { /* && $quote->insurer_api_status_id */
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isPolicyDocumentUploadDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
@@ -632,7 +632,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $fileContents = Http::get($documentUrl);
         [$mimeType , $docName] = $this->getMimeTypeAndFileName($documentUrl);
 
-        //upload file to azure
+        // upload file to azure
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);

@@ -108,8 +108,8 @@ class BikeEmailService extends BaseService
     private function buildCommonEmailData($lead, $advisor, $previousAdvisor)
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
-        //$whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
+        // $whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
+        // $whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
         $bikeQuoteId = $lead->code;
         $emailData = (object) [
