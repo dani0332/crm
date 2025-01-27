@@ -144,7 +144,7 @@ class Kernel extends ConsoleKernel
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
 
-        $schedule->command('quotes-syncing:retry')->timezone('Asia/Dubai')->everyTenMinutes()->onOneServer()->withoutOverlapping();
+        $schedule->command('quotes-syncing:retry')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
     }
 
     /**
