@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
@@ -13,6 +14,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\TransactionPaymentStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
@@ -22,6 +24,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
@@ -734,5 +737,17 @@ trait GenericQueriesAllLobs
         ];
 
         return in_array($lead_status_id, $skipStatus);
+    }
+
+    public function getPaymentAuthorisedDays()
+    {
+        $paymentAuthorisedDays = intval(ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->value('value'));
+
+        return intval($paymentAuthorisedDays ?? 0);
+    }
+
+    public function getRenewalBaches()
+    {
+        return app(RenewalBatchReportService::class)->getAllNonMotorBatches();
     }
 }

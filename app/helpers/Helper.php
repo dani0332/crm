@@ -538,6 +538,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::JETSKI->value,
             QuoteTypes::PET->value,
             QuoteTypes::YACHT->value,
+            QuoteTypes::LIFE->value,
         ]);
     }
 }

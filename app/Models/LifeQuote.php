@@ -39,6 +39,7 @@ class LifeQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
+    public $allowedColumns = ['others_info', 'is_smoker', 'sum_insured_value', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'tenure_of_insurance_id', 'number_of_years_id', 'height', 'weight', 'bmi', 'age', 'lang'];
 
     protected static function booted()
     {
@@ -63,7 +64,11 @@ class LifeQuote extends Model implements AuditableContract
     public function getAuditables()
     {
         return [
-            'auditable_type' => self::class,
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => self::class, 'key' => 'personal_quote_id'],
+            ],
         ];
     }
     public function getDobAttribute($value)
@@ -188,5 +193,10 @@ class LifeQuote extends Model implements AuditableContract
     public function notes()
     {
         return $this->morphMany(QuoteNote::class, 'quote_noteable');
+    }
+    
+    public function allowedColumns()
+    {
+        return $this->allowedColumns;
     }
 }

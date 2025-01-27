@@ -401,7 +401,7 @@ watch(
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3 flex">
-        <Link href="/quotes/life/cards">
+        <Link href="/personal-quotes/life/cards">
           <x-button
             size="sm"
             color="#1d83bc"
@@ -718,8 +718,8 @@ watch(
       <template #item-nationality="{ nationality }">
         {{ nationality?.code }}
       </template>
-      <template #item-lost_reason="{ life_quote_request_detail }">
-        {{ life_quote_request_detail?.lost_reason?.text }}
+      <template #item-lost_reason="{ quote_detail }">
+        {{ quote_detail?.lost_reason?.text }}
       </template>
 
       <!-- <template #item-is_ecommerce="{ is_ecommerce }">
