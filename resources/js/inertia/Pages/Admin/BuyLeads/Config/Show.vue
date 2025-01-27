@@ -65,6 +65,9 @@ const fetchValues = () => {
         buyForm.value = config.value;
         buyForm.volume = config.volume;
         buyForm.segment = config.segment;
+      } else {
+        // TODO: For Now Setting Default Segment as SIC but need to remove this later
+        buyForm.segment = 'sic';
       }
       fetchLoader.value = false;
     })
@@ -115,7 +118,7 @@ watch(
           :rules="[isRequired]"
         ></x-select>
       </x-field>
-      <x-field label="Segment">
+      <x-field label="Segment" class="hidden">
         <x-select
           placeholder="Select Segment"
           :options="props.segments"
