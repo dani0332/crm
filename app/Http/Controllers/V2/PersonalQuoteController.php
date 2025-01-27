@@ -120,7 +120,6 @@ class PersonalQuoteController extends Controller
 
     public function stopHapexReminder($quote)
     {
-        info(' fn:'.__FUNCTION__.' Quote UUID : '.$quote->uuid);
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
 
         return true;
