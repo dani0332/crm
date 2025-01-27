@@ -351,7 +351,7 @@ class BaseService
         }
 
         info('Previous assignment type is : '.$previousAssignmentType);
-        //Constants for system assigned types
+        // Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
         // Get the allocation record for the new advisor

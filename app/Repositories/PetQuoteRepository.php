@@ -134,7 +134,7 @@ class PetQuoteRepository extends BaseRepository
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
-            //PD Revert
+            // PD Revert
             return 0;
             // return $query->count();
         }

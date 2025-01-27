@@ -37,7 +37,7 @@ class SageProcessDataCleanUpCommand extends Command
 
         info('Saga Process Data Clean Up Command executed successfully.', [' data before date' => $date]);
 
-        //TODO : Check if this is required or not
+        // TODO : Check if this is required or not
         /*
          DB::statement('OPTIMIZE TABLE sage_processes');
         info('Sage Process table optimized successfully.');

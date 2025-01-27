@@ -113,11 +113,11 @@ class PersonalQuoteRepository extends BaseRepository
             $originalName = sanitizeFileName($file->getClientOriginalName());
             $docName = preg_replace('/\s+/', '', $originalName);
             $fileMimeType = $file->getClientMimeType();
-            //upload file to azure
+            // upload file to azure
             $fileNameAzure = uniqid().'_'.$quote->uuid.'_original_'.$docName;
             $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
 
-            //generate unique uuid
+            // generate unique uuid
             $docUuid = uniqid();
             while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
                 $docUuid = uniqid().rand(1, 100);

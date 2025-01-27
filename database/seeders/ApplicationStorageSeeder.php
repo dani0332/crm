@@ -72,7 +72,6 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ],
         );
-
     }
 
     private function seedBirdWorkflowUrls()
@@ -156,6 +155,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        $this->seedUnavailableTimeThreshold();
     }
 
     private function seedHomeAdvisors()
@@ -203,6 +203,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::TRAVEL_RENEWALS_DAYS_THRESHOLD],
             [
                 'value' => '1',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedUnavailableTimeThreshold()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::USER_UNAVAILABLE_TIME_THRESHOLD],
+            [
+                'value' => 120,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
