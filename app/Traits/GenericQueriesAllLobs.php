@@ -20,6 +20,7 @@ use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\CapiRequestService;
+use App\Services\CentralService;
 use App\Services\CustomerService;
 use App\Services\InsuranceProviderService;
 use App\Services\QuoteDocumentService;
@@ -232,6 +233,7 @@ trait GenericQueriesAllLobs
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
+    
         info('Quote Code: '.$record->code.' fn: bookPolicyPayload called');
         $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
@@ -264,17 +266,8 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        @[$isCreditCardEnabled, $brokerCommission, $isGIGInsuranceProvider, $isTapCaptureProcessStart, $isMultiplePaymentsEnabled, $isGIGOrQICProvider] = app(InsuranceProviderService::class)->getPaymentConfiguration($quoteType, $record->insurance_provider_id, $record->business_type_of_insurance_id, $record);
-        $bookPolicyDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
-        $bookPolicyDetails['brokerCommission'] = $brokerCommission;
-        $bookPolicyDetails['isGIGInsuranceProvider'] = $isGIGInsuranceProvider;
-        $bookPolicyDetails['isTapCaptureProcessStart'] = $isTapCaptureProcessStart;
-        $bookPolicyDetails['isMultiplePaymentsEnabled'] = $isMultiplePaymentsEnabled;
-        $bookPolicyDetails['isGIGOrQICProvider'] = $isGIGOrQICProvider;
-        [$isCommissionDisabled, $commissionTooltip] = app(SplitPaymentService::class)->checkCommissionStatus($payment);
-        $bookPolicyDetails['isCommissionDisabled'] = $isCommissionDisabled;
-        $bookPolicyDetails['commissionTooltip'] = $commissionTooltip;
-
+        $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record->insurance_provider_id, $payment, $record);
+        $bookPolicyDetails = array_merge($bookPolicyDetails, $tapPaymentConfiguration);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {

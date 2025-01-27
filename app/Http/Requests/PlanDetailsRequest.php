@@ -6,8 +6,9 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\Payment;
-use App\Services\InsuranceProviderService;
+use App\Services\BrokerCommissionService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PlanDetailsRequest extends FormRequest
@@ -60,7 +61,8 @@ class PlanDetailsRequest extends FormRequest
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 
-            @[$isCreditCardEnabled] = app(InsuranceProviderService::class)->getPaymentConfiguration(request()->quoteType, request()->insurance_provider_id, $quoteModel->business_type_of_insurance_id);
+            $quoteTypeId = QuoteTypes::getIdFromValue(request()->quoteType);
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, request()->insurance_provider_id);
             if (! $isCreditCardEnabled) {
                 $payment = Payment::where('code', request()->code)->first();
                 if ($payment && $payment->isPaymentAuthorized() && $payment->collection_type == CollectionTypeEnum::INSURER) {

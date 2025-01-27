@@ -1206,13 +1206,13 @@ class SplitPaymentService
                 });
                 if ($hasPaidCreditCardPayment) {
                     return [
-                        true,
-                        PaymentTooltip::DISABLED_COMMISSION,
+                        'isCommissionDisabled' => true,
+                        'disabledCommissionTooltip'=> PaymentTooltip::DISABLED_COMMISSION,
                     ];
                 }
             }
         }
 
-        return [false, ''];
+        return ["isCommissionDisabled" => false, "disabledCommissionTooltip" => ''];
     }
 }

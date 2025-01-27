@@ -30,6 +30,8 @@ final class PaymentTooltip extends Enum
     const PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT = 'The Total Price exceeds the Authorised Amount. Please request your manager to cancel the payment authorisation and ask the customer to reauthorise the updated plan price';
     const PAYMENT_AUTHORISED_CANNOT_EDIT = 'Payment is authorised and cannot be edited. Please request your manager to cancel the payment authorisation and ask the customer to reauthorise the updated plan price.';
     const PAYMENT_REVISED_ACTION_NEEDED = 'Action Needed: Please revise payment details to reflect plan changes';
+    const CC_PAYMENT_NOT_SUPPORTED= 'This payment method is currently unavailable. Credit Card payment is not supported by the selected Insurance Provider';
+    const CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED= 'Credit Card payment is not supported by the selected Insurance Provider once Policy is booked';
     // Main section
 
     // Main section

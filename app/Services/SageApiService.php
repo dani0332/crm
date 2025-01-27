@@ -556,7 +556,7 @@ class SageApiService
         // This specific block is added to handle tap payments
         $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
         info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type);
-        if ($payment->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP && $payment->collection_type == PaymentCollectionTypeEnum::INSURER && $hasAnyCCPayment) {
+        if ($payment->collection_type == PaymentCollectionTypeEnum::INSURER && $hasAnyCCPayment) {
             info('Skipping Policy Book & Authorizing payment for '.$payment->code);
             $successMessage = $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
             if (! $successMessage) {

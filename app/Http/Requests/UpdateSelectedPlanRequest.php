@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
-use App\Services\InsuranceProviderService;
+use App\Services\BrokerCommissionService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSelectedPlanRequest extends FormRequest
@@ -43,7 +43,8 @@ class UpdateSelectedPlanRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            @[$isCreditCardEnabled] = app(InsuranceProviderService::class)->getPaymentConfiguration(request()->quoteType, request()->insurance_provider_id);
+            $quoteTypeId = QuoteTypes::getIdFromValue(request()->quoteType);
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, request()->insurance_provider_id);
             if (! $isCreditCardEnabled) {
                 $payment = Payment::where('code', request()->code)->first();
                 if ($payment && $payment->isPaymentAuthorized() && $payment->collection_type == CollectionTypeEnum::INSURER) {

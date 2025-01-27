@@ -481,6 +481,7 @@ const handleDeclinedChange = () => {
   isDeclineClicked.value = true;
   isApproveClicked.value = false;
   isDeclineCustomReason.value = false;
+  isApproveNotChecked.value = false
   handleDeclinedReasonChange();
   return true;
 };
@@ -2796,9 +2797,9 @@ const shouldProcessUpdate = payment => {
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   const isCarQuote = props.quoteType === 'Car';
-  const isGIGInsuranceProvider =
-    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
-    page.props?.bookingDetails?.isGIGInsuranceProvider ||
+  const isGIGProvider =
+    page.props?.bookPolicyDetails?.isGIGProvider ||
+    page.props?.bookingDetails?.isGIGProvider ||
     false;
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
@@ -2807,7 +2808,7 @@ const shouldProcessUpdate = payment => {
     isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
   if (
     isInsurer &&
-    isGIGInsuranceProvider &&
+    isGIGProvider &&
     (isCarQuote || isTravelQuote) &&
     hasAnyCCSplitPayment()
   ) {
@@ -3420,6 +3421,15 @@ const isCCPaymentDisabled = option => {
     !isCCEnabled.value &&
     paymentMethodsForm.collection_type === 'insurer' &&
     option == 'CC'
+  );
+};
+
+const isPolicyBooked = option => {
+  return (
+    isCCEnabled.value &&
+    paymentMethodsForm.collection_type === 'insurer' &&
+    option == 'CC' &&
+    props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked
   );
 };
 
@@ -5310,10 +5320,10 @@ const isEditPaymentEnabled = () => {
                             :value="option.value"
                             :title="
                               isCCPaymentDisabled(option.value)
-                                ? 'This payment method is currently unavailable. Credit Card payment is not supported by the selected Insurance Provider'
-                                : option.tooltip
+                                ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED
+                                : isPolicyBooked(option.value) ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED : option.tooltip
                             "
-                            :disabled="isCCPaymentDisabled(option.value)"
+                            :disabled="isCCPaymentDisabled(option.value) || isPolicyBooked(option.value)"
                           >
                             {{ option.label }}
                           </option>
