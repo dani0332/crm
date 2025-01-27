@@ -218,7 +218,7 @@ watch(
         </x-field>
         <div>
           <x-tooltip>
-            <span class="border-b-2 border-dotted border-black text-sm">
+            <span class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
               Date of issuance
             </span>
             <template #tooltip>
@@ -239,7 +239,17 @@ watch(
             />
           </x-field>
         </div>
-        <x-field label="Months">
+        <div>
+          <x-tooltip>
+            <span class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
+              Months
+            </span>
+            <template #tooltip>
+              <span class="custom-tooltip-content">
+                This is the date in which the EP product was issued to the client
+              </span>
+            </template>
+          </x-tooltip>
           <DatePicker
             v-model="filters.months"
             name="months"
@@ -248,7 +258,7 @@ watch(
             model-type="yyyy-MM"
             format="MM-yyyy"
           />
-        </x-field>
+        </div>
       </div>
       <div class="flex flex-row-reverse gap-3">
         <div class="flex justify-self-end gap-3">
