@@ -76,7 +76,7 @@ class UpdateUserStatus extends Command
             }
 
             if ($lastActivity < $inactiveThreshold) {
-                $unAvailableTime = now()->subHours(2);
+                $unAvailableTime = now()->subMinutes(getAppStorageValueByKey(ApplicationStorageEnums::USER_UNAVAILABLE_TIME_THRESHOLD, 120));
                 $subtime = now()->subMinutes(90);
 
                 $offlineTime = now()->subSeconds($userInactiveThreshold);
