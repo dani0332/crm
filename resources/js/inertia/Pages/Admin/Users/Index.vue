@@ -6,9 +6,7 @@ const props = defineProps({
 const page = usePage();
 const params = useUrlSearchParams('history');
 const can = permission => useCan(permission);
-const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
-const rolesEnum = page.props.rolesEnum;
 const authUserId = page.props.auth.user.id;
 const impersonatingUser = page.props.impersonatingUser;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -138,7 +136,7 @@ onMounted(() => {
       <x-tooltip
         placement="top"
         v-if="
-          hasRole(rolesEnum.Engineering) &&
+          can(permissionsEnum.IMPERSONATE) &&
           !impersonatingUser &&
           authUserId !== item.id
         "

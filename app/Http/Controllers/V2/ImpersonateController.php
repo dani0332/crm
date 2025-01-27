@@ -2,25 +2,17 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\RolesEnum;
+use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 
 class ImpersonateController extends Controller
 {
-    public function __construct()
-    {
-        $allowedRoles = Arr::join([RolesEnum::Engineering], '|');
-
-        $this->middleware("role:$allowedRoles", [
-            'only' => ['loginVia'],
-        ]);
-    }
-
     public function loginAs($id)
     {
+        abort_if(auth()->user()->cannot(PermissionsEnum::IMPERSONATE), 403, 'You are not authorized to impersonate');
+
         abort_if(app('impersonate')->isImpersonating(), 403, 'You are already impersonating a user');
 
         $user = User::findOrFail($id);
