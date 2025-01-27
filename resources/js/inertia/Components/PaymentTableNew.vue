@@ -2797,10 +2797,7 @@ const shouldProcessUpdate = payment => {
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   const isCarQuote = props.quoteType === 'Car';
-  const isGIGProvider =
-    page.props?.bookPolicyDetails?.isGIGProvider ||
-    page.props?.bookingDetails?.isGIGProvider ||
-    false;
+  const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
@@ -3177,14 +3174,11 @@ onMounted(() => {
 });
 
 const is_lacking_payment = ref(
-  page.props?.bookPolicyDetails?.isLackingOfPayment ||
-    page.props?.bookingDetails?.isLackingOfPayment ||
-    false,
+  page.props?.bookPolicyDetails?.isLackingOfPayment || false,
 );
 
 const isPaidEditable = ref(
   page.props?.bookPolicyDetails?.isPaidEditable ||
-    page.props?.bookingDetails?.isPaidEditable ||
     page.props?.isPaidEditable ||
     false,
 );
@@ -3200,13 +3194,6 @@ watch(
 
 watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
-  newVal => {
-    is_lacking_payment.value = newVal || false;
-  },
-);
-
-watch(
-  () => page.props?.bookingDetails?.isLackingOfPayment,
   newVal => {
     is_lacking_payment.value = newVal || false;
   },
@@ -3372,32 +3359,19 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
 };
 
 const isCCEnabled = ref(
-  page.props?.bookPolicyDetails?.isCreditCardEnabled ||
-    page.props?.bookingDetails?.isCreditCardEnabled ||
-    false,
+  page.props?.bookPolicyDetails?.isCreditCardEnabled || false,
 );
 
 const isMultiPaymentsEnabled = ref(
-  page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled ||
-    page.props?.bookingDetails?.isMultiplePaymentsEnabled ||
-    false,
+  page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled || false,
 );
 
 const isGIGOrQICProvider  = ref(
-  page.props?.bookPolicyDetails?.isGIGOrQICProvider ||
-    page.props?.bookingDetails?.isGIGOrQICProvider ||
-    false,
+  page.props?.bookPolicyDetails?.isGIGOrQICProvider || false,
 );
 
 watch(
   () => page.props?.bookPolicyDetails?.isCreditCardEnabled,
-  newVal => {
-    isCCEnabled.value = newVal || false;
-  },
-);
-
-watch(
-  () => page.props?.bookingDetails?.isCreditCardEnabled,
   newVal => {
     isCCEnabled.value = newVal || false;
   },

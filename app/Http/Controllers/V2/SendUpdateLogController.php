@@ -228,7 +228,7 @@ class SendUpdateLogController extends Controller
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
             'realQuote' => $realQuote,
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
-            'bookingDetails' => $bookingDetails,
+            'bookPolicyDetails' => $bookingDetails,
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog),
             'paymentInvoices' => isset($paymentInvoices) ? array_values(array_unique($paymentInvoices)) : [], // array_values to reset index.
             'uploadedDocuments' => $uploadedDocuments,
