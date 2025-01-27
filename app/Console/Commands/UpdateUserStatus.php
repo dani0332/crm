@@ -154,6 +154,7 @@ class UpdateUserStatus extends Command
             ->select('user_id', DB::raw('MAX(last_activity) AS last_activity'))
             ->orderBy('last_activity')
             ->groupBy('user_id')
+            ->whereNull('impersonated_at')
             ->get();
     }
 

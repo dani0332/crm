@@ -2,7 +2,7 @@
 
 namespace App\Listeners\Impersonation;
 
-use App\Models\Sessions;
+use Illuminate\Support\Facades\DB;
 use Lab404\Impersonate\Events\TakeImpersonation;
 
 class HandleImpersonatedSession
@@ -17,7 +17,7 @@ class HandleImpersonatedSession
 
         session()->save();
 
-        Sessions::where('id', session()->getId())->update([
+        DB::table('sessions')->where('id', session()->getId())->update([
             'impersonated_at' => now(),
         ]);
     }
