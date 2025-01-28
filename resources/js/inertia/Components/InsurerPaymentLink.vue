@@ -10,8 +10,12 @@ const paymentLinkBtnDisabled = computed(() => {
     return props.paymentForm.insurerPaymentLink == ''
 });
 
+const insurerPaymentLink = computed(() => {
+    return props.payments[0]?.payment_splits[0]?.insurer_payment_link ?? null;
+});
+
 const quotePaymentLinkChanged = computed(() => {
-    return props.paymentForm.insurerPaymentLink != props.payments[0].insurer_payment_link && props.paymentForm.insurerPaymentLink != '' && props.paymentForm.status == 'edit';
+    return props.paymentForm.insurerPaymentLink != insurerPaymentLink.value && props.paymentForm.insurerPaymentLink != '' && props.paymentForm.status == 'edit';
 })
 
 const closePaymentForm = () => {

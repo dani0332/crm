@@ -26,11 +26,10 @@ class SendFTCEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(string $quoteUUID, QuoteTypes $quoteType, string $paymentLink = '')
+    public function __construct(string $quoteUUID, QuoteTypes $quoteType)
     {
         $this->quoteUUID = $quoteUUID;
         $this->quoteType = $quoteType;
-        $this->paymentLink = $paymentLink;
     }
 
     /**
@@ -40,18 +39,19 @@ class SendFTCEmailJob implements ShouldQueue
     {
         // Define eligible SIC types
         $nonEligibleSICTypes = [QuoteTypes::BIKE->id(), QuoteTypes::HOME->id()];
-        $insurerPaymentLinkCondition = $this->paymentLink != '';
 
         try {
             info(self::class." - Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid {$this->quoteUUID}");
+            $isSic = false;
 
             $leadQuery = $this->quoteType->model()::with('payments')
                 ->whereNotNull('advisor_id')
                 ->where('uuid', $this->quoteUUID);
 
             // only add isSIC check if the quote type is not in the nonEligibleSICTypes
-            if (! in_array($this->quoteType->id(), $nonEligibleSICTypes, true) && ! $insurerPaymentLinkCondition) {
+            if (! in_array($this->quoteType->id(), $nonEligibleSICTypes, true)) {
                 $leadQuery->isSICLead($this->quoteType);
+                $isSic = true;
             }
 
             // Fetch the lead
@@ -60,11 +60,11 @@ class SendFTCEmailJob implements ShouldQueue
             // Lead must be SIC LEAD and payment authorized
             if ($lead) {
                 $isPaymentAuthorized = $lead->isPaymentAuthorized();
-                if ($isPaymentAuthorized || $insurerPaymentLinkCondition) {
+                if ($isPaymentAuthorized) {
                     $data = [
                         'quoteUID' => $this->quoteUUID,
                         'quoteTypeId' => (int) $this->quoteType->id(),
-                        'isSic' => ! $insurerPaymentLinkCondition ? false : true,
+                        'isSic' => $isSic,
                     ];
 
                     Marshall::request('/payment/send-payment-auth-email', 'post', $data);

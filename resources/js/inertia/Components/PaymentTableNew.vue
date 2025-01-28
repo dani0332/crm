@@ -842,7 +842,6 @@ const handleCollectionTypeChange = () => {
           page.props.paymentMethodsEnum?.BankTransfer,
           page.props.paymentMethodsEnum?.Cheque,
           page.props.paymentMethodsEnum?.Cash,
-          props.quoteType != "Health" && page.props.paymentMethodsEnum?.InsurerPaymentLink,
         ].includes(item.value),
     );
     paymentMethodsModels.value[1] =
@@ -1884,7 +1883,6 @@ const initializePaymentForm = (
   paymentMethodsForm.payment_no = payment.total_payments;
   oldTotalPayments.value = payment.total_payments;
   paymentMethodsForm.frequency = payment.frequency;
-  paymentMethodsForm.insurerPaymentLink = payment.insurer_payment_link
   showDiscountOptions.value = true;
   paymentMethodsForm.discount_reason =
     payment.discount_reason !== null ? payment.discount_reason : '';
@@ -1941,6 +1939,9 @@ const processPaymentSplits = payment => {
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = split.payment_method.code;
     splitAmountModels.value[i] = split.payment_amount;
+    if(i === 1) {
+      paymentMethodsForm.insurerPaymentLink = split.insurer_payment_link;
+    }
     dueDateModels.value[i] = split.due_date
       ? moment(split.due_date).format('YYYY-MM-DD')
       : '';
@@ -2277,7 +2278,6 @@ const addPayment = isValid => {
 
   data.payment = {
     collection_type: paymentMethodsForm.collection_type,
-    insurer_payment_link: paymentMethodsForm.insurerPaymentLink,
     payment_methods: mainPaymentMethod,
     reference: paymentMethodsForm.payment_reference,
     payment_no: paymentMethodsForm.payment_no,
@@ -2307,6 +2307,8 @@ const addPayment = isValid => {
         check_detail: checkDetailModels.value[i],
       };
       if (i === 1) {
+        // Todo: For time being only saving insurer_payment_link for only first split payment
+        splitPayments[i]['insurer_payment_link'] = paymentMethodsForm.insurerPaymentLink;
         splitPayments[i]['discount_documents'] = discountDocumentModel.value;
       }
     }
@@ -3099,7 +3101,7 @@ const paymentAllocationStatusTooltip = payment_allocation_status => {
 
 // verify if master payment is paid
 const isMasterPaymentPaid = computed(() => {
-  if (props.payments[0].payment_status_id === props.paymentStatusEnum.PAID) {
+  if (props.payments.length > 0 && props.payments[0].payment_status_id === props.paymentStatusEnum.PAID) {
     return true;
   }
   return false;
@@ -4734,27 +4736,6 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                       <span v-else>{{
                         paymentTooltipEnum.PAYMENT_METHOD
                       }}</span>
-                    </template>
-                  </x-tooltip>
-                </div>
-                <div class="w-1/5 px-2">
-                  <x-tooltip>
-                    <span class="text-sm">
-                      <span
-                        class="border-b-2 border-dotted border-black text-sm"
-                        >Insurer Payment Link</span
-                      >
-                      <sup
-                        v-if="!isViewEnabled && !isCreditApprovalView"
-                        class="text-red-500"
-                        >*</sup
-                      >
-                    </span>
-                    <template #tooltip>
-                      <span v-if="isFieldReadonly">{{
-                        paymentTooltipEnum.TOTAL_AMOUNT_SPLIT_VIEW
-                      }}</span>
-                      <span v-else>{{ paymentTooltipEnum.TOTAL_AMOUNT }}</span>
                     </template>
                   </x-tooltip>
                 </div>
