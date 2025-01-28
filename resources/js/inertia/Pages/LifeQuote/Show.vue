@@ -499,6 +499,22 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+const getBMITag = () => {
+    const bmi = page.props.quote.life_quote?.bmi;
+    
+    const bmiRanges = [
+      { min: 0, max: 15.99, text: "High Risk-Underweight", color: "red" },
+      { min: 16, max: 18.4, text: "Low Risk-Underweight", color: "yellow" },
+      { min: 18.41, max: 25, text: "Normal", color: "green" },
+      { min: 25.01, max: 30, text: "Low Risk-Overweight", color: "yellow" },
+      { min: 30.01, max: 40, text: "Low Risk-Obese", color: "yellow" },
+      { min: 40.01, max: Infinity, text: "High Risk-Obese", color: "red" },
+    ];
+
+    const tag = bmiRanges.find(range => bmi >= range.min && bmi <= range.max);
+
+    return tag || { text: "Invalid BMI", color: "gray" };
+  }
 </script>
 
 <template>
@@ -691,10 +707,6 @@ const onAddUpdate = () => {
                 <dd>{{ quote.updated_at }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">SUM INSURED VALUE</dt>
-                <dd>{{ quote.life_quote?.sum_insured_value }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
                 <dd>
                   {{ quote.quote_detail?.next_followup_date }}
@@ -717,26 +729,6 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
                 <dd>{{ quote.premium }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CURRENCY</dt>
-                <dd>{{ quote.life_quote?.currency?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PURPOSE OF INSURANCE</dt>
-                <dd>{{ quote.life_quote?.purpose_of_insurance?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TYPE OF INSURANCE</dt>
-                <dd>{{ quote.life_quote?.insurance_tenure?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TENURE OF COVER</dt>
-                <dd>{{ quote.life_quote?.number_of_years?.text }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">OTHERS INFO</dt>
-                <dd>{{ quote.life_quote?.others_info }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY EXPIRY DATE</dt>
@@ -805,7 +797,37 @@ const onAddUpdate = () => {
                   </Link>
                 </div>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TYPE OF INSURANCE</dt>
+                <dd>{{ quote.life_quote?.insurance_tenure?.text }}</dd>
+              </div>
             </dl>
+          </div>
+          <hr class="mt-1 mb-1">
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg mb-2">Quote Details</h3>
+             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PURPOSE OF INSURANCE</dt>
+                <dd>{{ quote.life_quote?.purpose_of_insurance?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TENURE OF COVER</dt>
+                <dd>{{ quote.life_quote?.number_of_years?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENCY</dt>
+                <dd>{{ quote.life_quote?.currency?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SUM INSURED VALUE</dt>
+                <dd>{{ quote.life_quote?.sum_insured_value }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL INFORMATION</dt>
+                <dd>{{ quote.life_quote?.others_info }}</dd>
+              </div>
+             </dl>
           </div>
         </template>
       </Collapsible>
@@ -883,12 +905,12 @@ const onAddUpdate = () => {
                   <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality?.text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">AGE</dt>
+                  <dd>{{ quote.life_quote?.age }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
@@ -925,16 +947,40 @@ const onAddUpdate = () => {
                   <dd>{{ quote.gender }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality?.text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">HEIGHT</dt>
+                  <dd>{{ quote.life_quote?.height }} CM</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">WEIGHT</dt>
+                  <dd>{{ quote.life_quote?.weight }} KG</dd>
+                </div>
+                <div class="grid sm:grid-cols-2" v-if="quote.life_quote?.age && quote.life_quote?.age >= 20">
+                  <dt class="font-medium">BMI</dt>
+                  <dd>
+                    {{quote.life_quote?.bmi}}
+                    <span
+                      :class="`inline-block px-2 py-1 text-xs font-medium rounded-full bg-${getBMITag().color}-100 text-${getBMITag().color}-800`"
+                    >
+                      {{ getBMITag().text }}
+                    </span>
+                  </dd>
+
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MARITAL STATUS</dt>
                   <dd>{{ quote.life_quote?.marital_status?.text }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
+                <!-- <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">CHILDREN</dt>
-                  <dd>{{ quote.life_quote?.children?.text }}</dd>
-                </div>
+                  <dd>{{ quote.children?.text }}</dd>
+                </div> -->
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">IS SMOKER</dt>
-                  <dd>{{ quote.life_quote?.is_smoker ? 'Yes' : 'No' }}</dd>
+                  <dt class="font-medium">HAVE YOU CONSUMED ANY PRODUCTS WITH NICOTINE FOR THE PAST 12 MONTHS?</dt>
+                  <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Life'" />
               </dl>
