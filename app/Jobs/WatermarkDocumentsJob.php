@@ -19,7 +19,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
     public $timeout = 120; // 2 minutes
     public $tries = 3;
-    public $backoff = 120;
+    public $backoff = 10;
     private $quoteDocumentId;
     private $uuid;
     private $documentTypeId;
@@ -73,8 +73,6 @@ class WatermarkDocumentsJob implements ShouldQueue
 
     public function middleware()
     {
-        return [
-            (new WithoutOverlapping($this->quoteDocumentId.$this->uuid.$this->documentTypeId))->dontRelease(),
-        ];
+        return [(new WithoutOverlapping($this->quoteDocumentId.$this->uuid.$this->documentTypeId))->dontRelease()];
     }
 }
