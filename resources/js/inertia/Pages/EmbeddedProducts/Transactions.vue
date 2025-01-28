@@ -139,46 +139,48 @@ function exportReport() {
 const syncingRecords = ref([]);
 
 function reSync(code) {
-  syncingRecords.value = [...syncingRecords.value, code];
-  axios
-    .post(route('embedded-products.courier.re-sync', code), {})
-    .then(res => {
-      if (syncingRecords.value.length <= 1 && res?.data?.ok) {
-        router.get(
-          route(
-            'embedded-products.reports.certificates',
-            page.props.embeddedProduct.detail.id,
-          ),
-          {
-            replace: true,
-            preserveScroll: true,
-            preserveState: true,
-          },
+  if (confirm('Are you sure ?')) {
+    syncingRecords.value = [...syncingRecords.value, code];
+    axios
+      .post(route('embedded-products.courier.re-sync', code), {})
+      .then(res => {
+        if (syncingRecords.value.length <= 1 && res?.data?.ok) {
+          router.get(
+            route(
+              'embedded-products.reports.certificates',
+              page.props.embeddedProduct.detail.id,
+            ),
+            {
+              replace: true,
+              preserveScroll: true,
+              preserveState: true,
+            },
+          );
+        }
+        if (res?.data?.ok) {
+          notification.success({
+            title: res?.data?.message,
+            position: 'top',
+          });
+        } else {
+          notification.warning({
+            title: res?.data?.message,
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: err?.message,
+          position: 'top',
+        });
+      })
+      .finally(() => {
+        syncingRecords.value = syncingRecords.value.filter(
+          record => record !== code,
         );
-      }
-      if (res?.data?.ok) {
-        notification.success({
-          title: res?.data?.message,
-          position: 'top',
-        });
-      } else {
-        notification.warning({
-          title: res?.data?.message,
-          position: 'top',
-        });
-      }
-    })
-    .catch(err => {
-      notification.error({
-        title: err?.message,
-        position: 'top',
       });
-    })
-    .finally(() => {
-      syncingRecords.value = syncingRecords.value.filter(
-        record => record !== code,
-      );
-    });
+  }
 }
 
 onMounted(() => {
