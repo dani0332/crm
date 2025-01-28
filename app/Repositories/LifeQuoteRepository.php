@@ -54,13 +54,15 @@ class LifeQuoteRepository extends BaseRepository
             'sumInsuredCurrencyId' => $data['sum_insured_currency_id'],
             'maritalStatusId' => $data['marital_status_id'],
             'purposeOfInsuranceId' => $data['purpose_of_insurance_id'],
-            'childrenId' => $data['children_id'],
-            'premium' => $data['premium'],
             'tenureOfInsuranceId' => $data['tenure_of_insurance_id'],
             'numberOfYearsId' => $data['number_of_years_id'],
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
             'othersInfo' => $data['others_info'],
+            'height' => $data['height'],
+            'weight' => $data['weight'],
+            'bmi' => $data['bmi'],
+            'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
@@ -71,6 +73,17 @@ class LifeQuoteRepository extends BaseRepository
         ];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
+
+        if (isset($response->quoteUID)) {
+            //todo: will remove this code once handled on Capi
+            $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
+            $quote->lifeQuote()->update([
+                'height' => $quoteData['height'], 
+                'weight' => $quoteData['weight'], 
+                'bmi' => $quoteData['bmi'],
+                'age' => $quoteData['age']
+            ]);
+        }
 
         return $response;
     }
@@ -204,25 +217,6 @@ class LifeQuoteRepository extends BaseRepository
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         return $quote;
-    }
-
-    /**
-     * get all dropdown options required for form.
-     *
-     * @return array
-     */
-    public function fetchGetFormOptions()
-    {
-        return [
-            'nationalities' => NationalityRepository::withActive()->get(),
-            'currency' => CurrencyTypeRepository::withActive()->get(),
-            'purposeOfInsurance' => PurposeOfInsuranceRepository::withActive()->get(),
-            'maritalStatus' => MaritalStatusRepository::withActive()->get(),
-            'children' => LifeChildrenRepository::withActive()->get(),
-            'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->get(),
-            'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
-
-        ];
     }
 
     public function fetchGetDuplicateEntityByCode($code)
