@@ -154,6 +154,15 @@ class AdvisorConversionReportService extends BaseService
         ];
     }
 
+    private function getSaleStatuses()
+    {
+        return [
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+        ];
+    }
+
     private function getBindings(string $table)
     {
         $excludedSources = implode(',', array_map(fn ($source) => "'$source'", $this->getExcludedSources()));
@@ -162,7 +171,7 @@ class AdvisorConversionReportService extends BaseService
             ':table' => $table,
             ':excludedSources' => $excludedSources,
             ':quoteStatusDate' => $this->getAdvisorConversionQuoteStatusDate(),
-            ':policyBookedStatus' => QuoteStatusEnum::PolicyBooked,
+            ':saleStatuses' => implode(',', $this->getSaleStatuses()),
             ':approvedStatuses' => implode(',', $this->getApprovedStatuses()),
             ':badLeadsStatuses' => implode(',', $this->getBadLeadStatuses()),
             ':imRenewal' => QuoteStatusEnum::IMRenewal,
@@ -179,7 +188,7 @@ class AdvisorConversionReportService extends BaseService
             return strtr('SUM(CASE WHEN (
                             ((:table.payment_status_id in (:paidStatuses) OR :table.quote_status_id in (:approvedStatuses)) and :table.transaction_approved_at is NULL) OR
                             (:table.quote_status_id in (:approvedStatuses) and :table.transaction_approved_at < ":quoteStatusDate") OR
-                            (:table.quote_status_id = :policyBookedStatus and :table.transaction_approved_at >= ":quoteStatusDate")
+                            (:table.quote_status_id in (:saleStatuses) and :table.transaction_approved_at >= ":quoteStatusDate")
                         ) and :table.source '.$sourceCondition.' (:excludedSources) THEN 1 ELSE 0 END
                     ) as '.$as, $this->getBindings($table));
         };

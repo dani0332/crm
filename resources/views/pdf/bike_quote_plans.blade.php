@@ -514,7 +514,7 @@
 
         <div class="header">
             <div class="logo">
-                <img class="im-logo" src="{{ public_path('images/im_logo_21k-hi.png') }}" />
+                <img class="im-logo" src="{{ public_path('images/logo-new.png') }}" />
             </div>
             <h3>Your Tailor Made <br />Bike Insurance Comparison Table</h3>
         </div>
