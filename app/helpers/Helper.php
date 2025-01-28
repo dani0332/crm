@@ -999,12 +999,12 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName)
+    function getAppStorageValueByKey($keyName, $default = false)
     {
         $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
         if (! $query) {
-            return false;
+            return $default;
         }
 
         return $query->value;
@@ -1284,9 +1284,9 @@ if (! function_exists('getManagersByUser')) {
 }
 
 if (! function_exists('roundNumber')) {
-    function roundNumber($number)
+    function roundNumber($number, $precision = 2)
     {
-        return round($number, 2);
+        return round($number, $precision);
     }
 }
 
