@@ -148,6 +148,7 @@ const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
 const isCollectedByEnabled = ref(false);
 const modal2Ref = ref(null);
+const insurerPaymentLinkChanged = ref(false);
 
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
@@ -1599,8 +1600,9 @@ const isCPD = computed(() => {
 });
 
 // use in insurer payment link
-const updateFromInsurerPaymentLink = (closePaymentModal = false) => {
-  closePaymentModal && (createPaymentModal.value = !createPaymentModal.value);
+const updateFromInsurerPaymentLink = (closePaymentModal = false, paymentLinkChanged = false) => {
+  closePaymentModal == true && (createPaymentModal.value = !createPaymentModal.value);
+  insurerPaymentLinkChanged.value = paymentLinkChanged;
 }
 
 
@@ -2217,7 +2219,6 @@ const validatePaymentAmount = isValid => {
 };
 
 const addPayment = isValid => {
-  debugger;
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
@@ -2942,12 +2943,11 @@ const fetchPlans = () => {
 
 // Watch for changes in the modal's state
 watch(createPaymentModal, (newVal, oldVal) => {
-  debugger;
   if (oldVal === true && newVal === false) {
     // Modal is closing
     const checkInsurerPaymentLink = paymentMethodsModels.value[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink;
-    if (paymentMethodsForm.status === 'edit' && paymentMethodsForm.collection_type === "insurer" && checkInsurerPaymentLink ) {
-      addPayment();
+    if (insurerPaymentLinkChanged && paymentMethodsForm.status === 'edit' && paymentMethodsForm.collection_type === "insurer" && checkInsurerPaymentLink ) {
+      addPayment(true);
     }
   }
 });
@@ -3892,7 +3892,6 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
         <x-modal
           v-model="createPaymentModal"
           size="xl"
-          @close="customerClose()"
           :title="
             isCreditCardView
               ? 'Capture Transaction'

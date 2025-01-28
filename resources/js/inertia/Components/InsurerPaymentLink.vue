@@ -15,7 +15,9 @@ const insurerPaymentLink = computed(() => {
 });
 
 const quotePaymentLinkChanged = computed(() => {
-    return props.paymentForm.insurerPaymentLink != insurerPaymentLink.value && props.paymentForm.insurerPaymentLink != '' && props.paymentForm.status == 'edit';
+    const result = props.paymentForm.insurerPaymentLink != insurerPaymentLink.value && props.paymentForm.insurerPaymentLink != '' && props.paymentForm.status == 'edit';
+    emit('updateOnParent', { closePaymentModal: false, linkChanged: result });
+    return result;
 })
 
 const closePaymentForm = () => {
