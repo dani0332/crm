@@ -28,7 +28,7 @@ final class ApplicationStorageEnums extends Enum
     public const TIER_ASSIGNMENT_PROCESS_START_DATE = 'TIER_ASSIGNMENT_PROCESS_START_DATE';
     public const CAR_LEAD_PICKUP_FIFO = 'CAR_LEAD_PICKUP_FIFO';
     public const CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS = 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS';
-    public const JOB_FAILED_EMAIL_RECIPIENTS = 'ahsan.ashfaq@insurancemarket.ae,hussain.fakhruddin@insurancemarket.ae,daniyal.shahid@insurancemarket.ae,faisal.abbas@insurancemarket.ae';
+    public const JOB_FAILED_EMAIL_RECIPIENTS = 'ahsan.ashfaq@myalfred.com,hussain.fakhruddin@insurancemarket.ae,daniyal.shahid@myalfred.com,faisal.abbas@myalfred.com,afzal.khan@myalfred.com';
     public const CAR_SOLD_STATUS_REJECTION_TEMPLATE = 'CAR_SOLD_STATUS_REJECTION_TEMPLATE';
     public const UNCONTACTABLE_STATUS_REJECTION_TEMPLATE = 'UNCONTACTABLE_STATUS_REJECTION_TEMPLATE';
     public const CAR_SOLD_RESUBMISSIONS_TEMPLATE = 'CAR_SOLD_RESUBMISSIONS_TEMPLATE';
