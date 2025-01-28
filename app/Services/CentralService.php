@@ -7,6 +7,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
@@ -318,7 +319,10 @@ class CentralService extends BaseService
             $quote = $repository::where('code', $code)->firstOrFail();
 
             $quote->update($data->toArray());
-            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id);
+
+            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, request()->insurance_provider_id);
+            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
 
             return true;
         });
@@ -329,7 +333,7 @@ class CentralService extends BaseService
         $response = [];
         $requestData = $data;
 
-        //switch for quote type
+        // switch for quote type
         switch (ucfirst($quoteType)) {
             case QuoteTypes::CAR->value:
                 $endpoint = '/process-car-quote-plan';
@@ -955,7 +959,7 @@ class CentralService extends BaseService
         }
     }
 
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null)
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true)
     {
         info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {
@@ -967,8 +971,8 @@ class CentralService extends BaseService
             if ($insuranceProviderId) {
                 $payment->insurance_provider_id = $insuranceProviderId;
             }
-            app(PaymentService::class)->processMasterPayment($payment, $quoteObject);
-            app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment);
+            app(PaymentService::class)->processMasterPayment($payment, $quoteObject, $isCreditCardEnabled);
+            app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment, $isCreditCardEnabled);
 
             return $this->isLackingPayment($payment);
         }
@@ -1005,5 +1009,34 @@ class CentralService extends BaseService
                 info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
         }
+    }
+
+    public function getTapConfiguration($quoteType, $insuranceProviderId, $payment = null, $quote = null)
+    {
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $brokerCommission = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId);
+        $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
+
+        $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
+        $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
+        $isGIGOrQICProvider = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE]);
+
+        $isTapCaptureProcessStart = $quote ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId) : false;
+
+        $tapConfiguration = [
+            'isCreditCardEnabled' => $brokerCommission ? true : false,
+            'brokerCommission' => $brokerCommission,
+            'isGIGProvider' => $isGIGProvider,
+            'isTapCaptureProcessStart' => $isTapCaptureProcessStart,
+            'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
+            'isGIGOrQICProvider' => $isGIGOrQICProvider,
+        ];
+
+        if ($payment) {
+            $commissionInfo = app(SplitPaymentService::class)->checkCommissionStatus($payment);
+            $tapConfiguration = array_merge($tapConfiguration, $commissionInfo);
+        }
+
+        return $tapConfiguration;
     }
 }

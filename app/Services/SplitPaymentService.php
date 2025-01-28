@@ -16,6 +16,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -242,7 +243,7 @@ class SplitPaymentService
                 }
                 $premium = 0;
                 if ($modelType == quoteTypeCode::Health) {
-                    //Get Ecommerce Health Premium
+                    // Get Ecommerce Health Premium
                     $ecomDetail = app(HealthQuoteService::class)->getEcomDetails($modelObject);
                     if (isset($ecomDetail['priceWithVAT'])) {
                         $premium = $ecomDetail['priceWithVAT'];
@@ -293,7 +294,7 @@ class SplitPaymentService
                 if ((! in_array(ucfirst($modelType), $ecomModels)) && $childPayments->count() == 1) {
                     Log::info('MigratePayment::Plan Detail migration for Payment Code: '.$payment->code.' Model Type: '.ucfirst($modelType));
                     if (isset($payment->insurance_provider_id) && $payment->insurance_provider_id > 0) {
-                        //get vat from settings
+                        // get vat from settings
                         $vat = 0;
                         $priceVatApplicable = $grandTotal;
                         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
@@ -330,8 +331,8 @@ class SplitPaymentService
                 $payment->total_amount = $grandTotal;
                 $payment->collection_type = 'broker';
 
-                if ($payment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
-                    $payment->payment_status_id = PaymentStatusEnum::NEW; //new
+                if ($payment->payment_status_id == PaymentStatusEnum::DRAFT) { // draft
+                    $payment->payment_status_id = PaymentStatusEnum::NEW; // new
                 } elseif (
                     ($payment->payment_status_id == PaymentStatusEnum::CAPTURED || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED)
                     && $premium > 0
@@ -345,7 +346,7 @@ class SplitPaymentService
                         }
                     }
                     if ($capturedAmount > 0 && $premium > $capturedAmount) {
-                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid
+                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; // partially paid
                     }
                 }
 
@@ -356,13 +357,13 @@ class SplitPaymentService
                     $payment_sr_no = 1;
                     foreach ($childPayments as $childPayment) {
 
-                        if ($childPayment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
-                            $childPayment->payment_status_id = PaymentStatusEnum::NEW; //new
+                        if ($childPayment->payment_status_id == PaymentStatusEnum::DRAFT) { // draft
+                            $childPayment->payment_status_id = PaymentStatusEnum::NEW; // new
                         }
                         // Create a new SplitPayment record
                         $collectionAmount = 0;
-                        if ($childPayment->payment_status_id == PaymentStatusEnum::PAID || $childPayment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
-                        || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $childPayment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
+                        if ($childPayment->payment_status_id == PaymentStatusEnum::PAID || $childPayment->payment_status_id == PaymentStatusEnum::CAPTURED // if paid or captured
+                        || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $childPayment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID // if partial paid or captured
                         ) {
                             $collectionAmount = $childPayment->captured_amount;
                             $parentCollectionAmount += $childPayment->captured_amount;
@@ -394,12 +395,12 @@ class SplitPaymentService
 
                         $payment_sr_no++;
                         // Delete the child payment from the old table
-                        ////$childPayment->delete();
+                        // //$childPayment->delete();
                     }
                     if ($payment->code == $code) {
 
                         if ($premium > 0 && $parentCollectionAmount > 0 && $premium > $parentCollectionAmount) {
-                            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid
+                            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; // partially paid
                         } elseif ($payment->frequency == 'upfront') {
                             $payment->payment_status_id = $childPayment->payment_status_id;
                         }
@@ -660,7 +661,7 @@ class SplitPaymentService
 
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             // Log message for creating Sage receipt
-            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage recipt id: '.$paymentSplit->sage_reciept_id);
+            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage receipt id: '.$paymentSplit->sage_reciept_id);
 
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
             if ($isSageEnabled && empty($paymentSplit->sage_reciept_id)) {
@@ -709,7 +710,7 @@ class SplitPaymentService
                         $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
                     }
                 }
-                //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
+                // $paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
             }
 
             $existingReceipts = QuoteDocument::where(['payment_split_id' => $splitPaymentId, 'document_type_text' => DocumentTypeEnum::RECEIPT])->get();
@@ -1087,7 +1088,7 @@ class SplitPaymentService
             $this->updateMasterPaymentForMultipleSplits($masterPayment);
         }
 
-        //get the sum of all the split payments to update the total amount in master payment
+        // get the sum of all the split payments to update the total amount in master payment
         $masterPayment->total_amount = $masterPayment->paymentSplits()->sum('payment_amount');
         $masterPayment->saveQuietly();
 
@@ -1099,7 +1100,7 @@ class SplitPaymentService
         $masterPayment->total_payments = 1;
         $masterPayment->frequency = PaymentFrequency::UPFRONT;
 
-        //if first split payment is authorized then update total price and total amount to first split payment
+        // if first split payment is authorized then update total price and total amount to first split payment
         $firstSplitPayment = $masterPayment->paymentSplits()->where(['code' => $masterPayment->code, 'sr_no' => '1'])->first();
         if (isset($firstSplitPayment)) {
             $masterPayment->payment_methods_code = $firstSplitPayment->payment_method;
@@ -1134,7 +1135,7 @@ class SplitPaymentService
      * If the collection amount is greater than or equal to the payment amount, the payment split's status is set to PAID, otherwise, it is set to PARTIALLY_PAID
      * This method trigger when policy details section update
      */
-    public function updateSplitPaymentStatusAndAmount($payment)
+    public function updateSplitPaymentStatusAndAmount($payment, $isCreditCardEnabled = true)
     {
         info('Quote Code: '.$payment->code.' fn: Updating child payment status');
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
@@ -1157,6 +1158,9 @@ class SplitPaymentService
                     } else {
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
+                }
+                if (! $isCreditCardEnabled && $paymentSplit->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->collection_type == CollectionTypeEnum::INSURER && ! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
+                    $paymentSplit->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
                 }
                 if ($paymentSplit->isDirty()) {
                     $paymentSplit->save();
@@ -1185,5 +1189,33 @@ class SplitPaymentService
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
             $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         }
+    }
+
+    /**
+     * Check if the commission fields in booking details section is disabled
+     *
+     * @return array
+     */
+    public function checkCommissionStatus($payment)
+    {
+        if (isTapEnabled() && $payment && $payment->collection_type == CollectionTypeEnum::INSURER) {
+            $paymentSplits = $payment->paymentSplits;
+            if ($paymentSplits->isNotEmpty()) {
+                $hasPaidCreditCardPayment = $paymentSplits->contains(function ($split) {
+                    return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id == PaymentStatusEnum::PAID;
+                });
+                info('working 1st');
+                if ($hasPaidCreditCardPayment) {
+                    info('working 2nd');
+
+                    return [
+                        'isCommissionDisabled' => true,
+                        'disabledCommissionTooltip' => PaymentTooltip::DISABLED_COMMISSION,
+                    ];
+                }
+            }
+        }
+
+        return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 }

@@ -457,7 +457,7 @@ class SendEmailCustomerService extends BaseService
         $isEmailSent = 0;
         try {
             $appEnv = config('constants.APP_ENV');
-            //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
+            // Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
             if ($source == 'CORPORATE') {
                 $emailTemplateId = (int) config('constants.SIB_CORPORATE_TEMPLATE');
             } else {

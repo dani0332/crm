@@ -207,12 +207,10 @@ class SendUpdateLogController extends Controller
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
         $isEditDisabledForQueuedBooking = $this->sendUpdateLogService->isEditDisabledForQueuedBooking($sendUpdateLog);
 
-        $insurance_provider_id = $bookingDetails['insurance_provider_id'] ?? null;
-        @[$isCreditCardEnabled, $isSplitFrequencyHidden, $brokerCommission, $isGIGInsuranceProvider] = $this->getCreditCardAndSplitFrequencyStatus($quoteType, $insurance_provider_id, $quote->business_type_of_insurance_id);
-        $bookingDetails['isCreditCardEnabled'] = $isCreditCardEnabled;
-        $bookingDetails['isSplitFrequencyHidden'] = $isSplitFrequencyHidden;
-        $bookingDetails['brokerCommission'] = $brokerCommission;
-        $bookingDetails['isGIGInsuranceProvider'] = $isGIGInsuranceProvider;
+        $insurance_provider_id = $insuranceProviderId ?? $bookingDetails['insurance_provider_id'] ?? null;
+
+        $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $insurance_provider_id);
+        $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
@@ -230,7 +228,7 @@ class SendUpdateLogController extends Controller
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
             'realQuote' => $realQuote,
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
-            'bookingDetails' => $bookingDetails,
+            'bookPolicyDetails' => $bookingDetails,
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog),
             'paymentInvoices' => isset($paymentInvoices) ? array_values(array_unique($paymentInvoices)) : [], // array_values to reset index.
             'uploadedDocuments' => $uploadedDocuments,
@@ -252,7 +250,8 @@ class SendUpdateLogController extends Controller
             'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
             'isSentOrBooked' => $isSentOrBooked,
-            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog),
+            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission']),
+            'disableCommissionFields' => $this->sendUpdateLogService->disableCommissionFields($sendUpdatePayments),
         ]);
     }
 

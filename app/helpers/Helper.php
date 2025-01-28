@@ -25,6 +25,7 @@ use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
@@ -690,7 +691,7 @@ if (! function_exists('addDaysExcludeWeekend')) {
 if (! function_exists('getIMLogo')) {
     function getIMLogo($isPDF = false)
     {
-        $imLogo = 'images/im_logo_21k-hi.png';
+        $imLogo = 'images/logo-new.png';
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
@@ -998,12 +999,12 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName)
+    function getAppStorageValueByKey($keyName, $default = false)
     {
         $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
         if (! $query) {
-            return false;
+            return $default;
         }
 
         return $query->value;
@@ -1565,5 +1566,14 @@ if (! function_exists('isCHSAdvisor')) {
         $user = User::select('id')->chs()->first();
 
         return $user?->id == $userId;
+    }
+}
+
+if (! function_exists('isTapEnabled')) {
+    function isTapEnabled($processType = []): bool
+    {
+        $isTapEnabled = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION);
+
+        return $isTapEnabled;
     }
 }

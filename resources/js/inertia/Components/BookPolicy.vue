@@ -203,7 +203,7 @@ const bpForm = useForm({
   isPolicyCancelledOrPendingToolTtip:
     page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
   isCommissionDisabled: page.props?.bookPolicyDetails?.isCommissionDisabled,
-  commissionTooltip: page.props?.bookPolicyDetails?.commissionTooltip,
+  disabledCommissionTooltip: page.props?.bookPolicyDetails?.disabledCommissionTooltip,
   isTapCaptureProcessStart:
     page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
 });
@@ -379,7 +379,7 @@ let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 const commissionVatNotApplicableTooltip = computed(() => {
   let toolTip = null;
   if (bpForm.isCommissionDisabled) {
-    return bpForm.commissionTooltip;
+    return bpForm.disabledCommissionTooltip;
   }
   if (bpForm.commission_vat_applicable > 0) {
     if (isLifeLead) {
@@ -404,7 +404,7 @@ const commissionVatNotApplicableTooltip = computed(() => {
 const commissionVatApplicableTooltip = computed(() => {
   let toolTip = null;
   if (bpForm.isCommissionDisabled) {
-    return bpForm.commissionTooltip;
+    return bpForm.disabledCommissionTooltip;
   }
   if (bpForm.commission_vat_not_applicable > 0) {
     if (isLifeLead) {
@@ -532,11 +532,7 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   let hasBookingFailedEditPermission = can(permissionsEnum.BOOKING_FAILED_EDIT);
 
   let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
-  console.log(
-    '!isPolicyBookingFailed , !hasBookingFailedEditPermission',
-    !isPolicyBookingFailed,
-    !hasBookingFailedEditPermission,
-  );
+
   if (
     policyIssuanceSteps?.isPolicyAutomationEnabled &&
     !isPolicyBookingFailed &&
@@ -550,11 +546,6 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
     disableEditBookingDetails = true;
   }
 
-  console.log(
-    'disableEditBookingDetails',
-    disableEditBookingDetails,
-    policyIssuanceSteps,
-  );
   return disableEditBookingDetails;
 });
 
@@ -692,8 +683,19 @@ const isAllPaymentAuthorized = () => {
       paidStatusIds.includes(split.payment_status_id),
     );
   }
-  return false;
+  return true;
 };
+
+const isDisabledSendPCB = computed(() => {
+  const payment = getPayment();
+  if (payment) {
+    const ccPayments = filterCCPayments(payment)
+    if (payment.collection_type == 'insurer' && ccPayments.length > 0 && props.bookPolicyDetails?.text==sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT) {
+      return true;
+    }
+  }
+})
+
 </script>
 
 <template>
@@ -1344,7 +1346,7 @@ const isAllPaymentAuthorized = () => {
                     <span>{{ 'Please update the booking details.' }}</span>
                   </template>
                 </x-tooltip>
-                <template v-if="is_lacking_payment">
+                <template v-if="is_lacking_payment || isDisabledSendPCB">
                   <x-tooltip>
                     <x-button
                       size="sm"
@@ -1354,7 +1356,8 @@ const isAllPaymentAuthorized = () => {
                       :disabled="
                         bp.isEditing ||
                         is_lacking_payment ||
-                        disableIfPolicyFailedAndNoBookingFailedEditPermission
+                        disableIfPolicyFailedAndNoBookingFailedEditPermission ||
+                        isDisabledSendPCB
                       "
                       v-if="showSendAndBookPolicyButton"
                     >
@@ -1362,8 +1365,7 @@ const isAllPaymentAuthorized = () => {
                     </x-button>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
-                        Action Needed: Please revise payment details to reflect
-                        plan changes.
+                        {{ isDisabledSendPCB ? "Please Update the booking details" : "Action Needed: Please revise payment details to reflect plan changes."  }}
                       </span>
                     </template>
                   </x-tooltip>

@@ -160,7 +160,7 @@ class EmbeddedProductRepository extends BaseRepository
         $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
         $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIM');
 
-        //generate unique uuid
+        // generate unique uuid
         $docUuid = uniqid();
         while (GenericDocument::where('uuid', $docUuid)->first()) {
             $docUuid = uniqid().rand(1, 100);
