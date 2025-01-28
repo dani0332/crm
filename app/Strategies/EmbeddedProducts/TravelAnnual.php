@@ -155,6 +155,7 @@ class TravelAnnual extends EmbeddedProduct
             $item->id = $item->id;
             $item->ref_id = $item->code;
             $item->advisor_name = $advisorName;
+            $item->quote_request = $item->travelQuote ?? $item->quoteRequest;
             $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
             $item->plan_start_date = $planStartDate;
             $item->plan_end_date = $planEndDate;
