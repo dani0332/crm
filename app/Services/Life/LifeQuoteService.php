@@ -12,12 +12,20 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Facades\Capi;
+use App\Models\CurrencyType;
+use App\Models\LifeInsuranceTenure;
+use App\Models\LifeNumberOfYears;
+use App\Models\LifePurposeOfInsurance;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\DocumentType;
 use App\Models\Emirate;
+use App\Models\LifeQuoteRequestDetail;
+use App\Models\MartialStatus;
+use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
@@ -29,8 +37,6 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
-use App\Services\QuoteDocumentService;
-use App\Services\SplitPaymentService;
 use App\Models\ApplicationStorage;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
@@ -38,6 +44,10 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
 use App\Services\BaseService;
 use App\Services\CapiRequestService;
+use App\Services\LeadAllocationService;
+use App\Traits\CentralTrait;
+use App\Services\QuoteDocumentService;
+use App\Services\SplitPaymentService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Traits\AddPremiumAllLobs;
@@ -181,13 +191,15 @@ class LifeQuoteService extends BaseService
             'sumInsuredCurrencyId' => $data['sum_insured_currency_id'],
             'maritalStatusId' => $data['marital_status_id'],
             'purposeOfInsuranceId' => $data['purpose_of_insurance_id'],
-            'childrenId' => $data['children_id'],
-            'premium' => $data['premium'],
             'tenureOfInsuranceId' => $data['tenure_of_insurance_id'],
             'numberOfYearsId' => $data['number_of_years_id'],
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
             'othersInfo' => $data['others_info'],
+            'height' => $data['height'],
+            'weight' => $data['weight'],
+            'bmi' => $data['bmi'],
+            'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
@@ -197,7 +209,7 @@ class LifeQuoteService extends BaseService
             'createdById' => auth()->user()->id,
         ];
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $lifeQuote);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-personal-quote', $lifeQuote);
 
         return $response;
     }

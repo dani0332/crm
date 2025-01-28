@@ -19,6 +19,11 @@ class DatabaseSeeder extends Seeder
             // HealthRevivalQuotesSeeder::class,
             // QuoteStatusSeeder::class,
             LookupSeeder::class,
+            SUAdditionalCRNSubTypesSeeder::class,
+            //DocumentTypeSeeder::class,
+            // SendUpdateAdditionalSubType::class,
+            LifeInsuranceTenureSeeder::class,
+            // SendUpdateAdditionalSubType::class,
             TravelRenewalTeamSeeder::class,
         ]);
     }
