@@ -2940,14 +2940,17 @@ const fetchPlans = () => {
     });
 };
 
-watch(
-  () => props.sendUpdate?.plan_id,
-  () => {
-    if (props.sendUpdate?.plan_id) {
-      fetchPlans();
+// Watch for changes in the modal's state
+watch(createPaymentModal, (newVal, oldVal) => {
+  debugger;
+  if (oldVal === true && newVal === false) {
+    // Modal is closing
+    const checkInsurerPaymentLink = paymentMethodsModels.value[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink;
+    if (paymentMethodsForm.status === 'edit' && paymentMethodsForm.collection_type === "insurer" && checkInsurerPaymentLink ) {
+      addPayment();
     }
-  },
-);
+  }
+});
 
 onMounted(() => {
   if (props.sendUpdate?.plan_id) {
@@ -3889,6 +3892,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
         <x-modal
           v-model="createPaymentModal"
           size="xl"
+          @close="customerClose()"
           :title="
             isCreditCardView
               ? 'Capture Transaction'

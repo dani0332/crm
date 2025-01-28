@@ -152,6 +152,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_at' => now(),
             ]);
             $paymentLog->save();
+            // insurer payment link condition also have null send_update_id so therefore not adding any seperate condition for insurer payment link
             if (! $request->send_update_id) { // it will check if the payment is added from send update.
                 $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
             }
