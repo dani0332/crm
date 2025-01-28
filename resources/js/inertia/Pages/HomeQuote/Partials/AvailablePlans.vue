@@ -40,6 +40,9 @@ const planForm = useForm({
   listQuotePlanBenefitsPolicyDetails:
     props.plan.listQuotePlanBenefitsPolicyDetails || [],
   is_create: 0,
+  buildingValue: props.plan.buildingValue || '',
+  contentsValue: props.plan.contentsValue || '',
+  personalBelongingsValue: props.plan.personalBelongingsValue || '',
 });
 
 console.log('planForm', planForm);
@@ -109,77 +112,6 @@ const homeDiscountOptions = computed(() => {
     arr.push({ value: i, label: `${i}%` });
   }
   return arr;
-});
-
-const buildingValue = computed({
-  get() {
-    console.log(
-      'buildingValue',
-      planForm.listQuotePlanBenefitsInclusions?.buildings?.[0]?.value,
-    );
-
-    // Get the raw value (e.g., "AED 40,000")
-    const rawValue =
-      planForm.listQuotePlanBenefitsInclusions?.buildings?.[0]?.value || '0';
-
-    // Remove non-numeric characters (like "AED" or commas) and parse it as float
-    const numericValue = parseFloat(rawValue.replace(/[^\d.-]/g, ''));
-
-    console.log('numericValue', numericValue);
-
-    // Return the numeric value directly for v-model binding (input expects raw numbers)
-    return numericValue;
-  },
-  set(newValue) {
-    // Keep it as raw number, but remove commas or format artifacts when setting
-    planForm.listQuotePlanBenefitsInclusions.buildings[0].value =
-      newValue.toString();
-  },
-});
-
-const contentValue = computed({
-  get() {
-    console.log(
-      'contentValue',
-      planForm.listQuotePlanBenefitsInclusions?.contents?.[0]?.value,
-    );
-
-    const rawValue =
-      planForm.listQuotePlanBenefitsInclusions?.contents?.[0]?.value || '0';
-
-    const numericValue = parseFloat(rawValue.replace(/[^\d.-]/g, ''));
-
-    console.log('numericValue', numericValue);
-
-    return numericValue;
-  },
-  set(newValue) {
-    planForm.listQuotePlanBenefitsInclusions.contents[0].value =
-      newValue.toString();
-  },
-});
-
-const personalBelonginsValue = computed({
-  get() {
-    console.log(
-      'personalBelonginsValue',
-      planForm.listQuotePlanBenefitsInclusions?.personalBelongings?.[0]?.value,
-    );
-
-    const rawValue =
-      planForm.listQuotePlanBenefitsInclusions?.personalBelongings?.[0]
-        ?.value || '0';
-
-    const numericValue = parseFloat(rawValue.replace(/[^\d.-]/g, ''));
-
-    console.log('numericValue', numericValue);
-
-    return numericValue;
-  },
-  set(newValue) {
-    planForm.listQuotePlanBenefitsInclusions.personalBelongings[0].value =
-      newValue.toString();
-  },
 });
 
 const readOnlyMode = reactive({
@@ -332,16 +264,16 @@ const updatePlanLoading = ref(false);
 
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Building Value:</dt>
-              <x-input v-model="buildingValue" size="sm" type="number" />
+              <x-input v-model="planForm.buildingValue" size="sm" type="number" />
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Contents Value:</dt>
-              <x-input v-model="contentValue" size="sm" type="number" />
+              <x-input v-model="planForm.contentsValue" size="sm" type="number" />
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Personal Belongings Value:</dt>
               <x-input
-                v-model="personalBelonginsValue"
+                v-model="planForm.personalBelongingsValue"
                 size="sm"
                 type="number"
               />
