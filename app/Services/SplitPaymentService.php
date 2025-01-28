@@ -1198,13 +1198,15 @@ class SplitPaymentService
      */
     public function checkCommissionStatus($payment)
     {
-        if ($payment && $payment->collection_type == CollectionTypeEnum::INSURER) {
+        if (isTapEnabled() && $payment && $payment->collection_type == CollectionTypeEnum::INSURER) {
             $paymentSplits = $payment->paymentSplits;
             if ($paymentSplits->isNotEmpty()) {
                 $hasPaidCreditCardPayment = $paymentSplits->contains(function ($split) {
                     return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id == PaymentStatusEnum::PAID;
                 });
+                info('working 1st');
                 if ($hasPaidCreditCardPayment) {
+                    info('working 2nd');
                     return [
                         'isCommissionDisabled' => true,
                         'disabledCommissionTooltip' => PaymentTooltip::DISABLED_COMMISSION,

@@ -55,13 +55,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
-  modelClass: {
-    type: String,
-    default: '',
-  },
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
   disableMainBtn: String,
+  disableCommissionFields: Array,
 });
 
 const state = reactive({
@@ -410,11 +407,35 @@ const calculateCommission = () => {
         let commissionVatNotApplicable = Number(
           bookingDetailsForm.commission_vat_not_applicable,
         );
-        bookingDetailsForm.commission_percentage = convertToNegative(
-          (Number(commissionVatApplicable + commissionVatNotApplicable) /
-            total_price_with_vat_and_not_vat_applicable) *
+
+        let commissionPercentage = convertToNegative(
+            (Number(commissionVatApplicable + commissionVatNotApplicable) /
+                total_price_with_vat_and_not_vat_applicable) *
             100,
         );
+
+        // TAP PAYMENT FLAG.
+        if (page.props.isTapEnabled && commissionPercentage > 0 && bookingDetailsForm.commission_vat_applicable && props.bookingDetails?.brokerCommission) {
+          const brokerCommission = props.bookingDetails?.brokerCommission;
+          const brokerCommMinPer = brokerCommission ? brokerCommission.commission_percentage_min : null;
+          const brokerCommMaxPer = brokerCommission ? brokerCommission.commission_percentage_max : null;
+
+          if ((brokerCommMinPer > 0 && commissionPercentage < brokerCommMinPer) || (brokerCommMaxPer > 0 && commissionPercentage > brokerCommMaxPer)) {
+            notification.error({
+              title: 'The commission amount you entered is outside the permitted range.',
+              position: 'top',
+            });
+            bookingDetailsForm.setError({
+              commission_vat_applicable:
+                  'The commission amount you entered is outside the permitted range.',
+            });
+            bookingDetailsForm.commission_vat_applicable = commissionPercentage = null;
+            return;
+          } else {
+            bookingDetailsForm.clearErrors('commission_vat_applicable');
+          }
+        }
+        bookingDetailsForm.commission_percentage = commissionPercentage;
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -2111,7 +2132,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-tooltip v-if="disableCommissionVatApplicable">
+                  <x-tooltip v-if="disableCommissionVatApplicable || props.disableCommissionFields[0]">
                     <x-input
                       v-model="bookingDetailsForm.commission_vat_applicable"
                       class="!mb-0 w-full"
@@ -2124,8 +2145,7 @@ watch(
                       :icon-left="isNegativeValue ? 'minus' : ''"
                     />
                     <template #tooltip>
-                      This option is disabled because Commission (VAT not
-                      applicable) has already been entered.
+                      {{ props.disableCommissionFields[0] ? props.disableCommissionFields[1] : 'This option is disabled because Commission (VAT not applicable) has already been entered.' }}
                     </template>
                   </x-tooltip>
                   <x-input
@@ -2142,6 +2162,7 @@ watch(
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
                     size="xs"
+                    :error="bookingDetailsForm.errors.commission_vat_applicable"
                     :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
@@ -2199,7 +2220,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div v-if="props.isCommVatNotAppEnabled">
-                  <x-tooltip v-if="disableCommissionVatNotApplicable">
+                  <x-tooltip v-if="disableCommissionVatNotApplicable || props.disableCommissionFields[0]">
                     <x-input
                       type="number"
                       v-model="bookingDetailsForm.commission_vat_not_applicable"
@@ -2213,8 +2234,7 @@ watch(
                       :icon-left="isNegativeValue ? 'minus' : ''"
                     />
                     <template #tooltip>
-                      This option is disabled because Commission (VAT
-                      applicable) has already been entered.
+                      {{ props.disableCommissionFields[0] ? props.disableCommissionFields[1] : 'This option is disabled because Commission (VAT applicable) has already been entered.' }}
                     </template>
                   </x-tooltip>
                   <x-input

@@ -132,6 +132,7 @@ class HandleInertiaRequests extends Middleware
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
+            'isTapEnabled' => isTapEnabled(),
         ];
     }
 

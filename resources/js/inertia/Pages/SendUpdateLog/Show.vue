@@ -43,6 +43,7 @@ const props = defineProps({
   isCommVatNotAppEnabled: Boolean,
   isSentOrBooked: Boolean,
   disableMainBtn: String,
+  disableCommissionFields: Array,
 });
 
 const page = usePage();
@@ -675,6 +676,7 @@ const isLegacyPolicy = computed(() => {
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
       :is-comm-vat-not-app-enabled="props.isCommVatNotAppEnabled"
       :disable-main-btn="props.disableMainBtn"
+      :disable-commission-fields="props.disableCommissionFields"
     />
 
     <AuditLogs

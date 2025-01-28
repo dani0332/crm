@@ -207,7 +207,7 @@ class SendUpdateLogController extends Controller
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
         $isEditDisabledForQueuedBooking = $this->sendUpdateLogService->isEditDisabledForQueuedBooking($sendUpdateLog);
 
-        $insurance_provider_id = $bookingDetails['insurance_provider_id'] ?? null;
+        $insurance_provider_id = $insuranceProviderId ?? $bookingDetails['insurance_provider_id'] ?? null;
 
         $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $insurance_provider_id);
         $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
@@ -250,7 +250,8 @@ class SendUpdateLogController extends Controller
             'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
             'isSentOrBooked' => $isSentOrBooked,
-            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog),
+            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission']),
+            'disableCommissionFields' => $this->sendUpdateLogService->disableCommissionFields($sendUpdatePayments),
         ]);
     }
 
