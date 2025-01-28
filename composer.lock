@@ -12353,10 +12353,6 @@
   "platform": {
     "php": "^8.2"
   },
-<<<<<<< HEAD
-  "platform-dev": [],
-=======
   "platform-dev": {},
->>>>>>> develop
   "plugin-api-version": "2.6.0"
 }
