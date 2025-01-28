@@ -5,9 +5,9 @@ services:
     #build:
     # context: .
     # dockerfile: Dockerfile
-    #image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:Build.BuildId
+    image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:Build.BuildId
     container_name: imcrm${DOCKERENV}
-    image: imcrm${DOCKERENV}:latest
+    #image: imcrm${DOCKERENV}:latest
 
     environment:
       - DOPPLER_TOKEN
@@ -27,3 +27,8 @@ volumes:
   uatlogs:
   uat2logs:
   testlogs:
+# Set BuildKit globally for the build
+x-docker-args:
+  build:
+    environment:
+      DOCKER_BUILDKIT: 1

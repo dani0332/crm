@@ -1,30 +1,43 @@
 <script setup>
-import Pusher from 'pusher-js';
 const page = usePage();
 const showNotification = ref(false);
 const notificationData = ref({});
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.activity.user',
-);
+
+const channelName = `public.${page.props.appEnv}.activity.user`;
+const eventName = 'callback.notification';
+
 const listen = () => {
-  channel.bind('callback.notification', function (e) {
-    if (e.advisorId === page.props.auth.user.id) {
+  const worker = new SharedWorker('/build/workers/pusher.worker.js');
+
+  worker.port.addEventListener('message', e => {
+    if (e.data.advisorId === page.props.auth.user.id) {
       showNotification.value = true;
       notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
-        url: e.url,
-        quoteUuid: e.quoteUuid,
-        title: e.title,
-        message: e.message,
+        url: e.data.url,
+        quoteUuid: e.data.quoteUuid,
+        title: e.data.title,
+        message: e.data.message,
         timeout: 10000,
       };
       hideNotificationTimeOut();
     }
+  });
+
+  worker.onerror = function (error) {
+    console.log(error.message);
+    worker.port.close();
+  };
+
+  worker.port.start();
+
+  //Subscribe to channel/event
+  worker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
   });
 };
 
@@ -47,8 +60,12 @@ onMounted(() => {
   listen();
 });
 onUnmounted(() => {
-  channel.unbind('callback.notification');
-  channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
+  //Unsubscribe to channel/event
+  worker.port.postMessage({
+    action: 'unsubscribe',
+    channel: channelName,
+    event: eventName,
+  });
 });
 </script>
 <template xmlns="http://www.w3.org/1999/html">

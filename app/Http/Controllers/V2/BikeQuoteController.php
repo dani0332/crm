@@ -138,11 +138,11 @@ class BikeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         $quote = BikeQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BIKE->value, $quote);
@@ -302,7 +302,7 @@ class BikeQuoteController extends Controller
     {
         Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
 
-        //get Car quote by uuid using model
+        // get Car quote by uuid using model
         $bikeQuote = PersonalQuote::where('uuid', $request->quote_uuid)->first();
 
         $previousAdvisor = null;

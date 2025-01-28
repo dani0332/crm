@@ -1,34 +1,44 @@
 <script setup>
-import Pusher from 'pusher-js';
 const page = usePage();
 import CustomExpireNotification from './CustomExpireNotification.vue';
 
 const showNotification = ref(false);
 const notificationData = ref({});
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.activity.user',
-);
+const channelName = `public.${page.props.appEnv}.activity.user`;
+const eventName = 'expire.notification';
 
 const listen = () => {
-  channel.bind('expire.notification', function (e) {
-    if (e.advisorId === page.props.auth.user.id) {
+  const worker = new SharedWorker('/build/workers/pusher.worker.js');
+
+  worker.port.addEventListener('message', e => {
+    if (e.data.advisorId === page.props.auth.user.id) {
       notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
         title: 'Payment',
-        message: e.message,
-        url: e.url,
-        quoteUuid: e.quoteUuid,
+        message: e.data.message,
+        url: e.data.url,
+        quoteUuid: e.data.quoteUuid,
         timeout: 30000,
       };
       showNotification.value = true;
     }
+  });
+
+  worker.onerror = function (error) {
+    console.log(error.message);
+    worker.port.close();
+  };
+
+  worker.port.start();
+
+  //Subscribe to channel/event
+  worker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
   });
 };
 
@@ -41,8 +51,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  channel.unbind('expire.notification');
-  channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
+  //Unsubscribe to channel/event
+  worker.port.postMessage({
+    action: 'unsubscribe',
+    channel: channelName,
+    event: eventName,
+  });
 });
 </script>
 

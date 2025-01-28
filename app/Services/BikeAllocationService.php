@@ -292,6 +292,7 @@ class BikeAllocationService extends AllocationService
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
             ->where('quote_type_id', QuoteTypes::BIKE->id())
+            ->activeUser()
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -442,7 +443,7 @@ class BikeAllocationService extends AllocationService
     {
         info('About to assign bike lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
 
-        //Store the previous Assignment Type
+        // Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
 
         // Store the previous advisor ID.
@@ -488,6 +489,8 @@ class BikeAllocationService extends AllocationService
 
         // Save the updated lead.
         $lead->save();
+
+        $lead->endAllocation();
 
         return $lead;
     }

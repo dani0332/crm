@@ -32,7 +32,14 @@ class ActivityRepository extends BaseRepository
         }
 
         if (isset(request()->isCustom) && request()->isCustom === 'false') {
-            request()->due_date_time_end = Carbon::createFromFormat('d-m-Y', request()->due_date_time_end)->endOfDay()->toDateTimeString();
+            $dueDate = request()->due_date_time_end;
+
+            if ($dueDate && $dueDate !== '0000-00-00') {
+                request()->due_date_time_end = Carbon::createFromFormat('d-m-Y', $dueDate, null)->endOfDay()->toDateTimeString() ?? null;
+            } else {
+                request()->due_date_time_end = null;
+
+            }
         }
 
         return $this->with(['assignee', 'quoteStatus'])

@@ -15,6 +15,7 @@ use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\ExportDocumentService;
@@ -38,6 +39,7 @@ class QuoteDocumentController extends Controller
     protected $customerService;
     protected $userService;
     protected $exportDocumentService;
+    protected $applicationStorageService;
 
     public function __construct(
         CRUDService $crudService,
@@ -123,7 +125,7 @@ class QuoteDocumentController extends Controller
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
 
         // update quote status - production process
-        $this->updateQuoteStatus($quoteType, $request->quote_id);
+        app(CentralService::class)->updateQuoteInformation($quoteType, $request->quote_id);
 
         return redirect()->back()->with('success', 'File Uploaded');
     }

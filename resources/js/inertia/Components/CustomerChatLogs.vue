@@ -18,6 +18,7 @@ const props = defineProps({
 });
 
 const showChatLogs = ref(false);
+const notification = useToast();
 
 const formatted = date => useDateFormat(date, 'hh:mm:ss A').value;
 const loader = ref(false);
@@ -42,7 +43,7 @@ const chatMessages = ref({
 const getAllChat = () => {
   loader.value = true;
   axios
-    .post('/get-alfred-chat', {
+    .post('/instant-alfred/chats', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
     })
@@ -59,15 +60,21 @@ const getAllChat = () => {
 const showChat = item => {
   loader.value = true;
   axios
-    .post('/get-alfred-chat-by-date', {
+    .post('/instant-alfred/chats', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
-      // created_at: item.id,
     })
     .then(response => {
+      if (response.data.message) {
+        loader.value = false;
+        notification.error({
+          title: 'Chat not found',
+          position: 'top',
+        });
+        return;
+      }
       let { data } = { ...response.data };
       loader.value = false;
-      // chatMessages.value.created_at = item.id;
       chatMessages.value.data = data;
       chatMessages.value.id = props.quoteType + '-' + props.quoteId;
       showChatLogs.value = true;
@@ -76,10 +83,6 @@ const showChat = item => {
       loader.value = false;
     });
 };
-
-// onMounted(async () => {
-//   await getAllChat();
-// });
 </script>
 <template>
   <div>
@@ -93,16 +96,16 @@ const showChat = item => {
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
+          <x-divider class="mb-4 mt-1"></x-divider>
           <div class="text-center py-3">
             <x-button
               size="sm"
               color="primary"
               outlined
-              @click.prevent="showChat"
+              @click.prevent="showChat()"
               :loading="loader"
             >
-              Load Chat Logs
+              Load Instant Chat
             </x-button>
           </div>
         </template>

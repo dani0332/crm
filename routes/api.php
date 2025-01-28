@@ -44,6 +44,7 @@ Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteSta
 Route::prefix('v1')->group(function () {
 
     Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
+    Route::post('quotes/car/pause-resume-followup', [CarQuoteController::class, 'updatePauseAndResumeCounters']);
     Route::post('quotes/car/update-quote-status', [CarQuoteController::class, 'updateQuoteStatus']);
 
     Route::get('quotes/car/followup-leads', [CarQuoteController::class, 'getFollowupLeads']);
@@ -64,3 +65,5 @@ Route::prefix('v1')->group(function () {
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
+
+Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);

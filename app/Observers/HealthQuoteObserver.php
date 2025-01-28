@@ -2,21 +2,18 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\MAWelcomeJob;
-use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
-use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -42,6 +39,14 @@ class HealthQuoteObserver
     {
         $dirty = $healthQuote->getDirty();
 
+        if (
+            isset($dirty['quote_status_id']) &&
+            $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
+        ) {
+            // Trigger the event for transaction approval
+            HealthTransactionApproved::dispatch($healthQuote);
+        }
+
         if (isset($dirty['advisor_id'])) {
             try {
                 info(self::class." - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
@@ -62,18 +67,6 @@ class HealthQuoteObserver
         if (
             isset($dirty['quote_status_id'])
         ) {
-            if ($healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
-                HealthQuote::withoutEvents(function () use ($healthQuote) {
-                    $healthQuote->update(['transaction_approved_at' => now()]);
-                });
-
-                $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
-                if ($healthQuote->source === LeadSourceEnum::IMCRM || strpos($healthQuote->source, $ecommerceSource) !== false) {
-                    app(HealthQuoteService::class)->assignRenewalBatch($healthQuote->id);
-                }
-                $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
-            }
-
             if ($healthQuote->quote_status_id === QuoteStatusEnum::ApplicationSubmitted) {
                 SendApplicationSubmittedEmailJob::dispatch($healthQuote);
             }

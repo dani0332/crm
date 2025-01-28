@@ -17,6 +17,8 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || null,
   email: props.quote?.email || null,
   mobile_no: props.quote?.mobile_no || null,
+  company_name: props.quote?.home_company_name || null,
+  company_address: props.quote?.home_company_address || null,
   premium: props.quote?.premium || null,
   policy_number: props.quote?.policy_number || null,
   iam_possesion_type_id: props.quote?.iam_possesion_type_id || null,
@@ -161,6 +163,22 @@ function onSubmit(isValid) {
             :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm?.errors?.mobile_no"
+          />
+        </x-field>
+        <x-field label="COMPANY NAME">
+          <x-input
+            v-model="quoteForm.company_name"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_name"
+          />
+        </x-field>
+        <x-field label="COMPANY ADDRESS">
+          <x-input
+            v-model="quoteForm.company_address"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_address"
           />
         </x-field>
         <x-field label="PRICE">

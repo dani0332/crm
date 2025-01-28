@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\PolicyIssuanceStatus;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class PolicyIssuanceStatusSeeder extends Seeder
 {
@@ -24,7 +24,11 @@ class PolicyIssuanceStatusSeeder extends Seeder
             ['id' => 9, 'text' => 'Policy Issued', 'text_ar' => 'Policy Issued'],
         ];
 
-        DB::table('policy_issuance_status')->insert($statuses);
+        foreach ($statuses as $status) {
+            PolicyIssuanceStatus::firstOrCreate([
+                'text' => $status['text'],
+            ], $status);
+        }
 
     }
 }

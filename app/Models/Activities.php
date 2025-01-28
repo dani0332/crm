@@ -20,6 +20,7 @@ class Activities extends Model implements AuditableContract
         'status' => FilterTypes::EXACT,
         'assignee_id' => FilterTypes::EXACT,
         'due_date' => FilterTypes::DATE_BETWEEN,
+        'activity_type' => FilterTypes::EXACT,
     ];
     protected $appends = ['is_overdue'];
 
@@ -37,7 +38,7 @@ class Activities extends Model implements AuditableContract
     {
         return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
-    //Added custom field to verify over due date
+    // Added custom field to verify over due date
     public function getIsOverdueAttribute()
     {
         $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');

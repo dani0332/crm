@@ -14,12 +14,11 @@
     "barryvdh/laravel-dompdf": "^2.0",
     "bensampo/laravel-enum": "^v6.6.3",
     "doctrine/dbal": "^3.3",
-    "filippo-toso/pdf-watermarker": "^1.1",
     "guzzlehttp/guzzle": "^7.4",
     "hidehalo/nanoid-php": "^1.1",
     "illuminate/contracts": "^11.0",
     "illuminate/support": "^11.0",
-    "inertiajs/inertia-laravel": "^1.0",
+    "inertiajs/inertia-laravel": "^2.0",
     "intervention/image": "^3.7",
     "jjaffeux/postmark-inbound-php": ">=3.0",
     "laravel/framework": "^11.0",
@@ -38,11 +37,11 @@
     "pusher/pusher-php-server": "^7.2",
     "sammyjo20/laravel-haystack": "^2.2.0",
     "sentry/sentry-laravel": "^4.4.1",
+    "setasign/fpdf": "^1.8",
     "setasign/fpdi": "^2.6",
     "spatie/laravel-navigation": "^1.2",
     "spatie/laravel-permission": "^6.4.0",
-    "tightenco/ziggy": "^2.0",
-    "tecnickcom/tcpdf": "^6.7"
+    "tightenco/ziggy": "^2.0"
   },
   "require-dev": {
     "spatie/laravel-ignition": "^2.3",

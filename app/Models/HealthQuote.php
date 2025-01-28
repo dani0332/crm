@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
@@ -266,5 +267,15 @@ class HealthQuote extends Model implements AuditableContract
         }
 
         return null;
+    }
+
+    public function isValueLead()
+    {
+        return $this->health_team_type === HealthTeamType::RM_SPEED;
+    }
+
+    public function isVolumeLead()
+    {
+        return $this->health_team_type === HealthTeamType::EBP;
     }
 }

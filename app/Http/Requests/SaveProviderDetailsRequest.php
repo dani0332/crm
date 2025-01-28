@@ -21,7 +21,6 @@ class SaveProviderDetailsRequest extends FormRequest
      */
     public function rules(): array
     {
-
         return [
             'insurance_provider_id' => 'required|integer',
             'send_update_log_id' => 'required|integer',

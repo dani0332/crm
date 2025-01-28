@@ -192,7 +192,7 @@ class RenewalBatchReportService extends BaseService
         // get all available segments list
         $segments = array_merge(['all'], RenewalBatch::SGEMENT_TYPES_LIST);
         $car = $this->getProductByName(quoteTypeCode::Car);
-        //teams listing as per auth roles
+        // teams listing as per auth roles
         if ($authUserIsCEO || $authUserIsAccounts) {
             $authUserSubTeams = Team::where('is_active', true)
                 ->where('type', TeamTypeEnum::SUB_TEAM)
@@ -985,7 +985,7 @@ class RenewalBatchReportService extends BaseService
                                 (health_quote_request.quote_status_id IN (:transactionApproved) and health_quote_request.quote_status_date < ":m2ReleaseDate")
                             )
                             AND health_quote_request.advisor_id IN (:advisorId)
-                            THEN 1 ELSE 0 END) AS :as',
+                            THEN 1 ELSE 0 END) AS ":as"',
                         $this->getSuperRetentionRenewedBindings([
                             ':advisorId' => $segmentAdvisorsIdString,
                             ':as' => "{$renewedAsColumn}_for_{$batchName}",
@@ -1066,7 +1066,7 @@ class RenewalBatchReportService extends BaseService
 
     public function getAllNonMotorBatches()
     {
-        $renewalBatches = RenewalBatch::select('id', 'name', 'start_date', 'end_date')->whereNull('quote_type_id');
+        $renewalBatches = RenewalBatch::select('id', 'name', 'start_date', 'end_date', 'month', 'year')->whereNull('quote_type_id');
         $renewalBatches->orderBy('id');
         $renewalBatches = $renewalBatches->get()
             ->map(function ($batch) {
@@ -1079,7 +1079,7 @@ class RenewalBatchReportService extends BaseService
                 // Return an associative array with the batch 'name' and 'id'
                 return [
                     'id' => $batch->id,
-                    'name' => $batch->name.'-('.$start_date.' to '.$end_date.')',
+                    'name' => "{$batch->month_name}-{$batch->name}-({$start_date} to {$end_date})",
                 ];
             })
             ->toArray();

@@ -20,7 +20,6 @@ use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
-use App\Exports\LifeQuotesExport;
 use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\PUAQuoteExport;
@@ -99,6 +98,7 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::LIFE->value,
         ])) {
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
@@ -114,9 +114,6 @@ class CentralController extends Controller
         }
 
         switch (ucfirst($quoteType)) {
-            case QuoteTypes::LIFE->value:
-                return app(LifeQuotesExport::class)->download('life_leads');
-
             case QuoteTypes::HOME->value:
                 return app(HomeQuoteExport::class)->download('home_leads');
 
