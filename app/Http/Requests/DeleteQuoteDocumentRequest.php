@@ -40,12 +40,12 @@ class DeleteQuoteDocumentRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            //check for quote records if exists
+            // check for quote records if exists
             if (! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid)) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
             }
 
-            //validate if payment is authorized
+            // validate if payment is authorized
             if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
                 $validator->errors()->add('type', 'Documents can be deleted once payment is authorized.');
             }

@@ -13,7 +13,7 @@ class CreateRenewalBatchSlabsTable extends Migration
      */
     public function up()
     {
-        //pivot table
+        // pivot table
         if (! Schema::hasTable('renewal_batch_slabs')) {
             Schema::create('renewal_batch_slabs', function (Blueprint $table) {
                 $table->id();

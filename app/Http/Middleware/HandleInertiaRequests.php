@@ -11,6 +11,7 @@ use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
+use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
@@ -31,6 +32,7 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PolicyIssuanceStatus;
+use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
@@ -131,6 +133,7 @@ class HandleInertiaRequests extends Middleware
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
+            'impersonatingUser' => User::find(app('impersonate')?->getImpersonatorId()),
         ];
     }
 
@@ -225,13 +228,13 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD),
                         'Health',
-                        route('lead-allocation.index'),
+                        route('lead-allocation.index', ['userBlStatus' => LeadAllocationUserBLStatusFiltersEnum::BUY_LEAD_DISABLED->value]),
                         fn ($s) => $s->attributes(['icon' => 'health'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD),
                         'Car',
-                        route('car-lead-allocation.index'),
+                        route('car-lead-allocation.index', ['userBlStatus' => LeadAllocationUserBLStatusFiltersEnum::BUY_LEAD_DISABLED->value]),
                         fn ($s) => $s->attributes(['icon' => 'car'])
                     )
                     ->addIf(

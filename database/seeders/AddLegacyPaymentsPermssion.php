@@ -39,7 +39,7 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
-        ////////
+        // //////
         $permission = Permission::findOrCreate(PermissionsEnum::LEGACY_INVOICES, 'web');
         $role = Role::findOrCreate(RolesEnum::Accounts, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
@@ -61,7 +61,7 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
-        ////////
+        // //////
         $permission = Permission::findOrCreate(PermissionsEnum::LEGACY_PAYMENTS, 'web');
         $role = Role::findOrCreate(RolesEnum::Accounts, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
@@ -83,7 +83,7 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
-        ///////
+        // /////
         $permission = Permission::findOrCreate(PermissionsEnum::LEGACY_OTHER_DETAILS, 'web');
         $role = Role::findOrCreate(RolesEnum::Accounts, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
@@ -105,7 +105,7 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
-        ///////
+        // /////
         $permission = Permission::findOrCreate(PermissionsEnum::VIEW_LEGACY_DETAILS, 'web');
         $role = Role::findOrCreate(RolesEnum::Accounts, 'web');
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();

@@ -172,7 +172,7 @@ class YachtQuoteRepository extends BaseRepository
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
-            //PD Revert
+            // PD Revert
             // return $query->count();
             return 0;
         }

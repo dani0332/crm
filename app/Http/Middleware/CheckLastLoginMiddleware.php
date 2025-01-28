@@ -19,9 +19,10 @@ class CheckLastLoginMiddleware
     {
         $specialUsers = getAutomationUser();
         if (auth()->user()) {
-            if (in_array(auth()->user()->email, $specialUsers)) {
+            if (in_array(auth()->user()->email, $specialUsers) || app('impersonate')->isImpersonating()) {
                 return $next($request);
             }
+
             $lastLoginDate = Carbon::parse(auth()->user()->last_login);
             if (! now()->isSameDay($lastLoginDate)) {
                 auth()->logout();
