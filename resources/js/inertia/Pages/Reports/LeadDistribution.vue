@@ -318,7 +318,7 @@ const onLobChange = (e, isOnMounted = false) => {
         }}
       </template>
       <template
-        v-for="header in tableHeader"
+        v-for="header in tableHeader.filter(header => header.tooltip)"
         :key="header.value"
         #[`header-${header.value}`]="header"
       >
