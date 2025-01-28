@@ -485,6 +485,13 @@ class QuoteDocumentService extends BaseService
         // Convert the PDF to a version compatible with FPDI
         shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
 
+        sleep(3);
+
+        if (! file_exists($outputFile)) {
+            Log::error("Unable to read file outputFile: $outputFile ");
+            throw new \Exception("Unable to read file outputFile: $outputFile");
+        }
+
         $pdf = new Fpdi;
 
         $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
