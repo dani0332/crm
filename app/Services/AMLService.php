@@ -562,7 +562,7 @@ class AMLService
         ])->first();
 
         if ($paymentDetails?->insuranceProvider?->code !== InsuranceProvidersEnum::AXA) {
-            info('fn:amlScreeningGIG - Insurance provider not found. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+            info('fn:amlScreeningGIG - Insurance provider is not ('.InsuranceProvidersEnum::AXA.'). Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
 
             return false;
         }
