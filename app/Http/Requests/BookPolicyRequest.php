@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -50,6 +51,11 @@ class BookPolicyRequest extends FormRequest
             $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
             if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
+            }
+
+            $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->model_type);
+            if ($lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] && $lockStatusOfPolicyIssuanceSteps['isEditBookingDetailsDisabled']) {
+                $validator->errors()->add('value', 'Policy Booking is scheduled! You are not allowed to edit booking details');
             }
 
             if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {

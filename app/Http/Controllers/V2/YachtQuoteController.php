@@ -66,7 +66,7 @@ class YachtQuoteController extends Controller
         })->values();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
-        //PD Revert
+        // PD Revert
         // $count = $personalQuotes->count();
 
         $count = 0;
@@ -125,11 +125,11 @@ class YachtQuoteController extends Controller
     public function show($uuid)
     {
 
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         $quote = YachtQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::YACHT->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);

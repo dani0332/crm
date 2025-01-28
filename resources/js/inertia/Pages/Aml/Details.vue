@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-import { formatDate } from '../../Composables/utilities.js';
 import EntityModel from './Partials/EntityModel.vue';
 import IndividualModel from './Partials/IndividualModel.vue';
 
@@ -285,7 +284,10 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">DATE OF BIRTH</dt>
-              <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
+              <dd>
+                {{ dateFormat(quoteRequest.dob) }}
+                <!-- {{ dateFormat(quoteRequest.dob) }} -->
+              </dd>
             </div>
           </template>
           <template v-if="quoteType.code == quoteTypeCodeEnum.Health">
@@ -397,35 +399,43 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">PURPOSE OF INSURANCE</dt>
-              <dd>{{ quoteRequest?.purposeOfInsurance?.text ?? '' }}</dd>
+              <dd>
+                {{ quoteRequest?.life_quote?.purpose_of_insurance?.text ?? '' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">CHILDREN</dt>
-              <dd>{{ quoteRequest?.children?.text ?? '' }}</dd>
+              <dd>{{ quoteRequest?.life_quote?.children?.text ?? '' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">MARITAL STATUS</dt>
-              <dd>{{ quoteRequest?.maritalStatus?.text ?? '' }}</dd>
+              <dd>
+                {{ quoteRequest?.life_quote?.marital_status?.text ?? '' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">TENURE OF INSURANCE</dt>
-              <dd>{{ quoteRequest?.insuranceTenure?.text ?? '' }}</dd>
+              <dd>
+                {{ quoteRequest?.life_quote?.insurance_tenure?.text ?? '' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">SMOKER</dt>
-              <dd>{{ quoteRequest.is_smoker ? 'Yes' : 'No' }}</dd>
+              <dd>{{ quoteRequest?.life_quote.is_smoker ? 'Yes' : 'No' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">NO. OF YEARS</dt>
-              <dd>{{ quoteRequest?.numberOfYears?.text ?? '' }}</dd>
+              <dd>
+                {{ quoteRequest?.life_quote?.number_of_years?.text ?? '' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">SUM INSURED</dt>
-              <dd>{{ quoteRequest?.currency?.text ?? '' }}</dd>
+              <dd>{{ quoteRequest?.life_quote?.sum_insured_value ?? '' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">OTHER INFO</dt>
-              <dd>{{ quoteRequest.others_info }}</dd>
+              <dd>{{ quoteRequest?.life_quote.others_info }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">DATE OF BIRTH</dt>
@@ -433,7 +443,7 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">GENDER</dt>
-              <dd>{{ quoteRequest.gender }}</dd>
+              <dd>{{ quoteRequest?.gender }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">NATIONALITY</dt>

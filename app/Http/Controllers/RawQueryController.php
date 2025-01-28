@@ -20,12 +20,12 @@ class RawQueryController extends Controller
          ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($request->modelType).'Quote';
 
         $fieldsMap = [
-            HealthQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
+            HealthQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id', 'source', 'lead_allocation_failed_at', 'sic_flow_enabled', 'sic_advisor_requested', 'created_at'],
             HomeQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'pa_id', 'nationality_id'],
-            TravelQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
+            TravelQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id', 'source', 'lead_allocation_failed_at', 'sic_flow_enabled', 'sic_advisor_requested', 'created_at'],
             PersonalQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
-            LifeQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'pa_id', 'nationality_id'],
-            CarQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
+            LifeQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'pa_id', 'nationality_id', 'source', 'lead_allocation_failed_at', 'created_at'],
+            CarQuote::class => ['id', 'uuid', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id', 'source', 'is_renewal_tier_email_sent', 'lead_allocation_failed_at', 'sic_flow_enabled', 'sic_advisor_requested', 'created_at'],
             BusinessQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'pa_id', 'nationality_id'],
         ];
 

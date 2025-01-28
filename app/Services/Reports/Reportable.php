@@ -179,6 +179,11 @@ trait Reportable
             'previous_policy_expiry_date' => [
                 'can_view' => $canView,
             ],
+            'department' => [
+                'lobs' => [
+                    quoteTypeCode::Health,
+                ],
+            ],
         ];
     }
 

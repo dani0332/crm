@@ -327,9 +327,10 @@ const permissionsEnum = page.props.permissionsEnum;
 
 const exportLoader = ref(false);
 const onDataExport = () => {
+  let copyFilters = JSON.parse(JSON.stringify(cleanObj(filters)));
   let diff = calculateDaysDifference(
-    filters.created_at_start,
-    filters.created_at_end,
+    copyFilters.created_at_start ?? copyFilters.booking_date[0],
+    copyFilters.created_at_end ?? copyFilters.booking_date[1],
   );
 
   if (diff > 31) {
@@ -339,16 +340,6 @@ const onDataExport = () => {
     });
     return;
   }
-
-  filters.created_at_start = useDateFormat(
-    filters.created_at_start,
-    'YYYY-MM-DD',
-  ).value;
-
-  filters.created_at_end = useDateFormat(
-    filters.created_at_end,
-    'YYYY-MM-DD',
-  ).value;
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
@@ -469,7 +460,7 @@ const resetDateFilters = filterName => {
     (filterName.startsWith('created_at') ? filterMappings.created_at : []);
 
   filtersToReset.forEach(filter => {
-    filters[filter] = '';
+    filters[filter] = null;
   });
 };
 

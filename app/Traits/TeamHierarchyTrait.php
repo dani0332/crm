@@ -72,7 +72,17 @@ trait TeamHierarchyTrait
 
     public function getSubTeamsByTeamIds($teamIds)
     {
-        return Team::where('type', TeamTypeEnum::SUB_TEAM)->whereIn('parent_team_id', $teamIds)->where('is_active', 1)->select('id', 'name')->orderBy('name', 'asc')->get();
+        $subTeams = Team::with('parent')->where('type', TeamTypeEnum::SUB_TEAM)->whereIn('parent_team_id', $teamIds)->where('is_active', 1)->select('id', 'name', 'parent_team_id')->orderBy('name', 'asc')->get();
+
+        $subTeams->map(function ($subTeam) {
+            if ($subTeam->parent) {
+                $subTeam->name = "$subTeam->name ({$subTeam->parent?->name})";
+            }
+
+            return $subTeam;
+        });
+
+        return $subTeams;
     }
 
     public function getUsersByTeamId($teamId)
@@ -191,7 +201,7 @@ trait TeamHierarchyTrait
             ->select('users.id', 'users.name', 'ut.team_id as u_team_id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->where('users.is_active', 1)
+            ->activeUser()
             ->where('r.name', $role)
             ->get();
     }
@@ -213,5 +223,35 @@ trait TeamHierarchyTrait
     public function getUserDepartments($userId)
     {
         return DB::table('user_departments')->where('user_id', $userId)->get();
+    }
+
+    public function usersByTeamProduct()
+    {
+        $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->first();
+        if (! $product) {
+            return [];
+        }
+
+        $productTeams = Team::where('type', TeamTypeEnum::TEAM)
+            ->where('parent_team_id', $product->id)
+            ->where('is_active', 1)
+            ->pluck('id')
+            ->toArray();
+
+        $teamUserIds = UserTeams::whereIn('team_id', $productTeams)
+            ->pluck('user_id')
+            ->toArray();
+
+        $productUserIds = UserProducts::where('product_id', $product->id)
+            ->whereNotIn('user_id', $teamUserIds)
+            ->pluck('user_id')
+            ->toArray();
+
+        return array_unique(array_merge($teamUserIds, $productUserIds));
+    }
+
+    public function getAdvisorsByManagers(): array
+    {
+        return DB::table('user_manager')->where('manager_id', auth()->id())->pluck('user_id')->toArray() ?? [];
     }
 }

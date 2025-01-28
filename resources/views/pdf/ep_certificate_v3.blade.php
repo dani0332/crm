@@ -125,7 +125,6 @@
             max-width: 75%;
             width: 100%;
             margin: 0 auto;
-            font-size: 18px;
         }
 
         main,
@@ -167,6 +166,10 @@
 
         .text-danger {
             color: red;
+        }
+
+        * {
+            font-size: 18px !important;
         }
     </style>
 </head>

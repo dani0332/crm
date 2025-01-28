@@ -93,7 +93,7 @@ class LifeQuoteController extends Controller
         /* Start - Temporarily adding for correcting historic data  */
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $quoteShowData = app(LifeQuoteService::class)->getLifeQuoteShowData($quote);
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
@@ -129,7 +129,7 @@ class LifeQuoteController extends Controller
     {
         LifeQuoteRepository::update($uuid, $request->validated());
 
-        return redirect(route('life-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
+        return redirect('personal-quotes/life/'.$uuid)->with('message', 'Quote updated successfully');
     }
 
     public function cardsView(Request $request)

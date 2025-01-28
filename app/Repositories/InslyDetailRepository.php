@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
 use App\Models\InslyDetail;
+use App\Models\LifeQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\YachtQuote;
@@ -128,9 +129,7 @@ class InslyDetailRepository extends BaseRepository
         if ($inslyPolicyIssueDate) {
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
-
         $appUrl = config('constants.APP_URL');
-
         if (! empty($policy)) {
             $policyNumber = $policy['policy']['policy_no'];
             $coverage = $policy['policy']['coverage'];
@@ -214,7 +213,6 @@ class InslyDetailRepository extends BaseRepository
 
                 // create lead in case no record found
                 $payLoad = $this->prePareData($policy, $quoteType, $isPersonalQuote);
-
                 info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
                 info('InslyLead - created Lead Id : '.json_encode($id));
@@ -238,8 +236,12 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::LIFE->value:
-                            $obj->lifeQuoteRequestDetail()->updateOrCreate(
-                                ['life_quote_request_id' => $obj->id],
+                            $obj->lifeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new LifeQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;
@@ -364,8 +366,14 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
         $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
-        // commented this because its value is null so no need to assign.
-        /* $dataArr['insurance_provider_id'] = null; */
+
+        if ($insurer = $policy['policy']['insurer'] ?? null) {
+            info('Fetching Insurance Provider Id from Legacy Lead policy no: '.$policy['policy_no'].' and Insurer: '.trim($insurer));
+            $insuranceProviderId = InsuranceProviderRepository::getInslyProviderId(trim($insurer));
+            $dataArr['insurance_provider_id'] = $insuranceProviderId;
+            info('Assign Insurance Provider Id: '.$insuranceProviderId.' against Insurer: '.trim($insurer).' Legacy Lead policy no: '.$policy['policy_no']);
+        }
+
         $dataArr['policy_issuance_date'] = now()->format('Y-m-d');
 
         $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;

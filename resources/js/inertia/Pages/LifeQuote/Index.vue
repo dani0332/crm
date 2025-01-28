@@ -11,6 +11,7 @@ defineProps({
 });
 
 const page = usePage();
+let params = useUrlSearchParams('history');
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -265,21 +266,14 @@ function resetFilters() {
 }
 
 function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
-
-      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-        let id = key.slice(0, -2);
-        if (filters[id]) {
-          filters[id].push(parseInt(value));
-        }
-      } else {
-        filters[key] = value;
-      }
-    });
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+    } else {
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
+    }
   }
 }
 const quotesSelected = ref([]);
@@ -500,7 +494,7 @@ watch(
           @selected-filters="handleSelectedFilters"
           @toggleFilters="showFilters = !showFilters"
         />
-        <Link href="/quotes/life/cards">
+        <Link href="/personal-quotes/life/cards">
           <x-button
             size="sm"
             color="#1d83bc"
@@ -867,8 +861,8 @@ watch(
       <template #item-nationality="{ nationality }">
         {{ nationality?.code }}
       </template>
-      <template #item-lost_reason="{ life_quote_request_detail }">
-        {{ life_quote_request_detail?.lost_reason?.text }}
+      <template #item-lost_reason="{ quote_detail }">
+        {{ quote_detail?.lost_reason?.text }}
       </template>
 
       <!-- <template #item-is_ecommerce="{ is_ecommerce }">
@@ -885,12 +879,17 @@ watch(
       </template>
       <template #item-tenure_of_insurance="item">
         <p>
-          {{ item?.insurance_tenure?.text ?? '' }}
+          {{ item?.life_quote?.insurance_tenure?.text ?? '' }}
         </p>
       </template>
       <template #item-number_of_years="item">
         <p>
-          {{ item?.number_of_years?.text ?? '' }}
+          {{ item?.life_quote?.number_of_years?.text ?? '' }}
+        </p>
+      </template>
+      <template #item-sum_insured_value="item">
+        <p>
+          {{ item?.life_quote?.sum_insured_value ?? '' }}
         </p>
       </template>
     </DataTable>

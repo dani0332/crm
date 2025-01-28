@@ -15,7 +15,7 @@ const ruleForm = useForm({
   id: props.rule?.id ?? null,
   name: props.rule?.name ?? null,
   is_active: props.rule?.is_active ? true : false,
-  rule_users: props.rule?.rule_users.map(x => x.id) ?? null,
+  rule_users: props.rule?.rule_users.map(x => x.id) ?? [],
   rule_type: props.rule?.rule_type.id ?? null,
 });
 

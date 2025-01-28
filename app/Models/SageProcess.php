@@ -16,4 +16,10 @@ class SageProcess extends Model
     {
         return $this->morphTo();
     }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class);
+    }
+
 }

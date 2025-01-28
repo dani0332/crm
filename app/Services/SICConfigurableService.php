@@ -75,6 +75,8 @@ class SICConfigurableService extends BaseService
                 'min_age' => $request['min_age'],
                 'max_age' => $request['max_age'],
                 'is_type' => $request['is_type'],
+                'is_price_starting_from' => $request['is_price_starting_from'],
+                'price_starting_from' => $request['price_starting_from'] ?? 0,
                 'quote_type_id' => QuoteTypeId::Health,
                 'is_nationality' => $request['is_nationality'],
                 'is_member_category' => $request['is_member_category'],

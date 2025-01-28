@@ -30,6 +30,11 @@ class EmbeddedTransaction extends Model
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
+    public function travelAnnualPayments()
+    {
+        return $this->hasOne(Payment::class, 'code', 'code');
+    }
+
     public function quoteRequest()
     {
         return $this->morphTo();

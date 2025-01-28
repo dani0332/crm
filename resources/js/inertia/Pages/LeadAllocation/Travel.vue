@@ -102,7 +102,6 @@ onMounted(() => {
 
 <template>
   <div>
-    <UserStatus />
     <Head title="Travel Lead Allocation" />
     <div class="flex justify-between items-center">
       <div

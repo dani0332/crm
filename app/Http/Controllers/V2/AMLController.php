@@ -7,6 +7,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\LookupsEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -15,6 +16,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Exports\KycLogs;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -62,6 +64,7 @@ class AMLController extends Controller
     public function __construct()
     {
         $this->middleware('permission:aml-list', ['only' => ['index']]);
+        $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['export']]);
     }
 
     /**
@@ -86,6 +89,7 @@ class AMLController extends Controller
                     QuoteTypes::PET->id(),
                     QuoteTypes::CYCLE->id(),
                     QuoteTypes::JETSKI->id(),
+                    QuoteTypes::LIFE->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -152,6 +156,49 @@ class AMLController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'aml' => $quotes,
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        $query = AML::select([
+            'id',
+            'quote_request_id',
+            'quote_type_id',
+            'input',
+            'search_type',
+            'match_found',
+            'results_found',
+            'created_at',
+            'decision',
+        ])
+            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
+            ->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
+
+        $data = collect();
+
+        $query->chunk(1000, function ($chunk) use (&$data) {
+            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
+            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
+                $quoteType = QuoteTypes::getName($quoteTypeId);
+                $nameSpace = '\\App\\Models\\';
+                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
+
+                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
+                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
+                foreach ($quoteRequestData as $quoteRequest) {
+                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
+                    foreach ($amlData as $index => $value) {
+                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
+                        $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
+                    }
+                }
+            }
+            $data = $data->merge($chunk);
+        });
+
+        $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
+
+        return (new KycLogs($data))->download("AML Logs {$reportDateRange}");
     }
 
     /**
@@ -232,7 +279,7 @@ class AMLController extends Controller
             LookupsEnum::MEMBER_RELATION,
         ])->get()->groupBy('key');
 
-        //lookups , loop through each key, replace - with _ and update key
+        // lookups , loop through each key, replace - with _ and update key
         $lookups = $lookups->mapWithKeys(function ($item, $key) {
             return [str_replace('-', '_', $key) => $item];
         });
@@ -437,8 +484,9 @@ class AMLController extends Controller
                     ], ['entity_id' => $fetchEntity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
                 }
 
-                if (isset($AMLCheckRequest->company_name) && $quoteTypeId == QuoteTypeId::Business) {
+                if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
+                    $updateQuote->company_address = $AMLCheckRequest->company_address;
                     $updateQuote->save();
                 }
 
