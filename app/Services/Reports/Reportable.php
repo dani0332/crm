@@ -15,22 +15,22 @@ use Illuminate\Support\Facades\Auth;
 
 trait Reportable
 {
-    public function getStartAndEndDate($filters)
+    public function getStartAndEndDate($filters, $dateAttribute = 'advisorAssignedDates')
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $freshLoad = ! isset($filters->page);
 
-        if (isset($filters->advisorAssignedDates)) {
-            $startDate = Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat);
+        if (isset($filters->{$dateAttribute})) {
+            $startDate = Carbon::parse($filters->{$dateAttribute}[0])->startOfDay()->format($dateFormat);
         } else {
             $startDate = $freshLoad
                 ? now()->startOfDay()->format($dateFormat)
                 : now()->subDays((int) $maxDays)->startOfDay()->format($dateFormat);
         }
 
-        $endDate = isset($filters->advisorAssignedDates)
-            ? Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat)
+        $endDate = isset($filters->{$dateAttribute})
+            ? Carbon::parse($filters->{$dateAttribute}[1])->endOfDay()->format($dateFormat)
             : now()->endOfDay()->format($dateFormat);
 
         return [$freshLoad, $startDate, $endDate];
