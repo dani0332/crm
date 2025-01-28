@@ -1207,6 +1207,7 @@ class SplitPaymentService
                 info('working 1st');
                 if ($hasPaidCreditCardPayment) {
                     info('working 2nd');
+
                     return [
                         'isCommissionDisabled' => true,
                         'disabledCommissionTooltip' => PaymentTooltip::DISABLED_COMMISSION,
