@@ -637,7 +637,7 @@ class ReportService extends BaseService
         } else {
             $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
             foreach ($quoteTypes as $quoteType) {
-                if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
+                if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles) || (auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS]) && userHasProduct($quoteType))) {
                     $allowedLOBs[] = $lobTable[$quoteType->value];
                 } elseif (in_array(RolesEnum::Admin, $userRoles)) {
                     $allowedLOBs[] = $lobTable[$quoteType->value];

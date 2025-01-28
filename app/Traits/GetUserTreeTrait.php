@@ -27,7 +27,7 @@ trait GetUserTreeTrait
 
         return [];
     }
-    public function walkTree($userId, $productType = null) // product
+    public function walkTree($userId, $productType = null, $allowedPermissions=[]) // product
     {
         $childUserIds = [$userId];
         $productTeam = $this->getProductByName($productType ?? quoteTypeCode::Car);
@@ -45,7 +45,7 @@ trait GetUserTreeTrait
             RolesEnum::GMManager,
             RolesEnum::LeadPool,
         ];
-        if (auth()->user()->hasAnyRole($rolesArray)) {
+        if (auth()->user()->hasAnyRole($rolesArray) || auth()->user()->hasAnyPermission($allowedPermissions)) {
             $userAllTeams = DB::table('teams')
                 ->join('user_team', 'user_team.team_id', 'teams.id')
                 ->where('user_id', $userId)
