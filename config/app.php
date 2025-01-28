@@ -184,7 +184,7 @@ return [
         OwenIt\Auditing\AuditingServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         MongoDB\Laravel\MongoDBServiceProvider::class,
-
+        Lab404\Impersonate\ImpersonateServiceProvider::class,
     ],
 
     /*
