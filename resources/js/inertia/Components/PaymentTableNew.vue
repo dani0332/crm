@@ -5,6 +5,7 @@ import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+import { time } from 'highcharts';
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -159,11 +160,10 @@ const showLackingPayment = () => {
   if (is_lacking_payment.value && props.payments.length > 0) {
     notification.error(
       {
-        title:
-          'Action Needed: Please revise payment details to reflect plan changes.',
+        title: props.paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED,
         position: 'top',
-      },
-      50000,
+        timeout: 5000,
+      }
     );
   }
 };
@@ -481,6 +481,7 @@ const handleDeclinedChange = () => {
   isDeclineClicked.value = true;
   isApproveClicked.value = false;
   isDeclineCustomReason.value = false;
+  isApproveNotChecked.value = false;
   handleDeclinedReasonChange();
   return true;
 };
@@ -1809,6 +1810,15 @@ const editPaymentModal = (
     return false;
   }
 
+  if (isEditPaymentEnabled()){
+    notification.error({
+      title: props.paymentTooltipEnum.PAYMENT_AUTHORISED_CANNOT_EDIT,
+      position: 'top',
+      timeout: 10000,
+    });
+    return false;
+  }
+
   resetPaymentForm();
   initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
   handleCollectionTypeChange();
@@ -2350,10 +2360,12 @@ const addPayment = isValid => {
             location.reload();
           }, 500);
         },
-        onError: res => {
-          notification.error({
-            title: res.error,
-            position: 'top',
+        onError: errors => {
+          Object.keys(errors).forEach(function (key) {
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
           });
         },
       });
@@ -2785,10 +2797,7 @@ const shouldProcessUpdate = payment => {
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   const isCarQuote = props.quoteType === 'Car';
-  const isGIGInsuranceProvider =
-    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
-    page.props?.bookingDetails?.isGIGInsuranceProvider ||
-    false;
+  const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
@@ -2796,7 +2805,7 @@ const shouldProcessUpdate = payment => {
     isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
   if (
     isInsurer &&
-    isGIGInsuranceProvider &&
+    isGIGProvider &&
     (isCarQuote || isTravelQuote) &&
     hasAnyCCSplitPayment()
   ) {
@@ -3165,14 +3174,11 @@ onMounted(() => {
 });
 
 const is_lacking_payment = ref(
-  page.props?.bookPolicyDetails?.isLackingOfPayment ||
-    page.props?.bookingDetails?.isLackingOfPayment ||
-    false,
+  page.props?.bookPolicyDetails?.isLackingOfPayment || false,
 );
 
 const isPaidEditable = ref(
   page.props?.bookPolicyDetails?.isPaidEditable ||
-    page.props?.bookingDetails?.isPaidEditable ||
     page.props?.isPaidEditable ||
     false,
 );
@@ -3188,13 +3194,6 @@ watch(
 
 watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
-  newVal => {
-    is_lacking_payment.value = newVal || false;
-  },
-);
-
-watch(
-  () => page.props?.bookingDetails?.isLackingOfPayment,
   newVal => {
     is_lacking_payment.value = newVal || false;
   },
@@ -3360,26 +3359,19 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
 };
 
 const isCCEnabled = ref(
-  page.props?.bookPolicyDetails?.isCreditCardEnabled ||
-    page.props?.bookingDetails?.isCreditCardEnabled ||
-    false,
+  page.props?.bookPolicyDetails?.isCreditCardEnabled || false,
 );
 
 const isMultiPaymentsEnabled = ref(
-  page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled ||
-    page.props?.bookingDetails?.isMultiplePaymentsEnabled ||
-    false,
+  page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled || false,
+);
+
+const isGIGOrQICProvider  = ref(
+  page.props?.bookPolicyDetails?.isGIGOrQICProvider || false,
 );
 
 watch(
   () => page.props?.bookPolicyDetails?.isCreditCardEnabled,
-  newVal => {
-    isCCEnabled.value = newVal || false;
-  },
-);
-
-watch(
-  () => page.props?.bookingDetails?.isCreditCardEnabled,
   newVal => {
     isCCEnabled.value = newVal || false;
   },
@@ -3406,9 +3398,27 @@ const isCCPaymentDisabled = option => {
   );
 };
 
+const isPolicyBooked = option => {
+  return (
+    isCCEnabled.value &&
+    paymentMethodsForm.collection_type === 'insurer' &&
+    option == 'CC' &&
+    props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked
+  );
+};
+
 const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
   return paymentTypes.filter(item => !methodsToExclude.includes(item.value));
 };
+
+const isEditPaymentEnabled = () => {
+  return(
+    !isMultiPaymentsEnabled.value 
+    && isGIGOrQICProvider.value 
+    && props.payments[0].payment_status_id === props.paymentStatusEnum.AUTHORISED
+  )
+};
+
 </script>
 
 <template>
@@ -3770,8 +3780,7 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
                                 <template #content>!</template>
                               </x-badge>
                               <template #tooltip>
-                                Action Needed: Please revise payment <br />
-                                details to reflect plan changes.
+                                {{isEditPaymentEnabled() ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT :  paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED}}
                               </template>
                             </x-tooltip>
                           </template>
@@ -5285,10 +5294,10 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
                             :value="option.value"
                             :title="
                               isCCPaymentDisabled(option.value)
-                                ? 'This payment method is currently unavailable. Credit Card payment is not supported by the selected Insurance Provider'
-                                : option.tooltip
+                                ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED
+                                : isPolicyBooked(option.value) ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED : option.tooltip
                             "
-                            :disabled="isCCPaymentDisabled(option.value)"
+                            :disabled="isCCPaymentDisabled(option.value) || isPolicyBooked(option.value)"
                           >
                             {{ option.label }}
                           </option>

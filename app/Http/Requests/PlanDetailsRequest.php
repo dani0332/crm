@@ -2,9 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\CollectionTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
+use App\Models\Payment;
+use App\Services\BrokerCommissionService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PlanDetailsRequest extends FormRequest
@@ -37,7 +41,7 @@ class PlanDetailsRequest extends FormRequest
         }
 
         if (request()->quoteType == quoteTypeCode::Business) {
-            //for business either price_vat_applicable or price_vat_not_applicable is required, and only one field should have value
+            // for business either price_vat_applicable or price_vat_not_applicable is required, and only one field should have value
             $rules['price_vat_applicable'] = 'nullable|required_without:price_vat_not_applicable|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/';
             $rules['price_vat_not_applicable'] = 'nullable|required_without:price_vat_applicable|numeric|regex:/^\d{1,7}(\.\d{1,2})?$/';
         }
@@ -55,6 +59,15 @@ class PlanDetailsRequest extends FormRequest
 
             if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
+            }
+
+            $quoteTypeId = QuoteTypes::getIdFromValue(request()->quoteType);
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, request()->insurance_provider_id);
+            if (! $isCreditCardEnabled) {
+                $payment = Payment::where('code', request()->code)->first();
+                if ($payment && $payment->isPaymentAuthorized() && $payment->collection_type == CollectionTypeEnum::INSURER) {
+                    $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
+                }
             }
         });
     }

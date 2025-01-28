@@ -2,13 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\InsurerProviderEnum;
-use App\Enums\QuoteTagEnums;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Models\BrokerCommission;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteTag;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
@@ -30,7 +24,8 @@ class InsuranceProviderService extends BaseService
                 'ip.is_active',
                 'ip.lower_limit',
                 'ip.upper_limit',
-                'ip.sort_order'
+                'ip.sort_order',
+                'ip.multiple_payments'
             );
     }
 
@@ -195,57 +190,5 @@ class InsuranceProviderService extends BaseService
     public function getProviderByCode($code)
     {
         return InsuranceProvider::where('code', $code)->first();
-    }
-
-    /**
-     * Get the status of credit card and split frequency for a given quote type and insurance provider.
-     *
-     * @param  string  $quoteType
-     * @param  int  $insuranceProviderId
-     * @param  int  $businessTypeOfInsuranceId
-     * @param  object|null  $quote
-     * @return array
-     */
-    public function getPaymentConfiguration($quoteType, $insuranceProviderId, $businessTypeOfInsuranceId, $quote = null)
-    {
-        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        $brokerCommissionQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)->active();
-
-        // Check if the quote type is one of the specified types
-        if (in_array($quoteTypeId, [QuoteTypes::getId(QuoteTypes::BUSINESS), QuoteTypes::getId(QuoteTypes::CORPLINE), QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL)])) {
-            $quoteTypeId = QuoteTypeId::Business;
-            $brokerCommissionQuery->where('business_type_of_insurance_id', $businessTypeOfInsuranceId);
-        }
-        $brokerCommissionQuery->where('quote_type_id', $quoteTypeId);
-        $brokerCommission = $brokerCommissionQuery->first();
-
-        // Get the insurance provider details
-        $insuranceProvider = InsuranceProvider::find($insuranceProviderId);
-
-        $isGIGInsuranceProvider = false;
-        $isMultiplePaymentsEnabled = false;
-
-        if ($insuranceProvider) {
-            $isGIGInsuranceProvider = $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
-            $isMultiplePaymentsEnabled = $insuranceProvider->multiple_payments;
-        }
-
-        $isTapCaptureProcessStart = false;
-        if ($quote) {
-            $isTapCaptureProcessStart = QuoteTag::where([
-                'quote_type_id' => $quoteTypeId,
-                'quote_uuid' => $quote->uuid,
-                'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START,
-                'value' => 1,
-            ])->exists();
-        }
-
-        return [
-            $brokerCommission ? true : false,
-            $brokerCommission,
-            $isGIGInsuranceProvider,
-            $isTapCaptureProcessStart,
-            $isMultiplePaymentsEnabled,
-        ];
     }
 }
