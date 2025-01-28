@@ -14,7 +14,7 @@ class TravelAnnual extends EmbeddedProduct
         return [
             'EP REF-ID',
             'ADVISOR NAME',
-            'Date of Issuance',
+            'DATE OF ISSUANCE',
             'PLAN COMMENCEMENT DATE',
             'PLAN END DATE',
             'FULL NAME',
