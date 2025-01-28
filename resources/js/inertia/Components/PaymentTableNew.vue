@@ -1810,7 +1810,7 @@ const editPaymentModal = (
     return false;
   }
 
-  if (isEditPaymentEnabled()){
+  if (isEditPaymentEnabled() && split_payment_id == 0 && sr_no == 0 && capture_approval == 0){
     notification.error({
       title: props.paymentTooltipEnum.PAYMENT_AUTHORISED_CANNOT_EDIT,
       position: 'top',
@@ -3412,10 +3412,18 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
 };
 
 const isEditPaymentEnabled = () => {
+  const statusesToCheck = [
+    props.paymentStatusEnum.AUTHORISED,
+  ];
+
+  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
+    statusesToCheck.includes(item.payment_status_id),
+  );
+
   return(
-    !isMultiPaymentsEnabled.value 
-    && isGIGOrQICProvider.value 
-    && props.payments[0].payment_status_id === props.paymentStatusEnum.AUTHORISED
+    !isMultiPaymentsEnabled.value
+    && isGIGOrQICProvider.value
+    && hasAnyAuthorizedPayment
   )
 };
 

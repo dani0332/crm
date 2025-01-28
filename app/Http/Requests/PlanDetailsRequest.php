@@ -62,7 +62,7 @@ class PlanDetailsRequest extends FormRequest
             }
 
             $quoteTypeId = QuoteTypes::getIdFromValue(request()->quoteType);
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, request()->insurance_provider_id);
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id);
             if (! $isCreditCardEnabled) {
                 $payment = Payment::where('code', request()->code)->first();
                 if ($payment && $payment->isPaymentAuthorized() && $payment->collection_type == CollectionTypeEnum::INSURER) {
