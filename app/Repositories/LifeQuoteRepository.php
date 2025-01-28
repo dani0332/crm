@@ -122,35 +122,31 @@ class LifeQuoteRepository extends BaseRepository
                 $query->whereHas('lifeQuote', function ($subQuery) {
                     $subQuery->where('tenure_of_insurance_id', request()->tenure_of_insurance_id);
                 });
-                // $query->where('tenure_of_insurance_id', request()->tenure_of_insurance_id);
             })
             ->when(! empty(request()->number_of_years_id), function ($query) {
                 $query->whereHas('lifeQuote', function ($subQuery) {
                     $subQuery->where('number_of_years_id', request()->number_of_years_id);
                 });
-                // $query->where('number_of_years_id', request()->number_of_years_id);
             })
             ->when(! empty(request()->sum_insured_range) && ! empty(request()->sum_insured_currency_id), function ($query) {
-                $query->where('sum_insured_currency_id', request()->sum_insured_currency_id);
-                    // ->whereBetween('sum_insured_value', request()->sum_insured_range);
+                $query->whereHas('lifeQuote', function ($subQuery) {
+                    $subQuery->where('sum_insured_currency_id', request()->sum_insured_currency_id);
+                });
                 switch (request()->sum_insured_range) {
                     case 'lt500k':
                         $query->whereHas('lifeQuote', function ($subQuery) {
                             $subQuery->where('sum_insured_value', '<', 500000);
                         });
-                        // $query->where('sum_insured_value', '<', 500000);
                         break;
                     case '500k-1m':
                         $query->whereHas('lifeQuote', function ($subQuery) {
                             $subQuery->whereBetween('sum_insured_value', [500000, 999999]);
                         });
-                        // $query->whereBetween('sum_insured_value', [500000, 999999]);
                         break;
                     case 'gte1m':
                         $query->whereHas('lifeQuote', function ($subQuery) {
                             $subQuery->where('sum_insured_value', '>=', 1000000);
                         });
-                        // $query->where('sum_insured_value', '>=', 1000000);
                         break;
                 }
             })

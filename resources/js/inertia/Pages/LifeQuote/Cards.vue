@@ -33,9 +33,9 @@ const flattenLeads = (leadsTypes) => {
         lead.age = lead.life_quote?.age || '';
         lead.sum_insured_value = lead.life_quote?.sum_insured_value || '';
 
-        delete lead.nationality;
-        delete lead.insurance_tenure;
-        delete lead.life_quote;
+        // delete lead.nationality;
+        // delete lead.insurance_tenure;
+        // delete lead.life_quote;
       });
     }
   });
@@ -329,7 +329,7 @@ function filterQuotes(isValid) {
 watch(
   () => page.props.quotes,
   () => {
-    quotes.data = page.props.quotes;
+    quotes.data = flattenLeads(page.props.quotes);
   },
   { deep: true },
 );

@@ -165,8 +165,8 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'Type of Insurance', value: 'tenure_of_insurance', is_active: true },
-  { text: 'Tenure of Cover', value: 'number_of_years', sortable: true, is_active: true },
-  { text: 'Sum Assured', value: 'sum_insured_value', sortable: true, is_active: true },
+  { text: 'Tenure of Cover', value: 'number_of_years', is_active: true },
+  { text: 'Sum Assured', value: 'sum_insured_value', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {

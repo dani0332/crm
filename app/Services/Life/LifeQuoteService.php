@@ -32,6 +32,9 @@ use App\Repositories\UserRepository;
 use App\Services\QuoteDocumentService;
 use App\Services\SplitPaymentService;
 use App\Models\ApplicationStorage;
+use App\Models\CurrencyType;
+use App\Models\LifeInsuranceTenure;
+use App\Models\LifeNumberOfYears;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -40,6 +43,7 @@ use App\Services\BaseService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteLobs;
@@ -60,12 +64,15 @@ class LifeQuoteService extends BaseService
     public function getLifeQuoteData($isExportRequest = false, $isTotalLeadCountRequest = false)
     {
         $quotes = $this->getLifeQuotes($isExportRequest, $isTotalLeadCountRequest);
-        $quoteStatuses = $this->getPersonalQuoteStatuses(QuoteTypeId::Life)->get();
+        $leadStatuses = $this->getPersonalQuoteStatuses(QuoteTypeId::Life)->get();
         $advisors = $this->getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $authorizedDays = $this->getPaymentAuthorisedDays();
         $renewalBatches = $this->getRenewalBaches();
+        $typesOfInsurance = LifeInsuranceTenure::withActive()->get();
+        $numberOfYears = LifeNumberOfYears::withActive()->get();
+        $currency = CurrencyType::withActive()->get();
 
-        return compact('quotes', 'quoteStatuses', 'advisors', 'renewalBatches', 'authorizedDays');
+        return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency');
     }
 
     public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
@@ -103,6 +110,38 @@ class LifeQuoteService extends BaseService
                     $subQuery->whereBetween('advisor_assigned_date', [$advisorAssignedDateFrom, $advisorAssignedDateTo]);
                 });
             })
+            ->when(! empty(request()->tenure_of_insurance_id), function ($query) {
+                $query->whereHas('lifeQuote', function ($subQuery) {
+                    $subQuery->where('tenure_of_insurance_id', request()->tenure_of_insurance_id);
+                });
+            })
+            ->when(! empty(request()->number_of_years_id), function ($query) {
+                $query->whereHas('lifeQuote', function ($subQuery) {
+                    $subQuery->where('number_of_years_id', request()->number_of_years_id);
+                });
+            })
+            ->when(! empty(request()->sum_insured_range) && ! empty(request()->sum_insured_currency_id), function ($query) {
+                $query->whereHas('lifeQuote', function ($subQuery) {
+                    $subQuery->where('sum_insured_currency_id', request()->sum_insured_currency_id);
+                });
+                switch (request()->sum_insured_range) {
+                    case 'lt500k':
+                        $query->whereHas('lifeQuote', function ($subQuery) {
+                            $subQuery->where('sum_insured_value', '<', 500000);
+                        });
+                        break;
+                    case '500k-1m':
+                        $query->whereHas('lifeQuote', function ($subQuery) {
+                            $subQuery->whereBetween('sum_insured_value', [500000, 999999]);
+                        });
+                        break;
+                    case 'gte1m':
+                        $query->whereHas('lifeQuote', function ($subQuery) {
+                            $subQuery->where('sum_insured_value', '>=', 1000000);
+                        });
+                        break;
+                }
+            })
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
@@ -137,10 +176,22 @@ class LifeQuoteService extends BaseService
             $lifeQuotes[] = $this->getLifeQuotesAgainstQuoteStatus($quoteStatus);
         }
 
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $typesOfInsurance = LifeInsuranceTenure::withActive()->get();
+        $numberOfYears = LifeNumberOfYears::withActive()->get();
+        $currency = CurrencyType::withActive()->get();
+
         return [
             'quotes' => $lifeQuotes,
             'quoteType' => QuoteTypes::LIFE->value,
             'quoteTypeId' => QuoteTypeId::Life,
+            'leadStatuses' => $quoteStatuses,
+            'advisors' => $advisors,
+            'renewalBatches' => $renewalBatches,
+            'typesOfInsurance' => $typesOfInsurance,
+            'numberOfYears' => $numberOfYears,
+            'currency' => $currency,
         ];
     }
 
