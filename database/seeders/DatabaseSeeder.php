@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             // QuoteStatusSeeder::class,
             LookupSeeder::class,
             TravelRenewalTeamSeeder::class,
+            PermissionsSeeder::class,
             // DocumentTypeSeeder::class,
         ]);
     }
