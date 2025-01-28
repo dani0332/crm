@@ -34,10 +34,10 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
             return ['error' => 'Quote  not found'];
         }
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
-        /* filter_var is used to convert boolean values sent from frontend  */
+        /* filter_var is used to convert boolean values sent from frontend */
         $isRequestFromSendUpdateLogPage = $request->has('isSendUpdateLogRoute') && filter_var($request->isSendUpdateLogRoute, FILTER_VALIDATE_BOOLEAN);
 
-        //check if request is generated from Send Update Log Page or from LOB page
+        // check if request is generated from Send Update Log Page or from LOB page
         if ($isRequestFromSendUpdateLogPage) {
             $proformaPaymentRequest = Payment::where(['code' => $request->paymentCode, 'payment_methods_code' => PaymentMethodsEnum::ProformaPaymentRequest])->first();
             $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
@@ -65,7 +65,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
         $fileMimeType = 'application/pdf';
 
-        //upload file to azure
+        // upload file to azure
         $fileNameAzure = uniqid().'_'.$docmentableTypeEntry->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords($quoteType).'/'.$fileNameAzure;
         $azureDisk = Storage::disk('azureIM');

@@ -253,8 +253,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $premium = $issuePolicyResult?->premium;
         $priceVatApplicable = $premium / (1 + ((float) $this->vat / 100));
         $policyIssuanceDate = Carbon::now();
-        /* Last Cover day should be the expiry date as per business requirement */
-        $policyExpiryDate = Carbon::parse($quote->policy_start_date)->addDays($quote->days_cover_for)->subDay();
+        $coverDays = $this->calculateCoverDaysForExpiryDate($quote, $travelType);
+        $policyExpiryDate = Carbon::parse($quote->policy_start_date)->addDays($coverDays)->subDay();  /* Last Cover day should be the expiry date as per business requirement */
 
         $quote->update([
             'insurer_policy_id' => $insurerPolicyId,
@@ -525,7 +525,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
-        } elseif (! $policyIssuance) { /*&& $quote->insurer_api_status_id*/
+        } elseif (! $policyIssuance) { /* && $quote->insurer_api_status_id */
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isPolicyDocumentUploadDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
@@ -632,7 +632,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $fileContents = Http::get($documentUrl);
         [$mimeType , $docName] = $this->getMimeTypeAndFileName($documentUrl);
 
-        //upload file to azure
+        // upload file to azure
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);
@@ -727,6 +727,18 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $url = $this->baseUrl.$endPoint;
 
         return Http::timeout(20)->withHeaders($headers)->post($url, $payload);
+    }
+
+    private function calculateCoverDaysForExpiryDate($quote, $travelType): mixed
+    {
+        $coverDays = $quote->days_cover_for;
+        $isInboundLead = $travelType === TravelQuoteEnum::ALLIANCE_IN_BOUND;
+        $isMultiTripLead = $quote->coverage_code === TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP;
+        if ($isInboundLead && $isMultiTripLead) { /* Multi Trip Inbound should have maximum 180 days cover */
+            $coverDays = 180;
+        }
+
+        return $coverDays;
     }
 
 }

@@ -690,7 +690,7 @@ if (! function_exists('addDaysExcludeWeekend')) {
 if (! function_exists('getIMLogo')) {
     function getIMLogo($isPDF = false)
     {
-        $imLogo = 'images/im_logo_21k-hi.png';
+        $imLogo = 'images/logo-new.png';
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
@@ -998,12 +998,12 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName)
+    function getAppStorageValueByKey($keyName, $default = false)
     {
         $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
         if (! $query) {
-            return false;
+            return $default;
         }
 
         return $query->value;

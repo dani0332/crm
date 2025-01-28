@@ -15,7 +15,7 @@ class addCarLeadAllocationFetchStartDate extends Seeder
      */
     public function run()
     {
-        //LEAD_ALLOCATION_START_DATE_FOR_LEADS
+        // LEAD_ALLOCATION_START_DATE_FOR_LEADS
         $allocationStartDateForCar = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS')->get();
         if (count($allocationStartDateForCar) == 0) {
             DB::table('application_storage')->insert([[

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\QuoteTypes;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -172,5 +173,12 @@ class RenewalBatch extends Model implements AuditableContract
     public function scopeMotor($q)
     {
         $q->where('quote_type_id', QuoteTypes::CAR->id());
+    }
+
+    public function monthName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => Carbon::createFromDate($this->year, $this->month)->format('M')
+        );
     }
 }
