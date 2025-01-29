@@ -1204,10 +1204,7 @@ class SplitPaymentService
                 $hasPaidCreditCardPayment = $paymentSplits->contains(function ($split) {
                     return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id == PaymentStatusEnum::PAID;
                 });
-                info('working 1st');
                 if ($hasPaidCreditCardPayment) {
-                    info('working 2nd');
-
                     return [
                         'isCommissionDisabled' => true,
                         'disabledCommissionTooltip' => PaymentTooltip::DISABLED_COMMISSION,
@@ -1215,7 +1212,6 @@ class SplitPaymentService
                 }
             }
         }
-
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 }

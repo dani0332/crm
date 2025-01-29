@@ -17,6 +17,7 @@ use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
@@ -133,6 +134,7 @@ class HandleInertiaRequests extends Middleware
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
             'isTapEnabled' => isTapEnabled(),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
         ];
     }
 

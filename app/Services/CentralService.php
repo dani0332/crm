@@ -321,7 +321,7 @@ class CentralService extends BaseService
             $quote->update($data->toArray());
 
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, request()->insurance_provider_id);
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id);
             $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
 
             return true;
@@ -1011,20 +1011,22 @@ class CentralService extends BaseService
         }
     }
 
-    public function getTapConfiguration($quoteType, $insuranceProviderId, $payment = null, $quote = null)
+    public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null)
     {
+        $insuranceProviderId = $quote->insurance_provider_id;
+        $planId = $quote->plan_id ?? null;
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        $brokerCommission = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId);
+        [$isCreditCardEnabled, $brokerCommission] = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
         $isGIGOrQICProvider = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE]);
 
-        $isTapCaptureProcessStart = $quote ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId) : false;
+        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId) : false;
 
         $tapConfiguration = [
-            'isCreditCardEnabled' => $brokerCommission ? true : false,
+            'isCreditCardEnabled' => $isCreditCardEnabled,
             'brokerCommission' => $brokerCommission,
             'isGIGProvider' => $isGIGProvider,
             'isTapCaptureProcessStart' => $isTapCaptureProcessStart,
