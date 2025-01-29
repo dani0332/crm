@@ -653,6 +653,7 @@ watch(() => {
             <x-field>
               <x-button
                 @click.prevent="submitInsuredPersonSearch"
+                class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
                 size="sm"
                 color="primary"
                 :loading="loader.search"
@@ -797,6 +798,7 @@ watch(() => {
         />
         <div class="my-5 flex justify-center">
           <x-button
+            class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
             size="sm"
             color="success"
             type="submit"
@@ -1020,6 +1022,7 @@ watch(() => {
 
         <div class="flex justify-center my-5">
           <x-button
+            class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
             size="sm"
             color="success"
             type="submit"

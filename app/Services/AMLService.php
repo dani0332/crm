@@ -372,6 +372,7 @@ class AMLService
                 $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $ryuFilter->orWhereNull('decision');
             })
+            ->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
             ->whereNull('screenshot')
             ->orderBy('id', 'desc')
             ->value('splitted_customer_code');
@@ -401,7 +402,8 @@ class AMLService
         ])->where(function ($ryuFilter) {
             $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
             $ryuFilter->orWhereNull('decision');
-        })->whereNull('screenshot')->pluck('decision');
+        })->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
+            ->whereNull('screenshot')->pluck('decision');
 
         if ($fetchAMLRecords->count() == 0) {
             return true;
@@ -562,7 +564,7 @@ class AMLService
         ])->first();
 
         if ($paymentDetails?->insuranceProvider?->code !== InsuranceProvidersEnum::AXA) {
-            info('fn:amlScreeningGIG - Insurance provider not found. Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+            info('fn:amlScreeningGIG - Insurance provider is not ('.InsuranceProvidersEnum::AXA.'). Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
 
             return false;
         }
