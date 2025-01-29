@@ -1404,7 +1404,7 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
-// TODO:: Need to verify the insurer details
+
 const customerProfileForm = useForm({
   customer_id: page.props.record.customer_id,
   customer_type: page.props.record.customer_type,
