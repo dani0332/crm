@@ -242,12 +242,13 @@ watch(
               Months
             </span>
             <template #tooltip>
-                This is the date in which the EP product was issued to the client
+                This is the month in which the EP product was issued to the client
             </template>
           </x-tooltip>
           <DatePicker
             v-model="filters.months"
             name="months"
+            placeholder="Select Month"
             class="w-full"
             month-picker
             model-type="yyyy-MM"
