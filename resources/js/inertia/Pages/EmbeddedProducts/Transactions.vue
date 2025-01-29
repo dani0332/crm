@@ -237,7 +237,7 @@ watch(
           </x-field>
         </div>
         <div>
-          <x-tooltip>
+          <x-tooltip placement="bottom">
             <span class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
               Months
             </span>
