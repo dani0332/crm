@@ -383,6 +383,8 @@ const calculateCommission = () => {
         bookingDetailsForm.vat_on_commission =
           convertToNegative(vat_on_commission);
 
+        console.log('working -> ' + vat_on_commission);
+
         let total_commission =
           Number(bookingDetailsForm.commission_vat_not_applicable) +
           Number(bookingDetailsForm.commission_vat_applicable) +
@@ -458,7 +460,7 @@ function convertToNegative(value) {
   }
   value = isNaN(value) ? 0 : Number(value);
 
-  return value.toFixed(2);
+  return (Math.round(value * 100) / 100).toFixed(2);
 }
 
 function thousandSeparator(value) {
