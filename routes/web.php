@@ -172,6 +172,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::get('/bike-insurance-provider-plans', [BikeQuoteController::class, 'bikePlansByInsuranceProvider']);
 
+    // home routes without check_route_access middleware
+    Route::post('{quoteType}/home-manual-plan-toggle', [HomeQuoteController::class, 'manualPlanToggle'])->name('homeManualPlanToggle');
+    Route::get('quotes/home/cards', [HomeQuoteController::class, 'cardsView'])->name('home-quotes-card');
+    Route::get('home/{quoteId}/plan_details/{planId}', [HomeQuoteController::class, 'planDetails'])->name('home_plan_details');
+    Route::post('/home-plan-manual-update-process', [HomeQuoteController::class, 'homePlanUpdateManualProcess']);
+
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -200,10 +206,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 
         Route::resource('personal-quotes/home', HomeQuoteController::class)->names(generateRouteNames('home-quotes'));
-        Route::get('quotes/home/cards', [HomeQuoteController::class, 'cardsView'])->name('home-quotes-card');
-        Route::get('home/{quoteId}/plan_details/{planId}', [HomeQuoteController::class, 'planDetails'])->name('home_plan_details');
-        Route::post('{quoteType}/home-manual-plan-toggle', [HomeQuoteController::class, 'manualPlanToggle'])->name('homeManualPlanToggle');
-        Route::post('/home-plan-manual-update-process', [HomeQuoteController::class, 'homePlanUpdateManualProcess']);
 
         Route::group(['prefix' => 'quotes/'], function () {
             Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
