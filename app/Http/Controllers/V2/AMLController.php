@@ -398,7 +398,8 @@ class AMLController extends Controller
         ])->where(function ($ryuFilter) {
             $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
             $ryuFilter->orWhereNull('decision');
-        })->whereNull('screenshot')->get()->last() ?? [];
+        })->whereNotIn('decision', [AMLDecisionStatusEnum::INSURER_AXA])
+            ->whereNull('screenshot')->get()->last() ?? [];
 
         if ($getMemberOrUBODetails) {
             $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();

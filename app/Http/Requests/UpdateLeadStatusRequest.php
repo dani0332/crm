@@ -139,7 +139,8 @@ class UpdateLeadStatusRequest extends FormRequest
             ])->where(function ($ryuFilter) {
                 $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $ryuFilter->orWhereNull('decision');
-            })->whereNull('screenshot')->latest()->first();
+            })->whereNotIn('decision', [AMLDecisionStatusEnum::INSURER_AXA])
+                ->whereNull('screenshot')->latest()->first();
 
             $isTravelLeadTransactionApproved = false;
             if ((auth()->user()->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
