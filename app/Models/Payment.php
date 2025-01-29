@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
@@ -228,5 +229,10 @@ class Payment extends Model implements Auditable
     public function scopeMainLeadPayment($q)
     {
         return $q->whereNull('send_update_log_id');
+    }
+
+    public function isInsurerPayment()
+    {
+        return $this->collection_type == CollectionTypeEnum::INSURER;
     }
 }
