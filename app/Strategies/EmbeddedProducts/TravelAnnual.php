@@ -148,8 +148,8 @@ class TravelAnnual extends EmbeddedProduct
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
             } else {
-                $firstName = $customer->insured_first_name ?? ''; // TODO:: Need to update the insurer details
-                $lastName = $customer->insured_last_name ?? ''; // TODO:: Need to update the insurer details
+                $firstName = $customer?->insured?->first_name ?? '';
+                $lastName = $customer?->insured?->last_name ?? '';
             }
 
             $item->id = $item->id;

@@ -457,8 +457,8 @@ class EmbeddedProductRepository extends BaseRepository
         $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
 
         // TODO:: Need to update insured details - also check with Jawad is this function related to the task he shared with me
-        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : $quoteObject->customer->insured_first_name ?? '';
-        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : $quoteObject->customer->insured_last_name ?? '';
+        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : $quoteObject->customer?->insured?->first_name ?? '';
+        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : $quoteObject->customer?->insured?->last_name ?? '';
 
         info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
         $emailData = (object) [
