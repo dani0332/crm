@@ -98,6 +98,7 @@ function filterTransactions(isValid) {
       preserveScroll: true,
       onFinish: () => {
         loader.table = false;
+        setQueryFilters();
       },
       onBefore: () => {
         loader.table = true;
@@ -107,11 +108,16 @@ function filterTransactions(isValid) {
 }
 
 function setQueryFilters() {
-  for (const [key] of Object.entries(params)) {
+  var currentParams = {
+    ...params,
+    ...serverOptions.value,
+  }
+  Object(currentParams).hasOwnProperty('rowsPerPage') && delete currentParams.rowsPerPage;
+  for (const [key] of Object.entries(currentParams)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+      filters[key.substring(0, key.length - 2)] = currentParams[key];
     } else {
-      filters[key] = params[key];
+      filters[key] = currentParams[key];
     }
   }
 }
