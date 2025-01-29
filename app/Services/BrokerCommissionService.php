@@ -16,6 +16,7 @@ class BrokerCommissionService
      */
     public function getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId = null)
     {
+        dd($quoteTypeId, $insuranceProviderId, $planId);
         $baseQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)
             ->where('quote_type_id', $quoteTypeId)
             ->active();

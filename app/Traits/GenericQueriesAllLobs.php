@@ -266,6 +266,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
         $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $payment, true);
         $bookPolicyDetails = array_merge($bookPolicyDetails, $tapPaymentConfiguration);
+        dd($bookPolicyDetails);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
