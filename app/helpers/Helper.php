@@ -1568,12 +1568,11 @@ if (! function_exists('isCHSAdvisor')) {
     }
 }
 
-
 if (! function_exists('isFakeEmail')) {
     function isFakeEmail($email)
     {
         $fakeEmail = false;
-        
+
         $fakeDomains = explode(',', ApplicationStorage::where('key_name', ApplicationStorageEnums::FAKE_LEAD_DOMAINS)->first()->value);
 
         if (in_array(substr($email, strrpos($email, '@') + 1), $fakeDomains)) {
