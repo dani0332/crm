@@ -139,7 +139,7 @@ class UpdateLeadStatusRequest extends FormRequest
             ])->where(function ($ryuFilter) {
                 $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $ryuFilter->orWhereNull('decision');
-            })->whereNotIn('decision', [AMLDecisionStatusEnum::INSURER_AXA])
+            })->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
                 ->whereNull('screenshot')->latest()->first();
 
             $isTravelLeadTransactionApproved = false;

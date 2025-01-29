@@ -33,7 +33,7 @@ class DocumentTypeRepository extends BaseRepository
         if (in_array($quoteType, [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::BUSINESS->value, QuoteTypes::CORPLINE->value])) {
             // Retrieve the latest KYC log for additional business/customer details.
             $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)
-                ->whereNotIn('decision', [AMLDecisionStatusEnum::INSURER_AXA])
+                ->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
                 ->latest()->first();
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
             $businessTypeOfCustomer = $latestKycLog?->search_type;
@@ -59,7 +59,7 @@ class DocumentTypeRepository extends BaseRepository
         // Check if the quote type is Group medical or corpline .
         if (in_array($quoteType, [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::BUSINESS->value, QuoteTypes::CORPLINE->value])) {
             $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)
-                ->whereNotIn('decision', [AMLDecisionStatusEnum::INSURER_AXA])
+                ->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
                 ->latest()->first();
 
             $businessTypeOfInsurance = $quote->business_type_of_insurance_id;
@@ -93,7 +93,7 @@ class DocumentTypeRepository extends BaseRepository
         // Filter document types based on business insurance type and KYC search results.
         if ($quoteType === QuoteTypes::BUSINESS->value) {
             $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)
-                ->whereNotIn('decision', [AMLDecisionStatusEnum::INSURER_AXA])
+                ->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
                 ->latest()->first();
             $documentTypes->when($quote->business_type_of_insurance_id, function ($query) use ($quote) {
                 return $query->byBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
