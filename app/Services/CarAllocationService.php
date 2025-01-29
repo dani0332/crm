@@ -668,7 +668,7 @@ class CarAllocationService extends AllocationService
             ->toArray();
     }
 
-    public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
+    public function processLeadAssignment(CarQuote $lead, $userId, $tier, $assignmentType): void
     {
         info('About to assign car lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
 

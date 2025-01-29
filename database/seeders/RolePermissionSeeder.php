@@ -48,6 +48,7 @@ class RolePermissionSeeder extends Seeder
         // }
         // $this->addReceiveNotificationsPermission();
         // $this->searchModulePermissions();
+        $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         $this->paymentsVoid();
     }
 
@@ -92,6 +93,17 @@ class RolePermissionSeeder extends Seeder
                     $role->givePermissionTo($searchAcrossLOBsPermission);
                 }
             }
+        }
+    }
+
+    private function addMissingAdvisorRoles(): void
+    {
+        $missingAdvisorRoles = [RolesEnum::CarNewBusinessAdvisor, RolesEnum::LifeRenewalAdvisor];
+        foreach ($missingAdvisorRoles as $missingAdvisorRole) {
+            Role::firstOrCreate([
+                'name' => $missingAdvisorRole,
+                'guard_name' => 'web',
+            ]);
         }
     }
 
