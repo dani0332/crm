@@ -46,36 +46,9 @@ class CheckRouteAccess
 
     private function allowedViewAllLeads($routeName)
     {
-        $lobs = [
-            quoteTypeCode::Car,
-            quoteTypeCode::Bike,
-            quoteTypeCode::Health,
-            quoteTypeCode::Travel,
-            quoteTypeCode::Pet,
-            quoteTypeCode::Cycle,
-            quoteTypeCode::Yacht,
-            quoteTypeCode::Life,
-            quoteTypeCode::Home,
-            quoteTypeCode::Jetski,
-        ];
-
-        $allowed = false;
-        foreach ($lobs as $lob) {
-            $lob = strtolower($lob);
-            $allowedRoutes = [
-                "$lob-quotes-list",
-                "$lob-quotes-edit",
-                "$lob-quotes-show",
-                'main-dashboard-view',
-                'lead-distribution-report-view',
-                'advisor-performance-report-view',
-            ];
-
-            if (in_array($routeName, $allowedRoutes)) {
-                $allowed = true;
-                break;
-            }
-        }
+        $allowed = str_ends_with($routeName, '-quotes-list') || 
+           str_ends_with($routeName, '-quotes-show') || 
+           str_ends_with($routeName, '-quotes-edit');
 
         return auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS) && $allowed;
     }

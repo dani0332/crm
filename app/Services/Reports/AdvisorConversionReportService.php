@@ -118,7 +118,7 @@ class AdvisorConversionReportService extends BaseService
                 RolesEnum::Engineering,
             ])
             &&
-            ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
@@ -258,7 +258,7 @@ class AdvisorConversionReportService extends BaseService
                 RolesEnum::Engineering,
             ])
             &&
-            ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
@@ -397,11 +397,11 @@ class AdvisorConversionReportService extends BaseService
             ->pluck('code', 'text')
             ->toArray();
 
-        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::CORPLINE) && Auth::user()->can(PermissionsEnum::VIEW_ALL_LEADS))) {
+        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::CORPLINE) && Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS))) {
             $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
         }
 
-        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::GroupMedical) && Auth::user()->can(PermissionsEnum::VIEW_ALL_LEADS))) {
+        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::GroupMedical) && Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS))) {
             $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
         }
 

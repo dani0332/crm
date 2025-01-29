@@ -53,7 +53,7 @@ class AdvisorPerformanceReportService extends BaseService
             ->groupBy('car_quote_request.advisor_id')
             ->orderBy('users.email');
 
-        if (! auth()->user()->hasRole(RolesEnum::LeadPool) && ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])) {
+        if (! auth()->user()->hasRole(RolesEnum::LeadPool) && ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)) {
             $userIds = $this->walkTree(auth()->user()->id);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }

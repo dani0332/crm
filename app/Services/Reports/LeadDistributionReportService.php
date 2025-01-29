@@ -101,7 +101,7 @@ class LeadDistributionReportService extends BaseService
             if (
                 ! auth()->user()->hasRole(RolesEnum::LeadPool)
                 && ! auth()->user()->hasRole(RolesEnum::MotorHead)
-                && ! auth()->user()->hasAnyPermission([PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS])
+                && ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
             ) {
                 $userIds = $this->walkTree(auth()->user()->id);
                 $carQuoteQuery->whereIn('car_quote_request.advisor_id', $userIds);
@@ -197,7 +197,7 @@ class LeadDistributionReportService extends BaseService
             $personalQuoteQuery->where('personal_quotes.advisor_id', auth()->user()->id);
         } else {
             if (! $this->hasAdminPrivileges()) {
-                $userIds = $this->walkTree(auth()->user()->id, $quoteType->value, [PermissionsEnum::VIEW_ALL_LEADS, PermissionsEnum::VIEW_ALL_REPORTS]);
+                $userIds = $this->walkTree(auth()->user()->id, $quoteType->value, [PermissionsEnum::VIEW_ALL_REPORTS]);
                 $personalQuoteQuery->whereIn('personal_quotes.advisor_id', $userIds);
             }
         }
