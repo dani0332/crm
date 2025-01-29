@@ -383,7 +383,6 @@ const calculateCommission = () => {
         bookingDetailsForm.vat_on_commission =
           convertToNegative(vat_on_commission);
 
-
         let total_commission =
           Number(bookingDetailsForm.commission_vat_not_applicable) +
           Number(bookingDetailsForm.commission_vat_applicable) +
