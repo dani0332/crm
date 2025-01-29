@@ -343,7 +343,10 @@ watch(
         </Link>
       </template>
 
-      <template #item-ref_id="item">
+      <template
+        #item-ref_id="item"
+        v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
+      >
         <SanitizeHtml
           v-if="item.quote_request"
           :html="
