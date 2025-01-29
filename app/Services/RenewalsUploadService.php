@@ -753,6 +753,8 @@ class RenewalsUploadService
 
             $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
 
+            $transApprovedId = isFakeEmail($customerData['email']) ? $this->getquoteStatusIdbyCode(quoteStatusCode::FAKE) : $transApprovedId;
+
             $quoteData = [
                 'customer_id' => $customer->id,
                 'first_name' => $customerData['first_name'],
