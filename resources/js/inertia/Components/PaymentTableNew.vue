@@ -6293,7 +6293,7 @@ const isEditPaymentEnabled = () => {
           class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
         >
           <div
-            class="modal-confirm-container bg-white overflow-hidden rounded-lg"
+            class="modal-confirm-container bg-white w-full max-w-lg overflow-hidden rounded-lg"
           >
             <div class="modal-confirm-header text-base text-white bg-white">
               <div
