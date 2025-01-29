@@ -212,6 +212,7 @@ class SendUpdateLogController extends Controller
         $record->insurance_provider_id = $insurance_provider_id;
         $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $sendUpdatePayments[0] ?? null);
         $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),

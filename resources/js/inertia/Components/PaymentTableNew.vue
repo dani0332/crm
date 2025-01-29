@@ -3398,13 +3398,17 @@ const isCCPaymentDisabled = option => {
   );
 };
 
-const isPolicyBooked = option => {
-  return (
-    isCCEnabled.value &&
-    paymentMethodsForm.collection_type === 'insurer' &&
-    option == 'CC' &&
-    props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked
-  );
+const isPolicySendUpdateBooked = option => {
+  const isInsurerCollection = paymentMethodsForm.collection_type === 'insurer';
+  const isCCOption = option === 'CC';
+  const isPolicyBooked = props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked;
+  const isUpdateBooked = props.sendUpdate && props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+  const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
+
+  if (isUpdateBooked && isCCAndInsurer) {
+    return true;
+  }
+  return isCCAndInsurer && isPolicyBooked && !props.sendUpdate;
 };
 
 const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
@@ -5303,9 +5307,9 @@ const isEditPaymentEnabled = () => {
                             :title="
                               isCCPaymentDisabled(option.value)
                                 ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED
-                                : isPolicyBooked(option.value) ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED : option.tooltip
+                                : isPolicySendUpdateBooked(option.value) ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED : option.tooltip
                             "
-                            :disabled="isCCPaymentDisabled(option.value) || isPolicyBooked(option.value)"
+                            :disabled="isCCPaymentDisabled(option.value) || isPolicySendUpdateBooked(option.value)"
                           >
                             {{ option.label }}
                           </option>
