@@ -392,8 +392,6 @@ class CarQuoteService extends BaseService
             "companyName" => $request->company_name ?? null,
             'companyAddress' => $request->company_address ?? null,
             "pointOfContactName" => $request->company_contact_name ?? null,
-            "pointOfContactEmail" => $request->email,
-            "pointOfContactPhoneNumber" => $request->mobile_no,
             "businessActivityId" => $request->business_activity_id ?? null,
         ];
 
