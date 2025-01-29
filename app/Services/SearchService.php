@@ -328,7 +328,8 @@ class SearchService extends BaseService
 
         if ((request()->has('insurer_tax_invoice_number') || request()->has('insurer_commission_tax_invoice_number'))
             && ! isset(request()->code) && ! request()->has('payment_status')
-            && ! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))) {
+            && ! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))
+        ) {
 
             if (! request()->has('su_code') && ! $isSendUpdateFilter) {
                 $query->join('payments', 'personal_quotes.code', 'payments.code');
@@ -341,7 +342,7 @@ class SearchService extends BaseService
                     $query->where('payments.insurer_commmission_invoice_number', request()->insurer_commission_tax_invoice_number);
                 }
             } else {
-                $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
+                $query->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
 
                 if (request()->has('insurer_tax_invoice_number')) {
                     $query->where('send_update_logs.insurer_tax_invoice_number', request()->insurer_tax_invoice_number);
