@@ -3312,20 +3312,6 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
 const voidPaymentModel = ref(false);
 const voidPaymentProcess = ref(false);
 const isVoidPaymentEnabled = computed(() => {
-  console.log('void-payment-permission:', can(permissionEnum.PAYMENTS_VOID));
-  console.log(
-    'isPaymentAuthorized:',
-    props.payments[0].payment_status_id,
-    props.payments[0].payment_status_id ===
-      page.props.paymentStatusEnum.AUTHORISED,
-  );
-  console.log(
-    'isPaymentGatwayTapPay:',
-    props.payments[0].payment_gateway_id,
-    props.payments[0].payment_gateway_id ===
-      props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP,
-  );
-  console.log('tap Integration', props.isFuncsEnabled.tapIntegration);
   return (
     props.isFuncsEnabled.tapIntegration &&
     can(permissionEnum.PAYMENTS_VOID) &&
