@@ -1497,10 +1497,9 @@ const isProformaPaymentRequestExportable = (payment, documents) => {
 
 const downloadProformaPayment = async () => {
   let errorMsg = '';
-  if (
-    paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id
-  ) {
-    errorMsg = paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+  if (paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id) {
+    errorMsg =
+      paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
     notification.error({
       title: errorMsg,
       position: 'top',
@@ -1794,11 +1793,6 @@ const editPaymentModal = (
   sr_no,
   capture_approval,
 ) => {
-  if (!isAmlVerified() || !isKycVerified()) {
-    console.log('open AML and KYC Verification Modal');
-    openAmlVerificationModal();
-    return;
-  }
   if (
     sr_no === 0 &&
     payment.payment_status.id === paymentStatusEnum.PAID &&
@@ -1812,7 +1806,12 @@ const editPaymentModal = (
     return false;
   }
 
-  if (isEditPaymentEnabled() && split_payment_id == 0 && sr_no == 0 && capture_approval == 0) {
+  if (
+    isEditPaymentEnabled() &&
+    split_payment_id == 0 &&
+    sr_no == 0 &&
+    capture_approval == 0
+  ) {
     notification.error({
       title: paymentTooltipEnum.PAYMENT_AUTHORISED_CANNOT_EDIT,
       position: 'top',
@@ -2838,8 +2837,7 @@ const validateUpfrontCapture = paymentRecord => {
     paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
   const isCAPayment =
     paymentSplitRec.payment_method.code === 'CA' &&
-    paymentSplitRec.payment_status_id ===
-      paymentStatusEnum.CREDIT_APPROVED;
+    paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
   const isPaidPayment =
     paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
   return isIPPending || isCAPayment || isPaidPayment;
@@ -2895,9 +2893,7 @@ const validateSplitPaymentsCapture = paymentRecord => {
 };
 
 const validateNonUpfrontAndSplitCapture = paymentRecord => {
-  if (
-    paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED
-  ) {
+  if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
     if (verifyCreditApproved(paymentRecord)) return true;
   } else if (
     (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
@@ -3419,6 +3415,7 @@ const isInsurerAmlVerified = () => {
 };
 
 const openAmlVerificationModal = () => {
+  console.log('open AML and KYC Verification Modal');
   isAmlApprovalRequired.value = true;
 };
 
@@ -3509,9 +3506,12 @@ const isCCPaymentDisabled = option => {
 const isPolicySendUpdateBooked = option => {
   const isInsurerCollection = paymentMethodsForm.collection_type === 'insurer';
   const isCCOption = option === 'CC';
-  const isPolicyBooked = props.quoteRequest.quote_status_id ===
-      page.props.quoteStatusEnum.PolicyBooked;
-  const isUpdateBooked = props.sendUpdate && props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+  const isPolicyBooked =
+    props.quoteRequest.quote_status_id ===
+    page.props.quoteStatusEnum.PolicyBooked;
+  const isUpdateBooked =
+    props.sendUpdate &&
+    props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
   const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
 
   if (isUpdateBooked && isCCAndInsurer) {
@@ -3525,21 +3525,18 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
 };
 
 const isEditPaymentEnabled = () => {
-  const statusesToCheck = [
-    paymentStatusEnum.AUTHORISED,
-  ];
+  const statusesToCheck = [paymentStatusEnum.AUTHORISED];
 
   const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
     statusesToCheck.includes(item.payment_status_id),
   );
 
-  return(
-    !isMultiPaymentsEnabled.value
-    && isGIGOrQICProvider.value
-    && hasAnyAuthorizedPayment
-  )
+  return (
+    !isMultiPaymentsEnabled.value &&
+    isGIGOrQICProvider.value &&
+    hasAnyAuthorizedPayment
+  );
 };
-
 </script>
 
 <template>
@@ -3971,9 +3968,11 @@ const isEditPaymentEnabled = () => {
                                 color="orange"
                                 outlined
                                 @click="
-                                  getCaptureValidation(item)
-                                    ? editPaymentModal(item, 0, 0, 2)
-                                    : alertCapture(item)
+                                  !isAmlVerified() || !isKycVerified()
+                                    ? openAmlVerificationModal()
+                                    : getCaptureValidation(item)
+                                      ? editPaymentModal(item, 0, 0, 2)
+                                      : alertCapture(item)
                                 "
                                 :disabled="isApproveConfirmed"
                               >
@@ -6294,7 +6293,7 @@ const isEditPaymentEnabled = () => {
           class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
         >
           <div
-            class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+            class="modal-confirm-container bg-white overflow-hidden rounded-lg"
           >
             <div class="modal-confirm-header text-base text-white bg-white">
               <div
