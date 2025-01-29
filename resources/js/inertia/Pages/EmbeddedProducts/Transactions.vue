@@ -217,15 +217,12 @@ watch(
           />
         </x-field>
         <div>
-          <x-tooltip>
+          <x-tooltip placement="bottom">
             <span class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
               Date of issuance
             </span>
             <template #tooltip>
-              <span class="custom-tooltip-content"
-                >This is the date on which the EP product was issued and sent to
-                the client by the system</span
-              >
+              This is the date on which the EP product was issued and sent to the client by the system
             </template>
           </x-tooltip>
           <x-field>
@@ -245,9 +242,7 @@ watch(
               Months
             </span>
             <template #tooltip>
-              <span class="custom-tooltip-content">
                 This is the date in which the EP product was issued to the client
-              </span>
             </template>
           </x-tooltip>
           <DatePicker
