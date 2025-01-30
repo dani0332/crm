@@ -753,7 +753,7 @@ class RenewalsUploadService
 
             $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
 
-            $transApprovedId = isFakeEmail($customerData['email']) ? $this->getquoteStatusIdbyCode(quoteStatusCode::FAKE) : $transApprovedId;
+            $transApprovedId = $this->isFakeEmail($customerData['email']) ? $this->getquoteStatusIdbyCode(quoteStatusCode::FAKE) : $transApprovedId;
 
             $quoteData = [
                 'customer_id' => $customer->id,
@@ -2227,4 +2227,18 @@ class RenewalsUploadService
 
         return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
     }
+
+    private function isFakeEmail($email)
+    {
+        $fakeEmail = false;
+
+        $fakeDomains = explode(',', ApplicationStorage::where('key_name', ApplicationStorageEnums::FAKE_LEAD_DOMAINS)->first()->value);
+
+        if (in_array(substr($email, strrpos($email, '@') + 1), $fakeDomains)) {
+            $fakeEmail = true;
+        }
+
+        return $fakeEmail;
+    }
+
 }
