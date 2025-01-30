@@ -111,8 +111,9 @@ function setQueryFilters() {
   var currentParams = {
     ...params,
     ...serverOptions.value,
-  }
-  Object(currentParams).hasOwnProperty('rowsPerPage') && delete currentParams.rowsPerPage;
+  };
+  Object(currentParams).hasOwnProperty('rowsPerPage') &&
+    delete currentParams.rowsPerPage;
   for (const [key] of Object.entries(currentParams)) {
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = currentParams[key];
@@ -224,11 +225,14 @@ watch(
         </x-field>
         <div>
           <x-tooltip placement="bottom">
-            <span class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
+            <span
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
               Date of issuance
             </span>
             <template #tooltip>
-              This is the date on which the EP product was issued and sent to the client by the system
+              This is the date on which the EP product was issued and sent to
+              the client by the system
             </template>
           </x-tooltip>
           <x-field>
@@ -244,11 +248,13 @@ watch(
         </div>
         <div>
           <x-tooltip placement="bottom">
-            <span class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
+            <span
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
               Months
             </span>
             <template #tooltip>
-                This is the month in which the EP product was issued to the client
+              This is the month in which the EP product was issued to the client
             </template>
           </x-tooltip>
           <DatePicker
