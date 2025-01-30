@@ -142,7 +142,7 @@ class RolePermissionSeeder extends Seeder
 
         $roleBIU->syncPermissions($allPermissions);
     }
-    
+
     private function addMissingAdvisorRoles(): void
     {
         $missingAdvisorRoles = [RolesEnum::CarNewBusinessAdvisor, RolesEnum::LifeRenewalAdvisor];
