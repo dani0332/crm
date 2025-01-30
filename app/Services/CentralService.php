@@ -1013,8 +1013,8 @@ class CentralService extends BaseService
 
     public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null)
     {
-        $insuranceProviderId = $payment ? $payment->insurance_provider_id : $quote->insurance_provider_id;
-        $planId = $payment ? $payment->plan_id : $quote->plan_id ?? null;
+        $insuranceProviderId = $quote->insurance_provider_id;
+        $planId = $quote->plan_id ?? null;
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         [$isCreditCardEnabled, $brokerCommission] = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
