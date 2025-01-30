@@ -3322,7 +3322,8 @@ const isTotalAmountMismatched = () => {
     Math.round(props.payments[0]?.total_price * 100) / 100;
   const calculatedTotal =
     Math.round(
-      (props.payments[0].total_amount + props.payments[0].discount_value) * 100,
+      (props.payments[0]?.total_amount + props.payments[0]?.discount_value) *
+        100,
     ) / 100;
   console.log(
     ' totalPriceRounded === calculatedTotal ',
@@ -3342,7 +3343,7 @@ const isKycVerified = () => {
     page.props?.bookingDetails?.isGIGInsuranceProvider ||
     false;
   let paymentMethodCC =
-    props.payments[0].payment_methods_code ===
+    props.payments[0]?.payment_methods_code ===
     page.props.paymentMethodsEnum.CreditCard;
 
   console.log(
@@ -3374,7 +3375,7 @@ const isAmlVerified = () => {
     page.props?.bookingDetails?.isGIGInsuranceProvider ||
     false;
   let paymentMethodCC =
-    props.payments[0].payment_methods_code ===
+    props.payments[0]?.payment_methods_code ===
     page.props.paymentMethodsEnum.CreditCard;
   console.log(
     'isAmlVerified : isTravelQuote : ',
@@ -3412,7 +3413,7 @@ const isInsurerAmlVerified = () => {
     page.props?.bookingDetails?.isGIGInsuranceProvider ||
     false;
   let isPaymentMethodCC =
-    props.payments[0].payment_methods_code ===
+    props.payments[0]?.payment_methods_code ===
     page.props.paymentMethodsEnum.CreditCard;
 
   let insurerAMLStatus = props.quoteRequest?.insurer_aml_status || 'N/A';
