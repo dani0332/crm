@@ -180,8 +180,9 @@ class HomeAllocation extends BaseAllocation
             ->select('home_quote_request.owner_occupancy_type_id', 'home_lookups.id as short_term_id')
             ->first();
 
-        if (!$result) {
-            info('No matching record found for UUID: ' . $uuid);
+        if (! $result) {
+            info('No matching record found for UUID: '.$uuid);
+
             return false;
         }
 

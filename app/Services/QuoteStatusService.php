@@ -83,7 +83,7 @@ class QuoteStatusService
         $quoteType = QuoteType::findOrFail($quoteTypeId);
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
 
-        if (!empty($updateQuote->quote_status_id)) {
+        if (! empty($updateQuote->quote_status_id)) {
             switch ($updateQuote->quote_status_id) {
                 case QuoteStatusEnum::NewLead:
                     $updateQuote->quote_status_id = QuoteStatusEnum::Quoted;
@@ -91,6 +91,7 @@ class QuoteStatusService
                     $personalQuote = app(PersonalQuoteService::class)->getEntity($quoteTypeId, $quoteRequestId);
                     $personalQuote->quote_status_id = QuoteStatusEnum::Quoted;
                     $personalQuote->save();
+
                     return $updateQuote;
                 case QuoteStatusEnum::Quoted:
                     $updateQuote->quote_status_id = QuoteStatusEnum::Stale;

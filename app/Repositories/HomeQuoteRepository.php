@@ -76,10 +76,10 @@ class HomeQuoteRepository extends BaseRepository
 
         return $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
-            ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), fn($query) => $query->where('advisor_id', auth()->id()))
-            ->when(request()->filled('advisors'), fn($query) => $query->whereIn('advisor_id', (array) request('advisors')))
-            ->when(request()->has('is_renewal'), fn($query) => $this->applyRenewalFilter($query))
-            ->tap(fn($query) => $this->applyFilters($query))
+            ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', auth()->id()))
+            ->when(request()->filled('advisors'), fn ($query) => $query->whereIn('advisor_id', (array) request('advisors')))
+            ->when(request()->has('is_renewal'), fn ($query) => $this->applyRenewalFilter($query))
+            ->tap(fn ($query) => $this->applyFilters($query))
             ->when(! $shouldExcludeCreatedAtFilters, function ($query) {
                 if (request()->filled('created_at_start') && request()->filled('created_at_end')) {
                     $query->whereBetween('created_at', [request('created_at_start'), request('created_at_end')]);
@@ -92,8 +92,8 @@ class HomeQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
-                fn($query) => $query->count(),
-                fn($query) => $query->when($forExport, fn($query) => $query->get(), fn($query) => $query->simplePaginate())
+                fn ($query) => $query->count(),
+                fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate())
             );
     }
 
@@ -206,13 +206,13 @@ class HomeQuoteRepository extends BaseRepository
 
         $quoteData = $baseQuoteData;
 
-        info('Home Quote Create :' . json_encode($quoteData));
+        info('Home Quote Create :'.json_encode($quoteData));
 
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 
         try {
             if (isset($response->quoteUID)) {
-                info('Dispatching SaveCustomerAddressJob for quoteUID: ' . $response->quoteUID);
+                info('Dispatching SaveCustomerAddressJob for quoteUID: '.$response->quoteUID);
                 // add Address fields to Customer Address table
                 $addressData = $data['addressObj'] ?? [];
                 if (! empty($addressData)) {
@@ -223,7 +223,7 @@ class HomeQuoteRepository extends BaseRepository
             info('Failed to dispatch SaveCustomerAddressJob', ['error' => $e->getMessage()]);
         }
 
-        info('Home Quote Create Response :' . json_encode($response));
+        info('Home Quote Create Response :'.json_encode($response));
 
         // if (isset($response->quoteUID)) {
         //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);
@@ -279,12 +279,12 @@ class HomeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable() . '.*',
+                $this->getTable().'.*',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
-                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
                 as customer_type'),
             ])
             ->firstOrFail();
@@ -391,7 +391,7 @@ class HomeQuoteRepository extends BaseRepository
             'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -414,7 +414,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::HOME->value) . '-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
     }
 
     public function fetchUpdate($uuid, $data)
@@ -573,22 +573,22 @@ class HomeQuoteRepository extends BaseRepository
     private function getFilterMappings(): array
     {
         return [
-            'code' => fn($query, $value) => $query->where('code', $value),
-            'first_name' => fn($query, $value) => $query->where('first_name', 'like', "%$value%"),
-            'last_name' => fn($query, $value) => $query->where('last_name', 'like', "%$value%"),
-            'email' => fn($query, $value) => $query->where('email', 'like', "%$value%"),
-            'mobile_no' => fn($query, $value) => $query->where('mobile_no', 'like', "%$value%"),
-            'quote_status_id' => fn($query, $value) => $query->where('quote_status_id', $value),
-            'policy_expiry_date' => fn($query, $value) => $query->whereDate('policy_expiry_date', '>=', $value),
-            'policy_expiry_date_end' => fn($query, $value) => $query->whereDate('policy_expiry_date', '<=', $value),
-            'previous_quote_policy_number' => fn($query, $value) => $query->where('previous_quote_policy_number', $value),
-            'renewal_batches' => fn($query, $value) => $query->whereIn('renewal_batch', (array) $value),
-            'payment_due_date' => fn($query, $value) => $query->whereDate('payment_due_date', $value),
-            'booking_date' => fn($query, $value) => $query->whereDate('booking_date', $value),
-            'last_modified_date' => fn($query, $value) => $query->whereDate('last_modified_date', $value),
-            'advisor_assigned_date' => fn($query, $value) => $query->whereDate('advisor_assigned_date', $value),
-            'insurer_tax_invoice_number' => fn($query, $value) => $query->where('insurer_tax_invoice_number', $value),
-            'insurer_commission_tax_invoice_number' => fn($query, $value) => $query->where('insurer_commission_tax_invoice_number', $value),
+            'code' => fn ($query, $value) => $query->where('code', $value),
+            'first_name' => fn ($query, $value) => $query->where('first_name', 'like', "%$value%"),
+            'last_name' => fn ($query, $value) => $query->where('last_name', 'like', "%$value%"),
+            'email' => fn ($query, $value) => $query->where('email', 'like', "%$value%"),
+            'mobile_no' => fn ($query, $value) => $query->where('mobile_no', 'like', "%$value%"),
+            'quote_status_id' => fn ($query, $value) => $query->where('quote_status_id', $value),
+            'policy_expiry_date' => fn ($query, $value) => $query->whereDate('policy_expiry_date', '>=', $value),
+            'policy_expiry_date_end' => fn ($query, $value) => $query->whereDate('policy_expiry_date', '<=', $value),
+            'previous_quote_policy_number' => fn ($query, $value) => $query->where('previous_quote_policy_number', $value),
+            'renewal_batches' => fn ($query, $value) => $query->whereIn('renewal_batch', (array) $value),
+            'payment_due_date' => fn ($query, $value) => $query->whereDate('payment_due_date', $value),
+            'booking_date' => fn ($query, $value) => $query->whereDate('booking_date', $value),
+            'last_modified_date' => fn ($query, $value) => $query->whereDate('last_modified_date', $value),
+            'advisor_assigned_date' => fn ($query, $value) => $query->whereDate('advisor_assigned_date', $value),
+            'insurer_tax_invoice_number' => fn ($query, $value) => $query->where('insurer_tax_invoice_number', $value),
+            'insurer_commission_tax_invoice_number' => fn ($query, $value) => $query->where('insurer_commission_tax_invoice_number', $value),
         ];
     }
 }

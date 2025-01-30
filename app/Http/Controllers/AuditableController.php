@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HomeInsurerRequestResponses;
+use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
@@ -10,8 +12,6 @@ use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\HomeInsurerRequestResponses;
-use App\Models\HomeQuote;
 
 class AuditableController extends Controller
 {
@@ -97,16 +97,17 @@ class AuditableController extends Controller
 
             info('Loading API logs', [
                 'auditableType' => $auditableType,
-                'auditableId' => $auditableId
+                'auditableId' => $auditableId,
             ]);
 
             $quoteUID = $auditableType::where('id', $auditableId)->value('uuid');
 
-            if (!$quoteUID) {
+            if (! $quoteUID) {
                 info('Quote UUID not found', [
                     'auditableType' => $auditableType,
                     'auditableId' => $auditableId,
                 ]);
+
                 return response()->json(['error' => 'Quote UID not found.'], 404);
             }
 
@@ -141,7 +142,6 @@ class AuditableController extends Controller
     /**
      * Get the appropriate query builder based on the auditable type.
      *
-     * @param string $auditableType
      * @return \Illuminate\Database\Eloquent\Builder
      */
     protected function getQueryBuilderForAuditableType(string $auditableType)
