@@ -25,6 +25,7 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\PetQuoteRequestDetail;
+use App\Models\SavingsQuote;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
@@ -90,6 +91,7 @@ enum QuoteTypes: string
             QuoteTypes::JETSKI => 11,
             QuoteTypes::CORPLINE => 101,
             QuoteTypes::GROUP_MEDICAL => 102,
+            QuoteTypes::SAVINGS => 18,
             default => null,
         };
     }
@@ -110,6 +112,7 @@ enum QuoteTypes: string
             11 => QuoteTypes::JETSKI,
             101 => QuoteTypes::CORPLINE,
             102 => QuoteTypes::GROUP_MEDICAL,
+            18 => QuoteTypes::SAVINGS,
         ];
 
         return isset($types[$value]) ? $types[$value] : null;
@@ -131,6 +134,7 @@ enum QuoteTypes: string
             'Jetski' => QuoteTypes::JETSKI,
             'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
+            'Savings' => QuoteTypes::SAVINGS,
             default => null,
         });
     }
@@ -149,6 +153,7 @@ enum QuoteTypes: string
             self::PET => checkPersonalQuotes($this->value) ? new PersonalQuote : new PetQuote,
             self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
             self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
+            self::SAVINGS => checkPersonalQuotes($this->value) ? new PersonalQuote : new SavingsQuote,
             default => new PersonalQuote,
         };
     }
@@ -209,6 +214,7 @@ enum QuoteTypes: string
             self::PET => 'PET-',
             self::CYCLE => 'CYC-',
             self::JETSKI => 'JSK-',
+            self::SAVINGS => 'SAV-',
         };
     }
 
@@ -226,6 +232,7 @@ enum QuoteTypes: string
             'PET' => self::PET,
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
+            'SAV' => self::SAVINGS,
         ];
 
         return $codes[$code] ?? null;
@@ -233,20 +240,23 @@ enum QuoteTypes: string
 
     public function url(string $uuid): string
     {
+        $isPersonalQuote = checkPersonalQuotes($this->value);
+
         return match ($this) {
-            self::CAR => checkPersonalQuotes($this->value) ? route('car-quotes-show', $uuid) : route('car.show', $uuid),
-            self::HOME => checkPersonalQuotes($this->value) ? route('home-quotes-show', $uuid) : route('home.show', $uuid),
-            self::HEALTH => checkPersonalQuotes($this->value) ? route('health-quotes-show', $uuid) : route('health.show', $uuid),
-            self::LIFE => checkPersonalQuotes($this->value) ? route('life-quotes-show', $uuid) : (Route::has('life.show') ? route('life.show', $uuid) : route('life-quotes-show', $uuid)),
-            self::BUSINESS => checkPersonalQuotes($this->value) ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
-            self::BIKE => checkPersonalQuotes($this->value) ? route('bike-quotes-show', $uuid) : route('bike.show', $uuid),
-            self::YACHT => checkPersonalQuotes($this->value) ? route('yacht-quotes-show', $uuid) : route('yacht.show', $uuid),
-            self::TRAVEL => checkPersonalQuotes($this->value) ? route('travel-quotes-show', $uuid) : route('travel.show', $uuid),
-            self::PET => checkPersonalQuotes($this->value) ? route('pet-quotes-show', $uuid) : route('pet.show', $uuid),
-            self::CYCLE => checkPersonalQuotes($this->value) ? route('cycle-quotes-show', $uuid) : route('cycle.show', $uuid),
-            self::JETSKI => checkPersonalQuotes($this->value) ? route('jetski-quotes-show', $uuid) : route('jetski.show', $uuid),
-            self::CORPLINE => checkPersonalQuotes($this->value) ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
-            self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
+            self::CAR => $isPersonalQuote ? route('car-quotes-show', $uuid) : route('car.show', $uuid),
+            self::HOME => $isPersonalQuote ? route('home-quotes-show', $uuid) : route('home.show', $uuid),
+            self::HEALTH => $isPersonalQuote ? route('health-quotes-show', $uuid) : route('health.show', $uuid),
+            self::LIFE => $isPersonalQuote ? route('life-quotes-show', $uuid) : (Route::has('life.show') ? route('life.show', $uuid) : route('life-quotes-show', $uuid)),
+            self::BUSINESS => $isPersonalQuote ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
+            self::BIKE => $isPersonalQuote ? route('bike-quotes-show', $uuid) : route('bike.show', $uuid),
+            self::YACHT => $isPersonalQuote ? route('yacht-quotes-show', $uuid) : route('yacht.show', $uuid),
+            self::TRAVEL => $isPersonalQuote ? route('travel-quotes-show', $uuid) : route('travel.show', $uuid),
+            self::PET => $isPersonalQuote ? route('pet-quotes-show', $uuid) : route('pet.show', $uuid),
+            self::CYCLE => $isPersonalQuote ? route('cycle-quotes-show', $uuid) : route('cycle.show', $uuid),
+            self::JETSKI => $isPersonalQuote ? route('jetski-quotes-show', $uuid) : route('jetski.show', $uuid),
+            self::CORPLINE => $isPersonalQuote ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
+            self::GROUP_MEDICAL => $isPersonalQuote ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
+            self::SAVINGS => $isPersonalQuote ? route('savings-quotes-show', $uuid) : route('savings.show', $uuid),
         };
     }
 
@@ -295,6 +305,7 @@ enum QuoteTypes: string
             self::LIFE => [RolesEnum::LifeAdvisor],
             self::CORPLINE => [RolesEnum::CorpLineAdvisor],
             self::HOME => [RolesEnum::HomeAdvisor],
+            self::SAVINGS => [RolesEnum::SavingsAdvisor],
             default => [],
         };
     }
@@ -384,6 +395,7 @@ enum QuoteTypes: string
             self::CORPLINE => [],
             self::CAR_REVIVAL => [],
             self::CAR_BIKE => [],
+            self::SAVINGS => [],
             default => [],
         };
     }
