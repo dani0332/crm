@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -1568,17 +1569,11 @@ if (! function_exists('isCHSAdvisor')) {
     }
 }
 
-if (! function_exists('isFakeEmail')) {
-    function isFakeEmail($email)
+if (! function_exists('userHasProduct')) {
+    function userHasProduct($product)
     {
-        $fakeEmail = false;
+        $productIds = auth()->user()->products->pluck('product_id');
 
-        $fakeDomains = explode(',', ApplicationStorage::where('key_name', ApplicationStorageEnums::FAKE_LEAD_DOMAINS)->first()->value);
-
-        if (in_array(substr($email, strrpos($email, '@') + 1), $fakeDomains)) {
-            $fakeEmail = true;
-        }
-
-        return $fakeEmail;
+        return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
