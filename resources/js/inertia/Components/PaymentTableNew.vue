@@ -3305,16 +3305,7 @@ const splitPaymentTotalPrice = (
   return formatAmount(total);
 };
 
-const disableMainPaymentApproval = computed(() => {
-  return (
-    isAmlVerified() &&
-    isKycVerified() &&
-    (!isInsurerAmlVerified() || !isTotalAmountMismatched())
-  );
-});
-
 const amlAndKycTooltip = computed(() => {
-  if (isAmlVerified() && !isKycVerified()) return null;
   if (!isAmlVerified()) {
     return page.props.paymentTooltipEnum.PENDING_AML_CLEARANCE;
   } else if (!isInsurerAmlVerified()) {
@@ -3432,12 +3423,13 @@ const isInsurerAmlVerified = () => {
   let isInsurerAmlCleared =
     insurerAmlClearedStatuses.includes(insurerAMLStatus);
 
-  if (isTravelQuote && !isGIGInsuranceProvider && !isPaymentMethodCC) {
+  if (isTravelQuote) {
+    if (isGIGInsuranceProvider && isPaymentMethodCC) {
+      // Insurer AML is required if its travel and insurer is GIG and payment is CC
+      return isInsurerAmlCleared;
+    }
     //Bypass Insurer AML if its travel and insurer is other than GIG and payment is non CC
     return true;
-  } else if (isTravelQuote && isGIGInsuranceProvider && isPaymentMethodCC) {
-    // Insurer AML is required if its travel and insurer is GIG and payment is CC
-    return isInsurerAmlCleared;
   } else if (isPaymentMethodCC) {
     // Insurer AML is required if its non travel and payment is CC
     return isInsurerAmlCleared;
@@ -3445,6 +3437,32 @@ const isInsurerAmlVerified = () => {
 
   return true;
 };
+
+const disableMainPaymentApproval = computed(() => {
+  let isAmlFailed =
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningFailed;
+
+  return (
+    isAmlFailed ||
+    !isKycVerified() ||
+    !isInsurerAmlVerified() ||
+    !isTotalAmountMismatched()
+  );
+});
+
+console.log(
+  'disableMainPaymentApproval : ',
+  disableMainPaymentApproval.value,
+  ' isInsurerAmlVerified : ',
+  isInsurerAmlVerified(),
+  ' isAmlVerified : ',
+  isAmlVerified(),
+  ' isKycVerified : ',
+  isKycVerified(),
+  ' isTotalAmountMismatched : ',
+  isTotalAmountMismatched(),
+);
 
 const openAmlVerificationModal = () => {
   console.log('open AML and KYC Verification Modal');
