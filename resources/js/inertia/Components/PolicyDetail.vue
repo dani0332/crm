@@ -251,13 +251,13 @@ const rules = {
 
         const allowedMaxDate = new Date(currentDate);
 
-        allowedMaxDate.setMonth(currentDate.getMonth() + 2);
+        allowedMaxDate.setMonth(currentDate.getMonth() + 3);
 
         allowedMaxDate.setHours(0, 0, 0, 0);
         date.setHours(0, 0, 0, 0);
 
         if (date > allowedMaxDate) {
-          return 'Please select a date within the next two months';
+          return 'Please select a date within the next three months';
         }
       }
 
