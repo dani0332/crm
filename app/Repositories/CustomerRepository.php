@@ -52,6 +52,7 @@ class CustomerRepository extends BaseRepository
                 }
             } else {
                 if ($filterType == 'insured_first_name') {
+                    // TODO:: Need to check from customer too, if data not found in insured
                     $customerIds = Customer::whereHas('insured', function ($query) use ($filterValue) {
                         $query->where('first_name', $filterValue);
                     })->pluck('id');

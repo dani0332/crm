@@ -161,8 +161,8 @@ class UpdateLeadStatusRequest extends FormRequest
                 ])->where('id', $quoteObject->customer_id)->first();
 
                 $customerProfileDetails = [
-                    'first_name' => $customer?->insured?->first_name ?? $customer->first_name ?? null,
-                    'last_name' => $customer?->insured?->last_name ?? $customer->last_name ?? null,
+                    'insured_first_name' => ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? null,
+                    'insured_last_name' => ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? null,
                     'emirates_id_number' => ($customer?->insured?->id_type == 'emiratesId') ? $customer?->insured?->id_number : ($customer->emirates_id_number ?? null),
                     'emirates_id_expiry_date' => $customer->emirates_id_expiry_date ?? null,
                 ];

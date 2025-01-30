@@ -31,7 +31,7 @@ const tableHeader = [
   { text: 'CUSTOMER ID', value: 'uuid' },
   { text: 'REF-ID', value: 'code' },
   { text: 'NAME', value: 'first_name' },
-  { text: 'INSURED NAME', value: 'customer.insured.first_name' },
+  { text: 'INSURED NAME', value: 'customer' },
   { text: 'CREATED AT', value: 'created_at' },
   { text: 'UPDATED AT', value: 'updated_at' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
@@ -168,7 +168,11 @@ function onReset() {
         {{ getQuoteType(quote_type_id) }}
       </template>
 
-      <template #item-created_at="{ customer }">
+      <template #item-insured_first_name="{ customer }">
+          {{ (customer?.insured?.first_name ?? customer?.insured_first_name) ?? '' }}
+      </template>
+
+        <template #item-created_at="{ customer }">
         {{ customer?.created_at }}
       </template>
 

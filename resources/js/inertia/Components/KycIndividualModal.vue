@@ -79,8 +79,8 @@ const dateFormat = date =>
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
-  first_name: props.quote?.customer?.insured?.first_name ?? props.quote?.customer.insured_first_name ?? props.quote.first_name,
-  last_name: props.quote?.customer?.insured?.last_name ?? props.quote?.customer.insured_last_name ?? props.quote.last_name,
+  first_name: (props.quote?.customer?.insured?.first_name ?? props.quote?.customer.insured_first_name) ?? props.quote.first_name,
+  last_name: (props.quote?.customer?.insured?.last_name ?? props.quote?.customer.insured_last_name) ?? props.quote.last_name,
   dob: dateFormat(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id ?? null,
   country_of_residence:
