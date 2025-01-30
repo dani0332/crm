@@ -349,6 +349,12 @@
             font-weight: 400;
         }
 
+        table.tbl-footer tr td {
+            padding: 0;
+            margin: 0;
+            width: auto;
+        }
+
         .text-left {
             text-align: left;
         }
@@ -357,11 +363,6 @@
             text-align: right;
         }
 
-        table.tbl-footer tr td {
-            padding: 0;
-            margin: 0;
-            width: auto;
-        }
 
         .full-page-image {
             width: 100%;
@@ -448,9 +449,9 @@
             white-space: normal;
         }
 
-        /* main {
-            padding: 20px;
-        } */
+        main {
+            padding: 10px 20px;
+        }
 
         .head-caption {
             padding: 10px;
