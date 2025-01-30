@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use Closure;
 use Illuminate\Http\Request;
@@ -46,8 +45,8 @@ class CheckRouteAccess
 
     private function allowedViewAllLeads($routeName)
     {
-        $allowed = str_ends_with($routeName, '-quotes-list') || 
-           str_ends_with($routeName, '-quotes-show') || 
+        $allowed = str_ends_with($routeName, '-quotes-list') ||
+           str_ends_with($routeName, '-quotes-show') ||
            str_ends_with($routeName, '-quotes-edit');
 
         return auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS) && $allowed;

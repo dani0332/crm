@@ -27,7 +27,7 @@ trait GetUserTreeTrait
 
         return [];
     }
-    public function walkTree($userId, $productType = null, $allowedPermissions=[]) // product
+    public function walkTree($userId, $productType = null, $allowedPermissions = []) // product
     {
         $childUserIds = [$userId];
         $productTeam = $this->getProductByName($productType ?? quoteTypeCode::Car);
