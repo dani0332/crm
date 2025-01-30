@@ -554,7 +554,7 @@ class AdvisorConversionReportService extends BaseService
                         })->orWhere(function ($nsq) use ($table) {
                             $nsq->where("{$table}.transaction_approved_at", '<', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getApprovedStatuses());
                         })->orWhere(function ($nsq) use ($table) {
-                            $nsq->where("{$table}.transaction_approved_at", '>=', $this->getAdvisorConversionQuoteStatusDate())->where("{$table}.quote_status_id", QuoteStatusEnum::PolicyBooked);
+                            $nsq->where("{$table}.transaction_approved_at", '>=', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getSaleStatuses());
                         });
                     });
                 })
