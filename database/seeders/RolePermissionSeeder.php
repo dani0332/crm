@@ -66,6 +66,7 @@ class RolePermissionSeeder extends Seeder
         }
         // $this->addReceiveNotificationsPermission();
         // $this->searchModulePermissions();
+        $this->createBusinessIntelligenceUnitRole();
         $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
     }
 
@@ -111,6 +112,35 @@ class RolePermissionSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function createBusinessIntelligenceUnitRole(): void
+    {
+        $roleBIU = Role::firstOrCreate([
+            'name' => RolesEnum::BusinessIntelligenceUnit,
+            'guard_name' => 'web',
+        ]);
+
+        $accountAndFinanceRoles = Role::whereIn('name', [RolesEnum::Accounts, RolesEnum::FINANCE])->get();
+
+        $permissionsFromAccountAndFinanceRoles = $accountAndFinanceRoles->flatMap(function ($role) {
+            return $role->permissions;
+        })->unique('id');
+
+        $additionalPermissions = collect([
+            Permission::firstOrCreate([
+                'name' => 'view-all-leads',
+                'guard_name' => 'web',
+            ]),
+            Permission::firstOrCreate([
+                'name' => 'view-all-reports',
+                'guard_name' => 'web',
+            ]),
+        ]);
+
+        $allPermissions = $permissionsFromAccountAndFinanceRoles->merge($additionalPermissions)->unique('id');
+
+        $roleBIU->syncPermissions($allPermissions);
     }
 
     private function addMissingAdvisorRoles(): void
