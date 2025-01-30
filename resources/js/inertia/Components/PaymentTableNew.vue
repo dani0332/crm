@@ -3353,7 +3353,22 @@ const isKycVerified = () => {
   let paymentMethodCC =
     props.payments[0].payment_methods_code ===
     page.props.paymentMethodsEnum.CreditCard;
-  if (isTravelQuote && !isGIGInsuranceProvider && !paymentMethodCC) {
+
+  console.log(
+    'isAmlVerified : isTravelQuote : ',
+    isTravelQuote,
+    ' isGIGInsuranceProvider ',
+    isGIGInsuranceProvider,
+    ' paymentMethodCC : ',
+    paymentMethodCC,
+    ' props.quoteRequest.kyc_decision === Complete ',
+    props.quoteRequest.kyc_decision === 'Complete',
+  );
+
+  if (isTravelQuote) {
+    if (isGIGInsuranceProvider && paymentMethodCC) {
+      return props.quoteRequest.kyc_decision === 'Complete';
+    }
     return true;
   }
 
@@ -3370,7 +3385,24 @@ const isAmlVerified = () => {
   let paymentMethodCC =
     props.payments[0].payment_methods_code ===
     page.props.paymentMethodsEnum.CreditCard;
-  if (isTravelQuote && !isGIGInsuranceProvider && !paymentMethodCC) {
+  console.log(
+    'isAmlVerified : isTravelQuote : ',
+    isTravelQuote,
+    ' isGIGInsuranceProvider ',
+    isGIGInsuranceProvider,
+    ' paymentMethodCC : ',
+    paymentMethodCC,
+    ' props.quoteRequest.aml_status === page.props.amlStatusEnum.AMLScreeningCleared ',
+    props.quoteRequest.aml_status ===
+      page.props.amlStatusEnum.AMLScreeningCleared,
+  );
+  if (isTravelQuote) {
+    if (isGIGInsuranceProvider && paymentMethodCC) {
+      return (
+        props.quoteRequest.aml_status ===
+        page.props.amlStatusEnum.AMLScreeningCleared
+      );
+    }
     return true;
   }
 
