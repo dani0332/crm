@@ -330,7 +330,7 @@
             background-color: #1d83bc;
             color: black;
             text-align: center;
-            height: 160px;
+            height: 150px;
         }
 
         table.tbl-footer {
@@ -607,33 +607,8 @@
             // Content
             ['code' => 'heading', 'title' => 'Contents'],
             [
-                'code' => 'claimExcessDeductiblesForEachEveryLoss',
-                'title' => 'Claim Excess / Deductibles for each & every loss',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'accidentalDamageWhileInYourHome',
-                'title' => 'Accidental Damage while in your home',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'TheftVisibleViolentForcibleEntryOrExit',
-                'title' => 'Theft (visible, violent, forcible entry or exit)',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'fireExplosionLightningOrEarthquake',
-                'title' => 'Fire, explosion, lightning or earthquake',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'stormAndFlood',
-                'title' => 'Storm and flood',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'spoilageOfFoodInFreezer',
-                'title' => 'Spoilage of food in freezer',
+                'code' => 'singleArticleLimitForContentsSal',
+                'title' => 'Single Article Limit for contents (SAL)',
                 'type' => 'content',
             ],
             [
@@ -642,8 +617,8 @@
                 'type' => 'content',
             ],
             [
-                'code' => 'singleArticleLimitForContentsSal',
-                'title' => 'Single Article Limit for contents (SAL)',
+                'code' => 'contentsInTheOpen',
+                'title' => 'Contents in the Open',
                 'type' => 'content',
             ],
             [
@@ -652,8 +627,33 @@
                 'type' => 'content',
             ],
             [
-                'code' => 'contentsInTheOpen',
-                'title' => 'Contents in the Open',
+                'code' => 'spoilageOfFoodInFreezer',
+                'title' => 'Spoilage of food in freezer',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'stormAndFlood',
+                'title' => 'Storm and flood',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'fireExplosionLightningOrEarthquake',
+                'title' => 'Fire, explosion, lightning or earthquake',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'TheftVisibleViolentForcibleEntryOrExit',
+                'title' => 'Theft (visible, violent, forcible entry or exit)',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'accidentalDamageWhileInYourHome',
+                'title' => 'Accidental Damage while in your home',
+                'type' => 'content',
+            ],
+            [
+                'code' => 'claimExcessDeductiblesForEachEveryLoss',
+                'title' => 'Claim Excess / Deductibles for each & every loss',
                 'type' => 'content',
             ],
 
@@ -662,18 +662,8 @@
             // Personal Belongings
             ['code' => 'heading', 'title' => 'Personal Belongings'],
             [
-                'code' => 'claimExcessDeductiblesForEachEveryLoss',
-                'title' => 'Claim Excess / Deductibles for each & every loss',
-                'type' => 'personalBelonging',
-            ],
-            [
-                'code' => 'lossOfDocuments',
-                'title' => 'Loss of documents',
-                'type' => 'personalBelonging',
-            ],
-            [
-                'code' => 'valuablesAndPortableEquipment',
-                'title' => 'Valuables and portable equipment',
+                'code' => 'singleArticleLimitForPersonalBelongingsSal',
+                'title' => 'Single article limit for personal belongings (SAL)',
                 'type' => 'personalBelonging',
             ],
             [
@@ -682,8 +672,8 @@
                 'type' => 'personalBelonging',
             ],
             [
-                'code' => 'singleArticleLimitForPersonalBelongingsSal',
-                'title' => 'Single article limit for personal belongings (SAL)',
+                'code' => 'valuablesAndPortableEquipment',
+                'title' => 'Valuables and portable equipment',
                 'type' => 'personalBelonging',
             ],
             [
@@ -691,60 +681,15 @@
                 'title' => 'Personal money and credit cards',
                 'type' => 'personalBelonging',
             ],
-
-            ['code' => 'spacer', 'title' => ''],
-
-            // Building
-            ['code' => 'heading', 'title' => 'Building'],
             [
-                'code' => 'claimExcessDeductibles',
-                'title' => 'Claim Excess / Deductibles',
-                'type' => 'building',
+                'code' => 'lossOfDocuments',
+                'title' => 'Loss of documents',
+                'type' => 'personalBelonging',
             ],
             [
-                'code' => 'ownersLiabilityToThePublic',
-                'title' => 'Owner\'s liability to the public',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'breakageOfFixedGlassAndSanitaryFixtures',
-                'title' => 'Breakage of fixed glass and sanitary fixtures',
-                'type' => 'building',
-            ],
-            [
-                'code' => ' damageToServicesPipesAndCables',
-                'title' => ' Damage to Services (Pipes and Cables)',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'traceAndAccess',
-                'title' => 'Trace & Access',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'damageToTheGarden',
-                'title' => 'Damage to the garden',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'emergencyAccess',
-                'title' => 'Emergency access',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'theftForcibleEntryOrExit',
-                'title' => 'Theft (Forcible entry or exit)',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
-                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'temporaryRemoval',
-                'title' => 'Temporary Removal',
-                'type' => 'building',
+                'code' => 'claimExcessDeductiblesForEachEveryLoss',
+                'title' => 'Claim Excess / Deductibles for each & every loss',
+                'type' => 'personalBelonging',
             ],
 
             ['code' => 'spacer', 'title' => ''],
@@ -752,23 +697,8 @@
             // Additional Cover
             ['code' => 'heading', 'title' => 'Additional Cover'],
             [
-                'code' => 'legalAssistance',
-                'title' => 'Legal assistance',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'tenantsLiability',
-                'title' => 'Tenant\'s liability',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'occupiersPersonalAndEmployersLiability',
-                'title' => 'Occupiers personal and employers liability',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'fatalInjuryBenefit',
-                'title' => 'Fatal injury benefit',
+                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForBuilding',
+                'title' => 'Loss of rent or cost of alternative accommodation for Building',
                 'type' => 'additionalCover',
             ],
             [
@@ -777,13 +707,8 @@
                 'type' => 'additionalCover',
             ],
             [
-                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForBuilding',
-                'title' => 'Loss of rent or cost of alternative accommodation for Building',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'homeAssistance',
-                'title' => 'Home assistance',
+                'code' => 'fatalInjuryBenefit',
+                'title' => 'Fatal injury benefit',
                 'type' => 'additionalCover',
             ],
             [
@@ -792,23 +717,28 @@
                 'type' => 'additionalCover',
             ],
             [
-                'code' => 'lossOfPassportDrivingLicenseWorkPermitResidencePermit',
-                'title' => 'Loss of Passport, Driving License, Work permit, Residence Permit',
+                'code' => 'occupiersPersonalAndEmployersLiability',
+                'title' => 'Occupiers personal and employers liability',
                 'type' => 'additionalCover',
             ],
             [
-                'code' => 'moneyAndCreditCards',
-                'title' => 'Money & Credit Cards',
+                'code' => 'tenantsLiability',
+                'title' => 'Tenant\'s liability',
                 'type' => 'additionalCover',
             ],
             [
-                'code' => 'domesticHelpCover',
-                'title' => 'Domestic Help Cover',
+                'code' => 'homeAssistance',
+                'title' => 'Home assistance',
                 'type' => 'additionalCover',
             ],
             [
-                'code' => 'defenseCostLegalAssistance',
-                'title' => 'Defense Cost / Legal assistance',
+                'code' => 'legalAssistance',
+                'title' => 'Legal assistance',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'fatalInjuryBenefitProvidedDeathEnsuesWithin3MonthsOfSuchInjury',
+                'title' => 'Fatal injury benefit (provided death ensues within 3 months of such injury)',
                 'type' => 'additionalCover',
             ],
             [
@@ -817,9 +747,79 @@
                 'type' => 'additionalCover',
             ],
             [
-                'code' => 'fatalInjuryBenefitProvidedDeathEnsuesWithin3MonthsOfSuchInjury',
-                'title' => 'Fatal injury benefit (provided death ensues within 3 months of such injury)',
+                'code' => 'defenseCostLegalAssistance',
+                'title' => 'Defense Cost / Legal assistance',
                 'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'domesticHelpCover',
+                'title' => 'Domestic Help Cover',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'moneyAndCreditCards',
+                'title' => 'Money & Credit Cards',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'lossOfPassportDrivingLicenseWorkPermitResidencePermit',
+                'title' => 'Loss of Passport, Driving License, Work permit, Residence Permit',
+                'type' => 'additionalCover',
+            ],
+
+            ['code' => 'spacer', 'title' => ''],
+
+            // Building
+            ['code' => 'heading', 'title' => 'Building'],
+            [
+                'code' => 'damageToServicesPipesAndCables',
+                'title' => 'Damage to Services (Pipes and Cables)',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'breakageOfFixedGlassAndSanitaryFixtures',
+                'title' => 'Breakage of fixed glass and sanitary fixtures',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'ownersLiabilityToThePublic',
+                'title' => 'Owner\'s liability to the public',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'claimExcessDeductibles',
+                'title' => 'Claim Excess / Deductibles',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'temporaryRemoval',
+                'title' => 'Temporary Removal',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
+                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'theftForcibleEntryOrExit',
+                'title' => 'Theft (Forcible entry or exit)',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'emergencyAccess',
+                'title' => 'Emergency access',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'damageToTheGarden',
+                'title' => 'Damage to the garden',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'traceAndAccess',
+                'title' => 'Trace & Access',
+                'type' => 'building',
             ],
 
             ['code' => 'spacer', 'title' => ''],
@@ -828,43 +828,8 @@
             // Content And Personal Belonging
             ['code' => 'heading', 'title' => 'Content And Personal Belonging'],
             [
-                'code' => 'claimExcessDeductibles',
-                'title' => 'Claim Excess / Deductibles',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'fursAndSportingEquipmentMarquees',
-                'title' => 'Furs & Sporting equipment, Marquees',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'newAcquisitionsCover',
-                'title' => 'New Acquisitions cover',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'presentsAndGift',
-                'title' => 'Presents & Gift',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'valuablesCoinsStampsMedalsGoldSilverAndPlatedArticles',
-                'title' => 'Valuables - Coins stamps, medals, gold, silver and plated articles',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'TheftForcibleEntryOrExit',
-                'title' => 'Theft (Forcible entry or exit)',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
-                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'spoilageOfFoodInFreezer',
-                'title' => 'Spoilage of food in freezer',
+                'code' => 'contentsInTheOpen',
+                'title' => 'Contents in the Open',
                 'type' => 'contentAndPersonalBelonging',
             ],
             [
@@ -873,8 +838,43 @@
                 'type' => 'contentAndPersonalBelonging',
             ],
             [
-                'code' => 'contentsInTheOpen',
-                'title' => 'Contents in the Open',
+                'code' => 'spoilageOfFoodInFreezer',
+                'title' => 'Spoilage of food in freezer',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
+                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'TheftForcibleEntryOrExit',
+                'title' => 'Theft (Forcible entry or exit)',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'valuablesCoinsStampsMedalsGoldSilverAndPlatedArticles',
+                'title' => 'Valuables - Coins stamps, medals, gold, silver and plated articles',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'presentsAndGift',
+                'title' => 'Presents & Gift',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'newAcquisitionsCover',
+                'title' => 'New Acquisitions cover',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'fursAndSportingEquipmentMarquees',
+                'title' => 'Furs & Sporting equipment, Marquees',
+                'type' => 'contentAndPersonalBelonging',
+            ],
+            [
+                'code' => 'claimExcessDeductibles',
+                'title' => 'Claim Excess / Deductibles',
                 'type' => 'contentAndPersonalBelonging',
             ],
 
@@ -883,13 +883,23 @@
             // Fine Art And Collectible
             ['code' => 'heading', 'title' => 'Fine Art And Collectible'],
             [
-                'code' => 'claimExcessDeductibles',
-                'title' => 'Claim Excess / Deductibles',
+                'code' => 'sumInsured',
+                'title' => 'Sum Insured',
                 'type' => 'fineArtAndCollectible',
             ],
             [
-                'code' => 'emergencyEvacuation',
-                'title' => 'Emergency evacuation',
+                'code' => 'singleArticleLimitForUnspecifiedItems',
+                'title' => 'Single article limit for unspecified items',
+                'type' => 'fineArtAndCollectible',
+            ],
+            [
+                'code' => 'newAcquisitionsCover',
+                'title' => 'New Acquisitions cover',
+                'type' => 'fineArtAndCollectible',
+            ],
+            [
+                'code' => 'nonSpecifiedPairsAndSets',
+                'title' => 'Non specified pairs and sets',
                 'type' => 'fineArtAndCollectible',
             ],
             [
@@ -898,23 +908,13 @@
                 'type' => 'fineArtAndCollectible',
             ],
             [
-                'code' => 'nonSpecifiedPairsAndSets',
-                'title' => 'Non specified pairs and sets',
+                'code' => 'emergencyEvacuation',
+                'title' => 'Emergency evacuation',
                 'type' => 'fineArtAndCollectible',
             ],
             [
-                'code' => 'newAcquisitionsCover',
-                'title' => 'New Acquisitions cover',
-                'type' => 'fineArtAndCollectible',
-            ],
-            [
-                'code' => 'singleArticleLimitForUnspecifiedItems',
-                'title' => 'Single article limit for unspecified items',
-                'type' => 'fineArtAndCollectible',
-            ],
-            [
-                'code' => 'sumInsured',
-                'title' => 'Sum Insured',
+                'code' => 'claimExcessDeductibles',
+                'title' => 'Claim Excess / Deductibles',
                 'type' => 'fineArtAndCollectible',
             ],
 
@@ -923,18 +923,8 @@
             // Jewllery And Valuable
             ['code' => 'heading', 'title' => 'Jewllery And Valuable'],
             [
-                'code' => 'claimExcessDeductibles',
-                'title' => 'Claim Excess / Deductibles',
-                'type' => 'jewlleryAndValuable',
-            ],
-            [
-                'code' => 'nonSpecifiedPairsAndSets',
-                'title' => 'Non specified pairs and sets',
-                'type' => 'jewlleryAndValuable',
-            ],
-            [
-                'code' => 'newAcquisitionsCover',
-                'title' => 'New Acquisitions cover',
+                'code' => 'sumInsured',
+                'title' => 'Sum Insured',
                 'type' => 'jewlleryAndValuable',
             ],
             [
@@ -943,8 +933,18 @@
                 'type' => 'jewlleryAndValuable',
             ],
             [
-                'code' => 'sumInsured',
-                'title' => 'Sum Insured',
+                'code' => 'newAcquisitionsCover',
+                'title' => 'New Acquisitions cover',
+                'type' => 'jewlleryAndValuable',
+            ],
+            [
+                'code' => 'nonSpecifiedPairsAndSets',
+                'title' => 'Non specified pairs and sets',
+                'type' => 'jewlleryAndValuable',
+            ],
+            [
+                'code' => 'claimExcessDeductibles',
+                'title' => 'Claim Excess / Deductibles',
                 'type' => 'jewlleryAndValuable',
             ],
 
@@ -1248,33 +1248,33 @@
         <table class="tbl-footer" style="padding: 5px 10px; margin: 0; width: 100%; border: none;">
             <tr>
                 <td colspan="2" class="text-center">
-                    <h4 style="font-size: 20px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
+                    <h4 style="font-size: 18px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
                         Insurance Brokerage Services LLC</h4>
                 </td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 14px;">UAE Central Bank Registration number 85</td>
-                <td class="text-right" style="font-size: 14px;">27th Floor, Control Tower, Motor City</td>
+                <td class="text-left" style="font-size: 12px;">UAE Central Bank Registration number 85</td>
+                <td class="text-right" style="font-size: 12px;">27th Floor, Control Tower, Motor City</td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 14px;">Registered member of the Emirates Insurance Association
+                <td class="text-left" style="font-size: 12px;">Registered member of the Emirates Insurance Association
                 </td>
-                <td class="text-right" style="font-size: 14px;">Dubai, United Arab Emirates, P.O Box 26423</td>
+                <td class="text-right" style="font-size: 12px;">Dubai, United Arab Emirates, P.O Box 26423</td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 14px;">Department of Economy & Tourism in Dubai Trade License
+                <td class="text-left" style="font-size: 12px;">Department of Economy & Tourism in Dubai Trade License
                     number 238534</td>
-                <td class="text-right" style="font-size: 14px;">Tel: <a href="tel:+800253733"
+                <td class="text-right" style="font-size: 12px;">Tel: <a href="tel:+800253733"
                         style="color: #fff; text-decoration: none;">800 ALFRED (800-253-733)</a></td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 14px;">Holder of Health Insurance Intermediary Permit ID
+                <td class="text-left" style="font-size: 12px;">Holder of Health Insurance Intermediary Permit ID
                     Number BRK-00003 from Dubai Health Authority</td>
-                <td class="text-right" style="font-size: 14px;"><a href="https://insurancemarket.ae"
+                <td class="text-right" style="font-size: 12px;"><a href="https://insurancemarket.ae"
                         style="color: #fff; text-decoration: none;">www.insurancemarket.ae</a></td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 14px;">Registered member of Insurance Business Group under the
+                <td class="text-left" style="font-size: 12px;">Registered member of Insurance Business Group under the
                     Dubai Chamber of Commerce and Industry</td>
             </tr>
         </table>
