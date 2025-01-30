@@ -260,7 +260,7 @@ watch(
           <DatePicker
             v-model="filters.months"
             name="months"
-            placeholder="Select Month"
+            placeholder="Select month"
             class="w-full"
             month-picker
             model-type="yyyy-MM"
