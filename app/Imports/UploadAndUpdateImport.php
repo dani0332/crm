@@ -207,7 +207,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                     }
                 }
 
-                //todo: convert this to bulk insert
+                // todo: convert this to bulk insert
                 foreach ($failed as $failedRecord) {
                     RenewalQuoteProcess::create($failedRecord);
                 }

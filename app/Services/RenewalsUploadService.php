@@ -191,14 +191,14 @@ class RenewalsUploadService
      */
     public function renewalsUploadCreate($data)
     {
-        //upload renewal file to azure
+        // upload renewal file to azure
         $uploadedFile = $this->uploadRenewalsFile();
 
-        //create lead record
+        // create lead record
         $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::CREATE_LEADS, $data);
         info('UAT FN: renewalsUploadCreate File uploaded and renewals lead created');
 
-        //start import process
+        // start import process
         ProcessRenewalsUploadCreate::dispatch($renewalsUploadLead);
 
         return true;
@@ -219,11 +219,11 @@ class RenewalsUploadService
             info($logPrefix.' In Progress Now');
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
-                //start file import
+                // start file import
                 $renewalsUpload = new UploadAndCreateImport($renewalsUploadLead);
                 $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
 
-                //update counts
+                // update counts
                 $validRows = $renewalsUpload->getValidCount();
                 $failedRows = $renewalsUpload->getFailedCount();
 
@@ -488,7 +488,7 @@ class RenewalsUploadService
             $plansResponse = $this->getPlans($quote->uuid);
             if ($plansResponse === true) {
                 info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
-                //update status to plans fetched
+                // update status to plans fetched
                 $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
             } else {
@@ -506,10 +506,10 @@ class RenewalsUploadService
      */
     public function renewalsUploadUpdate($data)
     {
-        //upload renewal file to azure
+        // upload renewal file to azure
         $uploadedFile = $this->uploadRenewalsFile();
 
-        //create lead record
+        // create lead record
         $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::UPDATE_LEADS, $data);
         info('UAU FN: renewalsUploadUpdate File uploaded and renewals lead created');
 
@@ -531,11 +531,11 @@ class RenewalsUploadService
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
-                //start file import
+                // start file import
                 $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
                 $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
 
-                //todo: correct these values
+                // todo: correct these values
                 $validRows = $renewalsUpload->getValidCount();
                 $failedRows = $renewalsUpload->getFailedCount();
 
@@ -617,14 +617,14 @@ class RenewalsUploadService
     {
         $data['customer_name'] = trim($data['customer_name']);
 
-        //default values
+        // default values
         $customerData = [
             'first_name' => $data['customer_name'],
             'last_name' => '',
             'notes' => '',
         ];
 
-        //check if name have last name
+        // check if name have last name
         if (strpos($data['customer_name'], ' ')) {
             $nameParts = explode(' ', $data['customer_name'], 2);
             $customerData['first_name'] = $nameParts[0];
@@ -634,7 +634,7 @@ class RenewalsUploadService
         $emails = explode(',', $this->cleanValue($data['email']));
         $customerData['email'] = $emails[0];
 
-        //check in case of additional emails, and add in notes
+        // check in case of additional emails, and add in notes
         if (count($emails) > 1) {
             unset($emails[0]);
             $customerData['additional_emails'] = $emails;
@@ -643,7 +643,7 @@ class RenewalsUploadService
         $mobileNos = explode(',', $this->cleanValue($data['mobile_no']));
         $customerData['mobile_no'] = strtok($mobileNos[0], ',');
 
-        //check in case of additional mobile nos, and add in notes
+        // check in case of additional mobile nos, and add in notes
         if (count($mobileNos) > 1) {
             unset($mobileNos[0]);
             $customerData['additional_mobiles'] = $mobileNos;
@@ -665,7 +665,7 @@ class RenewalsUploadService
 
         $customer = CustomerService::getCustomerByEmail($customerData['email']);
 
-        //create new customer if not exists
+        // create new customer if not exists
         if (! isset($customer->id)) {
             $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
 
@@ -691,12 +691,12 @@ class RenewalsUploadService
     {
         $customer = CustomerService::getCustomerById($quote->customer_id);
 
-        //update primary email if changed
+        // update primary email if changed
         if (! empty($customerData['email']) && $customer->email != $customerData['email']) {
             app(CustomerService::class)->makeAdditionalContactPrimary($quote, GenericRequestEnum::EMAIL, $customerData['email']);
         }
 
-        //update primary mobile no if changed
+        // update primary mobile no if changed
         if (! empty($customerData['mobile_no']) && $customer->mobile_no != $customerData['mobile_no']) {
             app(CustomerService::class)->makeAdditionalContactPrimary($quote->refresh(), GenericRequestEnum::MOBILE_NO, $customerData['mobile_no']);
         }
@@ -740,7 +740,7 @@ class RenewalsUploadService
             }
             $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
 
-            //advisor and previous advisors will be ignored when not exists
+            // advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $previousAdvisor = $this->renewalsAddonService->getUser($data['previous_advisor']);
 
@@ -844,7 +844,7 @@ class RenewalsUploadService
                 $quoteData['currently_insured_with_id'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->id;
             }
 
-            //set business type insurance id
+            // set business type insurance id
             if (! empty($data['product_type'] && $quoteType->code == quoteTypeCode::Business)) {
                 if ($businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($data['product_type'])) {
                     $quoteData['business_type_of_insurance_id'] = $businessSubline->id;
@@ -874,7 +874,7 @@ class RenewalsUploadService
                 info($logPrefix.'-insertion in mongo db for : UUID: '.$quote->uuid);
             }
 
-            //update advisor assign date/time
+            // update advisor assign date/time
             if (! empty($advisorId)) {
                 $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
             }
@@ -1016,7 +1016,7 @@ class RenewalsUploadService
 
             $customerData = $this->buildCustomerData($data);
 
-            //check if name is changed , then run AML again
+            // check if name is changed , then run AML again
             if ($quote->first_name != $customerData['first_name'] || $quote->last_name != $customerData['last_name']) {
                 $isNameChanged = true;
             }
@@ -1100,7 +1100,7 @@ class RenewalsUploadService
                 info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
             } else {
                 if ($renewalUploadLead->is_sic == 1) {
-                    //add entry to quote tag as SIC
+                    // add entry to quote tag as SIC
                     $quoteTagPayload = [
                         'name' => QuoteSegmentEnum::SIC->tag(),
                         'quote_type_id' => QuoteTypeId::Car,
@@ -1116,7 +1116,7 @@ class RenewalsUploadService
                 }
             }
 
-            //mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
+            // mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
             RenewalQuoteProcess::where([
                 'quote_id' => $quote->id,
                 'status' => RenewalProcessStatuses::PROCESSED,
@@ -1124,7 +1124,7 @@ class RenewalsUploadService
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
 
-            //mark renewal quote process as processed and assign quote id
+            // mark renewal quote process as processed and assign quote id
             $renewalQuoteProcess->update([
                 'status' => RenewalProcessStatuses::PROCESSED,
                 'quote_id' => $quote->id,
@@ -1224,12 +1224,12 @@ class RenewalsUploadService
             $plan['insurerQuoteNo'] = strval($data['insurer_quote_no']);
         }
 
-        //excess will be used for comp or agency repair type
+        // excess will be used for comp or agency repair type
         if ($data['plan_type'] == CarPlanType::COMP || $data['plan_type'] == CarPlanType::AGENCY) {
             $plan['excess'] = $data['excess'];
         }
 
-        //trim is optional
+        // trim is optional
         if (! empty($data['trim'])) {
             if ($valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first()) {
                 if (! empty($valuation->insurer_available_trims)) {
@@ -1584,7 +1584,7 @@ class RenewalsUploadService
                         info('CQF VALIDATION - Quote Found for Update - '.$lead->policy_number);
                     }
                 }
-                //If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
+                // If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
                 if ($lead->quote_type != quoteTypeCode::TRA) {
                     if (! $leadData->insurer) {
                         $leadValidationErrors->push('Insurance Provider is required');
@@ -1980,7 +1980,7 @@ class RenewalsUploadService
             $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
         }
 
-        //todo: remove this code
+        // todo: remove this code
         //        foreach ($batchLeads as $key => $batchLead) {
         //            $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
         //            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
@@ -1988,7 +1988,7 @@ class RenewalsUploadService
         //        }
     }
 
-    //todo: remove this code
+    // todo: remove this code
     //    public function updateRenewalQuoteEmailSent($batch, $quoteId)
     //    {
     //        info('updateRenewalQuoteEmailSent START batch: '.$batch.' quoteId: '.$quoteId);
@@ -2016,14 +2016,14 @@ class RenewalsUploadService
     public function travelRenewalsUploadCreate($data)
     {
         $isTravel = true;
-        //upload renewal file to azure
+        // upload renewal file to azure
         $uploadedFile = $this->uploadRenewalsFile($isTravel);
 
-        //create lead record
+        // create lead record
         $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::CREATE_LEADS, $data);
         info('UAT FN: renewalsUploadCreate File uploaded and renewals lead created');
 
-        //start import process
+        // start import process
         ProcessTravelRenewalsUploadCreate::dispatch($renewalsUploadLead);
 
         return true;
@@ -2044,11 +2044,11 @@ class RenewalsUploadService
             info($logPrefix.' In Progress Now');
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
-                //start file import
+                // start file import
                 $renewalsUpload = new TravelUploadAndCreateImport($renewalsUploadLead);
                 $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
 
-                //update counts
+                // update counts
                 $validRows = $renewalsUpload->getValidCount();
                 $failedRows = $renewalsUpload->getFailedCount();
 
@@ -2141,7 +2141,7 @@ class RenewalsUploadService
             $searchByName = true;
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
             $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
-            //advisor and previous advisors will be ignored when not exists
+            // advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $quoteUuid = $this->generateUUID($quoteType->code, $quoteType->id);
             $payment_status_id = $this->getPaymentStatusIdByCode($data['payment_status']);
@@ -2171,7 +2171,7 @@ class RenewalsUploadService
 
             $quote = TravelQuote::create($quoteData);
 
-            //update advisor assign date/time
+            // update advisor assign date/time
             if (! empty($advisorId)) {
                 $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
             }

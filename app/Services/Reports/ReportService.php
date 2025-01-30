@@ -7,6 +7,7 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -253,9 +254,12 @@ class ReportService extends BaseService
 
         $allowedLOBs = [];
         foreach ($quoteTypes as $quoteType) {
-            if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
-                $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
-            } elseif (in_array(RolesEnum::Admin, $userRoles)) {
+            if (
+                in_array($quoteType->name.'_ADVISOR', $userRoles)
+                || in_array($quoteType->name.'_MANAGER', $userRoles)
+                || in_array(RolesEnum::Admin, $userRoles)
+                || (auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($quoteType))
+            ) {
                 $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
             } else {
                 continue;
@@ -584,7 +588,7 @@ class ReportService extends BaseService
 
         info('totalPremiumQuery took '.number_format($endTime - $startTime, 4).' seconds to run');
 
-        //dd($totalPremiumQuery->toSql(), $totalPremiumQuery->getBindings());
+        // dd($totalPremiumQuery->toSql(), $totalPremiumQuery->getBindings());
         // Execute the query and return the result
         return $result;
     }
@@ -633,7 +637,7 @@ class ReportService extends BaseService
         } else {
             $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
             foreach ($quoteTypes as $quoteType) {
-                if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
+                if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles) || (auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($quoteType))) {
                     $allowedLOBs[] = $lobTable[$quoteType->value];
                 } elseif (in_array(RolesEnum::Admin, $userRoles)) {
                     $allowedLOBs[] = $lobTable[$quoteType->value];

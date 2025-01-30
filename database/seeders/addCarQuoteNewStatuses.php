@@ -52,7 +52,7 @@ class addCarQuoteNewStatuses extends Seeder
             }
         }
 
-        //todo: check sort order
+        // todo: check sort order
         if (! QuoteStatus::where('id', QuoteStatusEnum::CarSold)->first()) {
             $carSold = QuoteStatus::create([
                 'id' => QuoteStatusEnum::CarSold,

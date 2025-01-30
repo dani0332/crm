@@ -57,12 +57,12 @@ class UpdateLeadStatusRequest extends FormRequest
         if (! empty(request()->leadStatus) && ! empty(request()->modelType) && strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)
             && isCarLostStatus(request()->leadStatus)
         ) {
-            //check for valid quote
+            // check for valid quote
             if (! $quote = $this->getQuoteObject(request()->modelType, request()->quote_uuid)) {
                 vAbort('Invalid quote type or uuid provided');
             }
 
-            //once quote is marked as sold/uncontactable, quote should be locked until have pending request
+            // once quote is marked as sold/uncontactable, quote should be locked until have pending request
             if (isCarLostStatus($quote->quote_status_id) && auth()->user()->hasAnyrole([RolesEnum::CarAdvisor])) {
                 $quote->load('carLostQuoteLog');
                 if (isset($quote->carLostQuoteLog->id) && $quote->carLostQuoteLog->status == GenericRequestEnum::PENDING) {
@@ -70,7 +70,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
 
-            //check for deadline date
+            // check for deadline date
             $batch = RenewalBatch::where([
                 'name' => $quote->renewal_batch,
             ])->with('deadline', function ($q) {
@@ -88,7 +88,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 $rules['proof_document'] = 'required';
             }
 
-            //todo: lost_approval_status should be required, and can be approved or rejected also reason_id should be required
+            // todo: lost_approval_status should be required, and can be approved or rejected also reason_id should be required
             if (auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                 $rules['lost_approval_status'] = 'required|in:'.GenericRequestEnum::APPROVED.','.GenericRequestEnum::REJECTED;
                 $rules['approve_reason_id'] = 'required_without:reject_reason_id';
