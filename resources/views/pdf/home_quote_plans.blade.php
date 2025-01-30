@@ -13,6 +13,7 @@
         @page {
             margin: 0;
             padding: 0;
+            margin-bottom: 160px;
         }
 
         html {
@@ -322,15 +323,15 @@
 
         footer {
             position: fixed;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            padding: 0px;
-            margin: 80px 0 0 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 145px;
+            padding: 0;
             background-color: #1d83bc;
-            color: black;
+            color: #fff;
             text-align: center;
-            height: 150px;
+            z-index: 1000;
         }
 
         table.tbl-footer {
@@ -447,9 +448,9 @@
             white-space: normal;
         }
 
-        main {
+        /* main {
             padding: 20px;
-        }
+        } */
 
         .head-caption {
             padding: 10px;
@@ -486,6 +487,11 @@
             left: 0;
             right: 0;
             height: 60px;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
 
         .content {}
@@ -1244,8 +1250,8 @@
     </main>
 
     {{-- PDF Page Footer --}}
-    <footer style="background-color: #1d83bc; color: #fff; text-align: center; padding: 10px;">
-        <table class="tbl-footer" style="padding: 5px 10px; margin: 0; width: 100%; border: none;">
+    <footer style="background-color: #1d83bc; color: #fff; text-align: center; padding: 5px;">
+        <table class="tbl-footer" style="padding: 0 10px; margin: 0; width: 100%; border: none;">
             <tr>
                 <td colspan="2" class="text-center">
                     <h4 style="font-size: 18px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
