@@ -2160,6 +2160,7 @@ const viewPlanDetailsLoader = ref({});
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

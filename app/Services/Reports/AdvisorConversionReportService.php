@@ -117,6 +117,8 @@ class AdvisorConversionReportService extends BaseService
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ])
+            &&
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
@@ -255,6 +257,8 @@ class AdvisorConversionReportService extends BaseService
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ])
+            &&
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
@@ -382,9 +386,9 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
         ];
 
-        $lobs = array_filter($lobs, function ($permission) {
-            return Auth::user()->can($permission);
-        });
+        $lobs = array_filter($lobs, function ($permission, $lob) {
+            return Auth::user()->can($permission) || Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($lob);
+        }, ARRAY_FILTER_USE_BOTH);
 
         $lobs = QuoteTypeRepository::GetList()
             ->filter(function ($lob) use ($lobs) {
@@ -393,11 +397,11 @@ class AdvisorConversionReportService extends BaseService
             ->pluck('code', 'text')
             ->toArray();
 
-        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT)) {
+        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::CORPLINE) && Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS))) {
             $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
         }
 
-        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT)) {
+        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::GroupMedical) && Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS))) {
             $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
         }
 

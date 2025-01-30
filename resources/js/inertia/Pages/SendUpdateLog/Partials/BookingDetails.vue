@@ -458,7 +458,7 @@ function convertToNegative(value) {
   }
   value = isNaN(value) ? 0 : Number(value);
 
-  return value.toFixed(2);
+  return (Math.round(value * 100) / 100).toFixed(2);
 }
 
 function thousandSeparator(value) {
