@@ -3442,9 +3442,12 @@ const disableMainPaymentApproval = computed(() => {
   let isAmlFailed =
     props.quoteRequest.aml_status ===
     page.props.amlStatusEnum.AMLScreeningFailed;
+  if (isAmlFailed) {
+    return true;
+  }
 
   return (
-    isAmlFailed &&
+    isAmlVerified() &&
     (!isKycVerified() || !isInsurerAmlVerified() || !isTotalAmountMismatched())
   );
 });
