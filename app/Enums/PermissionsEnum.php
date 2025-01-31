@@ -399,6 +399,10 @@ final class PermissionsEnum extends Enum
     public const DATA_EXTRACTION_SEARCH_ALL_LEADS = 'data-extraction-search-all-leads';
     public const TAP_BETA_ACCESS = 'tap-beta-access';
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
+    public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
+    public const SAVINGS_QUOTES_CREATE = 'savings-quotes-create';
+    public const SAVINGS_QUOTES_EDIT = 'savings-quotes-edit';
+    public const SAVINGS_QUOTES_SHOW = 'savings-quotes-show';
 
     public static function getAdvisorConversionReportPermissions()
     {

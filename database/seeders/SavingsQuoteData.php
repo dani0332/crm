@@ -2,21 +2,30 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\QuoteType;
-use App\Models\Role;
+use Database\Seeders\Traits\PermissionableSeeder;
 use Illuminate\Database\Seeder;
 
 class SavingsQuoteData extends Seeder
 {
+    use PermissionableSeeder;
+
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
         $this->upsertQuoteType();
-        $this->seedRoles();
+        $this->seedRoles([RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager]);
+        $this->seedPermissions([
+            PermissionsEnum::SAVINGS_QUOTES_LIST,
+            PermissionsEnum::SAVINGS_QUOTES_CREATE,
+            PermissionsEnum::SAVINGS_QUOTES_EDIT,
+            PermissionsEnum::SAVINGS_QUOTES_SHOW,
+        ], [RolesEnum::Engineering, RolesEnum::Admin]);
     }
 
     private function upsertQuoteType()
@@ -33,19 +42,5 @@ class SavingsQuoteData extends Seeder
         } else {
             QuoteType::where('code', $quoteType['code'])->update($quoteType);
         }
-    }
-
-    private function seedRoles()
-    {
-        $roles = [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager];
-
-        foreach ($roles as $role) {
-            $this->createRole($role);
-        }
-    }
-
-    private function createRole(string $role)
-    {
-        return Role::firstOrCreate(['name' => $role]);
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders\Traits;
 
-use App\Models\Role;
 use App\Models\Permission;
+use App\Models\Role;
 use Spatie\Permission\Models\Permission as ModelsPermission;
 use Spatie\Permission\Models\Role as ModelsRole;
 
@@ -36,13 +36,13 @@ trait PermissionableSeeder
         foreach ($roles as $role) {
             $this->assignPermissionToRole($role, $permission);
         }
-        
+
         return $permission;
     }
 
-    private function assignPermissionToRole(Role|ModelsRole $role = null, Permission|ModelsPermission $permission = null)
+    private function assignPermissionToRole(Role|ModelsRole|null $role = null, Permission|ModelsPermission|null $permission = null)
     {
-        if(!$role || !$permission) {
+        if (! $role || ! $permission) {
             return;
         }
 
