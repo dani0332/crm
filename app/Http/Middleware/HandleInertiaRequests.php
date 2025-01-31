@@ -377,6 +377,7 @@ class HandleInertiaRequests extends Middleware
                     route('life-quotes-list'),
                     fn ($s) => $s->attributes(['icon' => 'life'])
                 )
+                ->addIf(auth()->user()->can(PermissionsEnum::SAVINGS_QUOTES_LIST), 'Savings Quotes', route('savings-quotes-list'), fn ($s) => $s->attributes(['icon' => 'savings']))
                 ->addIf(
                     auth()->user()->can(PermissionsEnum::HomeQuotesList),
                     'Home Quotes',
