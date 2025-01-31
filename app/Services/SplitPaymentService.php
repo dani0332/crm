@@ -47,6 +47,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use App\Repositories\EmbeddedProductRepository;
+use Exception;
 
 class SplitPaymentService
 {
@@ -793,6 +795,7 @@ class SplitPaymentService
     // function to process the master payment approve
     public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0, $paymentCode = '')
     {
+        $canCaptureEp = false;
         DB::beginTransaction();
         try {
             if ($sendUpdateId > 0) {
@@ -855,6 +858,7 @@ class SplitPaymentService
 
                 }
                 $quoteModel->save();
+                $canCaptureEp = true;
                 if (! $sendUpdateId) {
                     QuoteStatusLog::create([
                         'quote_type_id' => $quoteTypeId,
@@ -889,6 +893,7 @@ class SplitPaymentService
             }
             DB::commit();
         } catch (\Exception $exception) {
+            $canCaptureEp = false;
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
                 info('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' with error: '.$exception->getMessage());
@@ -896,6 +901,19 @@ class SplitPaymentService
             }
             Log::error('Error in processMasterPaymentApprove for Quote Code: '.$quoteModel->code.': '.$exception->getMessage());
             DB::rollBack();
+        }
+
+        if ($canCaptureEp) {
+
+            try {
+                EmbeddedProductRepository::capturePayment($quoteId, $modelType);
+            } catch (Exception $e) {
+                Log::error($modelType . ' - capture embedded products failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $quoteId,
+                ]);
+            }
+            
         }
 
         return $successMessage;

@@ -87,17 +87,6 @@ class PersonalQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
-
-            if ($personalQuote->quote_type_id === QuoteTypeId::Bike) {
-                try {
-                    EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
-                } catch (Exception $e) {
-                    Log::error('PersonalQuoteObserver - capture embedded products failed', [
-                        'error' => $e->getMessage(),
-                        'uuid' => $personalQuote->uuid,
-                    ]);
-                }
-            }
         }
 
         if (
