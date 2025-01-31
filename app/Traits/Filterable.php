@@ -62,4 +62,18 @@ trait Filterable
             });
         });
     }
+
+    public function scopeResolveData($query, bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
+    {
+        return $query
+            ->when(
+                $getTotalCount,
+                fn ($q) => $q->count(),
+                fn ($query) => $query->when(
+                    $forExport,
+                    fn ($q) => $q->get(),
+                    fn ($q) => $q->when($paginted, fn ($sq) => $sq->simplePaginate(10)->withQueryString())
+                )
+            );
+    }
 }
