@@ -20,6 +20,7 @@ use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
 use App\Models\TravelQuote;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -198,8 +199,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY, 'error' => null, 'message' => null];
 
-        $title = $this->getTitle($quote->gender);
-
         $titleTraveller = [];
         $firstNameTraveller = [];
         $lastNameTraveller = [];
@@ -208,6 +207,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $nationalityTraveller = [];
 
         $customerMember = $quote->customerMembers;
+        $primaryMember = CustomerMembersRepository::where('id', $quote->primary_member_id)->first();
         foreach ($customerMember as $member) {
 
             $titleTraveller[] = $this->getTitle($member->gender);
@@ -222,9 +222,9 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $payload = [
             'quote_id' => $selectedPlan?->insurer_quote_id,
             'scheme_id' => $selectedPlan?->alliance_scheme_id,
-            'title_customer' => $title,
-            'first_name_customer' => $quote->first_name,
-            'last_name_customer' => $quote->last_name,
+            'title_customer' => $this->getTitle($primaryMember->gender),
+            'first_name_customer' => $primaryMember->first_name,
+            'last_name_customer' => $primaryMember->last_name,
             'title_traveller' => $titleTraveller,
             'first_name_traveller' => $firstNameTraveller,
             'last_name_traveller' => $lastNameTraveller,
@@ -318,7 +318,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function fetchAndUploadDocument($quote, $travelType): array
     {
-        $maxRetries = 15;
+        $maxRetries = 5;
         $retryDelay = 10; // seconds
         $retryCount = 0;
 
