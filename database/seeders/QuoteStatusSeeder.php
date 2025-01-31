@@ -58,7 +58,7 @@ class QuoteStatusSeeder extends Seeder
                 'uuid' => 'ea826923-11bb-11ee-a8a6-2a23318a2517',
                 'created_by' => 'muhammad.waris@myalfred.com',
                 'updated_by' => 'muhammad.waris@myalfred.com',
-            ]
+            ],
         ];
 
         foreach ($quoteStatusSeeder as $quoteStatus) {

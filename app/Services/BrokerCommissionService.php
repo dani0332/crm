@@ -22,10 +22,11 @@ class BrokerCommissionService
 
         $brokerCommission = $baseQuery->first();
         $isCreditCardEnabled = $brokerCommission ? true : false;
-        
+
         if ($planId) {
             $brokerCommission = (clone $baseQuery)->where('plan_id', $planId)->first();
         }
+
         return [$isCreditCardEnabled, $brokerCommission];
     }
 
@@ -37,7 +38,7 @@ class BrokerCommissionService
      * @param  int|null  $businessTypeOfInsuranceId
      * @return bool
      */
-    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $planId=null)
+    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $planId = null)
     {
         [$isCreditCardEnabled] = $this->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
 

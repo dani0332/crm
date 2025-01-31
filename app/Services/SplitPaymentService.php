@@ -1206,6 +1206,7 @@ class SplitPaymentService
                 }
             }
         }
+
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 }

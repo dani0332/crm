@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\CollectionTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Services\BrokerCommissionService;

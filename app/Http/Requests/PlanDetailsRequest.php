@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\CollectionTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
