@@ -527,10 +527,9 @@ class SageApiService
     public function postBookPolicyToSage($request, $quote)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        // check sage is enabled or not
-        $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
 
-        if (! $isSageEnabled) {
+        // check sage is enabled or not
+        if (! $this->isSageEnabled()) {
             info('Policy Book : postBookPolicyToSage : Sage is not enabled');
             $returnMessage['message'] = 'Sage is not enabled';
 
@@ -2061,9 +2060,14 @@ class SageApiService
 
     public function scheduleSageProcesses($insurerId = null): void
     {
-        $sageProcessCommandLock = Cache::lock('sage-processes-run-lock', 20);
+        $processLockKey = SageEnum::SAGE_PROCESS_LOCK_KEY;
+        $status[] = SageEnum::SAGE_PROCESS_PENDING_STATUS;
+        if ((new SageApiService)->isSageRetryTimeoutEnabled()) {
+            $status[] = SageEnum::SAGE_PROCESS_TIMEOUT_STATUS;
+        }
+        $sageProcessCommandLock = Cache::lock($processLockKey, 20);
         if ($sageProcessCommandLock->get()) {
-            $sageProcesses = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
+            $sageProcesses = SageProcess::whereIn('status', $status)
                 ->whereNotIn('insurance_provider_id', function ($query) {
                     $query->select('insurance_provider_id')
                         ->from('sage_processes')
@@ -2148,4 +2152,15 @@ class SageApiService
 
         return app(PaymentRepository::class)->handlePaymentApprove($data);
     }
+
+    public function isSageEnabled()
+    {
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
+    }
+    
+    public function isSageRetryTimeoutEnabled()
+    {
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
+    }
+
 }

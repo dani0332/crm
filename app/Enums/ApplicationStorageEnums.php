@@ -67,6 +67,7 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_LEAD_REASSIGNMENT = 'ENABLE_LEAD_REASSIGNMENT';
     public const DUBAI_NOW_CC_GROUP = 'DUBAI_NOW_CC_GROUP';
     public const SAGE_ENABLED = 'SAGE_ENABLED';
+    public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
     public const DTT_ENABLED = 'DTT_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
@@ -188,4 +189,7 @@ final class ApplicationStorageEnums extends Enum
     public const TRAVEL_RENEWALS_DAYS_THRESHOLD = 'TRAVEL_RENEWALS_DAYS_THRESHOLD';
     public const ENABLE_TAP_INTEGRATION = 'ENABLE_TAP_INTEGRATION';
     public const USER_UNAVAILABLE_TIME_THRESHOLD = 'USER_UNAVAILABLE_TIME_THRESHOLD';
+
+    /* Bike LMS Intro Email BCC */
+    public const LMS_INTRO_BIKE_EMAIL_BCC = 'LMS_INTRO_BIKE_EMAIL_BCC';
 }
