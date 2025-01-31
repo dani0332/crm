@@ -232,10 +232,10 @@ class RetentionReportService extends BaseService
             $currentDate = Carbon::now();
 
             // Calculate the start date of the previous month
-            $previousMonthStartDate = $currentDate->copy()->subMonth()->startOfMonth();
+            $previousMonthStartDate = $currentDate->copy()->subMonthNoOverflow()->startOfMonth();
 
             // Calculate the end date of the next month
-            $nextMonthEndDate = $currentDate->copy()->addMonth()->endOfMonth();
+            $nextMonthEndDate = $currentDate->copy()->addMonthNoOverflow()->endOfMonth();
 
             // Format the dates according to the specified date format
             $previousMonthStartDateFormatted = $previousMonthStartDate->format($this->dateFormat);
