@@ -13,6 +13,7 @@ use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\HandleHealthAdvisorUpdated;
 use App\Listeners\HandleTravelAdvisorUpdated;
 use App\Listeners\Health\HandleHealthTransactionApproved;
+use App\Listeners\Impersonation\HandleImpersonatedSession;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
 use App\Listeners\UpdateCustomerEmail;
@@ -23,6 +24,7 @@ use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Lab404\Impersonate\Events\TakeImpersonation;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -58,6 +60,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         HealthTransactionApproved::class => [
             HandleHealthTransactionApproved::class,
+        ],
+        TakeImpersonation::class => [
+            HandleImpersonatedSession::class,
         ],
     ];
 
