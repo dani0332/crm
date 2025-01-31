@@ -92,7 +92,7 @@ class SagePayloadFactory
     public static function createAPInvoicePrem($request, $type = SageEnum::SCT_STRAIGHT, $reversalDetails = '', $extras = [])
     {
         $optionalFields = self::createOptionalFields($request);
-        //Additional Option Field just for AP Invoice
+        // Additional Option Field just for AP Invoice
         $optionalFields[] = [
             'OptionalField' => 'IGTC',
             'Value' => 'N',
@@ -179,7 +179,7 @@ class SagePayloadFactory
     public static function createAPInvoiceSplitPayments($request, $paymentSplits, $type = SageEnum::SCT_STRAIGHT, $reversalDetails = '', $extras = [])
     {
         $optionalFields = self::createOptionalFields($request);
-        //Additional Option Field just for AP Invoice
+        // Additional Option Field just for AP Invoice
         $optionalFields[] = [
             'OptionalField' => 'IGTC',
             'Value' => 'N',
@@ -398,7 +398,7 @@ class SagePayloadFactory
                     'TaxClass1' => $taxClass,
                     'TaxAmount1' => roundNumber($request->vatOnCommission),
                     'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
-                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), /// commissionIncludingVat means commission_vat_applicable,
+                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // / commissionIncludingVat means commission_vat_applicable,
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
@@ -1235,7 +1235,7 @@ class SagePayloadFactory
         $sageRequest->manager = $managerName;
         $sageRequest->advisorDepartment = $advisorDepartment;
 
-        //calculate vat
+        // calculate vat
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
         $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
         //        $sageRequest->vatOnPremium = isset($quote->vat) ?: (isset($quote->price_with_vat) ? (floatval($quote->price_with_vat) - floatval($quote->price_vat_applicable ?? 0)) : 0); TODO:: This was added previous endorsement function, need to verify
@@ -1277,7 +1277,7 @@ class SagePayloadFactory
             $insurerGlLiaiblityAccount = $insuranceProvider?->gl_liaiblity_account;
         }
 
-        //Insurer GL Account and Vendor Number
+        // Insurer GL Account and Vendor Number
         $sageRequest->insurerGlLiaiblityAccount = $insurerGlLiaiblityAccount;
         $sageRequest->sageVenderId = $sageVenderId;
         $sageRequest->sageInsurerCustomerId = $sageInsurerCustomerId;

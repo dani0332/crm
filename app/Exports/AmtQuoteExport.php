@@ -45,7 +45,6 @@ class AmtQuoteExport
             $quote->code,
             $quote->first_name,
             $quote->last_name,
-            $quote->last_name,
             optional($quote->quoteStatus)->text,
             optional($quote->advisor)->name,
             $quote->premium,

@@ -316,7 +316,7 @@ class RenewalsImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wit
                     $onFailure('Product Type should not exceed length of 100 characters');
                 }
                 if (strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
-                    //$onFailure('Product Type should be either Comprehensive or Third Party  Only');
+                    // $onFailure('Product Type should be either Comprehensive or Third Party  Only');
                 }
             },
             '*.6' => function ($attribute, $value, $onFailure) { // Sales Channel

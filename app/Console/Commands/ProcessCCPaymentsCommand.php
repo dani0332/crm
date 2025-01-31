@@ -41,7 +41,9 @@ class ProcessCCPaymentsCommand extends Command
             CcPaymentProcess::where('status', PaymentProcessJobEnum::PENDING)
                 ->chunk(100, function ($pendingCCRecords) {
                     foreach ($pendingCCRecords as $pendingCCRecord) {
-                        ProcessCCPaymentJob::dispatch($pendingCCRecord);
+                        ProcessCCPaymentJob::dispatch($pendingCCRecord->id);
+                        $pendingCCRecord->update(['status' => PaymentProcessJobEnum::QUEUED]);
+                        info('Child payment code: '.$pendingCCRecord->splitPayment->code.' CC Payments Job ProcessCcPayments dispatched');
                     }
                 });
         } else {

@@ -256,15 +256,30 @@
             font-size: 12px;
         }
 
-        .provider-logo {
+        .image-wrapper {
+            min-width: 150px;
+            min-height: 150px;
             width: 150px;
-            position: absolute;
-            top: 55%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            height: 150px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+
+        .provider-logo {
             max-width: 100%;
             max-height: 100%;
+            object-fit: contain;
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
+       
 
         .no-border {
             border: none;
@@ -729,7 +744,9 @@
                                     $providerLogoImage = public_path('images/insurance_providers/default.png');
                                 }
                             @endphp
-                            <img class="provider-logo" alt="" src="{{ $providerLogoImage }}" />
+                            <div class="image-wrapper">
+                                <img class="provider-logo" src="{{ $providerLogoImage }}" alt="Provider Logo" />
+                              </div>
                         </th>
                     @endforeach
                 </tr>

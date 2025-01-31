@@ -15,6 +15,8 @@ class SearchService extends BaseService
 {
     use TeamHierarchyTrait;
 
+    public $paymentsDateFilters = ['payment_due_date', 'payment_date'];
+
     public function getSearchLeads($isEndorsementList = false, $isExport = false)
     {
         if (! empty(request()->except('list'))) {
@@ -57,7 +59,7 @@ class SearchService extends BaseService
 
                 $selectColumns = array_merge($selectColumns, $suSelectColumns);
                 PersonalQuote::applyRequestTableJoins($baseQuery, request());
-                $this->searchQuoteQueryFilters($baseQuery, request(), true);
+                $this->searchQuoteQueryFilters($baseQuery, request(), $isEndorsementList);
                 $selectColumns = $this->getFilteredCompanyCases(request(), $selectColumns);
 
             } else {
@@ -85,15 +87,18 @@ class SearchService extends BaseService
             $baseQuery->orderBy($baseTable.'.'.(request()->sortBy ?? 'updated_at'), request()->sortType ?? 'desc');
 
             if ($isExport) {
+                $excelExportColumns = [];
                 if (! request()->has('insured_name')) {
                     $baseQuery->leftJoin('customer', 'personal_quotes.customer_id', 'customer.id');
+                    $excelExportColumns = array_merge($excelExportColumns, ['customer.first_name as customer_first_name', 'customer.last_name as customer_last_name']);
                 }
 
                 if (! request()->has('department')) {
                     $baseQuery->leftJoin('users', 'personal_quotes.advisor_id', 'users.id');
                 }
 
-                if (! request()->has('payment_status') && request()->has('date_type') && ! in_array(request()->date_type, ['payment_due_date', 'payment_date'])) {
+                if (! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters)) && ! request()->has('payment_status')
+                    && ! request()->has('insurer_tax_invoice_number') && ! request()->has('insurer_commission_tax_invoice_number')) {
                     if ($isEndorsementList) {
                         $baseQuery->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
                     } else {
@@ -107,7 +112,7 @@ class SearchService extends BaseService
                     $baseQuery->leftJoin('insurance_provider', 'payments.insurance_provider_id', 'insurance_provider.id');
                 }
 
-                $excelExportColumns = ['customer.first_name as customer_first_name', 'customer.last_name as customer_last_name', 'users.name as advisor_name', 'payments.total_price', 'insurance_provider.text as insurance_provider'];
+                $excelExportColumns = array_merge($excelExportColumns, ['payments.total_price', 'insurance_provider.text as insurance_provider']);
                 $baseQuery->select(array_merge($selectColumns, $excelExportColumns));
 
                 return $baseQuery->get();
@@ -259,12 +264,11 @@ class SearchService extends BaseService
         }
 
         if (request()->has('date_type') && request()->has('date_range')) {
-            $paymentsDateFilters = ['payment_due_date', 'payment_date'];
             $baseTableDateFilters = ['created_at', 'policy_booking_date', 'policy_start_date', 'policy_expiry_date', 'transaction_approved_at'];
             $startDate = date('Y-m-d 00:00:00', strtotime($request->date_range[0]));
             $endDate = date('Y-m-d 23:59:59', strtotime($request->date_range[1]));
 
-            if (in_array($request->date_type, $paymentsDateFilters)) {
+            if (in_array($request->date_type, $this->paymentsDateFilters)) {
                 if ($isSendUpdateFilter) {
                     $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
                 } else {
@@ -291,7 +295,7 @@ class SearchService extends BaseService
         }
 
         if (request()->has('payment_status') && ! isset(request()->code)) {
-            if (request()->has('date_type') && ! in_array($request->date_type, ['payment_due_date', 'payment_date'])) {
+            if (request()->has('date_type') && ! in_array($request->date_type, $this->paymentsDateFilters)) {
                 if ($isSendUpdateFilter) {
                     $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
                 } else {
@@ -322,18 +326,31 @@ class SearchService extends BaseService
             $query->whereIn('personal_quotes.advisor_id', request()->advisors);
         }
 
-        if (request()->has('insurer_tax_invoice_number') && ! isset(request()->code)) {
-            if (! request()->has('su_code') && ! $isSendUpdateFilter) {
-                $query->join('send_update_logs', 'personal_quotes.id', 'send_update_logs.personal_quote_id');
-            }
-            $query->where('send_update_logs.insurer_tax_invoice_number', request()->insurer_tax_invoice_number);
-        }
+        if ((request()->has('insurer_tax_invoice_number') || request()->has('insurer_commission_tax_invoice_number'))
+            && ! isset(request()->code) && ! request()->has('payment_status')
+            && ! (request()->has('date_type') && in_array(request()->date_type, $this->paymentsDateFilters))) {
 
-        if (request()->has('insurer_commission_tax_invoice_number') && ! isset(request()->code)) {
-            if (! request()->has('su_code') && ! request()->has('insurer_tax_invoice_number') && ! $isSendUpdateFilter) {
-                $query->join('send_update_logs', 'personal_quotes.id', 'send_update_logs.personal_quote_id');
+            if (! request()->has('su_code') && ! $isSendUpdateFilter) {
+                $query->join('payments', 'personal_quotes.code', 'payments.code');
+
+                if (request()->has('insurer_tax_invoice_number')) {
+                    $query->where('payments.insurer_tax_number', request()->insurer_tax_invoice_number);
+                }
+
+                if (request()->has('insurer_commission_tax_invoice_number')) {
+                    $query->where('payments.insurer_commmission_invoice_number', request()->insurer_commission_tax_invoice_number);
+                }
+            } else {
+                $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
+
+                if (request()->has('insurer_tax_invoice_number')) {
+                    $query->where('send_update_logs.insurer_tax_invoice_number', request()->insurer_tax_invoice_number);
+                }
+
+                if (request()->has('insurer_commission_tax_invoice_number')) {
+                    $query->where('send_update_logs.insurer_commission_invoice_number', request()->insurer_commission_tax_invoice_number);
+                }
             }
-            $query->where('send_update_logs.insurer_commission_invoice_number', request()->insurer_commission_tax_invoice_number);
         }
 
         if (request()->has('update_status') && ! isset(request()->su_code)) {
