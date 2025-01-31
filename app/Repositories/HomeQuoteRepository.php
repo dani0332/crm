@@ -44,7 +44,7 @@ class HomeQuoteRepository extends BaseRepository
         $query->orderBy('home_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
-            //PD Revert
+            // PD Revert
             return 0;
 
             // return $query->count();

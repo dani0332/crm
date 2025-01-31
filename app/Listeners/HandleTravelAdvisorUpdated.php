@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
-use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendFTCEmailJob;
 use App\Models\TravelQuote;
@@ -49,17 +48,9 @@ class HandleTravelAdvisorUpdated
         if ($lead) {
             SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addSeconds(5));
         }
-        $skippableSources = [LeadSourceEnum::INSLY];
+        $skippableSources = [LeadSourceEnum::INSLY, LeadSourceEnum::RENEWAL_UPLOAD];
         if (in_array($lead->source, $skippableSources)) {
             info(self::class.' - lead is source is '.$lead->source.' upload. Skipping intro email job');
-
-            return;
-        }
-
-        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-            info(self::class.' - Going to dispatch SendOCBTravelRenewalIntroEmailJob ................');
-            SendOCBTravelRenewalIntroEmailJob::dispatch($lead->uuid)->delay(now()->addSeconds(30));
-            info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$lead->uuid} | Time:  ".now());
 
             return;
         }

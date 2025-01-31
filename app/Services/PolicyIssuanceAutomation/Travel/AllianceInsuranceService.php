@@ -20,6 +20,7 @@ use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
 use App\Models\TravelQuote;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -198,8 +199,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY, 'error' => null, 'message' => null];
 
-        $title = $this->getTitle($quote->gender);
-
         $titleTraveller = [];
         $firstNameTraveller = [];
         $lastNameTraveller = [];
@@ -208,6 +207,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $nationalityTraveller = [];
 
         $customerMember = $quote->customerMembers;
+        $primaryMember = CustomerMembersRepository::where('id', $quote->primary_member_id)->first();
         foreach ($customerMember as $member) {
 
             $titleTraveller[] = $this->getTitle($member->gender);
@@ -222,9 +222,9 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $payload = [
             'quote_id' => $selectedPlan?->insurer_quote_id,
             'scheme_id' => $selectedPlan?->alliance_scheme_id,
-            'title_customer' => $title,
-            'first_name_customer' => $quote->first_name,
-            'last_name_customer' => $quote->last_name,
+            'title_customer' => $this->getTitle($primaryMember->gender),
+            'first_name_customer' => $primaryMember->first_name,
+            'last_name_customer' => $primaryMember->last_name,
             'title_traveller' => $titleTraveller,
             'first_name_traveller' => $firstNameTraveller,
             'last_name_traveller' => $lastNameTraveller,
@@ -253,8 +253,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $premium = $issuePolicyResult?->premium;
         $priceVatApplicable = $premium / (1 + ((float) $this->vat / 100));
         $policyIssuanceDate = Carbon::now();
-        /* Last Cover day should be the expiry date as per business requirement */
-        $policyExpiryDate = Carbon::parse($quote->policy_start_date)->addDays($quote->days_cover_for)->subDay();
+        $coverDays = $this->calculateCoverDaysForExpiryDate($quote, $travelType);
+        $policyExpiryDate = Carbon::parse($quote->policy_start_date)->addDays($coverDays)->subDay();  /* Last Cover day should be the expiry date as per business requirement */
 
         $quote->update([
             'insurer_policy_id' => $insurerPolicyId,
@@ -318,7 +318,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function fetchAndUploadDocument($quote, $travelType): array
     {
-        $maxRetries = 15;
+        $maxRetries = 5;
         $retryDelay = 10; // seconds
         $retryCount = 0;
 
@@ -525,7 +525,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
-        } elseif (! $policyIssuance) { /*&& $quote->insurer_api_status_id*/
+        } elseif (! $policyIssuance) { /* && $quote->insurer_api_status_id */
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isPolicyDocumentUploadDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
@@ -632,7 +632,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $fileContents = Http::get($documentUrl);
         [$mimeType , $docName] = $this->getMimeTypeAndFileName($documentUrl);
 
-        //upload file to azure
+        // upload file to azure
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);
@@ -727,6 +727,18 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $url = $this->baseUrl.$endPoint;
 
         return Http::timeout(20)->withHeaders($headers)->post($url, $payload);
+    }
+
+    private function calculateCoverDaysForExpiryDate($quote, $travelType): mixed
+    {
+        $coverDays = $quote->days_cover_for;
+        $isInboundLead = $travelType === TravelQuoteEnum::ALLIANCE_IN_BOUND;
+        $isMultiTripLead = $quote->coverage_code === TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP;
+        if ($isInboundLead && $isMultiTripLead) { /* Multi Trip Inbound should have maximum 180 days cover */
+            $coverDays = 180;
+        }
+
+        return $coverDays;
     }
 
 }

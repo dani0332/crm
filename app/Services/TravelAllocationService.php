@@ -96,6 +96,17 @@ class TravelAllocationService extends AllocationService
             return null;
         }
 
+        info(self::class."::fetchLead - Travel ILA uuid: {$travelQuote->uuid}", [
+            'uuid' => $travelQuote->uuid,
+            'payment_status_id' => $travelQuote->payment_status_id,
+            'sic_advisor_requested' => $travelQuote->sic_advisor_requested,
+            'quote_status_id' => $travelQuote->quote_status_id,
+            'lead_allocation_failed_at' => $travelQuote->lead_allocation_failed_at,
+            'sic_flow_enabled' => $travelQuote->sic_flow_enabled,
+            'parent_quote_id' => $travelQuote->parent_id,
+            'source' => $travelQuote->source,
+        ]);
+
         if ($this->verifyFetchLeadPreChecks($travelQuote, $quoteId, $tracker) === false) {
             return null;
         }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Enums\QuoteTypes;
+use App\Facades\Ken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
@@ -227,5 +228,10 @@ class ApiController extends Controller
         app(QuoteStatusService::class)->markQuoteAsStale($quoteTypeId, $request->quote_uuid);
 
         return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
+    }
+
+    public function Ken2Connectivity()
+    {
+        return Ken::renewalRequest('/get-connectivity-check', 'get');
     }
 }

@@ -114,6 +114,16 @@ export const useRules = () => {
     );
   };
 
+  const isRequiredNumber = v => {
+    if (v === 0) return true;
+
+    if (!v) return 'This field is required';
+
+    return (
+      /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
+    );
+  };
+
   return {
     name,
     isEmail,
@@ -134,5 +144,6 @@ export const useRules = () => {
     vat,
     amount_with_vat,
     emptyOrNumericAndNoSpecialChar,
+    isRequiredNumber,
   };
 };

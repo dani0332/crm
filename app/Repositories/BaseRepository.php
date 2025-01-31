@@ -61,7 +61,7 @@ abstract class BaseRepository
      */
     public function forwardScopeCall($method, $parameters)
     {
-        //return $this->forwardCallTo($this, $method, $parameters);
+        // return $this->forwardCallTo($this, $method, $parameters);
         return $this->$method(...$parameters);
     }
 
