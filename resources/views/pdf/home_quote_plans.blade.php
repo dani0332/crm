@@ -512,13 +512,7 @@
                 ->value ?? 0;
 
         $buyNow = 'Buy Now';
-        $buyNowLink = $websitURL . '/home-insurance/quote/' . $quote->uuid . '/payment/?planId=';
-        if (isset($hasAdultAndSeniorMember)) {
-            if ($hasAdultAndSeniorMember == true) {
-                $buyNow = 'Add to Cart';
-                $buyNowLink = $websitURL . '/home-insurance/quote/' . $quote->uuid . '/?planAddToCart=';
-            }
-        }
+        $buyNowLink = $websitURL . '/home-insurance/quote/' . $quote->uuid . '/payment/=';
         if (isset($selectedPlanIds)) {
         } else {
             $selectedPlanIds = [];
@@ -1074,7 +1068,12 @@
                                             $buyNowfullLink = '#';
                                             $buyNowText = 'Selected';
                                         } else {
-                                            $buyNowfullLink = $buyNowLink . $planId;
+                                            $buyNowfullLink =
+                                                $buyNowLink .
+                                                '?providerCode=' .
+                                                $plans[$planId]->providerCode .
+                                                '&planId=' .
+                                                $planId;
                                             $buyNowText = $buyNow;
                                         }
 
@@ -1174,7 +1173,12 @@
                                             $buyNowfullLink = '#';
                                             $buyNowText = 'Selected';
                                         } else {
-                                            $buyNowfullLink = $buyNowLink . $planId;
+                                            $buyNowfullLink =
+                                                $buyNowLink .
+                                                '?providerCode=' .
+                                                $plans[$planId]->providerCode .
+                                                '&planId=' .
+                                                $planId;
                                             $buyNowText = $buyNow;
                                         }
                                     $return_value = `<a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}" >'.$buyNowText.'</a>`; @endphp
