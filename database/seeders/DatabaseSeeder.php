@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             TravelRenewalTeamSeeder::class,
             PermissionsSeeder::class,
-            SavingsQuoteData::class,
+            SavingsQuoteDataSeeder::class,
         ]);
     }
 }

@@ -5,11 +5,13 @@ namespace Database\Seeders;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\QuoteStatus;
+use App\Models\QuoteStatusMap;
 use App\Models\QuoteType;
 use Database\Seeders\Traits\PermissionableSeeder;
 use Illuminate\Database\Seeder;
 
-class SavingsQuoteData extends Seeder
+class SavingsQuoteDataSeeder extends Seeder
 {
     use PermissionableSeeder;
 
@@ -19,6 +21,8 @@ class SavingsQuoteData extends Seeder
     public function run(): void
     {
         $this->upsertQuoteType();
+        $this->mapQuoteStatuses();
+
         $this->seedRoles([RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager]);
         $this->seedPermissions([
             PermissionsEnum::SAVINGS_QUOTES_LIST,
@@ -42,5 +46,28 @@ class SavingsQuoteData extends Seeder
         } else {
             QuoteType::where('code', $quoteType['code'])->update($quoteType);
         }
+    }
+
+    private function mapQuoteStatuses()
+    {
+        $quoteStatuses = QuoteStatus::oldest()->get();
+
+        $sortOrder = 0;
+        $quoteStatuses->each(function ($quoteStatus) use (&$sortOrder) {
+            $quoteStatusMap = QuoteStatusMap::where('quote_status_id', $quoteStatus->id)
+                ->where('quote_type_id', QuoteTypes::SAVINGS->id())
+                ->exists();
+
+            if (! $quoteStatusMap) {
+                $sortOrder++;
+                QuoteStatusMap::create([
+                    'quote_status_id' => $quoteStatus->id,
+                    'quote_type_id' => QuoteTypes::SAVINGS->id(),
+                    'sort_order' => $sortOrder,
+                    'created_by' => 'usman.iqbal@myalfred.com',
+                    'updated_by' => 'usman.iqbal@myalfred.com',
+                ]);
+            }
+        });
     }
 }
