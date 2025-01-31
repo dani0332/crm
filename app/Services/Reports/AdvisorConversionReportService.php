@@ -117,6 +117,8 @@ class AdvisorConversionReportService extends BaseService
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ])
+            &&
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
@@ -154,6 +156,15 @@ class AdvisorConversionReportService extends BaseService
         ];
     }
 
+    private function getSaleStatuses()
+    {
+        return [
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+        ];
+    }
+
     private function getBindings(string $table)
     {
         $excludedSources = implode(',', array_map(fn ($source) => "'$source'", $this->getExcludedSources()));
@@ -162,7 +173,7 @@ class AdvisorConversionReportService extends BaseService
             ':table' => $table,
             ':excludedSources' => $excludedSources,
             ':quoteStatusDate' => $this->getAdvisorConversionQuoteStatusDate(),
-            ':policyBookedStatus' => QuoteStatusEnum::PolicyBooked,
+            ':saleStatuses' => implode(',', $this->getSaleStatuses()),
             ':approvedStatuses' => implode(',', $this->getApprovedStatuses()),
             ':badLeadsStatuses' => implode(',', $this->getBadLeadStatuses()),
             ':imRenewal' => QuoteStatusEnum::IMRenewal,
@@ -179,7 +190,7 @@ class AdvisorConversionReportService extends BaseService
             return strtr('SUM(CASE WHEN (
                             ((:table.payment_status_id in (:paidStatuses) OR :table.quote_status_id in (:approvedStatuses)) and :table.transaction_approved_at is NULL) OR
                             (:table.quote_status_id in (:approvedStatuses) and :table.transaction_approved_at < ":quoteStatusDate") OR
-                            (:table.quote_status_id = :policyBookedStatus and :table.transaction_approved_at >= ":quoteStatusDate")
+                            (:table.quote_status_id in (:saleStatuses) and :table.transaction_approved_at >= ":quoteStatusDate")
                         ) and :table.source '.$sourceCondition.' (:excludedSources) THEN 1 ELSE 0 END
                     ) as '.$as, $this->getBindings($table));
         };
@@ -246,6 +257,8 @@ class AdvisorConversionReportService extends BaseService
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ])
+            &&
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
         ) {
             $userIds = $this->walkTree(auth()->user()->id, $lob);
             if (auth()->user()->isManagerORDeputy()) {
@@ -373,9 +386,9 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
         ];
 
-        $lobs = array_filter($lobs, function ($permission) {
-            return Auth::user()->can($permission);
-        });
+        $lobs = array_filter($lobs, function ($permission, $lob) {
+            return Auth::user()->can($permission) || Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($lob);
+        }, ARRAY_FILTER_USE_BOTH);
 
         $lobs = QuoteTypeRepository::GetList()
             ->filter(function ($lob) use ($lobs) {
@@ -384,11 +397,11 @@ class AdvisorConversionReportService extends BaseService
             ->pluck('code', 'text')
             ->toArray();
 
-        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT)) {
+        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::CORPLINE) && Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS))) {
             $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
         }
 
-        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT)) {
+        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT) || (userHasProduct(quoteTypeCode::GroupMedical) && Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS))) {
             $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
         }
 
@@ -541,7 +554,7 @@ class AdvisorConversionReportService extends BaseService
                         })->orWhere(function ($nsq) use ($table) {
                             $nsq->where("{$table}.transaction_approved_at", '<', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getApprovedStatuses());
                         })->orWhere(function ($nsq) use ($table) {
-                            $nsq->where("{$table}.transaction_approved_at", '>=', $this->getAdvisorConversionQuoteStatusDate())->where("{$table}.quote_status_id", QuoteStatusEnum::PolicyBooked);
+                            $nsq->where("{$table}.transaction_approved_at", '>=', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getSaleStatuses());
                         });
                     });
                 })
