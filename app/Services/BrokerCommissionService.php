@@ -14,12 +14,20 @@ class BrokerCommissionService
      * @param  int|null  $businessTypeOfInsuranceId
      * @return BrokerCommission|null
      */
-    public function getBrokerCommission($quoteTypeId, $insuranceProviderId)
+    public function getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId = null)
     {
-        $brokerCommissionQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)->active();
-        $brokerCommissionQuery->where('quote_type_id', $quoteTypeId);
+        $baseQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->active();
 
-        return $brokerCommissionQuery->first();
+        $brokerCommission = $baseQuery->first();
+        $isCreditCardEnabled = $brokerCommission ? true : false;
+
+        if ($planId) {
+            $brokerCommission = (clone $baseQuery)->where('plan_id', $planId)->first();
+        }
+
+        return [$isCreditCardEnabled, $brokerCommission];
     }
 
     /**
@@ -30,10 +38,10 @@ class BrokerCommissionService
      * @param  int|null  $businessTypeOfInsuranceId
      * @return bool
      */
-    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId)
+    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $planId = null)
     {
-        $brokerCommission = $this->getBrokerCommission($quoteTypeId, $insuranceProviderId);
+        [$isCreditCardEnabled] = $this->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
 
-        return $brokerCommission ? $brokerCommission->credit_card_enabled : false;
+        return $isCreditCardEnabled;
     }
 }

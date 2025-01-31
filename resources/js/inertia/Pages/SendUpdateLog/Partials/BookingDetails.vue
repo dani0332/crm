@@ -58,7 +58,6 @@ const props = defineProps({
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
   disableMainBtn: String,
-  disableCommissionFields: Array,
 });
 
 const state = reactive({
@@ -286,6 +285,8 @@ const bookingDetailsForm = useForm({
   price_with_vat: props.sendUpdateLog?.price_with_vat || '0.00',
   // new entry section related.
   reversal_invoice: props.sendUpdateLog?.reversal_invoice || null,
+  isCommissionDisabled: props?.bookingDetails?.isCommissionDisabled,
+  disabledCommissionTooltip: props?.bookingDetails?.disabledCommissionTooltip,
 });
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
@@ -479,7 +480,7 @@ function convertToNegative(value) {
   }
   value = isNaN(value) ? 0 : Number(value);
 
-  return value.toFixed(2);
+  return (Math.round(value * 100) / 100).toFixed(2);
 }
 
 function thousandSeparator(value) {
@@ -2132,7 +2133,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-tooltip v-if="disableCommissionVatApplicable || props.disableCommissionFields[0]">
+                  <x-tooltip v-if="disableCommissionVatApplicable || bookingDetailsForm.isCommissionDisabled">
                     <x-input
                       v-model="bookingDetailsForm.commission_vat_applicable"
                       class="!mb-0 w-full"
@@ -2145,7 +2146,7 @@ watch(
                       :icon-left="isNegativeValue ? 'minus' : ''"
                     />
                     <template #tooltip>
-                      {{ props.disableCommissionFields[0] ? props.disableCommissionFields[1] : 'This option is disabled because Commission (VAT not applicable) has already been entered.' }}
+                      {{ bookingDetailsForm.isCommissionDisabled ? bookingDetailsForm.disabledCommissionTooltip : 'This option is disabled because Commission (VAT not applicable) has already been entered.' }}
                     </template>
                   </x-tooltip>
                   <x-input
@@ -2220,7 +2221,7 @@ watch(
                   </x-tooltip>
                 </div>
                 <div v-if="props.isCommVatNotAppEnabled">
-                  <x-tooltip v-if="disableCommissionVatNotApplicable || props.disableCommissionFields[0]">
+                  <x-tooltip v-if="disableCommissionVatNotApplicable || bookingDetailsForm.isCommissionDisabled">
                     <x-input
                       type="number"
                       v-model="bookingDetailsForm.commission_vat_not_applicable"
@@ -2234,7 +2235,7 @@ watch(
                       :icon-left="isNegativeValue ? 'minus' : ''"
                     />
                     <template #tooltip>
-                      {{ props.disableCommissionFields[0] ? props.disableCommissionFields[1] : 'This option is disabled because Commission (VAT applicable) has already been entered.' }}
+                      {{ bookingDetailsForm.isCommissionDisabled ? bookingDetailsForm.disabledCommissionTooltip : 'This option is disabled because Commission (VAT applicable) has already been entered.' }}
                     </template>
                   </x-tooltip>
                   <x-input

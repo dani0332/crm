@@ -43,7 +43,6 @@ const props = defineProps({
   isCommVatNotAppEnabled: Boolean,
   isSentOrBooked: Boolean,
   disableMainBtn: String,
-  disableCommissionFields: Array,
 });
 
 const page = usePage();
@@ -118,7 +117,7 @@ const sendUpdateForm = useForm({
   car_addons: props.sendUpdateLog?.car_addons || null,
   emirates_id: props.sendUpdateLog?.emirates_id || null,
   seating_capacity: props.sendUpdateLog?.seating_capacity || null,
-  endorsement_number: props.sendUpdateLog?.endorsement_number || null,
+  endorsement_number: props.sendUpdateLog?.endorsement_number || null
 });
 
 onMounted(() => {
@@ -676,7 +675,6 @@ const isLegacyPolicy = computed(() => {
       :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
       :is-comm-vat-not-app-enabled="props.isCommVatNotAppEnabled"
       :disable-main-btn="props.disableMainBtn"
-      :disable-commission-fields="props.disableCommissionFields"
     />
 
     <AuditLogs

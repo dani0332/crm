@@ -38,6 +38,7 @@ const openSidebar = ref(false);
 const minimizeSidebar = ref(false);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const impersonatingUser = page.props.impersonatingUser;
 const bannerInfo = computed(() => {
   let { quote_route, total_count } = page.props.totalQuotesCount;
 
@@ -333,6 +334,31 @@ const isReceiveNotificationsEnabled = computed(() => {
                 </x-button>
                 <template #content>
                   <x-popover-container class="p-2">
+                    <a
+                      v-if="impersonatingUser"
+                      class="flex gap-2 items-center px-2 group mb-2"
+                      :href="route('login-as.leave')"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="w-6 h-6 text-success-600"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                        />
+                      </svg>
+                      <span
+                        class="text-sm font-semibold group-hover:text-error-600"
+                      >
+                        Back to {{ impersonatingUser.name }}
+                      </span>
+                    </a>
                     <button
                       class="flex gap-2 items-center px-2 group"
                       @click="onLogout"
