@@ -532,15 +532,8 @@ class SendEmailCustomerService extends BaseService
                     'name' => $emailData->advisorName,
                 ];
             }
-            $bccAdditional = [];
-            if ($quoteType === QuoteTypes::CAR) {
-                $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->first()->value;
-                foreach (explode(',', $additionalBcc) as $additionalContact) {
-                    $bccAdditional[] = [
-                        'email' => $additionalContact,
-                    ];
-                }
-            }
+
+            $bccAdditional = $this->getBccAdditionalEmails($quoteType);
 
             $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
             $emailData->env = $subjectEnvTag;
@@ -1509,5 +1502,37 @@ class SendEmailCustomerService extends BaseService
         } else {
             info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:'.$quote->uuid.' | Time:'.now());
         }
+    }
+
+    public function getBccAdditionalEmails(QuoteTypes $quoteType): array
+    {
+        $bccAdditional = [];
+
+        $storageEnum = match ($quoteType) {
+            QuoteTypes::CAR => ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC,
+            QuoteTypes::BIKE => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC,
+            default => null,
+        };
+
+        if ($storageEnum === null) {
+            return $bccAdditional;
+        }
+
+        $additionalBcc = ApplicationStorage::where('key_name', $storageEnum)->first();
+
+        if ($additionalBcc === null) {
+            return $bccAdditional;
+        }
+
+        foreach (explode(',', $additionalBcc->value) as $additionalContact) {
+            $email = trim($additionalContact);
+            if (! empty($email)) {
+                $bccAdditional[] = [
+                    'email' => $email,
+                ];
+            }
+        }
+
+        return $bccAdditional;
     }
 }
