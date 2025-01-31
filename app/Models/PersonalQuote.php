@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
+use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
@@ -16,7 +18,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PersonalQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, Filterable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $guarded = [];
     public $filterables = [
@@ -329,5 +331,10 @@ class PersonalQuote extends Model implements AuditableContract
     public function renewalBatchModel()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
+    }
+
+    public function scopeSavings($query)
+    {
+        return $query->where('quote_type_id', QuoteTypes::SAVINGS->id());
     }
 }
