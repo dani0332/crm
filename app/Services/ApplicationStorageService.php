@@ -220,6 +220,7 @@ class ApplicationStorageService extends BaseService
 
         return true;
     }
+    
     public function updateCarLeadFetchSequence()
     {
         $applicationStorage = ApplicationStorage::where('key_name', 'CAR_LEAD_PICKUP_FIFO')->first();

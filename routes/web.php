@@ -81,8 +81,6 @@ use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
-use App\Jobs\ProcessCCPaymentJob;
-use App\Models\CcPaymentProcess;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -720,10 +718,3 @@ Route::get('/add-batch-number', function () {
 //     }
 
 // });
-
-Route::get('/test/{id}', function () {
-    $ccProcessData = CcPaymentProcess::find(request()->id);
-    $ccProcess = new ProcessCCPaymentJob($ccProcessData);
-    $ccProcess->handle();
-    echo 'Done';
-});
