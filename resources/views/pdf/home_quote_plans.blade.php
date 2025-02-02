@@ -326,7 +326,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 145px;
+            height: 130px;
             padding: 0;
             background-color: #1d83bc;
             color: #fff;
@@ -703,43 +703,13 @@
                 'type' => 'additionalCover',
             ],
             [
-                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForContents',
-                'title' => 'Loss of rent or cost of alternative accommodation for Contents',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'fatalInjuryBenefit',
-                'title' => 'Fatal injury benefit',
+                'code' => 'fatalInjuryBenefitProvidedDeathEnsuesWithin3MonthsOfSuchInjury',
+                'title' => 'Fatal injury benefit (provided death ensues within 3 months of such injury)',
                 'type' => 'additionalCover',
             ],
             [
                 'code' => 'visitorsPersonalEffects',
                 'title' => 'Visitor\'s personal effects',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'occupiersPersonalAndEmployersLiability',
-                'title' => 'Occupiers personal and employers liability',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'tenantsLiability',
-                'title' => 'Tenant\'s liability',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'homeAssistance',
-                'title' => 'Home assistance',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'legalAssistance',
-                'title' => 'Legal assistance',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'fatalInjuryBenefitProvidedDeathEnsuesWithin3MonthsOfSuchInjury',
-                'title' => 'Fatal injury benefit (provided death ensues within 3 months of such injury)',
                 'type' => 'additionalCover',
             ],
             [
@@ -767,26 +737,41 @@
                 'title' => 'Loss of Passport, Driving License, Work permit, Residence Permit',
                 'type' => 'additionalCover',
             ],
+            [
+                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForContents',
+                'title' => 'Loss of rent or cost of alternative accommodation for Contents',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'fatalInjuryBenefit',
+                'title' => 'Fatal injury benefit',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'occupiersPersonalAndEmployersLiability',
+                'title' => 'Occupiers personal and employers liability',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'tenantsLiability',
+                'title' => 'Tenant\'s liability',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'homeAssistance',
+                'title' => 'Home assistance',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'legalAssistance',
+                'title' => 'Legal assistance',
+                'type' => 'additionalCover',
+            ],
 
             ['code' => 'spacer', 'title' => ''],
 
             // Building
             ['code' => 'heading', 'title' => 'Building'],
-            [
-                'code' => 'damageToServicesPipesAndCables',
-                'title' => 'Damage to Services (Pipes and Cables)',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'breakageOfFixedGlassAndSanitaryFixtures',
-                'title' => 'Breakage of fixed glass and sanitary fixtures',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'ownersLiabilityToThePublic',
-                'title' => 'Owner\'s liability to the public',
-                'type' => 'building',
-            ],
             [
                 'code' => 'claimExcessDeductibles',
                 'title' => 'Claim Excess / Deductibles',
@@ -808,6 +793,11 @@
                 'type' => 'building',
             ],
             [
+                'code' => 'breakageOfFixedGlassAndSanitaryFixtures',
+                'title' => 'Breakage of fixed glass and sanitary fixtures',
+                'type' => 'building',
+            ],
+            [
                 'code' => 'emergencyAccess',
                 'title' => 'Emergency access',
                 'type' => 'building',
@@ -820,6 +810,16 @@
             [
                 'code' => 'traceAndAccess',
                 'title' => 'Trace & Access',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'damageToServicesPipesAndCables',
+                'title' => 'Damage to Services (Pipes and Cables)',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'ownersLiabilityToThePublic',
+                'title' => 'Owner\'s liability to the public',
                 'type' => 'building',
             ],
 
@@ -1259,33 +1259,33 @@
         <table class="tbl-footer" style="padding: 0 10px; margin: 0; width: 100%; border: none;">
             <tr>
                 <td colspan="2" class="text-center">
-                    <h4 style="font-size: 18px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
+                    <h4 style="font-size: 16px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
                         Insurance Brokerage Services LLC</h4>
                 </td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 12px;">UAE Central Bank Registration number 85</td>
-                <td class="text-right" style="font-size: 12px;">27th Floor, Control Tower, Motor City</td>
+                <td class="text-left" style="font-size: 10px;">UAE Central Bank Registration number 85</td>
+                <td class="text-right" style="font-size: 10px;">27th Floor, Control Tower, Motor City</td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 12px;">Registered member of the Emirates Insurance Association
+                <td class="text-left" style="font-size: 10px;">Registered member of the Emirates Insurance Association
                 </td>
-                <td class="text-right" style="font-size: 12px;">Dubai, United Arab Emirates, P.O Box 26423</td>
+                <td class="text-right" style="font-size: 10px;">Dubai, United Arab Emirates, P.O Box 26423</td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 12px;">Department of Economy & Tourism in Dubai Trade License
+                <td class="text-left" style="font-size: 10px;">Department of Economy & Tourism in Dubai Trade License
                     number 238534</td>
-                <td class="text-right" style="font-size: 12px;">Tel: <a href="tel:+800253733"
+                <td class="text-right" style="font-size: 10px;">Tel: <a href="tel:+800253733"
                         style="color: #fff; text-decoration: none;">800 ALFRED (800-253-733)</a></td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 12px;">Holder of Health Insurance Intermediary Permit ID
+                <td class="text-left" style="font-size: 10px;">Holder of Health Insurance Intermediary Permit ID
                     Number BRK-00003 from Dubai Health Authority</td>
-                <td class="text-right" style="font-size: 12px;"><a href="https://insurancemarket.ae"
+                <td class="text-right" style="font-size: 10px;"><a href="https://insurancemarket.ae"
                         style="color: #fff; text-decoration: none;">www.insurancemarket.ae</a></td>
             </tr>
             <tr>
-                <td class="text-left" style="font-size: 12px;">Registered member of Insurance Business Group under the
+                <td class="text-left" style="font-size: 10px;">Registered member of Insurance Business Group under the
                     Dubai Chamber of Commerce and Industry</td>
             </tr>
         </table>
