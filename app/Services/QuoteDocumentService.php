@@ -491,11 +491,23 @@ class QuoteDocumentService extends BaseService
         $encodedUrl = $this->encodeUrl($azureFilePath);
         $fileContent = file_get_contents($encodedUrl);
 
+        if (! $fileContent) {
+            Log::error("Unable to read file azureFilePath: $azureFilePath ");
+            throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
+        }
+
         $tempFilePath = storage_path('temp/temp_'.$docName);
         file_put_contents($tempFilePath, $fileContent);
 
         // Convert the PDF to a version compatible with FPDI
         shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+
+        sleep(3);
+
+        if (! file_exists($outputFile)) {
+            Log::error("Unable to read file outputFile: $outputFile ");
+            throw new \Exception("Unable to read file outputFile: $outputFile");
+        }
 
         $pdf = new Fpdi;
 
