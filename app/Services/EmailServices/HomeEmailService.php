@@ -22,23 +22,23 @@ class HomeEmailService extends BaseService
     public function sendHomeOCBIntroEmail($lead)
     {
         if (! $lead) {
-            info('sendHomeOCBIntroEmail - Lead not found | Time: '.now());
+            info('sendHomeOCBIntroEmail - Lead not found | Time: ' . now());
 
             return false;
         }
 
-        info("sendHomeOCBIntroEmail - Initiating process for Lead Ref ID: {$lead->uuid} | Time: ".now());
+        info("sendHomeOCBIntroEmail - Initiating process for Lead Ref ID: {$lead->uuid} | Time: " . now());
 
         // Fetch the advisor
         $advisor = User::find($lead->advisor_id);
         if (! $advisor) {
-            info("sendHomeOCBIntroEmail - Advisor not found for Lead Ref ID: {$lead->uuid} | Time: ".now());
+            info("sendHomeOCBIntroEmail - Advisor not found for Lead Ref ID: {$lead->uuid} | Time: " . now());
         }
 
         // Fetch home quote
         $homeQuote = $this->getHomeQuoteData($lead->uuid);
         if (! $homeQuote) {
-            info("sendHomeOCBIntroEmail - HomeQuote not found for Lead Ref ID: {$lead->uuid} | Time: ".now());
+            info("sendHomeOCBIntroEmail - HomeQuote not found for Lead Ref ID: {$lead->uuid} | Time: " . now());
 
             return false;
         }
@@ -55,7 +55,7 @@ class HomeEmailService extends BaseService
         $homeAutomatedEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS)->first();
 
         if (! $homeAutomatedEvent) {
-            info("sendHomeOCBIntroEmail - Workflow configuration not found for Lead Ref ID: {$lead->uuid} | Time: ".now());
+            info("sendHomeOCBIntroEmail - Workflow configuration not found for Lead Ref ID: {$lead->uuid} | Time: " . now());
 
             return false;
         }
@@ -66,11 +66,11 @@ class HomeEmailService extends BaseService
             if (empty($homeQuote->automated_flow_executed_at)) {
                 $homeQuote->automated_flow_executed_at = now();
                 $homeQuote->save();
-                info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote Ref-ID: {$homeQuote->uuid} | Time: ".now());
-                info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: ".now());
+                info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote Ref-ID: {$homeQuote->uuid} | Time: " . now());
+                info("sendHomeOCBIntroEmail - Successfully triggered event for Lead Ref ID: {$lead->uuid} | Time: " . now());
                 if ($response && $response->status_code === 200) {
                     $this->createQuoteFlowDetails($lead, $response);
-                    info("sendHomeOCBIntroEmail - Quote flow details created for HomeQuote Ref-ID: {$homeQuote->uuid} | Time: ".now());
+                    info("sendHomeOCBIntroEmail - Quote flow details created for HomeQuote Ref-ID: {$homeQuote->uuid} | Time: " . now());
                 } else {
                     info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} having response status code: {$response?->status_code}");
                 }
@@ -78,7 +78,7 @@ class HomeEmailService extends BaseService
 
             return $response ?? null;
         } catch (\Exception $e) {
-            info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} | Message: {$e->getMessage()} Line: {$e->getLine()} | Time: ".now());
+            info("sendHomeOCBIntroEmail - Error triggering event for Lead Ref ID: {$lead->uuid} | Message: {$e->getMessage()} Line: {$e->getLine()} | Time: " . now());
 
             return false;
         }
@@ -86,7 +86,7 @@ class HomeEmailService extends BaseService
 
     public function buildEmailData($lead, $advisor, $workflowType, $homeQuote)
     {
-        return (object) [
+        $data = [
             // Lead-related data
             'quoteUID' => $lead->uuid,
             'uuid' => $lead->uuid,
@@ -99,7 +99,7 @@ class HomeEmailService extends BaseService
             'flowExecutedAt' => $lead->automated_flow_executed_at ?? null,
 
             // Home quote-related data
-            'automatedFlowExecuted' => ! empty($homeQuote?->automated_flow_executed_at),
+            'automatedFlowExecuted' => !empty($homeQuote?->automated_flow_executed_at),
 
             // Advisor-related data
             'advisorId' => $advisor?->id,
@@ -113,8 +113,15 @@ class HomeEmailService extends BaseService
 
             // Workflow-related data
             'workflowType' => $workflowType,
-            'tempUrlPDF' => $this->attachHomeOCBPDFToEmail($lead->uuid),
         ];
+
+        $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid);
+
+        if (!empty($tempUrlPDF)) {
+            $data['tempUrlPDF'] = $tempUrlPDF;
+        }
+
+        return (object) $data;
     }
 
     public function getHomeQuoteData(string $uuid): ?HomeQuote
@@ -127,8 +134,15 @@ class HomeEmailService extends BaseService
     public function attachHomeOCBPDFToEmail($quoteUID)
     {
         try {
-            info(self::class." - attachHomeOCBPDFToEmail - Generating PDF for Quote UID: {$quoteUID} | Time: ".now());
+            info(self::class . " - attachHomeOCBPDFToEmail - Generating PDF for Quote UID: {$quoteUID} | Time: " . now());
+
             $quotePlans = app(HomeQuoteService::class)->getQuotePlans($quoteUID);
+
+            if (!isset($quotePlans->quotes->plans) || empty($quotePlans->quotes->plans)) {
+                info(self::class . " - attachHomeOCBPDFToEmail - No plans found for Quote UID: {$quoteUID} | Time: " . now());
+                return '';
+            }
+
             // Generate the PDF
             $planIds = [];
             if (isset($quotePlans->quotes->plans)) {
@@ -138,14 +152,13 @@ class HomeEmailService extends BaseService
             $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
             $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
 
-            info(self::class." - attachHomeOCBPDFToEmail - Storing PDF temporarily for Quote UID: {$quoteUID} | Time: ".now());
+            info(self::class . " - attachHomeOCBPDFToEmail - Storing PDF temporarily for Quote UID: {$quoteUID} | Time: " . now());
 
             // Generate a unique temporary file path
-            $tempFilePath = 'temp/'.uniqid().'.pdf';
+            $tempFilePath = 'temp/' . uniqid() . '.pdf';
             Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
 
             // Generate a public URL
-            // $publicUrl = asset('storage/' . $tempFilePath);
             $publicUrl = Storage::disk('azureIM')->temporaryUrl(
                 $tempFilePath,
                 now()->addMinutes(120)
@@ -153,12 +166,12 @@ class HomeEmailService extends BaseService
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            info(self::class." - attachHomeOCBPDFToEmail - Public URL generated for Quote UID: {$quoteUID} | Time: ".now());
+            info(self::class . " - attachHomeOCBPDFToEmail - Public URL generated for Quote UID: {$quoteUID} | Time: " . now());
 
             return $publicUrl;
         } catch (\Exception $e) {
             // Log the error details
-            info(self::class." - Error: attachHomeOCBPDFToEmail - Error attaching PDF for Quote UID: {$quoteUID} | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()} | Time: ".now());
+            info(self::class . " - Error: attachHomeOCBPDFToEmail - Error attaching PDF for Quote UID: {$quoteUID} | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()} | Time: " . now());
 
             return false;
         }
@@ -180,14 +193,14 @@ class HomeEmailService extends BaseService
                     'flow_type' => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
                     'flow_id' => $runId,
                 ]);
-                info(self::class." HomeAutomated | workflow run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                info(self::class . " HomeAutomated | workflow run id created for lead : Ref-ID: {$lead->uuid} |Time: " . now());
             } else {
-                info(self::class." HomeAutomated | workflow run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                info(self::class . " HomeAutomated | workflow run id not found for lead : Ref-ID: {$lead->uuid} |Time: " . now());
             }
         } catch (\Throwable $th) {
-            $errorMessage = self::class." - Error while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            $errorMessage = self::class . " - Error while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: " . now();
             info($errorMessage);
-            info("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            info("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: " . now());
             throw $th;
         }
     }
