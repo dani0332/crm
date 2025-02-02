@@ -175,9 +175,15 @@ const onUpdatePlan = () => {
 const formattedCategories = computed(() => {
   const categories = props.plan?.listQuotePlanBenefitsInclusions || {};
 
-  // Create a new object with formatted keys
   return Object.keys(categories).reduce((acc, key) => {
-    acc[key] = camelCaseToSpacedText(key);
+    // Handle specific keys explicitly
+    if (key === 'Fine Art & Collectible(s)') {
+      acc[key] = 'Fine Art & Collectible(s)';
+    } else if (key === 'Jewellery & Valuable(s)') {
+      acc[key] = 'Jewellery & Valuable(s)';
+    } else {
+      acc[key] = camelCaseToSpacedText(key);
+    }
     return acc;
   }, {});
 });

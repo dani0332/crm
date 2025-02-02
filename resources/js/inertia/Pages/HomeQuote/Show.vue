@@ -637,7 +637,7 @@ const onTogglePlans = toggle => {
 
 const planDetails = ref(null);
 
-const getPlanDetails = async (item) => {
+const getPlanDetails = async item => {
   if (!item?.id) {
     console.error('Invalid item provided: Missing ID');
     notification.error({
@@ -649,14 +649,19 @@ const getPlanDetails = async (item) => {
   }
 
   viewPlanDetailsLoader.value[item.id] = true;
-  console.log(`Loading state set for plan: ${item.id}`, viewPlanDetailsLoader.value);
+  console.log(
+    `Loading state set for plan: ${item.id}`,
+    viewPlanDetailsLoader.value,
+  );
 
   try {
     if (!availableAllPlans.value || !Array.isArray(availableAllPlans.value)) {
       throw new Error('Plans data is not available or invalid');
     }
 
-    const selectedPlan = availableAllPlans.value.find((plan) => plan.id === item.id);
+    const selectedPlan = availableAllPlans.value.find(
+      plan => plan.id === item.id,
+    );
     if (!selectedPlan) {
       throw new Error(`Plan with ID ${item.id} not found`);
     }
@@ -695,12 +700,12 @@ const getPlanDetails = async (item) => {
       actualPremium,
       discountPremium,
       listQuotePlanBenefitsInclusions: {
-        buildings: building,
+        building: building,
         contents: content,
         personalBelongings: personalBelonging,
-        contentAndPersonalBelonging,
-        fineArtAndCollectible,
-        jewlleryAndValuable,
+        contentAndPersonalBelongings : contentAndPersonalBelonging,
+        'Fine Art & Collectible(s)': fineArtAndCollectible,
+        'Jewellery & Valuable(s)': jewlleryAndValuable,
       },
       listQuotePlanBenefitsExclusions: exclusion,
       listQuotePlanBenefitsAditionalCovers: additionalCover,
@@ -718,7 +723,6 @@ const getPlanDetails = async (item) => {
 
     planDetails.value = planDetailsData;
     modals.planDetails = true;
-
   } catch (error) {
     console.error('Failed to fetch plan details:', error);
     notification.error({
@@ -728,7 +732,10 @@ const getPlanDetails = async (item) => {
     });
   } finally {
     viewPlanDetailsLoader.value[item.id] = false;
-    console.log(`Loading state reset for plan: ${item.id}`, viewPlanDetailsLoader.value);
+    console.log(
+      `Loading state reset for plan: ${item.id}`,
+      viewPlanDetailsLoader.value,
+    );
   }
 };
 
