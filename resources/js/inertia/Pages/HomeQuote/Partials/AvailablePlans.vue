@@ -288,14 +288,22 @@ const updatePlanLoading = ref(false);
               />
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="mt-2">Discounted Price:</dt>
-              <x-input
-                v-model="planForm.discounted_premium"
-                :disabled="!planForm.is_manual_update"
-                size="sm"
-                type="number"
-              />
-            </div>
+                <dt class="mt-2">Discounted Price:</dt>
+                <x-tooltip placement="bottom">
+                  <x-input
+                    v-model="planForm.discounted_premium"
+                    size="sm"
+                    type="number"
+                    disabled
+                  />
+                  <template #tooltip>
+                    Is there a special discount? please specify its type in
+                    'Manage Payments'. Ensure that it has been approved before
+                    applying. If you're unclear about discounts, please contact
+                    your supervisor.
+                  </template>
+                </x-tooltip>
+                </div>
             <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Code</dt>
               <dd>{{ props.plan.providerCode }}</dd>
