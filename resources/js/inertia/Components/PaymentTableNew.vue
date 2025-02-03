@@ -3345,8 +3345,8 @@ const voidPayment = () => {
         return;
       }
       notification.success({
-          title: 'Processed',
-          position: 'top',
+        title: 'Processed',
+        position: 'top',
       });
     })
     .catch(err => {
@@ -3359,8 +3359,8 @@ const voidPayment = () => {
         });
       } else {
         notification.error({
-            title: 'Void authorized payment process failed',
-            position: 'top',
+          title: 'Void authorized payment process failed',
+          position: 'top',
         });
       }
     });
