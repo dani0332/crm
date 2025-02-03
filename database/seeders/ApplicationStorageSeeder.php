@@ -17,6 +17,16 @@ class ApplicationStorageSeeder extends Seeder
     {
         $this->seedBirdWorkflowUrls();
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
             [
                 'value' => '2024-12-01',
@@ -57,6 +67,15 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
             [
                 'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

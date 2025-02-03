@@ -333,7 +333,12 @@ const onAddUpdate = () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.PetQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.PetQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -343,7 +348,14 @@ const onAddUpdate = () => {
           >
         </x-tooltip>
         <template v-else>
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.PetQuotesEdit)" />
+          <LeadEditBtnReuseTemplate
+            v-if="
+              canAny([
+                permissionsEnum.PetQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
+          />
         </template>
 
         <Link
@@ -1060,6 +1072,7 @@ const onAddUpdate = () => {
         canAny([
           permissionsEnum.VIEW_INSLY_BOOK_POLICY,
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

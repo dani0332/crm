@@ -318,7 +318,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function fetchAndUploadDocument($quote, $travelType): array
     {
-        $maxRetries = 15;
+        $maxRetries = 5;
         $retryDelay = 10; // seconds
         $retryCount = 0;
 
