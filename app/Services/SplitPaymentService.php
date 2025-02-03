@@ -559,12 +559,7 @@ class SplitPaymentService
             $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
-
-            $paymentMethodEndPoint = 'checkout';
-            if ($payment->insuranceProvider->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP) {
-                $paymentMethodEndPoint = 'tap';
-            }
-
+            $paymentMethodEndPoint = PaymentGatewayIdEnum::getName($payment->insuranceProvider->payment_gateway_id);
             $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.$paymentMethodEndPoint;
 
             $paymentParams = [
@@ -663,8 +658,7 @@ class SplitPaymentService
             // Log message for creating Sage receipt
             info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage receipt id: '.$paymentSplit->sage_reciept_id);
 
-            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-            if ($isSageEnabled && empty($paymentSplit->sage_reciept_id)) {
+            if ((new SageApiService)->isSageEnabled() && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
                 $request = Request::createFromGlobals();
                 $request->merge([
@@ -1159,7 +1153,7 @@ class SplitPaymentService
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
                 }
-                if (! $isCreditCardEnabled && $paymentSplit->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->collection_type == CollectionTypeEnum::INSURER && ! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
+                if (! $isCreditCardEnabled && $paymentSplit->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
                     $paymentSplit->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
                 }
                 if ($paymentSplit->isDirty()) {
@@ -1198,7 +1192,7 @@ class SplitPaymentService
      */
     public function checkCommissionStatus($payment)
     {
-        if (isTapEnabled() && $payment && $payment->collection_type == CollectionTypeEnum::INSURER) {
+        if (isTapEnabled() && $payment && $payment->isInsurerPayment()) {
             $paymentSplits = $payment->paymentSplits;
             if ($paymentSplits->isNotEmpty()) {
                 $hasPaidCreditCardPayment = $paymentSplits->contains(function ($split) {
@@ -1212,6 +1206,7 @@ class SplitPaymentService
                 }
             }
         }
+
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 }

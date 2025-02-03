@@ -178,7 +178,7 @@ class RenewalBatch extends Model implements AuditableContract
     public function monthName(): Attribute
     {
         return Attribute::make(
-            get: fn () => Carbon::createFromDate($this->year, $this->month)->format('M')
+            get: fn () => Carbon::parse("{$this->year}-{$this->month}")->format('M')
         );
     }
 }

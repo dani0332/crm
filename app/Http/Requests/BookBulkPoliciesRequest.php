@@ -2,8 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Services\ApplicationStorageService;
+use App\Services\SageApiService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BookBulkPoliciesRequest extends FormRequest
@@ -31,8 +30,7 @@ class BookBulkPoliciesRequest extends FormRequest
     public function withValidator($validator)
     {
         // check sage is enabled or not
-        $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-        if ($isSageEnabled) {
+        if (! (new SageApiService)->isSageEnabled()) {
             return response()->json(['errors' => [
                 'message' => 'Sage is not enabled',
             ]], 403);
