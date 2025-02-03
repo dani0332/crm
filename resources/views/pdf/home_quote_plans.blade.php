@@ -605,6 +605,61 @@
             ->toArray();
 
         $features = [
+            // Building
+            ['code' => 'heading', 'title' => 'Building'],
+            [
+                'code' => 'temporaryRemoval',
+                'title' => 'Temporary Removal',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
+                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'theftForcibleEntryOrExit',
+                'title' => 'Theft (Forcible entry or exit)',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'breakageOfFixedGlassAndSanitaryFixtures',
+                'title' => 'Breakage of fixed glass and sanitary fixtures',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'emergencyAccess',
+                'title' => 'Emergency access',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'damageToTheGarden',
+                'title' => 'Damage to the garden',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'traceAndAccess',
+                'title' => 'Trace & Access',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'damageToServicesPipesAndCables',
+                'title' => 'Damage to Services (Pipes and Cables)',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'ownersLiabilityToThePublic',
+                'title' => 'Owner\'s liability to the public',
+                'type' => 'building',
+            ],
+            [
+                'code' => 'claimExcessDeductibles',
+                'title' => 'Claim Excess / Deductibles',
+                'type' => 'building',
+            ],
+
+            ['code' => 'spacer', 'title' => ''],
+
             // Content
             ['code' => 'heading', 'title' => 'Contents'],
             [
@@ -691,136 +746,6 @@
                 'code' => 'claimExcessDeductiblesForEachEveryLoss',
                 'title' => 'Claim Excess / Deductibles for each & every loss',
                 'type' => 'personalBelonging',
-            ],
-
-            ['code' => 'spacer', 'title' => ''],
-
-            // Additional Cover
-            ['code' => 'heading', 'title' => 'Additional Cover'],
-            [
-                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForBuilding',
-                'title' => 'Loss of rent or cost of alternative accommodation for Building',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'fatalInjuryBenefitProvidedDeathEnsuesWithin3MonthsOfSuchInjury',
-                'title' => 'Fatal injury benefit (provided death ensues within 3 months of such injury)',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'visitorsPersonalEffects',
-                'title' => 'Visitor\'s personal effects',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'thirdPartyLiabilityCover',
-                'title' => 'Third Party Liability Cover',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'defenseCostLegalAssistance',
-                'title' => 'Defense Cost / Legal assistance',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'domesticHelpCover',
-                'title' => 'Domestic Help Cover',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'moneyAndCreditCards',
-                'title' => 'Money & Credit Cards',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'lossOfPassportDrivingLicenseWorkPermitResidencePermit',
-                'title' => 'Loss of Passport, Driving License, Work permit, Residence Permit',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForContents',
-                'title' => 'Loss of rent or cost of alternative accommodation for Contents',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'fatalInjuryBenefit',
-                'title' => 'Fatal injury benefit',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'occupiersPersonalAndEmployersLiability',
-                'title' => 'Occupiers personal and employers liability',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'tenantsLiability',
-                'title' => 'Tenant\'s liability',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'homeAssistance',
-                'title' => 'Home assistance',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'legalAssistance',
-                'title' => 'Legal assistance',
-                'type' => 'additionalCover',
-            ],
-
-            ['code' => 'spacer', 'title' => ''],
-
-            // Building
-            ['code' => 'heading', 'title' => 'Building'],
-            [
-                'code' => 'claimExcessDeductibles',
-                'title' => 'Claim Excess / Deductibles',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'temporaryRemoval',
-                'title' => 'Temporary Removal',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
-                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'theftForcibleEntryOrExit',
-                'title' => 'Theft (Forcible entry or exit)',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'breakageOfFixedGlassAndSanitaryFixtures',
-                'title' => 'Breakage of fixed glass and sanitary fixtures',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'emergencyAccess',
-                'title' => 'Emergency access',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'damageToTheGarden',
-                'title' => 'Damage to the garden',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'traceAndAccess',
-                'title' => 'Trace & Access',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'damageToServicesPipesAndCables',
-                'title' => 'Damage to Services (Pipes and Cables)',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'ownersLiabilityToThePublic',
-                'title' => 'Owner\'s liability to the public',
-                'type' => 'building',
             ],
 
             ['code' => 'spacer', 'title' => ''],
@@ -947,6 +872,81 @@
                 'code' => 'claimExcessDeductibles',
                 'title' => 'Claim Excess / Deductibles',
                 'type' => 'jewlleryAndValuable',
+            ],
+
+            ['code' => 'spacer', 'title' => ''],
+
+            // Additional Cover
+            ['code' => 'heading', 'title' => 'Additional Cover'],
+            [
+                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForBuilding',
+                'title' => 'Loss of rent or cost of alternative accommodation for Building',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'fatalInjuryBenefitProvidedDeathEnsuesWithin3MonthsOfSuchInjury',
+                'title' => 'Fatal injury benefit (provided death ensues within 3 months of such injury)',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'visitorsPersonalEffects',
+                'title' => 'Visitor\'s personal effects',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'thirdPartyLiabilityCover',
+                'title' => 'Third Party Liability Cover',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'defenseCostLegalAssistance',
+                'title' => 'Defense Cost / Legal assistance',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'domesticHelpCover',
+                'title' => 'Domestic Help Cover',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'moneyAndCreditCards',
+                'title' => 'Money & Credit Cards',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'lossOfPassportDrivingLicenseWorkPermitResidencePermit',
+                'title' => 'Loss of Passport, Driving License, Work permit, Residence Permit',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForContents',
+                'title' => 'Loss of rent or cost of alternative accommodation for Contents',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'fatalInjuryBenefit',
+                'title' => 'Fatal injury benefit',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'occupiersPersonalAndEmployersLiability',
+                'title' => 'Occupiers personal and employers liability',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'tenantsLiability',
+                'title' => 'Tenant\'s liability',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'homeAssistance',
+                'title' => 'Home assistance',
+                'type' => 'additionalCover',
+            ],
+            [
+                'code' => 'legalAssistance',
+                'title' => 'Legal assistance',
+                'type' => 'additionalCover',
             ],
 
             ['code' => 'spacer', 'title' => ''],
