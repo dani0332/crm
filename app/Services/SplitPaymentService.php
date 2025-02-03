@@ -837,6 +837,10 @@ class SplitPaymentService
                 'updated_by' => Auth::user()->id ?? null,
             ]);
 
+            if (($totalPaidPayments + $totalPartialPaidPayments) == $masterPayment->total_payments) {
+                $canCaptureEp = true;
+            }
+
             info('Master payment code: '.$quoteModel->code.' Master payment approved with Payment Status: '.$masterPaymentStatus);
 
             $successMessage = 'Transaction approved';
@@ -858,7 +862,6 @@ class SplitPaymentService
 
                 }
                 $quoteModel->save();
-                $canCaptureEp = true;
                 if (! $sendUpdateId) {
                     QuoteStatusLog::create([
                         'quote_type_id' => $quoteTypeId,
