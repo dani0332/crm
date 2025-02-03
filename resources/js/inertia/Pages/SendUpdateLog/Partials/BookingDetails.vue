@@ -417,10 +417,10 @@ const calculateCommission = () => {
         // TAP PAYMENT FLAG.
         if (page.props.isTapEnabled && commissionPercentage > 0 && bookingDetailsForm.commission_vat_applicable && props.bookingDetails?.brokerCommission) {
           const brokerCommission = props.bookingDetails?.brokerCommission;
-          const brokerCommMinPer = brokerCommission ? brokerCommission.commission_percentage_min : null;
-          const brokerCommMaxPer = brokerCommission ? brokerCommission.commission_percentage_max : null;
+          const brokerCommMinPer = brokerCommission ? roundValue(brokerCommission.commission_percentage_min) : null;
+          const brokerCommMaxPer = brokerCommission ? roundValue(brokerCommission.commission_percentage_max) : null;
 
-          if ((brokerCommMinPer > 0 && commissionPercentage < brokerCommMinPer) || (brokerCommMaxPer > 0 && commissionPercentage > brokerCommMaxPer)) {
+          if ((brokerCommMinPer != null && brokerCommMaxPer != null) && ! (commissionPercentage >= brokerCommMinPer && commissionPercentage <= brokerCommMaxPer)) {
             notification.error({
               title: 'The commission amount you entered is outside the permitted range.',
               position: 'top',
@@ -479,7 +479,11 @@ function convertToNegative(value) {
   }
   value = isNaN(value) ? 0 : Number(value);
 
-  return value.toFixed(2);
+  return roundValue(value);
+}
+
+function roundValue(value) {
+  return (Math.round(value * 100) / 100).toFixed(2);
 }
 
 function thousandSeparator(value) {
