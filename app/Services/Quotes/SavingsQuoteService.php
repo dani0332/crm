@@ -2,7 +2,12 @@
 
 namespace App\Services\Quotes;
 
+use App\Enums\GenderEnum;
 use App\Enums\QuoteTypes;
+use App\Models\Nationality;
+use App\Models\CurrencyType;
+use App\Models\MartialStatus;
+use App\Enums\SavingsPurposeEnum;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -29,5 +34,16 @@ class SavingsQuoteService extends BaseQuoteService
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         return $query->resolveData($paginted, $forExport, $getTotalCount);
+    }
+
+    public function getFormOptions()
+    {
+        return [
+            'nationalities' => Nationality::withActive()->options(),
+            'genders' => GenderEnum::withLabels(),
+            'maritalStatuses' => MartialStatus::withActive()->options(),
+            'purposes' => SavingsPurposeEnum::withLabels(),
+            'currencies' => CurrencyType::withActive()->options(),
+        ];
     }
 }

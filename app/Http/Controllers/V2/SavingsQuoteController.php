@@ -38,4 +38,11 @@ class SavingsQuoteController extends Controller
             'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
+
+    public function create()
+    {
+        $data = $this->savingsQuoteService->getFormOptions();
+
+        return inertia('SavingsQuote/Form', $data);
+    }
 }
