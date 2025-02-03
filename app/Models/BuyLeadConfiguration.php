@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BuyLeadSegment;
 use App\Observers\BuyLeadConfigurationObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,7 @@ class BuyLeadConfiguration extends Model
         'department_id',
         'value',
         'volume',
+        'segment',
     ];
 
     public function casts()
@@ -21,7 +23,18 @@ class BuyLeadConfiguration extends Model
         return [
             'value' => 'float',
             'volume' => 'float',
+            'segment' => BuyLeadSegment::class,
         ];
+    }
+
+    public function scopeIsSIC($query)
+    {
+        $query->where('segment', BuyLeadSegment::SIC);
+    }
+
+    public function scopeIsNonSIC($query)
+    {
+        $query->where('segment', BuyLeadSegment::NON_SIC);
     }
 
     public function department()

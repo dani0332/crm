@@ -795,7 +795,7 @@ watch(
           class="w-full"
         />
         <ComboBox
-          label="INSURER API STATUS"
+          label="Insurer API Status"
           v-model="filters.insurer_api_status_id"
           placeholder="Select Status"
           :options="insurerApiStatus"

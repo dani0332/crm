@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -998,12 +999,12 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName)
+    function getAppStorageValueByKey($keyName, $default = false)
     {
         $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
         if (! $query) {
-            return false;
+            return $default;
         }
 
         return $query->value;
@@ -1283,9 +1284,9 @@ if (! function_exists('getManagersByUser')) {
 }
 
 if (! function_exists('roundNumber')) {
-    function roundNumber($number)
+    function roundNumber($number, $precision = 2)
     {
-        return round($number, 2);
+        return round($number, $precision);
     }
 }
 
@@ -1565,5 +1566,14 @@ if (! function_exists('isCHSAdvisor')) {
         $user = User::select('id')->chs()->first();
 
         return $user?->id == $userId;
+    }
+}
+
+if (! function_exists('userHasProduct')) {
+    function userHasProduct($product)
+    {
+        $productIds = auth()->user()->products->pluck('product_id');
+
+        return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
