@@ -534,7 +534,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -580,7 +583,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.LifeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -591,7 +599,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.LifeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
           />
         </template>
       </div>
@@ -1373,6 +1386,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         canAny([
           permissionsEnum.VIEW_INSLY_BOOK_POLICY,
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

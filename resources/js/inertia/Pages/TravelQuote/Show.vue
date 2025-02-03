@@ -1542,7 +1542,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -2827,7 +2830,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
           </h3>
           <div class="flex gap-2">
             <Link
-              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+              v-if="
+                quote?.insly_id &&
+                canAny([
+                  permissionsEnum.VIEW_LEGACY_DETAILS,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
               :href="`/legacy-policy/${quote.insly_id}`"
               preserve-scroll
             >
@@ -3315,6 +3324,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"
