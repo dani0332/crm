@@ -15,21 +15,27 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
-  company_name: props.quote?.company_name || null,
-  company_address: props.quote?.company_address || null,
-  boat_details: props.quote?.savings_quote?.boat_details || '',
-  engine_details: props.quote?.savings_quote?.engine_details || '',
-  claim_experience: props.quote?.savings_quote?.claim_experience || '',
-  asset_value: props.quote?.asset_value || null,
-  use: props.quote?.savings_quote?.use || '',
-  operator_experience: props.quote?.savings_quote?.operator_experience || '',
+  dob: props.quote?.dob || '',
+  nationality_id: props.quote?.nationality_id || '',
+  gender: props.quote?.gender || '',
+  marital_status_id: props.quote?.marital_status_id || '',
+  tenure_of_savings: props.quote?.tenure_of_savings || '',
+  has_nicotine: props.quote?.has_nicotine || '',
+  purpose: props.quote?.purpose || '',
+  currency: props.quote?.currency || '',
+  amount: props.quote?.amount || '',
+  investment_frequency: props.quote?.investment_frequency || '',
+  additional_notes: props.quote?.additional_notes || '',
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
+
 const editMode = computed(() => {
   return props.quote && props.quote.uuid ? true : false;
 });
+
 const isEmptyField = ref(false);
+
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.clearErrors();
@@ -62,11 +68,12 @@ function onSubmit(isValid) {
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
-      <x-alert color="error" class="mb-5" v-if="quoteForm.errors.error">{{
-        quoteForm?.errors?.error
-      }}</x-alert>
+      <x-alert color="error" class="mb-5" v-if="quoteForm.errors.error">
+        {{ quoteForm?.errors?.error }}
+      </x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Personal Details -->
         <x-field label="First Name" required>
           <x-input
             v-model="quoteForm.first_name"
@@ -92,7 +99,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.email"
             type="email"
             :disabled="editMode"
-            :rules="[isRequired]"
+            :rules="[isRequired, isEmail]"
             class="w-full"
             :error="quoteForm.errors.email"
           />
@@ -120,6 +127,7 @@ function onSubmit(isValid) {
             :options="nationalities"
             class="w-full"
             :error="quoteForm.errors.nationality_id"
+            :rules="[isRequired]"
           />
         </x-field>
         <x-field label="Gender" required>
@@ -136,16 +144,17 @@ function onSubmit(isValid) {
             :options="maritalStatuses"
             class="w-full"
             :error="quoteForm.errors.marital_status_id"
+            :rules="[isRequired]"
           />
         </x-field>
-        <x-field label="Tenure of savings" required>
+        <!-- Savings Details -->
+        <x-field label="Tenure of Savings" required>
           <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :rules="[isRequired, isMobileNo]"
-            :disabled="editMode"
+            v-model="quoteForm.tenure_of_savings"
+            type="text"
+            :rules="[isRequired]"
             class="w-full"
-            :error="quoteForm.errors.mobile_no"
+            :error="quoteForm.errors.tenure_of_savings"
           />
         </x-field>
 
@@ -157,7 +166,7 @@ function onSubmit(isValid) {
             >
               <div class="flex gap-12 mt-2">
                 <x-form-group
-                  v-model="quoteForm.has_accident"
+                  v-model="quoteForm.has_nicotine"
                   :rules="[isRequired]"
                 >
                   <x-radio value="1" label="Yes" />
@@ -167,31 +176,34 @@ function onSubmit(isValid) {
             </x-field>
           </div>
         </div>
-        <x-field label="Purpose os savings" required>
+
+        <x-field label="Purpose of Savings" required>
           <x-select
-            v-model="quoteForm.marital_status_id"
+            v-model="quoteForm.purpose"
             :options="purposes"
             class="w-full"
-            :error="quoteForm.errors.marital_status_id"
+            :rules="[isRequired]"
+            :error="quoteForm.errors.purpose"
           />
         </x-field>
         <div class="grid sm:grid-cols-2 gap-4">
           <x-field label="Investment Amount (Currency)" required>
             <x-select
-              v-model="quoteForm.marital_status_id"
+              v-model="quoteForm.currency"
               :options="currencies"
+              :rules="[isRequired]"
               class="w-full"
-              :error="quoteForm.errors.marital_status_id"
+              :error="quoteForm.errors.currency"
             />
           </x-field>
           <x-field label="Amount" required>
             <x-input
-              v-model="quoteForm.mobile_no"
-              type="tel"
-              :rules="[isRequired, isMobileNo]"
+              v-model="quoteForm.amount"
+              type="number"
+              :rules="[isRequired]"
               :disabled="editMode"
               class="w-full"
-              :error="quoteForm.errors.mobile_no"
+              :error="quoteForm.errors.amount"
             />
           </x-field>
         </div>
@@ -201,7 +213,7 @@ function onSubmit(isValid) {
             <x-field label="Investment Frequency" required>
               <div class="flex gap-12 mt-2">
                 <x-form-group
-                  v-model="quoteForm.has_accident"
+                  v-model="quoteForm.investment_frequency"
                   :rules="[isRequired]"
                 >
                   <x-radio value="regular" label="Regular" />
@@ -213,12 +225,11 @@ function onSubmit(isValid) {
         </div>
         <x-field label="Additional Notes" required>
           <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :rules="[isRequired, isMobileNo]"
-            :disabled="editMode"
+            v-model="quoteForm.additional_notes"
+            type="text"
+            :rules="[isRequired]"
             class="w-full"
-            :error="quoteForm.errors.mobile_no"
+            :error="quoteForm.errors.additional_notes"
           />
         </x-field>
       </div>
