@@ -119,6 +119,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.dob"
             input-classes="w-full"
             :rules="[isRequired]"
+            :max-date="new Date()"
           />
         </x-field>
         <x-field label="Nationality" required>
