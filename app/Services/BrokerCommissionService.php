@@ -21,7 +21,7 @@ class BrokerCommissionService
             ->active();
 
         $brokerCommission = $baseQuery->first();
-        $commissionInPayments = $brokerCommission->commission_in_payments;
+        $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
         $isCreditCardEnabled = $brokerCommission ? true : false;
 
         if ($planId) {
