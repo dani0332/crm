@@ -40,12 +40,17 @@ class TravelQuoteRepository extends BaseRepository
             ->filter(! $forExport)
             ->withFakeLeadCriteria();
 
+        if (request()->has('travel_start_date') && request('travel_start_date') != '') {
+            $query->whereDate('start_date', '<=', request('travel_start_date'));
+        }
+
         $this->adjustQueryByDateFilters($query, 'travel_quote_request');
 
         $query->orderBy('travel_quote_request.created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
+
     public function fetchExport()
     {
         return $this->filter()->with(
