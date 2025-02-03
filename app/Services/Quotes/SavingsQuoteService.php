@@ -4,10 +4,10 @@ namespace App\Services\Quotes;
 
 use App\Enums\GenderEnum;
 use App\Enums\QuoteTypes;
-use App\Models\Nationality;
+use App\Enums\SavingsPurposeEnum;
 use App\Models\CurrencyType;
 use App\Models\MartialStatus;
-use App\Enums\SavingsPurposeEnum;
+use App\Models\Nationality;
 
 class SavingsQuoteService extends BaseQuoteService
 {

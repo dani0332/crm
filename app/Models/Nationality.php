@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\Modelable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Nationality extends BaseModel
