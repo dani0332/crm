@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Modelable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -9,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class CurrencyType extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, Modelable;
 
     protected $table = 'currency_type';
 
@@ -20,11 +21,11 @@ class CurrencyType extends Model implements AuditableContract
 
     private function getCurrencyRates()
     {
-        // These are rates as of Oct 15, 2024
+        // These are rates as of Feb 3, 2025
         return [
             'AED' => 1,
-            'EUR' => 4.00,
-            'GBP' => 4.60,
+            'EUR' => 3.76,
+            'GBP' => 4.52,
             'USD' => 3.67,
         ];
     }
