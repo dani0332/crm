@@ -1546,6 +1546,10 @@ class SendUpdateLogService
                     return 'The payment status is not yet Authorised.';
                 }
             }
+
+            if (! $sendUpdateLog->is_booking_filled) {
+                return 'Please Update the booking details.';
+            }
         }
 
         return '';
