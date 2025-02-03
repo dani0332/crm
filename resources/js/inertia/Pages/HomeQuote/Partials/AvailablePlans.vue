@@ -47,6 +47,14 @@ const planForm = useForm({
 
 console.log('planForm', planForm);
 
+watch(
+  () => planForm.actual_premium,
+  () => {
+    planForm.discounted_premium = planForm.actual_premium;
+  },
+  { immediate: true },
+);
+
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
   { index: 0, label: 'General Info' },
@@ -123,6 +131,14 @@ onMounted(() => {
 
 const onUpdatePlan = () => {
   console.log('onUpdatePlan', props.plan);
+
+  if (planForm.discounted_premium > planForm.actual_premium) {
+    notification.error({
+      title: 'Discounted Price must be lower than Actual Price',
+      position: 'top',
+    });
+    return;
+  }
 
     updatePlanLoading.value = true;
   axios
