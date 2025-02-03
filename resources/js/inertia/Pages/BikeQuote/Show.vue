@@ -347,6 +347,11 @@ const fetchUpdatedQuote = async () => {
 
 const applyEmiratesIdNumMasking = emiratesId =>
     customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
+
+function capitalizeString(str) {
+    if (!str) return 'N/A';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
 </script>
 
 <template>
@@ -461,15 +466,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
             <dd>{{ quote?.paid_at ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">AML STATUS</dt>
-            <dd>{{ amlStatusName ?? '' }}</dd>
-          </div>
-          <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">INSURER AML STATUS</dt>
-            <dd>N/A</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
             <dd>{{ quote?.payment_status?.text }}</dd>
           </div>
@@ -546,16 +542,20 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
-                <dd v-if="quote?.kyc_decision === 'Complete'">
-                  KYC - Complete
-                </dd>
-                <dd v-else>KYC - Pending</dd>
+                  <dt class="font-medium">AML STATUS</dt>
+                  <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
+<!--              <div class="grid sm:grid-cols-2">-->
+<!--                <dt class="font-medium">AML STATUS</dt>-->
+<!--                <dd v-if="quote?.kyc_decision === 'Complete'">-->
+<!--                  KYC - Complete-->
+<!--                </dd>-->
+<!--                <dd v-else>KYC - Pending</dd>-->
+<!--              </div>-->
               <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER AML STATUS</dt>
-                <dd>N/A</dd>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER AGE</dt>
