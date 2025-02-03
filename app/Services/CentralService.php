@@ -1016,7 +1016,7 @@ class CentralService extends BaseService
         $insuranceProviderId = $quote->insurance_provider_id;
         $planId = $quote->plan_id ?? null;
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        [$isCreditCardEnabled, $brokerCommission] = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
+        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
@@ -1032,6 +1032,7 @@ class CentralService extends BaseService
             'isTapCaptureProcessStart' => $isTapCaptureProcessStart,
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'isGIGOrQICProvider' => $isGIGOrQICProvider,
+            'commissionInPayments' => $commissionInPayments,
         ];
 
         if ($payment) {
