@@ -176,17 +176,29 @@ const formattedCategories = computed(() => {
   const categories = props.plan?.listQuotePlanBenefitsInclusions || {};
 
   return Object.keys(categories).reduce((acc, key) => {
+    let formattedKey;
+
     // Handle specific keys explicitly
     if (key === 'Fine Art & Collectible(s)') {
-      acc[key] = 'Fine Art & Collectible(s)';
+      formattedKey = 'Fine Art & Collectible(s)';
     } else if (key === 'Jewellery & Valuable(s)') {
-      acc[key] = 'Jewellery & Valuable(s)';
+      formattedKey = 'Jewellery & Valuable(s)';
     } else {
-      acc[key] = camelCaseToSpacedText(key);
+      formattedKey = camelCaseToSpacedText(key);
     }
+
+    formattedKey = formattedKey.replace(/\(S\)/g, '(s)').replace(/\(s\)/g, '(s)');
+
+    formattedKey = formattedKey.replace(/\b\w/g, (char) => char.toUpperCase());
+
+    formattedKey = formattedKey.replace(/\(S\)/g, '(s)').replace(/\(s\)/g, '(s)');
+
+    acc[key] = formattedKey;
     return acc;
   }, {});
 });
+
+
 
 function camelCaseToSpacedText(camelCaseStr) {
   return camelCaseStr.replace(/([A-Z])/g, ' $1').trim();
@@ -342,7 +354,7 @@ const updatePlanLoading = ref(false);
               <!-- Heading for each category (e.g., "Buildings", "Contents") -->
               <h6
                 v-if="items && items.length > 0"
-                class="font-bold capitalize mb-1"
+                class="font-bold mb-1"
               >
                 {{ formattedCategories[category] }}:
               </h6>
