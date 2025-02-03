@@ -488,7 +488,7 @@ const totalLeads = reactive({
   ],
 });
 
-function onFetchLeadsInfo(advisor_id, renewal_batch_id, type, page = 1) {
+function onFetchLeadsInfo(advisor_id, renewal_batch_id, type, month, page = 1) {
   totalLeads.data = [];
   totalLeads.modal = true;
   totalLeads.loader = true;
@@ -496,6 +496,7 @@ function onFetchLeadsInfo(advisor_id, renewal_batch_id, type, page = 1) {
   filters.page = page;
   filters.renewal_batch_id = renewal_batch_id;
   filters.advisor_id = advisor_id;
+  filters.month = month;
   // Deep copy filters to payload
   let payload = JSON.parse(JSON.stringify(filters));
   payload = cleanFilters(payload);
@@ -528,6 +529,7 @@ const setPageTable = page => {
     filters.advisor_id,
     filters.renewal_batch_id,
     filters.type,
+    filters.month,
     page,
   );
 };
@@ -886,6 +888,7 @@ function handleDateChange(dateRange) {
                 item.advisor_id,
                 item.renewal_batch_id,
                 RetentionReportEnum.TOTAL,
+                item.month,
               )
             "
             class="text-primary underline"
@@ -909,6 +912,7 @@ function handleDateChange(dateRange) {
                 item.advisor_id,
                 item.renewal_batch_id,
                 RetentionReportEnum.LOST,
+                item.month,
               )
             "
             class="text-primary underline"
@@ -932,6 +936,7 @@ function handleDateChange(dateRange) {
                 item.advisor_id,
                 item.renewal_batch_id,
                 RetentionReportEnum.INVALID,
+                item.month,
               )
             "
             class="text-primary underline"
@@ -955,6 +960,7 @@ function handleDateChange(dateRange) {
                 item.advisor_id,
                 item.renewal_batch_id,
                 RetentionReportEnum.SALES,
+                item.month,
               )
             "
             class="text-primary underline"
