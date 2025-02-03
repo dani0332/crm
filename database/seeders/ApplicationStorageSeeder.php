@@ -72,6 +72,15 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
+            [
+                'value' => 'newleadpool@insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
     }
 
     private function seedBirdWorkflowUrls()
