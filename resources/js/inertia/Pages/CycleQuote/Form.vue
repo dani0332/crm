@@ -131,10 +131,10 @@ const gender = computed(() => {
             :error="quoteForm.errors.mobile_no"
           />
         </x-field>
-        <x-field label="DATE OF BIRTH">
+        <x-field label="Date of Birth">
           <DatePicker v-model="quoteForm.dob" name="created_at_start" />
         </x-field>
-        <x-field label="NATIONALITY">
+        <x-field label="Nationality">
           <ComboBox
             v-model="quoteForm.nationality_id"
             :single="true"

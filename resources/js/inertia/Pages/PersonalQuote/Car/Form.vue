@@ -533,7 +533,7 @@ const gender = computed(() => {
           />
         </x-field>
 
-        <x-field label="Gender">
+        <x-field label="GENDER">
           <x-select
             v-model="quoteForm.gender"
             :options="gender"
