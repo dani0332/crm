@@ -2801,11 +2801,18 @@ const shouldProcessUpdate = payment => {
   let isInsurerAmlCleared = true;
   let isAMlAndKycTravelComplete =
     isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
+  let enabledQuoteTypesForInsurer = [
+      quoteTypeCodeEnum.Car,
+      quoteTypeCodeEnum.Home,
+      quoteTypeCodeEnum.Bike,
+      quoteTypeCodeEnum.Travel,
+  ];
   if (
     isInsurer &&
     isGIGProvider &&
-    (isCarQuote || isTravelQuote) &&
-    hasAnyCCSplitPayment()
+    enabledQuoteTypesForInsurer.includes(props.quoteType) &&
+    hasAnyCCSplitPayment() &&
+    !shouldSendUpdate
   ) {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;

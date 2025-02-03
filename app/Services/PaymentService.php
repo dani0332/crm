@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Enums\CollectionTypeEnum;
 use App\Enums\DiscountTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Models\Payment;
 
 class PaymentService extends BaseService
 {
@@ -103,5 +103,13 @@ class PaymentService extends BaseService
             info('Quote Code: '.$payment->code.' updateTotalAmount - totalPrice: '.$totalPrice.', discountValue: '.$discountValue.', totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
         }
+    }
+
+    public function checkCCPayments($paymentSplit): bool
+    {
+        $excludedPaymentStatus = [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED];
+
+        return $paymentSplit::whereNotIn('payment_status_id', $excludedPaymentStatus)
+            ->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0;
     }
 }

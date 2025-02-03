@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\PaymentCollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -211,8 +210,6 @@ class SageApiService
     public function bookEndorsementOnSage($endorsementPreparedPayload)
     {
         [$request, $sendUpdateLog, $sageRequestPayload] = $endorsementPreparedPayload;
-
-        $response = ['status' => true, 'message' => 'Endorsement successfully booked'];
         $sendUpdateCategory = $sendUpdateLog?->category?->code;
         [$sageLogsArray, $reversalInvoiceLogs] = $this->sendUpdateSageLogs($request, $sendUpdateLog);
 
@@ -222,6 +219,26 @@ class SageApiService
 
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
+
+        // Reminder:: To handle insurer payment against credit card for Tap Integration
+        if (isTapEnabled()) {
+            $checkCCPayments = app(PaymentService::class)->checkCCPayments($preparedData['splitPayments']);
+            info('fn:bookEndorsementOnSage - TAP Enabled - Collection Type: '.$preparedData['payment']->collection_type.' - Credit Card Payments available: '.$checkCCPayments.' - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
+            if ($preparedData['payment']->isInsurerPayment() && $checkCCPayments) {
+                info('fn:bookEndorsementOnSage - Authorizing payment process started - PaymentCode: '.$preparedData['payment']->code.' - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
+                $successMessage = $this->handleSplitPaymentApproval($request->quoteType, $mainQuote, $preparedData['payment'], $preparedData['splitPayments']);
+                info('fn:bookEndorsementOnSage - Authorizing payment process completed - response:'.json_encode($successMessage).' - PaymentCode: '.$preparedData['payment']->code.' - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
+                if (! $successMessage) {
+                    return ['status' => false, 'message' => 'Error while approving send update payment'];
+                }
+            }
+            QuoteTag::updateOrCreate([
+                'send_update_log_id' => $sendUpdateLog?->id,
+                'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START,
+            ], ['value' => 1]);
+
+            return ['status' => false, 'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status'];
+        }
 
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
             if (empty($reversalInvoiceLogs)) {
@@ -553,7 +570,7 @@ class SageApiService
 
         // This block is for collection type INSURER and having any Credit Card Payment
         // This specific block is added to handle tap payments
-        $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
+        $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0;
         info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type);
         if ($payment->isInsurerPayment() && $hasAnyCCPayment) {
             info('Skipping Policy Book & Authorizing payment for '.$payment->code);
@@ -2127,11 +2144,10 @@ class SageApiService
 
     private function handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits)
     {
-        info('handleSplitPaymentApproval called from sage api service: '.$quote->code);
-        $modelType = QuoteTypes::getName($quoteTypeId)->value;
+        info('fn:handleSplitPaymentApproval - Split payment approval process started - process called from SageApiService - QuoteCode: '.$quote->code.' - PaymentCode: '.$payment->code);
+        $modelType = $payment->send_update_log_id ? $quoteTypeId : QuoteTypes::getName($quoteTypeId)->value;
         $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
-
-        $data = new SplitPaymentApproveRequest([
+        $splitPaymentApprovalRequest = new SplitPaymentApproveRequest([
             'modelType' => $modelType,
             'quote_id' => $quote->id,
             'plan_id' => $payment->plan_id,
@@ -2142,10 +2158,13 @@ class SageApiService
             'is_capture' => 1,
             'is_approved' => 0,
             'declined_reason' => $payment->declined_reason,
-            'send_update_id' => null,
+            'send_update_id' => $payment->send_update_log_id ?? null,
             'collection_type' => $payment->collection_type,
         ]);
 
-        return app(PaymentRepository::class)->handlePaymentApprove($data);
+        $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
+        info('fn:handleSplitPaymentApproval - Split payment approval process completed - process called from SageApiService - QuoteCode: '.$quote->code.' - PaymentCode: '.$payment->code.($sendUpdateLog ? ' - SendUpdateCode: '.$sendUpdateLog->code : ''));
+
+        return $response;
     }
 }
