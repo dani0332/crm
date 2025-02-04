@@ -700,11 +700,23 @@ class SplitPaymentService
             if (! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])) {
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
                 $capturePaymentResponse = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
+                
                 if ($capturePaymentResponse->getStatusCode() != 200) {
                     $data = json_decode($capturePaymentResponse->getContent(), true);
                     $this->handleCapturePaymentError($data[0] ?? '', $isFromJob, $paymentSplit->id, $paymentSplit->code);
                     if ($isFromJob) {
                         $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
+                    }
+                
+                } else if($isFromJob && in_array($modelType, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])){
+
+                    try {
+                        EmbeddedProductRepository::capturePayment($quoteId, $modelType);
+                    } catch (Exception $e) {
+                        Log::error($modelType . ' - capture embedded products failed', [
+                            'error' => $e->getMessage(),
+                            'uuid' => $quoteId,
+                        ]);
                     }
                 }
                 // $paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
@@ -795,7 +807,6 @@ class SplitPaymentService
     // function to process the master payment approve
     public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0, $paymentCode = '')
     {
-        $canCaptureEp = false;
         DB::beginTransaction();
         try {
             if ($sendUpdateId > 0) {
@@ -836,10 +847,6 @@ class SplitPaymentService
                 'payment_status_id' => $masterPaymentStatus,
                 'updated_by' => Auth::user()->id ?? null,
             ]);
-
-            if (($totalPaidPayments + $totalPartialPaidPayments) == $masterPayment->total_payments) {
-                $canCaptureEp = true;
-            }
 
             info('Master payment code: '.$quoteModel->code.' Master payment approved with Payment Status: '.$masterPaymentStatus);
 
@@ -896,7 +903,6 @@ class SplitPaymentService
             }
             DB::commit();
         } catch (\Exception $exception) {
-            $canCaptureEp = false;
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
                 info('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' with error: '.$exception->getMessage());
@@ -904,19 +910,6 @@ class SplitPaymentService
             }
             Log::error('Error in processMasterPaymentApprove for Quote Code: '.$quoteModel->code.': '.$exception->getMessage());
             DB::rollBack();
-        }
-
-        if ($canCaptureEp) {
-
-            try {
-                EmbeddedProductRepository::capturePayment($quoteId, $modelType);
-            } catch (Exception $e) {
-                Log::error($modelType . ' - capture embedded products failed', [
-                    'error' => $e->getMessage(),
-                    'uuid' => $quoteId,
-                ]);
-            }
-            
         }
 
         return $successMessage;
