@@ -21,7 +21,7 @@ class BrokerCommissionService
             ->active();
 
         $brokerCommission = $baseQuery->first();
-        $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
+        $commissionInPayments = $brokerCommission->commission_in_payments ?? false; // todo: Check it with Denber
         $isCreditCardEnabled = $brokerCommission ? true : false;
 
         if ($planId) {
