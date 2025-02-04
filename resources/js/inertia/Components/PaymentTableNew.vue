@@ -3330,6 +3330,7 @@ const voidPayment = () => {
     quote_uuid: props.quoteRequest.uuid,
     payment_id: props.payments[0].id,
     payment_code: props.payments[0].code,
+    send_update_log_id: props.sendUpdate?.id ?? null
   };
 
   axios
