@@ -78,6 +78,7 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   insurer_api_status_id: '',
+  api_issuance_status_id: '',
   amlStatus: [],
   insurance_provider_ids: [],
   plan_name: [],
@@ -113,6 +114,8 @@ const tableHeader = [
     value: 'sic_advisor_requested',
   },
   { text: 'Advisor Assigned Date And Time', value: 'advisor_assigned_date' },
+  { text: 'API ISSUANCE STATUS', value: 'api_issuance_status' },
+  { text: 'INSURER API STATUS', value: 'insurer_api_status' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {
@@ -151,6 +154,14 @@ const paymentStatusOptions = computed(() => {
 });
 const insurerApiStatus = computed(() => {
   return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+const issuanceStatuses = computed(() => {
+  return Object.entries(page.props.issuanceStatuses).map(([index, value]) => {
     return {
       value: index,
       label: value,
@@ -795,7 +806,14 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Insurer Commission Tax Invoice No"
         />
         <ComboBox
-          label="INSURER API STATUS"
+          label="API Issuance Status"
+          v-model="filters.api_issuance_status_id"
+          placeholder="Select API Issuance Status"
+          :options="issuanceStatuses"
+          class="w-full"
+        />
+        <ComboBox
+          label="Insurer API Status"
           v-model="filters.insurer_api_status_id"
           placeholder="Select Status"
           :options="insurerApiStatus"

@@ -289,7 +289,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.YachtQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.YachtQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -300,7 +305,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.YachtQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.YachtQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
           />
         </template>
 
@@ -999,6 +1009,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

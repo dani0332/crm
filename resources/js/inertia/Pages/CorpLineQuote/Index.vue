@@ -365,7 +365,7 @@ const onDataExport = () => {
 
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
-    if (key == 'created_at_start' || key == 'created_at_end') {
+    if (/date/i.test(key) && params[key]) {
       filters[key] = useDateFormat(params[key], 'YYYY-MM-DD').value;
     } else if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key].map(value =>
@@ -672,7 +672,8 @@ const insurerAMLStatusOption = computed(() => {
               filters.payment_due_date ||
               filters.booking_date ||
               filters.company_name ||
-              filters.advisor_assigned_date
+              filters.advisor_assigned_date ||
+              (filters.policy_expiry_date && filters.policy_expiry_date_end)
                 ? []
                 : [isRequired]
             "
@@ -690,7 +691,8 @@ const insurerAMLStatusOption = computed(() => {
               filters.payment_due_date ||
               filters.booking_date ||
               filters.company_name ||
-              filters.advisor_assigned_date
+              filters.advisor_assigned_date ||
+              (filters.policy_expiry_date && filters.policy_expiry_date_end)
                 ? []
                 : [isRequired]
             "

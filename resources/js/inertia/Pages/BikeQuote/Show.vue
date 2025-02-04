@@ -347,6 +347,11 @@ const fetchUpdatedQuote = async () => {
 
 const applyEmiratesIdNumMasking = emiratesId =>
     customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
+
+function capitalizeString(str) {
+    if (!str) return 'N/A';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
 </script>
 
 <template>
@@ -373,7 +378,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -406,7 +414,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.BikeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.BikeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -417,7 +430,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.BikeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.BikeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
           />
         </template>
 
@@ -446,15 +464,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
             <dd>{{ quote?.paid_at ?? '' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">AML STATUS</dt>
-            <dd>{{ amlStatusName ?? '' }}</dd>
-          </div>
-          <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">INSURER AML STATUS</dt>
-            <dd>N/A</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -533,16 +542,20 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
-                <dd v-if="quote?.kyc_decision === 'Complete'">
-                  KYC - Complete
-                </dd>
-                <dd v-else>KYC - Pending</dd>
+                  <dt class="font-medium">AML STATUS</dt>
+                  <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
+<!--              <div class="grid sm:grid-cols-2">-->
+<!--                <dt class="font-medium">AML STATUS</dt>-->
+<!--                <dd v-if="quote?.kyc_decision === 'Complete'">-->
+<!--                  KYC - Complete-->
+<!--                </dd>-->
+<!--                <dd v-else>KYC - Pending</dd>-->
+<!--              </div>-->
               <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER AML STATUS</dt>
-                <dd>N/A</dd>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER AGE</dt>
@@ -1353,6 +1366,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

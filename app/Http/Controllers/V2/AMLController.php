@@ -426,6 +426,12 @@ class AMLController extends Controller
             $insurerAMLScreeningResponse = [];
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
+                $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
+                $customer->nationality_id = $AMLCheckRequest->nationality_id;
+                $customer->dob = $AMLCheckRequest->dob;
+                $customer->insured_first_name = $AMLCheckRequest->insured_first_name;
+                $customer->insured_last_name = $AMLCheckRequest->insured_last_name;
+
                 $insuredPersonDetails = Insured::updateOrCreate([
                     'id_type' => $AMLCheckRequest->screening_id_type,
                     'id_number' => $AMLCheckRequest->screening_id_number,
@@ -436,7 +442,7 @@ class AMLController extends Controller
                     'nationality_id' => $AMLCheckRequest->nationality_id,
                     'gender' => $AMLCheckRequest->screening_gender,
                 ]);
-
+                $insuredPersonDetails->refresh();
                 CustomerInsured::updateOrCreate([
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $updateQuote->id,
@@ -445,9 +451,12 @@ class AMLController extends Controller
                     'insured_id' => $insuredPersonDetails->id,
                 ]);
 
-                if ($insuredPersonDetails->isDirty() || ! isset($getLastScreening->created_at) || Carbon::parse($insuredPersonDetails->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')) {
-                    $insuredPersonDetails->save();
-                    $insuredPersonDetails->refresh();
+                if ($customer->isDirty() ||
+                    ! isset($getLastScreening->created_at) ||
+                    Carbon::parse($customer->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')
+                ) {
+                    $customer->save();
+                    $customer->refresh();
 
                     $getMemberOrUBODetails[] = [
                         'first_name' => $insuredPersonDetails->first_name,

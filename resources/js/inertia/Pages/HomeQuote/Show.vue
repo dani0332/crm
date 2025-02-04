@@ -517,6 +517,11 @@ const onAddUpdate = () => {
 const applyEmiratesIdNumMasking = emiratesId =>
     customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
 
+function capitalizeString(str) {
+    if (!str) return 'N/A';
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
 </script>
 
 <template>
@@ -678,7 +683,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER AML STATUS</dt>
-                <dd>N/A</dd>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -1369,6 +1374,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

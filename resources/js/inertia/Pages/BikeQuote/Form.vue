@@ -290,7 +290,7 @@ const gender = computed(() => {
             :error="quoteForm.errors.nationality_id"
           />
         </x-field>
-        <x-field label="Gender">
+        <x-field label="GENDER">
           <x-select
             v-model="quoteForm.gender"
             :options="gender"

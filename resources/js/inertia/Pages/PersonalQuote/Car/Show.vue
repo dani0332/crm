@@ -1642,6 +1642,25 @@ const allowStatusUpdate = computed(() => {
   );
 });
 
+const convertToNumber = (value, decimalPlace = 2) => {
+  // Step 1: Round to (decimalPlace + 2) decimal places
+  const roundToExtra =
+    Math.round(value * Math.pow(10, decimalPlace + 2)) /
+    Math.pow(10, decimalPlace + 2);
+
+  // Step 2: Round to (decimalPlace + 1) decimal places
+  const roundToOneLess =
+    Math.round(roundToExtra * Math.pow(10, decimalPlace + 1)) /
+    Math.pow(10, decimalPlace + 1);
+
+  // Step 3: Round to (decimalPlace) decimal places
+  const roundToFinal =
+    Math.round(roundToOneLess * Math.pow(10, decimalPlace)) /
+    Math.pow(10, decimalPlace);
+
+  return roundToFinal;
+};
+
 function genderFormatForProfile(gender) {
   if (!gender) return gender;
   return gender === 'M' || gender === 'Male' ? 'Male' : 'Female';
@@ -1666,7 +1685,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       </template>
       <template #default>
         <Link
-          v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+          v-if="
+            record?.insly_id &&
+            canAny([
+              permissionEnum.VIEW_LEGACY_DETAILS,
+              permissionEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="`/legacy-policy/${record.insly_id}`"
           preserve-scroll
         >
@@ -1876,7 +1901,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER AML STATUS</dt>
-                <dd>{{ capitalizeString(quote.insurer_aml_status) }}</dd>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BATCH</dt>
@@ -3427,9 +3452,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
             </template>
             <template #item-premiumWithVat="item">
               {{
-                parseFloat(
+                convertToNumber(
                   item.discountPremium + item.vat + getAddonVat(item),
-                ).toFixed(2)
+                )
               }}
             </template>
             <template #item-action="item">
@@ -3809,6 +3834,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"
