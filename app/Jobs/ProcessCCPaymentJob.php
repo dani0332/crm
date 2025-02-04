@@ -68,12 +68,12 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 true
             );
 
-            $payment = PaymentSplits::find($ccPaymentProcess->payment_splits_id)->payment;
-            if (! $payment) {
+            $paymentSplit = PaymentSplits::find($ccPaymentProcess->payment_splits_id);
+            if (!$paymentSplit || !$paymentSplit->payment) {
                 info("CC Payments Job Failed for Payment Split {$splitPaymentCode} - Error: Payment not found");
-
                 return;
             }
+            $payment = $paymentSplit->payment;
             $splitPayments = $payment->paymentSplits;
             $hasAnyCCPayment = $splitPayments->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
 

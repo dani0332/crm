@@ -208,9 +208,9 @@ class SendUpdateLogController extends Controller
         $isEditDisabledForQueuedBooking = $this->sendUpdateLogService->isEditDisabledForQueuedBooking($sendUpdateLog);
 
         $insurance_provider_id = $insuranceProviderId ?? $bookingDetails['insurance_provider_id'] ?? null;
-        $record = $quote;
-        $record->insurance_provider_id = $insurance_provider_id;
-        $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $sendUpdatePayments[0] ?? null);
+        $sendUpdate = $quote;
+        $sendUpdate->insurance_provider_id = $insurance_provider_id;
+        $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $sendUpdate, $sendUpdatePayments[0] ?? null);
         $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
 
         return inertia('SendUpdateLog/Show', [
