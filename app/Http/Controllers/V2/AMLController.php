@@ -387,6 +387,7 @@ class AMLController extends Controller
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
         // TODO:: Insured Mapping verified
+        info('AML Screening Bridger - Process Started - Ref-ID: '.$quoteRequestId);
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
@@ -402,6 +403,7 @@ class AMLController extends Controller
             ->whereNull('screenshot')->get()->last() ?? [];
 
         if ($getMemberOrUBODetails) {
+            info('AML Screening Bridger - Members found against Ref-ID: '.$quoteRequestId);
             $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
             if (in_array(null, $memberValidateCheck)) {
                 return redirect()->back()->with('error', 'First Name missing');
@@ -426,6 +428,7 @@ class AMLController extends Controller
             $insurerAMLScreeningResponse = [];
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
+                info('AML Screening Bridger - Customer Type: '.CustomerTypeEnum::Individual);
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customer->nationality_id = $AMLCheckRequest->nationality_id;
                 $customer->dob = $AMLCheckRequest->dob;
@@ -458,6 +461,7 @@ class AMLController extends Controller
                     $customer->save();
                     $customer->refresh();
 
+                    info('AML Screening Bridger - Customer Details updated - Ref-ID: '.$quoteRequestId);
                     $getMemberOrUBODetails[] = [
                         'first_name' => $insuredPersonDetails->first_name,
                         'last_name' => $insuredPersonDetails->last_name,
@@ -471,11 +475,11 @@ class AMLController extends Controller
                     $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteRequestId)->first();
                     $carQuoteRequestDetails->chassis_number = $AMLCheckRequest->chassis_number;
                     if ($carQuoteRequestDetails->isDirty()) {
+                        info('AML Screening Bridger - Chassis number updated - Ref-ID: '.$quoteRequestId);
                         $carQuoteRequestDetails->save();
-                        if (isTapEnabled()) {
-                            info('AML Screening Bridger - Tap Enabled - update premium API called - Ref-ID: '.$quoteRequestId);
-                            // TODO:: Reminder need to call update premium API
-                        }
+//                        if (isTapEnabled()) {
+//                            info('AML Screening Bridger - Tap Enabled - update premium API called - Ref-ID: '.$quoteRequestId);
+//                        }
                     }
                 }
 
@@ -518,10 +522,12 @@ class AMLController extends Controller
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
                 // Job dispatch for all members including customer
+                info('AML Screening Bridger - AML Screening Job Dispatched against Individual Customer - Ref-ID: '.$quoteRequestId);
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
+                info('AML Screening Bridger - Customer Type: '.CustomerTypeEnum::Entity);
                 $entityDetailsForApi = [];
                 $bridgerInsightService = new BridgerInsightService;
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
@@ -544,6 +550,7 @@ class AMLController extends Controller
                     ], ['entity_id' => $entityId, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
 
                     $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
+                    info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
                 } else {
                     $fetchEntity->trade_license_no = $AMLCheckRequest->trade_license_no;
@@ -577,6 +584,7 @@ class AMLController extends Controller
                 }
 
                 // Job dispatch for all UBO members
+                info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
             }
 
