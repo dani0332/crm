@@ -10,7 +10,7 @@ use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -333,14 +333,14 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
-    public function insured(): HasManyThrough
+    public function insured(): HasOneThrough
     {
-        return $this->hasManyThrough(
+        return $this->hasOneThrough(
             Insured::class,
             CustomerInsured::class,
             'quote_request_id', // customer_insured.quote_request_id, relation between personal_quote and customer_insured.
             'id', // insured.id
-            'id', // life_quote_request.id
+            'id', // personal_quote_request.id
             'insured_id' // customer_insured.insured_id
         );
     }

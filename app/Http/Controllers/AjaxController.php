@@ -268,6 +268,7 @@ class AjaxController extends Controller
 
                 $customer = Customer::find($request->customer_id);
 
+                // Need to discuss.
                 $customer->insured_first_name = $data['first_name']; // TODO:: Need to update the insurer details
                 $customer->insured_last_name = $data['last_name'];
 

@@ -82,11 +82,13 @@ class BusinessQuoteService extends BaseService
                 'bqr.kyc_decision',
                 'bqr.stale_at',
                 DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
-                'c.insured_first_name',
-                'c.insured_last_name',
+                'c.insured_first_name as customer_insured_first_name',
+                'c.insured_last_name as customer_insured_last_name',
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
+                'i.first_name as insured_first_name',
+                'i.last_name as insured_last_name',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -142,6 +144,11 @@ class BusinessQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
             })
+            ->leftJoin('customer_insured as ci', function ($query) {
+                $query->on('ci.quote_type_id', '=', QuoteTypeId::Business);
+                $query->on('ci.quote_request_id', '=', 'bqr.id');
+            })
+            ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 

@@ -31,7 +31,7 @@ const tableHeader = [
   { text: 'CUSTOMER ID', value: 'uuid' },
   { text: 'REF-ID', value: 'code' },
   { text: 'NAME', value: 'first_name' },
-  { text: 'INSURED NAME', value: 'insured_first_name' }, // TODO:: Need to verify the insurer details
+  { text: 'INSURED NAME', value: 'insured_first_name' },
   { text: 'CREATED AT', value: 'created_at' },
   { text: 'UPDATED AT', value: 'updated_at' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
@@ -94,7 +94,7 @@ function onReset() {
             { value: 'email', label: 'Email Address' },
             { value: 'first_name', label: 'Customer Name' },
             { value: 'entity_name', label: 'Entity Name' },
-            { value: 'insured_first_name', label: 'Insured Name' }, // TODO:: Need to verify the insurer details
+            { value: 'insured_first_name', label: 'Insured Name' },
             { value: 'mobile_no', label: 'Mobile Number' },
             { value: 'uuid', label: 'Customer ID' },
           ]"
@@ -164,16 +164,15 @@ function onReset() {
         {{ customer?.first_name }}
       </template>
 
+      <template #item-insured_first_name="{ customer }">
+        {{ (customer?.insured?.first_name ?? customer?.insured_first_name) ?? '' }}
+      </template>
+
       <template #item-quote_type_id="{ quote_type_id }">
         {{ getQuoteType(quote_type_id) }}
       </template>
 
-<!--  TODO:: Need to update the insurer details-->
-      <template #item-insured_first_name="{ customer }">
-        {{ customer?.insured_first_name }}
-      </template>
-
-      <template #item-created_at="{ customer }">
+        <template #item-created_at="{ customer }">
         {{ customer?.created_at }}
       </template>
 
