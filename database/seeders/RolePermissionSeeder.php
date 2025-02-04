@@ -109,7 +109,7 @@ class RolePermissionSeeder extends Seeder
 
     private function addVoidPaymentEmbeddedPermission(): void
     {
-        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::EpAdmin])->get();
+        $role = Role::where('name', RolesEnum::EpAdmin)->first();
         $permission = Permission::firstOrCreate([
             'name' => PermissionsEnum::PAYMENTS_VOID,
             'guard_name' => 'web',
@@ -118,10 +118,8 @@ class RolePermissionSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        foreach ($roles as $role) {
-            if (! $role->hasPermissionTo($permission)) {
-                $role->givePermissionTo($permission);
-            }
+        if (! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
         }
     }
 }
