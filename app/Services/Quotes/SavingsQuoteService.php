@@ -4,12 +4,14 @@ namespace App\Services\Quotes;
 
 use App\Enums\RolesEnum;
 use App\Enums\GenderEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Nationality;
 use App\Models\CurrencyType;
 use App\Models\MartialStatus;
 use App\Models\PersonalQuote;
 use App\Enums\SavingsPurposeEnum;
+use App\Models\SavingsQuote;
 use Illuminate\Support\Facades\Auth;
 
 class SavingsQuoteService extends BaseQuoteService
@@ -33,8 +35,8 @@ class SavingsQuoteService extends BaseQuoteService
             ->filter(! $forExport, $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount);
 
-        $this->adjustQueryByInsurerInvoiceFilters($query);
-        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        // $this->adjustQueryByInsurerInvoiceFilters($query);
+        // $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         return $query->resolveData($paginted, $forExport, $getTotalCount);
     }
@@ -80,10 +82,25 @@ class SavingsQuoteService extends BaseQuoteService
             'gender' => $data['gender'],
             'quote_type_id' => $data['quoteTypeId'],
             'uuid' => $uuid,
-            'code' => "{$this->quoteType->shortCode()}-{$uuid}",
+            'code' => "{$this->quoteType->shortCode()}{$uuid}",
+            'quote_status_id' => QuoteStatusEnum::NewLead
         ]);
 
-        dd($personalQuote);
+        SavingsQuote::create([
+            'personal_quote_id' => $personalQuote->id,
+            'marital_status_id' => $data['maritalStatusId'],
+            'tenure_of_savings' => $data['tenureOfSavings'],
+            'has_nicotine' => $data['hasNicotine'],
+            'purpose' => $data['purpose'],
+            'currency' => $data['currency'],
+            'amount' => $data['amount'],
+            'investment_frequency' => $data['investmentFrequency'],
+            'additional_notes' => $data['additionalNotes'],
+        ]);
+
+        return (object) [
+            'quoteUID' => $uuid,
+        ];
     }
 
     public function create(array $data)
@@ -118,6 +135,6 @@ class SavingsQuoteService extends BaseQuoteService
             'advisorId' => (! Auth::user()->hasRole(RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
-        $this->tempMockApi($data);
+        return $this->tempMockApi($data);
     }
 }

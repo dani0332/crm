@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Events\LeadsCount;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsQuoteRequest;
@@ -49,6 +50,14 @@ class SavingsQuoteController extends Controller
 
     public function store(SavingsQuoteRequest $request)
     {
-        $data = $this->savingsQuoteService->create($request->validated());
+        $response = $this->savingsQuoteService->create($request->validated());
+
+         if (! empty($response->errors) || ! empty($response->msg)) {
+            vAbort($response->msg);
+        }
+
+        LeadsCount::dispatch($this->savingsQuoteService->getData(forExport: true, getTotalCount: true));
+
+        // return redirect(route('savings-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
 }
