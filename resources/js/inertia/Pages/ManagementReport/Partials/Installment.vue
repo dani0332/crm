@@ -44,11 +44,16 @@ const tableHeader = reactive([
     value: 'policy_start_date',
     tooltip: 'Policy inception date',
   },
-
+  
   {
     text: 'Payment Due Date',
     value: 'due_date',
     tooltip: 'The due date of the child installment',
+  },
+  {
+    text: 'Payment Ref Id',
+    value: 'code',
+    tooltip: 'The payment ref id for the child installment',
   },
   {
     text: 'Price (VAT applicable)',

@@ -48,6 +48,11 @@ const tableHeader = reactive([
     tooltip: 'The due date of the parent payment',
   },
   {
+    text: 'Payment Ref Id',
+    value: 'code',
+    tooltip: 'The payment ref id of the parent payment',
+  },
+  {
     text: 'Team',
     value: 'team',
     tooltip: 'Team Name',
