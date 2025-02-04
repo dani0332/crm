@@ -264,7 +264,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record->insurance_provider_id, $payment, $record);
+        $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $payment, true);
         $bookPolicyDetails = array_merge($bookPolicyDetails, $tapPaymentConfiguration);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {

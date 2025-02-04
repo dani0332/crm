@@ -2,7 +2,6 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteTypes;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
@@ -70,6 +69,7 @@ use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\HealthRevivalQuoteController;
+use App\Http\Controllers\V2\ImpersonateController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\LifeQuoteController;
@@ -82,14 +82,6 @@ use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
-use App\Http\Middleware\SetReadDbConnection;
-use App\Jobs\ProcessCCPaymentJob;
-use App\Models\CarQuote;
-use App\Models\CcPaymentProcess;
-use App\Models\Payment;
-use App\Models\PaymentSplits;
-use App\Models\TravelQuote;
-use App\Repositories\PaymentRepository;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -126,6 +118,9 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+    Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
+    Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
+
     Route::get('leadsearch', function () {
         return redirect('home');
     });
@@ -227,16 +222,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-sold', [CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
-        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction'); // ->middleware(SetReadDbConnection::class)->name('data-extraction');
-        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->name('export-car-pua-updates'); // ->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
-        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->name('export-rm-leads'); // ->middleware(SetReadDbConnection::class)->name('export-rm-leads');
+        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
+        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
+        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
         Route::delete('delete-quote-notes/{id}', [CentralController::class, 'deleteQuoteNotes'])->name('delete-quote-notes');
-        Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-plan-detail'); // ->middleware(SetReadDbConnection::class)->name('export-plan-detail');
-        Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-leads-detail-with-email-mobile'); // ->middleware(SetReadDbConnection::class)->name('export-leads-detail-with-email-mobile');
-        Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-makes-models'); // ->middleware(SetReadDbConnection::class)->name('export-makes-models');
+        Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-plan-detail');
+        Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-leads-detail-with-email-mobile');
+        Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-makes-models');
 
         Route::group(['prefix' => 'renewals'], function () {
             Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals'])->name('renewals-upload-create');
@@ -244,7 +239,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
-            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export'); // ->middleware(SetReadDbConnection::class)->name('renewal-search-export');
+            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export')->middleware(SetReadDbConnection::class)->name('renewal-search-export');
         });
     });
 
@@ -445,10 +440,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::group(['prefix' => 'quote-sync'], function () {
-            // Route::middleware('readonly_db')->group(function () {
-            Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
-            Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
-            // });
+            Route::middleware('readonly_db')->group(function () {
+                Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
+                Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
+            });
             Route::get('/edit/{quoteSync}', [QuoteSyncController::class, 'edit'])->name('admin.quotesync.edit');
             Route::put('/update/{quoteSync}', [QuoteSyncController::class, 'update'])->name('admin.quotesync.update');
             Route::post('/sync-stuck-entries', [QuoteSyncController::class, 'addStuckEntriesForSyncing'])->name('admin.quotesync.sync-stuck-entries');
@@ -601,7 +596,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
-        Route::get('export', [AMLController::class, 'export']); // ->middleware(SetReadDbConnection::class);
+        Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
     });
     Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
 
@@ -727,42 +722,3 @@ Route::get('/add-batch-number', function () {
 //     }
 
 // });
-
-Route::get('tap-pay-checkout-api/{code}/{quoteTypeId}', function () {
-    $quoteTypeId = request()->quoteTypeId;
-    if ($quoteTypeId == 8) {
-        $quote = TravelQuote::where('uuid', request()->code)->first();
-    } else {
-        $quote = CarQuote::where('uuid', request()->code)->first();
-    }
-    $payment = Payment::where('code', $quote->code)->first();
-    $paymentSplits = PaymentSplits::where('code', $quote->code)->get();
-
-    $modelType = QuoteTypes::getName($quoteTypeId)->value;
-    // premium_authorized need to confirm this in case of broker cc payment we are targetting collection amount
-    $collectionAmount = $paymentSplits->pluck('premium_authorized', 'sr_no')->toArray();
-    $data = new \stdClass;
-    $data->modelType = $modelType;
-    $data->quote_id = $quote->id;
-    $data->plan_id = $payment->plan_id;
-    $data->payment_code = $payment->code;
-    $data->customer_id = $quote->customer_id;
-    $data->collection_amount = $collectionAmount;
-    $data->is_declined = 0;
-    $data->is_capture = 1;
-    $data->is_approved = 0;
-    $data->declined_reason = $payment->declined_reason;
-    $data->send_update_id = null;
-    $data->collection_type = $payment->collection_type;
-
-    app(PaymentRepository::class)->handlePaymentApprove($data);
-
-    echo 'Payment Capture';
-});
-
-Route::get('/test/{id}', function () {
-    $ccProcessData = CcPaymentProcess::find(request()->id);
-    $ccProcess = new ProcessCCPaymentJob($ccProcessData);
-    $ccProcess->handle();
-    echo 'Done';
-});

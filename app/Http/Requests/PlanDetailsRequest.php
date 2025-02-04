@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\CollectionTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -62,10 +61,10 @@ class PlanDetailsRequest extends FormRequest
             }
 
             $quoteTypeId = QuoteTypes::getIdFromValue(request()->quoteType);
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, request()->insurance_provider_id);
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id);
             if (! $isCreditCardEnabled) {
                 $payment = Payment::where('code', request()->code)->first();
-                if ($payment && $payment->isPaymentAuthorized() && $payment->collection_type == CollectionTypeEnum::INSURER) {
+                if ($payment && $payment->isPaymentAuthorized() && $payment->isInsurerPayment()) {
                     $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
                 }
             }

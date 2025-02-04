@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
@@ -20,9 +19,9 @@ use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\User;
-use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\PaymentLinkService;
+use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -543,9 +542,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
 
                 // create sage receipt
-                $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-
-                if ($isSageEnabled) {
+                if ((new SageApiService)->isSageEnabled()) {
                     $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
                     if ($sageResponse['status'] == 'success') {
                         $paymentInformation['sage_reciept_id'] = $sageResponse['response'];

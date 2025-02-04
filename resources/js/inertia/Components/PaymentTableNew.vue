@@ -21,11 +21,12 @@ const can = permission => useCan(permission);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const paymentAllocationStatus = page.props.paymentAllocationStatus;
 const paymentMethodsEnums = page.props.paymentMethodsEnum;
+const paymentTooltipEnum = page.props.paymentTooltipEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const props = defineProps({
   payments: Array,
   can: Object,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   proformaPayment: Object,
   paymentDocument: Object,
@@ -158,13 +159,11 @@ const initialAmount = ref(0);
 
 const showLackingPayment = () => {
   if (is_lacking_payment.value && props.payments.length > 0) {
-    notification.error(
-      {
-        title: props.paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED,
-        position: 'top',
-        timeout: 5000,
-      }
-    );
+    notification.error({
+      title: paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED,
+      position: 'top',
+      timeout: 5000,
+    });
   }
 };
 
@@ -308,7 +307,7 @@ const isPolicyIssuanceDiscount = computed(() => {
 
 const { copy, copied } = useClipboard();
 const onCopyPaymentLink = (paymentLink, paymentStatus) => {
-  if (paymentStatus == props.paymentStatusEnum.PAID) {
+  if (paymentStatus == paymentStatusEnum.PAID) {
     notification.error({
       title: "Payment already 'Paid', button deactivated for this transaction",
       position: 'top',
@@ -1413,7 +1412,7 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
 };
 
 const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
-  if (paymentStatus == props.paymentStatusEnum.PAID) {
+  if (paymentStatus == paymentStatusEnum.PAID) {
     notification.error({
       title: "Payment already 'Paid', button deactivated for this transaction",
       position: 'top',
@@ -1498,12 +1497,9 @@ const isProformaPaymentRequestExportable = (payment, documents) => {
 
 const downloadProformaPayment = async () => {
   let errorMsg = '';
-  if (
-    props.paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id
-  ) {
+  if (paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id) {
     errorMsg =
-      props.paymentTooltipEnum
-        .PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+      paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
     notification.error({
       title: errorMsg,
       position: 'top',
@@ -1799,7 +1795,7 @@ const editPaymentModal = (
 ) => {
   if (
     sr_no === 0 &&
-    payment.payment_status.id === props.paymentStatusEnum.PAID &&
+    payment.payment_status.id === paymentStatusEnum.PAID &&
     capture_approval === 0 &&
     isPaidEditable.value === false
   ) {
@@ -1810,9 +1806,14 @@ const editPaymentModal = (
     return false;
   }
 
-  if (isEditPaymentEnabled()){
+  if (
+    isEditPaymentEnabled() &&
+    split_payment_id == 0 &&
+    sr_no == 0 &&
+    capture_approval == 0
+  ) {
     notification.error({
-      title: props.paymentTooltipEnum.PAYMENT_AUTHORISED_CANNOT_EDIT,
+      title: paymentTooltipEnum.PAYMENT_AUTHORISED_CANNOT_EDIT,
       position: 'top',
       timeout: 10000,
     });
@@ -1943,11 +1944,11 @@ const initializePaymentForm = (
 
 const processPaymentSplits = payment => {
   const paidStatusIds = [
-    props.paymentStatusEnum.PAID,
-    props.paymentStatusEnum.PARTIALLY_PAID,
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.CAPTURED,
-    props.paymentStatusEnum.PARTIAL_CAPTURED,
+    paymentStatusEnum.PAID,
+    paymentStatusEnum.PARTIALLY_PAID,
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.CAPTURED,
+    paymentStatusEnum.PARTIAL_CAPTURED,
   ];
 
   for (let i = 1; i <= payment.total_payments; i++) {
@@ -1958,7 +1959,7 @@ const processPaymentSplits = payment => {
       paidAmountSum.value += parseFloat(split.payment_amount);
     }
     authorizedPayments.value[i] =
-      split.payment_status_id === props.paymentStatusEnum.AUTHORISED;
+      split.payment_status_id === paymentStatusEnum.AUTHORISED;
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = split.payment_method.code;
     splitAmountModels.value[i] = split.payment_amount;
@@ -2099,11 +2100,11 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
 const isAnyPaid = payment => {
   const paidStatusIds = [
-    props.paymentStatusEnum.PAID,
-    props.paymentStatusEnum.PARTIALLY_PAID,
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.CAPTURED,
-    props.paymentStatusEnum.PARTIAL_CAPTURED,
+    paymentStatusEnum.PAID,
+    paymentStatusEnum.PARTIALLY_PAID,
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.CAPTURED,
+    paymentStatusEnum.PARTIAL_CAPTURED,
   ];
 
   return payment.payment_splits.some(split =>
@@ -2698,8 +2699,7 @@ const uploadDocument = (doc, files, count) => {
     )
   ) {
     isFileError.value = true;
-    fileErrorMessage.value =
-      props.paymentTooltipEnum.PAYMENT_ADD_DUPLICATE_FILES;
+    fileErrorMessage.value = paymentTooltipEnum.PAYMENT_ADD_DUPLICATE_FILES;
     return false;
   }
 
@@ -2824,9 +2824,9 @@ const shouldProcessUpdate = payment => {
 
 const getValidStatuses = paymentSplitRec => {
   const validStatuses = [
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.PAID,
-    props.paymentStatusEnum.PARTIALLY_PAID,
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.PAID,
+    paymentStatusEnum.PARTIALLY_PAID,
   ];
   return validStatuses.includes(paymentSplitRec.payment_status_id);
 };
@@ -2837,13 +2837,12 @@ const validateUpfrontCapture = paymentRecord => {
     return getValidStatuses(paymentSplitRec);
   const isIPPending =
     paymentSplitRec.payment_method.code === 'IP' &&
-    paymentSplitRec.payment_status_id === props.paymentStatusEnum.PENDING;
+    paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
   const isCAPayment =
     paymentSplitRec.payment_method.code === 'CA' &&
-    paymentSplitRec.payment_status_id ===
-      props.paymentStatusEnum.CREDIT_APPROVED;
+    paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
   const isPaidPayment =
-    paymentSplitRec.payment_status_id === props.paymentStatusEnum.PAID;
+    paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
   return isIPPending || isCAPayment || isPaidPayment;
 };
 
@@ -2855,7 +2854,7 @@ const filterCCPayments = payment => {
 
 const filterCAPayments = payment => {
   return payment.payment_splits.filter(
-    item => item.payment_status_id == props.paymentStatusEnum.CREDIT_APPROVED,
+    item => item.payment_status_id == paymentStatusEnum.CREDIT_APPROVED,
   );
 };
 
@@ -2866,11 +2865,11 @@ const validateSplitPaymentsCapture = paymentRecord => {
     let totalSplitPayments = paymentRecord.payment_splits.length;
     let paidPaymentStatus = paymentRecord.payment_splits.filter(
       item =>
-        item.payment_status_id === props.paymentStatusEnum.PAID ||
-        item.payment_status_id === props.paymentStatusEnum.PARTIALLY_PAID,
+        item.payment_status_id === paymentStatusEnum.PAID ||
+        item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID,
     );
     let ccPaymentStatus = paymentMethodCC.filter(
-      item => item.payment_status_id === props.paymentStatusEnum.AUTHORISED,
+      item => item.payment_status_id === paymentStatusEnum.AUTHORISED,
     );
     return (
       totalSplitPayments == ccPaymentStatus.length + paidPaymentStatus.length
@@ -2882,14 +2881,14 @@ const validateSplitPaymentsCapture = paymentRecord => {
     if (ipPaymentStatus.length > 0) {
       let ipPending = ipPaymentStatus.filter(
         item =>
-          item.payment_status_id === props.paymentStatusEnum.PENDING ||
-          item.payment_status_id === props.paymentStatusEnum.PAID,
+          item.payment_status_id === paymentStatusEnum.PENDING ||
+          item.payment_status_id === paymentStatusEnum.PAID,
       );
       return ipPending.length === ipPaymentStatus.length;
     } else {
       if (verifyCreditApproved(paymentRecord)) return true;
       let paidPaymentStatus = paymentRecord.payment_splits.filter(
-        item => item.payment_status_id === props.paymentStatusEnum.PAID,
+        item => item.payment_status_id === paymentStatusEnum.PAID,
       );
       return paidPaymentStatus.length === paymentRecord.payment_splits.length;
     }
@@ -2897,15 +2896,13 @@ const validateSplitPaymentsCapture = paymentRecord => {
 };
 
 const validateNonUpfrontAndSplitCapture = paymentRecord => {
-  if (
-    paymentRecord.payment_status_id === props.paymentStatusEnum.CREDIT_APPROVED
-  ) {
+  if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
     if (verifyCreditApproved(paymentRecord)) return true;
   } else if (
     (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
       paymentRecord.payment_splits[0].payment_method.code === 'PDC') &&
     paymentRecord.payment_splits[0].payment_status_id ===
-      props.paymentStatusEnum.PENDING
+      paymentStatusEnum.PENDING
   ) {
     return true;
   }
@@ -2955,9 +2952,9 @@ const alertCapture = payment => {
 
 const hasAnyAuthorisedPendingCA = computed(() => {
   const statusesToCheck = [
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.CREDIT_APPROVED,
-    props.paymentStatusEnum.PENDING,
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.CREDIT_APPROVED,
+    paymentStatusEnum.PENDING,
   ];
 
   return payment => {
@@ -3159,7 +3156,7 @@ const paymentAllocationStatusTooltip = payment_allocation_status => {
 
 // verify if master payment is paid
 const isMasterPaymentPaid = computed(() => {
-  if (props.payments[0].payment_status_id === props.paymentStatusEnum.PAID) {
+  if (props.payments[0].payment_status_id === paymentStatusEnum.PAID) {
     return true;
   }
   return false;
@@ -3342,12 +3339,12 @@ const isSplitDeleteEnabled = computed(() => {
 
 const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
   const eligibleStatuses = [
-    props.paymentStatusEnum.PAID,
-    props.paymentStatusEnum.CAPTURED,
-    props.paymentStatusEnum.AUTHORISED,
-    props.paymentStatusEnum.REFUNDED,
-    props.paymentStatusEnum.PARTIAL_CAPTURED,
-    props.paymentStatusEnum.PARTIALLY_PAID,
+    paymentStatusEnum.PAID,
+    paymentStatusEnum.CAPTURED,
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.REFUNDED,
+    paymentStatusEnum.PARTIAL_CAPTURED,
+    paymentStatusEnum.PARTIALLY_PAID,
   ];
 
   return (
@@ -3366,7 +3363,7 @@ const isMultiPaymentsEnabled = ref(
   page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled || false,
 );
 
-const isGIGOrQICProvider  = ref(
+const isGIGOrQICProvider = ref(
   page.props?.bookPolicyDetails?.isGIGOrQICProvider || false,
 );
 
@@ -3398,13 +3395,21 @@ const isCCPaymentDisabled = option => {
   );
 };
 
-const isPolicyBooked = option => {
-  return (
-    isCCEnabled.value &&
-    paymentMethodsForm.collection_type === 'insurer' &&
-    option == 'CC' &&
-    props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked
-  );
+const isPolicySendUpdateBooked = option => {
+  const isInsurerCollection = paymentMethodsForm.collection_type === 'insurer';
+  const isCCOption = option === 'CC';
+  const isPolicyBooked =
+    props.quoteRequest.quote_status_id ===
+    page.props.quoteStatusEnum.PolicyBooked;
+  const isUpdateBooked =
+    props.sendUpdate &&
+    props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+  const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
+
+  if (isUpdateBooked && isCCAndInsurer) {
+    return true;
+  }
+  return isCCAndInsurer && isPolicyBooked && !props.sendUpdate;
 };
 
 const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
@@ -3412,13 +3417,18 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
 };
 
 const isEditPaymentEnabled = () => {
-  return(
-    !isMultiPaymentsEnabled.value 
-    && isGIGOrQICProvider.value 
-    && props.payments[0].payment_status_id === props.paymentStatusEnum.AUTHORISED
-  )
-};
+  const statusesToCheck = [paymentStatusEnum.AUTHORISED];
 
+  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
+    statusesToCheck.includes(item.payment_status_id),
+  );
+
+  return (
+    !isMultiPaymentsEnabled.value &&
+    isGIGOrQICProvider.value &&
+    hasAnyAuthorizedPayment
+  );
+};
 </script>
 
 <template>
@@ -3780,7 +3790,11 @@ const isEditPaymentEnabled = () => {
                                 <template #content>!</template>
                               </x-badge>
                               <template #tooltip>
-                                {{isEditPaymentEnabled() ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT :  paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED}}
+                                {{
+                                  isEditPaymentEnabled()
+                                    ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT
+                                    : paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED
+                                }}
                               </template>
                             </x-tooltip>
                           </template>
@@ -5073,7 +5087,7 @@ const isEditPaymentEnabled = () => {
                       <span class="text-sm">
                         {{
                           splitPaymentRecord.payment_status_id ==
-                          props.paymentStatusEnum.PARTIALLY_PAID
+                          paymentStatusEnum.PARTIALLY_PAID
                             ? 'PARTIALLY CAPTURED AT'
                             : 'CAPTURED AT'
                         }}
@@ -5295,9 +5309,14 @@ const isEditPaymentEnabled = () => {
                             :title="
                               isCCPaymentDisabled(option.value)
                                 ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED
-                                : isPolicyBooked(option.value) ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED : option.tooltip
+                                : isPolicySendUpdateBooked(option.value)
+                                  ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED
+                                  : option.tooltip
                             "
-                            :disabled="isCCPaymentDisabled(option.value) || isPolicyBooked(option.value)"
+                            :disabled="
+                              isCCPaymentDisabled(option.value) ||
+                              isPolicySendUpdateBooked(option.value)
+                            "
                           >
                             {{ option.label }}
                           </option>

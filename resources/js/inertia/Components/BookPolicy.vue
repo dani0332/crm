@@ -203,7 +203,8 @@ const bpForm = useForm({
   isPolicyCancelledOrPendingToolTtip:
     page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
   isCommissionDisabled: page.props?.bookPolicyDetails?.isCommissionDisabled,
-  disabledCommissionTooltip: page.props?.bookPolicyDetails?.disabledCommissionTooltip,
+  disabledCommissionTooltip:
+    page.props?.bookPolicyDetails?.disabledCommissionTooltip,
   isTapCaptureProcessStart:
     page.props?.bookPolicyDetails?.isTapCaptureProcessStart,
 });
@@ -532,7 +533,7 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   let hasBookingFailedEditPermission = can(permissionsEnum.BOOKING_FAILED_EDIT);
 
   let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
- 
+
   if (
     policyIssuanceSteps?.isPolicyAutomationEnabled &&
     !isPolicyBookingFailed &&
@@ -689,13 +690,16 @@ const isAllPaymentAuthorized = () => {
 const isDisabledSendPCB = computed(() => {
   const payment = getPayment();
   if (payment) {
-    const ccPayments = filterCCPayments(payment)
-    if (payment.collection_type == 'insurer' && ccPayments.length > 0 && props.bookPolicyDetails?.text==sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT) {
+    const ccPayments = filterCCPayments(payment);
+    if (
+      payment.collection_type == 'insurer' &&
+      ccPayments.length > 0 &&
+      props.bookPolicyDetails?.text == sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT
+    ) {
       return true;
     }
   }
-})
-
+});
 </script>
 
 <template>
@@ -1365,7 +1369,11 @@ const isDisabledSendPCB = computed(() => {
                     </x-button>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
-                        {{ isDisabledSendPCB ? "Please Update the booking details" : "Action Needed: Please revise payment details to reflect plan changes."  }}
+                        {{
+                          isDisabledSendPCB
+                            ? 'Please Update the booking details'
+                            : 'Action Needed: Please revise payment details to reflect plan changes.'
+                        }}
                       </span>
                     </template>
                   </x-tooltip>

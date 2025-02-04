@@ -43,13 +43,13 @@ class ReportsController extends Controller
 
     public function __construct()
     {
-        $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConversionReportPermissions());
+        $advisorConverionReportPermissions = implode('|', array_merge(PermissionsEnum::getAdvisorConversionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS]));
         $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
 
-        $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
+        $advisorDistributionReportPermissions = implode('|', array_merge(PermissionsEnum::getAdvisorDistributionReportPermissions(), [PermissionsEnum::VIEW_ALL_REPORTS]));
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        // $this->middleware('readonly_db');
+        $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -188,7 +188,10 @@ class ReportsController extends Controller
             RolesEnum::SeniorManagement,
             RolesEnum::Admin,
             RolesEnum::Engineering,
-        ])) {
+        ])
+            &&
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
+        ) {
             $usersReportToLoggedInUser = UserManager::where('manager_id', auth()->user()->id)
                 ->whereIn('user_id', $usersReportToLoggedInUser)->pluck('user_id')->toArray();
         }
@@ -244,8 +247,11 @@ class ReportsController extends Controller
         } else {
             // Managers can see only advisors assigned to them
             $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
-            $advisorIdsByTeam = UserManager::where('manager_id', auth()->user()->id)
-                ->whereIn('user_id', $teamUsers)->pluck('user_id')->toArray();
+            $advisorIdsByTeamQuery = UserManager::whereIn('user_id', $teamUsers);
+            if (! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)) {
+                $advisorIdsByTeamQuery->where('manager_id', auth()->user()->id);
+            }
+            $advisorIdsByTeam = $advisorIdsByTeamQuery->pluck('user_id')->toArray();
         }
 
         return User::whereIn('id', $advisorIdsByTeam)

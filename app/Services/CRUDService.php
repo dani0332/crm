@@ -10,7 +10,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentGatewayIdEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
@@ -663,7 +663,7 @@ class CRUDService extends BaseService
             ],
         ];
 
-        $paymentGatewayEndpoint = $data['payment_gateway_id'] == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP ? 'tap' : 'checkout';
+        $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
         info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/capture', 'post', $planData);
 

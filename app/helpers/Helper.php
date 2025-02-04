@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -1284,9 +1285,9 @@ if (! function_exists('getManagersByUser')) {
 }
 
 if (! function_exists('roundNumber')) {
-    function roundNumber($number)
+    function roundNumber($number, $precision = 2)
     {
-        return round($number, 2);
+        return round($number, $precision);
     }
 }
 
@@ -1575,5 +1576,14 @@ if (! function_exists('isTapEnabled')) {
         $isTapEnabled = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION);
 
         return $isTapEnabled;
+    }
+}
+
+if (! function_exists('userHasProduct')) {
+    function userHasProduct($product)
+    {
+        $productIds = auth()->user()->products->pluck('product_id');
+
+        return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }

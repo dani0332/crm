@@ -1554,9 +1554,4 @@ class SendUpdateLogService
 
         return '';
     }
-
-    public function disableCommissionFields($payment = [])
-    {
-        return app(SplitPaymentService::class)->checkCommissionStatus($payment[0] ?? null);
-    }
 }
