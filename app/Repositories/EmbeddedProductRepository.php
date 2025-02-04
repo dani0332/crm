@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
-use App\Enums\PaymentGatewayIdEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -809,7 +809,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
             ],
         ];
-        $paymentGatewayEndpoint = PaymentGatewayIdEnum::getName($data['payment_gateway_id']);
+        $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
         info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/cancel', 'post', $planData);
 
@@ -843,7 +843,7 @@ class EmbeddedProductRepository extends BaseRepository
                         'quoteUID' => $item->quoteRequest->uuid,
                         'quoteTypeId' => $quoteTypeId,
                     ];
-                    $paymentGatewayEndpoint = PaymentGatewayIdEnum::getName($paymentSplit->payment_gateway_id);
+                    $paymentGatewayEndpoint = PaymentGatewayEnum::getName($paymentSplit->payment_gateway_id);
                 }
 
                 $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
