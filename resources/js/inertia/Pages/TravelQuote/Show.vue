@@ -131,6 +131,7 @@ const {
   policy_start_date,
   isEmail,
   isMobileNo,
+  maxCharacters,
 } = useRules();
 const confirmDeleteData = reactive({
   docs: null,
@@ -2522,7 +2523,7 @@ const allowStatusUpdate = computed(() => {
             v-model="travelerForm.first_name"
             label="Member Name*"
             placeholder="Member Name"
-            :rules="[isRequired]"
+            :rules="[isRequired, maxCharacters(40)]"
             :hasError="travelerForm.errors.first_name"
           />
           <ComboBox

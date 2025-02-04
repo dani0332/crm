@@ -124,6 +124,11 @@ export const useRules = () => {
     );
   };
 
+  const maxCharacters = max => v =>
+    !v ||
+    v.length <= max ||
+    `This field may not be greater than ${max} characters.`;
+
   return {
     name,
     isEmail,
@@ -145,5 +150,6 @@ export const useRules = () => {
     amount_with_vat,
     emptyOrNumericAndNoSpecialChar,
     isRequiredNumber,
+    maxCharacters,
   };
 };
