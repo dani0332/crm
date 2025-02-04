@@ -227,10 +227,7 @@ class InslyDetailRepository extends BaseRepository
 
                 // create lead in case no record found
                 $payLoad = $this->prePareData($policy, $quoteType, $isPersonalQuote);
-<<<<<<< HEAD
                 $payLoad['advisor_id'] = $advisorId;
-=======
->>>>>>> develop
                 info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
                 info('InslyLead - created Lead Id : '.json_encode($id));
