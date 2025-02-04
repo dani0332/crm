@@ -3348,6 +3348,10 @@ const voidPayment = () => {
         title: 'Processed',
         position: 'top',
       });
+
+      router.reload({
+        only: ['payments'],
+      });
     })
     .catch(err => {
       console.log(err);
