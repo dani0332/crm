@@ -248,6 +248,7 @@ class SendUpdateLogController extends Controller
             'isSentOrBooked' => $isSentOrBooked,
             'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog),
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 

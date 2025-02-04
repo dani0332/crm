@@ -44,6 +44,7 @@ const props = defineProps({
   isSentOrBooked: Boolean,
   disableMainBtn: String,
   paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const page = usePage();
@@ -628,6 +629,7 @@ const isLegacyPolicy = computed(() => {
       :quoteDocuments="props.quoteDocuments"
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="props.isFuncsEnabled"
     />
 
     <LazyPolicyDetails
