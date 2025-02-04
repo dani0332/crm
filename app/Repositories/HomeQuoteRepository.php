@@ -223,7 +223,8 @@ class HomeQuoteRepository extends BaseRepository
                 // Trigger Home Quote ILA Job
                 // Requirement is to trigger ILA job after the quote is created from IMCRM and recieve the OCB email
                 info('Dispatching HomeQuoteILAJob for quoteUID: ' . $response->quoteUID);
-                HomeQuoteILAJob::dispatch($response->quoteUID);
+                HomeQuoteILAJob::dispatch($response->quoteUID)
+                    ->delay(now()->addMinutes(3));
             }
         } catch (\Exception $e) {
             info('Failed to dispatch SaveCustomerAddressJob', ['error' => $e->getMessage()]);
