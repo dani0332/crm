@@ -24,7 +24,7 @@ class UpdateSelectedPlanRequest extends FormRequest
      */
     public function rules(): array
     {
-        $quoteType = strtolower($this->input('quoteType'));
+        $quoteType = request()->quoteType;
 
         $rules = [
             'plan_id' => 'required',
@@ -43,10 +43,10 @@ class UpdateSelectedPlanRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $quoteType = $this->input('quoteType');
-        $insuranceProviderId = $this->input('insurance_provider_id');
-        $planId = $this->input('plan_id');
-        $code = $this->input('code');
+        $quoteType = request()->quoteType;
+        $insuranceProviderId =  request()->insurance_provider_id;
+        $planId = request()->plan_id;
+        $code = request()->code;
 
         $validator->after(function ($validator) use ($quoteType, $insuranceProviderId, $planId, $code) {
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);

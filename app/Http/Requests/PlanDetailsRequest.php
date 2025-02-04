@@ -27,7 +27,7 @@ class PlanDetailsRequest extends FormRequest
      */
     public function rules(): array
     {
-        $quoteType = $this->input('quoteType');
+        $quoteType = request()->quoteType;
 
         $rules = [
             'insurance_provider_id' => 'required|integer',
@@ -52,9 +52,9 @@ class PlanDetailsRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $quoteType = $this->input('quoteType');
-        $code = $this->input('code');
-        $insuranceProviderId = $this->input('insurance_provider_id');
+        $quoteType = request()->quoteType;
+        $code = request()->code;
+        $insuranceProviderId = request()->insurance_provider_id;
 
         $validator->after(function ($validator) use ($quoteType, $code, $insuranceProviderId) {
             $repository = getRepositoryObject($quoteType);
