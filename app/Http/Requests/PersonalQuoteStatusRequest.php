@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
