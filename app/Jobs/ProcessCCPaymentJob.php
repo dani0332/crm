@@ -20,6 +20,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Enums\QuoteTypes;
+use App\Repositories\EmbeddedProductRepository;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 {
@@ -97,6 +101,18 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                     return (new SageApiService)->postBookPolicyToSage($request, $quote);
                 } else {
                     info("CC Payments Job Failed for Payment Split : {$splitPaymentCode} - Error: Quote not found");
+                }
+            }
+
+            if (in_array($ccPaymentProcess->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
+
+                try {
+                    EmbeddedProductRepository::capturePayment($ccPaymentProcess->quoteable_id, $ccPaymentProcess->quote_type);
+                } catch (Exception $e) {
+                    Log::error($ccPaymentProcess->quote_type . ' - capture embedded products failed', [
+                        'error' => $e->getMessage(),
+                        'uuid' => $ccPaymentProcess->quoteable_id,
+                    ]);
                 }
             }
 

@@ -47,7 +47,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
-use App\Repositories\EmbeddedProductRepository;
 use Exception;
 
 class SplitPaymentService
@@ -708,16 +707,6 @@ class SplitPaymentService
                         $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
                     }
                 
-                } else if($isFromJob && in_array($modelType, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])){
-
-                    try {
-                        EmbeddedProductRepository::capturePayment($quoteId, $modelType);
-                    } catch (Exception $e) {
-                        Log::error($modelType . ' - capture embedded products failed', [
-                            'error' => $e->getMessage(),
-                            'uuid' => $quoteId,
-                        ]);
-                    }
                 }
                 // $paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
             }
