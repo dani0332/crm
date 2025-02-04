@@ -79,7 +79,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
             $hasAnyCCPayment = $splitPayments->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
 
             if (in_array($payment->payment_status_id, [PaymentStatusEnum::CAPTURED]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
-                $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id && !$payment->isGIGInsurer());
+                $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id && ! $payment->isGIGInsurer());
                 // We can trigger sage & book policy entry from here
                 if ($quote) {
                     QuoteTag::where('quote_uuid', $quote->uuid)
