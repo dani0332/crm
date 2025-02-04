@@ -40,7 +40,7 @@ class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMap
     {
         return [
             $chat->quote_type,
-            $chat->quote_id,
+            $chat->quote_id = strtoupper(substr($chat->quote_type, 0, 3)).'-'.$chat->quote_id,
             $chat->created_at,
             $chat->msg,
             $chat->role,

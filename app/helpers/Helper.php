@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -690,7 +691,7 @@ if (! function_exists('addDaysExcludeWeekend')) {
 if (! function_exists('getIMLogo')) {
     function getIMLogo($isPDF = false)
     {
-        $imLogo = 'images/im_logo_21k-hi.png';
+        $imLogo = 'images/logo-new.png';
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
@@ -998,12 +999,12 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName)
+    function getAppStorageValueByKey($keyName, $default = false)
     {
         $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
         if (! $query) {
-            return false;
+            return $default;
         }
 
         return $query->value;
@@ -1208,6 +1209,12 @@ if (! function_exists('getAssignmentTypeText')) {
             case 4:
                 $assignmentText = 'Manual ReAssigned';
                 break;
+            case 5:
+                $assignmentText = 'Bought Lead';
+                break;
+            case 6:
+                $assignmentText = 'ReAssigned as Bought Lead';
+                break;
             default:
                 break;
         }
@@ -1277,9 +1284,9 @@ if (! function_exists('getManagersByUser')) {
 }
 
 if (! function_exists('roundNumber')) {
-    function roundNumber($number)
+    function roundNumber($number, $precision = 2)
     {
-        return round($number, 2);
+        return round($number, $precision);
     }
 }
 
@@ -1311,7 +1318,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer.first_name as client_first_name',
                 'customer.last_name as client_last_name',
                 'customer.email as client_email',
-                'customer.mobile_no as client_phone_number',
+                "{$table}.mobile_no as client_phone_number",
                 'customer_addresses.type as courier_address_type',
                 'customer_addresses.office_number as courier_address_office_number',
                 'customer_addresses.floor_number as courier_address_floor_number',
@@ -1559,5 +1566,14 @@ if (! function_exists('isCHSAdvisor')) {
         $user = User::select('id')->chs()->first();
 
         return $user?->id == $userId;
+    }
+}
+
+if (! function_exists('userHasProduct')) {
+    function userHasProduct($product)
+    {
+        $productIds = auth()->user()->products->pluck('product_id');
+
+        return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }

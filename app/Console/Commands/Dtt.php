@@ -6,7 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Jobs\CarRevivalLeadsCreationJob;
+use App\Jobs\Revival\CarRevivalLeadsCreationJob;
 use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;

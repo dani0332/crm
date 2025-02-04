@@ -51,6 +51,7 @@ use App\Http\Controllers\TravelLeadAllocationController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\Admin\RulesController;
 use App\Http\Controllers\V2\Admin\TierController;
@@ -58,6 +59,8 @@ use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\BuyLeadConfigController;
+use App\Http\Controllers\V2\BuyLeadController;
 use App\Http\Controllers\V2\CarQuoteController;
 use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
@@ -65,6 +68,8 @@ use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
+use App\Http\Controllers\V2\HealthRevivalQuoteController;
+use App\Http\Controllers\V2\ImpersonateController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\LifeQuoteController;
@@ -114,6 +119,9 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+    Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
+    Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
+
     Route::get('leadsearch', function () {
         return redirect('home');
     });
@@ -196,6 +204,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::put('revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('carrevival-quotes-update');
 
             Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
+
+            // health revival
+            Route::get('health-revival', [HealthRevivalQuoteController::class, 'index'])->name('health-revival-quotes-list');
+            Route::get('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'show'])->name('health-revival-quotes-show');
+            Route::get('health-revival/{uuid}/edit', [HealthRevivalQuoteController::class, 'edit'])->name('health-revival-quotes-edit');
+            Route::put('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'update'])->name('health-revival-quotes-update');
         });
 
         Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
@@ -226,7 +240,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
-            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->middleware(SetReadDbConnection::class)->name('renewal-search-export');
+            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export')->middleware(SetReadDbConnection::class)->name('renewal-search-export');
         });
     });
 
@@ -268,6 +282,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('route:clear');
         Artisan::call('config:clear');
         Artisan::call('view:clear');
+        Artisan::call('permission:cache-reset');
         Artisan::call('schedule:clear-cache');
 
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
@@ -333,6 +348,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/{quoteType}/update-availability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/{quoteType}/update-cap', [LeadAllocationController::class, 'updateCaps']);
     Route::post('/lead-allocation/toggle-reset-cap', [LeadAllocationController::class, 'updateResetCapSwitch']);
+    Route::post('/lead-allocation/toggle-bl-status', [LeadAllocationController::class, 'updateBlStatus']);
+    Route::post('/lead-allocation/toggle-normal-allocation', [LeadAllocationController::class, 'updateNormalLeadAllocationStatus']);
+    Route::post('/lead-allocation/toggle-bl-reset-cap', [LeadAllocationController::class, 'updateBLResetCap']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
@@ -402,7 +420,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             'index' => 'admin.sic-health-config.index',
             'store' => 'admin.sic-health-config.store',
         ]);
-
+        Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
@@ -431,6 +449,27 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::put('/update/{quoteSync}', [QuoteSyncController::class, 'update'])->name('admin.quotesync.update');
             Route::post('/sync-stuck-entries', [QuoteSyncController::class, 'addStuckEntriesForSyncing'])->name('admin.quotesync.sync-stuck-entries');
             Route::post('/sync-failed-entries', [QuoteSyncController::class, 'addFailedEntriesForSyncing'])->name('admin.quotesync.sync-failed-entries');
+        });
+
+        Route::prefix('/process-tracker')->controller(ProcessTrackerController::class)->group(function () {
+            Route::get('/', 'index')->name('process-tracker.index');
+        });
+
+        Route::prefix('buy-leads')->group(function () {
+            Route::prefix('config')->group(function () {
+                Route::get('show', [BuyLeadConfigController::class, 'show'])->name('admin.buy-leads.config.show');
+                Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
+                Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
+            });
+        });
+    });
+
+    Route::prefix('buy-leads')->group(function () {
+        Route::prefix('request')->group(function () {
+            Route::get('show', [BuyLeadController::class, 'show'])->name('buy-leads.request.show');
+            Route::get('tracking', [BuyLeadController::class, 'tracking'])->name('buy-leads.request.tracking');
+            Route::post('fetch-rate', [BuyLeadController::class, 'fetchRate'])->name('buy-leads.rate.fetch');
+            Route::post('submit', [BuyLeadController::class, 'submit'])->name('buy-leads.request.submit');
         });
     });
 
@@ -608,6 +647,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/getCarModelDetails', [AjaxController::class, 'getCarModelDetails']);
     Route::get('/getBikeModelDetails', [AjaxController::class, 'getBikeModelDetails']);
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
+    Route::get('/getBatchNamesByQuoteTypeId', [AjaxController::class, 'getBatchNamesByQuoteTypeId']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
     Route::get('sage-api-logs/{sectionId}', [SageApi::class, 'sageApiLogs'])->name('sage-api-logs')->middleware('permission:'.PermissionsEnum::VIEW_SAGE_API_LOGS);
@@ -632,7 +672,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
     Route::get('/insurance-provider-plans', [CarQuoteController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
-    //health plan manual add routes
+    // health plan manual add routes
     Route::get('/network-plans-health', [HealthQuoteController::class, 'plansByNetwork']);
     Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
 
@@ -651,7 +691,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/health-plan-notify-agent', [HealthQuoteController::class, 'healthPlanNotifyAgent']);
 
     Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
-    //bookpolicy routes
+    // bookpolicy routes
     Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy')->middleware('permission:'.PermissionsEnum::BOOK_POLICY_DETAILS_ADD);
     Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy')->middleware('permission:'.PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON.'|'.PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON.'|'.PermissionsEnum::BOOK_POLICY_BUTTON);
 
@@ -675,7 +715,7 @@ Route::get('/add-batch-number', function () {
     echo 'Done';
 });
 
-//Migration Not Required For Now 21 Nov 24
+// Migration Not Required For Now 21 Nov 24
 // Route::get('run-insly-email-fix', function () {
 
 //     if (\Illuminate\Support\Facades\Auth::user()?->hasRole(\App\Enums\RolesEnum::Admin)) {

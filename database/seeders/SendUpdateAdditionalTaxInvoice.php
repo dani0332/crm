@@ -35,11 +35,11 @@ class SendUpdateAdditionalTaxInvoice extends Seeder
                 'quote_type_id' => $quoteTypeId,
                 'business_insurance_type_id' => null,
                 'key' => 'additional-tax-invoice-commission-booking',
-                'text' => 'Additional tax invoice and commission booking',
+                'text' => 'Additional tax invoice and tax invoice raised by buyer booking',
                 'code' => SendUpdateLogStatusEnum::ATICB,
                 'parent_id' => $parent->id,
             ], [
-                'description' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
+                'description' => 'Select this option when you need to book additional tax invoices and commission. This may involve collection of an additional premium amount, please check with the insurer.',
             ]);
         }
 
@@ -55,11 +55,11 @@ class SendUpdateAdditionalTaxInvoice extends Seeder
                 'quote_type_id' => QuoteTypeId::Business,
                 'business_insurance_type_id' => $businessInsuranceTypeId,
                 'key' => 'additional-tax-invoice-commission-booking',
-                'text' => 'Additional tax invoice and commission booking',
+                'text' => 'Additional tax invoice and tax invoice raised by buyer booking',
                 'code' => SendUpdateLogStatusEnum::ATICB,
                 'parent_id' => $parent->id,
             ], [
-                'description' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
+                'description' => 'Select this option when you need to book additional tax invoices and commission. This may involve collection of an additional premium amount, please check with the insurer.',
             ]);
         }
     }

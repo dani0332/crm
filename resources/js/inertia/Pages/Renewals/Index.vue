@@ -172,7 +172,7 @@ const onToggle = e => {};
           :href="
             azureStorageUrl +
             azureStorageContainer +
-            '/renewals/renewals_upload_update_m4.xlsx'
+            '/renewals/renewals_upload_update_m5.xlsx'
           "
           color="green"
           icon-right="cells"
@@ -485,11 +485,11 @@ const onToggle = e => {};
                 <td>200</td>
               </tr>
               <tr>
-                <td>41</td>
-                <td>Renewal Batch REF</td>
-                <td>Renewal Batch REF</td>
+                <td>42</td>
+                <td>Is GCC</td>
+                <td>Is GCC - Yes/No</td>
                 <td>No</td>
-                <td>50</td>
+                <td>3</td>
               </tr>
             </tbody>
           </table>

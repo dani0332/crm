@@ -8,6 +8,7 @@ defineProps({
 });
 
 const page = usePage();
+let params = useUrlSearchParams('history');
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -182,21 +183,14 @@ function resetFilters() {
 }
 
 function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
-
-      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-        let id = key.slice(0, -2);
-        if (filters[id]) {
-          filters[id].push(parseInt(value));
-        }
-      } else {
-        filters[key] = value;
-      }
-    });
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+    } else {
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
+    }
   }
 }
 const quotesSelected = ref([]);

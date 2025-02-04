@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\QuoteTypes;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -148,11 +149,11 @@ class RenewalBatch extends Model implements AuditableContract
 
         $monthsYears = [
             ['month' => $baseDate->month, 'year' => $baseDate->year],
-            ['month' => $baseDate->copy()->addMonth()->month, 'year' => $baseDate->copy()->addMonth()->year],
+            ['month' => $baseDate->copy()->addMonthNoOverflow()->month, 'year' => $baseDate->copy()->addMonthNoOverflow()->year],
         ];
 
         if ($includePreviousMonth) {
-            array_unshift($monthsYears, ['month' => $baseDate->copy()->subMonth()->month, 'year' => $baseDate->copy()->subMonth()->year]);
+            array_unshift($monthsYears, ['month' => $baseDate->copy()->subMonthNoOverflow()->month, 'year' => $baseDate->copy()->subMonthNoOverflow()->year]);
         }
 
         $q->where(function ($query) use ($monthsYears) {
@@ -172,5 +173,12 @@ class RenewalBatch extends Model implements AuditableContract
     public function scopeMotor($q)
     {
         $q->where('quote_type_id', QuoteTypes::CAR->id());
+    }
+
+    public function monthName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => Carbon::parse("{$this->year}-{$this->month}")->format('M')
+        );
     }
 }

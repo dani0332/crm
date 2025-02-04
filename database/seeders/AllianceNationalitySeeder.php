@@ -269,7 +269,7 @@ class AllianceNationalitySeeder extends Seeder
             ['id' => '254', 'nationality' => 'Cymry', 'nationality_id' => ''],
             ['id' => '255', 'nationality' => 'English', 'nationality_id' => ''],
             ['id' => '256', 'nationality' => 'Great Britain', 'nationality_id' => ''],
-            ['id' => '256', 'nationality' => 'United Kingdom', 'nationality_id' => '200'],
+            ['id' => '257', 'nationality' => 'United Kingdom', 'nationality_id' => '200'],
             ['id' => '258', 'nationality' => 'Portuguese', 'nationality_id' => '147'],
         ];
         foreach ($allianceNationalities as $allianceNationality) {

@@ -52,7 +52,8 @@ RUN pecl install mongodb && docker-php-ext-enable mongodb
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 
 # Install papertrail
-RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz && \
+RUN --mount=type=cache,target=/tmp \
+wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz && \
 tar xzf ./remote_syslog*.tar.gz && \
 cp /var/www/remote_syslog/remote_syslog /usr/local/bin
 
@@ -71,7 +72,7 @@ useradd -u 1000 -ms /bin/bash -g www www
 
 RUN doppler configure set token ${IMCRM_TOKEN}
 
-RUN \
+RUN --mount=type=cache,target=/tmp \
   wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
   cd /tmp/ && tar -zxvf newrelic-php5-*-linux.tar.gz && cd .. && \
   export NR_INSTALL_USE_CP_NOT_LN=1 && \

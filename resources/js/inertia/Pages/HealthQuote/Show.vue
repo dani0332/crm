@@ -1853,7 +1853,13 @@ const onAddUpdate = () => {
 
       <template #default v-if="readOnlyMode.isDisable === true">
         <Link
-          v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+          v-if="
+            quote?.insly_id &&
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="`/legacy-policy/${quote.insly_id}`"
           preserve-scroll
         >
@@ -1952,7 +1958,11 @@ const onAddUpdate = () => {
     </x-modal>
 
     <div
-      v-if="!$page.props.can.isAdvisor"
+      v-if="
+        (!$page.props.can.isAdvisor ||
+          hasRole(rolesEnum.SuperManagerLeadAllocation)) &&
+        !can(permissionsEnum.VIEW_ALL_LEADS)
+      "
       class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
     >
       <Collapsible :expanded="sectionExpanded">
@@ -3708,6 +3718,7 @@ const onAddUpdate = () => {
         canAny([
           permissionsEnum.VIEW_INSLY_BOOK_POLICY,
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

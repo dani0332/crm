@@ -107,6 +107,7 @@ const showChatLogs = ref(false);
 const chatMessages = ref({
   created_at: '',
   data: [],
+  id: null,
 });
 
 const tableHeader = reactive([
@@ -177,8 +178,14 @@ const createQueryParams = item => {
   };
 };
 
+const resetChatMessageObject = () => {
+  chatMessages.value.created_at = '';
+  chatMessages.value.data = [];
+  chatMessages.value.id = null;
+};
 const showChat = item => {
   loader.view = true;
+  resetChatMessageObject();
   axios
     .post('/instant-alfred/chats', {
       ...createQueryParams(item),
@@ -230,6 +237,7 @@ const downloadReport = () => {
             { label: 'Car', value: 'Car' },
             { label: 'Health', value: 'Health' },
             { label: 'Travel', value: 'Travel' },
+            { label: 'Bike', value: 'Bike' },
           ]"
           placeholder="Select a Quote Type"
           class="w-full"
@@ -237,22 +245,6 @@ const downloadReport = () => {
         >
         </combo-box>
       </x-field>
-      <!-- <ToolTip
-        :title="'Select Start & End Date'"
-        :tooltip="'Maximum 30 days are allowed'"
-      >
-      </ToolTip>
-      <DatePicker
-        class="py-1"
-        v-model="filters.chat_initiated_at"
-        placeholder="Select Start & End Date"
-        range
-        :max-range="31"
-        size="sm"
-        model-type="yyyy-MM-dd"
-        :rules="[isRequired]"
-        :onlySelect="true"
-      /> -->
       <div>
         <x-tooltip position="top">
           <label
@@ -278,27 +270,6 @@ const downloadReport = () => {
           :onlySelect="true"
         />
       </div>
-
-      <!-- <DatePicker
-        label="Start Date"
-        :rules="
-          filters.quoteId || filters.email || filters.mobile_no
-            ? []
-            : [isRequired]
-        "
-        v-model="filters.start_date"
-        class="w-full"
-      /> -->
-      <!-- <DatePicker
-        label="End Date"
-        :rules="
-          filters.quoteId || filters.email || filters.mobile_no
-            ? []
-            : [isRequired]
-        "
-        v-model="filters.end_date"
-        class="w-full"
-      /> -->
       <x-field label="Transaction Type">
         <combo-box
           v-model="filters.transaction_type_id"
@@ -346,31 +317,6 @@ const downloadReport = () => {
           class="w-full"
         />
       </x-field>
-      <!-- <x-field label="Fallback">
-        <x-select
-          v-model="filters.fallback"
-          :options="[
-            { value: null, label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          placeholder="Search by Fallback"
-          class="w-full"
-        />
-      </x-field> -->
-      <!-- <x-field label=" Message channel">
-        <x-select
-          v-model="filters.channel"
-          :options="[
-            { value: null, label: 'All' },
-            { value: 'WHATSAPP', label: 'Whatsapp' },
-            { value: 'EMAIL', label: 'Email' },
-            { value: 'WEBSITE', label: 'Website' },
-          ]"
-          placeholder="Search by Message channel"
-          class="w-full"
-        />
-      </x-field> -->
       <x-field label="Segment">
         <x-select
           v-model="filters.segment"
@@ -502,14 +448,4 @@ const downloadReport = () => {
       to: logs.to,
     }"
   />
-
-  <!-- <Pagination
-    :links="{
-      next: pagination.next_page_url,
-      prev: pagination.prev_page_url,
-      current: Number(pagination.current_page),
-      from: pagination.from,
-      to: pagination.to,
-    }"
-  /> -->
 </template>

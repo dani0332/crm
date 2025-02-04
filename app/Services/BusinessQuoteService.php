@@ -45,7 +45,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.last_name',
                 'bqr.email',
                 'bqr.mobile_no',
-                'bqr.company_name',
+                'bqr.company_name AS business_company_name',
+                'bqr.company_address AS business_company_address',
                 'bqr.brief_details',
                 'bqr.number_of_employees',
                 'bqr.business_type_of_insurance_id',
@@ -223,6 +224,8 @@ class BusinessQuoteService extends BaseService
             'numberOfEmployees' => $request->number_of_employees,
             'mobileNo' => $request->mobile_no,
             'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
+            'gender' => $request->gender,
             'briefDetails' => $request->brief_details,
             'premium' => $request->premium,
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
@@ -232,7 +235,6 @@ class BusinessQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
         if (isset($response->quoteUID)) {
@@ -259,7 +261,9 @@ class BusinessQuoteService extends BaseService
         }
 
         if (! isset($request->code) && ! isset($request->advisor_assigned_date) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date)
-        && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
+        && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)
+        && ! isset($request->policy_expiry_date) && ! isset($request->policy_expiry_date_end)
+        ) {
             $this->query->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         // if ($request->ajax()) {
@@ -311,6 +315,8 @@ class BusinessQuoteService extends BaseService
             && ! isset($request->previous_quote_policy_number)
             && ! isset($request->insurer_tax_invoice_number)
             && ! isset($request->insurer_commission_tax_invoice_number)
+            && ! isset($request->policy_expiry_date)
+            && ! isset($request->policy_expiry_date_end)
         ) {
             $dateFrom = Carbon::parse($request['created_at_start'])->startOfDay()->toDateTimeString();
             $dateTo = Carbon::parse($request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -418,7 +424,7 @@ class BusinessQuoteService extends BaseService
         $this->adjustQueryByDateFilters($this->query, 'bqr');
 
         // sortBy filter
-        if (isset($request->sortBy) && $request->sortBy != '') {
+        if (isset($request->sortBy) && $request->sortBy != '' && in_array(strtolower($request->sortType), ['asc', 'desc'])) {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($request->sortBy, $request->sortType);
         } else {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'DESC');
@@ -462,6 +468,7 @@ class BusinessQuoteService extends BaseService
             $businessQuote->first_name = $request->first_name;
             $businessQuote->last_name = $request->last_name;
             $businessQuote->company_name = $request->company_name;
+            $businessQuote->company_address = $request->company_address;
             $businessQuote->gender = $request->gender;
             $businessQuote->brief_details = $request->brief_details;
             $businessQuote->premium = $request->premium;
@@ -489,7 +496,8 @@ class BusinessQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'company_name' => 'input|text|required',
+            'company_name' => 'input|text|max:250',
+            'company_address' => 'input|text|max:1000',
             'next_followup_date' => 'input|date|title|range',
             'transapp_code' => 'readonly|none',
             'source' => 'input|text',

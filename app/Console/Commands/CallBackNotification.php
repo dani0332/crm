@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\ActivityTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Events\CallBackNotifications;
 use App\Models\Activities;
 use App\Models\QuoteType;
@@ -33,6 +34,8 @@ class CallBackNotification extends Command
      */
     protected $description = 'InstantAlfred CallBack and Whatsapp Notification';
 
+    protected $allowedQuoteTypeIds = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike];
+
     /**
      * Create a new command instance.
      *
@@ -58,13 +61,14 @@ class CallBackNotification extends Command
                 $query->where(DB::raw("TIMESTAMPDIFF(MINUTE, created_at, '$currentTime')"), '=', 60)
                     ->orWhere(DB::raw("TIMESTAMPDIFF(MINUTE, created_at, '$currentTime')"), '=', 120);
             })
+            ->whereIn('quote_type_id', $this->allowedQuoteTypeIds)
             ->chunk(500, function ($activities) {
                 foreach ($activities as $activity) {
                     $modelType = $activity->quote_type_id
                         ? QuoteType::select('code')->find($activity->quote_type_id)
                         : null;
 
-                    if ($modelType && $activity) {
+                    if ($modelType && $activity && $this->isAllowedQuoteType($modelType->code)) {
                         $quoteTypeCode = strtolower($modelType->code);
                         $record = $this->getQuoteObjectBy($quoteTypeCode, $activity->quote_request_id, 'id');
                         if ($record) {
@@ -103,6 +107,15 @@ class CallBackNotification extends Command
                     }
                 }
             });
+    }
+
+    private function isAllowedQuoteType($quoteTypeCode)
+    {
+        return in_array($quoteTypeCode, [
+            QuoteTypeCode::Car,
+            QuoteTypeCode::Travel,
+            QuoteTypeCode::Bike,
+        ]);
     }
 
 }

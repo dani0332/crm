@@ -12,7 +12,7 @@ class Quadrant extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'quadrants';
-    protected $fillable = ['name', 'is_active'];
+    protected $fillable = ['name', 'is_active', 'code'];
 
     public function users()
     {

@@ -121,7 +121,7 @@ const inboundCoverageCode = [
 ];
 const outboundCoverageCode = [
   { value: travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP, label: 'Single Trip' },
-  { value: travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP, label: 'Annual Trip' },
+  { value: travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP, label: 'Multi Trip' },
 ];
 const outboundRegions = [
   { value: '1', label: 'Worldwide (excl. US/Canada)' },

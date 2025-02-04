@@ -7,6 +7,8 @@ const page = usePage();
 const params = useUrlSearchParams('history');
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const authUserId = page.props.auth.user.id;
+const impersonatingUser = page.props.impersonatingUser;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 
 const filters = reactive({
@@ -128,6 +130,22 @@ onMounted(() => {
       >
         {{ id }}
       </Link>
+    </template>
+    <template #item-name="item">
+      {{ item.name }}
+      <x-tooltip
+        placement="top"
+        v-if="
+          can(permissionsEnum.ENABLE_IMPERSONATION) &&
+          !impersonatingUser &&
+          authUserId !== item.id
+        "
+      >
+        <a :href="route('login-as.id.login', item.id)">
+          <x-icon icon="loginAs" class="text-success-600 ml-2" />
+        </a>
+        <template #tooltip> Login As {{ item.name }} </template>
+      </x-tooltip>
     </template>
     <template #item-email="item">
       <Link

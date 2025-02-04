@@ -15,9 +15,9 @@ enum QuoteSegmentEnum: string
     {
         return match ($this) {
             self::ALL => 'All',
-            self::SIC => 'SIC leads',
-            self::NON_SIC => 'Non SIC leads',
-            self::SIC_REVIVAL => 'SIC Revival',
+            self::SIC => 'SIC Ecom leads',
+            self::NON_SIC => 'Non SIC Ecom leads',
+            self::SIC_REVIVAL => 'Revival Leads',
         };
     }
 
@@ -25,8 +25,25 @@ enum QuoteSegmentEnum: string
     {
         return match ($this) {
             self::SIC => 'SIC',
-            self::SIC_REVIVAL => 'SIC Revival',
+            self::SIC_REVIVAL => 'Revival',
             self::NON_SIC => 'Non-SIC',
         };
+    }
+
+    public static function withLabels($quoteTypeId = null): array
+    {
+        $values = [];
+        $caseList = collect(self::cases());
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $caseList = collect($caseList)->whereNotIn('value', self::SIC_REVIVAL->value);
+        }
+        foreach ($caseList as $case) {
+            $values[] = [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ];
+        }
+
+        return $values;
     }
 }

@@ -159,7 +159,7 @@ class EmbeddedProductRepository extends BaseRepository
         $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
         $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIM');
 
-        //generate unique uuid
+        // generate unique uuid
         $docUuid = uniqid();
         while (GenericDocument::where('uuid', $docUuid)->first()) {
             $docUuid = uniqid().rand(1, 100);
@@ -239,7 +239,10 @@ class EmbeddedProductRepository extends BaseRepository
             if ($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
 
                 if ($transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER) {
-                    return CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->count() == 0;
+                    $address = CustomerAddress::where('quote_uuid', $transaction->quoteRequest->uuid)->where('quote_type_id', $quoteTypeId)->first();
+
+                    return empty($address?->type);
+
                 }
 
                 $paymentDate = Carbon::parse($payment->getAttributes()['captured_at']);

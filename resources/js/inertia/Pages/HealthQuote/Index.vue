@@ -18,6 +18,7 @@ defineProps({
     default: 0,
   },
   authorizedDays: Number,
+  assignmentTypes: Object,
 });
 
 const page = usePage();
@@ -203,13 +204,6 @@ const subTeamOptions = [
   { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
-];
-
-const assignmentTypeOptions = [
-  { value: 1, label: 'System Assigned' },
-  { value: 2, label: 'System ReAssigned' },
-  { value: 3, label: 'Manual Assigned' },
-  { value: 4, label: 'Manual ReAssigned' },
 ];
 
 const leadStatusOptions = computed(() => {
@@ -748,7 +742,7 @@ watch(() => {
               rolesEnum.CarAdvisor,
               rolesEnum.HealthRenewalAdvisor,
               rolesEnum.HealthAdvisor,
-            ])
+            ]) || hasRole(rolesEnum.SuperManagerLeadAllocation)
           "
           v-model="filters.advisors"
           label="Advisor"
@@ -789,7 +783,7 @@ watch(() => {
           v-model="filters.assignment_type"
           label="Assignment Type"
           placeholder="Search by Assignment Type"
-          :options="assignmentTypeOptions"
+          :options="assignmentTypes"
           :single="true"
         />
         <x-input
@@ -954,7 +948,10 @@ watch(() => {
       </div>
     </x-form>
     <Transition name="fade">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
+      <div
+        v-if="quotesSelected.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)"
+        class="mb-4"
+      >
         <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">

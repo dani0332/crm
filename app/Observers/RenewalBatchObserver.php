@@ -111,7 +111,7 @@ class RenewalBatchObserver
                     $renewalBatch->segmentAdvisors()->attach($value, $pivotColumnsData);
                 }
             }
-            //segment value
+            // segment value
             if ($this->attributes['segment_value']) {
                 foreach ($this->attributes['segment_value'] as $key => $value) {
                     $pivotColumnsData = [

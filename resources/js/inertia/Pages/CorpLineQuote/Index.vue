@@ -327,9 +327,10 @@ const permissionsEnum = page.props.permissionsEnum;
 
 const exportLoader = ref(false);
 const onDataExport = () => {
+  let copyFilters = JSON.parse(JSON.stringify(cleanObj(filters)));
   let diff = calculateDaysDifference(
-    filters.created_at_start,
-    filters.created_at_end,
+    copyFilters.created_at_start ?? copyFilters.booking_date[0],
+    copyFilters.created_at_end ?? copyFilters.booking_date[1],
   );
 
   if (diff > 31) {
@@ -339,16 +340,6 @@ const onDataExport = () => {
     });
     return;
   }
-
-  filters.created_at_start = useDateFormat(
-    filters.created_at_start,
-    'YYYY-MM-DD',
-  ).value;
-
-  filters.created_at_end = useDateFormat(
-    filters.created_at_end,
-    'YYYY-MM-DD',
-  ).value;
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
@@ -367,7 +358,7 @@ const onDataExport = () => {
 
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
-    if (key == 'created_at_start' || key == 'created_at_end') {
+    if (/date/i.test(key) && params[key]) {
       filters[key] = useDateFormat(params[key], 'YYYY-MM-DD').value;
     } else if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key].map(value =>
@@ -469,7 +460,7 @@ const resetDateFilters = filterName => {
     (filterName.startsWith('created_at') ? filterMappings.created_at : []);
 
   filtersToReset.forEach(filter => {
-    filters[filter] = '';
+    filters[filter] = null;
   });
 };
 
@@ -667,7 +658,8 @@ watch(() => {
               filters.payment_due_date ||
               filters.booking_date ||
               filters.company_name ||
-              filters.advisor_assigned_date
+              filters.advisor_assigned_date ||
+              (filters.policy_expiry_date && filters.policy_expiry_date_end)
                 ? []
                 : [isRequired]
             "
@@ -685,7 +677,8 @@ watch(() => {
               filters.payment_due_date ||
               filters.booking_date ||
               filters.company_name ||
-              filters.advisor_assigned_date
+              filters.advisor_assigned_date ||
+              (filters.policy_expiry_date && filters.policy_expiry_date_end)
                 ? []
                 : [isRequired]
             "

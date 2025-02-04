@@ -14,14 +14,14 @@ class TravelAnnual extends EmbeddedProduct
         return [
             'EP REF-ID',
             'ADVISOR NAME',
-            'PAYMENT DATE',
+            'DATE OF ISSUANCE',
             'PLAN COMMENCEMENT DATE',
             'PLAN END DATE',
-            'PASSPORT NUMBER',
             'FULL NAME',
             'EMIRATES ID NUMBER',
             'DOB',
             'AGE',
+            'PASSPORT NUMBER',
             'NATIONALITY',
             'CONTRIBUTION AMOUNT',
             'POLICY ISSUE STATUS',
@@ -136,7 +136,7 @@ class TravelAnnual extends EmbeddedProduct
             $nationality = $quoteObject->customer->nationality->text ?? '';
 
             $age = isset($quoteObject->dob) ?
-                Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now()).' Years'
+                floor(Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now())).' Years'
                 : '';
             $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
@@ -155,6 +155,7 @@ class TravelAnnual extends EmbeddedProduct
             $item->id = $item->id;
             $item->ref_id = $item->code;
             $item->advisor_name = $advisorName;
+            $item->quote_request = $item->travelQuote ?? $item->quoteRequest;
             $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
             $item->plan_start_date = $planStartDate;
             $item->plan_end_date = $planEndDate;

@@ -92,7 +92,7 @@ class QuoteDocumentService extends BaseService
     {
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
-        //load quote document with provided detail
+        // load quote document with provided detail
         $quote->load(['documents' => function ($q) use ($data) {
             $q->where([
                 'doc_name' => $data['doc_name'],
@@ -100,10 +100,10 @@ class QuoteDocumentService extends BaseService
             ]);
         }]);
 
-        //check for document and delete if found
+        // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
-            //Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
+            // Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
 
             return response()->json(['message' => 'document deleted successfully']);
         }
@@ -208,7 +208,7 @@ class QuoteDocumentService extends BaseService
                     $quoteDocument->id, $data['quote_uuid'], $documentType->id
                 )->afterCommit();
             } else {
-                info('Watermkark job not dispatched - Ref: '.$quote->code);
+                info('Watermark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
@@ -280,8 +280,8 @@ class QuoteDocumentService extends BaseService
             $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
-                    // Match the exact text "Certificate of Insurance" only
-                    return preg_match('/^Certificate of Insurance$/', $document->original_name);
+                    // Exclude documents that contain "Certificate of Insurance" followed by any text or space
+                    return ! preg_match('/^Certificate of Insurance\s+\S+/', $document->original_name);
                 });
             }
 
@@ -474,11 +474,23 @@ class QuoteDocumentService extends BaseService
         $encodedUrl = $this->encodeUrl($azureFilePath);
         $fileContent = file_get_contents($encodedUrl);
 
+        if (! $fileContent) {
+            Log::error("Unable to read file azureFilePath: $azureFilePath ");
+            throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
+        }
+
         $tempFilePath = storage_path('temp/temp_'.$docName);
         file_put_contents($tempFilePath, $fileContent);
 
         // Convert the PDF to a version compatible with FPDI
         shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+
+        sleep(3);
+
+        if (! file_exists($outputFile)) {
+            Log::error("Unable to read file outputFile: $outputFile ");
+            throw new \Exception("Unable to read file outputFile: $outputFile");
+        }
 
         $pdf = new Fpdi;
 
@@ -663,8 +675,19 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
-     * verify if a document is watermark qualified function
+     * Check if all required documents are uploaded to enable send policy to customer & book policy button in book policy section
+     * Triggering from updateQuoteStatus & bookPolicyPayload
+     *
+     * @return bool
      */
+    public function areDocsUploaded($quoteDocuments, $quoteType, $record)
+    {
+        $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType, $record);
+        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+
+        return $quoteDocumentsCount == count($documentTypeCodes);
+    }
+
     public function getWatermarkProperty($quote, $documentType, $insuranceProviderId = null): bool
     {
         $ips = InsuranceProvider::where('skip_watermark', 1)->select('id')->pluck('id')->toArray();
