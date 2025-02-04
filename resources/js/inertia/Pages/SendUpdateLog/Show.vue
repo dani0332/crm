@@ -117,7 +117,7 @@ const sendUpdateForm = useForm({
   car_addons: props.sendUpdateLog?.car_addons || null,
   emirates_id: props.sendUpdateLog?.emirates_id || null,
   seating_capacity: props.sendUpdateLog?.seating_capacity || null,
-  endorsement_number: props.sendUpdateLog?.endorsement_number || null
+  endorsement_number: props.sendUpdateLog?.endorsement_number || null,
 });
 
 onMounted(() => {

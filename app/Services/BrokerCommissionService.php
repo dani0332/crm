@@ -21,13 +21,14 @@ class BrokerCommissionService
             ->active();
 
         $brokerCommission = $baseQuery->first();
+        $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
         $isCreditCardEnabled = $brokerCommission ? true : false;
 
         if ($planId) {
             $brokerCommission = (clone $baseQuery)->where('plan_id', $planId)->first();
         }
 
-        return [$isCreditCardEnabled, $brokerCommission];
+        return [$isCreditCardEnabled, $brokerCommission, $commissionInPayments];
     }
 
     /**
