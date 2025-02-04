@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SavingsQuoteRequest;
 use App\Services\Quotes\SavingsQuoteService;
 
 class SavingsQuoteController extends Controller
@@ -44,5 +45,10 @@ class SavingsQuoteController extends Controller
         $data = $this->savingsQuoteService->getFormOptions();
 
         return inertia('SavingsQuote/Form', $data);
+    }
+
+    public function store(SavingsQuoteRequest $request)
+    {
+        $data = $this->savingsQuoteService->create($request->validated());
     }
 }
