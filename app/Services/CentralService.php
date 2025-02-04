@@ -1020,8 +1020,8 @@ class CentralService extends BaseService
 
         info('fn:voidPayment - Payment found. - Payment Code:'.$request->payment_code);
         $paymentGateways = [
-            PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT => 'checkout',
-            PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => 'tap',
+            PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT => PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT_TEXT,
+            PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP_TEXT,
         ];
 
         if ($payment->payment_gateway_id !== PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP) {
