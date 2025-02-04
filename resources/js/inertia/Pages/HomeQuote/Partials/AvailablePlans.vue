@@ -195,10 +195,10 @@ const formattedCategories = computed(() => {
     let formattedKey;
 
     // Handle specific keys explicitly
-    if (key === 'Fine Art & Collectible(s)') {
-      formattedKey = 'Fine Art & Collectible(s)';
-    } else if (key === 'Jewellery & Valuable(s)') {
-      formattedKey = 'Jewellery & Valuable(s)';
+    if (key === 'Fine Art And Collectible(s)') {
+      formattedKey = 'Fine Art And Collectible(s)';
+    } else if (key === 'Jewellery And Valuable(s)') {
+      formattedKey = 'Jewellery And Valuable(s)';
     } else {
       formattedKey = camelCaseToSpacedText(key);
     }
