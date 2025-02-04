@@ -2968,9 +2968,10 @@ const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
       const paymentMethodCC = filterCCPayments(payment);
+      const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
       if (
         payment.collection_type === 'insurer' &&
-        hasAnyAuthorisedPendingCA.value(payment)
+        hasAnyAuthorisedPendingCA.value(payment) && !isGIGProvider 
       ) {
         return 'approve';
       }
