@@ -747,7 +747,6 @@ class EmbeddedProductRepository extends BaseRepository
                         ->delete();
 
                     $paymentSplit = PaymentSplits::where('code', $transaction->code)->orderBy('sr_no', 'desc')->first();
-                    $data['payment_gateway_id'] = $paymentSplit->payment_gateway_id;
                     $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
                     PaymentAction::create([
                         'payment_code' => $transaction->code,
@@ -763,7 +762,7 @@ class EmbeddedProductRepository extends BaseRepository
                         'uuid' => $data['uuid'],
                         'type_id' => $type->id,
                         'code' => $transaction->code,
-
+                        'payment_gateway_id' => $paymentSplit->payment_gateway_id,
                     ];
                     $processResponse = $this->processCancelPayment($data);
 
