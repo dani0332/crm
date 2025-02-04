@@ -82,16 +82,27 @@ class RetentionReportService extends BaseService
      */
     private function buildQuery($request)
     {
+        $asAtDate = isset($request['asAtDate']) ? Carbon::parse($request['asAtDate'])->endOfDay() : null;
+
+        $getSalesSumQuery = function () use ($asAtDate) {
+            $bookedStatus = QuoteStatusEnum::PolicyBooked;
+            if ($asAtDate) {
+                return "SUM(CASE WHEN quote_status_id = {$bookedStatus} AND personal_quotes.policy_booking_date <= '{$asAtDate}' THEN 1 ELSE 0 END) as sales";
+            }
+
+            return "SUM(CASE WHEN quote_status_id = {$bookedStatus} THEN 1 ELSE 0 END) as sales";
+        };
+
         // Initialize the query with the necessary select statements and joins
         $query = PersonalQuote::query()
             ->selectRaw("renewal_batch_id, renewal_batch, MONTHNAME({$this->monthColumnName}) as `month`,
-                users.name as `advisor_name`,
-                count(*) as total,
-                SUM(CASE WHEN quote_status_id = ".QuoteStatusEnum::Lost.' THEN 1 ELSE 0 END) as lost,
-                SUM(CASE WHEN quote_status_id IN ('.QuoteStatusEnum::Fake.', '.QuoteStatusEnum::Duplicate.') THEN 1 ELSE 0 END) as invalid,
-                SUM(CASE WHEN quote_status_id = '.QuoteStatusEnum::PolicyBooked.' THEN 1 ELSE 0 END) as sales, advisor_id')
+            users.name as `advisor_name`,
+            COUNT(DISTINCT(personal_quotes.id)) AS total,
+            SUM(CASE WHEN quote_status_id = ".QuoteStatusEnum::Lost.' THEN 1 ELSE 0 END) as lost,
+            SUM(CASE WHEN quote_status_id IN ('.QuoteStatusEnum::Fake.', '.QuoteStatusEnum::Duplicate.") THEN 1 ELSE 0 END) as invalid,
+            {$getSalesSumQuery()},
+            advisor_id")
             ->join('users', 'advisor_id', '=', 'users.id');
-
         // Apply general filters to the query based on the request parameters
         $this->applyFilters($query, $request);
         // Group the query results by advisor name
@@ -237,11 +248,6 @@ class RetentionReportService extends BaseService
             $query->whereBetween('renewal_batches.start_date', [$previousMonthStartDateFormatted, $nextMonthEndDateFormatted]);
 
             $this->applyDefaultFilterForBatch($query, $request, $isDetailsFilter);
-        }
-
-        if (isset($request['asAtDate'])) {
-            $query->where('personal_quotes.policy_booking_date', '<=', Carbon::parse($request['asAtDate'])->endOfDay())
-                ->whereIn('quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued]);
         }
     }
 
@@ -426,6 +432,9 @@ class RetentionReportService extends BaseService
         // Apply filters to the query based on the request parameters
         $this->applyFilters($query, $request->all(), true);
         $this->applyFiltersToQuery($query, $request);
+
+        $query->when($request->month, fn ($q) => $q->whereRaw("MONTHNAME({$this->monthColumnName}) = '{$request->month}'"));
+        $query->when($request->asAtDate, fn ($q) => $q->whereDate('personal_quotes.policy_booking_date', '<=', Carbon::parse($request->asAtDate)->endOfDay()));
 
         // Return the paginated results with query string
         return $query->paginate(12)->withQueryString();

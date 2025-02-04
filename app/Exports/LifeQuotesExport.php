@@ -50,7 +50,7 @@ class LifeQuotesExport
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->transapp_code,
-            $quote->premium,
+            $quote->premium ? $quote->premium : $quote->price_with_vat,
             $quote->policy_number,
             $quote->source,
             optional($quote->lifeQuoteRequestDetail)?->lostReason->text ?? '',
