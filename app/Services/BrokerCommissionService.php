@@ -14,10 +14,10 @@ class BrokerCommissionService
      * @param  int|null  $businessTypeId
      * @return BrokerCommission|null
      */
-    public function getBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId=null, $planId = null)
+    public function getBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId = null, $planId = null)
     {
         $baseQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)->active();
-        // If business type of insurance is provided, then get the broker commission for that business type of insurance & ignoring the quote type.    
+        // If business type of insurance is provided, then get the broker commission for that business type of insurance & ignoring the quote type.
         if ($businessTypeId) {
             $baseQuery->where('business_type_of_insurance_id', $businessTypeId);
         } else {
