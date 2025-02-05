@@ -1015,10 +1015,10 @@ class CentralService extends BaseService
     /**
      * Get the TAP configuration for a given quote & send update.
      *
-     * @param string $quoteType The type of the quote.
-     * @param object $quote The quote object or send update object.
-     * @param object|null $payment The payment object (optional).
-     * @param bool|null $isTapProcessCheck Flag to check if TAP capture process should start (optional).
+     * @param  string  $quoteType  The type of the quote.
+     * @param  object  $quote  The quote object or send update object.
+     * @param  object|null  $payment  The payment object (optional).
+     * @param  bool|null  $isTapProcessCheck  Flag to check if TAP capture process should start (optional).
      * @return array The TAP configuration.
      */
     public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null)
