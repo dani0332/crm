@@ -75,6 +75,9 @@ final class QuoteStatusEnum extends Enum
     public const PolicyCancelledReissued = 74;
     public const POLICY_BOOKING_QUEUED = 75;
     public const POLICY_BOOKING_FAILED = 76;
+    public const PAYMENT_LINK_REQUESTED_BY_CUSTOMER = 77;
+    public const PAYMENT_LINK_INPROGRESS = 78;
+    public const PAYMENT_LINK_SENT_TO_CUSTOMER = 79;
 
     // This is use for lost reason id not for Quote status
     public const LOSTREASONID = 34;

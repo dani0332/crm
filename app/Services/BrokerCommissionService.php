@@ -21,12 +21,14 @@ class BrokerCommissionService
             ->active();
 
         $brokerCommission = $baseQuery->first();
+        $commissionInPayments = $brokerCommission->commission_in_payments ?? false; // todo: Check it with Denber
         $isCreditCardEnabled = $brokerCommission ? true : false;
-        
+
         if ($planId) {
             $brokerCommission = (clone $baseQuery)->where('plan_id', $planId)->first();
         }
-        return [$isCreditCardEnabled, $brokerCommission];
+
+        return [$isCreditCardEnabled, $brokerCommission, $commissionInPayments];
     }
 
     /**
@@ -37,7 +39,7 @@ class BrokerCommissionService
      * @param  int|null  $businessTypeOfInsuranceId
      * @return bool
      */
-    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $planId=null)
+    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $planId = null)
     {
         [$isCreditCardEnabled] = $this->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
 

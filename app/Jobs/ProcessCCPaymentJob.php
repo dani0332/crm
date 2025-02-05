@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\PaymentCollectionTypeEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
@@ -69,16 +68,17 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 true
             );
 
-            $payment = PaymentSplits::find($ccPaymentProcess->payment_splits_id)->payment;
-            if (! $payment) {
+            $paymentSplit = PaymentSplits::find($ccPaymentProcess->payment_splits_id);
+            if (! $paymentSplit || ! $paymentSplit->payment) {
                 info("CC Payments Job Failed for Payment Split {$splitPaymentCode} - Error: Payment not found");
 
                 return;
             }
+            $payment = $paymentSplit->payment;
             $splitPayments = $payment->paymentSplits;
             $hasAnyCCPayment = $splitPayments->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
 
-            if (in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
+            if (in_array($payment->payment_status_id, [PaymentStatusEnum::CAPTURED]) && $payment->isInsurerPayment() && $hasAnyCCPayment && ! $payment->isGIGInsurer()) {
                 $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id);
                 // We can trigger sage & book policy entry from here
                 if ($quote) {
@@ -98,6 +98,8 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 } else {
                     info("CC Payments Job Failed for Payment Split : {$splitPaymentCode} - Error: Quote not found");
                 }
+            } else {
+                info("CC Payments Job did not meet conditions for Payment Split : {$splitPaymentCode}");
             }
 
             info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
@@ -109,9 +111,9 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
+        info("CC Payment Job failed for: {$this->ccPaymentProcessId}, Error: {$exception->getMessage()}");
         $ccPaymentProcess = CcPaymentProcess::find($this->ccPaymentProcessId);
         $ccPaymentProcess->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
-        info("CC Payment Job failed for: {$ccPaymentProcess->splitPayment->code}, Error: {$exception->getMessage()}");
     }
 
     public function uniqueId(): string
