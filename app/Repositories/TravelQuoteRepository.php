@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\TravelQuote;
 use App\Traits\CentralTrait;
+use Carbon\Carbon;
 
 class TravelQuoteRepository extends BaseRepository
 {
@@ -41,7 +42,7 @@ class TravelQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria();
 
         if (request()->has('travel_start_date') && request('travel_start_date') != '') {
-            $query->whereDate('start_date', '<=', request('travel_start_date'));
+            $query->whereDate('start_date', Carbon::parse(request('travel_start_date')));
         }
 
         $this->adjustQueryByDateFilters($query, 'travel_quote_request');

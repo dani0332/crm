@@ -562,7 +562,7 @@ class TravelQuoteService extends BaseService
         }
 
         if (isset($request->travel_start_date) && $request->travel_start_date != '') {
-            $this->query->whereDate('tqr.start_date', '<=', $request->travel_start_date);
+            $this->query->whereDate('tqr.start_date', Carbon::parse($request->travel_start_date));
         }
 
         $this->query->filterBySegment();
