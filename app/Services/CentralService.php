@@ -1036,7 +1036,7 @@ class CentralService extends BaseService
         $voidPaymentURL = '/payment/'.$paymentGateways[$payment->payment_gateway_id].'/cancel';
         $payload = [
             'quoteUID' => $request->quote_uuid,
-            'quoteTypeId' => $request->quote_type_id,
+            'quoteTypeId' => (int) $request->quote_type_id,
             'payments' => [
                 [
                     'codeRef' => $request->payment_code,
