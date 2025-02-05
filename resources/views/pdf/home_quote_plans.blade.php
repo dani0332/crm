@@ -753,77 +753,60 @@
                     ];
                 @endphp
                 @foreach ($planCovers as $cover)
-                    @foreach ($plans[$planIds[0]]->benefits as $planBenefit => $benefit)
-                        {{-- Only continue if the current planBenefit is in the $planCovers list --}}
-                        @continue($cover !== $planBenefit)
+                    {{-- Benefit Title Row (appears only once for each benefit) --}}
+                    <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
+                        <td colspan="{{ count($planIds) + 1 }}">
+                            <p class="text-left font-bold" style="color: #ffffff; padding-left: 12px;">
+                                {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover))) }}
+                            </p>
+                        </td>
+                    </tr>
 
-                        {{-- Normalize the benefit data --}}
-                        @php
-                            // Ensure $benefit is an array
-                            if (is_object($benefit)) {
-                                $benefit = (array) $benefit;
+                    {{-- Collect all benefit items for the current cover across all plans --}}
+                    @php
+                        $benefitItems = [];
+                        foreach ($plans as $planId => $plan) {
+                            if (isset($plan->benefits->$cover)) {
+                                foreach ($plan->benefits->$cover as $benefit) {
+                                    if (is_object($benefit) && property_exists($benefit, 'code')) {
+                                        $benefitItems[$benefit->code] = $benefit;
+                                    }
+                                }
                             }
+                        }
+                    @endphp
 
-                            // Convert stdClass benefits to an array if they exist
-                            if (isset($benefit['stdClass']) && is_object($benefit['stdClass'])) {
-                                $benefit = (array) $benefit['stdClass'];
-                            }
-
-                            // Filter out non-benefit keys
-                            $benefitItems = array_filter(
-                                $benefit,
-                                fn($item) => is_object($item) && property_exists($item, 'code'),
-                            );
-                        @endphp
-
-                        {{-- Skip if no valid benefits exist --}}
-                        @if (empty($benefitItems))
-                            @continue
-                        @endif
-
-                        {{-- Benefit Title Row --}}
-                        <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
-                            <td colspan="{{ count($planIds) + 1 }}">
-                                <p class="text-left font-bold" style="color: #ffffff; padding-left: 12px;">
-                                    {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $planBenefit))) }}
+                    {{-- Iterate through unique benefit items and display the benefit once with values for each plan --}}
+                    @foreach ($benefitItems as $code => $item)
+                        <tr style="page-break-inside: avoid;">
+                            {{-- First column: Benefit Code --}}
+                            <td style="background-color: #DBEEFF">
+                                <p class="text-left font-bold">
+                                    {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code))) }}
                                 </p>
                             </td>
-                        </tr>
 
-                        {{-- Iterate through valid benefit items --}}
-                        @foreach ($benefitItems as $item)
-                            <tr style="page-break-inside: avoid;">
-                                {{-- First column: Benefit Code --}}
-                                <td style="background-color: #DBEEFF">
-                                    <p class="text-left font-bold">
-                                        {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $item->code ?? 'N/A'))) }}
-                                    </p>
+                            {{-- Display values for each plan in subsequent columns --}}
+                            @foreach ($planIds as $planId)
+                                @php
+                                    $planBenefitCollection = collect($plans[$planId]->benefits->$cover ?? []);
+                                    $matchingBenefit = $planBenefitCollection->firstWhere('code', $code);
+                                    $planValue = $matchingBenefit->value ?? 'Excluded';
+                                @endphp
+                                <td>
+                                    <p class="text-left">{{ $planValue }}</p>
                                 </td>
-
-                                {{-- Subsequent columns: Benefit Value for each plan --}}
-                                @foreach ($planIds as $planId)
-                                    @php
-                                        $planBenefitCollection = collect($plans[$planId]->benefits->$planBenefit ?? []);
-                                        $matchingBenefit = $planBenefitCollection->firstWhere(
-                                            'code',
-                                            $item->code ?? '',
-                                        );
-                                        $planValue = $matchingBenefit->value ?? 'Excluded';
-                                    @endphp
-                                    <td>
-                                        <p class="text-left">{{ $planValue }}</p>
-                                    </td>
-                                @endforeach
-                            </tr>
-                        @endforeach
-
-                        <tr style="page-break-inside: avoid;">
-                            <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
-                                <div class="spacer"></div>
-                            </td>
+                            @endforeach
                         </tr>
                     @endforeach
+
+                    <tr style="page-break-inside: avoid;">
+                        <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
+                            <div class="spacer"></div>
+                        </td>
+                    </tr>
                 @endforeach
+
 
                 <tr>
                     <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
