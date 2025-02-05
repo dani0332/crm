@@ -884,13 +884,13 @@ class SendUpdateLogService
                 }
             }
             QuoteTag::updateOrCreate([
-                'quote_type_id' => $sendUpdateRequest->quoteType,
+                'quote_type_id' => QuoteTypes::getIdFromValue($sendUpdateRequest->quoteType),
                 'quote_uuid' => $quoteDetails->uuid,
                 'send_update_log_id' => $sendUpdateLog?->id,
                 'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLog?->id,
             ], ['value' => 1]);
 
-            return ['status' => false, 'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status'];
+            return ['status' => true, 'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status'];
         }
 
         info('fn:preparedDataForEndorsement - Preparing Sage Payload for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
