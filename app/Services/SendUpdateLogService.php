@@ -1538,17 +1538,21 @@ class SendUpdateLogService
                 app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
             $payment = $payment[0] ?? null;
             if (! empty($payment) && $payment->paymentSplits->isNotEmpty() && $brokerCommission && $isTransactionApproved) {
-                $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
-                    return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id != PaymentStatusEnum::AUTHORISED;
+                $hasCCPayment = $payment->paymentSplits->contains(function ($split) {
+                    return $split->payment_method == PaymentMethodsEnum::CreditCard;
                 });
 
-                if ($hasUnpaidCCPayment) {
+                if (! $sendUpdateLog->is_booking_filled && $hasCCPayment) {
+                    return 'Please Update the booking details.';
+                }
+
+                $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
+                    return $split->payment_status_id != PaymentStatusEnum::AUTHORISED;
+                });
+
+                if ($hasCCPayment && $hasUnpaidCCPayment) {
                     return 'The payment status is not yet Authorised.';
                 }
-            }
-
-            if (! $sendUpdateLog->is_booking_filled) {
-                return 'Please Update the booking details.';
             }
         }
 
