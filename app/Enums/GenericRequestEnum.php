@@ -46,9 +46,7 @@ final class GenericRequestEnum extends Enum
     public const BIKE = 'BIKE';
     public const MOTOR_BIKE = 'MOTOR BIKE';
     public const MOTORBIKE = 'MOTORBIKE';
-    const SEND_UPDATE_QUOTE_TYPE_MARSHAL = 99; // this quote type pass to Marshal Service for capture payment, not added on quote type enums because getting conflict while calling quotes.
+    const SEND_UPDATE_QUOTE_TYPE_MARSHAL = 99; // this quote type pass to Marshal Service for capture payment, not added on quote type enums because geting conflict while calling qutoes.
     public const ERROR = 'ERROR';
     const FAILED = 'failed';
-    const TYPE_LEAD = 'lead';
-    const TYPE_ENDORSEMENT = 'endorsement';
 }

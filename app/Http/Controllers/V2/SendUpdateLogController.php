@@ -423,9 +423,22 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
     {
+        $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
         $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
 
-        return response()->json(['message' => $endorsementResponse['message'] ?? 'Something went wrong'], $endorsementResponse['status'] ? 200 : 500);
+        if (! $endorsementResponse['status'] || ! isset($endorsementResponse['sageRequestPayload'])) {
+            $responseMessage = (! isset($endorsementResponse['sageRequestPayload']) && empty($endorsementResponse['message'])) ? 'Something went wrong' : $endorsementResponse['message'];
+
+            return response()->json(['message' => $responseMessage], 500);
+        }
+
+        info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
+        app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
+
+        (new SageApiService)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
+        info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
+
+        return response()->json(['message' => $endorsementResponse['message']], 200);
     }
 
     public function getOptions(Request $request)
