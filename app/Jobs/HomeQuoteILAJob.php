@@ -9,7 +9,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class HomeQuoteILAJob implements ShouldQueue
 {
@@ -38,15 +37,11 @@ class HomeQuoteILAJob implements ShouldQueue
 
     /**
      * The quote UID to process.
-     *
-     * @var string
      */
     protected string $quoteUID;
 
     /**
      * Create a new job instance.
-     *
-     * @param string $quoteUID
      */
     public function __construct(string $quoteUID)
     {
@@ -56,7 +51,6 @@ class HomeQuoteILAJob implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @return void
      * @throws Exception
      */
     public function handle(): void
@@ -71,7 +65,7 @@ class HomeQuoteILAJob implements ShouldQueue
             $response = QuoteTypes::HOME->allocate($this->quoteUID);
             $assignedAdvisorId = $response['advisorId'] ?? '';
 
-            if (!empty($assignedAdvisorId)) {
+            if (! empty($assignedAdvisorId)) {
                 info('Quote allocation executed successfully.', [
                     'quoteUID' => $this->quoteUID,
                     'assignedAdvisorId' => $assignedAdvisorId,
@@ -93,9 +87,6 @@ class HomeQuoteILAJob implements ShouldQueue
 
     /**
      * Handle a job failure.
-     *
-     * @param Exception $exception
-     * @return void
      */
     public function failed(Exception $exception): void
     {
