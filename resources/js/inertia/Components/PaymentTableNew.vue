@@ -2803,11 +2803,18 @@ const shouldProcessUpdate = payment => {
   let isInsurerAmlCleared = true;
   let isAMlAndKycTravelComplete =
     isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
+  let enabledQuoteTypesForInsurer = [
+    quoteTypeCodeEnum.Car,
+    quoteTypeCodeEnum.Home,
+    quoteTypeCodeEnum.Bike,
+    quoteTypeCodeEnum.Travel,
+  ];
   if (
     isInsurer &&
     isGIGProvider &&
-    (isCarQuote || isTravelQuote) &&
-    hasAnyCCSplitPayment()
+    enabledQuoteTypesForInsurer.includes(props.quoteType) &&
+    hasAnyCCSplitPayment() &&
+    !shouldSendUpdate
   ) {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
@@ -2968,9 +2975,12 @@ const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
       const paymentMethodCC = filterCCPayments(payment);
+      const isGIGProvider =
+        page.props?.bookPolicyDetails?.isGIGProvider || false;
       if (
         payment.collection_type === 'insurer' &&
-        hasAnyAuthorisedPendingCA.value(payment)
+        hasAnyAuthorisedPendingCA.value(payment) &&
+        !isGIGProvider
       ) {
         return 'approve';
       }

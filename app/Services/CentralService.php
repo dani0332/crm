@@ -321,7 +321,8 @@ class CentralService extends BaseService
             $quote->update($data->toArray());
 
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id);
+            $businessTypeId = $quote->business_type_of_insurance_id ?? null;
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId);
             $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
 
             return true;
@@ -1011,20 +1012,42 @@ class CentralService extends BaseService
         }
     }
 
-    public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null)
+    /**
+     * Get the TAP configuration for a given quote & send update.
+     *
+     * @param  string  $quoteType  The type of the quote.
+     * @param  object  $quote  The quote object or send update object.
+     * @param  object|null  $payment  The payment object (optional).
+     * @param  bool|null  $isTapProcessCheck  Flag to check if TAP capture process should start (optional).
+     * @return array The TAP configuration.
+     */
+    public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null, $sendUpdateLog = null)
     {
+        // Retrieve necessary IDs from the quote object
         $insuranceProviderId = $quote->insurance_provider_id;
+        $businessTypeId = $quote->business_type_of_insurance_id ?? null;
         $planId = $quote->plan_id ?? null;
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
+
+        // Get broker commission details
+        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+
+        // Get insurance provider details
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
 
+        // Determine if the provider is GIG
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
+
+        // Check if multiple payments are enabled for the provider
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
+
+        // Check if the provider is either GIG or QIC
         $isGIGOrQICProvider = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE]);
 
-        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId) : false;
+        // Check if TAP capture process should start
+        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId, $sendUpdateLog) : false;
 
+        // Prepare the TAP configuration array
         $tapConfiguration = [
             'isCreditCardEnabled' => $isCreditCardEnabled,
             'brokerCommission' => $brokerCommission,
@@ -1035,6 +1058,7 @@ class CentralService extends BaseService
             'commissionInPayments' => $commissionInPayments,
         ];
 
+        // If payment object is provided, check commission status and merge with TAP configuration
         if ($payment) {
             $commissionInfo = app(SplitPaymentService::class)->checkCommissionStatus($payment);
             $tapConfiguration = array_merge($tapConfiguration, $commissionInfo);

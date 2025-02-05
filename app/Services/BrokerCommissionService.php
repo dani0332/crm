@@ -11,17 +11,21 @@ class BrokerCommissionService
      *
      * @param  int  $quoteTypeId
      * @param  int  $insuranceProviderId
-     * @param  int|null  $businessTypeOfInsuranceId
+     * @param  int|null  $businessTypeId
      * @return BrokerCommission|null
      */
-    public function getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId = null)
+    public function getBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId = null, $planId = null)
     {
-        $baseQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)
-            ->where('quote_type_id', $quoteTypeId)
-            ->active();
+        $baseQuery = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)->active();
+        // If business type of insurance is provided, then get the broker commission for that business type of insurance & ignoring the quote type.
+        if ($businessTypeId) {
+            $baseQuery->where('business_type_of_insurance_id', $businessTypeId);
+        } else {
+            $baseQuery->where('quote_type_id', $quoteTypeId);
+        }
 
         $brokerCommission = $baseQuery->first();
-        $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
+        $commissionInPayments = $brokerCommission->commission_in_payments ?? false; // todo: Check it with Denber
         $isCreditCardEnabled = $brokerCommission ? true : false;
 
         if ($planId) {
@@ -39,9 +43,9 @@ class BrokerCommissionService
      * @param  int|null  $businessTypeOfInsuranceId
      * @return bool
      */
-    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $planId = null)
+    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $businessTypeId = null, $planId = null)
     {
-        [$isCreditCardEnabled] = $this->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
+        [$isCreditCardEnabled] = $this->getBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
         return $isCreditCardEnabled;
     }

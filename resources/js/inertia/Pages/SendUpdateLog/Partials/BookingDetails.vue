@@ -423,10 +423,21 @@ const calculateCommission = () => {
           props.bookingDetails?.brokerCommission
         ) {
           const brokerCommission = props.bookingDetails?.brokerCommission;
-          const brokerCommMinPer = brokerCommission ? roundValue(brokerCommission.commission_percentage_min) : null;
-          const brokerCommMaxPer = brokerCommission ? roundValue(brokerCommission.commission_percentage_max) : null;
+          const brokerCommMinPer = brokerCommission
+            ? roundValue(brokerCommission.commission_percentage_min)
+            : null;
+          const brokerCommMaxPer = brokerCommission
+            ? roundValue(brokerCommission.commission_percentage_max)
+            : null;
 
-          if ((brokerCommMinPer != null && brokerCommMaxPer != null) && ! (commissionPercentage >= brokerCommMinPer && commissionPercentage <= brokerCommMaxPer)) {
+          if (
+            brokerCommMinPer != null &&
+            brokerCommMaxPer != null &&
+            !(
+              commissionPercentage >= brokerCommMinPer &&
+              commissionPercentage <= brokerCommMaxPer
+            )
+          ) {
             notification.error({
               title:
                 'The commission amount you entered is outside the permitted range.',
