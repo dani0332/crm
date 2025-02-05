@@ -2804,10 +2804,10 @@ const shouldProcessUpdate = payment => {
   let isAMlAndKycTravelComplete =
     isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
   let enabledQuoteTypesForInsurer = [
-      quoteTypeCodeEnum.Car,
-      quoteTypeCodeEnum.Home,
-      quoteTypeCodeEnum.Bike,
-      quoteTypeCodeEnum.Travel,
+    quoteTypeCodeEnum.Car,
+    quoteTypeCodeEnum.Home,
+    quoteTypeCodeEnum.Bike,
+    quoteTypeCodeEnum.Travel,
   ];
   if (
     isInsurer &&
