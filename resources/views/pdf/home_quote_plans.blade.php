@@ -753,15 +753,6 @@
                     ];
                 @endphp
                 @foreach ($planCovers as $cover)
-                    {{-- Benefit Title Row (appears only once for each benefit) --}}
-                    <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
-                        <td colspan="{{ count($planIds) + 1 }}">
-                            <p class="text-left font-bold" style="color: #ffffff; padding-left: 12px;">
-                                {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover))) }}
-                            </p>
-                        </td>
-                    </tr>
-
                     {{-- Collect all benefit items for the current cover across all plans --}}
                     @php
                         $benefitItems = [];
@@ -776,35 +767,47 @@
                         }
                     @endphp
 
-                    {{-- Iterate through unique benefit items and display the benefit once with values for each plan --}}
-                    @foreach ($benefitItems as $code => $item)
-                        <tr style="page-break-inside: avoid;">
-                            {{-- First column: Benefit Code --}}
-                            <td style="background-color: #DBEEFF">
-                                <p class="text-left font-bold">
-                                    {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code))) }}
+                    {{-- Only display the heading and benefit items if there are any benefit items --}}
+                    @if (!empty($benefitItems))
+                        {{-- Benefit Title Row (appears only once for each benefit) --}}
+                        <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
+                            <td colspan="{{ count($planIds) + 1 }}">
+                                <p class="text-left font-bold" style="color: #ffffff; padding-left: 12px;">
+                                    {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover))) }}
                                 </p>
                             </td>
-
-                            {{-- Display values for each plan in subsequent columns --}}
-                            @foreach ($planIds as $planId)
-                                @php
-                                    $planBenefitCollection = collect($plans[$planId]->benefits->$cover ?? []);
-                                    $matchingBenefit = $planBenefitCollection->firstWhere('code', $code);
-                                    $planValue = $matchingBenefit->value ?? 'Excluded';
-                                @endphp
-                                <td>
-                                    <p class="text-left">{{ $planValue }}</p>
-                                </td>
-                            @endforeach
                         </tr>
-                    @endforeach
 
-                    <tr style="page-break-inside: avoid;">
-                        <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
-                            <div class="spacer"></div>
-                        </td>
-                    </tr>
+                        {{-- Iterate through unique benefit items and display the benefit once with values for each plan --}}
+                        @foreach ($benefitItems as $code => $item)
+                            <tr style="page-break-inside: avoid;">
+                                {{-- First column: Benefit Code --}}
+                                <td style="background-color: #DBEEFF">
+                                    <p class="text-left font-bold">
+                                        {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code))) }}
+                                    </p>
+                                </td>
+
+                                {{-- Display values for each plan in subsequent columns --}}
+                                @foreach ($planIds as $planId)
+                                    @php
+                                        $planBenefitCollection = collect($plans[$planId]->benefits->$cover ?? []);
+                                        $matchingBenefit = $planBenefitCollection->firstWhere('code', $code);
+                                        $planValue = $matchingBenefit->value ?? 'Excluded';
+                                    @endphp
+                                    <td>
+                                        <p class="text-left">{{ $planValue }}</p>
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+
+                        <tr style="page-break-inside: avoid;">
+                            <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
+                                <div class="spacer"></div>
+                            </td>
+                        </tr>
+                    @endif
                 @endforeach
 
 
