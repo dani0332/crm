@@ -104,12 +104,4 @@ class PaymentService extends BaseService
             $payment->total_amount = $totalAmount;
         }
     }
-
-    public function checkCCPayments($paymentSplit): bool
-    {
-        $excludedPaymentStatus = [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED];
-
-        return $paymentSplit::whereNotIn('payment_status_id', $excludedPaymentStatus)
-            ->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0;
-    }
 }

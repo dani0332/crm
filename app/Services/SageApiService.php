@@ -220,26 +220,6 @@ class SageApiService
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
-        // Reminder:: To handle insurer payment against credit card for Tap Integration
-        if (isTapEnabled()) {
-            $checkCCPayments = app(PaymentService::class)->checkCCPayments($preparedData['splitPayments']);
-            info('fn:bookEndorsementOnSage - TAP Enabled - Collection Type: '.$preparedData['payment']->collection_type.' - Credit Card Payments available: '.$checkCCPayments.' - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
-            if ($preparedData['payment']->isInsurerPayment() && $checkCCPayments) {
-                info('fn:bookEndorsementOnSage - Authorizing payment process started - PaymentCode: '.$preparedData['payment']->code.' - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
-                $successMessage = $this->handleSplitPaymentApproval($request->quoteType, $mainQuote, $preparedData['payment'], $preparedData['splitPayments']);
-                info('fn:bookEndorsementOnSage - Authorizing payment process completed - response:'.json_encode($successMessage).' - PaymentCode: '.$preparedData['payment']->code.' - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
-                if (! $successMessage) {
-                    return ['status' => false, 'message' => 'Error while approving send update payment'];
-                }
-            }
-            QuoteTag::updateOrCreate([
-                'send_update_log_id' => $sendUpdateLog?->id,
-                'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START,
-            ], ['value' => 1]);
-
-            return ['status' => false, 'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status'];
-        }
-
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
             if (empty($reversalInvoiceLogs)) {
                 return ['status' => false, 'message' => 'Reversal invoice logs not found for reverse and correction'];
@@ -2148,7 +2128,7 @@ class SageApiService
         info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - end');
     }
 
-    private function handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits)
+    public function handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits)
     {
         info('fn:handleSplitPaymentApproval - Split payment approval process started - process called from SageApiService - QuoteCode: '.$quote->code.' - PaymentCode: '.$payment->code);
         $modelType = $payment->send_update_log_id ? $quoteTypeId : QuoteTypes::getName($quoteTypeId)->value;
@@ -2169,7 +2149,7 @@ class SageApiService
         ]);
 
         $response = app(PaymentRepository::class)->handlePaymentApprove($splitPaymentApprovalRequest);
-        info('fn:handleSplitPaymentApproval - Split payment approval process completed - process called from SageApiService - QuoteCode: '.$quote->code.' - PaymentCode: '.$payment->code.($sendUpdateLog ? ' - SendUpdateCode: '.$sendUpdateLog->code : ''));
+        info('fn:handleSplitPaymentApproval - Split payment approval process completed - process called from SageApiService - QuoteCode: '.$quote->code.' - PaymentCode: '.$payment->code);
 
         return $response;
     }
