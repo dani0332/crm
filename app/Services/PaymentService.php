@@ -6,7 +6,6 @@ use App\Enums\DiscountTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Models\Payment;
 
 class PaymentService extends BaseService
 {

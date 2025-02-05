@@ -237,8 +237,10 @@ class Payment extends Model implements Auditable
         return $this->collection_type == CollectionTypeEnum::INSURER;
     }
 
-    public function isGIGInsurer()
+    public function isGIGInsurer($quoteTypeId, $quoteDetails)
     {
-        return $this->insuranceProvider->code == InsurerProviderEnum::GIG_INSURANCE;
+        $insuranceProvider = getInsuranceProvider($this, $quoteTypeId, $quoteDetails);
+
+        return $insuranceProvider?->code == InsurerProviderEnum::GIG_INSURANCE;
     }
 }

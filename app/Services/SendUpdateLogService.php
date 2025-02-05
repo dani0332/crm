@@ -875,7 +875,7 @@ class SendUpdateLogService
                 ->where('payment_method', PaymentMethodsEnum::CreditCard)
                 ->count() > 0;
             info('fn:preparedDataForEndorsement - TAP Enabled - Collection Type: '.$preparedDetailsForEndorsement['payment']->collection_type.' - Credit Card Payments available: '.$checkCCPayments.' - SendUpdateCode: '.$sendUpdateLog->code);
-            if ($preparedDetailsForEndorsement['payment']->isInsurerPayment() && $checkCCPayments && ! $preparedDetailsForEndorsement['payment']->isGIGInsurer()) {
+            if ($preparedDetailsForEndorsement['payment']->isInsurerPayment() && $checkCCPayments && ! $preparedDetailsForEndorsement['payment']->isGIGInsurer($sendUpdateRequest->quoteType, $quoteDetails)) {
                 info('fn:preparedDataForEndorsement - Authorizing payment process started - PaymentCode: '.$preparedDetailsForEndorsement['payment']->code.' - SendUpdateCode: '.$sendUpdateLog->code);
                 $successMessage = app(SageApiService::class)->handleSplitPaymentApproval($sendUpdateRequest->quoteType, $quoteDetails, $preparedDetailsForEndorsement['payment'], $preparedDetailsForEndorsement['splitPayments']);
                 info('fn:preparedDataForEndorsement - Authorizing payment process completed - response:'.json_encode($successMessage).' - PaymentCode: '.$preparedDetailsForEndorsement['payment']->code.' - SendUpdateCode: '.$sendUpdateLog->code);
