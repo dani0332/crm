@@ -337,4 +337,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $query->where('quote_type_id', QuoteTypes::SAVINGS->id());
     }
+
+    public function savingsQuote()
+    {
+        return $this->hasOne(SavingsQuote::class);
+    }
 }

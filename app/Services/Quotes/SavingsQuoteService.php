@@ -31,6 +31,8 @@ class SavingsQuoteService extends BaseQuoteService
             'payments',
             'quoteDetail',
             'renewalBatchModel',
+            'savingsQuote',
+            'nationality',
         ])
             ->filter(! $forExport, $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount);
@@ -119,12 +121,12 @@ class SavingsQuoteService extends BaseQuoteService
             'quoteTypeId' => $this->quoteType->id(),
             "maritalStatusId" => $data['marital_status_id'],
             "tenureOfSavings" => $data['tenure_of_savings'],
-            "hasNicotine" => $data['tenure_of_savings'],
-            "purpose" => $data['tenure_of_savings'],
-            "currency" => $data['tenure_of_savings'],
-            "amount" => $data['tenure_of_savings'],
-            "investmentFrequency" => $data['tenure_of_savings'],
-            "additionalNotes" => $data['tenure_of_savings'],
+            "hasNicotine" => $data['has_nicotine'],
+            "purpose" => $data['purpose'],
+            "currency" => $data['currency'],
+            "amount" => $data['amount'],
+            "investmentFrequency" => $data['investment_frequency'],
+            "additionalNotes" => $data['additional_notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'utmSource' => '',
