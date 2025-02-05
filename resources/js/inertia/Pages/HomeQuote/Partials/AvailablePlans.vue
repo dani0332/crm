@@ -386,7 +386,7 @@ const updatePlanLoading = ref(false);
                   <div class="font-medium">{{ item.text }}</div>
 
                   <!-- Display the description field with grey text -->
-                  <div class="text-gray-500">{{ item.description }}</div>
+                  <div class="text-gray-500">{{ item.value }}</div>
                 </div>
               </div>
             </div>
