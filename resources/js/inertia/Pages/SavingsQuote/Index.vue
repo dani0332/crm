@@ -92,6 +92,22 @@ const tableHeader = ref([
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
+    text: 'Investment Frequency',
+    value: 'savings_quote.investment_frequency',
+    is_active: true,
+  },
+  {
+    text: 'Investment Amount',
+    value: 'savings_quote.amount',
+    is_active: true,
+  },
+  {
+    text: 'Tenure of Cover',
+    value: 'savings_quote.tenure_of_savings',
+    is_active: true,
+  },
+  { text: 'POLICY NO', value: 'policy_number', is_active: true },
+  {
     text: 'CREATED DATE',
     value: 'created_at',
     is_active: true,
@@ -109,25 +125,15 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
-  { text: 'POLICY NO', value: 'policy_number', is_active: true },
+  { text: 'Nationality', value: 'nationality.text', is_active: true },
+  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
-  {
-    text: 'CURRENTLY INSURED WITH',
-    value: 'currently_insured_with',
-    is_active: true,
-  },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
+  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  { text: 'PRICE', value: 'premium', is_active: true },
   {
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
     is_active: true,
-  },
-  {
-    text: 'Previous Policy Premium',
-    value: 'previous_quote_policy_premium',
-    is_active: true,
-    sortable: true,
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
 ]);
