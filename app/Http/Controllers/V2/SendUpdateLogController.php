@@ -210,6 +210,7 @@ class SendUpdateLogController extends Controller
         $insurance_provider_id = $insuranceProviderId ?? $bookingDetails['insurance_provider_id'] ?? null;
         $sendUpdate = $quote;
         $sendUpdate->insurance_provider_id = $insurance_provider_id;
+        $sendUpdate->business_type_of_insurance_id = $realQuote->business_type_of_insurance_id ?? null;
         $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $sendUpdate, $sendUpdatePayments[0] ?? null);
         $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
 
