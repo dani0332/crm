@@ -785,7 +785,7 @@
                         <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
                             <td colspan="{{ count($planIds) + 1 }}">
                                 <p class="text-left font-bold" style="color: #ffffff; padding-left: 12px;">
-                                    {{ $planBenefit }}
+                                    {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $planBenefit))) }}
                                 </p>
                             </td>
                         </tr>
@@ -795,7 +795,9 @@
                             <tr style="page-break-inside: avoid;">
                                 {{-- First column: Benefit Code --}}
                                 <td style="background-color: #DBEEFF">
-                                    <p class="text-left font-bold">{{ $item->code ?? 'N/A' }}</p>
+                                    <p class="text-left font-bold">
+                                        {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $item->code ?? 'N/A'))) }}
+                                    </p>
                                 </td>
 
                                 {{-- Subsequent columns: Benefit Value for each plan --}}
