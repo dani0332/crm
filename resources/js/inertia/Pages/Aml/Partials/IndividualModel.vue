@@ -594,6 +594,12 @@ watch(() => {
         : 'emiratesId';
   }
 });
+
+watch(() => insuredFormDetails.nationality_id, (newValue) => {
+  if (newValue !== null) {
+    isEmptyNationality.value = false;
+  }
+});
 </script>
 
 <template>
