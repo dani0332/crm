@@ -173,6 +173,7 @@ class TravelQuoteService extends BaseService
             'tqr.insurer_aml_status',
             'tqr.departure_country_id',
             'tqr.insurance_provider_id',
+            'tqr.gender',
             DB::raw('
                 CASE
                     WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
