@@ -43,6 +43,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const embeddedProductEnum = page.props.embeddedProductEnum;
 const embeddedProductTypeEnum = page.props.embeddedProductTypeEnum;
+const paymentGatewayIdEnum = page.props.paymentGatewayIdEnum;
 const modals = reactive({
   cancelPayment: false,
   viewDocuments: false,
@@ -611,9 +612,16 @@ const onAddDocumentSubmit = event => {
                 View Documents
               </x-button>
               <x-button
-                v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)
-                  && getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
-                  && item.product_type == embeddedProductTypeEnum.NON_INSURANCE"
+                v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL) 
+                  && (
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payment_status_id == paymentStatusEnum.DRAFT
+                  || getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payments[0]?.payment_gateway_id == paymentGatewayIdEnum.PAYMENT_GATEWAY_CHECKOUT
+                  || (
+                    getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
+                    && item.product_type == embeddedProductTypeEnum.NON_INSURANCE 
+                    && getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payments[0]?.payment_gateway_id == paymentGatewayIdEnum.PAYMENT_GATEWAY_TAP
+                    )
+                  )"
                 size="xs"
                 color="#ff5e00"
                 :disabled="!item.can_cancel_payment"
@@ -622,8 +630,10 @@ const onAddDocumentSubmit = event => {
                 Cancel Payments
               </x-button>
               <x-button
-                v-if="[paymentStatusEnum.DRAFT, paymentStatusEnum.AUTHORISED, paymentStatusEnum.CANCELLED].includes(getFirstPriceWithTransaction(item.prices)?.transactions[0]
-                  ?.payment_status_id)"
+                v-if="
+                    [paymentStatusEnum.DRAFT, paymentStatusEnum.AUTHORISED, paymentStatusEnum.CANCELLED].includes(getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payment_status_id)
+                    && getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payments[0]?.payment_gateway_id == paymentGatewayIdEnum.PAYMENT_GATEWAY_TAP
+                  "
                 size="xs"
                 color="#ff5e00"
                 :disabled="!item.can_void_payment"

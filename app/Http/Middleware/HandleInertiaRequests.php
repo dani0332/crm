@@ -44,6 +44,7 @@ use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
 use App\Enums\EmbeddedProductTypeEnum;
+use App\Enums\PaymentGatewayIdEnum;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -137,6 +138,7 @@ class HandleInertiaRequests extends Middleware
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
             'isTapEnabled' => isTapEnabled(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentGatewayIdEnum' => PaymentGatewayIdEnum::asArray(),
         ];
     }
 

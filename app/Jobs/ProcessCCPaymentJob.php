@@ -104,18 +104,6 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 }
             }
 
-            if (in_array($ccPaymentProcess->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
-
-                try {
-                    EmbeddedProductRepository::capturePayment($ccPaymentProcess->quoteable_id, $ccPaymentProcess->quote_type);
-                } catch (Exception $e) {
-                    Log::error($ccPaymentProcess->quote_type . ' - capture embedded products failed', [
-                        'error' => $e->getMessage(),
-                        'uuid' => $ccPaymentProcess->quoteable_id,
-                    ]);
-                }
-            }
-
             info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
 
         } else {
