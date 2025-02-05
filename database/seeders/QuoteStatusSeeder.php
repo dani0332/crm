@@ -58,7 +58,7 @@ class QuoteStatusSeeder extends Seeder
                 'uuid' => 'ea826923-11bb-11ee-a8a6-2a23318a2517',
                 'created_by' => 'muhammad.waris@myalfred.com',
                 'updated_by' => 'muhammad.waris@myalfred.com',
-            ]
+            ],
         ];
 
         foreach ($quoteStatusSeeder as $quoteStatus) {
@@ -67,44 +67,29 @@ class QuoteStatusSeeder extends Seeder
             ];
             QuoteStatus::firstOrCreate($conditions, $quoteStatus);
         }
+
         $quoteTypes = QuoteType::all();
         foreach ($quoteTypes as $quoteType) {
-            QuoteStatusMap::firstOrCreate([
+            $commonData = [
                 'quote_type_id' => $quoteType->id,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.waris@myalfred.com',
+                'updated_by' => 'muhammad.waris@myalfred.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            QuoteStatusMap::firstOrCreate([
                 'quote_status_id' => QuoteStatusEnum::PAYMENT_LINK_REQUESTED_BY_CUSTOMER,
-            ], [
-                'quote_type_id' => $quoteType->id,
-                'quote_status_id' => QuoteStatusEnum::PAYMENT_LINK_REQUESTED_BY_CUSTOMER,
-                'sort_order' => 22,
-                'created_by' => 'muhammad.waris@myalfred.com',
-                'updated_by' => 'muhammad.waris@myalfred.com',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            ], $commonData);
+
             QuoteStatusMap::firstOrCreate([
-                'quote_type_id' => $quoteType->id,
                 'quote_status_id' => QuoteStatusEnum::PAYMENT_LINK_INPROGRESS,
-            ], [
-                'quote_type_id' => $quoteType->id,
-                'quote_status_id' => QuoteStatusEnum::PAYMENT_LINK_INPROGRESS,
-                'sort_order' => 22,
-                'created_by' => 'muhammad.waris@myalfred.com',
-                'updated_by' => 'muhammad.waris@myalfred.com',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            ], $commonData);
+
             QuoteStatusMap::firstOrCreate([
-                'quote_type_id' => $quoteType->id,
                 'quote_status_id' => QuoteStatusEnum::PAYMENT_LINK_SENT_TO_CUSTOMER,
-            ], [
-                'quote_type_id' => $quoteType->id,
-                'quote_status_id' => QuoteStatusEnum::PAYMENT_LINK_SENT_TO_CUSTOMER,
-                'sort_order' => 22,
-                'created_by' => 'muhammad.waris@myalfred.com',
-                'updated_by' => 'muhammad.waris@myalfred.com',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            ], $commonData);
         }
     }
 }

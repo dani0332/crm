@@ -159,13 +159,11 @@ const initialAmount = ref(0);
 
 const showLackingPayment = () => {
   if (is_lacking_payment.value && props.payments.length > 0) {
-    notification.error(
-      {
-        title: paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED,
-        position: 'top',
-        timeout: 5000,
-      }
-    );
+    notification.error({
+      title: paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED,
+      position: 'top',
+      timeout: 5000,
+    });
   }
 };
 
@@ -1499,10 +1497,9 @@ const isProformaPaymentRequestExportable = (payment, documents) => {
 
 const downloadProformaPayment = async () => {
   let errorMsg = '';
-  if (
-    paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id
-  ) {
-    errorMsg = paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+  if (paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id) {
+    errorMsg =
+      paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
     notification.error({
       title: errorMsg,
       position: 'top',
@@ -1809,7 +1806,12 @@ const editPaymentModal = (
     return false;
   }
 
-  if (isEditPaymentEnabled() && split_payment_id == 0 && sr_no == 0 && capture_approval == 0){
+  if (
+    isEditPaymentEnabled() &&
+    split_payment_id == 0 &&
+    sr_no == 0 &&
+    capture_approval == 0
+  ) {
     notification.error({
       title: paymentTooltipEnum.PAYMENT_AUTHORISED_CANNOT_EDIT,
       position: 'top',
@@ -2838,8 +2840,7 @@ const validateUpfrontCapture = paymentRecord => {
     paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
   const isCAPayment =
     paymentSplitRec.payment_method.code === 'CA' &&
-    paymentSplitRec.payment_status_id ===
-      paymentStatusEnum.CREDIT_APPROVED;
+    paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
   const isPaidPayment =
     paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
   return isIPPending || isCAPayment || isPaidPayment;
@@ -2895,9 +2896,7 @@ const validateSplitPaymentsCapture = paymentRecord => {
 };
 
 const validateNonUpfrontAndSplitCapture = paymentRecord => {
-  if (
-    paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED
-  ) {
+  if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
     if (verifyCreditApproved(paymentRecord)) return true;
   } else if (
     (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
@@ -2969,9 +2968,12 @@ const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
       const paymentMethodCC = filterCCPayments(payment);
+      const isGIGProvider =
+        page.props?.bookPolicyDetails?.isGIGProvider || false;
       if (
         payment.collection_type === 'insurer' &&
-        hasAnyAuthorisedPendingCA.value(payment)
+        hasAnyAuthorisedPendingCA.value(payment) &&
+        !isGIGProvider
       ) {
         return 'approve';
       }
@@ -3364,7 +3366,7 @@ const isMultiPaymentsEnabled = ref(
   page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled || false,
 );
 
-const isGIGOrQICProvider  = ref(
+const isGIGOrQICProvider = ref(
   page.props?.bookPolicyDetails?.isGIGOrQICProvider || false,
 );
 
@@ -3399,8 +3401,12 @@ const isCCPaymentDisabled = option => {
 const isPolicySendUpdateBooked = option => {
   const isInsurerCollection = paymentMethodsForm.collection_type === 'insurer';
   const isCCOption = option === 'CC';
-  const isPolicyBooked = props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked;
-  const isUpdateBooked = props.sendUpdate && props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+  const isPolicyBooked =
+    props.quoteRequest.quote_status_id ===
+    page.props.quoteStatusEnum.PolicyBooked;
+  const isUpdateBooked =
+    props.sendUpdate &&
+    props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
   const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
 
   if (isUpdateBooked && isCCAndInsurer) {
@@ -3414,21 +3420,18 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
 };
 
 const isEditPaymentEnabled = () => {
-  const statusesToCheck = [
-    paymentStatusEnum.AUTHORISED,
-  ];
+  const statusesToCheck = [paymentStatusEnum.AUTHORISED];
 
   const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
     statusesToCheck.includes(item.payment_status_id),
   );
 
-  return(
-    !isMultiPaymentsEnabled.value
-    && isGIGOrQICProvider.value
-    && hasAnyAuthorizedPayment
-  )
+  return (
+    !isMultiPaymentsEnabled.value &&
+    isGIGOrQICProvider.value &&
+    hasAnyAuthorizedPayment
+  );
 };
-
 </script>
 
 <template>
@@ -3790,7 +3793,11 @@ const isEditPaymentEnabled = () => {
                                 <template #content>!</template>
                               </x-badge>
                               <template #tooltip>
-                                {{isEditPaymentEnabled() ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT :  paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED}}
+                                {{
+                                  isEditPaymentEnabled()
+                                    ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT
+                                    : paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED
+                                }}
                               </template>
                             </x-tooltip>
                           </template>
@@ -5305,9 +5312,14 @@ const isEditPaymentEnabled = () => {
                             :title="
                               isCCPaymentDisabled(option.value)
                                 ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED
-                                : isPolicySendUpdateBooked(option.value) ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED : option.tooltip
+                                : isPolicySendUpdateBooked(option.value)
+                                  ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED
+                                  : option.tooltip
                             "
-                            :disabled="isCCPaymentDisabled(option.value) || isPolicySendUpdateBooked(option.value)"
+                            :disabled="
+                              isCCPaymentDisabled(option.value) ||
+                              isPolicySendUpdateBooked(option.value)
+                            "
                           >
                             {{ option.label }}
                           </option>

@@ -36,6 +36,9 @@ final class PolicyIssuanceEnum extends Enum
     const BOOKING_DETAILS_API_FAILED_STATUS_ID = 4;
     const BOOKING_DETAILS_API_FAILED = 'Booking Details API Failed';
     const BOOKING_DETAILS_API_ACTION_MESSAGE = 'Retrieval of Required Booking Details via API';
+    const AUTO_APPROVE_FAILED_STATUS_ID = 5;
+    const AUTO_APPROVE_FAILED = 'Auto Approve Failed';
+    const AUTO_APPROVE_ACTION_MESSAGE = 'Auto Capture Payment';
 
     /* Insurer API Generic Status */
 
@@ -75,6 +78,7 @@ final class PolicyIssuanceEnum extends Enum
             self::POLICY_DETAIL_API_FAILED_STATUS_ID => self::POLICY_DETAIL_API_FAILED,
             self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_FAILED,
             self::BOOKING_DETAILS_API_FAILED_STATUS_ID => self::BOOKING_DETAILS_API_FAILED,
+            self::AUTO_APPROVE_FAILED_STATUS_ID => self::AUTO_APPROVE_FAILED,
         ];
 
         return $status ? $statuses[$status] : $statuses;
@@ -87,6 +91,7 @@ final class PolicyIssuanceEnum extends Enum
             self::POLICY_DETAIL_API_FAILED_STATUS_ID => self::POLICY_DETAIL_API_ACTION_MESSAGE,
             self::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID => self::UPLOAD_POLICY_DOCUMENTS_API_ACTION_MESSAGE,
             self::BOOKING_DETAILS_API_FAILED_STATUS_ID => self::BOOKING_DETAILS_API_ACTION_MESSAGE,
+            self::AUTO_APPROVE_FAILED_STATUS_ID => self::AUTO_APPROVE_ACTION_MESSAGE,
         ];
 
         return $status ? $statuses[$status] : '';

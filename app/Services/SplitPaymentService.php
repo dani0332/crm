@@ -11,7 +11,6 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
-use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
@@ -559,8 +558,7 @@ class SplitPaymentService
             $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
-            $paymentMethodEndPoint = PaymentGatewayIdEnum::getName($payment->insuranceProvider->payment_gateway_id);
-            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.$paymentMethodEndPoint;
+            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
 
             $paymentParams = [
                 'code' => $payment->code.'-'.$splitPayment->sr_no,
@@ -658,8 +656,7 @@ class SplitPaymentService
             // Log message for creating Sage receipt
             info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage receipt id: '.$paymentSplit->sage_reciept_id);
 
-            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-            if ($isSageEnabled && empty($paymentSplit->sage_reciept_id)) {
+            if ((new SageApiService)->isSageEnabled() && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
                 $request = Request::createFromGlobals();
                 $request->merge([
@@ -1207,6 +1204,7 @@ class SplitPaymentService
                 }
             }
         }
+
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 }

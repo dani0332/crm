@@ -1539,12 +1539,16 @@ class SendUpdateLogService
             $payment = $payment[0] ?? null;
             if (! empty($payment) && $payment->paymentSplits->isNotEmpty() && $brokerCommission && $isTransactionApproved) {
                 $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
-                    return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id != PaymentStatusEnum::PAID;
+                    return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id != PaymentStatusEnum::AUTHORISED;
                 });
 
                 if ($hasUnpaidCCPayment) {
                     return 'The payment status is not yet Authorised.';
                 }
+            }
+
+            if (! $sendUpdateLog->is_booking_filled) {
+                return 'Please Update the booking details.';
             }
         }
 

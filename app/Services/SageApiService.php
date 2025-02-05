@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\PaymentCollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -527,10 +526,9 @@ class SageApiService
     public function postBookPolicyToSage($request, $quote)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        // check sage is enabled or not
-        $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
 
-        if (! $isSageEnabled) {
+        // check sage is enabled or not
+        if (! $this->isSageEnabled()) {
             info('Policy Book : postBookPolicyToSage : Sage is not enabled');
             $returnMessage['message'] = 'Sage is not enabled';
 
@@ -553,9 +551,11 @@ class SageApiService
 
         // This block is for collection type INSURER and having any Credit Card Payment
         // This specific block is added to handle tap payments
-        $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
+        $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED])
+            ->where('payment_method', PaymentMethodsEnum::CreditCard)
+            ->count() > 0;
         info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type);
-        if ($payment->isInsurerPayment() && $hasAnyCCPayment) {
+        if ($payment->isInsurerPayment() && $hasAnyCCPayment && ! $payment->isGIGInsurer()) {
             info('Skipping Policy Book & Authorizing payment for '.$payment->code);
             $successMessage = $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
             if (! $successMessage) {
@@ -2061,9 +2061,14 @@ class SageApiService
 
     public function scheduleSageProcesses($insurerId = null): void
     {
-        $sageProcessCommandLock = Cache::lock('sage-processes-run-lock', 20);
+        $processLockKey = SageEnum::SAGE_PROCESS_LOCK_KEY;
+        $status[] = SageEnum::SAGE_PROCESS_PENDING_STATUS;
+        if ((new SageApiService)->isSageRetryTimeoutEnabled()) {
+            $status[] = SageEnum::SAGE_PROCESS_TIMEOUT_STATUS;
+        }
+        $sageProcessCommandLock = Cache::lock($processLockKey, 20);
         if ($sageProcessCommandLock->get()) {
-            $sageProcesses = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
+            $sageProcesses = SageProcess::whereIn('status', $status)
                 ->whereNotIn('insurance_provider_id', function ($query) {
                     $query->select('insurance_provider_id')
                         ->from('sage_processes')
@@ -2148,4 +2153,15 @@ class SageApiService
 
         return app(PaymentRepository::class)->handlePaymentApprove($data);
     }
+
+    public function isSageEnabled()
+    {
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
+    }
+
+    public function isSageRetryTimeoutEnabled()
+    {
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
+    }
+
 }
