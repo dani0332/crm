@@ -273,22 +273,6 @@
             background-color: #d7fbd0;
         }
 
-        /* .text-heading {
-            color: #ffffff;
-            background-image: url('{{ public_path('images/new-heading-title-bg-image.png') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            height: 50px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            padding: 0;
-            margin: 0;
-            font-size: 20px;
-            font-weight: 900;
-        } */
-
         .text-heading {
             color: #ffffff;
             height: 40px;
@@ -603,355 +587,6 @@
             ->sortByDesc('isRenewal')
             ->pluck('id')
             ->toArray();
-
-        $features = [
-            // Building
-            ['code' => 'heading', 'title' => 'Building'],
-            [
-                'code' => 'temporaryRemoval',
-                'title' => 'Temporary Removal',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
-                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'theftForcibleEntryOrExit',
-                'title' => 'Theft (Forcible entry or exit)',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'breakageOfFixedGlassAndSanitaryFixtures',
-                'title' => 'Breakage of fixed glass and sanitary fixtures',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'emergencyAccess',
-                'title' => 'Emergency access',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'damageToTheGarden',
-                'title' => 'Damage to the garden',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'traceAndAccess',
-                'title' => 'Trace & Access',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'damageToServicesPipesAndCables',
-                'title' => 'Damage to Services (Pipes and Cables)',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'ownersLiabilityToThePublic',
-                'title' => 'Owner\'s liability to the public',
-                'type' => 'building',
-            ],
-            [
-                'code' => 'claimExcessDeductibles',
-                'title' => 'Claim Excess / Deductibles',
-                'type' => 'building',
-            ],
-
-            ['code' => 'spacer', 'title' => ''],
-
-            // Content
-            ['code' => 'heading', 'title' => 'Contents'],
-            [
-                'code' => 'singleArticleLimitForContentsSal',
-                'title' => 'Single Article Limit for contents (SAL)',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'contentsTemporarilyRemoved',
-                'title' => 'Contents temporarily removed',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'contentsInTheOpen',
-                'title' => 'Contents in the Open',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'keysAndLocks',
-                'title' => 'Keys and Locks',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'spoilageOfFoodInFreezer',
-                'title' => 'Spoilage of food in freezer',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'stormAndFlood',
-                'title' => 'Storm and flood',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'fireExplosionLightningOrEarthquake',
-                'title' => 'Fire, explosion, lightning or earthquake',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'TheftVisibleViolentForcibleEntryOrExit',
-                'title' => 'Theft (visible, violent, forcible entry or exit)',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'accidentalDamageWhileInYourHome',
-                'title' => 'Accidental Damage while in your home',
-                'type' => 'content',
-            ],
-            [
-                'code' => 'claimExcessDeductiblesForEachEveryLoss',
-                'title' => 'Claim Excess / Deductibles for each & every loss',
-                'type' => 'content',
-            ],
-
-            ['code' => 'spacer', 'title' => ''],
-
-            // Personal Belongings
-            ['code' => 'heading', 'title' => 'Personal Belongings'],
-            [
-                'code' => 'singleArticleLimitForPersonalBelongingsSal',
-                'title' => 'Single article limit for personal belongings (SAL)',
-                'type' => 'personalBelonging',
-            ],
-            [
-                'code' => 'jewellery',
-                'title' => 'Jewellery',
-                'type' => 'personalBelonging',
-            ],
-            [
-                'code' => 'valuablesAndPortableEquipment',
-                'title' => 'Valuables and portable equipment',
-                'type' => 'personalBelonging',
-            ],
-            [
-                'code' => 'personalMoneyAndCreditCards',
-                'title' => 'Personal money and credit cards',
-                'type' => 'personalBelonging',
-            ],
-            [
-                'code' => 'lossOfDocuments',
-                'title' => 'Loss of documents',
-                'type' => 'personalBelonging',
-            ],
-            [
-                'code' => 'claimExcessDeductiblesForEachEveryLoss',
-                'title' => 'Claim Excess / Deductibles for each & every loss',
-                'type' => 'personalBelonging',
-            ],
-
-            ['code' => 'spacer', 'title' => ''],
-
-            // For High Value Plans
-            // Content And Personal Belonging
-            ['code' => 'heading', 'title' => 'Content And Personal Belonging'],
-            [
-                'code' => 'contentsInTheOpen',
-                'title' => 'Contents in the Open',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'replacementOfKeysAndLocks',
-                'title' => 'Replacement of keys and locks',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'spoilageOfFoodInFreezer',
-                'title' => 'Spoilage of food in freezer',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'stormFloodFireExplosionLightningOrEarthquake',
-                'title' => 'Storm, flood, fire, explosion, lightning or earthquake',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'TheftForcibleEntryOrExit',
-                'title' => 'Theft (Forcible entry or exit)',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'valuablesCoinsStampsMedalsGoldSilverAndPlatedArticles',
-                'title' => 'Valuables - Coins stamps, medals, gold, silver and plated articles',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'presentsAndGift',
-                'title' => 'Presents & Gift',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'newAcquisitionsCover',
-                'title' => 'New Acquisitions cover',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'fursAndSportingEquipmentMarquees',
-                'title' => 'Furs & Sporting equipment, Marquees',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-            [
-                'code' => 'claimExcessDeductibles',
-                'title' => 'Claim Excess / Deductibles',
-                'type' => 'contentAndPersonalBelonging',
-            ],
-
-            ['code' => 'spacer', 'title' => ''],
-
-            // Fine Art And Collectible
-            ['code' => 'heading', 'title' => 'Fine Art And Collectible'],
-            [
-                'code' => 'sumInsured',
-                'title' => 'Sum Insured',
-                'type' => 'fineArtAndCollectible',
-            ],
-            [
-                'code' => 'singleArticleLimitForUnspecifiedItems',
-                'title' => 'Single article limit for unspecified items',
-                'type' => 'fineArtAndCollectible',
-            ],
-            [
-                'code' => 'newAcquisitionsCover',
-                'title' => 'New Acquisitions cover',
-                'type' => 'fineArtAndCollectible',
-            ],
-            [
-                'code' => 'nonSpecifiedPairsAndSets',
-                'title' => 'Non specified pairs and sets',
-                'type' => 'fineArtAndCollectible',
-            ],
-            [
-                'code' => 'defectiveTitle',
-                'title' => 'Defective title',
-                'type' => 'fineArtAndCollectible',
-            ],
-            [
-                'code' => 'emergencyEvacuation',
-                'title' => 'Emergency evacuation',
-                'type' => 'fineArtAndCollectible',
-            ],
-            [
-                'code' => 'claimExcessDeductibles',
-                'title' => 'Claim Excess / Deductibles',
-                'type' => 'fineArtAndCollectible',
-            ],
-
-            ['code' => 'spacer', 'title' => ''],
-
-            // Jewllery And Valuable
-            ['code' => 'heading', 'title' => 'Jewllery And Valuable'],
-            [
-                'code' => 'sumInsured',
-                'title' => 'Sum Insured',
-                'type' => 'jewlleryAndValuable',
-            ],
-            [
-                'code' => 'singleArticleLimitForUnspecifiedItems',
-                'title' => 'Single article limit for unspecified items',
-                'type' => 'jewlleryAndValuable',
-            ],
-            [
-                'code' => 'newAcquisitionsCover',
-                'title' => 'New Acquisitions cover',
-                'type' => 'jewlleryAndValuable',
-            ],
-            [
-                'code' => 'nonSpecifiedPairsAndSets',
-                'title' => 'Non specified pairs and sets',
-                'type' => 'jewlleryAndValuable',
-            ],
-            [
-                'code' => 'claimExcessDeductibles',
-                'title' => 'Claim Excess / Deductibles',
-                'type' => 'jewlleryAndValuable',
-            ],
-
-            ['code' => 'spacer', 'title' => ''],
-
-            // Additional Cover
-            ['code' => 'heading', 'title' => 'Additional Cover'],
-            [
-                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForBuilding',
-                'title' => 'Loss of rent or cost of alternative accommodation for Building',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'fatalInjuryBenefitProvidedDeathEnsuesWithin3MonthsOfSuchInjury',
-                'title' => 'Fatal injury benefit (provided death ensues within 3 months of such injury)',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'visitorsPersonalEffects',
-                'title' => 'Visitor\'s personal effects',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'thirdPartyLiabilityCover',
-                'title' => 'Third Party Liability Cover',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'defenseCostLegalAssistance',
-                'title' => 'Defense Cost / Legal assistance',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'domesticHelpCover',
-                'title' => 'Domestic Help Cover',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'moneyAndCreditCards',
-                'title' => 'Money & Credit Cards',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'lossOfPassportDrivingLicenseWorkPermitResidencePermit',
-                'title' => 'Loss of Passport, Driving License, Work permit, Residence Permit',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'lossOfRentOrCostOfAlternativeAccommodationForContents',
-                'title' => 'Loss of rent or cost of alternative accommodation for Contents',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'fatalInjuryBenefit',
-                'title' => 'Fatal injury benefit',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'occupiersPersonalAndEmployersLiability',
-                'title' => 'Occupiers personal and employers liability',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'tenantsLiability',
-                'title' => 'Tenant\'s liability',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'homeAssistance',
-                'title' => 'Home assistance',
-                'type' => 'additionalCover',
-            ],
-            [
-                'code' => 'legalAssistance',
-                'title' => 'Legal assistance',
-                'type' => 'additionalCover',
-            ],
-
-            ['code' => 'spacer', 'title' => ''],
-        ];
-
     @endphp
 
     {{-- PDF Page Header --}}
@@ -967,15 +602,7 @@
                 style="margin: 0; padding-top: 5px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
                 Your tailor made home insurance <br />comparison table
             </h3>
-            {{-- <h3
-                style="margin: 0; padding-top: 10px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
-                Your tailor made home insurance comparison table <br /> with isurance reference ID: {{ $quote->code }}
-            </h3> --}}
         </div>
-        {{-- <p class="head-caption"
-            style="position: fixed; top: 60px; right: 5px; font-size: 14px; font-weight: bold; text-align: right;">
-            Your home insurance reference ID is <span class="text-blue">{{ $quote->code }}</span>
-        </p> --}}
     </header>
 
     {{-- PDF Page Inner Content --}}
@@ -1111,124 +738,91 @@
                 </tr>
             </thead>
             <tbody>
-                @php $featCount = 0 @endphp
-                @foreach ($features as $index => $feature)
-                    @if (@$feature['code'] == 'heading')
-                        @php
-                            $hasDataBelow = false;
-                            for ($i = $index + 1; $i < count($features); $i++) {
-                                if ($features[$i]['code'] == 'heading' || $features[$i]['code'] == 'spacer') {
-                                    break;
-                                }
+                {{-- Loop through the plan benefits only once --}}
+                {{-- Sort benefits based on the order in $planCovers --}}
+                @php
+                    // plan covers for sorting order as they are not sorted in API as per Excel Sheet
+                    $planCovers = [
+                        'building',
+                        'content',
+                        'personalBelonging',
+                        'contentAndPersonalBelonging',
+                        'fineArtAndCollectible',
+                        'jewlleryAndValuable',
+                        'additionalCover',
+                    ];
+                @endphp
+                @foreach ($planCovers as $cover)
+                    @foreach ($plans[$planIds[0]]->benefits as $planBenefit => $benefit)
+                        {{-- Only continue if the current planBenefit is in the $planCovers list --}}
+                        @continue($cover !== $planBenefit)
 
-                                foreach ($planIds as $planId) {
-                                    if (
-                                        isset($plans[$planId]->{$features[$i]['type']}->{$features[$i]['code']}->value)
-                                    ) {
-                                        $hasDataBelow = true;
-                                        break 2;
-                                    }
-                                }
+                        {{-- Normalize the benefit data --}}
+                        @php
+                            // Ensure $benefit is an array
+                            if (is_object($benefit)) {
+                                $benefit = (array) $benefit;
                             }
+
+                            // Convert stdClass benefits to an array if they exist
+                            if (isset($benefit['stdClass']) && is_object($benefit['stdClass'])) {
+                                $benefit = (array) $benefit['stdClass'];
+                            }
+
+                            // Filter out non-benefit keys
+                            $benefitItems = array_filter(
+                                $benefit,
+                                fn($item) => is_object($item) && property_exists($item, 'code'),
+                            );
                         @endphp
 
-                        @if ($hasDataBelow)
-                            <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
-                                <td colspan="{{ sizeof($planIds) + 1 }}">
-                                    <p class="text-left !font-bold" style="color: #ffffff; padding-left: 12px;">
-                                        {{ $feature['title'] }}</p>
-                                </td>
-                            </tr>
+                        {{-- Skip if no valid benefits exist --}}
+                        @if (empty($benefitItems))
+                            @continue
                         @endif
-                        @php continue; @endphp
-                    @endif
 
-                    @if (@$feature['code'] == 'spacer')
+                        {{-- Benefit Title Row --}}
+                        <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
+                            <td colspan="{{ count($planIds) + 1 }}">
+                                <p class="text-left font-bold" style="color: #ffffff; padding-left: 12px;">
+                                    {{ $planBenefit }}
+                                </p>
+                            </td>
+                        </tr>
+
+                        {{-- Iterate through valid benefit items --}}
+                        @foreach ($benefitItems as $item)
+                            <tr style="page-break-inside: avoid;">
+                                {{-- First column: Benefit Code --}}
+                                <td style="background-color: #DBEEFF">
+                                    <p class="text-left font-bold">{{ $item->code ?? 'N/A' }}</p>
+                                </td>
+
+                                {{-- Subsequent columns: Benefit Value for each plan --}}
+                                @foreach ($planIds as $planId)
+                                    @php
+                                        $planBenefitCollection = collect($plans[$planId]->benefits->$planBenefit ?? []);
+                                        $matchingBenefit = $planBenefitCollection->firstWhere(
+                                            'code',
+                                            $item->code ?? '',
+                                        );
+                                        $planValue = $matchingBenefit->value ?? 'Excluded';
+                                    @endphp
+                                    <td>
+                                        <p class="text-left">{{ $planValue }}</p>
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+
                         <tr style="page-break-inside: avoid;">
                             <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
                                 <div class="spacer"></div>
                             </td>
                         </tr>
-                        @php continue; @endphp
-                    @endif
-
-                    <?php $planIterate = 0; ?>
-                    <tr class="<?php echo 'row_' . $featCount; ?> {{ $feature['row_class'] ?? '' }}"
-                        style="page-break-inside: avoid;">
-                        <td style="background-color: #DBEEFF">
-                            <p class="text-left font-bold">{{ @$feature['title'] }}</p>
-                        </td>
-                        @foreach ($planIds as $planId)
-                            <?php $return_value = ''; ?>
-                            @if (isset($feature['type']))
-                                @if ($feature['type'] == 'info')
-                                    @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
-                                @elseif($feature['type'] == 'excess')
-                                    @php $return_value =   $plans[$planId]->excess->premium ?? "" @endphp
-                                @elseif($feature['type'] == 'prop')
-                                    @php $return_value =   $plans[$planId]->{$feature['code']}  @endphp
-                                @elseif($feature['type'] == 'buy')
-                                    @php
-                                        if (in_array($planId, $selectedPlanIds)) {
-                                            $buyNowfullLink = '#';
-                                            $buyNowText = 'Selected';
-                                        } else {
-                                            $buyNowfullLink =
-                                                $buyNowLink .
-                                                '?providerCode=' .
-                                                $plans[$planId]->providerCode .
-                                                '&planId=' .
-                                                $planId;
-                                            $buyNowText = $buyNow;
-                                        }
-                                    $return_value = `<a target="_blank" class="btn-buy" href="{{ $buyNowfullLink }}" >'.$buyNowText.'</a>`; @endphp
-                                @elseif(is_array($feature['type']))
-                                    @php $value = "Excluded";  @endphp
-                                    @foreach ($feature['type'] as $type)
-                                        @if (isset($plans[$planId]->{$type}->{$feature['code']}->value))
-                                            @php
-                                                $value = $plans[$planId]->{$type}->{$feature['code']}->value;
-                                                break;
-                                            @endphp
-                                        @endif
-                                    @endforeach
-                                    @php  $return_value  = $value; @endphp
-                                @else
-                                    @if ($feature['code'] == 'coPayment')
-                                        @php  $return_value = $addons[$planId]['coPayment']['text'] ?? 'N/A'; @endphp
-                                    @else
-                                        @php  $return_value =  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' ; @endphp
-                                    @endif
-                                @endif
-                            @endif
-                            <td class="{{ @$feature['col_class'] }}">
-                                <p>
-                                    <?php if ($return_value == 'Excluded') {
-                                    $planIterate++;
-                                    ?>
-                                    Excluded
-                                    <?php } else {
-                                    $planIterate = 0;
-                                    ?>
-                                    <?php echo $return_value; ?>
-
-                                    <?php } ?>
-                                </p>
-                            </td>
-                            <?php if (count($planIds) == $planIterate) {
-                            ?>
-                            <style>
-                                .row_<?php echo $featCount; ?> {
-                                    display: none !important;
-                                }
-                            </style>
-                            <?php
-                        }
-                        ?>
-                        @endforeach
-                    </tr>
-                    <?php $featCount++; ?>
+                    @endforeach
                 @endforeach
+
                 <tr>
                     <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
                         <a target="_blank" class="btn-all-quotes"
