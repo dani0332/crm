@@ -1021,7 +1021,7 @@ class CentralService extends BaseService
      * @param  bool|null  $isTapProcessCheck  Flag to check if TAP capture process should start (optional).
      * @return array The TAP configuration.
      */
-    public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null)
+    public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null, $sendUpdateLog = null)
     {
         // Retrieve necessary IDs from the quote object
         $insuranceProviderId = $quote->insurance_provider_id;
@@ -1045,7 +1045,7 @@ class CentralService extends BaseService
         $isGIGOrQICProvider = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE]);
 
         // Check if TAP capture process should start
-        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId) : false;
+        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId, $sendUpdateLog) : false;
 
         // Prepare the TAP configuration array
         $tapConfiguration = [

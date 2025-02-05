@@ -887,7 +887,7 @@ class SendUpdateLogService
                 'quote_type_id' => $sendUpdateRequest->quoteType,
                 'quote_uuid' => $quoteDetails->uuid,
                 'send_update_log_id' => $sendUpdateLog?->id,
-                'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START,
+                'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLog?->id,
             ], ['value' => 1]);
 
             return ['status' => false, 'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status'];

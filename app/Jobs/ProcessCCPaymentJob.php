@@ -86,7 +86,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                         QuoteTag::where([
                             'quote_uuid' => $quote->uuid,
                             'send_update_log_id' => $payment->send_update_log_id,
-                            'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START,
+                            'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$payment->send_update_log_id,
                         ])->update(['value', 0]);
 
                         $sendUpdateRequest = new \stdClass;
