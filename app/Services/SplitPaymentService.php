@@ -767,7 +767,7 @@ class SplitPaymentService
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
                 }
             } else {
-                if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policu schedule for automation
+                if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policy schedule for automation
                     $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
                 }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
