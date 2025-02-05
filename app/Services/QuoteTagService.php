@@ -27,6 +27,7 @@ class QuoteTagService
             $whereClause['name'] = QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLog->id;
             $whereClause['send_update_log_id'] = $sendUpdateLog->id;
         }
+
         return QuoteTag::where($whereClause)
             ->select('id')
             ->limit(1)
