@@ -59,7 +59,7 @@ class PlanDetailsRequest extends FormRequest
         $validator->after(function ($validator) use ($quoteType, $code, $insuranceProviderId) {
             $repository = getRepositoryObject($quoteType);
             $quoteModel = $repository::where('code', $code)->firstOrFail();
-
+            $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
             if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
@@ -69,7 +69,7 @@ class PlanDetailsRequest extends FormRequest
             }
 
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, $insuranceProviderId);
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $businessTypeId);
 
             if (! $isCreditCardEnabled) {
                 $payment = Payment::where('code', $code)->first();

@@ -321,7 +321,8 @@ class CentralService extends BaseService
             $quote->update($data->toArray());
 
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id);
+            $businessTypeId = $quote->business_type_of_insurance_id ?? null;
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId);
             $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
 
             return true;
@@ -1014,9 +1015,10 @@ class CentralService extends BaseService
     public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null)
     {
         $insuranceProviderId = $quote->insurance_provider_id;
+        $businessTypeId = $quote->business_type_of_insurance_id ?? null;
         $planId = $quote->plan_id ?? null;
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId, $planId);
+        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
