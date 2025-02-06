@@ -1369,7 +1369,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
   });
 };
 
@@ -3093,6 +3093,8 @@ const allowStatusUpdate = computed(() => {
                         selectedPlansIds: selectedPlanIds,
                         planType: 'normalPlans',
                       }"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
                     />
                     <x-button
                       v-else
@@ -3183,6 +3185,8 @@ const allowStatusUpdate = computed(() => {
                           selectedPlansIds: selectedPlanIds,
                           planType: 'seniorPlans',
                         }"
+                        :insuranceProviderId="item.id"
+                        :code="quote.code"
                       />
                       <x-button
                         v-else

@@ -2307,6 +2307,8 @@ const updateProfileDetails = isValid => {
                   :plan="item"
                   :quoteType="quoteType"
                   :uuid="quote.uuid"
+                  :insuranceProviderId="item.id"
+                  :code="quote.code"
                 />
 
                 <x-button

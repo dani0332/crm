@@ -25,7 +25,6 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
-use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;
@@ -35,7 +34,6 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
-use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -208,6 +206,13 @@ class SendUpdateLogController extends Controller
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
         $isEditDisabledForQueuedBooking = $this->sendUpdateLogService->isEditDisabledForQueuedBooking($sendUpdateLog);
 
+        $insurance_provider_id = $insuranceProviderId ?? $bookingDetails['insurance_provider_id'] ?? null;
+        $sendUpdate = $quote;
+        $sendUpdate->insurance_provider_id = $insurance_provider_id;
+        $sendUpdate->business_type_of_insurance_id = $realQuote->business_type_of_insurance_id ?? null;
+        $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $realQuote, $sendUpdatePayments[0] ?? null, isTapEnabled(), $sendUpdateLog);
+        $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
@@ -224,7 +229,7 @@ class SendUpdateLogController extends Controller
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
             'realQuote' => $realQuote,
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
-            'bookingDetails' => $bookingDetails,
+            'bookPolicyDetails' => $bookingDetails,
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog),
             'paymentInvoices' => isset($paymentInvoices) ? array_values(array_unique($paymentInvoices)) : [], // array_values to reset index.
             'uploadedDocuments' => $uploadedDocuments,
@@ -246,7 +251,7 @@ class SendUpdateLogController extends Controller
             'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
             'isSentOrBooked' => $isSentOrBooked,
-            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog),
+            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission']),
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
@@ -391,7 +396,7 @@ class SendUpdateLogController extends Controller
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
         if (isset($suEmailProcess['status']) && $suEmailProcess['status'] == 500) {
-            vAbort('Send Update to customer email failed');
+            vAbort($suEmailProcess['message'] ?? 'Send Update to customer email failed');
         }
 
         return response()->json($suEmailProcess);
@@ -419,22 +424,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
     {
-        $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
         $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
 
-        if (! $endorsementResponse['status'] || ! isset($endorsementResponse['sageRequestPayload'])) {
-            $responseMessage = (! isset($endorsementResponse['sageRequestPayload']) && empty($endorsementResponse['message'])) ? 'Something went wrong' : $endorsementResponse['message'];
-
-            return response()->json(['message' => $responseMessage], 500);
-        }
-
-        info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
-        app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
-
-        (new SageApiService)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
-        info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
-
-        return response()->json(['message' => $endorsementResponse['message']], 200);
+        return response()->json(['message' => $endorsementResponse['message'] ?? 'Something went wrong'], $endorsementResponse['status'] ? 200 : 500);
     }
 
     public function getOptions(Request $request)
