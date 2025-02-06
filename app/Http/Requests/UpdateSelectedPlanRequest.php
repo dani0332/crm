@@ -24,15 +24,17 @@ class UpdateSelectedPlanRequest extends FormRequest
      */
     public function rules(): array
     {
+        $quoteType = request()->quoteType;
+
         $rules = [
             'plan_id' => 'required',
         ];
 
-        if (strtolower(request()->quoteType) == strtolower(QuoteTypes::HEALTH->value)) {
+        if ($quoteType == strtolower(QuoteTypes::HEALTH->value)) {
             $rules['copay_id'] = 'required';
         }
 
-        if (strtolower(request()->quoteType) == strtolower(QuoteTypes::TRAVEL->value)) {
+        if ($quoteType == strtolower(QuoteTypes::TRAVEL->value)) {
             $rules['selected_plan_id'] = 'sometimes';
         }
 
@@ -41,11 +43,16 @@ class UpdateSelectedPlanRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $validator->after(function ($validator) {
-            $quoteTypeId = QuoteTypes::getIdFromValue(request()->quoteType);
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, request()->plan_id);
+        $quoteType = request()->quoteType;
+        $insuranceProviderId = request()->insurance_provider_id;
+        $planId = request()->plan_id;
+        $code = request()->code;
+
+        $validator->after(function ($validator) use ($quoteType, $insuranceProviderId, $planId, $code) {
+            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $planId);
             if (! $isCreditCardEnabled) {
-                $payment = Payment::where('code', request()->code)->first();
+                $payment = Payment::where('code', $code)->first();
                 if ($payment && $payment->isPaymentAuthorized() && $payment->isInsurerPayment()) {
                     $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
                 }

@@ -116,7 +116,7 @@ trait QuoteAllocatable
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
     {
         $q->where(function ($sq) {
-            $sq->where('sic_advisor_requested', 1)->orWhere->hasOneOfPaidStatus();
+            $sq->where('sic_advisor_requested', 1)->orWhere->hasOneOfPaidStatus()->orWhere('quote_status_id', QuoteStatusEnum::PaymentLinkRequestedByCustomer);
         });
     }
 
@@ -127,7 +127,7 @@ trait QuoteAllocatable
 
     public function isRequestedAdvisorOrPaymentAuthorized()
     {
-        return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+        return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 
     public function isRenewalUpload()

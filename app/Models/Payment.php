@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CollectionTypeEnum;
+use App\Enums\InsurerProviderEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
@@ -234,5 +235,12 @@ class Payment extends Model implements Auditable
     public function isInsurerPayment()
     {
         return $this->collection_type == CollectionTypeEnum::INSURER;
+    }
+
+    public function isGIGInsurer($quoteTypeId, $quoteDetails)
+    {
+        $insuranceProvider = getInsuranceProvider($this, $quoteTypeId, $quoteDetails);
+
+        return $insuranceProvider?->code == InsurerProviderEnum::GIG_INSURANCE;
     }
 }

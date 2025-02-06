@@ -4,7 +4,7 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-final class PaymentGatewayIdEnum extends Enum
+final class PaymentGatewayEnum extends Enum
 {
     public const PAYMENT_GATEWAY_CHECKOUT = 2;
     public const PAYMENT_GATEWAY_TAP = 3;

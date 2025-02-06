@@ -11,6 +11,7 @@ use App\Models\CcPaymentProcess;
 use App\Models\PaymentSplits;
 use App\Models\QuoteTag;
 use App\Services\SageApiService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Queueable;
@@ -68,35 +69,54 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 true
             );
 
-            $payment = PaymentSplits::find($ccPaymentProcess->payment_splits_id)->payment;
-            if (! $payment) {
+            $paymentSplit = PaymentSplits::find($ccPaymentProcess->payment_splits_id);
+            if (! $paymentSplit || ! $paymentSplit->payment) {
                 info("CC Payments Job Failed for Payment Split {$splitPaymentCode} - Error: Payment not found");
 
                 return;
             }
+            $payment = $paymentSplit->payment;
             $splitPayments = $payment->paymentSplits;
-            $hasAnyCCPayment = $splitPayments->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0 ? true : false;
+            $hasAnyCCPayment = $splitPayments->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0;
 
-            if (in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
+            if (in_array($payment->payment_status_id, [PaymentStatusEnum::CAPTURED]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
                 $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id);
-                // We can trigger sage & book policy entry from here
-                if ($quote) {
-                    QuoteTag::where('quote_uuid', $quote->uuid)
-                        ->where('name', QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START)
-                        ->update(['value' => 0]);
+                if ($quote && ! $payment->isGIGInsurer($ccPaymentProcess->quote_type, $quote)) {
+                    if (! empty($payment->send_update_log_id)) {
+                        QuoteTag::where([
+                            'quote_uuid' => $quote->uuid,
+                            'send_update_log_id' => $payment->send_update_log_id,
+                            'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$payment->send_update_log_id,
+                        ])->update(['value', 0]);
 
-                    $request = new \stdClass;
-                    $request->quote_id = $quote->id; // TODO :  Lead ID
-                    $request->modelType = $ccPaymentProcess->quote_type;
-                    $request->model_type = $ccPaymentProcess->quote_type;
-                    $request->is_send_policy = false;
-                    $request->send_policy_type = SendPolicyTypeEnum::SAGE;
-                    $request->transaction_payment_status = null;
+                        $sendUpdateRequest = new \stdClass;
+                        $sendUpdateRequest->quoteType = $ccPaymentProcess->quote_type;
+                        $sendUpdateRequest->quoteRefId = $quote->id;
+                        $sendUpdateRequest->quoteUuid = $quote->uuid;
+                        $sendUpdateRequest->sendUpdateId = $payment->send_update_log_id;
+                        $sendUpdateRequest->inslyMigrated = $quote->insly_migrated;
 
-                    return (new SageApiService)->postBookPolicyToSage($request, $quote);
+                        return app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
+                    } else {
+                        QuoteTag::where('quote_uuid', $quote->uuid)
+                            ->where('name', QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START)
+                            ->update(['value' => 0]);
+
+                        $request = new \stdClass;
+                        $request->quote_id = $quote->id; // TODO :  Lead ID
+                        $request->modelType = $ccPaymentProcess->quote_type;
+                        $request->model_type = $ccPaymentProcess->quote_type;
+                        $request->is_send_policy = false;
+                        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+                        $request->transaction_payment_status = null;
+
+                        return (new SageApiService)->postBookPolicyToSage($request, $quote);
+                    }
                 } else {
                     info("CC Payments Job Failed for Payment Split : {$splitPaymentCode} - Error: Quote not found");
                 }
+            } else {
+                info("CC Payments Job did not meet conditions for Payment Split : {$splitPaymentCode}");
             }
 
             info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
