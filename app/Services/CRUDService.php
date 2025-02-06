@@ -667,7 +667,6 @@ class CRUDService extends BaseService
         info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/capture', 'post', $planData);
 
-
         return $response;
     }
 
