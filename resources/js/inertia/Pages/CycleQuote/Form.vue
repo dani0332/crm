@@ -1,5 +1,5 @@
 <script setup>
-import {XInput} from "@indielayer/ui";
+import { XInput } from '@indielayer/ui';
 
 const props = defineProps({
   genderOptions: Object,
@@ -134,7 +134,12 @@ const gender = computed(() => {
           />
         </x-field>
         <x-field label="Date of Birth">
-          <DatePicker v-model="quoteForm.dob" :utc="false" model-type="yyyy-MM-dd" name="created_at_start" />
+          <DatePicker
+            v-model="quoteForm.dob"
+            :utc="false"
+            model-type="yyyy-MM-dd"
+            name="created_at_start"
+          />
         </x-field>
         <x-field label="Nationality">
           <ComboBox

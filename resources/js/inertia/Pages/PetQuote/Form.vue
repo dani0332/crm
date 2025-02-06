@@ -112,7 +112,12 @@ function onSubmit(isValid) {
           />
         </x-field>
         <x-field label="DATE OF BIRTH">
-          <DatePicker v-model="quoteForm.dob" :utc="false" model-type="yyyy-MM-dd" name="created_at_start" />
+          <DatePicker
+            v-model="quoteForm.dob"
+            :utc="false"
+            model-type="yyyy-MM-dd"
+            name="created_at_start"
+          />
         </x-field>
         <x-field label="NATIONALITY">
           <ComboBox
