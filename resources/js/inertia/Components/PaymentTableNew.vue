@@ -3323,12 +3323,7 @@ const isTotalAmountMismatched = () => {
       (props.payments[0]?.total_amount + props.payments[0]?.discount_value) *
         100,
     ) / 100;
-  console.log(
-    ' totalPriceRounded === calculatedTotal ',
-    totalPriceRounded,
-    calculatedTotal,
-    totalPriceRounded === calculatedTotal,
-  );
+ 
   return totalPriceRounded === calculatedTotal;
 };
 
@@ -3344,16 +3339,6 @@ const isKycVerified = () => {
     props.payments[0]?.payment_methods_code ===
     page.props.paymentMethodsEnum.CreditCard;
 
-  console.log(
-    'isAmlVerified : isTravelQuote : ',
-    isTravelQuote,
-    ' isGIGInsuranceProvider ',
-    isGIGInsuranceProvider,
-    ' paymentMethodCC : ',
-    paymentMethodCC,
-    ' props.quoteRequest.kyc_decision === Complete ',
-    props.quoteRequest.kyc_decision === 'Complete',
-  );
 
   if (isTravelQuote) {
     if (isGIGInsuranceProvider && paymentMethodCC) {
@@ -3375,17 +3360,7 @@ const isAmlVerified = () => {
   let paymentMethodCC =
     props.payments[0]?.payment_methods_code ===
     page.props.paymentMethodsEnum.CreditCard;
-  console.log(
-    'isAmlVerified : isTravelQuote : ',
-    isTravelQuote,
-    ' isGIGInsuranceProvider ',
-    isGIGInsuranceProvider,
-    ' paymentMethodCC : ',
-    paymentMethodCC,
-    ' props.quoteRequest.aml_status === page.props.amlStatusEnum.AMLScreeningCleared ',
-    props.quoteRequest.aml_status ===
-      page.props.amlStatusEnum.AMLScreeningCleared,
-  );
+  
   if (isTravelQuote) {
     if (isGIGInsuranceProvider && paymentMethodCC) {
       return (
@@ -3451,21 +3426,8 @@ const disableMainPaymentApproval = computed(() => {
   );
 });
 
-console.log(
-  'disableMainPaymentApproval : ',
-  disableMainPaymentApproval.value,
-  ' isInsurerAmlVerified : ',
-  isInsurerAmlVerified(),
-  ' isAmlVerified : ',
-  isAmlVerified(),
-  ' isKycVerified : ',
-  isKycVerified(),
-  ' isTotalAmountMismatched : ',
-  isTotalAmountMismatched(),
-);
 
 const openAmlVerificationModal = () => {
-  console.log('open AML and KYC Verification Modal');
   isAmlApprovalRequired.value = true;
 };
 

@@ -684,7 +684,6 @@ class SagePayloadFactory
                     'BankCode' => SageEnum::BANK_CODE,
                     'BankReceiptAmount' => roundNumber(floatval($request->collection_amount)),
                     'CheckReceiptNumber' => $request->checkDetails,
-                    /* 'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code), */
                     'PaymentCode' => SageEnum::PAYMENT_CODE,
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [

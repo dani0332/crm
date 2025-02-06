@@ -39,10 +39,11 @@ class BrokerCommissionService
         }
 
         $brokerCommission = $query->first();
-        $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
+        // todo: confirm from denber
+        // $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
         $isCreditCardEnabled = $brokerCommission ? true : false;
 
-        return [$isCreditCardEnabled, $brokerCommission, $commissionInPayments];
+        return [$isCreditCardEnabled, $brokerCommission, false];
     }
 
     /**
