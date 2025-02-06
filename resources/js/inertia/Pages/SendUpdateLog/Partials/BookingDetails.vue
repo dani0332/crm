@@ -2441,7 +2441,7 @@ watch(
                           disableMainBtn
                             ? disableMainBtn
                             : isTapCaptureProcessStart
-                            ? 'Action Needed: Please complete the TAP Capture process.'
+                            ? 'Update booking already in queued.'
                             : 'Action Needed: Please revise payment details to reflect plan changes.'
                         }}
                       </span>
