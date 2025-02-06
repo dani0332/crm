@@ -385,8 +385,8 @@ const updatePlanLoading = ref(false);
                   <!-- Display the text field -->
                   <div class="font-medium">{{ item.text }}</div>
 
-                  <!-- Display the description field with grey text -->
-                  <div class="text-gray-500">{{ item.value }}</div>
+                  <!-- Display the value field with grey text -->
+                  <div class="text-gray-500">{{ item.value ?? 'N/A' }}</div>
                 </div>
               </div>
             </div>
@@ -407,8 +407,8 @@ const updatePlanLoading = ref(false);
                 <!-- Display the text field -->
                 <div class="font-medium">{{ cover.text }}</div>
 
-                <!-- Display the description field with grey text -->
-                <div class="text-gray-500">{{ cover.description }}</div>
+                <!-- Display the value field with grey text -->
+                <div class="text-gray-500">{{ cover.value ?? 'N/A' }}</div>
               </div>
             </div>
           </div>
@@ -428,8 +428,8 @@ const updatePlanLoading = ref(false);
                 <!-- Display the text field -->
                 <div class="font-medium">{{ exclusion.text }} ABC</div>
 
-                <!-- Display the description field with grey text -->
-                <div class="text-gray-500">{{ exclusion.description }}</div>
+                <!-- Display the value field with grey text -->
+                <div class="text-gray-500">{{ exclusion.value ?? 'N/A' }}</div>
               </div>
             </div>
           </div>
