@@ -1074,8 +1074,9 @@ class RenewalsUploadService
                 $quoteData['renewal_upload_copay_code'] = $data['copay'];
                 $quoteData['renewal_upload_payment_link'] = $data['payment_link'];
             }
-
-            $quoteData['is_gcc_standard'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
+            else {
+                $quoteData['is_gcc_standard'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
+            }
 
             /*
              * API refresh plans when quote_updated_at have latest date
