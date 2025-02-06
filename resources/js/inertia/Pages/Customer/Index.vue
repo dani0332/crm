@@ -165,14 +165,16 @@ function onReset() {
       </template>
 
       <template #item-insured_first_name="{ customer }">
-        {{ (customer?.insured?.first_name ?? customer?.insured_first_name) ?? '' }}
+        {{
+          customer?.insured?.first_name ?? customer?.insured_first_name ?? ''
+        }}
       </template>
 
       <template #item-quote_type_id="{ quote_type_id }">
         {{ getQuoteType(quote_type_id) }}
       </template>
 
-        <template #item-created_at="{ customer }">
+      <template #item-created_at="{ customer }">
         {{ customer?.created_at }}
       </template>
 

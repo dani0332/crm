@@ -246,8 +246,8 @@ const onAddUpdate = () => {
 };
 
 const applyEmiratesIdNumMasking = emiratesId =>
-    customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
-
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -630,7 +630,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       v-model="customerProfileForm.emirates_id_number"
                       :rules="[isRequired, emiratesNumber]"
                       placeholder="xxx-xxxx-xxxxxxx-x"
-                      @input="applyEmiratesIdNumMasking(customerProfileForm.emirates_id_number)"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />

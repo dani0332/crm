@@ -346,11 +346,12 @@ const fetchUpdatedQuote = async () => {
 };
 
 const applyEmiratesIdNumMasking = emiratesId =>
-    customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 
 function capitalizeString(str) {
-    if (!str) return 'N/A';
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 </script>
 
@@ -542,16 +543,16 @@ function capitalizeString(str) {
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">AML STATUS</dt>
-                  <dd>{{ amlStatusName ?? '' }}</dd>
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
-<!--              <div class="grid sm:grid-cols-2">-->
-<!--                <dt class="font-medium">AML STATUS</dt>-->
-<!--                <dd v-if="quote?.kyc_decision === 'Complete'">-->
-<!--                  KYC - Complete-->
-<!--                </dd>-->
-<!--                <dd v-else>KYC - Pending</dd>-->
-<!--              </div>-->
+              <!--              <div class="grid sm:grid-cols-2">-->
+              <!--                <dt class="font-medium">AML STATUS</dt>-->
+              <!--                <dd v-if="quote?.kyc_decision === 'Complete'">-->
+              <!--                  KYC - Complete-->
+              <!--                </dd>-->
+              <!--                <dd v-else>KYC - Pending</dd>-->
+              <!--              </div>-->
               <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER AML STATUS</dt>
@@ -841,7 +842,11 @@ function capitalizeString(str) {
                   v-model="customerProfileForm.emirates_id_number"
                   :rules="[isRequired, emiratesNumber]"
                   placeholder="xxx-xxxx-xxxxxxx-x"
-                  @input="applyEmiratesIdNumMasking(customerProfileForm.emirates_id_number)"
+                  @input="
+                    applyEmiratesIdNumMasking(
+                      customerProfileForm.emirates_id_number,
+                    )
+                  "
                   class="w-full"
                   :disabled="!isProfileUpdateAllow"
                 />

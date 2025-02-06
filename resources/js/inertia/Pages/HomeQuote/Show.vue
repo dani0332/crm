@@ -515,13 +515,13 @@ const onAddUpdate = () => {
 };
 
 const applyEmiratesIdNumMasking = emiratesId =>
-    customerProfileForm.emirates_id_number = applyEmiratesNumberMasking(emiratesId);
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 
 function capitalizeString(str) {
-    if (!str) return 'N/A';
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
-
 </script>
 
 <template>
@@ -934,7 +934,11 @@ function capitalizeString(str) {
                       v-model="customerProfileForm.emirates_id_number"
                       :rules="[isRequired, emiratesNumber]"
                       placeholder="xxx-xxxx-xxxxxxx-x"
-                      @input="applyEmiratesIdNumMasking(customerProfileForm.emirates_id_number)"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
