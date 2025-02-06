@@ -1197,7 +1197,6 @@ watch(
 );
 
 const isTapCaptureProcessStart = computed(() => {
-  console.log('istap start: ', props.bookingDetails?.isTapCaptureProcessStart);
   return props.bookingDetails?.isTapCaptureProcessStart || false;
 });
 
