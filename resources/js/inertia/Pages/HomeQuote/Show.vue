@@ -1,4 +1,6 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+
 const props = defineProps({
   quote: Object,
   quoteType: String,
@@ -50,7 +52,7 @@ const props = defineProps({
 });
 
 const page = usePage();
-const { isRequired } = useRules();
+const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
@@ -513,6 +515,15 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
+
+function capitalizeString(str) {
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
 </script>
 
 <template>
@@ -670,6 +681,11 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -906,6 +922,10 @@ const onAddUpdate = () => {
                   <dd>{{ quote.dob }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ quote.gender }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
                   <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
                 </div>
@@ -914,8 +934,13 @@ const onAddUpdate = () => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />

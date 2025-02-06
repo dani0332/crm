@@ -593,6 +593,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('send-bridger-response', [AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
         Route::get('aml-fetch-entity', [AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
+        Route::get('get-insured-person', [AMLController::class, 'getInsuredPersonDetails'])->name('get-insured-person');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
@@ -707,6 +708,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
     Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+
+    Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
 });
 
 Route::get('/add-batch-number', function () {

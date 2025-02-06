@@ -43,6 +43,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\BikeEmailService;
 use App\Services\BikeQuoteService;
 use App\Services\CentralService;
@@ -87,6 +88,7 @@ class BikeQuoteController extends Controller
             'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 

@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -210,7 +211,8 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
 
 const { copy, copied } = useClipboard();
 
-const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+const { isRequired, isEmail, isNumber, isMobileNo, emiratesNumber } =
+  useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -1842,6 +1844,10 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -2072,6 +2078,11 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>N/A</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
@@ -2306,8 +2317,13 @@ const onAddUpdate = () => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />

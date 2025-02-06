@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
@@ -39,6 +40,7 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -105,8 +107,9 @@ class BusinessQuoteController extends Controller
         $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $authorizedDays = intval($paymentAuthorizedDays->value);
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays'));
+        return inertia('CorpLineQuote/Index', compact('quotes', 'renewalBatches', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays', 'insurerAMLStatus'));
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -192,7 +195,9 @@ class BusinessQuoteController extends Controller
         $isQuoteDocumentEnabled = $this->businessQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = $this->businessQuoteService->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->businessQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
-        $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)->latest()->first();
+        $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)
+            ->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
+            ->latest()->first();
         @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(self::TYPE_ID, $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::CORPLINE);
         $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->businessQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);

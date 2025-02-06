@@ -655,6 +655,7 @@ class SagePayloadFactory
                 'GroupCode' => 'PHC',
             ];
         } else {
+            // TODO:: Need to be updated when contact and insured person FR approved
             $payLoad = [
                 'CustomerNumber' => 'P'.$customer->id,
                 'CustomerName' => $customer->insured_first_name.' '.$customer->insured_last_name,
@@ -1164,6 +1165,7 @@ class SagePayloadFactory
 
     public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits): object
     {
+        // TODO:: Need to update the insurer details when contact and insured person FR approved
         $firstChildPayment = $paymentSplits->first();
         $insuredFullName = isset($quote->customer_id) ? $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name : '';
         $latestEndorsementCode = '';
