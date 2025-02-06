@@ -65,6 +65,8 @@ const props = defineProps({
   quoteNotes: Object,
   paymentDocument: Array,
   noteDocumentType: Array,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -3660,6 +3662,8 @@ const onAddUpdate = () => {
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
       "
       :bookPolicyDetails="bookPolicyDetails"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PaymentTable

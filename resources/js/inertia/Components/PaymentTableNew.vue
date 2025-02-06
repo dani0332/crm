@@ -71,6 +71,14 @@ const props = defineProps({
     type: Array,
     default: [],
   },
+  paymentGatewayEnum: {
+    type: Array,
+    default: [],
+  },
+  isFuncsEnabled: {
+    type: Array,
+    default: [],
+  },
 });
 
 // All reactive properties are defined here
@@ -3255,7 +3263,7 @@ watch(
   },
 );
 
-// verifiy if verify option is enabled
+// verify if verify option is enabled
 const isVerifiedEnabled = computed(() => {
   if (
     paymentMethodsModels.value[splitPaymentNo.value] === 'CC' ||
@@ -3439,7 +3447,7 @@ const transactionActionText = computed(() => {
   }
 });
 
-// verifiy if split payment deletion is enabled
+// verify if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
   const isNotUpfront =
     paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
@@ -3546,6 +3554,69 @@ const isEditPaymentEnabled = () => {
     isGIGOrQICProvider.value &&
     hasAnyAuthorizedPayment
   );
+};
+
+// voidPaymentModal
+const voidPaymentModel = ref(false);
+const voidPaymentProcess = ref(false);
+const isVoidPaymentEnabled = computed(() => {
+  return (
+    props.isFuncsEnabled.tapIntegration &&
+    can(permissionEnum.PAYMENTS_VOID) &&
+    props.payments[0].payment_status_id ===
+      page.props.paymentStatusEnum.AUTHORISED &&
+    props.payments[0].payment_gateway_id ===
+      props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+  );
+});
+
+const voidPayment = () => {
+  voidPaymentProcess.value = true;
+  let data = {
+    quote_type_id: page.props.quoteTypeId,
+    quote_id: props.quoteRequest.id,
+    quote_uuid: props.quoteRequest.uuid,
+    payment_id: props.payments[0].id,
+    payment_code: props.payments[0].code,
+    send_update_log_id: props.sendUpdate?.id ?? null,
+  };
+
+  axios
+    .post(`/payments/${props.quoteType}/void-payment`, data)
+    .then(res => {
+      voidPaymentProcess.value = false;
+      voidPaymentModel.value = false;
+      if (res.data.status === false) {
+        notification.error({
+          title: res.data.message,
+          position: 'top',
+        });
+        return;
+      }
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+
+      router.reload({
+        only: ['payments'],
+      });
+    })
+    .catch(err => {
+      console.log(err);
+      voidPaymentProcess.value = false;
+      if (err.response.data) {
+        notification.error({
+          title: err.response.data[0],
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Void authorized payment process failed',
+          position: 'top',
+        });
+      }
+    });
 };
 </script>
 
@@ -3989,6 +4060,16 @@ const isEditPaymentEnabled = () => {
                                 Approve
                               </x-button>
                             </template>
+                          </template>
+                          <template v-if="isVoidPaymentEnabled">
+                            <x-button
+                              size="xs"
+                              color="orange"
+                              outlined
+                              @click="voidPaymentModel = true"
+                            >
+                              Void
+                            </x-button>
                           </template>
                         </div>
                       </td>
@@ -6474,6 +6555,30 @@ const isEditPaymentEnabled = () => {
             </x-form>
           </div>
         </div>
+        <x-modal
+          v-model="voidPaymentModel"
+          size="lg"
+          title="Void Authorized Payment"
+          show-close
+          backdrop
+        >
+          <x-form :auto-focus="false">
+            <div class="text-lg text-center">
+              <span> Are you sure to void this payment?</span>
+            </div>
+            <div class="mt-2 text-center">
+              <x-button
+                size="sm"
+                color="orange"
+                class="mt-4 text-center"
+                :loading="voidPaymentProcess"
+                @click="voidPayment"
+              >
+                <span>Confirm</span>
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
       </template>
     </Collapsible>
   </div>

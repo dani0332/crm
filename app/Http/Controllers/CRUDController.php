@@ -18,6 +18,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -688,6 +689,9 @@ class CRUDController extends Controller
 
         $puaTypeEnum = PuaEnum::asArray();
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+        $paymentGatewayEnum = PaymentGatewayIdEnum::asArray();
+        $isFuncsEnabled = ['tapIntegration' => isTapEnabled()];
+
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
             $isCommercialVehicles = false;
@@ -871,6 +875,8 @@ class CRUDController extends Controller
                 'paymentDocument',
                 'customerAddressData',
                 'amlStatusName',
+                'paymentGatewayEnum',
+                'isFuncsEnabled',
             ]));
         }
 
@@ -913,6 +919,8 @@ class CRUDController extends Controller
                 'access',
                 'isNewPaymentStructure',
                 'hasPolicyIssuedStatus',
+                'paymentGatewayEnum',
+                'isFuncEnabled',
             ]));
         }
 
@@ -1030,6 +1038,8 @@ class CRUDController extends Controller
                 'linkedQuoteDetails' => $linkedQuoteDetails,
                 'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
                 'paymentDocument' => $paymentDocument,
+                'paymentGatewayEnum' => $paymentGatewayEnum,
+                'isFuncsEnabled' => $isFuncsEnabled,
             ]);
         }
 
@@ -1186,6 +1196,8 @@ class CRUDController extends Controller
                 'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
                 'clientInquiryLogs' => $clientInquiryLogs,
                 'paymentDocument' => $paymentDocument,
+                'paymentGatewayEnum' => $paymentGatewayEnum,
+                'isFuncsEnabled' => $isFuncsEnabled,
             ]);
         } else {
             return view('shared.show', compact([

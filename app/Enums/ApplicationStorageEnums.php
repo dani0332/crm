@@ -193,4 +193,6 @@ final class ApplicationStorageEnums extends Enum
 
     /* Bike LMS Intro Email BCC */
     public const LMS_INTRO_BIKE_EMAIL_BCC = 'LMS_INTRO_BIKE_EMAIL_BCC';
+    public const ENABLE_TAP_INTEGRATION = 'ENABLE_TAP_INTEGRATION';
+    public const TAP_AUTHORIZED_EMAILS = 'TAP_AUTHORIZED_EMAILS';
 }

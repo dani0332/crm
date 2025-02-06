@@ -96,7 +96,10 @@ defineProps({
   lockLeadSectionsDetails: Object,
   customerAddressData: Object,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
+
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
@@ -3683,6 +3686,8 @@ const convertToNumber = (value, decimalPlace = 2) => {
       :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
     <PaymentTable
       v-else
