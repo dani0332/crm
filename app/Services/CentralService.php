@@ -1029,11 +1029,11 @@ class CentralService extends BaseService
         $planId = $quote->plan_id ?? null;
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
 
-        // Get broker commission details
-        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->getBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
-
         // Get insurance provider details
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
+
+        // Get broker commission details
+        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
         // Determine if the provider is GIG
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
