@@ -10,6 +10,9 @@ class InsurerAMLScreeningJob implements ShouldQueue
 {
     use Queueable;
 
+    public $tries = 3;
+    public $timeout = 30;
+    public $backoff = 40;
     public string|int $quoteTypeID;
     public object $quoteDetails;
     public string $customerType;
