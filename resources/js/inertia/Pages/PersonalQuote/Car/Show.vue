@@ -1536,7 +1536,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'paymentEntityModel'],
+    only: ['payments', 'paymentEntityModel', 'bookPolicyDetails'],
   });
 };
 
@@ -3486,6 +3486,8 @@ const convertToNumber = (value, decimalPlace = 2) => {
                       page.props.linkedQuoteDetails.childLeadsCount > 0
                     "
                     :uuid="quote.uuid"
+                    :insuranceProviderId="item.id"
+                    :code="quote.code"
                   />
 
                   <x-button

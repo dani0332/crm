@@ -1649,7 +1649,13 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
+    only: [
+      'payments',
+      'quoteRequest',
+      'ecomDetails',
+      'coPayment',
+      'bookPolicyDetails',
+    ],
   });
 };
 watch(
@@ -3477,6 +3483,8 @@ const onAddUpdate = () => {
                       :plan="item"
                       :quoteType="quoteType"
                       :uuid="quote.uuid"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
                     />
 
                     <x-button

@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -761,7 +762,7 @@ class EmbeddedProductRepository extends BaseRepository
                         'uuid' => $data['uuid'],
                         'type_id' => $type->id,
                         'code' => $transaction->code,
-
+                        'payment_gateway_id' => $paymentSplit->payment_gateway_id,
                     ];
                     $processResponse = $this->processCancelPayment($data);
 
@@ -807,8 +808,9 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
             ],
         ];
-
-        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+        $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
+        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/cancel', 'post', $planData);
 
         return $response;
     }
@@ -831,16 +833,18 @@ class EmbeddedProductRepository extends BaseRepository
             ->get();
 
         $payload = [];
+        $paymentGatewayEndpoint = '';
         if ($epTransaction->isNotEmpty()) {
             foreach ($epTransaction as $item) {
+                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
                 if (empty($payload)) {
                     $payload = [
                         'quoteUID' => $item->quoteRequest->uuid,
                         'quoteTypeId' => $quoteTypeId,
                     ];
+                    $paymentGatewayEndpoint = PaymentGatewayEnum::getName($paymentSplit->payment_gateway_id);
                 }
 
-                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
                 $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
                 $payload['payments'][] = [
                     'codeRef' => $item->code.'-'.$sr,
@@ -870,7 +874,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         try {
-            Marshall::request('/payment/checkout/capture', 'post', $payload);
+            Marshall::request("/payment/{$paymentGatewayEndpoint}/capture", 'post', $payload);
         } catch (Exception $e) {
             Log::error('Capture Payment Error: '.$e->getMessage());
         }

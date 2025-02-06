@@ -15,4 +15,6 @@ final class QuoteTagEnums extends Enum
 {
     public const POLICY_SENT_TO_CUSTOMER = 'PSTC';
     public const POLICY_BOOKED_ON_SAGE = 'PBOS';
+    public const TAP_PAYMENT_CAPTURE_PROCESS_START = 'TPCPS';
+    public const TAP_PAYMENT_CAPTURE_PROCESS_SU_START = 'TPCPSUS';
 }

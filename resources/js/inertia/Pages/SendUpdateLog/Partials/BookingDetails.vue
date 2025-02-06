@@ -55,10 +55,6 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
-  modelClass: {
-    type: String,
-    default: '',
-  },
   isEditDisabledForQueuedBooking: Boolean,
   isCommVatNotAppEnabled: Boolean,
   disableMainBtn: String,
@@ -289,6 +285,8 @@ const bookingDetailsForm = useForm({
   price_with_vat: props.sendUpdateLog?.price_with_vat || '0.00',
   // new entry section related.
   reversal_invoice: props.sendUpdateLog?.reversal_invoice || null,
+  isCommissionDisabled: props?.bookingDetails?.isCommissionDisabled,
+  disabledCommissionTooltip: props?.bookingDetails?.disabledCommissionTooltip,
 });
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
@@ -410,11 +408,53 @@ const calculateCommission = () => {
         let commissionVatNotApplicable = Number(
           bookingDetailsForm.commission_vat_not_applicable,
         );
-        bookingDetailsForm.commission_percentage = convertToNegative(
+
+        let commissionPercentage = convertToNegative(
           (Number(commissionVatApplicable + commissionVatNotApplicable) /
             total_price_with_vat_and_not_vat_applicable) *
             100,
         );
+
+        // TAP PAYMENT FLAG.
+        if (
+          page.props.isTapEnabled &&
+          commissionPercentage > 0 &&
+          bookingDetailsForm.commission_vat_applicable &&
+          props.bookingDetails?.brokerCommission
+        ) {
+          const brokerCommission = props.bookingDetails?.brokerCommission;
+          const brokerCommMinPer = brokerCommission
+            ? roundValue(brokerCommission.commission_percentage_min)
+            : null;
+          const brokerCommMaxPer = brokerCommission
+            ? roundValue(brokerCommission.commission_percentage_max)
+            : null;
+
+          if (
+            brokerCommMinPer != null &&
+            brokerCommMaxPer != null &&
+            !(
+              commissionPercentage >= brokerCommMinPer &&
+              commissionPercentage <= brokerCommMaxPer
+            )
+          ) {
+            notification.error({
+              title:
+                'The commission amount you entered is outside the permitted range.',
+              position: 'top',
+            });
+            bookingDetailsForm.setError({
+              commission_vat_applicable:
+                'The commission amount you entered is outside the permitted range.',
+            });
+            bookingDetailsForm.commission_vat_applicable =
+              commissionPercentage = null;
+            return;
+          } else {
+            bookingDetailsForm.clearErrors('commission_vat_applicable');
+          }
+        }
+        bookingDetailsForm.commission_percentage = commissionPercentage;
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -458,6 +498,10 @@ function convertToNegative(value) {
   }
   value = isNaN(value) ? 0 : Number(value);
 
+  return roundValue(value);
+}
+
+function roundValue(value) {
   return (Math.round(value * 100) / 100).toFixed(2);
 }
 
@@ -1148,6 +1192,19 @@ watch(
       disableCommissionVatApplicable.value = true;
     } else {
       disableCommissionVatApplicable.value = false;
+    }
+  },
+);
+
+const isTapCaptureProcessStart = computed(() => {
+  return props.bookingDetails?.isTapCaptureProcessStart || false;
+});
+
+watch(
+  () => props.bookingDetails?.isTapCaptureProcessStart,
+  (newValue, oldValue) => {
+    if (newValue) {
+      isTapCaptureProcessStart.value = newValue;
     }
   },
 );
@@ -2111,7 +2168,12 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
-                  <x-tooltip v-if="disableCommissionVatApplicable">
+                  <x-tooltip
+                    v-if="
+                      disableCommissionVatApplicable ||
+                      bookingDetailsForm.isCommissionDisabled
+                    "
+                  >
                     <x-input
                       v-model="bookingDetailsForm.commission_vat_applicable"
                       class="!mb-0 w-full"
@@ -2124,8 +2186,11 @@ watch(
                       :icon-left="isNegativeValue ? 'minus' : ''"
                     />
                     <template #tooltip>
-                      This option is disabled because Commission (VAT not
-                      applicable) has already been entered.
+                      {{
+                        bookingDetailsForm.isCommissionDisabled
+                          ? bookingDetailsForm.disabledCommissionTooltip
+                          : 'This option is disabled because Commission (VAT not applicable) has already been entered.'
+                      }}
                     </template>
                   </x-tooltip>
                   <x-input
@@ -2142,6 +2207,7 @@ watch(
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
                     size="xs"
+                    :error="bookingDetailsForm.errors.commission_vat_applicable"
                     :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
@@ -2199,7 +2265,12 @@ watch(
                   </x-tooltip>
                 </div>
                 <div v-if="props.isCommVatNotAppEnabled">
-                  <x-tooltip v-if="disableCommissionVatNotApplicable">
+                  <x-tooltip
+                    v-if="
+                      disableCommissionVatNotApplicable ||
+                      bookingDetailsForm.isCommissionDisabled
+                    "
+                  >
                     <x-input
                       type="number"
                       v-model="bookingDetailsForm.commission_vat_not_applicable"
@@ -2213,8 +2284,11 @@ watch(
                       :icon-left="isNegativeValue ? 'minus' : ''"
                     />
                     <template #tooltip>
-                      This option is disabled because Commission (VAT
-                      applicable) has already been entered.
+                      {{
+                        bookingDetailsForm.isCommissionDisabled
+                          ? bookingDetailsForm.disabledCommissionTooltip
+                          : 'This option is disabled because Commission (VAT applicable) has already been entered.'
+                      }}
                     </template>
                   </x-tooltip>
                   <x-input
@@ -2346,7 +2420,12 @@ watch(
               </x-button>
 
               <template
-                v-if="props.updateBtn && (isLackingPayment || disableMainBtn)"
+                v-if="
+                  props.updateBtn &&
+                  (isLackingPayment ||
+                    disableMainBtn ||
+                    isTapCaptureProcessStart)
+                "
               >
                 <div>
                   <x-tooltip>
@@ -2356,7 +2435,11 @@ watch(
                       color="orange"
                       :loading="loader.sendUpdateSectionBtn"
                       @click="sendUpdateValidation"
-                      :disabled="isLackingPayment || disableMainBtn"
+                      :disabled="
+                        isLackingPayment ||
+                        disableMainBtn ||
+                        isTapCaptureProcessStart
+                      "
                     >
                       {{ props.updateBtn }}
                     </x-button>
@@ -2365,7 +2448,9 @@ watch(
                         {{
                           disableMainBtn
                             ? disableMainBtn
-                            : 'Action Needed: Please revise payment details to reflect plan changes.'
+                            : isTapCaptureProcessStart
+                              ? 'Update booking already in queued.'
+                              : 'Action Needed: Please revise payment details to reflect plan changes.'
                         }}
                       </span>
                     </template>

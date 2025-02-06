@@ -15,6 +15,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -551,14 +552,12 @@ class SplitPaymentService
         if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
             return response()->json(['success' => true, 'payment_link' => $splitPayment->payment_link]);
         } else {
-
             $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 
             $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
-
             $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
 
             $paymentParams = [
@@ -632,7 +631,8 @@ class SplitPaymentService
         $paymentSplit = PaymentSplits::find($splitPaymentId);
         info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Processing split payment approval started is from job: '.($isFromJob ? 'true' : 'false'));
 
-        $sendUpdateId = $paymentSplit->payment->send_update_log_id;
+        $payment = $paymentSplit->payment;
+        $sendUpdateId = $payment->send_update_log_id;
         $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
         $maxRetries = 2;
 
@@ -706,9 +706,10 @@ class SplitPaymentService
             }
 
             $existingReceipts = QuoteDocument::where(['payment_split_id' => $splitPaymentId, 'document_type_text' => DocumentTypeEnum::RECEIPT])->get();
-            if ($existingReceipts->count() === 0 && $isFromJob) {
+            if ($existingReceipts->count() === 0 && $isFromJob && $payment->collection_type == CollectionTypeEnum::BROKER) {
                 $this->createReceipt($modelType, $quoteId, $paymentSplit, $sendUpdateId, $isFromJob);
             }
+
         }
 
         if (! $paymentSplit->payment->is_approved &&
@@ -766,7 +767,7 @@ class SplitPaymentService
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
                 }
             } else {
-                if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policu schedule for automation
+                if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policy schedule for automation
                     $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
                 }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
@@ -1126,7 +1127,7 @@ class SplitPaymentService
      * If the collection amount is greater than or equal to the payment amount, the payment split's status is set to PAID, otherwise, it is set to PARTIALLY_PAID
      * This method trigger when policy details section update
      */
-    public function updateSplitPaymentStatusAndAmount($payment)
+    public function updateSplitPaymentStatusAndAmount($payment, $isCreditCardEnabled = true)
     {
         info('Quote Code: '.$payment->code.' fn: Updating child payment status');
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
@@ -1149,6 +1150,9 @@ class SplitPaymentService
                     } else {
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
+                }
+                if (! $isCreditCardEnabled && $paymentSplit->payment_method == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
+                    $paymentSplit->payment_method = PaymentMethodsEnum::InsurerPayment;
                 }
                 if ($paymentSplit->isDirty()) {
                     $paymentSplit->save();
@@ -1177,5 +1181,30 @@ class SplitPaymentService
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
             $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         }
+    }
+
+    /**
+     * Check if the commission fields in booking details section is disabled
+     *
+     * @return array
+     */
+    public function checkCommissionStatus($payment)
+    {
+        if (isTapEnabled() && $payment && $payment->isInsurerPayment()) {
+            $paymentSplits = $payment->paymentSplits;
+            if ($paymentSplits->isNotEmpty()) {
+                $hasPaidCreditCardPayment = $paymentSplits->contains(function ($split) {
+                    return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id == PaymentStatusEnum::PAID;
+                });
+                if ($hasPaidCreditCardPayment) {
+                    return [
+                        'isCommissionDisabled' => true,
+                        'disabledCommissionTooltip' => PaymentTooltip::DISABLED_COMMISSION,
+                    ];
+                }
+            }
+        }
+
+        return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
 }

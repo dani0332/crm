@@ -21,7 +21,7 @@ const props = defineProps({
   storageUrl: String,
   realQuote: Object,
   isNegativeValue: Boolean,
-  bookingDetails: Array,
+  bookPolicyDetails: Array,
   updateBtn: String,
   uploadedDocuments: Array,
   payments: Array,
@@ -665,7 +665,7 @@ const isLegacyPolicy = computed(() => {
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
       :is-negative-value="isNegativeValue"
-      :booking-details="props.bookingDetails"
+      :booking-details="props.bookPolicyDetails"
       :real-quote="props.realQuote"
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"

@@ -10,6 +10,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -1729,7 +1730,7 @@ class HealthQuoteService extends BaseService
                     'uuid' => $request->uuid,
                     'type_id' => $type->id,
                     'code' => $payment->code,
-
+                    'payment_gateway_id' => $payment->payment_gateway_id,
                 ];
                 $processResponse = $this->processCancelPayment($data);
 
@@ -1771,7 +1772,9 @@ class HealthQuoteService extends BaseService
 
     public function processCancelPayment($data)
     {
-        $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
+        $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
+        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/'.$paymentGatewayEndpoint.'/cancel';
         $apiToken = config('constants.MARSHALL_API_TOKEN');
         $apiTimeout = config('constants.MARSHALL_API_TIMEOUT');
         $apiUserName = config('constants.MARSHALL_API_USER');
