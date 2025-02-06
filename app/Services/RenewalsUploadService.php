@@ -1073,8 +1073,7 @@ class RenewalsUploadService
                 $quoteData['renewal_upload_plan_code'] = $data['plan_code'];
                 $quoteData['renewal_upload_copay_code'] = $data['copay'];
                 $quoteData['renewal_upload_payment_link'] = $data['payment_link'];
-            }
-            else {
+            } else {
                 $quoteData['is_gcc_standard'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
             }
 
