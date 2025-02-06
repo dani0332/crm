@@ -10,6 +10,7 @@ use App\Enums\SendPolicyTypeEnum;
 use App\Models\CcPaymentProcess;
 use App\Models\PaymentSplits;
 use App\Models\QuoteTag;
+use App\Models\SendUpdateLog;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
@@ -83,6 +84,8 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id);
                 if ($quote && ! $payment->isGIGInsurer($ccPaymentProcess->quote_type, $quote)) {
                     if (! empty($payment->send_update_log_id)) {
+                        $sendUpdateLog = SendUpdateLog::where('id', $payment->send_update_log_id)->first();
+                        info("CC Payment Job: Executing Send update case - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:".$sendUpdateLog->code);
                         QuoteTag::where([
                             'quote_uuid' => $quote->uuid,
                             'send_update_log_id' => $payment->send_update_log_id,
@@ -95,6 +98,8 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                         $sendUpdateRequest->quoteUuid = $quote->uuid;
                         $sendUpdateRequest->sendUpdateId = $payment->send_update_log_id;
                         $sendUpdateRequest->inslyMigrated = $quote->insly_migrated;
+
+                        info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode($sendUpdateRequest->toArray()));
 
                         return app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
                     } else {

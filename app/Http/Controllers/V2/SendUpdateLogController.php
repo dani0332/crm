@@ -19,6 +19,7 @@ use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Http\Requests\SendUpdateValidationRequest;
 use App\Http\Requests\UpdateToCustomerRequest;
+use App\Jobs\ProcessCCPaymentJob;
 use App\Models\ApplicationStorage;
 use App\Models\Lookup;
 use App\Models\Payment;
@@ -393,7 +394,7 @@ class SendUpdateLogController extends Controller
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
         if (isset($suEmailProcess['status']) && $suEmailProcess['status'] == 500) {
-            vAbort('Send Update to customer email failed');
+            vAbort($suEmailProcess['message'] ?? 'Send Update to customer email failed');
         }
 
         return response()->json($suEmailProcess);
