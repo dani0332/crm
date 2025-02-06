@@ -144,5 +144,4 @@ final class PaymentTooltip extends Enum
     const PENDING_AML_CLEARANCE = 'You cannot proceed with transaction approval until AML status is Cleared.';
     const PENDING_KYC_CLEARANCE = 'You cannot proceed with transaction approval until KYC  is completed.';
     const TOTAL_AMOUNT_MISMATCHED = 'Please revise payment details to reflect plan changes.';
-
 }

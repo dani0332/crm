@@ -19,7 +19,6 @@ use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Http\Requests\SendUpdateValidationRequest;
 use App\Http\Requests\UpdateToCustomerRequest;
-use App\Jobs\ProcessCCPaymentJob;
 use App\Models\ApplicationStorage;
 use App\Models\Lookup;
 use App\Models\Payment;
