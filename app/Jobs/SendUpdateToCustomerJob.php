@@ -7,7 +7,6 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Jobs\EP\SendEPJob;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
-use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -74,16 +73,6 @@ class SendUpdateToCustomerJob implements ShouldQueue
                     info('job:SendUpdateToCustomerJob - SendUpdateCode: '.$sendUpdateLog->uuid.' - Job failed - SendUpdateCode: '.$sendUpdateLog->code);
                 }
             }
-        }
-
-        if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU && isset($this->payload['dispatchSageCall'])) {
-            info('job:SendUpdateToCustomerJob - Calling updateSageProcessForDispatching function through sendUpdateToCustomer - SendUpdateCode: '.$sendUpdateLog->code);
-            $sageRequestPayload = $this->payload['sageRequestPayload'];
-            unset($this->payload['sageRequestPayload']);
-            $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);
-
-            (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);
-            info('job:SendUpdateToCustomerJob - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
         }
 
         info('job:SendUpdateToCustomerJob - Job completed - SendUpdateCode: '.$sendUpdateLog->code);

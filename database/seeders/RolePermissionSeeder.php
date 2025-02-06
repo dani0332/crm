@@ -68,6 +68,7 @@ class RolePermissionSeeder extends Seeder
         // $this->searchModulePermissions();
         $this->createBusinessIntelligenceUnitRole();
         $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
+        $this->paymentsVoid();
     }
 
     private function addReceiveNotificationsPermission()
@@ -151,6 +152,15 @@ class RolePermissionSeeder extends Seeder
                 'name' => $missingAdvisorRole,
                 'guard_name' => 'web',
             ]);
+        }
+    }
+
+    private function paymentsVoid(): void
+    {
+        $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_VOID, 'web');
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+        if ($role && ! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
         }
     }
 }

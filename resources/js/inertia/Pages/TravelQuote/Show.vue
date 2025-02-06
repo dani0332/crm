@@ -64,6 +64,8 @@ defineProps({
   isAmlClearedForQuote: Boolean,
   amlStatusName: String,
   access: Object,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -1369,7 +1371,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
   });
 };
 
@@ -3115,6 +3117,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         selectedPlansIds: selectedPlanIds,
                         planType: 'normalPlans',
                       }"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
                     />
                     <x-button
                       v-else
@@ -3205,6 +3209,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                           selectedPlansIds: selectedPlanIds,
                           planType: 'seniorPlans',
                         }"
+                        :insuranceProviderId="item.id"
+                        :code="quote.code"
                       />
                       <x-button
                         v-else
@@ -3277,6 +3283,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PaymentTable

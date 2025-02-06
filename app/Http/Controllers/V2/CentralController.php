@@ -642,6 +642,13 @@ class CentralController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
+    public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $response = app(CentralService::class)->voidPayment($request);
+
+        return response()->json(['status' => $response['status'], 'message' => $response['message']]);
+    }
+
     public function getInsurerAMLResponse(Request $request)
     {
         $insurerAMLFailureStatus = [

@@ -274,12 +274,6 @@ class SendUpdateLogRepository extends BaseRepository
                 if (! $endorsementResponse['status']) {
                     $response[] = ['status' => 500, 'message' => $endorsementResponse['message']];
                 }
-
-                if ($endorsementResponse['status'] && ! empty($endorsementResponse['sageRequestPayload'])) {
-                    $request['dispatchSageCall'] = true;
-                    $request['sageRequestPayload'] = $endorsementResponse['sageRequestPayload'];
-                    $response[] = ['status' => 200, 'message' => $endorsementResponse['message']];
-                }
             }
 
             if ($request['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {

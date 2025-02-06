@@ -44,6 +44,8 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
@@ -1353,6 +1355,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <EmbeddedProducts

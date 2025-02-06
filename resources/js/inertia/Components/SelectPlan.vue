@@ -12,6 +12,8 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  insuranceProviderId: Number,
+  code: String,
 });
 
 const page = usePage();
@@ -64,6 +66,8 @@ const updateSelectedPlan = () => {
     }
   }
 
+  data.insurance_provider_id = props.insuranceProviderId;
+  data.code = props.code;
   axios
     .post(
       `/personal-quotes/${props.quoteType}/${props.uuid}/update-selected-plan`,
@@ -119,11 +123,13 @@ const updateSelectedPlan = () => {
       });
     })
     .catch(err => {
-      console.log(err);
       isLoading.value = false;
-      notification.error({
-        title: err?.response?.data?.message ?? 'something went wrong',
-        position: 'top',
+      Object.keys(err?.response?.data?.errors).forEach(function (key, value) {
+        notification.error({
+          title: err?.response?.data?.errors[key][0],
+          position: 'top',
+          timeout: key == 'authorized' ? 10000 : 3000,
+        });
       });
     });
 };

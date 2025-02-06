@@ -348,7 +348,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'paymentEntityModel'],
+    only: ['payments', 'paymentEntityModel', 'bookPolicyDetails'],
   });
   emit('plan-selected', plan);
   onLoadAvailablePlansData();
@@ -619,6 +619,8 @@ onMounted(() => {
               :plan="item"
               :quoteType="'Bike'"
               :uuid="quote.uuid"
+              :insuranceProviderId="item.id"
+              :code="quote.code"
             />
 
             <x-button v-else size="xs" color="orange" outlined :disabled="true">

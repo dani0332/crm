@@ -66,6 +66,8 @@ const props = defineProps({
   quoteNotes: Object,
   paymentDocument: Array,
   noteDocumentType: Array,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -1651,7 +1653,13 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
+    only: [
+      'payments',
+      'quoteRequest',
+      'ecomDetails',
+      'coPayment',
+      'bookPolicyDetails',
+    ],
   });
 };
 watch(
@@ -3493,6 +3501,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       :plan="item"
                       :quoteType="quoteType"
                       :uuid="quote.uuid"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
                     />
 
                     <x-button
@@ -3668,6 +3678,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
       "
       :bookPolicyDetails="bookPolicyDetails"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PaymentTable
