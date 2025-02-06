@@ -1,4 +1,6 @@
 <script setup>
+import {XInput} from "@indielayer/ui";
+
 const props = defineProps({
   genderOptions: Object,
   nationalities: Object,
@@ -26,7 +28,7 @@ const quoteForm = useForm({
   has_good_condition:
     String(props.quote?.cycle_quote?.has_good_condition) || null,
 
-  dob: props.quote?.dob || null,
+  dob: props.quote?.unformatted_dob || null,
   nationality_id: props.quote?.nationality_id || null,
   gender: props.quote?.customer?.gender || null,
 });
@@ -132,7 +134,7 @@ const gender = computed(() => {
           />
         </x-field>
         <x-field label="Date of Birth">
-          <DatePicker v-model="quoteForm.dob" name="created_at_start" />
+          <DatePicker v-model="quoteForm.dob" :utc="false" model-type="yyyy-MM-dd" name="created_at_start" />
         </x-field>
         <x-field label="Nationality">
           <ComboBox

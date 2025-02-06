@@ -20,7 +20,7 @@ const quoteForm = useForm({
   use: props.quote?.yacht_quote?.use || '',
   operator_experience: props.quote?.yacht_quote?.operator_experience || '',
 
-  dob: props.quote?.dob || null,
+  dob: props.quote?.unformatted_dob || null,
   nationality_id: props.quote?.nationality_id || null,
   gender: props.quote?.customer?.gender || null,
 });
@@ -47,8 +47,8 @@ function onSubmit(isValid) {
 
 const gender = computed(() => {
   return [
-    { value: 'M', label: 'Male' },
-    { value: 'F', label: 'Female' },
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
   ];
 });
 </script>
@@ -114,7 +114,7 @@ const gender = computed(() => {
           />
         </x-field>
         <x-field label="DATE OF BIRTH">
-          <DatePicker v-model="quoteForm.dob" name="created_at_start" />
+          <DatePicker v-model="quoteForm.dob" :utc="false" model-type="yyyy-MM-dd" name="created_at_start" />
         </x-field>
         <x-field label="NATIONALITY">
           <ComboBox

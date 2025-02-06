@@ -36,7 +36,7 @@ class CycleQuoteRequest extends FormRequest
             'accessories' => 'required',
             'has_accident' => 'required|boolean',
             'has_good_condition' => 'required|boolean',
-            'dob' => 'nullable|date_format:Y-m-d|before:today',
+            'dob' => 'nullable|before:today',
             'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
             'nationality_id' => 'nullable|exists:nationality,id',
         ];

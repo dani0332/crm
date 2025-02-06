@@ -26,7 +26,7 @@ const quoteForm = useForm({
   is_mixed_breed: props.quote ? props.quote?.pet_quote?.is_mixed_breed : null,
   has_injury: props.quote ? props.quote?.pet_quote?.has_injury : null,
   gender: props.quote?.pet_quote?.gender || '',
-  dob: props.quote?.dob || null,
+  dob: props.quote?.unformatted_dob || null,
   nationality_id: props.quote?.nationality_id || null,
   customer_gender: props.quote?.customer?.gender || '',
 });
@@ -112,7 +112,7 @@ function onSubmit(isValid) {
           />
         </x-field>
         <x-field label="DATE OF BIRTH">
-          <DatePicker v-model="quoteForm.dob" name="created_at_start" />
+          <DatePicker v-model="quoteForm.dob" :utc="false" model-type="yyyy-MM-dd" name="created_at_start" />
         </x-field>
         <x-field label="NATIONALITY">
           <ComboBox

@@ -37,7 +37,7 @@ class YachtQuoteRequest extends FormRequest
             'asset_value' => 'required|numeric',
             'use' => 'required|max:1000',
             'operator_experience' => 'required|max:1000',
-            'dob' => 'nullable|date_format:Y-m-d|before:today',
+            'dob' => 'nullable|before:today',
             'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
             'nationality_id' => 'nullable|exists:nationality,id',
         ];
