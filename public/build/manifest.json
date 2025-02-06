@@ -1,19 +1,11 @@
 {
   "resources/js/inertia/inertia.js": {
-<<<<<<< HEAD
-    "file": "assets/inertia-BZV51iv0.js",
-=======
-    "file": "assets/inertia-2zEbhp-E.js",
->>>>>>> feat/tap-payment-gateway
+    "file": "assets/inertia-D2OQyZ2T.js",
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
     "css": [
-<<<<<<< HEAD
-      "assets/inertia-BxjeUu9c.css"
-=======
-      "assets/inertia-DV2dLjjV.css"
->>>>>>> feat/tap-payment-gateway
+      "assets/inertia-CYA6HsjB.css"
     ]
   }
 }

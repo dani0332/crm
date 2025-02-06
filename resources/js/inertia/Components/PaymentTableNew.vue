@@ -2971,10 +2971,15 @@ const hasAnyAuthorisedPendingCA = computed(() => {
 const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length > 0) {
-      const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+      const isGIGProvider =
+        page.props?.bookPolicyDetails?.isGIGProvider || false;
       const paymentMethodCC = filterCCPayments(payment);
-      if ((payment.collection_type === 'broker' && paymentMethodCC.length > 0) ||
-         ( payment.collection_type === 'insurer' && hasAnyAuthorisedPendingCA.value(payment) && isGIGProvider)) {
+      if (
+        (payment.collection_type === 'broker' && paymentMethodCC.length > 0) ||
+        (payment.collection_type === 'insurer' &&
+          hasAnyAuthorisedPendingCA.value(payment) &&
+          isGIGProvider)
+      ) {
         return 'capture';
       }
       return 'approve';
