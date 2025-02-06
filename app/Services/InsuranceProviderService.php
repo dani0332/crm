@@ -25,7 +25,8 @@ class InsuranceProviderService extends BaseService
                 'ip.lower_limit',
                 'ip.upper_limit',
                 'ip.sort_order',
-                'ip.multiple_payments'
+                'ip.multiple_payments',
+                'ip.payment_gateway_id'
             );
     }
 

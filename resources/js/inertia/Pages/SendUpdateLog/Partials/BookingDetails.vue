@@ -1195,6 +1195,19 @@ watch(
     }
   },
 );
+
+const isTapCaptureProcessStart = computed(() => {
+  return props.bookingDetails?.isTapCaptureProcessStart || false;
+});
+
+watch(
+  () => props.bookingDetails?.isTapCaptureProcessStart,
+  (newValue, oldValue) => {
+    if (newValue) {
+      isTapCaptureProcessStart.value = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -2407,7 +2420,12 @@ watch(
               </x-button>
 
               <template
-                v-if="props.updateBtn && (isLackingPayment || disableMainBtn)"
+                v-if="
+                  props.updateBtn &&
+                  (isLackingPayment ||
+                    disableMainBtn ||
+                    isTapCaptureProcessStart)
+                "
               >
                 <div>
                   <x-tooltip>
@@ -2417,7 +2435,11 @@ watch(
                       color="orange"
                       :loading="loader.sendUpdateSectionBtn"
                       @click="sendUpdateValidation"
-                      :disabled="isLackingPayment || disableMainBtn"
+                      :disabled="
+                        isLackingPayment ||
+                        disableMainBtn ||
+                        isTapCaptureProcessStart
+                      "
                     >
                       {{ props.updateBtn }}
                     </x-button>
@@ -2426,7 +2448,9 @@ watch(
                         {{
                           disableMainBtn
                             ? disableMainBtn
-                            : 'Action Needed: Please revise payment details to reflect plan changes.'
+                            : isTapCaptureProcessStart
+                              ? 'Update booking already in queued.'
+                              : 'Action Needed: Please revise payment details to reflect plan changes.'
                         }}
                       </span>
                     </template>
