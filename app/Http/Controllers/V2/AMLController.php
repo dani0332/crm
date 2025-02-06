@@ -477,9 +477,9 @@ class AMLController extends Controller
                     if ($carQuoteRequestDetails->isDirty()) {
                         info('AML Screening Bridger - Chassis number updated - Ref-ID: '.$quoteRequestId);
                         $carQuoteRequestDetails->save();
-//                        if (isTapEnabled()) {
-//                            info('AML Screening Bridger - Tap Enabled - update premium API called - Ref-ID: '.$quoteRequestId);
-//                        }
+                        //                        if (isTapEnabled()) {
+                        //                            info('AML Screening Bridger - Tap Enabled - update premium API called - Ref-ID: '.$quoteRequestId);
+                        //                        }
                     }
                 }
 
