@@ -3323,7 +3323,7 @@ const isTotalAmountMismatched = () => {
       (props.payments[0]?.total_amount + props.payments[0]?.discount_value) *
         100,
     ) / 100;
- 
+
   return totalPriceRounded === calculatedTotal;
 };
 
@@ -3338,7 +3338,6 @@ const isKycVerified = () => {
   let paymentMethodCC =
     props.payments[0]?.payment_methods_code ===
     page.props.paymentMethodsEnum.CreditCard;
-
 
   if (isTravelQuote) {
     if (isGIGInsuranceProvider && paymentMethodCC) {
@@ -3360,7 +3359,7 @@ const isAmlVerified = () => {
   let paymentMethodCC =
     props.payments[0]?.payment_methods_code ===
     page.props.paymentMethodsEnum.CreditCard;
-  
+
   if (isTravelQuote) {
     if (isGIGInsuranceProvider && paymentMethodCC) {
       return (
@@ -3425,7 +3424,6 @@ const disableMainPaymentApproval = computed(() => {
     (!isKycVerified() || !isInsurerAmlVerified() || !isTotalAmountMismatched())
   );
 });
-
 
 const openAmlVerificationModal = () => {
   isAmlApprovalRequired.value = true;
