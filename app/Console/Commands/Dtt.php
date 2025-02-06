@@ -125,10 +125,10 @@ class Dtt extends Command
             ->whereNull('previous_quote_policy_number')
 
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            
-            ->where(function($query) use ($excludePaymentStatuses, $excludeAmlStatuses) {
+
+            ->where(function ($query) use ($excludePaymentStatuses, $excludeAmlStatuses) {
                 $query->whereIn('aml_status', $excludeAmlStatuses)
-                      ->whereNotIn('payment_status_id', $excludePaymentStatuses);
+                    ->whereNotIn('payment_status_id', $excludePaymentStatuses);
             })
 
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
