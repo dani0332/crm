@@ -496,7 +496,7 @@
                 ->value ?? 0;
 
         $buyNow = 'Buy Now';
-        $buyNowLink = $websitURL . '/home-insurance/quote/' . $quote->uuid . '/payment/=';
+        $buyNowLink = $websitURL . '/home-insurance/quote/' . $quote->uuid . '/payment/';
         if (isset($selectedPlanIds)) {
         } else {
             $selectedPlanIds = [];
