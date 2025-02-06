@@ -512,7 +512,6 @@ class CarQuoteService extends BaseService
             if ($carQuoteDetails->isDirty()) {
                 $carQuoteDetails->chassis_number = $request->chassis_number;
                 $carQuoteDetails->save();
-                // TODO:: Reminder update plan premium API call here only for GIG Screening Case
             }
 
             if (isset($request->gender)) {

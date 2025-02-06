@@ -386,7 +386,6 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
-        // TODO:: Insured Mapping verified
         info('AML Screening Bridger - Process Started - Ref-ID: '.$quoteRequestId);
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
@@ -477,9 +476,6 @@ class AMLController extends Controller
                     if ($carQuoteRequestDetails->isDirty()) {
                         info('AML Screening Bridger - Chassis number updated - Ref-ID: '.$quoteRequestId);
                         $carQuoteRequestDetails->save();
-                        //                        if (isTapEnabled()) {
-                        //                            info('AML Screening Bridger - Tap Enabled - update premium API called - Ref-ID: '.$quoteRequestId);
-                        //                        }
                     }
                 }
 
@@ -705,7 +701,6 @@ class AMLController extends Controller
 
     private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType)
     {
-        // TODO :: Insured mapping verified
         foreach ($membersDetails as $memberDetail) {
             BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, auth()->user()->email);
         }

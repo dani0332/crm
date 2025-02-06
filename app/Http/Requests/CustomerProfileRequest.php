@@ -25,7 +25,6 @@ class CustomerProfileRequest extends FormRequest
      */
     public function rules()
     {
-        // TODO:: Insured mapping verified
         $rules = [];
         if ($this->customer_type == CustomerTypeEnum::Individual) {
             $rules = array_merge($rules, [

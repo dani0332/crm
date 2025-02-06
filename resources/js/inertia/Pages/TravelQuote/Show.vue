@@ -2145,14 +2145,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   <dt class="font-medium">EMAIL</dt>
                   <dd>{{ quote.email }}</dd>
                 </div>
-                <!--<div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">ADDRESS TYPE</dt>
-                  <dd></dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">RESIDENCE ADDRESS</dt>
-                  <dd></dd>
-                </div>-->
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>

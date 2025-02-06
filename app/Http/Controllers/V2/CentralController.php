@@ -164,7 +164,6 @@ class CentralController extends Controller
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
-        // TODO:: Insured mapping verified
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
             $emiratesDetails = [
                 str_replace('-', '', $customerProfileRequest->emirates_id_number),

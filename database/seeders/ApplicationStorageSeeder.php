@@ -226,7 +226,8 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-        // TODO:: Need to confirm email addresses
+
+        // TODO:: Need to confirm email addresses with Shahrukh
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS],
             [

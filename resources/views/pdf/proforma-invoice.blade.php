@@ -388,7 +388,6 @@
     $advisor = $quote->advisor;
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->collection_date)->format($dateFormat);
     $customer = $quote->customer;
-//    TODO:: Need to update the insurer details
     $insuredFirstName = ($customer?->insured?->first_name ?? $customer->insured_first_name);
     $insuredLastName = ($customer?->insured?->last_name ?? $customer->insured_last_name);
     $customerName =  ucwords($insuredFirstName .' '. $insuredLastName);

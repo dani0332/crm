@@ -528,11 +528,6 @@ class CRUDController extends Controller
 
         $this->validate($request, $validateArray);
         app(CustomerAddressService::class)->validateAddress($request);
-
-        if ($request->has('chassis_number') && $modelType == quoteTypeCode::Car) {
-            // TODO:: Reminder, Need to call update premium API here
-        }
-
         $record = $this->crudService->saveModelByType($modelType, $request);
 
         if ($record) {
@@ -1356,7 +1351,7 @@ class CRUDController extends Controller
             $carQuoteWithDetails = CarQuote::with('carQuoteRequestDetail')->where('uuid', $id)->first();
             $carQuoteWithDetails->chassis_number = $request->chassis_number;
             if ($carQuoteWithDetails->isDirty()) {
-                // TODO:: Reminder, Need to call update premium API here
+                $carQuoteWithDetails->save();
             }
         }
 
