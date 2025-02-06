@@ -115,6 +115,9 @@ class InstantAlfredService extends BaseService
                         WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
                             AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
                             THEN 'SIC-REVIVAL'
+                        WHEN qt.name = '".QuoteSegmentEnum::SIC_REVIVAL->tag()."'
+                            AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
+                            THEN 'SIC-REVIVAL'
                         WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
                         ELSE 'N/A'
                         END as segment
