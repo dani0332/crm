@@ -2985,7 +2985,6 @@ const hasAnyAuthorisedPendingCA = computed(() => {
 });
 
 const getCaptureOption = computed(() => {
-  return payment => {
     return payment => {
         if (props.payments.length === 0) return;
         const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
