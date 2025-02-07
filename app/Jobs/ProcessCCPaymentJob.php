@@ -21,10 +21,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Enums\QuoteTypes;
-use App\Repositories\EmbeddedProductRepository;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 {
