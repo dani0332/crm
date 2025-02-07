@@ -2985,15 +2985,18 @@ const hasAnyAuthorisedPendingCA = computed(() => {
 });
 
 const getCaptureOption = computed(() => {
-    return payment => {
-        if (props.payments.length === 0) return;
-        const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
-        const paymentMethodCC = filterCCPayments(payment);
-        if (paymentMethodCC.length > 0 && (hasAnyAuthorisedPendingCA.value(payment) || isGIGProvider)) {
-            return 'capture';
-        }
-        return 'approve';
-    };
+  return payment => {
+    if (props.payments.length === 0) return;
+    const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+    const paymentMethodCC = filterCCPayments(payment);
+    if (
+      paymentMethodCC.length > 0 &&
+      (hasAnyAuthorisedPendingCA.value(payment) || isGIGProvider)
+    ) {
+      return 'capture';
+    }
+    return 'approve';
+  };
 });
 
 const planText = ref();
