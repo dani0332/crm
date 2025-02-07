@@ -827,7 +827,7 @@ class EmbeddedProductRepository extends BaseRepository
             ->whereIn('product_id', $embeddedProductOptionsIds)
             ->first();
 
-        if (!$embededTransaction) {
+        if (! $embededTransaction) {
             $response = ['data' => ['Transaction does not exist'], 'code' => 403];
         } elseif ($embededTransaction->payment_status_id !== PaymentStatusEnum::AUTHORISED) {
             $response = ['data' => ['Invalid payment status'], 'code' => 403];
@@ -836,7 +836,7 @@ class EmbeddedProductRepository extends BaseRepository
             $response = $this->fetchCancelPayment([
                 'amount' => $payment->premium_authorized,
                 'reason' => 'Payment void',
-                ...$data
+                ...$data,
             ]);
         }
 

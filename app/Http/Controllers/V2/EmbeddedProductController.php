@@ -186,7 +186,7 @@ class EmbeddedProductController extends Controller
 
         return response($response['data'], $response['code']);
     }
-    
+
     public function voidPayment(Request $request)
     {
         $response = EmbeddedProductRepository::voidPayment($request->all());
