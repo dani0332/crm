@@ -1561,7 +1561,7 @@ class SendUpdateLogService
 
         if (isTapEnabled()) {
             $isTransactionApproved = $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED ||
-                app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+                app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED]);
             $payment = $payment[0] ?? null;
             if (! empty($payment) && $payment->paymentSplits->isNotEmpty() && $brokerCommission && $isTransactionApproved) {
                 $hasCCPayment = $payment->paymentSplits->contains(function ($split) {

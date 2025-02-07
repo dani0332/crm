@@ -9,12 +9,14 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -133,10 +135,12 @@ class HandleInertiaRequests extends Middleware
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
+            'embeddedProductTypeEnum' => EmbeddedProductTypeEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
             'isTapEnabled' => isTapEnabled(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'impersonatingUser' => User::find(app('impersonate')?->getImpersonatorId()),
+            'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
         ];
     }
 
