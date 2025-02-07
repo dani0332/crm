@@ -2825,17 +2825,21 @@ const shouldProcessUpdate = payment => {
     hasAnyCCSplitPayment() &&
     !shouldSendUpdate
   ) {
-    isInsurerAmlCleared = insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    isInsurerAmlCleared =
+      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
     isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
   }
 
-  if (captureOption === 'approve'){
-    return hasPayments
+  if (captureOption === 'approve') {
+    return hasPayments;
   }
 
-  return hasPayments && isTotalPriceMatching &&
+  return (
+    hasPayments &&
+    isTotalPriceMatching &&
     isAMlAndKycTravelComplete &&
-    isInsurerAmlCleared;
+    isInsurerAmlCleared
+  );
 };
 
 const getValidStatuses = paymentSplitRec => {
