@@ -86,7 +86,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 $isGIGInsuranceProvider = $payment->isGIGInsurer($ccPaymentProcess->quote_type, $quote);
                 info('CC Payment Job - Insurance Provider is GIG: '.$isGIGInsuranceProvider);
                 if ($quote && ! $isGIGInsuranceProvider) {
-                    info('CC Payment Job - Is Send Update Exists: '.! empty($payment->send_update_log_id).' - Send Update Log Id: '.$payment->send_update_log_id);
+                    info('CC Payment Job - Is Send Update Exists: '.! empty($payment->send_update_log_id).' - Send Update Log Id: '.$payment->send_update_log_id ?? '');
                     if (! empty($payment->send_update_log_id)) {
                         $sendUpdateLog = SendUpdateLog::where('id', $payment->send_update_log_id)->first();
                         info("CC Payment Job: Executing Send update case - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:".$sendUpdateLog->code);
