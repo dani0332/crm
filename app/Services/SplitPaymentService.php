@@ -1181,18 +1181,4 @@ class SplitPaymentService
             $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
         }
     }
-
-    private function generateHomeEcomPaymentUrl(string $uuid): string
-    {
-        $afiaWebDomain = config(self::AFIA_WEBSITE_DOMAIN_CONFIG_KEY);
-        if (empty($afiaWebDomain)) {
-            info('AFIA website domain is not configured.', ['uuid' => $uuid]);
-
-            return '';
-        }
-        $basePath = self::HOME_INSURANCE_BASE_PATH;
-        $paymentLinkUrl = rtrim($afiaWebDomain, '/') . $basePath . $uuid . '/payment/status';
-
-        return $paymentLinkUrl;
-    }
 }
