@@ -612,16 +612,21 @@ const onAddDocumentSubmit = event => {
                 View Documents
               </x-button>
               <x-button
-                v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL) 
-                  && (
-                  getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payment_status_id == paymentStatusEnum.DRAFT
-                  || getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payments[0]?.payment_gateway_id == paymentGatewayEnum.PAYMENT_GATEWAY_CHECKOUT
-                  || (
-                    getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
-                    && item.product_type == embeddedProductTypeEnum.NON_INSURANCE 
-                    && getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payments[0]?.payment_gateway_id == paymentGatewayEnum.PAYMENT_GATEWAY_TAP
-                    )
-                  )"
+                v-if="
+                  can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL) &&
+                  (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payment_status_id == paymentStatusEnum.DRAFT ||
+                    getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payments[0]?.payment_gateway_id ==
+                      paymentGatewayEnum.PAYMENT_GATEWAY_CHECKOUT ||
+                    (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id == paymentStatusEnum.CAPTURED &&
+                      item.product_type ==
+                        embeddedProductTypeEnum.NON_INSURANCE &&
+                      getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                        ?.payments[0]?.payment_gateway_id ==
+                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP))
+                "
                 size="xs"
                 color="#ff5e00"
                 :disabled="!item.can_cancel_payment"
@@ -631,9 +636,18 @@ const onAddDocumentSubmit = event => {
               </x-button>
               <x-button
                 v-if="
-                    [paymentStatusEnum.DRAFT, paymentStatusEnum.AUTHORISED, paymentStatusEnum.CANCELLED].includes(getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payment_status_id)
-                    && getFirstPriceWithTransaction(item.prices)?.transactions[0]?.payments[0]?.payment_gateway_id == paymentGatewayEnum.PAYMENT_GATEWAY_TAP
-                  "
+                  [
+                    paymentStatusEnum.DRAFT,
+                    paymentStatusEnum.AUTHORISED,
+                    paymentStatusEnum.CANCELLED,
+                  ].includes(
+                    getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id,
+                  ) &&
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payments[0]?.payment_gateway_id ==
+                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+                "
                 size="xs"
                 color="#ff5e00"
                 :disabled="!item.can_void_payment"
@@ -702,9 +716,7 @@ const onAddDocumentSubmit = event => {
           @submit="onVoidSubmit"
         >
           <div>
-            <p>
-              Are you sure to void this payment?
-            </p>
+            <p>Are you sure to void this payment?</p>
           </div>
 
           <template #secondary-action>
