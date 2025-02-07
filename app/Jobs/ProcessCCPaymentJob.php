@@ -99,6 +99,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                             'sendUpdateId' => $payment->send_update_log_id,
                             'inslyMigrated' => $quote->insly_migrated,
                             'reversalInvoice' => $sendUpdateLog->reversal_invoice ?? '',
+                            'isEmailSent' => $sendUpdateLog->is_email_sent,
                         ]);
 
                         info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode($sendUpdateRequest->toArray()));
