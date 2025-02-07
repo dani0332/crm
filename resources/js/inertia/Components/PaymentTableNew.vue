@@ -2986,21 +2986,16 @@ const hasAnyAuthorisedPendingCA = computed(() => {
 
 const getCaptureOption = computed(() => {
   return payment => {
-    if (props.payments.length > 0) {
-      const isGIGProvider =
-        page.props?.bookPolicyDetails?.isGIGProvider || false;
-      const paymentMethodCC = filterCCPayments(payment);
-      if (
-        (payment.collection_type === 'broker' && paymentMethodCC.length > 0) ||
-        (payment.collection_type === 'insurer' &&
-          hasAnyAuthorisedPendingCA.value(payment) &&
-          isGIGProvider)
-      ) {
-        return 'capture';
-      }
-      return 'approve';
+    if (props.payments.length === 0) return;
+    const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+    const paymentMethodCC = filterCCPayments(payment);
+    if (
+      paymentMethodCC.length > 0 &&
+      (hasAnyAuthorisedPendingCA.value(payment) || isGIGProvider)
+    ) {
+      return 'capture';
     }
-    return;
+    return 'approve';
   };
 });
 

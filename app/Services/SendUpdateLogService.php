@@ -935,8 +935,6 @@ class SendUpdateLogService
             $sageProcessDataRequest = json_decode($sageProcessData['request'], true);
             $sageRequestPayload->sageProcessRequestType = SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST;
             $sageProcessDataRequest['sagePayload'] = $sageRequestPayload;
-            unset($request['dispatchSageCall']);
-
             $sageProcessDataRequest['requestPayload'] = $request;
             $sageProcessData['request'] = json_encode($sageProcessDataRequest);
         }
