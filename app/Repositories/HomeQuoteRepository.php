@@ -21,6 +21,7 @@ use App\Enums\TeamNameEnum;
 use App\Facades\Capi;
 use App\Jobs\HomeQuoteILAJob;
 use App\Jobs\SaveCustomerAddressJob;
+use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\Emirate;
@@ -220,11 +221,8 @@ class HomeQuoteRepository extends BaseRepository
                     SaveCustomerAddressJob::dispatch($response->quoteUID, $addressData);
                 }
 
-                // Trigger Home Quote ILA Job
-                // Requirement is to trigger ILA job after the quote is created from IMCRM and recieve the OCB email
-                info('Dispatching HomeQuoteILAJob for quoteUID: ' . $response->quoteUID);
-                HomeQuoteILAJob::dispatch($response->quoteUID)
-                    ->delay(now()->addMinutes(1));
+                // dispatch job to send Home OCB intro email
+                SendHomeOCBIntroEmailJob::dispatch($response->quoteUID)->delay(now()->addMinutes(1));
             }
         } catch (\Exception $e) {
             info('Failed to dispatch SaveCustomerAddressJob', ['error' => $e->getMessage()]);
