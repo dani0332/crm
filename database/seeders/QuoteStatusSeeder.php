@@ -80,15 +80,15 @@ class QuoteStatusSeeder extends Seeder
             ];
 
             QuoteStatusMap::firstOrCreate([
-                'quote_status_id' => QuoteStatusEnum::PAYMENT_LINK_REQUESTED_BY_CUSTOMER,
+                'quote_status_id' => QuoteStatusEnum::PaymentLinkRequestedByCustomer,
             ], $commonData);
 
             QuoteStatusMap::firstOrCreate([
-                'quote_status_id' => QuoteStatusEnum::PAYMENT_LINK_INPROGRESS,
+                'quote_status_id' => QuoteStatusEnum::PaymentLinkInprogress,
             ], $commonData);
 
             QuoteStatusMap::firstOrCreate([
-                'quote_status_id' => QuoteStatusEnum::PAYMENT_LINK_SENT_TO_CUSTOMER,
+                'quote_status_id' => QuoteStatusEnum::PaymentLinkSentToCustomer,
             ], $commonData);
         }
     }
