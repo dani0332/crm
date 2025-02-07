@@ -221,8 +221,10 @@ class HomeQuoteRepository extends BaseRepository
                     SaveCustomerAddressJob::dispatch($response->quoteUID, $addressData);
                 }
 
-                // dispatch job to send Home OCB intro email
-                SendHomeOCBIntroEmailJob::dispatch($response->quoteUID)->delay(now()->addMinutes(1));
+                // dispatch job to send Home OCB intro email if user is not an admin
+                if (!auth()->user()->hasRole(RolesEnum::Admin)) {
+                    SendHomeOCBIntroEmailJob::dispatch($response->quoteUID)->delay(now()->addMinutes(1));
+                }
             }
         } catch (\Exception $e) {
             info('Failed to dispatch SaveCustomerAddressJob', ['error' => $e->getMessage()]);
