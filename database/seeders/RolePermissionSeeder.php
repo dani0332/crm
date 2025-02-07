@@ -68,6 +68,7 @@ class RolePermissionSeeder extends Seeder
         // $this->searchModulePermissions();
         $this->createBusinessIntelligenceUnitRole();
         $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
+        $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         $this->paymentsVoid();
     }
 
@@ -152,6 +153,22 @@ class RolePermissionSeeder extends Seeder
                 'name' => $missingAdvisorRole,
                 'guard_name' => 'web',
             ]);
+        }
+    }
+
+    private function addVoidPaymentEmbeddedPermission(): void
+    {
+        $role = Role::where('name', RolesEnum::EpAdmin)->first();
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::PAYMENTS_VOID,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if (! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
         }
     }
 

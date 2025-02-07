@@ -4,9 +4,11 @@ namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -228,6 +230,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
+            $item->can_void_payment = $this->canVoidPayment($transaction->first());
         });
 
         return $ep;
@@ -250,6 +253,18 @@ class EmbeddedProductRepository extends BaseRepository
 
                 return $paymentDate->diffInDays(Carbon::now()) <= 3;
             }
+        }
+
+        return false;
+    }
+
+    private function canVoidPayment($transaction)
+    {
+        if (
+            auth()->user()->can(PermissionsEnum::PAYMENTS_VOID)
+            && $transaction
+        ) {
+            return $transaction->payment_status_id == PaymentStatusEnum::AUTHORISED;
         }
 
         return false;
@@ -688,6 +703,9 @@ class EmbeddedProductRepository extends BaseRepository
                 $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED);
             })
             ->with(['payments', 'quoteRequest'])
+            ->whereHas('product.embeddedProduct', function ($query) {
+                $query->where('product_type', EmbeddedProductTypeEnum::NON_INSURANCE);
+            })
             ->get();
 
         if ($epTransaction->isNotEmpty()) {
@@ -795,6 +813,34 @@ class EmbeddedProductRepository extends BaseRepository
             'data' => ['Transaction does not exist'],
             'code' => 403,
         ];
+    }
+
+    public function fetchVoidPayment($data)
+    {
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
+        $type = QuoteType::where('code', $data['modelType'])->first();
+
+        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest'])
+            ->where('quote_request_id', $data['quote_id'])
+            ->where('quote_type_id', $type->id)
+            ->where('is_selected', true)
+            ->whereIn('product_id', $embeddedProductOptionsIds)
+            ->first();
+
+        if (! $embededTransaction) {
+            $response = ['data' => ['Transaction does not exist'], 'code' => 403];
+        } elseif ($embededTransaction->payment_status_id !== PaymentStatusEnum::AUTHORISED) {
+            $response = ['data' => ['Invalid payment status'], 'code' => 403];
+        } else {
+            $payment = $embededTransaction->payments->first();
+            $response = $this->fetchCancelPayment([
+                'amount' => $payment->premium_authorized,
+                'reason' => 'Payment void',
+                ...$data,
+            ]);
+        }
+
+        return $response;
     }
 
     private function processCancelPayment($data)
