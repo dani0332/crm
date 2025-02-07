@@ -79,10 +79,14 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
             $payment = $paymentSplit->payment;
             $splitPayments = $payment->paymentSplits;
             $hasAnyCCPayment = $splitPayments->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0;
+            info('CC Payment Job - Payment Status ID: '.$payment->payment_status_id.' - Collected By Insurer: '.$payment->isInsurerPayment().' - Has any CC Payment:'.$hasAnyCCPayment);
 
             if (in_array($payment->payment_status_id, [PaymentStatusEnum::CAPTURED]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
                 $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id);
-                if ($quote && ! $payment->isGIGInsurer($ccPaymentProcess->quote_type, $quote)) {
+                $isGIGInsuranceProvider = $payment->isGIGInsurer($ccPaymentProcess->quote_type, $quote);
+                info('CC Payment Job - Insurance Provider is GIG: '.$isGIGInsuranceProvider);
+                if ($quote && ! $isGIGInsuranceProvider) {
+                    info('CC Payment Job - Is Send Update Exists: '.! empty($payment->send_update_log_id).' - Send Update Log Id: '.$payment->send_update_log_id ?? '');
                     if (! empty($payment->send_update_log_id)) {
                         $sendUpdateLog = SendUpdateLog::where('id', $payment->send_update_log_id)->first();
                         info("CC Payment Job: Executing Send update case - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:".$sendUpdateLog->code);
