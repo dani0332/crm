@@ -4,6 +4,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -96,7 +97,11 @@ defineProps({
   lockLeadSectionsDetails: Object,
   customerAddressData: Object,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
+  insurerAMLStatus: String,
 });
+
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
@@ -167,7 +172,7 @@ const dateFormat = date => {
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
-const { isRequired, isEmail, isNumber, isMobile } = useRules();
+const { isRequired, isEmail, isNumber, isMobile, emiratesNumber } = useRules();
 
 const isCarLostStatus = statusId => {
   return (
@@ -1658,6 +1663,20 @@ const convertToNumber = (value, decimalPlace = 2) => {
 
   return roundToFinal;
 };
+
+function genderFormatForProfile(gender) {
+  if (!gender) return gender;
+  return gender === 'M' || gender === 'Male' ? 'Male' : 'Female';
+}
+
+function capitalizeString(str) {
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -1884,6 +1903,10 @@ const convertToNumber = (value, decimalPlace = 2) => {
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BATCH</dt>
                 <dd>{{ record.quote_batch_id_text }}</dd>
               </div>
@@ -1906,6 +1929,10 @@ const convertToNumber = (value, decimalPlace = 2) => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CYLINDER</dt>
                 <dd>{{ record.cylinder }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CHASSIS NUMBER</dt>
+                <dd>{{ record.chassis_number }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRIM</dt>
@@ -2230,7 +2257,7 @@ const convertToNumber = (value, decimalPlace = 2) => {
                       v-model="customerProfileForm.insured_first_name"
                       :rules="[isRequired]"
                       placeholder="INSURED FIRST NAME"
-                      class="w-full"
+                      class="!mb-0 w-full"
                       :disabled="
                         !isProfileUpdateAllow ||
                         linkedQuoteDetails.childLeadsCount > 0
@@ -2245,7 +2272,7 @@ const convertToNumber = (value, decimalPlace = 2) => {
                       v-model="customerProfileForm.insured_last_name"
                       :rules="[isRequired]"
                       placeholder="INSURED LAST NAME"
-                      class="w-full"
+                      class="!mb-0 w-full"
                       :disabled="
                         !isProfileUpdateAllow ||
                         linkedQuoteDetails.childLeadsCount > 0
@@ -2277,13 +2304,18 @@ const convertToNumber = (value, decimalPlace = 2) => {
                   <dd>{{ fullAddress }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ record.nationality_id_text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ record.dob }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ genderFormatForProfile(record.gender) }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ record.nationality_id_text }}</dd>
+                </div>
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
                   <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
@@ -2293,9 +2325,14 @@ const convertToNumber = (value, decimalPlace = 2) => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
-                      class="w-full"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
+                      class="!mb-0 w-full"
                       :disabled="
                         !isProfileUpdateAllow ||
                         linkedQuoteDetails.childLeadsCount > 0
@@ -2315,6 +2352,7 @@ const convertToNumber = (value, decimalPlace = 2) => {
                         linkedQuoteDetails.childLeadsCount > 0
                       "
                       :min-date="new Date()"
+                      class="!mb-0"
                     />
                   </dd>
                 </div>
@@ -3683,6 +3721,8 @@ const convertToNumber = (value, decimalPlace = 2) => {
       :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
     <PaymentTable
       v-else

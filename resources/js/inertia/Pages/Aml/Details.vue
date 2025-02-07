@@ -17,11 +17,13 @@ const props = defineProps({
   businessCommuModeText: Array,
   kycLogs: Array,
   kycStatus: String,
-  customerDetails: Object,
+  insuredPersonDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
   cardHolderName: Object,
   amlStatusName: String,
+  quoteTypeIdEnum: Array,
+  quoteStatusEnums: Array,
 });
 
 const page = usePage();
@@ -709,7 +711,7 @@ onMounted(() => {
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
       :quote-aml-status="page.props.quoteAmlStatus"
-      :customer-details="props.customerDetails"
+      :insuredPersonDetails="props.insuredPersonDetails"
       :cardHolderName="cardHolderName"
       :kycLogs="kycLogs"
     />

@@ -5,6 +5,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -57,6 +58,8 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const assumptionState = reactive({
@@ -64,7 +67,7 @@ const assumptionState = reactive({
 });
 
 const page = usePage();
-const { isRequired } = useRules();
+const { isRequired, emiratesNumber } = useRules();
 
 const modelClass = 'App\\Models\\PersonalQuote';
 
@@ -170,9 +173,9 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer?.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer?.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer?.emirates_id_number || null,
+  insured_first_name: page.props.quote?.insured?.first_name || '',
+  insured_last_name: page.props.quote?.insured?.last_name || '',
+  emirates_id_number: page.props.quote?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer?.emirates_id_expiry_date || null,
 
@@ -343,6 +346,15 @@ const fetchUpdatedQuote = async () => {
     });
   }
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
+
+function capitalizeString(str) {
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
 </script>
 
 <template>
@@ -457,10 +469,6 @@ const fetchUpdatedQuote = async () => {
             <dd>{{ quote?.paid_at ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">AML STATUS</dt>
-            <dd>{{ amlStatusName ?? '' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
             <dd>{{ quote?.payment_status?.text }}</dd>
           </div>
@@ -538,10 +546,11 @@ const fetchUpdatedQuote = async () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd v-if="quote?.kyc_decision === 'Complete'">
-                  KYC - Complete
-                </dd>
-                <dd v-else>KYC - Pending</dd>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER AGE</dt>
@@ -811,6 +820,10 @@ const fetchUpdatedQuote = async () => {
               <dd>{{ quote?.dob }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">GENDER</dt>
+              <dd>{{ quote?.gender }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
               <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
               <dd>
                 {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
@@ -821,8 +834,13 @@ const fetchUpdatedQuote = async () => {
               <dd>
                 <x-input
                   v-model="customerProfileForm.emirates_id_number"
-                  :rules="[isRequired]"
-                  placeholder="EMIRATES ID NUMBER"
+                  :rules="[isRequired, emiratesNumber]"
+                  placeholder="xxx-xxxx-xxxxxxx-x"
+                  @input="
+                    applyEmiratesIdNumMasking(
+                      customerProfileForm.emirates_id_number,
+                    )
+                  "
                   class="w-full"
                   :disabled="!isProfileUpdateAllow"
                 />
@@ -1301,6 +1319,8 @@ const fetchUpdatedQuote = async () => {
       "
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <QuotePayments

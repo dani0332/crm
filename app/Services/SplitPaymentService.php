@@ -767,7 +767,7 @@ class SplitPaymentService
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
                 }
             } else {
-                if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policu schedule for automation
+                if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policy schedule for automation
                     $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
                 }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
@@ -1151,8 +1151,8 @@ class SplitPaymentService
                         $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
                     }
                 }
-                if (! $isCreditCardEnabled && $paymentSplit->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
-                    $paymentSplit->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
+                if (! $isCreditCardEnabled && $paymentSplit->payment_method == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
+                    $paymentSplit->payment_method = PaymentMethodsEnum::InsurerPayment;
                 }
                 if ($paymentSplit->isDirty()) {
                     $paymentSplit->save();

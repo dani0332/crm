@@ -39,6 +39,7 @@ const props = defineProps({
   ecomHealthInsuranceQuoteUrl: String,
   bookPolicyDetails: Array,
   paymentDocument: Array,
+  paymentGatewayEnum: Array,
 });
 
 const page = usePage();
@@ -2470,6 +2471,7 @@ const updateProfileDetails = isValid => {
       ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
     "
     :bookPolicyDetails="bookPolicyDetails"
+    :paymentGatewayEnum="paymentGatewayEnum"
   />
 
   <!-- QuoteDocuments -->
