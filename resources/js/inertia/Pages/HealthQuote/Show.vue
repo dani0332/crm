@@ -3252,8 +3252,8 @@ const onAddUpdate = () => {
               </x-button>
               <template #tooltip>
                 <div>
-                  When clicked, this button sends the One Click Buy (OCB) email
-                  to the customer with updated rates and coverage options,
+                  When clicked, this button sends the One Click Apply (OCB)
+                  email to the customer with updated rates and coverage options,
                   helping them finalize their purchase with ease.
                 </div>
               </template>
