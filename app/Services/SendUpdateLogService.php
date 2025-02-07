@@ -910,7 +910,7 @@ class SendUpdateLogService
         }
 
         info('fn:preparedDataForEndorsement - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
-        app(SendUpdateLogService::class)->updateSageProcessForDispatching((array) $sendUpdateRequest, $sendUpdateLog, $sageRequestPayload);
+        app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $sageRequestPayload);
 
         (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);
         info('fn:preparedDataForEndorsement - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
