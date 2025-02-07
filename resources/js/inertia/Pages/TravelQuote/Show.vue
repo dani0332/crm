@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -63,6 +64,8 @@ defineProps({
   isAmlClearedForQuote: Boolean,
   amlStatusName: String,
   access: Object,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -131,6 +134,7 @@ const {
   policy_start_date,
   isEmail,
   isMobileNo,
+  emiratesNumber,
 } = useRules();
 const confirmDeleteData = reactive({
   docs: null,
@@ -1367,7 +1371,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
   });
 };
 
@@ -1500,6 +1504,15 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
+
+function capitalizeString(str) {
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -1742,6 +1755,10 @@ const allowStatusUpdate = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -2131,20 +2148,29 @@ const allowStatusUpdate = computed(() => {
                   <dd>{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality_id_text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ quote.gender }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality_id_text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -3091,6 +3117,8 @@ const allowStatusUpdate = computed(() => {
                         selectedPlansIds: selectedPlanIds,
                         planType: 'normalPlans',
                       }"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
                     />
                     <x-button
                       v-else
@@ -3181,6 +3209,8 @@ const allowStatusUpdate = computed(() => {
                           selectedPlansIds: selectedPlanIds,
                           planType: 'seniorPlans',
                         }"
+                        :insuranceProviderId="item.id"
+                        :code="quote.code"
                       />
                       <x-button
                         v-else
@@ -3253,6 +3283,8 @@ const allowStatusUpdate = computed(() => {
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PaymentTable

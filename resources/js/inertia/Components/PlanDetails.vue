@@ -89,16 +89,11 @@ const submitPlanDetailsForm = isValid => {
       Object.keys(errors).forEach(function (key) {
         planDetailsForm.setError(key, errors[key]);
       });
-      if (errors.error) {
-        notification.error({
-          title: errors.error,
-          position: 'top',
-        });
-      }
       Object.keys(errors).forEach(function (key) {
         notification.error({
           title: errors[key],
           position: 'top',
+          timeout: key == 'authorized' ? 10000 : 3000,
         });
       });
     },

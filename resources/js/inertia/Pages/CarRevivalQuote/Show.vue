@@ -31,6 +31,7 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentStatusEnum: Object,
   storageUrl: String,
+  paymentGatewayEnum: Array,
 });
 
 const page = usePage();
@@ -977,6 +978,7 @@ const sendPolicyToClient = () => {
         })
       "
       :storageUrl="storageUrl"
+      :paymentGatewayEnum="paymentGatewayEnum"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
