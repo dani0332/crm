@@ -2817,6 +2817,7 @@ const shouldProcessUpdate = payment => {
     quoteTypeCodeEnum.Bike,
     quoteTypeCodeEnum.Travel,
   ];
+  const captureOption = getCaptureOption.value(payment);
   if (
     isInsurer &&
     isGIGProvider &&
@@ -2829,9 +2830,16 @@ const shouldProcessUpdate = payment => {
     isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
   }
 
-  return hasPayments /*&& isTotalPriceMatching &&
+  if (captureOption === 'approve') {
+    return hasPayments;
+  }
+
+  return (
+    hasPayments &&
+    isTotalPriceMatching &&
     isAMlAndKycTravelComplete &&
-    isInsurerAmlCleared*/;
+    isInsurerAmlCleared
+  );
 };
 
 const getValidStatuses = paymentSplitRec => {
