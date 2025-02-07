@@ -46,6 +46,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -1360,10 +1361,11 @@ class CRUDController extends Controller
         app(CustomerAddressService::class)->validateAddress($request);
 
         if ($modelType == quoteTypeCode::Car) {
-            $carQuoteWithDetails = CarQuote::with('carQuoteRequestDetail')->where('uuid', $id)->first();
-            $carQuoteWithDetails->chassis_number = $request->chassis_number;
-            if ($carQuoteWithDetails->isDirty()) {
-                $carQuoteWithDetails->save();
+            $carQuoteRequest = CarQuote::with('carQuoteRequestDetail')->where('uuid', $id)->first();
+            $carQuoteRequestDetail = $carQuoteRequest->carQuoteRequestDetail;
+            $carQuoteRequestDetail->chassis_number = $request->chassis_number;
+            if ($carQuoteRequestDetail->isDirty()) {
+                $carQuoteRequestDetail->save();
             }
         }
 
