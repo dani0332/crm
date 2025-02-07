@@ -92,12 +92,13 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                             'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$payment->send_update_log_id,
                         ])->update(['value', 0]);
 
-                        $sendUpdateRequest = new \stdClass;
-                        $sendUpdateRequest->quoteType = $ccPaymentProcess->quote_type;
-                        $sendUpdateRequest->quoteRefId = $quote->id;
-                        $sendUpdateRequest->quoteUuid = $quote->uuid;
-                        $sendUpdateRequest->sendUpdateId = $payment->send_update_log_id;
-                        $sendUpdateRequest->inslyMigrated = $quote->insly_migrated;
+                        $sendUpdateRequest = collect([
+                            'quoteType' => $ccPaymentProcess->quote_type,
+                            'quoteRefId' => $quote->id,
+                            'quoteUuid' => $quote->uuid,
+                            'sendUpdateId' => $payment->send_update_log_id,
+                            'inslyMigrated' => $quote->insly_migrated,
+                        ]);
 
                         info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode($sendUpdateRequest->toArray()));
 
