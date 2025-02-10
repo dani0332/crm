@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Events\LeadsCount;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
+use App\Enums\InvestmentFrequencyEnum;
 use App\Http\Requests\SavingsQuoteRequest;
 use App\Services\Quotes\SavingsQuoteService;
 
@@ -38,6 +39,7 @@ class SavingsQuoteController extends Controller
             'advisors' => $advisors,
             'totalCount' => $count,
             'authorizedDays' => intval($authorizedDays->value),
+            'investmentFrequencies' => InvestmentFrequencyEnum::withLabels(),
         ]);
     }
 
@@ -52,7 +54,7 @@ class SavingsQuoteController extends Controller
     {
         $response = $this->savingsQuoteService->create($request->validated());
 
-         if (! empty($response->errors) || ! empty($response->msg)) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 
