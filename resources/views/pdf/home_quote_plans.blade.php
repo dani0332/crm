@@ -480,14 +480,19 @@
         }
 
         table.disclaimer-table {
+            margin: auto;
+            padding: auto;
+            table-layout: fixed;
+            page-break-inside: avoid;
+            page-break-before: auto;
             width: 100%;
-            margin-bottom: 20px;
-            margin-top: 20px;
             border-collapse: separate;
             border: none !important;
         }
 
         table.disclaimer-table td {
+            page-break-inside: avoid;
+            page-break-before: auto;
             padding: 10px;
             text-align: left;
             vertical-align: top;
@@ -497,6 +502,8 @@
         }
 
         .disclaimer-title {
+            page-break-inside: avoid;
+            page-break-before: auto;
             font-weight: bold;
             font-size: 20px;
             margin-bottom: 10px;
@@ -505,6 +512,8 @@
         }
 
         .disclaimer-text {
+            page-break-inside: avoid;
+            page-break-before: auto;
             margin: 0;
             font-size: 16px;
             line-height: 1.5;
