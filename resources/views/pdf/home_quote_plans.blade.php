@@ -479,6 +479,38 @@
             page-break-after: auto;
         }
 
+        table.disclaimer-table {
+            width: 100%;
+            margin-bottom: 20px;
+            margin-top: 20px;
+            border-collapse: separate;
+            border: none !important;
+        }
+
+        table.disclaimer-table td {
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+            font-size: 16px;
+            line-height: 1.5;
+            border: none;
+        }
+
+        .disclaimer-title {
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 10px;
+            display: block;
+            text-align: left;
+        }
+
+        .disclaimer-text {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.5;
+            text-align: left;
+        }
+
         .content {}
     </style>
 </head>
@@ -819,7 +851,27 @@
                 </tr>
             </tbody>
         </table>
-        <div class="disclaimer-container"
+
+        <table class="disclaimer-table">
+            <tr>
+                <td>
+                    <span class="disclaimer-title">
+                        Disclaimer and Material Information
+                    </span>
+                    <p class="disclaimer-text">
+                        All quotes provided are indicative and based on the information you have supplied. While we
+                        strive for accuracy in our comparison tables, discrepancies may occur. In such instances, the
+                        terms detailed in the insurer's policy wordings and schedules will take precedence over the
+                        details provided by us. For the full text of the disclaimer and material information, please
+                        refer to the quote. Policy wordings and schedules will prevail. Additionally, your final price
+                        may be adjusted following the insurer's review of your risk profile after payment. We recommend
+                        reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
+                    </p>
+                </td>
+            </tr>
+        </table>
+
+        {{-- <div class="disclaimer-container"
             style="width: 100%; padding: 10px; box-sizing: border-box; margin-bottom: 20px;">
             <span class="section-title"
                 style="font-weight: bold; font-size: 20px; display: block; margin-bottom: 10px;">Disclaimer and
@@ -833,7 +885,7 @@
                 may be adjusted following the insurer's review of your risk profile after payment. We recommend
                 reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
             </p>
-        </div>
+        </div> --}}
     </main>
 
     {{-- PDF Page Footer --}}
