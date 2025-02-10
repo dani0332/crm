@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Carbon\Carbon;
+
 trait Filterable
 {
     private function getAlias($alias = null)
@@ -75,5 +77,26 @@ trait Filterable
                     fn ($q) => $q->when($paginted, fn ($sq) => $sq->simplePaginate(10)->withQueryString())
                 )
             );
+    }
+
+    public function scopeFilterByCreatedAt($query, $start, $end, $alias = null)
+    {
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $defaultStartDate = now()->startOfDay();
+        $defaultEndDate = now()->endOfDay();
+
+        $start = $start ? Carbon::parse($start)->startOfDay() : $defaultStartDate;
+        $end = $end ? Carbon::parse($end)->endOfDay() : $defaultEndDate;
+
+        $start = $start->format($dateFormat);
+        $end = $end->format($dateFormat);
+
+        $query->when($start, function ($sq) use ($start, $alias) {
+            $sq->where("{$this->getAlias($alias)}.created_at", '>=', $start);
+        });
+
+        $query->when($end, function ($sq) use ($end, $alias) {
+            $sq->where("{$this->getAlias($alias)}.created_at", '<=', $end);
+        });
     }
 }

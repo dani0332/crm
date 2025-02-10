@@ -2,15 +2,16 @@
 
 namespace App\Services\Quotes;
 
-use App\Enums\RolesEnum;
 use App\Enums\GenderEnum;
+use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Models\Nationality;
+use App\Enums\RolesEnum;
+use App\Enums\SavingsPurposeEnum;
 use App\Models\CurrencyType;
 use App\Models\MartialStatus;
+use App\Models\Nationality;
 use App\Models\PersonalQuote;
-use App\Enums\SavingsPurposeEnum;
 use App\Models\SavingsQuote;
 use Illuminate\Support\Facades\Auth;
 
@@ -34,11 +35,17 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote',
             'nationality',
         ])
-            ->filter(! $forExport, $getTotalCount)
-            ->withFakeLeadCriteria($getTotalCount);
+            ->filter(forTotalLeadsCount: $getTotalCount)
+            ->withFakeLeadCriteria($getTotalCount)
+            ->filterByCreatedAt(request('created_at_start'), request('created_at_end'))
+            ->when(request('investment_frequency'), function ($q) {
+                $q->whereHas('savingsQuote', function ($sq) {
+                    $sq->where('investment_frequency', request('investment_frequency'));
+                });
+            });
 
-        // $this->adjustQueryByInsurerInvoiceFilters($query);
-        // $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        $this->adjustQueryByInsurerInvoiceFilters($query);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         return $query->resolveData($paginted, $forExport, $getTotalCount);
     }
@@ -51,14 +58,14 @@ class SavingsQuoteService extends BaseQuoteService
             'maritalStatuses' => MartialStatus::withActive()->options(),
             'purposes' => SavingsPurposeEnum::withLabels(),
             'currencies' => CurrencyType::withActive()->options(),
+            'investmentFrequencies' => InvestmentFrequencyEnum::withLabels(),
         ];
     }
 
     // TODO: Remove this function after the API is ready
     private function tempMockApi($data)
     {
-        $getUUID = function(): string
-        {
+        $getUUID = function (): string {
             $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             $length = 8;
 
@@ -85,7 +92,7 @@ class SavingsQuoteService extends BaseQuoteService
             'quote_type_id' => $data['quoteTypeId'],
             'uuid' => $uuid,
             'code' => "{$this->quoteType->shortCode()}{$uuid}",
-            'quote_status_id' => QuoteStatusEnum::NewLead
+            'quote_status_id' => QuoteStatusEnum::NewLead,
         ]);
 
         SavingsQuote::create([
@@ -119,14 +126,14 @@ class SavingsQuoteService extends BaseQuoteService
             'nationalityId' => $data['nationality_id'],
             'gender' => $data['gender'],
             'quoteTypeId' => $this->quoteType->id(),
-            "maritalStatusId" => $data['marital_status_id'],
-            "tenureOfSavings" => $data['tenure_of_savings'],
-            "hasNicotine" => $data['has_nicotine'],
-            "purpose" => $data['purpose'],
-            "currency" => $data['currency'],
-            "amount" => $data['amount'],
-            "investmentFrequency" => $data['investment_frequency'],
-            "additionalNotes" => $data['additional_notes'],
+            'maritalStatusId' => $data['marital_status_id'],
+            'tenureOfSavings' => $data['tenure_of_savings'],
+            'hasNicotine' => $data['has_nicotine'],
+            'purpose' => $data['purpose'],
+            'currency' => $data['currency'],
+            'amount' => $data['amount'],
+            'investmentFrequency' => $data['investment_frequency'],
+            'additionalNotes' => $data['additional_notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'utmSource' => '',
