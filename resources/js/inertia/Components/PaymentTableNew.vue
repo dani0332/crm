@@ -2985,9 +2985,8 @@ const getCaptureOption = computed(() => {
 
         // Return 'capture' if all conditions are met, otherwise return 'approve'
         if ((isCreditCardPayment && isNotInsurerPayment && !isGIGProvider) || isGIGProvider) {
-            return 'capture';
+            return  'capture';
         }
-
         return 'approve';
     };
 });
