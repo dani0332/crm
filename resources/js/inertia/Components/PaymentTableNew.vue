@@ -1815,6 +1815,7 @@ const editPaymentModal = (
   }
 
   if (
+    paymentMethodsForm.collection_type === 'insurer' &&
     isEditPaymentEnabled() &&
     split_payment_id == 0 &&
     sr_no == 0 &&
