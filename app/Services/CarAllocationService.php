@@ -230,10 +230,10 @@ class CarAllocationService extends AllocationService
         if (isset($teamMap[$leadSource])) {
             // Retrieve team IDs for the relevant team
             $teamIds = Team::where('name', $teamMap[$leadSource])->pluck('id')->toArray();
-    
+
             // Retrieve user IDs associated with the relevant team
             $userIds = UserTeams::whereIn('team_id', $teamIds)->pluck('user_id')->toArray();
-    
+
             // Get only the common user IDs
             $tierUserIds = array_intersect($tierUserIds->toArray(), $userIds);
         }
