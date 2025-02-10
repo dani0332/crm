@@ -8,6 +8,7 @@ const props = defineProps({
   maritalStatuses: Object,
   purposes: Object,
   currencies: Object,
+  investmentFrequencies: Object,
 });
 
 const quoteForm = useForm({
@@ -217,8 +218,11 @@ function onSubmit(isValid) {
                   v-model="quoteForm.investment_frequency"
                   :rules="[isRequired]"
                 >
-                  <x-radio value="regular" label="Regular" />
-                  <x-radio value="lumpsum" label="Lumpsum" />
+                  <x-radio
+                    v-for="item in investmentFrequencies"
+                    :value="item.value"
+                    :label="item.label"
+                  />
                 </x-form-group>
               </div>
             </x-field>
