@@ -2972,25 +2972,27 @@ const alertCapture = payment => {
 };
 
 const getCaptureOption = computed(() => {
-    return payment => {
-        // Return early if there are no payments
-        if (props.payments.length === 0) return;
+  return payment => {
+    // Return early if there are no payments
+    if (props.payments.length === 0) return;
 
-        const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
-        const paymentMethodCC = filterCCPayments(payment);
+    const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+    const paymentMethodCC = filterCCPayments(payment);
 
-        // Check if the conditions for 'capture' are met
-        const isCreditCardPayment = paymentMethodCC.length > 0;
-        const isNotInsurerPayment = payment.collection_type !== 'insurer';
+    // Check if the conditions for 'capture' are met
+    const isCreditCardPayment = paymentMethodCC.length > 0;
+    const isNotInsurerPayment = payment.collection_type !== 'insurer';
 
-        // Return 'capture' if all conditions are met, otherwise return 'approve'
-        if ((isCreditCardPayment && isNotInsurerPayment && !isGIGProvider) || isGIGProvider) {
-            return  'capture';
-        }
-        return 'approve';
-    };
+    // Return 'capture' if all conditions are met, otherwise return 'approve'
+    if (
+      (isCreditCardPayment && isNotInsurerPayment && !isGIGProvider) ||
+      isGIGProvider
+    ) {
+      return 'capture';
+    }
+    return 'approve';
+  };
 });
-
 
 const planText = ref();
 const fetchPlans = () => {
