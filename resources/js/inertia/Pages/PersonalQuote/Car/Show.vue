@@ -1893,7 +1893,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ quote.car_company_address }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
