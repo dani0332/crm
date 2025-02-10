@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Events\LeadsCount;
-use App\Enums\PermissionsEnum;
-use App\Http\Controllers\Controller;
 use App\Enums\InvestmentFrequencyEnum;
+use App\Enums\PermissionsEnum;
+use App\Events\LeadsCount;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsQuoteRequest;
 use App\Services\Quotes\SavingsQuoteService;
 
