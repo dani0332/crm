@@ -14,20 +14,19 @@ class OutboundEmailsHookService
     {
         try {
             info(self::class.' - handleOutboundEmailsHook Received webhook request: ' . json_encode($request->all()) . ' | Time: ' . now());
-            $payload = collect($request->all());
-
+            $payload =(object) collect($request['payload']);
             if ($payload->isEmpty()) {
                 info(self::class.' - handleOutboundEmailsHook Bird Webhook Payload data is empty!' . ' | Time: ' . now());
 
                 return apiResponse([], Response::HTTP_BAD_REQUEST, ' Webhook Payload is empty!');
             }
 
-            if (!empty($payload['status'])) {
+            if (!empty($payload['id'])) {
                 // Extract necessary fields from the payload
                 $messageId = $payload['id'] ?? null;
                 $status = $payload['status'];
                 $reason = $payload['reason'] ?? null;
-                $identifierValue = $payload['sender']['connector']['identifierValue'] ?? null;
+                $identifierValue = collect($payload['receiver']['contacts'])->first()['identifierValue'] ?? null;
 
                 info('Extracted fields - Message ID: ' . $messageId . ', Status: ' . $status . ', Identifier Value: ' . $identifierValue);
 
@@ -67,7 +66,6 @@ class OutboundEmailsHookService
         info('birdMessageStatusUpdate called with result: ' . json_encode($result) . ' and identifierValue: ' . $identifierValue);
         $result = (object) $result->all();
         info(self::class.' - Webhook birdMessageStatusUpdate Payload: '.json_encode($result));
-
         $messageId = $result->messageId ?? null;
         $status = $result->status ?? null; // Changed from $result->type to $result->status
         $emailSubject = $result->reason ?? null;
