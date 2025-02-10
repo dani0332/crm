@@ -15,6 +15,7 @@ defineProps({
     default: 0,
   },
   authorizedDays: Number,
+  investmentFrequencies: Array,
 });
 
 const page = usePage();
@@ -52,6 +53,7 @@ let availableFilters = {
   advisor_assigned_date: '',
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  investment_frequency: '',
 };
 
 const filters = reactive(availableFilters);
@@ -170,6 +172,9 @@ function onSubmit(isValid) {
       preserveScroll: true,
       onBefore: () => (loader.table = true),
       onSuccess: () => (loader.table = false),
+      onFinish: () => {
+        loader.table = false;
+      },
     });
   } else {
     console.log('Invalid');
@@ -623,6 +628,14 @@ const validateDateRange = () => {
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <x-field label="Investment Frequency">
+          <ComboBox
+            v-model="filters.investment_frequency"
+            placeholder="Search by Investment Frequency"
+            :options="investmentFrequencies"
+            :single="true"
+          />
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
