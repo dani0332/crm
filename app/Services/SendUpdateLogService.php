@@ -869,8 +869,8 @@ class SendUpdateLogService
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
         ];
 
-        // Reminder:: To handle insurer payment against credit card for Tap Integration
-        if (isTapEnabled()) {
+        // Reminder:: To handle insurer payment against credit card for Tap Integration and if payment available in Send update then create Receipt
+        if (isTapEnabled() && ! empty($preparedDetailsForEndorsement['payment']?->send_update_log_id)) {
             $checkCCPayments = $preparedDetailsForEndorsement['splitPayments']->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED])
                 ->where('payment_method', PaymentMethodsEnum::CreditCard)
                 ->count() > 0;
@@ -882,13 +882,16 @@ class SendUpdateLogService
                 if (! $successMessage) {
                     return ['status' => false, 'message' => 'Error while approving send update payment'];
                 }
+
+                QuoteTag::updateOrCreate([
+                    'quote_type_id' => QuoteTypes::getIdFromValue($sendUpdateRequest->quoteType),
+                    'quote_uuid' => $quoteDetails->uuid,
+                    'send_update_log_id' => $sendUpdateLog?->id,
+                    'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLog?->id,
+                ], ['value' => 1]);
+            } else {
+                // Endorsement booking should be called in any case
             }
-            QuoteTag::updateOrCreate([
-                'quote_type_id' => QuoteTypes::getIdFromValue($sendUpdateRequest->quoteType),
-                'quote_uuid' => $quoteDetails->uuid,
-                'send_update_log_id' => $sendUpdateLog?->id,
-                'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLog?->id,
-            ], ['value' => 1]);
 
             return ['status' => true, 'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status'];
         }
