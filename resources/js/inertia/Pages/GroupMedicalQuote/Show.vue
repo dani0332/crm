@@ -152,12 +152,6 @@ const onLeadStatus = () => {
           position: 'top',
         });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
-      },
     },
   );
 };
