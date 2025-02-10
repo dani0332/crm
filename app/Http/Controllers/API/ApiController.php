@@ -33,6 +33,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Services\OutboundEmailsHookService;
+use App\Http\Requests\BirdOutBoundWebhookRequest;
 
 class ApiController extends Controller
 {
@@ -40,13 +42,15 @@ class ApiController extends Controller
 
     public $apiService;
     public $inboundEmailsHookService;
+    public $outboundEmailsHookService;
     protected $emailStatusService;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
+        $this->outboundEmailsHookService = $outboundEmailsHookService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -233,5 +237,10 @@ class ApiController extends Controller
     public function Ken2Connectivity()
     {
         return Ken::renewalRequest('/get-connectivity-check', 'get');
+    }
+
+    public function birdOutboundEmailsHook(BirdOutBoundWebhookRequest $request)
+    {
+        return $this->outboundEmailsHookService->handleOutboundEmailsHook($request);
     }
 }
