@@ -686,7 +686,6 @@ watch(
             <x-input
               v-model="insuredFormDetails.insured_first_name"
               :rules="[isRequired, rules.nameCheck]"
-              :key="insuredFormDetails.insured_first_name"
               placeholder="Insured First Name"
               type="text"
               class="w-full"
@@ -696,7 +695,6 @@ watch(
             <x-input
               v-model="insuredFormDetails.insured_last_name"
               :rules="[isRequired, rules.nameCheck]"
-              :key="insuredFormDetails.insured_last_name"
               placeholder="Insured Last Name"
               type="text"
               class="w-full"
@@ -719,13 +717,11 @@ watch(
               :rules="[isRequired]"
               placeholder="Date of Birth"
               class="w-full"
-              :key="insuredFormDetails.dob"
             />
           </x-field>
           <x-field label="Gender" required>
             <x-select
               v-model="insuredFormDetails.screening_gender"
-              :key="insuredFormDetails.screening_gender"
               :options="gender"
               placeholder="Gender"
               :rules="[isRequired]"
