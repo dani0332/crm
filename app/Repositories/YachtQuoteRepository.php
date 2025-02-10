@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -53,6 +54,9 @@ class YachtQuoteRepository extends BaseRepository
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'dob' => $data['dob'],
+            'gender' => $data['gender'],
+            'nationalityId' => $data['nationality_id'],
         ];
 
         info('YachtQuote create data : '.json_encode($quoteData));
@@ -68,7 +72,7 @@ class YachtQuoteRepository extends BaseRepository
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::YACHT->id())->where('uuid', $uuid)->firstOrFail();
 
-            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'company_name', 'company_address', 'asset_value']);
+            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'company_name', 'company_address', 'asset_value', 'gender', 'dob', 'nationality_id']);
             $quoteData['updated_by_id'] = Auth::user()->id;
 
             $quote->update($quoteData);
@@ -78,8 +82,26 @@ class YachtQuoteRepository extends BaseRepository
                 Arr::only($data, (new YachtQuote)->allowedColumns())
             );
 
+            $quote->customer()->update([
+                'dob' => $data['dob'] ?? null,
+                'gender' => $data['gender'] ?? null,
+                'nationality_id' => $data['nationality_id'] ?? null,
+            ]);
+
             return $quote;
         });
+    }
+
+    /**
+     * get all dropdown options required for form.
+     *
+     * @return array
+     */
+    public function fetchGetFormOptions()
+    {
+        return [
+            'nationalities' => NationalityRepository::withActive()->get(),
+        ];
     }
 
     /**
@@ -87,7 +109,8 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->byQuoteTypeId(QuoteTypes::YACHT->id())
+        $quoteTypeId = QuoteTypes::YACHT->id();
+        $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
                 'yachtQuote',
@@ -97,6 +120,9 @@ class YachtQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'insuranceProvider',
+                'insured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable',
                         'paymentSplits.paymentStatus',
@@ -121,6 +147,7 @@ class YachtQuoteRepository extends BaseRepository
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
+                'dob AS unformatted_dob',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -134,6 +161,9 @@ class YachtQuoteRepository extends BaseRepository
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        if (isset($data['insured'][0])) {
+            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        }
 
         return $quote;
     }
@@ -164,7 +194,19 @@ class YachtQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount);
+            ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->select([
+                '*',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                '),
+            ]);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');

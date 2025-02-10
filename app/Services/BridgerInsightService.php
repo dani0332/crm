@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Models\KycLog;
@@ -158,6 +159,7 @@ class BridgerInsightService
                                 'search_type' => (substr($memberUboDetails['code'], 0, 3) == CustomerTypeEnum::IndividualShort) ? CustomerTypeEnum::Individual : CustomerTypeEnum::Entity,
                                 'customer_code' => $memberUboDetails['code'],
                                 'decision' => AMLDecisionStatusEnum::ESCALATED,
+                                'screening_type' => AMLScreeningTypeEnum::BRIDGER,
                             ];
 
                             if ($amlResultCount == 0) {
