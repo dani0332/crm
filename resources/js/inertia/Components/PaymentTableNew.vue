@@ -1815,7 +1815,7 @@ const editPaymentModal = (
   }
 
   if (
-    paymentMethodsForm.collection_type === 'insurer' &&
+    payment.collection_type === 'insurer' &&
     isEditPaymentEnabled() &&
     split_payment_id == 0 &&
     sr_no == 0 &&
@@ -2971,28 +2971,22 @@ const alertCapture = payment => {
   });
 };
 
-const hasAnyAuthorisedPendingCA = computed(() => {
-  const statusesToCheck = [
-    paymentStatusEnum.AUTHORISED,
-    paymentStatusEnum.CREDIT_APPROVED,
-    paymentStatusEnum.PENDING,
-  ];
-
-  return payment => {
-    return payment.payment_splits.some(item =>
-      statusesToCheck.includes(item.payment_status_id),
-    );
-  };
-});
-
 const getCaptureOption = computed(() => {
   return payment => {
+    // Return early if there are no payments
     if (props.payments.length === 0) return;
+
     const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
     const paymentMethodCC = filterCCPayments(payment);
+
+    // Check if the conditions for 'capture' are met
+    const isCreditCardPayment = paymentMethodCC.length > 0;
+    const isNotInsurerPayment = payment.collection_type !== 'insurer';
+
+    // Return 'capture' if all conditions are met, otherwise return 'approve'
     if (
-      paymentMethodCC.length > 0 &&
-      (hasAnyAuthorisedPendingCA.value(payment) || isGIGProvider)
+      (isCreditCardPayment && isNotInsurerPayment && !isGIGProvider) ||
+      isGIGProvider
     ) {
       return 'capture';
     }

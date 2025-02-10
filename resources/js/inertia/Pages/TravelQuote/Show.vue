@@ -276,15 +276,6 @@ const onLeadStatus = () => {
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages) {
-          notification.success({
-            title: 'Lead Status Updated',
-            position: 'top',
-          });
-        }
-      },
     },
   );
 };
@@ -1753,7 +1744,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">AML STATUS</dt>
+                <dt class="font-medium uppercase">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
