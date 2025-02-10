@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -24,6 +25,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
@@ -49,6 +51,7 @@ class JetskiQuoteController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 
@@ -178,6 +181,8 @@ class JetskiQuoteController extends Controller
             'sendUpdateEnum' => $sendUpdateEnum,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 

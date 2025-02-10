@@ -124,6 +124,14 @@ export const useRules = () => {
     );
   };
 
+  const emiratesNumber = v => {
+    const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
+    return (
+      pattern.test(v) ||
+      'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.'
+    );
+  };
+
   return {
     name,
     isEmail,
@@ -145,5 +153,6 @@ export const useRules = () => {
     amount_with_vat,
     emptyOrNumericAndNoSpecialChar,
     isRequiredNumber,
+    emiratesNumber,
   };
 };

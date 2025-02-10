@@ -36,6 +36,8 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const page = usePage();
@@ -150,12 +152,6 @@ const onLeadStatus = () => {
           position: 'top',
         });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
-      },
     },
   );
 };
@@ -213,8 +209,14 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
+  insured_first_name:
+    page.props.quote.insured_first_name ??
+    page.props.quote.customer_insured_first_name ??
+    '',
+  insured_last_name:
+    page.props.quote.insured_last_name ??
+    page.props.quote.customer_insured_last_name ??
+    '',
   emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer.emirates_id_expiry_date || null,
@@ -561,8 +563,12 @@ const allowStatusUpdate = computed(() => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>N/A</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">FIRST NAME</dt>
@@ -1126,6 +1132,8 @@ const allowStatusUpdate = computed(() => {
       quoteSubType="Group Medical"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PolicyDetail

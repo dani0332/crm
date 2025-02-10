@@ -221,17 +221,21 @@ class CarAllocationService extends AllocationService
      */
     public function executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId): mixed
     {
-        if ($leadSource == LeadSourceEnum::REVIVAL_REPLIED || ($leadSource == LeadSourceEnum::RENEWAL_UPLOAD && $teamId == 0)) {
-            // if lead source is revival replied or renewal upload then we should only assign to organic advisors
+        $teamMap = [
+            LeadSourceEnum::REVIVAL_REPLIED => TeamNameEnum::ORGANIC,
+            LeadSourceEnum::RENEWAL_UPLOAD => $teamId == 0 ? TeamNameEnum::ORGANIC : null,
+            LeadSourceEnum::REVIVAL_PAID => TeamNameEnum::SIC_UNASSISTED,
+        ];
 
-            // Retrieve the ID of Organic team.
-            $organicId = Team::whereIn('name', [TeamNameEnum::ORGANIC])->pluck('id')->toArray();
+        if (isset($teamMap[$leadSource])) {
+            // Retrieve team IDs for the relevant team
+            $teamIds = Team::where('name', $teamMap[$leadSource])->pluck('id')->toArray();
 
-            // Retrieve the user IDs associated with organic team.
-            $organicUserIds = UserTeams::whereIn('team_id', $organicId)->pluck('user_id')->toArray();
+            // Retrieve user IDs associated with the relevant team
+            $userIds = UserTeams::whereIn('team_id', $teamIds)->pluck('user_id')->toArray();
 
-            // Getting common to get only organic advisors
-            $tierUserIds = array_intersect($tierUserIds->toArray(), $organicUserIds);
+            // Get only the common user IDs
+            $tierUserIds = array_intersect($tierUserIds->toArray(), $userIds);
         }
 
         return $tierUserIds;
@@ -394,7 +398,7 @@ class CarAllocationService extends AllocationService
 
         $advisors = [];
 
-        if ($lead->isBuyLeadApplicable() && ($tier->isValue() || $tier->isVolume())) {
+        if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::CAR)) && ($tier->isValue() || $tier->isVolume())) {
             $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
 

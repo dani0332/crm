@@ -179,7 +179,7 @@ class HealthAllocationService extends AllocationService
 
         $advisor = null;
 
-        if ($lead->isBuyLeadApplicable() && ($lead->isValueLead() || $lead->isVolumeLead())) {
+        if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::HEALTH)) && ($lead->isValueLead() || $lead->isVolumeLead())) {
             $advisor = $this->fetchAdvisor('getBLAdvisorByStatus', $leadTeam, $isReassignmentJob, $lead);
         }
 
