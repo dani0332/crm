@@ -869,13 +869,19 @@ class SendUpdateLogService
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
         ];
 
-        // Reminder:: To handle insurer payment against credit card for Tap Integration and if payment available in Send update then create Receipt
+        // Handle TapPay insurer payment against credit card and if payment available in Send update then create Receipt
+        $ccPaymentProcess = false;
         if (isTapEnabled() && ! empty($preparedDetailsForEndorsement['payment']?->send_update_log_id)) {
+            info('fn:preparedDataForEndorsement - TAP Enabled - SendUpdateCode: '.$sendUpdateLog->code);
             $checkCCPayments = $preparedDetailsForEndorsement['splitPayments']->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED])
                 ->where('payment_method', PaymentMethodsEnum::CreditCard)
                 ->count() > 0;
-            info('fn:preparedDataForEndorsement - TAP Enabled - Collection Type: '.$preparedDetailsForEndorsement['payment']->collection_type.' - Credit Card Payments available: '.$checkCCPayments.' - SendUpdateCode: '.$sendUpdateLog->code);
-            if ($preparedDetailsForEndorsement['payment']->isInsurerPayment() && $checkCCPayments && ! $preparedDetailsForEndorsement['payment']->isGIGInsurer($sendUpdateRequest->quoteType, $quoteDetails)) {
+            $isInsurerPayment = $preparedDetailsForEndorsement['payment']->isInsurerPayment();
+            $isInsurerGIG = $preparedDetailsForEndorsement['payment']->isGIGInsurer($sendUpdateRequest->quoteType, $quoteDetails);
+            $isPaymentGatewayTap = $preparedDetailsForEndorsement['payment']->isPaymentGatewayTap();
+            info('fn:preparedDataForEndorsement - Collected By Insurer: '.$isInsurerPayment.' - GIG Insurer: '.$isInsurerGIG.' - Payment Gateway Tap:'.$isPaymentGatewayTap.' - CC Payment: '.$checkCCPayments.' - SendUpdateCode: '.$sendUpdateLog->code);
+
+            if ($isInsurerPayment && $checkCCPayments && $isPaymentGatewayTap && ! $isInsurerGIG) {
                 info('fn:preparedDataForEndorsement - Authorizing payment process started - PaymentCode: '.$preparedDetailsForEndorsement['payment']->code.' - SendUpdateCode: '.$sendUpdateLog->code);
                 $successMessage = app(SageApiService::class)->handleSplitPaymentApproval($sendUpdateRequest->quoteType, $quoteDetails, $preparedDetailsForEndorsement['payment'], $preparedDetailsForEndorsement['splitPayments']);
                 info('fn:preparedDataForEndorsement - Authorizing payment process completed - response:'.json_encode($successMessage).' - PaymentCode: '.$preparedDetailsForEndorsement['payment']->code.' - SendUpdateCode: '.$sendUpdateLog->code);
@@ -883,17 +889,14 @@ class SendUpdateLogService
                     return ['status' => false, 'message' => 'Error while approving send update payment'];
                 }
 
+                $ccPaymentProcess = true;
                 QuoteTag::updateOrCreate([
                     'quote_type_id' => QuoteTypes::getIdFromValue($sendUpdateRequest->quoteType),
                     'quote_uuid' => $quoteDetails->uuid,
                     'send_update_log_id' => $sendUpdateLog?->id,
                     'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLog?->id,
                 ], ['value' => 1]);
-            } else {
-                // Endorsement booking should be called in any case
             }
-
-            return ['status' => true, 'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status'];
         }
 
         info('fn:preparedDataForEndorsement - Preparing Sage Payload for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
@@ -912,13 +915,22 @@ class SendUpdateLogService
             return $checkRequiredSageValidations;
         }
 
-        info('fn:preparedDataForEndorsement - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
-        app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $sageRequestPayload);
+        if (isset($sendUpdateRequest->throughCCPayment)) {
+            info('fn:preparedDataForEndorsement - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
+            app(SendUpdateLogService::class)->updateSageProcessForDispatching((array) $sendUpdateRequest, $sendUpdateLog, $sageRequestPayload);
 
-        (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);
-        info('fn:preparedDataForEndorsement - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
+            (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);
+            info('fn:preparedDataForEndorsement - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
 
-        return ['status' => true, 'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status'];
+            return ['status' => true, 'message' => 'Send update sage process scheduled'];
+        }
+
+        return [
+            'status' => true,
+            'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status',
+            'sageRequestPayload' => $sageRequestPayload,
+            'ccPaymentProcess' => $ccPaymentProcess,
+        ];
     }
 
     public function updateSageProcessForDispatching($request, $quote, $sageRequestPayload)
