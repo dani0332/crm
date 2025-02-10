@@ -398,12 +398,6 @@ const onLeadStatus = () => {
           response.props.quoteRequest?.stale_at,
         );
         router.reload({ only: ['quoteRequest'] });
-        if (!flash_messages) {
-          notification.success({
-            title: 'Lead Status Updated',
-            position: 'top',
-          });
-        }
       },
     },
   );

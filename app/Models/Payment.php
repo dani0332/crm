@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CollectionTypeEnum;
 use App\Enums\InsurerProviderEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
@@ -242,5 +243,10 @@ class Payment extends Model implements Auditable
         $insuranceProvider = getInsuranceProvider($this, $quoteTypeId, $quoteDetails);
 
         return $insuranceProvider?->code == InsurerProviderEnum::GIG_INSURANCE;
+    }
+
+    public function isPaymentGatewayTap()
+    {
+        return $this->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP;
     }
 }

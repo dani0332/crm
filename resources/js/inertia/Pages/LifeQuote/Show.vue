@@ -328,12 +328,6 @@ const onLeadStatus = () => {
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
-      },
     },
   );
 };

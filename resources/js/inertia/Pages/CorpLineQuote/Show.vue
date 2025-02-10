@@ -172,10 +172,6 @@ const onLeadStatus = () => {
       preserveScroll: true,
       onSuccess: () => {
         loaders.value.leadStatus = false;
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
       },
       onError: errors => {
         loaders.value.leadStatus = false;
