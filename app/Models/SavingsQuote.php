@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class SavingsQuote extends Model
 {
     protected $table = 'savings_quote_request';
-
     protected $fillable = [
         'personal_quote_id',
         'marital_status_id',
