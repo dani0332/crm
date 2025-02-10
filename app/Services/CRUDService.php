@@ -10,6 +10,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
@@ -256,7 +257,7 @@ class CRUDService extends BaseService
             $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
 
             $previousQuoteStatus = $entity->quote_status_id;
-            //if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
+            // if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
                 $entity->quote_status_id = QuoteStatusEnum::Quoted;
             } else {
@@ -284,7 +285,7 @@ class CRUDService extends BaseService
                 || $request->leadStatus == QuoteStatusEnum::EarlyRenewal
             ) {
                 if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
-                    //perform approval or rejection
+                    // perform approval or rejection
                     $carLostQuoteLog = CarLostQuoteLog::where([
                         'car_quote_request_id' => $entity->id,
                         'id' => $request->car_lost_quote_log_id,
@@ -316,11 +317,11 @@ class CRUDService extends BaseService
                     }
 
                     if ($request->lost_approval_status == GenericRequestEnum::REJECTED) {
-                        //send rejection email
+                        // send rejection email
                         CarLostStatusRejected::dispatch($entity, $carLostQuoteLog);
                     }
                 } elseif (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
-                    //store request of car sold/uncontactable with proof
+                    // store request of car sold/uncontactable with proof
                     $carLostQuoteLog = $entity->carLostQuoteLogs()->create([
                         'advisor_id' => auth()->user()->id,
                         'quote_status_id' => $request->leadStatus,
@@ -636,6 +637,9 @@ class CRUDService extends BaseService
                     $data['type_id'] = GenericRequestEnum::SEND_UPDATE_QUOTE_TYPE_MARSHAL;
                 }
 
+                $payment = $paymentSplit->payment;
+                $data['payment_gateway_id'] = $payment->payment_gateway_id;
+
                 $processResponse = $this->processCapturePayment($data);
 
                 return response($processResponse, 200);
@@ -659,7 +663,9 @@ class CRUDService extends BaseService
             ],
         ];
 
-        $response = Marshall::request('/payment/checkout/capture', 'post', $planData);
+        $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
+        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/capture', 'post', $planData);
 
         return $response;
     }
@@ -994,7 +1000,7 @@ class CRUDService extends BaseService
         $scoreList[] = ['score' => $score, 'text' => 'Does the owner/ Shareholder/ Partner/Director of the company from High-Risk countries?', 'value' => $text];
         $entityScore += $score;
 
-        //New Field
+        // New Field
 
         if ($entity->deal_sanction_list == 1) {
             $text = 'Yes';

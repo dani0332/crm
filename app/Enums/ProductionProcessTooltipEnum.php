@@ -6,7 +6,7 @@ use BenSampo\Enum\Enum;
 
 final class ProductionProcessTooltipEnum extends Enum
 {
-    //Managment section
+    // Managment section
     const POLICY_NUMBER = 'The unique Insurance policy number for the chosen insurance plan offered by the provider.';
     const PRICE_VAT_NOT_APPLICABLE = 'Price that VAT is not applicable. Remember, VAT is exempt for Life Insurance policies.';
     const PRICE_VAT_APPLICABLE = 'Price as per the insurers tax invoice that VAT is applicable. Please enter the price without including Value Added Tax (VAT). VAT will be calculated separately.';

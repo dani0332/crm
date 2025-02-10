@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
@@ -38,7 +39,7 @@ class PetQuoteRepository extends BaseRepository
             'lastName' => $request['last_name'],
             'email' => $request['email'],
             'mobileNo' => $request['mobile_no'],
-            'gender' => $request['gender'],
+            'petGender' => $request['gender'], // Reminder:: this is pet's gender
             'microchipNo' => $request['microchip_no'],
             'petTypeId' => $request['pet_type_id'],
             'petAgeId' => $request['pet_age_id'],
@@ -56,6 +57,9 @@ class PetQuoteRepository extends BaseRepository
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'gender' => $request['customer_gender'], // Reminder:: this is customer gender
+            'dob' => $request['dob'],
+            'nationalityId' => $request['nationality_id'],
         ];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
@@ -73,7 +77,7 @@ class PetQuoteRepository extends BaseRepository
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no',
+                'first_name', 'last_name', 'email', 'mobile_no', 'customer_gender', 'dob', 'nationality_id',
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;
@@ -83,6 +87,12 @@ class PetQuoteRepository extends BaseRepository
                 ['personal_quote_id' => $quote->id],
                 Arr::only($data, (new PetQuote)->allowedColumns())
             );
+
+            $quote->customer()->update([
+                'dob' => $data['dob'] ?? null,
+                'gender' => $data['customer_gender'] ?? null,
+                'nationality_id' => $data['nationality_id'] ?? null,
+            ]);
 
             return $quote;
         });
@@ -126,7 +136,19 @@ class PetQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount);
+            ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->select([
+                '*',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                '),
+            ]);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
@@ -134,7 +156,7 @@ class PetQuoteRepository extends BaseRepository
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
-            //PD Revert
+            // PD Revert
             return 0;
             // return $query->count();
         }
@@ -144,7 +166,8 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())
+        $quoteTypeId = QuoteTypes::PET->id();
+        $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
                 'petQuote.accomodationType:id,text',
@@ -157,6 +180,9 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'transactionType',
+                'insured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -193,6 +219,7 @@ class PetQuoteRepository extends BaseRepository
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
+                'dob AS unformatted_dob',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -208,6 +235,9 @@ class PetQuoteRepository extends BaseRepository
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        if (isset($data['insured'][0])) {
+            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        }
 
         return $quote;
     }
@@ -224,6 +254,7 @@ class PetQuoteRepository extends BaseRepository
             'pet_types' => LookupRepository::where('key', LookupsEnum::PET_TYPES)->get(),
             'accomodation_types' => HomeAccomodationType::all(),
             'possession_types' => HomePossessionType::all(),
+            'nationalities' => NationalityRepository::withActive()->get(),
         ];
     }
 

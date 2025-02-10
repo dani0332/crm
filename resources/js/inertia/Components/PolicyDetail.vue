@@ -251,13 +251,13 @@ const rules = {
 
         const allowedMaxDate = new Date(currentDate);
 
-        allowedMaxDate.setMonth(currentDate.getMonth() + 2);
+        allowedMaxDate.setMonth(currentDate.getMonth() + 3);
 
         allowedMaxDate.setHours(0, 0, 0, 0);
         date.setHours(0, 0, 0, 0);
 
         if (date > allowedMaxDate) {
-          return 'Please select a date within the next two months';
+          return 'Please select a date within the next three months';
         }
       }
 
@@ -383,12 +383,7 @@ const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] =
   createReusableTemplate();
 
 const setQuotePlanInsurerNumber = () => {
-  policyDetailsForm.quote_plan_insurer_quote_number =
-    planQuoteInsurerNumber.value ||
-    page.props.quote.insurer_quote_number ||
-    props.availablePlans?.find(item => item.id == page.props.quote?.plan_id)
-      ?.insurerQuoteNo ||
-    '';
+  policyDetailsForm.quote_plan_insurer_quote_number = '';
 };
 const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   let disableEditPolicyDetails = false;

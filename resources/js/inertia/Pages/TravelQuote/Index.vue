@@ -11,6 +11,7 @@ defineProps({
   amlStatuses: Object,
   insuranceProviders: Array,
   travelPlans: Array,
+  insurerAMLStatus: Array,
 });
 
 let params = useUrlSearchParams('history');
@@ -56,6 +57,7 @@ const filters = reactive({
   created_at_start: new Date() || '',
   created_at_end: new Date() || '',
   quote_status_id: [],
+  insurer_aml_status: [],
   advisor_id: [],
   is_ecommerce: '',
   payment_status_id: '',
@@ -76,6 +78,7 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   insurer_api_status_id: '',
+  api_issuance_status_id: '',
   amlStatus: [],
   insurance_provider_ids: [],
   plan_name: [],
@@ -104,12 +107,15 @@ const tableHeader = [
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'AML Status', value: 'aml_status' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   {
     text: 'ADVISOR REQUESTED',
     value: 'sic_advisor_requested',
   },
   { text: 'Advisor Assigned Date And Time', value: 'advisor_assigned_date' },
+  { text: 'API ISSUANCE STATUS', value: 'api_issuance_status' },
+  { text: 'INSURER API STATUS', value: 'insurer_api_status' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {
@@ -148,6 +154,14 @@ const paymentStatusOptions = computed(() => {
 });
 const insurerApiStatus = computed(() => {
   return Object.entries(page.props.insurerApiStatus).map(([index, value]) => {
+    return {
+      value: index,
+      label: value,
+    };
+  });
+});
+const issuanceStatuses = computed(() => {
+  return Object.entries(page.props.issuanceStatuses).map(([index, value]) => {
     return {
       value: index,
       label: value,
@@ -503,6 +517,13 @@ watch(
   },
   { deep: true },
 );
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -613,6 +634,14 @@ watch(
             name="quote_status_id"
             placeholder="Search by Lead Status"
             :options="leadsStatusOptions"
+          />
+        </x-field>
+        <x-field label="Insurer AML Status">
+          <ComboBox
+            v-model="filters.insurer_aml_status"
+            name="insurer_aml_status"
+            placeholder="Search by Insurer AML Status"
+            :options="insurerAMLStatusOption"
           />
         </x-field>
         <x-field label="Policy Expiry Start Date">
@@ -777,7 +806,14 @@ watch(
           placeholder="Insurer Commission Tax Invoice No"
         />
         <ComboBox
-          label="INSURER API STATUS"
+          label="API Issuance Status"
+          v-model="filters.api_issuance_status_id"
+          placeholder="Select API Issuance Status"
+          :options="issuanceStatuses"
+          class="w-full"
+        />
+        <ComboBox
+          label="Insurer API Status"
           v-model="filters.insurer_api_status_id"
           placeholder="Select Status"
           :options="insurerApiStatus"

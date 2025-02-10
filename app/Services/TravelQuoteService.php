@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
@@ -49,7 +50,7 @@ class TravelQuoteService extends BaseService
     public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
-        $this->query = TravelQuote::as('tqr')->select(
+        $this->query = TravelQuote::as('tqr')->select([
             'tqr.id',
             'tqr.uuid',
             DB::raw('DATE_FORMAT(tqr.created_at, "%d-%m-%Y %H:%i") as created_at'),
@@ -135,16 +136,16 @@ class TravelQuoteService extends BaseService
             'tqr.risk_score',
             'tqr.kyc_decision',
             'tqr.is_documents_valid',
-            //'tqr.prefill_plan_id',
+            // 'tqr.prefill_plan_id',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
                 WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
                 "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
-            'c.insured_first_name',
-            'c.insured_last_name',
-            'c.emirates_id_number',
+            'insured.first_name as insured_first_name',
+            'insured.last_name as insured_last_name',
+            DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
@@ -169,9 +170,20 @@ class TravelQuoteService extends BaseService
             'tqr.insly_migrated',
             'tqr.sic_advisor_requested',
             'tqr.aml_status',
+            'tqr.insurer_aml_status',
             'tqr.departure_country_id',
             'tqr.insurance_provider_id',
-        )
+            'tqr.gender',
+            DB::raw('
+                CASE
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE insurer_aml_status
+                END AS insurer_aml_status_display
+            '),
+        ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -194,6 +206,11 @@ class TravelQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'tqr.id');
             })
+            ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
+                $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
+                $insuredCustomerMapping->on('ic.quote_request_id', '=', 'tqr.id');
+            })
+            ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
@@ -446,6 +463,22 @@ class TravelQuoteService extends BaseService
         if (isset($request->policy_number) && $request->policy_number != '') {
             $this->query->where('tqr.policy_number', $request->policy_number);
         }
+        if (! empty($request->api_issuance_status_id)) {
+            $apiIssuanceStatusIds = (array) $request->api_issuance_status_id;
+
+            $this->query->when(in_array('blank', $apiIssuanceStatusIds), function ($query) use ($apiIssuanceStatusIds) {
+                $query->where(function ($subQuery) use ($apiIssuanceStatusIds) {
+                    $subQuery->whereNull('tqr.api_issuance_status_id')
+                        ->orWhere('tqr.api_issuance_status_id', '');
+
+                    if (count($apiIssuanceStatusIds) > 1) {
+                        $subQuery->orWhereIn('tqr.api_issuance_status_id', $apiIssuanceStatusIds);
+                    }
+                });
+            }, function ($query) use ($apiIssuanceStatusIds) {
+                $query->whereIn('tqr.api_issuance_status_id', $apiIssuanceStatusIds);
+            });
+        }
         if (isset($request->insurer_api_status_id) && $request->insurer_api_status_id != '') {
             $this->query->whereIn('tqr.insurer_api_status_id', $request->insurer_api_status_id);
         }
@@ -523,6 +556,14 @@ class TravelQuoteService extends BaseService
             $this->query->whereIn('tqr.plan_id', $request->plan_name);
         }
 
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('tqr.insurer_aml_status', $request->insurer_aml_status);
+        }
+
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('tqr.insurer_aml_status', $request->insurer_aml_status);
+        }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
@@ -565,17 +606,6 @@ class TravelQuoteService extends BaseService
                 return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
             }
         }
-    }
-
-    public function updateChildRecord($id)
-    {
-        TravelQuoteRequestDetail::updateOrCreate(
-            ['travel_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => Auth::user()->id,
-            ]
-        );
     }
 
     private function getQuerySuffix($item)
@@ -929,10 +959,8 @@ class TravelQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::TRAVEL, TravelQuoteRequestDetail::class, 'travel_quote_request_id');
         }
 
         return $result;
@@ -1091,10 +1119,10 @@ class TravelQuoteService extends BaseService
         $duplicateLead->save();
 
         if ($duplicateLead) {
-            //update morph relation in payments table
+            // update morph relation in payments table
             $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
 
-            //update morph relation in quote_documents table,which are associated with split payments
+            // update morph relation in quote_documents table,which are associated with split payments
             Payment::where('code', $newLeadCode)->with('paymentSplits')->get()->each(function ($payment) use ($duplicateLead) {
                 $payment->paymentSplits->each(function ($split) use ($duplicateLead) {
                     $split->documents()->update(['quote_documentable_id' => $duplicateLead->id]);
