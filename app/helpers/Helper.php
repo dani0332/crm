@@ -1570,6 +1570,15 @@ if (! function_exists('isCHSAdvisor')) {
     }
 }
 
+if (! function_exists('isTapEnabled')) {
+    function isTapEnabled($processType = []): bool
+    {
+        $isTapEnabled = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION);
+
+        return $isTapEnabled;
+    }
+}
+
 if (! function_exists('userHasProduct')) {
     function userHasProduct($product)
     {

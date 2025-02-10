@@ -97,8 +97,11 @@ defineProps({
   lockLeadSectionsDetails: Object,
   customerAddressData: Object,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
   insurerAMLStatus: String,
 });
+
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
@@ -1538,7 +1541,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'paymentEntityModel'],
+    only: ['payments', 'paymentEntityModel', 'bookPolicyDetails'],
   });
 };
 
@@ -3521,6 +3524,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       page.props.linkedQuoteDetails.childLeadsCount > 0
                     "
                     :uuid="quote.uuid"
+                    :insuranceProviderId="item.id"
+                    :code="quote.code"
                   />
 
                   <x-button
@@ -3716,6 +3721,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
     <PaymentTable
       v-else

@@ -145,7 +145,7 @@ class BusinessQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
             })
             ->leftJoin('customer_insured as ci', function ($query) {
-                $query->on('ci.quote_type_id', '=', QuoteTypeId::Business);
+                $query->on('ci.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $query->on('ci.quote_request_id', '=', 'bqr.id');
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
