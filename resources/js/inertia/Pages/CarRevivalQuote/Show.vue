@@ -130,7 +130,7 @@ const onLeadStatus = () => {
     preserveScroll: true,
     onError: errors => {
       console.log(errors);
-    }
+    },
   });
 };
 
