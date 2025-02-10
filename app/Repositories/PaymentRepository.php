@@ -20,7 +20,6 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\QuoteType;
 use App\Models\User;
 use App\Services\CentralService;
 use App\Services\PaymentLinkService;
@@ -296,7 +295,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         // Update parent payment status
         $payment = Payment::where('code', $quoteID)->first();
         $this->setMasterPaymentStatus($payment);
-        if ($sendFTCEmail) {   
+        if ($sendFTCEmail) {
             $modelType = $request->modelType;
             $quoteType = QuoteTypes::from($modelType);
             SendFTCEmailJob::dispatch($quoteID, $quoteType)->delay(now()->addSeconds(5));
