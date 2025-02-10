@@ -521,6 +521,15 @@
         }
 
         .content {}
+
+        .disclaimer-td {
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+            font-size: 16px;
+            line-height: 1.5;
+            border: none;
+        }
     </style>
 </head>
 
@@ -858,43 +867,25 @@
                             href="{{ $websitURL . '/home-insurance/quote/' . $quote->uuid }}">View all quotes</a>
                     </td>
                 </tr>
+
+                <tr>
+                    <td class="disclaimer-td" colspan="{{ sizeof($planIds) + 1 }}">
+                        <span class="disclaimer-title">
+                            Disclaimer and Material Information
+                        </span>
+                        <p class="disclaimer-text">
+                            All quotes provided are indicative and based on the information you have supplied. While we
+                            strive for accuracy in our comparison tables, discrepancies may occur. In such instances, the
+                            terms detailed in the insurer's policy wordings and schedules will take precedence over the
+                            details provided by us. For the full text of the disclaimer and material information, please
+                            refer to the quote. Policy wordings and schedules will prevail. Additionally, your final price
+                            may be adjusted following the insurer's review of your risk profile after payment. We recommend
+                            reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
+                        </p>
+                    </td>
+                </tr>
             </tbody>
         </table>
-
-        <table class="disclaimer-table">
-            <tr>
-                <td>
-                    <span class="disclaimer-title">
-                        Disclaimer and Material Information
-                    </span>
-                    <p class="disclaimer-text">
-                        All quotes provided are indicative and based on the information you have supplied. While we
-                        strive for accuracy in our comparison tables, discrepancies may occur. In such instances, the
-                        terms detailed in the insurer's policy wordings and schedules will take precedence over the
-                        details provided by us. For the full text of the disclaimer and material information, please
-                        refer to the quote. Policy wordings and schedules will prevail. Additionally, your final price
-                        may be adjusted following the insurer's review of your risk profile after payment. We recommend
-                        reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
-                    </p>
-                </td>
-            </tr>
-        </table>
-
-        {{-- <div class="disclaimer-container"
-            style="width: 100%; padding: 10px; box-sizing: border-box; margin-bottom: 20px;">
-            <span class="section-title"
-                style="font-weight: bold; font-size: 20px; display: block; margin-bottom: 10px;">Disclaimer and
-                material information</span>
-            <p class="section-text" style="font-size: 16px; line-height: 1.5; width: 100%; margin: 0;">
-                All quotes provided are indicative and based on the information you have supplied. While we
-                strive for accuracy in our comparison tables, discrepancies may occur. In such instances, the
-                terms detailed in the insurer's policy wordings and schedules will take precedence over the
-                details provided by us. For the full text of the disclaimer and material information, please
-                refer to the quote. Policy wordings and schedules will prevail. Additionally, your final price
-                may be adjusted following the insurer's review of your risk profile after payment. We recommend
-                reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
-            </p>
-        </div> --}}
     </main>
 
     {{-- PDF Page Footer --}}
