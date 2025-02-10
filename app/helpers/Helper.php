@@ -1587,13 +1587,3 @@ if (! function_exists('userHasProduct')) {
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
-
-if (! function_exists('isTapEnabled')) {
-    function isTapEnabled($processType = []): bool
-    {
-        $isTapEnabled = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION);
-        $tapAuthorizedEmails = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS);
-
-        return $isTapEnabled;
-    }
-}
