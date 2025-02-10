@@ -130,13 +130,7 @@ const onLeadStatus = () => {
     preserveScroll: true,
     onError: errors => {
       console.log(errors);
-    },
-    onSuccess: () => {
-      notification.success({
-        title: 'Lead Status Updated',
-        position: 'top',
-      });
-    },
+    }
   });
 };
 
