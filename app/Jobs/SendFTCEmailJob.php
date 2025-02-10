@@ -22,14 +22,16 @@ class SendFTCEmailJob implements ShouldQueue
     private $quoteUUID;
     private $quoteType;
     private $paymentLink;
+    private $isInsurerPayment;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(string $quoteUUID, QuoteTypes $quoteType)
+    public function __construct(string $quoteUUID, QuoteTypes $quoteType, bool $isInsurerPayment = false)
     {
         $this->quoteUUID = $quoteUUID;
         $this->quoteType = $quoteType;
+        $this->isInsurerPayment = $isInsurerPayment;
     }
 
     /**
@@ -38,12 +40,11 @@ class SendFTCEmailJob implements ShouldQueue
     public function handle(): void
     {
         // Define eligible SIC types
-        $nonEligibleSICTypes = [QuoteTypes::BIKE->id(), QuoteTypes::HOME->id()];
+        $nonEligibleSICTypes = [QuoteTypes::BIKE->id(), QuoteTypes::HOME->id(), QuoteTypes::HEALTH->id()];
 
         try {
             info(self::class." - Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid {$this->quoteUUID}");
             $isSic = false;
-
             $leadQuery = $this->quoteType->model()::with('payments')
                 ->whereNotNull('advisor_id')
                 ->where('uuid', $this->quoteUUID);
@@ -59,7 +60,7 @@ class SendFTCEmailJob implements ShouldQueue
 
             // Lead must be SIC LEAD and payment authorized
             if ($lead) {
-                $isPaymentAuthorized = $lead->isPaymentAuthorized();
+                $isPaymentAuthorized = $this->isInsurerPayment|| $lead->isPaymentAuthorized();
                 if ($isPaymentAuthorized) {
                     $data = [
                         'quoteUID' => $this->quoteUUID,
