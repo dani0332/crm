@@ -24,7 +24,7 @@ class UpdateSelectedPlanRequest extends FormRequest
      */
     public function rules(): array
     {
-        $quoteType = request()->quoteType;
+        $quoteType = strtolower(request()->quoteType);
 
         $rules = [
             'plan_id' => 'required',
