@@ -3547,10 +3547,7 @@ const isEditPaymentEnabled = () => {
     statusesToCheck.includes(item.payment_status_id),
   );
 
-  return (
-    !isMultiPaymentsEnabled.value &&
-    hasAnyAuthorizedPayment
-  );
+  return !isMultiPaymentsEnabled.value && hasAnyAuthorizedPayment;
 };
 
 // voidPaymentModal
