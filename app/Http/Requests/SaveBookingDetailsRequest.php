@@ -154,7 +154,11 @@ class SaveBookingDetailsRequest extends FormRequest
 
             // if insurer tax invoice is not empty.
             if ($insurerTaxInvoiceNumber) {
-                $taxInvoiceValidation = Payment::select('id')->whereNot('send_update_log_id', $this->sendUpdate->id)
+                $taxInvoiceValidation = Payment::select('id')
+                    ->where(function ($query) {
+                        $query->whereNot('send_update_log_id', $this->sendUpdate->id)
+                            ->orWhereNull('send_update_log_id');
+                    })
                     ->where(function ($query) use ($insurerTaxInvoiceNumber) {
                         $query->where('insurer_tax_number', $insurerTaxInvoiceNumber)
                             ->orWhere('insurer_commmission_invoice_number', $insurerTaxInvoiceNumber);
@@ -173,7 +177,11 @@ class SaveBookingDetailsRequest extends FormRequest
 
             // if insurer commission invoice is not empty.
             if ($insurerCommissionInvoiceNumber) {
-                $commissionInvoiceValidation = Payment::select('id')->whereNot('send_update_log_id', $this->sendUpdate->id)
+                $commissionInvoiceValidation = Payment::select('id')
+                    ->where(function ($query) {
+                        $query->whereNot('send_update_log_id', $this->sendUpdate->id)
+                            ->orWhereNull('send_update_log_id');
+                    })
                     ->where(function ($query) use ($insurerCommissionInvoiceNumber) {
                         $query->where('insurer_commmission_invoice_number', $insurerCommissionInvoiceNumber)
                             ->orWhere('insurer_tax_number', $insurerCommissionInvoiceNumber);

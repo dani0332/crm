@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -65,6 +66,8 @@ const props = defineProps({
   quoteNotes: Object,
   paymentDocument: Array,
   noteDocumentType: Array,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -208,7 +211,8 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
 
 const { copy, copied } = useClipboard();
 
-const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+const { isRequired, isEmail, isNumber, isMobileNo, emiratesNumber } =
+  useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -394,12 +398,6 @@ const onLeadStatus = () => {
           response.props.quoteRequest?.stale_at,
         );
         router.reload({ only: ['quoteRequest'] });
-        if (!flash_messages) {
-          notification.success({
-            title: 'Lead Status Updated',
-            position: 'top',
-          });
-        }
       },
     },
   );
@@ -1649,7 +1647,13 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
+    only: [
+      'payments',
+      'quoteRequest',
+      'ecomDetails',
+      'coPayment',
+      'bookPolicyDetails',
+    ],
   });
 };
 watch(
@@ -1834,6 +1838,10 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -1853,7 +1861,13 @@ const onAddUpdate = () => {
 
       <template #default v-if="readOnlyMode.isDisable === true">
         <Link
-          v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+          v-if="
+            quote?.insly_id &&
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="`/legacy-policy/${quote.insly_id}`"
           preserve-scroll
         >
@@ -1952,7 +1966,11 @@ const onAddUpdate = () => {
     </x-modal>
 
     <div
-      v-if="!$page.props.can.isAdvisor"
+      v-if="
+        (!$page.props.can.isAdvisor ||
+          hasRole(rolesEnum.SuperManagerLeadAllocation)) &&
+        !can(permissionsEnum.VIEW_ALL_LEADS)
+      "
       class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
     >
       <Collapsible :expanded="sectionExpanded">
@@ -2052,8 +2070,13 @@ const onAddUpdate = () => {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>N/A</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
@@ -2288,8 +2311,13 @@ const onAddUpdate = () => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -3467,6 +3495,8 @@ const onAddUpdate = () => {
                       :plan="item"
                       :quoteType="quoteType"
                       :uuid="quote.uuid"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
                     />
 
                     <x-button
@@ -3642,6 +3672,8 @@ const onAddUpdate = () => {
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
       "
       :bookPolicyDetails="bookPolicyDetails"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PaymentTable
@@ -3708,6 +3740,7 @@ const onAddUpdate = () => {
         canAny([
           permissionsEnum.VIEW_INSLY_BOOK_POLICY,
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

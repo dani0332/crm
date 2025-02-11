@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypes;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AMLCheckRequest extends FormRequest
@@ -30,6 +31,11 @@ class AMLCheckRequest extends FormRequest
                 'insured_first_name' => 'required|max:200',
                 'insured_last_name' => 'required|max:200',
             ];
+
+            if ($this->quote_type == QuoteTypes::CAR) {
+                $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
+            }
+
         }
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {
@@ -44,6 +50,12 @@ class AMLCheckRequest extends FormRequest
         }
 
         return $rules;
+    }
 
+    public function messages(): array
+    {
+        return [
+            'chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
+        ];
     }
 }

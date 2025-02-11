@@ -15,6 +15,7 @@ const props = defineProps({
     default: 0,
   },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -36,6 +37,7 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   quote_status: [],
+  insurer_aml_status: [],
   advisor_id: [],
   is_ecommerce: '',
   is_renewal: '',
@@ -92,6 +94,11 @@ const tableHeader = ref([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
     text: 'CREATED DATE',
@@ -205,6 +212,7 @@ const handleSelectedFilters = selectedFilters => {
 };
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -388,6 +396,13 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -548,6 +563,12 @@ const validateDateRange = () => {
             "
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -730,7 +751,12 @@ const validateDateRange = () => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
-          v-if="can(permissionsEnum.PetQuotesShow)"
+          v-if="
+            canAny([
+              permissionsEnum.PetQuotesShow,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="route('pet-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >

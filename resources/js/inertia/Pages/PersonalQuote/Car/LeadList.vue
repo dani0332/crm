@@ -16,6 +16,7 @@ defineProps({
   teams: Object,
   authorizedDays: Number,
   assignmentTypes: Object,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -75,6 +76,7 @@ const tableHeader = [
   { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'LEAD COST', value: 'cost_per_lead' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
   { text: 'ECOMMERCE', value: 'is_ecommerce' },
   { text: 'TIER NAME', value: 'tier_id_text' },
@@ -251,6 +253,7 @@ const filters = reactive({
   email: '',
   mobile_no: '',
   quote_status_id: [],
+  insurer_aml_status: [],
   created_at_start: '',
   currently_insured_with: '',
   is_ecommerce: '',
@@ -586,6 +589,13 @@ const onExport = (url, isLoading = false) => {
       }, 1000);
   });
 };
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -759,6 +769,12 @@ const onExport = (url, isLoading = false) => {
           label="Lead Status"
           name="quote_status_id"
           :options="leadStatuses"
+        />
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
         />
         <ComboBox
           v-model="filters.tier_id"
@@ -1062,7 +1078,10 @@ const onExport = (url, isLoading = false) => {
     </x-form>
 
     <Transition name="fade" v-if="!hasRole(rolesEnum.CarAdvisor)">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
+      <div
+        v-if="quotesSelected.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)"
+        class="mb-4"
+      >
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"

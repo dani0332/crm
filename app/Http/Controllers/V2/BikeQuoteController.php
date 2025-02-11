@@ -11,6 +11,7 @@ use App\Enums\CarPlanType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
@@ -42,6 +43,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\BikeEmailService;
 use App\Services\BikeQuoteService;
 use App\Services\CentralService;
@@ -86,6 +88,7 @@ class BikeQuoteController extends Controller
             'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 
@@ -138,11 +141,11 @@ class BikeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         $quote = BikeQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BIKE->value, $quote);
@@ -205,8 +208,10 @@ class BikeQuoteController extends Controller
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+        $listQuotePlans = $this->bikeQuoteService->getPlans($uuid, true, true);
 
         return inertia('BikeQuote/Show', [
+            'listQuotePlans' => $listQuotePlans,
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
             'record' => $quote,
@@ -257,6 +262,8 @@ class BikeQuoteController extends Controller
             'websiteURL' => $websiteURL,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 
@@ -302,7 +309,7 @@ class BikeQuoteController extends Controller
     {
         Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
 
-        //get Car quote by uuid using model
+        // get Car quote by uuid using model
         $bikeQuote = PersonalQuote::where('uuid', $request->quote_uuid)->first();
 
         $previousAdvisor = null;

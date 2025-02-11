@@ -42,12 +42,6 @@ const onLeadStatus = () => {
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Quote status is updated',
-          position: 'top',
-        });
-      },
     },
   );
 };

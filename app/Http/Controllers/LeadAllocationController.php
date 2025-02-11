@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -51,6 +52,10 @@ class LeadAllocationController extends Controller
             $unAvailableUsers = 0;
             $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('LEAD_ALLOCATION_JOB_SWITCH');
             $data = $this->leadAllocationService->getGridData();
+            if (request()->has('userBlStatus') && request('userBlStatus') !== LeadAllocationUserBLStatusFiltersEnum::ALL->value) {
+                $userBlStatus = LeadAllocationUserBLStatusFiltersEnum::from(request('userBlStatus'));
+                $data = $userBlStatus->applyFilter($data);
+            }
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount += $value->allocation_count;
                 if ($value->is_available == 1) {
@@ -67,6 +72,7 @@ class LeadAllocationController extends Controller
                 'isAutoAllocationWorking' => (int) $isAutoAllocationWorking,
                 'data' => $data,
                 'quoteType' => QuoteTypes::HEALTH->value,
+                'userBLStatuses' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
             ]);
         } else {
             abort(403, 'Unauthorized action.');
@@ -234,6 +240,9 @@ class LeadAllocationController extends Controller
 
     public function updateResetCapSwitch(Request $request)
     {
+        $requester = auth()->user();
+        info(self::class."::updateResetCapSwitch - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
+
         if (isset($request->resetCap)) {
             $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
             if (isset($request->leadId)) {
@@ -250,6 +259,8 @@ class LeadAllocationController extends Controller
 
     public function updateBlStatus(Request $request)
     {
+        $requester = auth()->user();
+        info(self::class."::updateBlStatus - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         if (isset($request->buyLeadStatus)) {
             $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
             if (isset($request->leadId)) {
@@ -265,6 +276,8 @@ class LeadAllocationController extends Controller
 
     public function updateNormalLeadAllocationStatus(Request $request)
     {
+        $requester = auth()->user();
+        info(self::class."::updateNormalLeadAllocationStatus - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         if (isset($request->nlStatus)) {
             $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
             if (isset($request->laId)) {
@@ -280,6 +293,8 @@ class LeadAllocationController extends Controller
 
     public function updateBLResetCap(Request $request)
     {
+        $requester = auth()->user();
+        info(self::class."::updateBLResetCap - Requester: {$requester->id}: {$requester->name} ({$requester->email})".json_encode($request->all()));
         if (isset($request->blResetCap)) {
             $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
             if (isset($request->laId)) {

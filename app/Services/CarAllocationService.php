@@ -55,6 +55,47 @@ class CarAllocationService extends AllocationService
         $this->resetProps();
     }
 
+    private function verifyPreChecks(CarQuote $lead, bool $overrideAssignment): bool
+    {
+        info(self::class." - Processing Car ILA for uuid: {$lead->uuid}", [
+            'uuid' => $lead->uuid,
+            'payment_status_id' => $lead->payment_status_id,
+            'source' => $lead->source,
+            'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
+            'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
+            'sic_flow_enabled' => $lead->sic_flow_enabled,
+            'sic_advisor_requested' => $lead->sic_advisor_requested,
+            'quote_status_id' => $lead->quote_status_id,
+        ]);
+
+        $continueAssignment = false;
+
+        if (! $overrideAssignment && ! empty($lead->advisor_id)) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is already assigned to advisor with ID: {$lead->advisor_id}, skipping assignment");
+        } elseif ($lead->isFakeOrDuplicate()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
+        } elseif ($lead->hasExemptedSource()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has exempted source {$lead->source}, skipping assignment");
+        } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment");
+            $continueAssignment = true;
+        } elseif ($lead->isRenewalTierEmailSent()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has renewal tier email sent, skipping assignment");
+        } elseif ($lead->isSICFlowDisabled() && ! $lead->isRenewalUpload()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} has SIC flow disabled and not Renewal Upload, skipping assignment");
+            $continueAssignment = true;
+        } elseif ($lead->isRevivalRepliedOrPaid()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is a Revival lead, continuing assignment");
+            $continueAssignment = true;
+        } elseif ($lead->isRenewalUpload()) {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} is Renewal Upload, skipping assignment");
+        } else {
+            info(self::class."::verifyPreChecks - Lead with UUID: {$lead->uuid} does not meet any criteria, skipping assignment");
+        }
+
+        return $continueAssignment;
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         // Check if Dubai Now exclusion should be applied
@@ -68,27 +109,13 @@ class CarAllocationService extends AllocationService
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
         }
 
-        // Create a query to retrieve a car lead based on the provided quote ID and filters.
-        $carQuoteQuery = CarQuote::where('uuid', $quoteId)
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', $exemptedLeadSources)
-            ->where('is_renewal_tier_email_sent', 0)
-            ->where(function ($query) {
-                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                    ->orWhere(function ($query) {
-                        $query->where('sic_flow_enabled', 1)
-                            ->where(function ($query) {
-                                $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-                                    ->orWhere('sic_advisor_requested', 1);
-                            });
-                    });
-            });
+        $lead = CarQuote::where('uuid', $quoteId)->first();
 
-        if (! $overrideAdvisorId) {
-            $carQuoteQuery->whereNull('advisor_id');
+        if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
+            return null;
         }
 
-        return $carQuoteQuery->first();
+        return $lead;
     }
 
     public function getTier($tierId)
@@ -367,7 +394,7 @@ class CarAllocationService extends AllocationService
 
         $advisors = [];
 
-        if ($lead->isBuyLeadApplicable() && ($tier->isValue() || $tier->isVolume())) {
+        if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::CAR)) && ($tier->isValue() || $tier->isVolume())) {
             $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
 
@@ -435,10 +462,10 @@ class CarAllocationService extends AllocationService
         return $query;
     }
 
-    public function getBLAdvisorsByStatus($lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
+    public function getBLAdvisorsByStatus(CarQuote $lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
     {
         info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
-        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $tier->isValue());
+        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $lead->isSIC(QuoteTypes::CAR), $tier->isValue());
         info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
 
         $userIds = array_values(array_intersect(
@@ -543,7 +570,7 @@ class CarAllocationService extends AllocationService
             ])->get();
     }
 
-    public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
+    public function determineFinalUserId(CarQuote $lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
@@ -592,7 +619,7 @@ class CarAllocationService extends AllocationService
 
         if ($this->isBuyLeadAdvisor) {
             foreach ($finalEligibleUserIds as $advisorId) {
-                $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $advisorId, $tier->isValue());
+                $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $lead->isSIC(QuoteTypes::CAR), $advisorId, $tier->isValue());
                 if ($this->buyLeadRequest) {
                     info("Buy Lead Request {$this->buyLeadRequest->id} found for advisor ID: {$advisorId} and tier ID: {$tier->id} for uuid : {$lead->uuid}");
                     $this->buyLeadRequest->startProcessing();
@@ -641,9 +668,17 @@ class CarAllocationService extends AllocationService
             ->toArray();
     }
 
-    public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
+    public function processLeadAssignment(CarQuote $lead, $userId, $tier, $assignmentType): void
     {
         info('About to assign car lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
+
+        if ($lead->advisor_id === $userId) {
+            info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
+
+            $this->endBuyLeadProcessing();
+
+            return;
+        }
 
         if (! empty($lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
             $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
@@ -654,10 +689,10 @@ class CarAllocationService extends AllocationService
         }
 
         if ($assignmentType === AssignmentTypeEnum::SYSTEM_REASSIGNED && $this->isBuyLeadAdvisor) {
-            $assignmentType = AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
+            $assignmentType = AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD;
         }
 
-        //Store the previous Assignment Type
+        // Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
 
         // Store the previous advisor ID.

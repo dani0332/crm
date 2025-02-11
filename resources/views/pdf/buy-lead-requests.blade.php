@@ -41,7 +41,7 @@
                     <td>{{ $quoteType->refId($row->ref_id) }}</td>
                     <td>{{ $row->quoteType?->code }}</td>
                     <td>{{ $row->department }}</td>
-                    <td>{{ \Carbon\Carbon::parse($row->requested_date)->format('Y-m-d H:i:s') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($row->created_at)->format('Y-m-d H:i:s') }}</td>
                     <td>{{ $row->cost }}</td>
                 </tr>
             @endforeach

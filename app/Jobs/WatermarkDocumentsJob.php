@@ -19,6 +19,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
     public $timeout = 120; // 2 minutes
     public $tries = 3;
+    public $backoff = 10;
     private $quoteDocumentId;
     private $uuid;
     private $documentTypeId;
@@ -38,7 +39,7 @@ class WatermarkDocumentsJob implements ShouldQueue
      */
     public function handle()
     {
-        info('watermark job started for '.$this->uuid);
+        info('watermark job started for '.$this->uuid.' attempt: '.$this->attempts());
         $quoteDocument = QuoteDocument::find($this->quoteDocumentId);
         $documentType = DocumentType::find($this->documentTypeId);
 

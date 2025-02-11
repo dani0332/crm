@@ -28,11 +28,14 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const page = usePage();
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const modelClass = 'App\\Models\\PersonalQuote';
 const readOnlyMode = reactive({
@@ -95,7 +98,12 @@ const dateFormat = date =>
               placement="bottom"
             >
               <LeadEditBtnReuseTemplate
-                v-if="can(permissionsEnum.JetskiQuotesEdit)"
+                v-if="
+                  canAny([
+                    permissionsEnum.JetskiQuotesEdit,
+                    permissionsEnum.VIEW_ALL_LEADS,
+                  ])
+                "
                 :isDisabled="true"
               />
               <template #tooltip
@@ -106,7 +114,12 @@ const dateFormat = date =>
             </x-tooltip>
             <template v-else>
               <LeadEditBtnReuseTemplate
-                v-if="can(permissionsEnum.JetskiQuotesEdit)"
+                v-if="
+                  canAny([
+                    permissionsEnum.JetskiQuotesEdit,
+                    permissionsEnum.VIEW_ALL_LEADS,
+                  ])
+                "
               />
             </template>
             <Link
@@ -141,8 +154,12 @@ const dateFormat = date =>
                 <dd class="break-words">{{ quote.advisor?.email }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>N/A</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>

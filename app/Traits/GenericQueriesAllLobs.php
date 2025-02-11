@@ -20,6 +20,7 @@ use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\CapiRequestService;
+use App\Services\CentralService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Carbon\Carbon;
@@ -175,7 +176,7 @@ trait GenericQueriesAllLobs
     {
         $customer = CustomerService::getCustomerByEmail($customerData['email']);
 
-        //create new customer if not exists
+        // create new customer if not exists
         if (! isset($customer->id)) {
             $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
 
@@ -230,8 +231,8 @@ trait GenericQueriesAllLobs
      */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
+
         info('Quote Code: '.$record->code.' fn: bookPolicyPayload called');
-        $infoMessage = 'Quote Code: '.$record->code.' ';
         $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
@@ -258,17 +259,17 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['paymentStatusHeading'] = $paymentStatusHeading;
         $bookPolicyDetails['paymentStatusDescription'] = $paymentStatusDescription;
         $isFilledPolicyDetails = $this->isFilledPolicyDetails($quoteType, $record);
-        $infoMessage .= 'QSI: '.$record->quote_status_id.' IPDF: '.$isFilledPolicyDetails.' IEQD: '.empty($quoteDocuments);
         $bookPolicyDetails['policyCancelled'] = false;
         $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
+        $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $payment, true);
+        $bookPolicyDetails = array_merge($bookPolicyDetails, $tapPaymentConfiguration);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
                 $isAllRequiredDocumentUploaded = app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $quoteType, $record);
-                $infoMessage .= ' ARDF: '.$isAllRequiredDocumentUploaded;
                 if ($isAllRequiredDocumentUploaded) {
                     $bookPolicyDetails['sendButton'] = true;
                     $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
@@ -277,15 +278,12 @@ trait GenericQueriesAllLobs
                 if ($bookPolicyDetails['sendButton']) {
                     $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType, $record);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
-                    $infoMessage .= ' TDC: '.count($taxDocuments).' UDC: '.$taxDocumentsCount;
                     if ($taxDocumentsCount == count($taxDocuments)) {
                         $bookPolicyDetails['editButton'] = true;
                         $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
-                        $infoMessage .= ' BDS '.$areBookingDetailsFilled;
 
                         if ($areBookingDetailsFilled) {
                             $isMainLead = $this->checkMainLead($record, $quoteType);
-                            $infoMessage .= ' IML '.$isMainLead;
                             if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
                                 $bookPolicyDetails['bookButton'] = true;
                                 $bookPolicyDetails['text'] = SendPolicyTypeEnum::SAGE_BUTTON_TEXT;
@@ -303,8 +301,6 @@ trait GenericQueriesAllLobs
         if ($record->quote_status_id == QuoteStatusEnum::PolicySentToCustomer) {
             $bookPolicyDetails['text'] = 'Book Policy';
         }
-        info($infoMessage);
-        info('Quote Code: '.$record->code.' Policy Booking Details: ', $bookPolicyDetails);
 
         return $bookPolicyDetails;
     }
@@ -456,18 +452,24 @@ trait GenericQueriesAllLobs
         if ($this->isSplitPaymentFullyPaid($payment)) {
             return true;
         }
+
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $discountValue = round($payment->discount_value, 2);
             $paymentTotalAmount = round($payment->total_amount, 2);
-            if ($paymentTotalAmount + $discountValue > $paymentTotalPrice) {
-                return true;
+            $tolerance = 0.01;
+
+            if (($paymentTotalAmount + $discountValue) >= ($paymentTotalPrice - $tolerance) &&
+                ($paymentTotalAmount + $discountValue) <= ($paymentTotalPrice + $tolerance)) {
+                return false;
             }
-            $paymentTotalPrice = round($payment->total_price, 2);
+
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $discountValue), 2);
             info('Quote Code: '.$payment->code.' Checking Lacking Payment paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
 
-            return ! ($sumOfSplitPayment >= $paymentTotalPrice);
+            // Check if the sum of split payments is approximately equal to the total price
+            return ! (($sumOfSplitPayment >= ($paymentTotalPrice - $tolerance)) &&
+                    ($sumOfSplitPayment <= ($paymentTotalPrice + $tolerance)));
         }
 
         return true;
@@ -480,14 +482,14 @@ trait GenericQueriesAllLobs
      *
      * @return array
      */
-    private function checkForInsufficientPayment($paymnet)
+    public function checkForInsufficientPayment($payment)
     {
         $paymentStatusHeading = '';
         $paymentStatusDescription = '';
         $isInsufficientPayment = false;
 
-        if ($paymnet) {
-            $paymentStatusId = $paymnet->payment_status_id;
+        if ($payment) {
+            $paymentStatusId = $payment->payment_status_id;
 
             $insufficientPaymentStatuses = [
                 PaymentStatusEnum::PARTIALLY_PAID,
@@ -503,7 +505,7 @@ trait GenericQueriesAllLobs
                 PaymentStatusEnum::OVERDUE,
             ];
 
-            if (in_array($paymnet->payment_status_id, $insufficientPaymentStatuses)) {
+            if (in_array($payment->payment_status_id, $insufficientPaymentStatuses)) {
                 switch ($paymentStatusId) {
                     case PaymentStatusEnum::PARTIALLY_PAID:
                         $paymentStatusHeading = 'Insufficient payment received';

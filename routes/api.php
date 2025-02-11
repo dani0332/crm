@@ -65,3 +65,5 @@ Route::prefix('v1')->group(function () {
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
+
+Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);

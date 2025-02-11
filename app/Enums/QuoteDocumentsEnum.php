@@ -25,10 +25,10 @@ final class QuoteDocumentsEnum extends Enum
     public const LIFE_TAX_INVOICE = 'CTI';
     public const LIFE_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';
 
-    //Risk Score Document Type
+    // Risk Score Document Type
     public const SCRDOC = 'SCRDOC';
 
-    //Travel Quote
+    // Travel Quote
     public const TRAVEL_POLICY_SCHEDULE = 'CPS_TRVL';
     public const TRAVEL_TAX_INVOICE = 'TI';
     public const TRAVEL_TAX_INVOICE_RAISE_BY_BUYER = 'CTIRBB';

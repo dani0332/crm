@@ -140,7 +140,6 @@ abstract class BaseAllocation extends AllocationService
             $previousUserId = $this->lead->advisor_id;
             $this->lead->advisor_id = $advisor->id;
             $this->lead->assignment_type = $assignmentType;
-            $this->lead->quote_updated_at = now();
             $quoteBatch = QuoteBatches::latest()->first();
             $this->lead->quote_batch_id = $quoteBatch->id;
             $this->lead->save();

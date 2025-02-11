@@ -50,7 +50,7 @@ class SendBookPolicyRequest extends FormRequest
                 ]], 403);
             }
             $validator->after(function ($validator) {
-                //check for quote records if exists
+                // check for quote records if exists
                 $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
 
                 if ($quote) {

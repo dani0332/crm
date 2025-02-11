@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
@@ -10,6 +11,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -62,7 +64,7 @@ class HealthQuoteService extends BaseService
         $this->httpService = $httpService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
-            //'hqr.prefill_plan_id',
+            // 'hqr.prefill_plan_id',
             'hqr.uuid',
             'hqr.code',
             'hqr.first_name',
@@ -148,9 +150,9 @@ class HealthQuoteService extends BaseService
                 WHERE quote_type_id = '.QuoteTypeId::Health.' AND quote_request_id = hqr.id),
                 "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
-            'c.insured_first_name',
-            'c.insured_last_name',
-            'c.emirates_id_number',
+            'insured.first_name as insured_first_name',
+            'insured.last_name as insured_last_name',
+            DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
@@ -188,7 +190,16 @@ class HealthQuoteService extends BaseService
             'hqr.insly_migrated',
             'hqr.sic_advisor_requested',
             'hqr.aml_status',
-            'hqr.insurance_provider_id'
+            'hqr.insurance_provider_id',
+            DB::raw('
+                CASE
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE insurer_aml_status
+                END AS insurer_aml_status_display
+            ')
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -215,6 +226,11 @@ class HealthQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
             })
+            ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
+                $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
+                $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
+            })
+            ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
@@ -241,6 +257,7 @@ class HealthQuoteService extends BaseService
                 ]);
                 $payment->orderBy('created_at');
             },
+            'plan',
         ])->first();
     }
 
@@ -481,7 +498,7 @@ class HealthQuoteService extends BaseService
 
         // payment_status_id filter
         if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('payment_status_id', $request->payment_status);
+            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
         }
 
         // is_cold filter
@@ -564,6 +581,10 @@ class HealthQuoteService extends BaseService
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
             $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('hqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'hqr');
@@ -655,7 +676,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->premium = $request->premium;
-        //check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
+        // check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
             $healthQuote->quote_updated_at = Carbon::now();
             $updateMemberDetails = [
@@ -1211,7 +1232,7 @@ class HealthQuoteService extends BaseService
         }
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
-        //check if team is assigned and status not qualified yet so mark it qualified.
+        // check if team is assigned and status not qualified yet so mark it qualified.
         if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
             HealthQuote::where('id', $lead->id)->update([
                 'quote_status_id' => QuoteStatusEnum::Qualified,
@@ -1292,8 +1313,8 @@ class HealthQuoteService extends BaseService
 
         info('Previous assignment type is : '.$previousAssignmentType);
 
-        //Constants for system assigned types
-        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD];
+        // Constants for system assigned types
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
         // Get the allocation record for the new advisor
@@ -1583,7 +1604,7 @@ class HealthQuoteService extends BaseService
     public function renewalCreatePlan($planData)
     {
         $apiCreds = [
-            'apiEndPoint' => config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans',
+            'apiEndPoint' => config('constants.KEN2_API_ENDPOINT').'/save-manual-health-quote-plans',
             'apiToken' => config('constants.KEN_API_TOKEN'),
             'apiTimeout' => config('constants.KEN_API_TIMEOUT'),
             'apiUserName' => config('constants.KEN_API_USER'),
@@ -1716,7 +1737,7 @@ class HealthQuoteService extends BaseService
             $maxAmount = $payment->premium_captured - $payment->premium_refunded;
             if ($maxAmount >= $request->amount) {
                 $paymentAction = new PaymentAction;
-                $paymentAction->payment_code = $payment->code; //$embededTransaction->code;
+                $paymentAction->payment_code = $payment->code; // $embededTransaction->code;
                 $paymentAction->is_fulfilled = 0;
                 $paymentAction->action_type = 'REFUND';
                 $paymentAction->reason = $request->reason;
@@ -1728,7 +1749,7 @@ class HealthQuoteService extends BaseService
                     'uuid' => $request->uuid,
                     'type_id' => $type->id,
                     'code' => $payment->code,
-
+                    'payment_gateway_id' => $payment->payment_gateway_id,
                 ];
                 $processResponse = $this->processCancelPayment($data);
 
@@ -1770,7 +1791,9 @@ class HealthQuoteService extends BaseService
 
     public function processCancelPayment($data)
     {
-        $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
+        $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
+        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/'.$paymentGatewayEndpoint.'/cancel';
         $apiToken = config('constants.MARSHALL_API_TOKEN');
         $apiTimeout = config('constants.MARSHALL_API_TIMEOUT');
         $apiUserName = config('constants.MARSHALL_API_USER');

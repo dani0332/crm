@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
+use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
@@ -128,8 +129,20 @@ class InslyDetailRepository extends BaseRepository
         if ($inslyPolicyIssueDate) {
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
-
         $appUrl = config('constants.APP_URL');
+        $advisorName = $policy['policy']['renewer_person'] ?? null;
+        if ($advisorName == null) {
+            $advisorName = $policy['quote']['broker'] ?? null;
+        }
+        $appUrl = config('constants.APP_URL');
+        $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
+        if ($advisorId == null) {
+            return [
+                'status' => 400,
+                'message' => 'Advisor not found.',
+                'data' => '',
+            ];
+        }
 
         if (! empty($policy)) {
             $policyNumber = $policy['policy']['policy_no'];
@@ -214,7 +227,7 @@ class InslyDetailRepository extends BaseRepository
 
                 // create lead in case no record found
                 $payLoad = $this->prePareData($policy, $quoteType, $isPersonalQuote);
-
+                $payLoad['advisor_id'] = $advisorId;
                 info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
                 info('InslyLead - created Lead Id : '.json_encode($id));
@@ -366,8 +379,10 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
 
         if ($insurer = $policy['policy']['insurer'] ?? null) {
+            info('Fetching Insurance Provider Id from Legacy Lead policy no: '.$policy['policy_no'].' and Insurer: '.trim($insurer));
             $insuranceProviderId = InsuranceProviderRepository::getInslyProviderId(trim($insurer));
             $dataArr['insurance_provider_id'] = $insuranceProviderId;
+            info('Assign Insurance Provider Id: '.$insuranceProviderId.' against Insurer: '.trim($insurer).' Legacy Lead policy no: '.$policy['policy_no']);
         }
 
         $dataArr['policy_issuance_date'] = now()->format('Y-m-d');

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use Auth;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Lab404\Impersonate\Models\Impersonate;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
@@ -21,6 +23,7 @@ class User extends Authenticatable implements AuditableContract
     use Auditable;
     use HasFactory;
     use HasRoles;
+    use Impersonate;
     use Notifiable;
 
     /**
@@ -112,6 +115,11 @@ class User extends Authenticatable implements AuditableContract
         } else {
             return 0;
         }
+    }
+
+    public function hasTeam(...$teams)
+    {
+        return $this->teams->whereIn('name', $teams)->isNotEmpty();
     }
 
     public function isLeadPool()
@@ -370,6 +378,11 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsTo(Department::class)->select('id', 'name');
     }
 
+    public function advisors()
+    {
+        return $this->hasMany(InslyAdvisor::class);
+    }
+
     public function businessTypes()
     {
         return $this->belongsToMany(BusinessTypeOfInsurance::class, 'business_type_of_insurance_user', 'user_id', 'business_type_of_insurance_id');
@@ -380,28 +393,48 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsToMany(Department::class, 'user_departments', 'user_id', 'department_id');
     }
 
-    public function isValueUser()
+    public function isValueUser(QuoteTypes $quoteType): bool
     {
+        if ($quoteType === QuoteTypes::HEALTH) {
+            return $this->hasTeam(TeamNameEnum::RM_SPEED);
+        }
+
         return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VALUE);
     }
 
-    public function isVolumeUser()
+    public function isVolumeUser(QuoteTypes $quoteType): bool
     {
+        if ($quoteType === QuoteTypes::HEALTH) {
+            return $this->hasTeam(TeamNameEnum::EBP);
+        }
+
         return strtolower($this->subTeam?->name) === strtolower(TeamNameEnum::VOLUME);
     }
 
-    public function scopeIsValueUser($q)
+    public function scopeIsValueUser($q, QuoteTypes $quoteType)
     {
-        $q->whereHas('subTeam', function ($q) {
-            $q->where('name', 'like', TeamNameEnum::VALUE);
-        });
+        if ($quoteType === QuoteTypes::HEALTH) {
+            $q->whereHas('teams', function ($q) {
+                $q->where('name', 'like', TeamNameEnum::RM_SPEED);
+            });
+        } else {
+            $q->whereHas('subTeam', function ($q) {
+                $q->where('name', 'like', TeamNameEnum::VALUE);
+            });
+        }
     }
 
-    public function scopeIsVolumeUser($q)
+    public function scopeIsVolumeUser($q, QuoteTypes $quoteType)
     {
-        $q->whereHas('subTeam', function ($q) {
-            $q->where('name', 'like', TeamNameEnum::VOLUME);
-        });
+        if ($quoteType === QuoteTypes::HEALTH) {
+            $q->whereHas('teams', function ($q) {
+                $q->where('name', 'like', TeamNameEnum::EBP);
+            });
+        } else {
+            $q->whereHas('subTeam', function ($q) {
+                $q->where('name', 'like', TeamNameEnum::VOLUME);
+            });
+        }
     }
 
     public function scopeChs($query)

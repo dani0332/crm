@@ -19,6 +19,7 @@ defineProps({
   },
   authorizedDays: Number,
   assignmentTypes: Object,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -66,6 +67,11 @@ const tableHeader = ref([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type', is_active: true },
   {
@@ -152,6 +158,7 @@ const filters = reactive({
   created_at_end: new Date() || '',
   sub_team: '',
   quote_status: [],
+  insurer_aml_status: [],
   advisors: [],
   is_ecommerce: '',
   is_renewal: '',
@@ -587,6 +594,13 @@ watch(() => {
     filters.created_at_end = '';
   }
 });
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -724,6 +738,12 @@ watch(() => {
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
         />
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <DatePicker
           v-model="filters.policy_expiry_date"
           name="policy_expiry_date"
@@ -742,7 +762,7 @@ watch(() => {
               rolesEnum.CarAdvisor,
               rolesEnum.HealthRenewalAdvisor,
               rolesEnum.HealthAdvisor,
-            ])
+            ]) || hasRole(rolesEnum.SuperManagerLeadAllocation)
           "
           v-model="filters.advisors"
           label="Advisor"
@@ -948,7 +968,10 @@ watch(() => {
       </div>
     </x-form>
     <Transition name="fade">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
+      <div
+        v-if="quotesSelected.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)"
+        class="mb-4"
+      >
         <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">

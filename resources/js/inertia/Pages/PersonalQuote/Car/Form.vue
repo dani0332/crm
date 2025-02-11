@@ -1,4 +1,6 @@
 <script setup>
+import QuoteStatus from '@/inertia/Pages/PersonalQuote/Partials/QuoteStatus.vue';
+
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -8,6 +10,7 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  quoteStatusEnums: Array,
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -76,6 +79,7 @@ const quoteForm = useForm({
   trim: props.quote?.trim || null,
   additional_notes: props.quote?.additional_notes || '',
   car_model_id: props.quote?.car_model_id || null,
+  chassis_number: props.quote?.chassis_number || null,
   year_of_manufacture: props.quote?.year_of_manufacture || null,
   emirate_of_registration_id: props.quote?.emirate_of_registration_id || null,
   car_type_insurance_id: props.quote?.car_type_insurance_id || null,
@@ -329,6 +333,62 @@ const floorLabel = computed(() => {
 
 const isCourierStatusPending = computed(() => {
   return quoteForm.courierQuoteStatus !== 'Pending';
+});
+
+const chassisNumberDisabled = computed(() => {
+  let disallowedStatus = [
+    props.quoteStatusEnums.PolicySentToCustomer,
+    props.quoteStatusEnums.PolicyBooked,
+  ];
+  return disallowedStatus.includes(props?.quote?.quote_status_id);
+});
+
+const chassisNumberValidate = eventType => {
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
+
+  if (eventType == 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
+      event.preventDefault();
+    }
+  }
+
+  if (eventType == 'blur') {
+    const lengthValid =
+      quoteForm.chassis_number.length >= 8 &&
+      quoteForm.chassis_number.length <= 17;
+    const isAlphanumeric = regex.test(quoteForm.chassis_number);
+    if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
+      quoteForm.errors.chassis_number =
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+    } else {
+      quoteForm.clearErrors('chassis_number');
+    }
+  }
+};
+
+const chassisNumberRule = v => {
+  const regex = /^[a-zA-Z0-9]*$/;
+  const lengthValid = v.length >= 8 && v.length <= 17;
+  const isAlphanumeric = regex.test(v);
+  if (v && (!lengthValid || !isAlphanumeric)) {
+    return 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+  }
+  return true;
+};
+
+const gender = computed(() => {
+  return [
+    { value: 'M', label: 'Male' },
+    { value: 'F', label: 'Female' },
+  ];
 });
 
 const isAmlOrKycUpdated = computed(() => {
@@ -638,6 +698,14 @@ const isAmlOrKycUpdated = computed(() => {
           />
         </x-field>
 
+        <x-field label="GENDER">
+          <x-select
+            v-model="quoteForm.gender"
+            :options="gender"
+            placeholder="Gender"
+          />
+        </x-field>
+
         <x-field 
         v-if="quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE || quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
         label="UAE LICENCE HELD FOR" required>
@@ -708,6 +776,44 @@ const isAmlOrKycUpdated = computed(() => {
             @keypress="cylinderValidation"
           />
         </x-field>
+
+        <div>
+          <template v-if="chassisNumberDisabled">
+            <x-tooltip placement="bottom">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+              >
+                CHASSIS NUMBER
+              </label>
+              <template #tooltip>
+                This lead is now locked as the policy has been booked. If
+                changes are needed, go to 'Send Update', select 'Add Update',
+                and choose 'Cancellation from Inception and Reissuance'
+              </template>
+            </x-tooltip>
+            <x-input
+              :disabled="chassisNumberDisabled"
+              v-model="quoteForm.chassis_number"
+              class="w-full"
+              type="text"
+              placeholder="Enter Chassis Number"
+            />
+          </template>
+          <template v-else>
+            <x-field label="CHASSIS NUMBER">
+              <x-input
+                v-model="quoteForm.chassis_number"
+                class="w-full"
+                type="text"
+                placeholder="Enter Chassis Number"
+                :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
+                @keypress="chassisNumberValidate('keypress')"
+                @blur="chassisNumberValidate('blur')"
+                :error="quoteForm.errors.chassis_number"
+              />
+            </x-field>
+          </template>
+        </div>
 
         <x-field label="TRIM">
           <ComboBox
