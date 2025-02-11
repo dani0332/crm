@@ -90,6 +90,6 @@ class PaymentSplits extends Model implements Auditable
 
     public function paymentCharges(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasOne(PaymentCharge::class);
+        return $this->hasOne(PaymentCharge::class, 'payment_split_id', 'id');
     }
 }
