@@ -18,6 +18,7 @@ use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\DocumentType;
+use App\Models\PaymentCharges;
 use App\Models\PolicyIssuanceLog;
 use App\Models\TravelQuote;
 use App\Repositories\PaymentRepository;
@@ -283,6 +284,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $payload = [
             'policy_id' => $quote->insurer_policy_id,
+            'agency_reference' => $payment->paymentSplits->first()?->paymentCharges?->transaction_id ?? null,
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 

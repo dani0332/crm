@@ -87,4 +87,9 @@ class PaymentSplits extends Model implements Auditable
     {
         return $this->hasOne(CcPaymentProcess::class)->failed();
     }
+
+    public function paymentCharges(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PaymentCharges::class);
+    }
 }
