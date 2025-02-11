@@ -3549,7 +3549,6 @@ const isEditPaymentEnabled = () => {
 
   return (
     !isMultiPaymentsEnabled.value &&
-    isGIGOrQICProvider.value &&
     hasAnyAuthorizedPayment
   );
 };
