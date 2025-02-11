@@ -18,4 +18,15 @@ class SavingsQuote extends Model
         'investment_frequency',
         'additional_notes',
     ];
+
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => self::class, 'key' => 'personal_quote_id'],
+            ],
+        ];
+    }
 }
