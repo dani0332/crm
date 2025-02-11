@@ -63,7 +63,7 @@ const quoteForm = useForm({
   },
   dob: props.quote?.dob || null,
   nationality_id: props.quote?.nationality_id || null,
-  gender: props.quote?.customer?.gender || null,
+  gender: props.quote?.gender || null,
   company_name: props.quote?.company_name || null,
   company_address: props.quote?.company_address || null,
 });
