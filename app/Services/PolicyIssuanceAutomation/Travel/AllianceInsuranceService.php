@@ -18,7 +18,6 @@ use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
 use App\Models\DocumentType;
-use App\Models\PaymentCharges;
 use App\Models\PolicyIssuanceLog;
 use App\Models\TravelQuote;
 use App\Repositories\PaymentRepository;
