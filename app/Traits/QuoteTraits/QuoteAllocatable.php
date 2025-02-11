@@ -108,15 +108,22 @@ trait QuoteAllocatable
         return ! $this->isSICFlowEnabled();
     }
 
+    public function scopePaymentLinkRequested($q)
+    {
+        $q->where('quote_status_id', QuoteStatusEnum::PaymentLinkRequestedByCustomer);
+    }
+
     public function scopeHasOneOfPaidStatus($q)
     {
-        $q->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+        $q->where(function ($sq) {
+            $sq->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->orWhere->paymentLinkRequested();
+        });
     }
 
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
     {
         $q->where(function ($sq) {
-            $sq->where('sic_advisor_requested', 1)->orWhere->hasOneOfPaidStatus()->orWhere('quote_status_id', QuoteStatusEnum::PaymentLinkRequestedByCustomer);
+            $sq->where('sic_advisor_requested', 1)->orWhere->hasOneOfPaidStatus();
         });
     }
 
