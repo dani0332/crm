@@ -13,7 +13,9 @@ use App\Models\MartialStatus;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Models\SavingsQuote;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -100,8 +102,8 @@ class SavingsQuoteService extends BaseQuoteService
             'marital_status_id' => $data['maritalStatusId'],
             'tenure_of_savings' => $data['tenureOfSavings'],
             'has_nicotine' => $data['hasNicotine'],
-            'purpose' => $data['purpose'],
-            'currency' => $data['currency'],
+            'purpose_of_savings' => $data['purposeOfSavings'],
+            'currency_id' => $data['currencyId'],
             'amount' => $data['amount'],
             'investment_frequency' => $data['investmentFrequency'],
             'additional_notes' => $data['additionalNotes'],
@@ -129,8 +131,8 @@ class SavingsQuoteService extends BaseQuoteService
             'maritalStatusId' => $data['marital_status_id'],
             'tenureOfSavings' => $data['tenure_of_savings'],
             'hasNicotine' => $data['has_nicotine'],
-            'purpose' => $data['purpose'],
-            'currency' => $data['currency'],
+            'purposeOfSavings' => $data['purpose_of_savings'],
+            'currencyId' => $data['currency_id'],
             'amount' => $data['amount'],
             'investmentFrequency' => $data['investment_frequency'],
             'additionalNotes' => $data['additional_notes'],
@@ -145,5 +147,33 @@ class SavingsQuoteService extends BaseQuoteService
         ];
 
         return $this->tempMockApi($data);
+    }
+
+    public function getOne(string $uuid)
+    {
+        return $this->baseQuery()->with([
+            'savingsQuote',
+        ])->where('uuid', $uuid)->firstOrFail();
+    }
+
+    public function update(string $uuid, array $data)
+    {
+        return DB::transaction(function () use ($uuid, $data) {
+            $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
+
+            $quoteData = Arr::only($data, [
+                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
+            ]);
+
+            $quoteData['updated_by_id'] = Auth::user()->id;
+            $quote->update($quoteData);
+
+            $quote->savingsQuote()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                $data
+            );
+
+            return $quote;
+        });
     }
 }
