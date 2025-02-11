@@ -203,7 +203,6 @@ function onSubmit(isValid) {
               v-model="quoteForm.amount"
               type="number"
               :rules="[isRequired]"
-              :disabled="editMode"
               class="w-full"
               :error="quoteForm.errors.amount"
             />

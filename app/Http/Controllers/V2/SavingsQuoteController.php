@@ -62,4 +62,21 @@ class SavingsQuoteController extends Controller
 
         // return redirect(route('savings-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
+
+    public function edit($uuid)
+    {
+        $data = $this->savingsQuoteService->getFormOptions();
+        $quote = $this->savingsQuoteService->getOne($uuid);
+
+        return inertia('SavingsQuote/Form', array_merge($data, [
+            'quote' => $quote,
+        ]));
+    }
+
+    public function update(SavingsQuoteRequest $request, $uuid)
+    {
+        $this->savingsQuoteService->update($uuid, $request->validated());
+
+        return redirect(route('savings-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
+    }
 }
