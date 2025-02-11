@@ -23,7 +23,7 @@ const quoteForm = useForm({
   tenure_of_savings: props.quote?.savings_quote?.tenure_of_savings || '',
   has_nicotine: (props.quote?.savings_quote?.has_nicotine | 0).toString(),
   purpose_of_savings: props.quote?.savings_quote?.purpose_of_savings || '',
-  currency: props.quote?.savings_quote?.currency_id || '',
+  currency_id: props.quote?.savings_quote?.currency_id || '',
   amount: props.quote?.savings_quote?.amount || '',
   investment_frequency: props.quote?.savings_quote?.investment_frequency || '',
   additional_notes: props.quote?.savings_quote?.additional_notes || '',
@@ -191,11 +191,11 @@ function onSubmit(isValid) {
         <div class="grid sm:grid-cols-2 gap-4">
           <x-field label="Investment Amount (Currency)" required>
             <x-select
-              v-model="quoteForm.currency"
+              v-model="quoteForm.currency_id"
               :options="currencies"
               :rules="[isRequired]"
               class="w-full"
-              :error="quoteForm.errors.currency"
+              :error="quoteForm.errors.currency_id"
             />
           </x-field>
           <x-field label="Amount" required>
