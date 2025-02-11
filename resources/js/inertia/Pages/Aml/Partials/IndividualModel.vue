@@ -610,11 +610,14 @@ watch(
   },
 );
 
-watch(() => insuredFormDetails.dob, newValue => {
-  if (newValue !== null) {
-    dobValidationKey.value = true;
-  }
-});
+watch(
+  () => insuredFormDetails.dob,
+  newValue => {
+    if (newValue !== null) {
+      dobValidationKey.value = true;
+    }
+  },
+);
 </script>
 
 <template>
