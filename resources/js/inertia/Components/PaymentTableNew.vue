@@ -1626,6 +1626,7 @@ const isCPD = computed(() => {
 
 // use in insurer payment link
 const updateFromInsurerPaymentLink = (closePaymentModal = false, paymentLinkChanged = false) => {
+  debugger;
   closePaymentModal == true && (createPaymentModal.value = !createPaymentModal.value);
   insurerPaymentLinkChanged.value = paymentLinkChanged;
 }
@@ -2258,7 +2259,7 @@ const validatePaymentAmount = isValid => {
   return false;
 };
 
-const addPayment = isValid => {
+const addPayment = (isValid, sendFTCEmail = true) => {
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
@@ -2312,6 +2313,7 @@ const addPayment = isValid => {
     plan_id: planDetail?.value?.id ?? null, // handling null exception when plan is not found
     captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
+    sendFTCEmail: sendFTCEmail,
     new_payment_structure: true,
     isInertia: true,
     send_update_id: props.sendUpdate?.id || null,
@@ -3034,9 +3036,10 @@ const fetchPlans = () => {
 watch(createPaymentModal, (newVal, oldVal) => {
   if (oldVal === true && newVal === false) {
     // Modal is closing
+    debugger;
     const checkInsurerPaymentLink = paymentMethodsModels.value[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink;
-    if (insurerPaymentLinkChanged && paymentMethodsForm.status === 'edit' && paymentMethodsForm.collection_type === "insurer" && checkInsurerPaymentLink ) {
-      addPayment(true);
+    if (insurerPaymentLinkChanged.value && paymentMethodsForm.collection_type === "insurer" && checkInsurerPaymentLink ) {
+      addPayment(true, false);
     }
   }
 });
@@ -3193,7 +3196,7 @@ const paymentAllocationStatusTooltip = payment_allocation_status => {
 
 // verify if master payment is paid
 const isMasterPaymentPaid = computed(() => {
-  if (props.payments.length > 0 && props.payments[0].payment_status_id === props.paymentStatusEnum.PAID) {
+  if (props.payments.length > 0 && props.payments[0].payment_status_id === page.props.paymentStatusEnum.PAID) {
     return true;
   }
   return false;
