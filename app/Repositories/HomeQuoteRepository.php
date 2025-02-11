@@ -165,6 +165,7 @@ class HomeQuoteRepository extends BaseRepository
         return [
             'lookUpData' => $lookUpData,
             'homePossessionTypeEnum' => HomePossessionType::asArray(),
+            'nationalities' => NationalityRepository::withActive()->get(),
         ];
     }
 
@@ -198,6 +199,11 @@ class HomeQuoteRepository extends BaseRepository
             'lastName' => 'last_name',
             'email' => 'email',
             'mobileNo' => 'mobile_no',
+            'dob' => 'dob',
+            'nationalityId' => 'nationality_id',
+            'gender' => 'gender',
+            'companyName' => 'company_name',
+            'companyAddress' => 'company_address',
         ];
 
         foreach ($optionalFields as $key => $field) {

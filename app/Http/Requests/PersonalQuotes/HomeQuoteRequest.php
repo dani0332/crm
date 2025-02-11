@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\PersonalQuotes;
 
+use App\Enums\GenericRequestEnum;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class HomeQuoteRequest extends FormRequest
@@ -45,6 +47,11 @@ class HomeQuoteRequest extends FormRequest
             'addressObj.villa_apartment_office_no' => 'required|string|max:50',
             'addressObj.villa_building_name' => 'required|string|max:100',
             'addressObj.street_name' => 'required|string|max:150',
+            'dob' => 'nullable|date_format:Y-m-d|before:today',
+            'nationality_id' => 'nullable|exists:nationality,id',
+            'gender' => 'nullable|string|in:' . GenericRequestEnum::MALE_SINGLE . ',' . GenericRequestEnum::FEMALE . '',
+            'company_name' => 'nullable|string|max:200',
+            'company_address' => 'nullable|string',
         ];
     }
 
@@ -104,6 +111,27 @@ class HomeQuoteRequest extends FormRequest
             'addressObj.street_name.required' => 'The street name is required.',
             'addressObj.street_name.string' => 'The street name must be a string.',
             'addressObj.street_name.max' => 'The street name cannot exceed 150 characters.',
+
+            'dob.date_format' => 'The date of birth must be in the format YYYY-MM-DD.',
+            'dob.before' => 'The date of birth must be before today.',
+
+            'nationality_id.exists' => 'The selected nationality is invalid.',
+
+            'gender.string' => 'The gender must be a valid string.',
+            'gender.in' => 'The selected gender is invalid. Please choose a valid option.',
+
+            'company_name.string' => 'The company name must be a valid string.',
+            'company_name.max' => 'The company name cannot exceed 200 characters.',
+
+            'company_address.string' => 'The company address must be a valid string.',
+
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'dob' => isset($this->dob) ? Carbon::parse($this->dob)->format('Y-m-d') : null,
+        ]);
     }
 }
