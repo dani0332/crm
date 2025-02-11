@@ -26,6 +26,11 @@ class PersonalQuote extends Model implements AuditableContract
         'last_name',
         'email',
         'mobile_no',
+        'dob',
+        'nationality_id',
+        'gender',
+        'company_name',
+        'company_address',
     ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
