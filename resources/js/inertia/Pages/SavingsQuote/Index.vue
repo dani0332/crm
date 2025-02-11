@@ -421,14 +421,16 @@ const validateDateRange = () => {
         />
 
         <div v-if="readOnlyMode.isDisable === true">
-          <x-button
-            v-if="can(permissionsEnum.SAVINGS_QUOTES_CREATE)"
-            size="sm"
-            color="#ff5e00"
-            :href="route('savings-quotes-create')"
-          >
-            Create Lead
-          </x-button>
+          <Link :href="route('savings-quotes-create')">
+            <x-button
+              v-if="can(permissionsEnum.SAVINGS_QUOTES_CREATE)"
+              size="sm"
+              color="#ff5e00"
+              :href="route('savings-quotes-create')"
+            >
+              Create Lead
+            </x-button>
+          </Link>
         </div>
       </template>
     </StickyHeader>
