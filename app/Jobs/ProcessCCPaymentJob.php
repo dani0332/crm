@@ -113,6 +113,8 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 
                         return app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
                     } else {
+                        info('CC Payment Job: Executing Booking Process: '.$splitPaymentCode);
+
                         QuoteTag::where('quote_uuid', $quote->uuid)
                             ->where('name', QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START)
                             ->update(['value' => 0]);
