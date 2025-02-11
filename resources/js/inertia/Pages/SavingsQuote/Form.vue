@@ -19,14 +19,14 @@ const quoteForm = useForm({
   dob: props.quote?.dob || '',
   nationality_id: props.quote?.nationality_id || '',
   gender: props.quote?.gender || '',
-  marital_status_id: props.quote?.marital_status_id || '',
-  tenure_of_savings: props.quote?.tenure_of_savings || '',
-  has_nicotine: props.quote?.has_nicotine || '',
-  purpose: props.quote?.purpose || '',
-  currency: props.quote?.currency || '',
-  amount: props.quote?.amount || '',
-  investment_frequency: props.quote?.investment_frequency || '',
-  additional_notes: props.quote?.additional_notes || '',
+  marital_status_id: props.quote?.savings_quote?.marital_status_id || '',
+  tenure_of_savings: props.quote?.savings_quote?.tenure_of_savings || '',
+  has_nicotine: (props.quote?.savings_quote?.has_nicotine | 0).toString(),
+  purpose_of_savings: props.quote?.savings_quote?.purpose_of_savings || '',
+  currency: props.quote?.savings_quote?.currency_id || '',
+  amount: props.quote?.savings_quote?.amount || '',
+  investment_frequency: props.quote?.savings_quote?.investment_frequency || '',
+  additional_notes: props.quote?.savings_quote?.additional_notes || '',
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -181,11 +181,11 @@ function onSubmit(isValid) {
 
         <x-field label="Purpose of Savings" required>
           <x-select
-            v-model="quoteForm.purpose"
+            v-model="quoteForm.purpose_of_savings"
             :options="purposes"
             class="w-full"
             :rules="[isRequired]"
-            :error="quoteForm.errors.purpose"
+            :error="quoteForm.errors.purpose_of_savings"
           />
         </x-field>
         <div class="grid sm:grid-cols-2 gap-4">
