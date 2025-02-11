@@ -3,7 +3,6 @@
 namespace App\Services\Quotes;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\RenewalBatch;
@@ -38,13 +37,11 @@ abstract class BaseQuoteService
         return UserRepository::getPersonalQuoteAdvisors($this->quoteType->value);
     }
 
-    public function getQuoteStatuses()
+    public function getQuoteStatuses($ignoreList = [])
     {
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId($this->quoteType->id())->get();
 
-        return collect($quoteStatuses)->filter(function ($value) {
-            return $value['id'] != QuoteStatusEnum::Lost;
-        })->values();
+        return collect($quoteStatuses)->filter(fn ($value) => ! in_array($value['id'], $ignoreList))->values();
     }
 
     public function getRenewalBatches()
