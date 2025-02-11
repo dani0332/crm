@@ -77,7 +77,7 @@ class PetQuoteRepository extends BaseRepository
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'customer_gender', 'dob', 'nationality_id',
+                'first_name', 'last_name', 'email', 'mobile_no', 'gender', 'dob', 'nationality_id',
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;
