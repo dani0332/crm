@@ -60,7 +60,7 @@ class SavingsQuoteController extends Controller
 
         LeadsCount::dispatch($this->savingsQuoteService->getData(forExport: true, getTotalCount: true));
 
-        // return redirect(route('savings-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
+        return redirect(route('savings-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
 
     public function edit($uuid)
