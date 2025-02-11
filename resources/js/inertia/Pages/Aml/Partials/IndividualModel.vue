@@ -166,7 +166,13 @@ const rules = {
 
   emirateNumberCheck: v => {
     const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
-    return pattern.test(v) || 'Enter the correct EID number format';
+    if (v.length == 15 || v.length > 18 || pattern.test(v)) {
+      insuredFormDetails.errors.screening_id_number = '';
+    } else {
+      return 'Enter the correct EID number format';
+    }
+
+    return true;
   },
 
   passportNumberCheck: v => {
