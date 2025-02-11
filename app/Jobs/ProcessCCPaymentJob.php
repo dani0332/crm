@@ -82,7 +82,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
             $hasAnyCCPayment = $splitPayments->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0;
             info('CC Payment Job - Payment Status ID: '.$payment->payment_status_id.' - Collected By Insurer: '.$payment->isInsurerPayment().' - Has any CC Payment:'.$hasAnyCCPayment);
 
-            if (in_array($payment->payment_status_id, [PaymentStatusEnum::CAPTURED]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
+            if (in_array($payment->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
                 $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id);
                 $isGIGInsuranceProvider = $payment->isGIGInsurer($ccPaymentProcess->quote_type, $quote);
                 $isPaymentGatewayTap = $payment->isPaymentGatewayTap();
