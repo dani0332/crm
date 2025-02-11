@@ -3547,11 +3547,7 @@ const isEditPaymentEnabled = () => {
     statusesToCheck.includes(item.payment_status_id),
   );
 
-  return (
-    !isMultiPaymentsEnabled.value &&
-    isGIGOrQICProvider.value &&
-    hasAnyAuthorizedPayment
-  );
+  return !isMultiPaymentsEnabled.value && hasAnyAuthorizedPayment;
 };
 
 // voidPaymentModal
