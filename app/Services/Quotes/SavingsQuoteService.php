@@ -149,10 +149,21 @@ class SavingsQuoteService extends BaseQuoteService
         return $this->tempMockApi($data);
     }
 
-    public function getOne(string $uuid)
+    public function getOne(string $uuid, $includeRelations = false)
     {
         return $this->baseQuery()->with([
             'savingsQuote',
+            ...($includeRelations ? [
+                'quoteStatus',
+                'currentlyInsuredWith',
+                'advisor',
+                'paymentStatus',
+                'payments',
+                'quoteDetail',
+                'renewalBatchModel',
+                'nationality',
+                'customer',
+            ] : []),
         ])->where('uuid', $uuid)->firstOrFail();
     }
 
