@@ -1,5 +1,7 @@
 <script setup>
 const notification = useNotifications('toast');
+const dateFormat = date =>
+  date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 
 const props = defineProps({
   quote: { type: Object, default: null },
@@ -16,7 +18,7 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
-  dob: props.quote?.dob || '',
+  dob: props.quote?.dob ? dateFormat(props.quote?.dob) : '',
   nationality_id: props.quote?.nationality_id || '',
   gender: props.quote?.gender || '',
   marital_status_id: props.quote?.savings_quote?.marital_status_id || '',
