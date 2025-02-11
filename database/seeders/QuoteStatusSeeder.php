@@ -32,9 +32,9 @@ class QuoteStatusSeeder extends Seeder
                 'updated_by' => 'muhammad.waris@myalfred.com',
             ],
             [
-                'code' => 'PaymentLinkInprogress',
-                'text' => 'Payment Link Inprogress',
-                'text_ar' => 'Payment Link Inprogress',
+                'code' => 'PaymentLinkInProgress',
+                'text' => 'Payment Link In Progress',
+                'text_ar' => 'Payment Link In Progress',
                 'is_active' => 1,
                 'sort_order' => 20,
                 'is_deleted' => 0,
