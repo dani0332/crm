@@ -18,6 +18,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -72,6 +73,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\AllocationService;
+use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
@@ -268,6 +270,7 @@ class CRUDController extends Controller
         // $count = $gridData->count();
         $count = 0;
         $hasOtherFilters = count(array_diff_key($request->all(), ['page' => ''])) > 0;
+        $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
@@ -300,6 +303,7 @@ class CRUDController extends Controller
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
+                'insurerAMLStatus' => $insurerAMLStatus,
             ]);
         }
 
@@ -320,6 +324,7 @@ class CRUDController extends Controller
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HomeQuoteRepository::getData(true, true),
                 'authorizedDays' => intval($authorizedDays->value),
+                'insurerAMLStatus' => $insurerAMLStatus,
             ]);
         }
 
@@ -365,6 +370,7 @@ class CRUDController extends Controller
                 'teams' => $teams,
                 'authorizedDays' => intval($authorizedDays->value),
                 'assignmentTypes' => AssignmentTypeEnum::withLabels(),
+                'insurerAMLStatus' => $insurerAMLStatus,
             ]);
         }
 
@@ -422,11 +428,13 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
+                'quoteStatusEnums' => QuoteStatusEnum::asArray(),
             ]);
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Home) {
             return inertia('HomeQuote/Form', [
+                'nationalities' => NationalityRepository::withActive()->get(),
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -512,6 +520,12 @@ class CRUDController extends Controller
             $this->validate($request, [
                 'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             ]);
+        }
+        if ($request->has('chassis_number') && $request->chassis_number !== null) {
+            $this->validate($request, [
+                'chassis_number' => 'string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/'],
+                ['chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
+                ]);
         }
 
         $this->validate($request, $validateArray);
@@ -689,6 +703,9 @@ class CRUDController extends Controller
 
         $puaTypeEnum = PuaEnum::asArray();
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+        $paymentGatewayEnum = PaymentGatewayIdEnum::asArray();
+        $isFuncsEnabled = ['tapIntegration' => isTapEnabled()];
+
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
             $isCommercialVehicles = false;
@@ -781,8 +798,10 @@ class CRUDController extends Controller
 
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
+            $listQuotePlans = app(CarQuoteService::class)->getPlans($id);
 
             return inertia('PersonalQuote/Car/Show', compact([
+                'listQuotePlans',
                 'record',
                 'sendUpdateOptions',
                 'sendUpdateLogs',
@@ -872,6 +891,8 @@ class CRUDController extends Controller
                 'paymentDocument',
                 'customerAddressData',
                 'amlStatusName',
+                'paymentGatewayEnum',
+                'isFuncsEnabled',
             ]));
         }
 
@@ -914,6 +935,8 @@ class CRUDController extends Controller
                 'access',
                 'isNewPaymentStructure',
                 'hasPolicyIssuedStatus',
+                'paymentGatewayEnum',
+                'isFuncEnabled',
             ]));
         }
 
@@ -1031,6 +1054,8 @@ class CRUDController extends Controller
                 'linkedQuoteDetails' => $linkedQuoteDetails,
                 'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
                 'paymentDocument' => $paymentDocument,
+                'paymentGatewayEnum' => $paymentGatewayEnum,
+                'isFuncsEnabled' => $isFuncsEnabled,
             ]);
         }
 
@@ -1187,6 +1212,8 @@ class CRUDController extends Controller
                 'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
                 'clientInquiryLogs' => $clientInquiryLogs,
                 'paymentDocument' => $paymentDocument,
+                'paymentGatewayEnum' => $paymentGatewayEnum,
+                'isFuncsEnabled' => $isFuncsEnabled,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1268,6 +1295,7 @@ class CRUDController extends Controller
             return inertia('HomeQuote/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
+                'nationalities' => NationalityRepository::withActive()->get(),
                 'dropdownSource' => $dropdownSource,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
@@ -1290,6 +1318,7 @@ class CRUDController extends Controller
                 'model' => json_encode($model->properties),
                 'customerAddressData' => $customerAddressData,
                 'courierQuoteStatus' => $courierQuoteStatus,
+                'quoteStatusEnums' => QuoteStatusEnum::asArray(),
             ]);
         }
 
@@ -1332,6 +1361,16 @@ class CRUDController extends Controller
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         $this->validate($request, $validateArray);
         app(CustomerAddressService::class)->validateAddress($request);
+
+        if ($modelType == quoteTypeCode::Car) {
+            $carQuoteRequest = CarQuote::with('carQuoteRequestDetail')->where('uuid', $id)->first();
+            $carQuoteRequestDetail = $carQuoteRequest->carQuoteRequestDetail;
+            $carQuoteRequestDetail->chassis_number = $request->chassis_number;
+            if ($carQuoteRequestDetail->isDirty()) {
+                $carQuoteRequestDetail->save();
+            }
+        }
+
         $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
         // check if request addressObj is not empty then insert/update the address of user in customer address table

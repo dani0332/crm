@@ -38,6 +38,9 @@ class PetQuoteRequest extends FormRequest
             'is_mixed_breed' => 'nullable',
             'has_injury' => 'nullable',
             'gender' => 'required|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
+            'dob' => 'nullable|before:today',
+            'customer_gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
+            'nationality_id' => 'nullable|exists:nationality,id',
         ];
     }
 }

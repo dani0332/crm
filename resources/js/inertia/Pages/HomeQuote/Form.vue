@@ -7,6 +7,7 @@ const props = defineProps({
   quote: Object,
   homePossessionTypeEnum: Object,
   model: String,
+  nationalities: Object,
   lookUpData: Object,
 });
 const page = usePage();
@@ -60,6 +61,9 @@ const quoteForm = useForm({
       page.props?.quote?.customerAddressData?.building_name || null,
     street_name: page.props?.quote?.customerAddressData?.street || null,
   },
+  dob: props.quote?.dob || null,
+  nationality_id: props.quote?.nationality_id || null,
+  gender: props.quote?.customer?.gender || null,
 });
 
 console.log('quoteForm:', quoteForm);
@@ -98,9 +102,8 @@ const checkForPossesionTypeIdValidation = () => {
   }
 
   // Check if the possessionTypeId is in the applicableForPossessionTypes array
-  const isPossessionTypeValid = coverageType.applicableForPossessionTypes.includes(
-    possessionTypeId,
-  );
+  const isPossessionTypeValid =
+    coverageType.applicableForPossessionTypes.includes(possessionTypeId);
 
   // If the possession type is not valid, show an error
   if (!isPossessionTypeValid) {
@@ -497,6 +500,13 @@ watch(
     }
   },
 );
+
+const gender = computed(() => {
+  return [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+  ];
+});
 </script>
 
 <template>
@@ -570,6 +580,45 @@ watch(
             class="w-full"
             :hasError="formFieldReq.sub_area_id"
             :error="quoteForm.errors.sub_area_id"
+          />
+        </x-field>
+
+        <x-field label="DATE OF BIRTH">
+          <DatePicker v-model="quoteForm.dob" name="created_at_start" />
+        </x-field>
+        <x-field label="NATIONALITY">
+          <ComboBox
+            v-model="quoteForm.nationality_id"
+            :single="true"
+            :options="
+              nationalities.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+          />
+        </x-field>
+        <x-field label="GENDER">
+          <x-select
+            v-model="quoteForm.gender"
+            :options="gender"
+            placeholder="Gender"
+          />
+        </x-field>
+        <x-field label="COMPANY NAME">
+          <x-input
+            v-model="quoteForm.company_name"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_name"
+          />
+        </x-field>
+        <x-field label="COMPANY ADDRESS">
+          <x-input
+            v-model="quoteForm.company_address"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_address"
           />
         </x-field>
 

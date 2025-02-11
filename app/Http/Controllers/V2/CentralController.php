@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -51,12 +53,15 @@ use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
+use App\Models\CustomerInsured;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
@@ -101,7 +106,7 @@ class CentralController extends Controller
             QuoteTypes::JETSKI->value,
             QuoteTypes::HOME->value,
         ])) {
-            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
+            return app(PersonalQuotesExport::class)->download($quoteType . '_leads');
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
@@ -155,25 +160,42 @@ class CentralController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
+        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType) . ' Leads has been Assigned');
     }
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
+            $emiratesDetails = [
+                str_replace('-', '', $customerProfileRequest->emirates_id_number),
+                $customerProfileRequest->emirates_id_expiry_date,
+            ];
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
+            $customer->update($emiratesDetails);
 
-            $customer->update($customerProfileRequest->only([
-                'insured_first_name',
-                'insured_last_name',
-                'emirates_id_number',
-                'emirates_id_expiry_date',
-            ]));
+            $insuredPersonDetails = Insured::updateOrCreate([
+                'id_type' => 'emiratesId',
+                'id_number' => $customerProfileRequest->emirates_id_number,
+            ], [
+                'first_name' => $customerProfileRequest->insured_first_name,
+                'last_name' => $customerProfileRequest->insured_last_name,
+                'dob' => $customer->dob,
+                'nationality_id' => $customer->nationality_id,
+                'gender' => $customer->screening_gender,
+            ]);
+
+            CustomerInsured::updateOrCreate([
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id,
+            ], [
+                'customer_id' => $customerProfileRequest->customer_id,
+                'insured_id' => $insuredPersonDetails->id,
+            ]);
         }
 
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
             $entity = Entity::updateOrCreate(['trade_license_no' => $customerProfileRequest->trade_license_no], $customerProfileRequest->validated());
-            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
+            $entity->update(['code' => CustomerTypeEnum::EntityShort . '-' . $entity->id]);
 
             QuoteRequestEntityMapping::updateOrCreate([
                 'quote_type_id' => $customerProfileRequest->quote_type_id,
@@ -206,7 +228,7 @@ class CentralController extends Controller
     {
         try {
             $validatedData = $bookPolicyRequest->validated();
-            info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
+            info('Quote Code: ' . $validatedData['payment_code'] . ' fn: updateBookingPolicy called');
 
             $paymentInformation = [
                 'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
@@ -235,19 +257,18 @@ class CentralController extends Controller
             }
 
             $payment->update($paymentInformation);
-            info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
+            info('Quote Code: ' . $validatedData['payment_code'] . ' Book policy details update successfully');
 
             $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
             if (! $response['status']) {
                 return back()->with('error', $response['message']);
             }
-            info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
+            info('Quote Code: ' . $validatedData['payment_code'] . ' Commission Schedule updated successfully');
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
-
     }
 
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
@@ -256,7 +277,7 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
-        info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
+        info('Quote Code: ' . $quote->code . ' fn: sendBookingPolicy called policy type ' . $request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
@@ -267,7 +288,7 @@ class CentralController extends Controller
             ];
             $quote->update($quoteData);
 
-            info('Quote Code: '.$quote->code.' Policy send to customer');
+            info('Quote Code: ' . $quote->code . ' Policy send to customer');
 
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
@@ -350,7 +371,7 @@ class CentralController extends Controller
     public function retrySplitPayment(RetrySplitPaymentRequest $request)
     {
         $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
-        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+        info('Manual CC Payments Job Started For Payment Split ID: ' . $paymentProcessJob->payment_splits_id);
 
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
@@ -361,7 +382,6 @@ class CentralController extends Controller
     public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
     {
         return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
-
     }
 
     // Store new payment
@@ -537,7 +557,7 @@ class CentralController extends Controller
             $listQuotePlans = $randomPlans;
         }
 
-        info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
+        info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: ' . $request->quote_uuid);
 
         $emailTemplateId = (int) ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->value('value');
 
@@ -559,17 +579,16 @@ class CentralController extends Controller
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
                     OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
-                    info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
+                    info('OCAHealthFollowupEmailJob dispatched for HEA-' . $healthQuote->uuid . ' - Time: ' . now());
                 }
-
             }
-            info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
+            info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: ' . $request->quote_uuid);
 
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-            info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
+            info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: ' . $request->quote_uuid . ' with error code: ' . $responseCode);
 
-            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
+            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: ' . $responseCode], 500);
         }
     }
     public function exportRmLeads()
@@ -587,7 +606,7 @@ class CentralController extends Controller
         }
 
         $zipFileName = 'PUA-UPDATES.zip';
-        $zipFilePath = storage_path('temp/'.$zipFileName);
+        $zipFilePath = storage_path('temp/' . $zipFileName);
         $zip = new \ZipArchive;
 
         if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
@@ -613,11 +632,46 @@ class CentralController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error processing exports: '.$e->getMessage()], 500);
+            return response()->json(['message' => 'Error processing exports: ' . $e->getMessage()], 500);
         }
 
         $zip->close();
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $response = app(CentralService::class)->voidPayment($request);
+
+        return response()->json(['status' => $response['status'], 'message' => $response['message']]);
+    }
+
+    public function getInsurerAMLResponse(Request $request)
+    {
+        $insurerAMLFailureStatus = [
+            AMLStatusCode::InsurerAMLScreeningPending,
+            AMLStatusCode::InsurerAMLScreeningFailed,
+        ];
+
+        $response = ['status' => false, 'message' => ''];
+        if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
+            $resposneMessage = 'GIG server connection issue. Please check API logs for details of the error';
+
+            if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
+                $insurerAMLScreeningResponse = AML::where([
+                    'quote_type_id' => $request->quoteType,
+                    'quote_request_id' => $request->quoteRequestId,
+                    'screening_type' => 'INSURER_' . InsuranceProvidersEnum::AXA,
+                ])->latest()->first();
+
+                $amlResponse = json_decode($insurerAMLScreeningResponse->results);
+
+                return ['status' => true, 'message' => $amlResponse->message ?? $resposneMessage];
+            }
+            $response = ['status' => true, 'message' => $resposneMessage];
+        }
+
+        return $response;
     }
 }

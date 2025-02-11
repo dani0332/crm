@@ -16,11 +16,12 @@ const props = defineProps({
   residentStatuses: Object,
   lookups: Object,
   quoteAmlStatus: Number,
-  customerDetails: Object,
+  insuredPersonDetails: Object,
   cardHolderName: Object,
   kycLogs: Array,
 });
 
+const page = usePage();
 const loader = ref({
   search: false,
 });
@@ -70,6 +71,13 @@ const customerAmlOnly = () => {
   return true;
 };
 
+const gender = computed(() => {
+  return [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+  ];
+});
+
 const insuredFormDetails = useForm({
   customer_id: props.quoteDetails.customer_id,
   customer_type: props.customerTypeEnum.Individual,
@@ -108,18 +116,24 @@ const insuredFormDetails = useForm({
   id_issuance_authority:
     props.entityDetails?.entity?.id_issuance_authority ?? null,
 
+  screening_id_type: props.insuredPersonDetails?.insured?.id_type ?? null,
+  screening_id_number: props.insuredPersonDetails?.insured?.id_number ?? null,
+
   insured_first_name:
-    props.quoteDetails?.customer?.insured_first_name ??
+    props.insuredPersonDetails?.insured?.first_name ??
     (props.quoteType.code === 'Health'
       ? props.membersDetails[0]?.first_name
       : null),
   insured_last_name:
-    props.quoteDetails?.customer?.insured_last_name ??
+    props.insuredPersonDetails?.insured?.last_name ??
     (props.quoteType.code === 'Health'
       ? props.membersDetails[0]?.last_name
       : null),
-  nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
-  dob: props.quoteDetails?.customer.dob ?? null,
+  nationality_id: props.insuredPersonDetails?.insured.nationality_id ?? null,
+  dob: props.insuredPersonDetails?.insured.dob ?? null,
+  screening_gender: props.insuredPersonDetails?.insured?.gender ?? null,
+  chassis_number:
+    props.quoteDetails?.car_quote_request_detail?.chassis_number ?? null,
 
   entity_id: props.entityDetails?.entity?.id,
   trade_license_no: props.entityDetails?.entity?.trade_license_no,
@@ -139,6 +153,31 @@ const rules = {
       pattern.test(v) || 'Special characters are not allowed in Insured Name'
     );
   },
+
+  chassisNumberCheck: v => {
+    const regex = /^[A-Za-z0-9]+$/;
+    const lengthValid = v?.length >= 8 && v?.length <= 17;
+    const isAlphanumeric = regex.test(v);
+    return (
+      (lengthValid && isAlphanumeric) ||
+      'The entered value does not meet the required length of 8 to 17 characters'
+    );
+  },
+
+  emirateNumberCheck: v => {
+    const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
+    return pattern.test(v) || 'Enter the correct EID number format';
+  },
+
+  passportNumberCheck: v => {
+    const regex = /^[A-Za-z0-9]+$/;
+    const lengthValid = v?.length >= 8 && v?.length <= 9;
+    const isAlphanumeric = regex.test(v);
+    return (
+      (lengthValid && isAlphanumeric) ||
+      'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.'
+    );
+  },
 };
 
 const submitQuoteUpdateForm = isValid => {
@@ -151,9 +190,20 @@ const submitQuoteUpdateForm = isValid => {
       });
     },
     onSuccess: response => {
-      if (response.props.flash.length === 0) {
+      if (response.props.flash.success?.length === 0) {
         notification.success({
           title: 'Quote is updated',
+          position: 'top',
+        });
+      }
+      if (
+        typeof response.props.flash.info !== 'undefined' &&
+        response.props.flash.info?.length > 0
+      ) {
+        notification.error({
+          title:
+            response.props.flash.info?.message ||
+            'GIG server connection issue. Please check API logs for details of the error',
           position: 'top',
         });
       }
@@ -166,12 +216,6 @@ const updateCustomerDetails = isValid => {
     customer_id: insuredFormDetails.customer_id,
     customer_type: insuredFormDetails.customer_type,
     quote_type: insuredFormDetails.quote_type,
-
-    insured_first_name: insuredFormDetails.insured_first_name,
-    insured_last_name: insuredFormDetails.insured_last_name,
-    nationality_id: insuredFormDetails.nationality_id,
-    dob: insuredFormDetails.dob,
-
     place_of_birth: insuredFormDetails.place_of_birth,
     country_of_residence: insuredFormDetails.country_of_residence,
     residential_address: insuredFormDetails.residential_address,
@@ -219,6 +263,7 @@ const insuredDetailsSubmit = isValid => {
       insuredFormDetails.nationality_id === null &&
       validateCustomerFields.value === false;
   }
+
   if (!isValid) return;
 
   if (
@@ -324,7 +369,210 @@ const linkEntity = () => {
     .finally(() => (entityDetailsFound.value = false));
 };
 
+const insuredPersonDetailsFound = ref(false);
+const insuredSearchValidation = computed(() => {
+  if (
+    insuredFormDetails.screening_id_type === '' ||
+    insuredFormDetails.screening_id_number === '' ||
+    insuredFormDetails.screening_id_number === null
+  ) {
+    insuredFormDetails.setError({
+      screening_id_number: 'The field is required',
+    });
+    return false;
+  } else {
+    if (insuredFormDetails.screening_id_type === 'emiratesId') {
+      let validateEmirate = rules.emirateNumberCheck(
+        insuredFormDetails.screening_id_number,
+      );
+      if (validateEmirate !== true) {
+        insuredFormDetails.setError({ screening_id_number: validateEmirate });
+        return false;
+      }
+    }
+
+    if (insuredFormDetails.screening_id_type === 'passport') {
+      let validatePassport = rules.passportNumberCheck(
+        insuredFormDetails.screening_id_number,
+      );
+      if (validatePassport !== true) {
+        insuredFormDetails.setError({ screening_id_number: validatePassport });
+        return false;
+      }
+    }
+  }
+  insuredFormDetails.clearErrors('screening_id_number');
+  return true;
+});
+
+const submitInsuredPersonSearch = () => {
+  if (insuredSearchValidation.value) {
+    loader.value.search = true;
+    let url = `/kyc/get-insured-person?id_type=${insuredFormDetails.screening_id_type}&id_number=${insuredFormDetails.screening_id_number}`;
+    axios
+      .get(url)
+      .then(res => {
+        if (res.data.status) {
+          let response = res.data.response;
+          insuredPersonDetailsFound.value = true;
+
+          insuredFormDetails.insured_first_name = response?.first_name;
+          insuredFormDetails.insured_last_name = response?.last_name;
+          insuredFormDetails.nationality_id = response?.nationality_id;
+          insuredFormDetails.dob = response?.dob;
+          insuredFormDetails.screening_gender = response?.gender;
+
+          notification.success({
+            title: res.data.message,
+            position: 'top',
+          });
+        } else {
+          notification.error({
+            title: res.data.message,
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      })
+      .finally(() => (loader.value.search = false));
+  }
+};
+
+function clearInsuredPersonDetails() {
+  insuredFormDetails.insured_first_name = '';
+  insuredFormDetails.insured_last_name = '';
+  insuredFormDetails.nationality_id = null;
+  insuredFormDetails.dob = null;
+  insuredFormDetails.gender = null;
+
+  insuredPersonDetailsFound.value = false;
+}
+
 const is_insured = ref(0);
+const documentIDTypeForScreening = computed(() => {
+  return props.lookups.id_type
+    ?.filter(docIDTypeScreening =>
+      ['emiratesId', 'passport'].includes(docIDTypeScreening.code),
+    )
+    ?.map(docIDTypeScreening => ({
+      value: docIDTypeScreening.code,
+      label: docIDTypeScreening.text,
+    }));
+});
+
+const applyScreeningIdNumMasking = () => {
+  let screeningIdNumber = insuredFormDetails.screening_id_number.replace(
+    /\D/g,
+    '',
+  );
+  if (screeningIdNumber?.length > 15) {
+    screeningIdNumber = screeningIdNumber.substring(0, 15); // Limit to 15 characters
+  }
+  if (screeningIdNumber?.length <= 3) {
+    screeningIdNumber = screeningIdNumber.replace(/(\d{3})(\d{0,})/, '$1-$2');
+  } else if (screeningIdNumber?.length <= 7) {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{0,})/,
+      '$1-$2-$3',
+    );
+  } else if (screeningIdNumber?.length <= 13) {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{7})(\d{0,})/,
+      '$1-$2-$3-$4',
+    );
+  } else {
+    screeningIdNumber = screeningIdNumber.replace(
+      /(\d{3})(\d{4})(\d{7})(\d{1,})/,
+      '$1-$2-$3-$4',
+    );
+  }
+
+  insuredFormDetails.screening_id_number = screeningIdNumber;
+};
+
+const validatePassportNumber = eventType => {
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
+
+  if (eventType == 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
+      event.preventDefault();
+    }
+  }
+
+  if (eventType == 'blur') {
+    const lengthValid =
+      insuredFormDetails?.screening_id_number?.length >= 8 &&
+      insuredFormDetails?.screening_id_number?.length <= 9;
+    const isAlphanumeric = regex.test(insuredFormDetails.screening_id_number);
+    if (
+      insuredFormDetails.screening_id_number &&
+      (!lengthValid || !isAlphanumeric)
+    ) {
+      insuredFormDetails.errors.screening_id_number =
+        'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.';
+      event.preventDefault();
+      return true;
+    } else {
+      insuredFormDetails.clearErrors('screening_id_number');
+      return false;
+    }
+  }
+};
+
+const chassisNumberDisabled = computed(() => {
+  let disallowedStatus = [
+    page.props.quoteStatusEnums.PolicySentToCustomer,
+    page.props.quoteStatusEnums.PolicyBooked,
+  ];
+  return disallowedStatus.includes(props?.quoteDetails?.quote_status_id);
+});
+
+const chassisNumberValidate = eventType => {
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
+
+  if (eventType == 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
+      event.preventDefault();
+    }
+  }
+
+  if (eventType == 'blur') {
+    const lengthValid =
+      insuredFormDetails.chassis_number.length >= 8 &&
+      insuredFormDetails.chassis_number.length <= 17;
+    const isAlphanumeric = regex.test(insuredFormDetails.chassis_number);
+    if (
+      insuredFormDetails.chassis_number &&
+      (!lengthValid || !isAlphanumeric)
+    ) {
+      insuredFormDetails.errors.chassis_number =
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+      event.preventDefault();
+      return true;
+    } else {
+      insuredFormDetails.clearErrors('chassis_number');
+      return false;
+    }
+  }
+};
 
 watch(
   props.membersDetails,
@@ -332,6 +580,28 @@ watch(
     is_insured.value = !props.membersDetails.some(x => x.is_payer);
   },
   { immediate: true },
+);
+
+watch(() => {
+  if (
+    insuredFormDetails.screening_id_type === '' ||
+    insuredFormDetails.screening_id_type === null
+  ) {
+    insuredFormDetails.screening_id_type =
+      props.quoteType.id === page.props.quoteTypeIdEnum.Travel &&
+      props.quoteDetails.direction_code === 'travelUaeInbound'
+        ? 'passport'
+        : 'emiratesId';
+  }
+});
+
+watch(
+  () => insuredFormDetails.nationality_id,
+  newValue => {
+    if (newValue !== null) {
+      isEmptyNationality.value = false;
+    }
+  },
 );
 </script>
 
@@ -352,7 +622,66 @@ watch(
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
+        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+          <x-field label="ID type" required>
+            <x-select
+              v-model="insuredFormDetails.screening_id_type"
+              :options="documentIDTypeForScreening"
+              placeholder="ID type"
+              :rules="[isRequired]"
+            />
+          </x-field>
+          <x-field label="ID number" required>
+            <template
+              v-if="insuredFormDetails.screening_id_type === 'emiratesId'"
+            >
+              <x-input
+                v-model="insuredFormDetails.screening_id_number"
+                placeholder="xxx-xxxx-xxxxxxx-x"
+                :rules="[isRequired, rules.emirateNumberCheck]"
+                @input="applyScreeningIdNumMasking"
+                :error="insuredFormDetails.errors.screening_id_number"
+              />
+            </template>
+            <template v-else>
+              <x-input
+                v-model="insuredFormDetails.screening_id_number"
+                :placeholder="
+                  insuredFormDetails.screening_id_type === ''
+                    ? 'Enter ID Number'
+                    : 'Enter Passport Number'
+                "
+                :rules="[isRequired, rules.passportNumberCheck]"
+                @blur="validatePassportNumber('blur')"
+                @keypress="validatePassportNumber('keypress')"
+                :error="insuredFormDetails.errors.screening_id_number"
+              />
+            </template>
+          </x-field>
+          <template v-if="!insuredPersonDetailsFound">
+            <x-field>
+              <x-button
+                @click.prevent="submitInsuredPersonSearch"
+                class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
+                size="sm"
+                color="primary"
+                :loading="loader.search"
+              >
+                Search
+              </x-button>
+            </x-field>
+          </template>
+          <template v-else>
+            <div class="text-left space-x-4">
+              <x-button
+                size="sm"
+                color="info"
+                @click.prevent="clearInsuredPersonDetails"
+              >
+                Cancel
+              </x-button>
+            </div>
+          </template>
           <x-field label="Insured First Name">
             <x-input
               v-model="insuredFormDetails.insured_first_name"
@@ -390,7 +719,15 @@ watch(
               class="w-full"
             />
           </x-field>
-          <div class="flex gap-5 mb-5 align-center">
+          <x-field label="Gender" required>
+            <x-select
+              v-model="insuredFormDetails.screening_gender"
+              :options="gender"
+              placeholder="Gender"
+              :rules="[isRequired]"
+            />
+          </x-field>
+          <div class="flex gap-5 align-center">
             <p>Is the insured the payer?</p>
             <x-form-group v-model="is_insured">
               <x-radio :value="1" label="Yes" />
@@ -400,6 +737,53 @@ watch(
         </dl>
 
         <x-divider class="mb-4 mt-1" />
+        <div v-if="quoteType.id === page.props.quoteTypeIdEnum.Car">
+          <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Additional Vehicle Details
+            </h3>
+          </div>
+
+          <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+            <template v-if="chassisNumberDisabled">
+              <div>
+                <x-tooltip placement="bottom">
+                  <label
+                    class="font-medium text-gray-700 text-sm underline decoration-dotted decoration-primary-600"
+                  >
+                    Chassis Number <sup class="text-red-500">*</sup>
+                  </label>
+                  <template #tooltip>
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed, go to 'Send Update', select 'Add
+                    Update', and choose 'Cancellation from Inception and
+                    Reissuance'
+                  </template>
+                  <x-input
+                    :disabled="chassisNumberDisabled"
+                    v-model="insuredFormDetails.chassis_number"
+                    placeholder="Chassis Number"
+                    type="text"
+                    class="w-full"
+                  />
+                </x-tooltip>
+              </div>
+            </template>
+            <x-field label="Chassis Number" required v-else>
+              <x-input
+                v-model="insuredFormDetails.chassis_number"
+                placeholder="Enter Chassis Number"
+                type="text"
+                class="w-full"
+                :rules="[isRequired, rules.chassisNumberCheck]"
+                @blur="chassisNumberValidate('blur')"
+                @keypress="chassisNumberValidate('keypress')"
+                :error="insuredFormDetails.errors.chassis_number"
+              />
+            </x-field>
+          </dl>
+          <x-divider class="mb-4 mt-1" />
+        </div>
 
         <MemberDetailsModel
           :quoteType="quoteType"
@@ -423,6 +807,7 @@ watch(
         />
         <div class="my-5 flex justify-center">
           <x-button
+            class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
             size="sm"
             color="success"
             type="submit"
@@ -646,6 +1031,7 @@ watch(
 
         <div class="flex justify-center my-5">
           <x-button
+            class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
             size="sm"
             color="success"
             type="submit"

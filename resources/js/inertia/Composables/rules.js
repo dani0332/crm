@@ -123,6 +123,14 @@ export const useRules = () => {
       /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
     );
   };
+
+  const emiratesNumber = v => {
+    const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
+    return (
+      pattern.test(v) ||
+      'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.'
+    );
+  };
   // Add minValue rule
   const minValue = (min) => (v) => {
     return (
@@ -153,6 +161,7 @@ export const useRules = () => {
     amount_with_vat,
     emptyOrNumericAndNoSpecialChar,
     isRequiredNumber,
+    emiratesNumber,
     minValue,
   };
 };
