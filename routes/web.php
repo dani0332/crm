@@ -85,6 +85,7 @@ use App\Http\Controllers\VehicleDepreciationController;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\SetReadDbConnection;
 
 /*
 |--------------------------------------------------------------------------
