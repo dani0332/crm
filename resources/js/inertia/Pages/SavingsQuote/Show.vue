@@ -287,10 +287,10 @@ const onAddUpdate = () => {
 
 <template>
   <div>
-    <Head title="Pet Quotes" />
+    <Head title="Savings Quotes" />
     <StickyHeader>
       <template v-slot:header>
-        <h2 class="text-xl font-semibold">Pet Detail</h2>
+        <h2 class="text-xl font-semibold">Savings Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
@@ -445,10 +445,6 @@ const onAddUpdate = () => {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ amlStatusName ?? '' }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
@@ -461,87 +457,23 @@ const onAddUpdate = () => {
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">DEVICE</dt>
-                <dd>{{ quote.device }}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div class="mt-6">
-            <h3 class="font-semibold text-primary-800">Quote Details</h3>
-            <x-divider class="mb-4 mt-1" />
-          </div>
-
-          <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PRICE</dt>
-                <dd>{{ quote?.pet_quote?.premium }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">POLICY NUMBER</dt>
-                <dd>{{ quote?.pet_quote?.policy_number }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TYPE OF PET</dt>
-                <dd>{{ quote?.pet_quote?.pet_type?.text }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">BREED OF PET</dt>
-                <dd>{{ quote?.pet_quote?.breed_of_pet1 }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AGE OF PET</dt>
-                <dd>{{ quote?.pet_quote?.pet_age?.text }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">IS NEUTERED</dt>
-                <dd>{{ quote?.pet_quote?.is_neutered ? 'Yes' : 'No' }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">IS MICROCHIPPED</dt>
-                <dd>{{ quote?.pet_quote?.is_microchipped ? 'Yes' : 'No' }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">MICROCHIP NO</dt>
-                <dd>{{ quote?.pet_quote?.microchip_no }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">IS MIXED BREED</dt>
-                <dd>{{ quote?.pet_quote?.is_mixed_breed ? 'Yes' : 'No' }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">HAS INJURY</dt>
-                <dd>{{ quote?.pet_quote?.has_injury ? 'Yes' : 'No' }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">GENDER</dt>
-                <dd>{{ quote?.pet_quote?.gender }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ACCOMMODATION TYPE</dt>
-                <dd>{{ quote?.pet_quote?.accomodation_type?.text }}</dd>
+                <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
+                <dd>
+                  {{ quote.quote_detail?.next_followup_date }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">POSSESION TYPE</dt>
-                <dd>{{ quote?.pet_quote?.possession_type?.text }}</dd>
+                <dt class="font-medium">SOURCE</dt>
+                <dd>{{ quote.source }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS ECOMMERCE</dt>
+                <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
@@ -573,41 +505,54 @@ const onAddUpdate = () => {
                   </Link>
                 </div>
               </div>
-              <div
-                class="grid sm:grid-cols-2"
-                v-if="linkedQuoteDetails.childLeadsCount == 1"
-              >
-                <div>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      CHILD REF-ID
-                    </label>
-                    <template #tooltip>
-                      The Child Reference ID acts as an individual identifier
-                      for dependents under the main lead. It's our way of
-                      efficiently organizing and accessing each person's records
-                      within the system.
-                    </template>
-                  </x-tooltip>
-                </div>
-                <div>
-                  <Link
-                    :href="
-                      getDetailPageRoute(
-                        linkedQuoteDetails.childLeadsUuid,
-                        linkedQuoteDetails.quote_type_id,
-                      )
-                    "
-                    class="text-primary-500 hover:underline"
-                  >
-                    {{ linkedQuoteDetails.childLeads ?? '' }}
-                  </Link>
-                </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TYPE OF INSURANCE</dt>
+                <dd>Savings</dd>
               </div>
             </dl>
           </div>
+
+          <div class="mt-6">
+            <h3 class="font-semibold text-primary-800">Quote Details</h3>
+            <x-divider class="mb-4 mt-1" />
+          </div>
+
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PURPOSE OF INVESTMENT</dt>
+                <dd>{{ quote?.savings_quote?.purpose }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TENURE OF SAVINGS</dt>
+                <dd>{{ quote?.savings_quote?.tenure_of_savings }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENCY</dt>
+                <dd>{{ quote?.savings_quote?.currency?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INVESTMENT AMOUNT</dt>
+                <dd>{{ quote?.savings_quote?.amount }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDITIONAL INFORMATION</dt>
+                <dd>{{ quote?.savings_quote?.additional_notes }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INVESTMENT FREQUENCY</dt>
+                <dd>{{ quote?.savings_quote?.frequency }}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="mt-6">
+            <h3 class="font-semibold text-primary-800">Selected Plans</h3>
+            <x-divider class="mb-4 mt-1" />
+          </div>
+
+          // TODO
         </template>
       </Collapsible>
     </div>
