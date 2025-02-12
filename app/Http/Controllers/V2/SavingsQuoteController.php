@@ -11,6 +11,7 @@ use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsQuoteRequest;
 use App\Repositories\ActivityRepository;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Services\CentralService;
 use App\Services\QuoteDocumentService;
@@ -109,6 +110,8 @@ class SavingsQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($this->savingsQuoteService->quoteType->value, $quote->id);
         $bookPolicyDetails = $this->savingsQuoteService->bookPolicyPayload($quote, $this->savingsQuoteService->quoteType->value, $quote->payments, $quoteDocuments);
 
+        $membersDetails = CustomerMembersRepository::getBy($quote->id, $this->savingsQuoteService->quoteType->name);
+
         return inertia('SavingsQuote/Show', [
             'quoteType' => $this->savingsQuoteService->quoteType,
             'quote' => $quote,
@@ -124,6 +127,7 @@ class SavingsQuoteController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote?->payments,
+            'membersDetails' => $membersDetails,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
