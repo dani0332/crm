@@ -108,8 +108,6 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
 
-
-
         if (empty($email)) {
             return [
                 'status' => 400,
