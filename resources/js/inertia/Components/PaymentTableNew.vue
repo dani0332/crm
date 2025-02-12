@@ -79,6 +79,7 @@ const props = defineProps({
     type: Array,
     default: [],
   },
+  realQuote: Object,
 });
 
 // All reactive properties are defined here
@@ -2996,8 +2997,12 @@ const getCaptureOption = computed(() => {
 
 const planText = ref();
 const fetchPlans = () => {
-  let providerId = props.sendUpdate?.insurance_provider_id;
-  let planId = props.sendUpdate?.plan_id;
+  let providerId = props.realQuote?.insurance_provider_id;
+  let planId = props.realQuote?.plan_id;
+  if (!providerId || !planId) {
+    providerId = props.sendUpdate?.insurance_provider_id;
+    planId = props.sendUpdate?.plan_id;
+  }
   let url = `/get-plans/${props.quoteType}/${providerId}/${planId}`;
   axios
     .get(url)
@@ -3009,6 +3014,17 @@ const fetchPlans = () => {
     });
 };
 
+// Ecom leads
+watch(
+  () => props.realQuote?.plan_id,
+  () => {
+    if (props.realQuote?.plan_id) {
+      fetchPlans();
+    }
+  },
+);
+
+// Insly Leads
 watch(
   () => props.sendUpdate?.plan_id,
   () => {
@@ -3019,7 +3035,7 @@ watch(
 );
 
 onMounted(() => {
-  if (props.sendUpdate?.plan_id) {
+  if (props.realQuote?.plan_id || props.sendUpdate?.plan_id) {
     fetchPlans();
   }
   showLackingPayment();
