@@ -138,12 +138,6 @@ class HomeEmailService extends BaseService
 
             $quotePlans = app(HomeQuoteService::class)->getQuotePlans($quoteUID);
 
-            if (! isset($quotePlans->quotes->plans) || empty($quotePlans->quotes->plans)) {
-                info(self::class . " - attachHomeOCBPDFToEmail - No plans found for Quote UID: {$quoteUID} | Time: " . now());
-
-                return '';
-            }
-
             // Generate the PDF
             $planIds = [];
             if (isset($quotePlans->quotes->plans)) {
@@ -155,6 +149,12 @@ class HomeEmailService extends BaseService
                     ->pluck('id')
                     ->take(5)
                     ->toArray() ?? [];
+            }
+
+            if (empty($planIds)) {
+                info(self::class . " - attachHomeOCBPDFToEmail - No plans found for Quote UID: {$quoteUID} | Time: " . now());
+
+                return '';
             }
 
             $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
