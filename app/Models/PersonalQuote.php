@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\GenderEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
@@ -44,7 +45,7 @@ class PersonalQuote extends Model implements AuditableContract
         'stale_at' => FilterTypes::NULL_CHECK,
         'previous_policy_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
-    protected $appends = ['age'];
+    protected $appends = ['age', 'gender_label'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -349,6 +350,23 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return Attribute::make(
             get: fn () => $this->dob ? Carbon::parse($this->dob)->age : null
+        );
+    }
+
+    public function genderLabel(): Attribute
+    {
+        $genderLabel = null;
+
+        if (GenderEnum::tryFrom($this->gender)) {
+            $genderLabel = GenderEnum::tryFrom($this->gender)->label();
+        }
+
+        if (! $genderLabel) {
+            $genderLabel = in_array(strtolower($this->gender), ['m', 'male']) ? 'Male' : 'Female';
+        }
+
+        return Attribute::make(
+            get: fn () => $genderLabel
         );
     }
 }
