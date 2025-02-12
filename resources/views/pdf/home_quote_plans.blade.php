@@ -632,7 +632,7 @@
 
         $planIds = collect($plans)
             ->filter(function ($plan) {
-                return !$plan->isDisabled;
+                return !$plan->isDisabled && $plan->isRatingAvailable;
             })
             ->sortByDesc('isRenewal')
             ->pluck('id')
@@ -875,11 +875,14 @@
                         </span>
                         <p class="disclaimer-text">
                             All quotes provided are indicative and based on the information you have supplied. While we
-                            strive for accuracy in our comparison tables, discrepancies may occur. In such instances, the
+                            strive for accuracy in our comparison tables, discrepancies may occur. In such instances,
+                            the
                             terms detailed in the insurer's policy wordings and schedules will take precedence over the
                             details provided by us. For the full text of the disclaimer and material information, please
-                            refer to the quote. Policy wordings and schedules will prevail. Additionally, your final price
-                            may be adjusted following the insurer's review of your risk profile after payment. We recommend
+                            refer to the quote. Policy wordings and schedules will prevail. Additionally, your final
+                            price
+                            may be adjusted following the insurer's review of your risk profile after payment. We
+                            recommend
                             reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
                         </p>
                     </td>

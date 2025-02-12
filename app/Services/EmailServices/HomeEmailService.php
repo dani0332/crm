@@ -149,7 +149,7 @@ class HomeEmailService extends BaseService
             if (isset($quotePlans->quotes->plans)) {
                 $planIds = collect($quotePlans->quotes->plans)
                     ->filter(function ($plan) {
-                        return !$plan->isDisabled;
+                        return !$plan->isDisabled && $plan->isRatingAvailable;
                     })
                     ->sortByDesc('isRenewal')
                     ->pluck('id')
