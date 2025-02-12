@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\PermissionsEnum;
@@ -9,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\Customer;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -103,9 +105,9 @@ class HomeQuoteService extends BaseService
                 WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
                 "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
-            'c.insured_first_name',
-            'c.insured_last_name',
-            'c.emirates_id_number',
+            'insured.first_name as insured_first_name',
+            'insured.last_name as insured_last_name',
+            DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
@@ -129,6 +131,16 @@ class HomeQuoteService extends BaseService
             'hqr.policy_booking_date',
             'hqr.insly_migrated',
             'hqr.aml_status',
+            'c.gender',
+            DB::raw('
+                CASE
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE insurer_aml_status
+                END AS insurer_aml_status_display
+            ')
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
@@ -147,6 +159,11 @@ class HomeQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
             })
+            ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
+                $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
+                $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
+            })
+            ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
@@ -199,7 +216,10 @@ class HomeQuoteService extends BaseService
             'source' => $sourceName,
             'isPropertyRentedHolidayHome' => $request->is_property_rented_holiday_home == 'on' ? true : false,
             'referenceUrl' => $appUrl,
+            'dob' => $request->dob ?? null,
+            'gender' => $request->gender ?? null,
         ];
+
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
@@ -378,6 +398,10 @@ class HomeQuoteService extends BaseService
             }
         }
 
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('hqr.insurer_aml_status', $request->insurer_aml_status);
+        }
+
         $this->adjustQueryByDateFilters($this->query, 'hqr');
 
         // sortBy filter
@@ -476,7 +500,15 @@ class HomeQuoteService extends BaseService
         $homeQuote->policy_number = $request->policy_number;
         $homeQuote->has_building = $request->has_building == 'on' ? true : false;
         $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ? true : false;
+        $homeQuote->gender = $request->gender;
+        $homeQuote->dob = $request->dob;
         $homeQuote->save();
+
+        Customer::where('id', $homeQuote->customer_id)->update([
+            'nationality_id' => $request->nationality_id ?? null,
+            'gender' => $request->gender ?? null,
+            'dob' => $request->dob ?? null,
+        ]);
 
         if (isset($request->return_to_view)) {
             return redirect('quote/home/'.$id)->with('success', 'Home Quote has been updated');

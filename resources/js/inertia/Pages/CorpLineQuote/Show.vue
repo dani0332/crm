@@ -42,6 +42,8 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const page = usePage();
@@ -170,10 +172,6 @@ const onLeadStatus = () => {
       preserveScroll: true,
       onSuccess: () => {
         loaders.value.leadStatus = false;
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
       },
       onError: errors => {
         loaders.value.leadStatus = false;
@@ -427,7 +425,6 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
-
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -435,8 +432,14 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote.insured_first_name || '',
-  insured_last_name: page.props.quote.insured_last_name || '',
+  insured_first_name:
+    page.props.quote.insured_first_name ??
+    page.props.quote.customer_insured_first_name ??
+    '',
+  insured_last_name:
+    page.props.quote.insured_last_name ??
+    page.props.quote.customer_insured_last_name ??
+    '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
@@ -781,8 +784,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <dd>{{ quote.business_company_address }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>N/A</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -1303,6 +1311,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quoteSubType="quoteTypeCodeEnum.CORPLINE"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PaymentTable
@@ -1338,6 +1348,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

@@ -394,7 +394,7 @@ class CarAllocationService extends AllocationService
 
         $advisors = [];
 
-        if ($lead->isBuyLeadApplicable() && ($tier->isValue() || $tier->isVolume())) {
+        if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::CAR)) && ($tier->isValue() || $tier->isVolume())) {
             $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
 
@@ -668,7 +668,7 @@ class CarAllocationService extends AllocationService
             ->toArray();
     }
 
-    public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
+    public function processLeadAssignment(CarQuote $lead, $userId, $tier, $assignmentType): void
     {
         info('About to assign car lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
 

@@ -2,14 +2,13 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
-use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
+use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -172,8 +171,7 @@ class SendUpdateValidationRequest extends FormRequest
                 }
             }
 
-            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-            if (! $isSageEnabled) {
+            if (! (new SageApiService)->isSageEnabled()) {
                 return ['status' => false, 'message' => 'Sage300 is not enabled'];
             }
 

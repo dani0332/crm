@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -65,6 +66,7 @@ class BikeQuoteRepository extends BaseRepository
             'additionalNotes' => $data['additional_notes'],
             'currentlyInsuredWithId' => $data['currently_insured_with'],
             'cubicCapacity' => $data['cubic_capacity'],
+            'gender' => $data['gender'] ?? null,
         ];
 
         info('bikeQuote:'.json_encode($quoteData));
@@ -81,7 +83,7 @@ class BikeQuoteRepository extends BaseRepository
             $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id',
+                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
             ]);
 
             $quoteData['currently_insured_with_id'] = $data['currently_insured_with'];
@@ -92,6 +94,12 @@ class BikeQuoteRepository extends BaseRepository
             $quote->bikeQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
                 Arr::only($data, (new BikeQuote)->allowedColumns())
+            );
+
+            $quote->customer()->update([
+                'dob' => $data['dob'] ?? null,
+                'nationality_id' => $data['nationality_id'] ?? null,
+                'gender' => $data['gender'] ?? null]
             );
 
             return $quote;
@@ -125,7 +133,8 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())
+        $quoteTypeId = QuoteTypes::BIKE->id();
+        $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
                 'bikeQuote' => function ($q) {
@@ -138,6 +147,9 @@ class BikeQuoteRepository extends BaseRepository
                 'currentlyInsuredWith',
                 'transactionType',
                 'insuranceProvider',
+                'insured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -188,6 +200,9 @@ class BikeQuoteRepository extends BaseRepository
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        if (isset($data['insured'][0])) {
+            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        }
 
         return $quote;
     }
@@ -210,7 +225,19 @@ class BikeQuoteRepository extends BaseRepository
                 $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter(! $forExport)
-            ->withFakeLeadCriteria();
+            ->withFakeLeadCriteria()
+            ->select([
+                '*',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                '),
+            ]);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');

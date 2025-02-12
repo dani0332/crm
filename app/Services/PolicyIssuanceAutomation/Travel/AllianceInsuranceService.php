@@ -283,6 +283,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $payload = [
             'policy_id' => $quote->insurer_policy_id,
+            'agency_reference' => $payment->paymentSplits->first()?->paymentCharges?->transaction_id ?? null,
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
@@ -318,7 +319,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function fetchAndUploadDocument($quote, $travelType): array
     {
-        $maxRetries = 15;
+        $maxRetries = 5;
         $retryDelay = 10; // seconds
         $retryCount = 0;
 
