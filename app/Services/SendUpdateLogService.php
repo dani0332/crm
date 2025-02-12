@@ -877,7 +877,7 @@ class SendUpdateLogService
                 ->where('payment_method', PaymentMethodsEnum::CreditCard)
                 ->count() > 0;
             $isInsurerPayment = $preparedDetailsForEndorsement['payment']->isInsurerPayment();
-            $isInsurerGIG = $preparedDetailsForEndorsement['payment']->isGIGInsurer($sendUpdateRequest->quoteType, $quoteDetails);
+            $isInsurerGIG = $preparedDetailsForEndorsement['payment']->isGIGOrRAKInsurer($sendUpdateRequest->quoteType, $quoteDetails);
             $isPaymentGatewayTap = $preparedDetailsForEndorsement['payment']->isPaymentGatewayTap();
             info('fn:preparedDataForEndorsement - Collected By Insurer: '.$isInsurerPayment.' - GIG Insurer: '.$isInsurerGIG.' - Payment Gateway Tap:'.$isPaymentGatewayTap.' - CC Payment: '.$checkCCPayments.' - SendUpdateCode: '.$sendUpdateLog->code);
 

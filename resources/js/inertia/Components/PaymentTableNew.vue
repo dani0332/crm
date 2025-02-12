@@ -1,13 +1,13 @@
 <script setup>
-import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive, ref } from 'vue';
-import moment from 'moment';
-import NProgress from 'nprogress';
-import { computed } from 'vue';
-import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
-import { time } from 'highcharts';
+import ToolTip from "./../Components/ToolTip.vue";
+import { onMounted, reactive, ref } from "vue";
+import moment from "moment";
+import NProgress from "nprogress";
+import { computed } from "vue";
+import UpdateTotalPrice from "./../Components/UpdateTotalPrice.vue";
+import { time } from "highcharts";
 
-const notification = useNotifications('toast');
+const notification = useNotifications("toast");
 const page = usePage();
 
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
@@ -17,7 +17,7 @@ const paymentLookups = page.props.paymentLookups;
 const vatValue = page.props.vatValue;
 const documentTypeEnum = page.props.documentTypeEnum;
 const quoteDocuments = page.props.quoteDocuments;
-const can = permission => useCan(permission);
+const can = (permission) => useCan(permission);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const paymentAllocationStatus = page.props.paymentAllocationStatus;
 const paymentMethodsEnums = page.props.paymentMethodsEnum;
@@ -36,11 +36,11 @@ const props = defineProps({
   storageUrl: String,
   eCommercePrice: {
     type: [String, Number],
-    default: '0',
+    default: "0",
   },
   quoteSubType: {
     type: String,
-    default: '',
+    default: "",
   },
   sendUpdate: {
     type: Object,
@@ -56,7 +56,7 @@ const props = defineProps({
   },
   eCommercePriceWithLP: {
     type: [String, Number],
-    default: '0',
+    default: "0",
   },
   expanded: {
     required: false,
@@ -98,7 +98,7 @@ const isFieldReadonly = ref(false);
 const isUploading = ref(false);
 const isFileError = ref(false);
 const isViewEnabled = ref(false);
-const fileErrorMessage = ref('');
+const fileErrorMessage = ref("");
 const splitPaymentNo = ref(0);
 const isApproveClicked = ref(false);
 const isApproveConfirm = ref(false);
@@ -109,11 +109,11 @@ const isApprovePaymentError = ref(false);
 const showDiscountOptions = ref(true);
 const isApprovedDocumentNotUploaded = ref(false);
 const isMultipleDocumentEnabled = ref(true);
-const approvedDocument = ref('');
-const resetDiscountReason = ref('');
-const approveErrorMessage = ref('');
+const approvedDocument = ref("");
+const resetDiscountReason = ref("");
+const approveErrorMessage = ref("");
 const discountValue = ref(0); // Initial discount value
-const calculatedDiscount = ref('');
+const calculatedDiscount = ref("");
 const discountDocumentModel = ref([]);
 const isDiscountDocumentNotUploaded = ref(false);
 const paymentTypesFiltered = ref([]);
@@ -140,7 +140,7 @@ const isDiscountReasonError = ref(false);
 const isCreditApprovalView = ref(false);
 const isCreditCardView = ref(false);
 const isDiscountError = ref(false);
-const discountError = ref('');
+const discountError = ref("");
 const isTotalPriceUpdated = ref(false);
 const trashedFilesModal = ref([]);
 const isApproveNotChecked = ref(true);
@@ -152,7 +152,7 @@ const isPaymentFrequencyNotSelected = ref(false);
 const isDiscountAllowed = ref(true);
 const isRetryModalOpen = ref(false);
 const retryProcessJobId = ref(0);
-const retryPaymentErrorMessage = ref('');
+const retryPaymentErrorMessage = ref("");
 const isSplitAmountInvalid = ref([]);
 const isSplitAmountInvalidError = ref([]);
 const isDeleteModalOpen = ref(false);
@@ -160,9 +160,9 @@ const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
 const isCollectedByEnabled = ref(false);
 const modal2Ref = ref(null);
-const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
+const familyEmployeDiscount = ["Car", "Health", "Home", "Travel"];
 // Array of quote types to check against
-const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
+const quoteTypesToCheck = ["Car", "Health", "Travel"]; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
@@ -170,7 +170,7 @@ const showLackingPayment = () => {
   if (is_lacking_payment.value && props.payments.length > 0) {
     notification.error({
       title: paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED,
-      position: 'top',
+      position: "top",
       timeout: 5000,
     });
   }
@@ -179,17 +179,11 @@ const showLackingPayment = () => {
 // Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
-} else if (
-  props.quoteType === 'Health' &&
-  props.quoteRequest?.source !== 'Revival'
-) {
+} else if (props.quoteType === "Health" && props.quoteRequest?.source !== "Revival") {
   initialAmount.value = props.eCommercePrice;
-} else if (
-  props.quoteType === 'Health' &&
-  props.quoteRequest?.source === 'Revival'
-) {
+} else if (props.quoteType === "Health" && props.quoteRequest?.source === "Revival") {
   initialAmount.value = props.quoteRequest.premium;
-} else if (props.quoteType === 'Bike') {
+} else if (props.quoteType === "Bike") {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
@@ -201,21 +195,17 @@ if (props.sendUpdate) {
 
 // Here we define the computed properties
 const isisUpfrontFrequency = computed(
-  () => paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT,
+  () => paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT
 );
 const isCustomFrequency = computed(
-  () => paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM,
+  () => paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM
 );
 const isSinglePayment = computed(() => paymentMethodsForm.payment_no == 1);
-const isCreditApprovalApplied = computed(
-  () => paymentMethodsForm.credit_approval !== '',
-);
+const isCreditApprovalApplied = computed(() => paymentMethodsForm.credit_approval !== "");
 
 const isPaymentMethodEnabled = computed(() => {
   return (
-    isCreditApprovalApplied.value &&
-    isCustomFrequency.value &&
-    isSinglePayment.value
+    isCreditApprovalApplied.value && isCustomFrequency.value && isSinglePayment.value
   );
 });
 
@@ -223,19 +213,19 @@ const totalPrice = ref(initialAmount.value); // Initial total price
 const totalAmount = ref(initialAmount.value); // Initial total price
 
 const discountProofDocument = props.paymentDocument.find(
-  item => item.text === 'Discount Proof',
+  (item) => item.text === "Discount Proof"
 );
 const paymentProofDocument = props.paymentDocument.find(
-  item => item.text === 'Payment Proof',
+  (item) => item.text === "Payment Proof"
 );
 const approveProofDocument = props.paymentDocument.find(
-  item => item.text === 'Receipt',
+  (item) => item.text === "Receipt"
 );
 
 let initalPlanDetails = [];
 if (
-  props.quoteType == 'Business' ||
-  props.quoteType == 'Home' ||
+  props.quoteType == "Business" ||
+  props.quoteType == "Home" ||
   props.isPlanDetailEnabled
 ) {
   initalPlanDetails =
@@ -243,7 +233,7 @@ if (
     props.quoteRequest?.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
-} else if (props.quoteType == 'Bike') {
+} else if (props.quoteType == "Bike") {
   initalPlanDetails = props.quoteRequest?.car_plan;
 } else {
   initalPlanDetails = props.quoteRequest?.insurance_provider;
@@ -252,19 +242,16 @@ if (
 let planDetail = ref(initalPlanDetails);
 const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
-const masterPaymentStatus = ref('NEW');
+const masterPaymentStatus = ref("NEW");
 
-const getCustomReasonIndex = value => {
-  const index = declinedReasons.findIndex(reason => reason.value === value);
+const getCustomReasonIndex = (value) => {
+  const index = declinedReasons.findIndex((reason) => reason.value === value);
   return index !== -1 ? index : null;
 };
 
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
-  if (
-    discount > 50 &&
-    paymentMethodsForm.discount_reason === 'refer_a_friend'
-  ) {
+  if (discount > 50 && paymentMethodsForm.discount_reason === "refer_a_friend") {
     totalAmount.value = totalPrice.value;
   } else {
     totalAmount.value = totalPrice.value - discount;
@@ -276,24 +263,20 @@ const calculateTotalAmount = () => {
 const isInsureNowPayLaterAllowed = computed(() => {
   //handle edit scenario for insure now pay later
   if (
-    paymentMethodsForm.status == 'edit' &&
-    paymentMethodsForm.collection_type === 'broker'
+    paymentMethodsForm.status == "edit" &&
+    paymentMethodsForm.collection_type === "broker"
   ) {
     if (props.payments.length > 0) {
       let inureNowPayLaterExists = props.payments[0].payment_splits.find(
-        item =>
-          item.payment_method.code ===
-          page.props.paymentMethodsEnum?.InsureNowPayLater,
+        (item) =>
+          item.payment_method.code === page.props.paymentMethodsEnum?.InsureNowPayLater
       );
       if (inureNowPayLaterExists) {
         return true;
       }
     }
   }
-  if (
-    paymentMethodsForm.collection_type === 'broker' &&
-    can(permissionEnum.INPL_USER)
-  ) {
+  if (paymentMethodsForm.collection_type === "broker" && can(permissionEnum.INPL_USER)) {
     return true;
   }
   return false;
@@ -304,8 +287,7 @@ const isPolicyIssuanceDiscount = computed(() => {
     can(permissionEnum.PAYMENTS_DISCOUNT_EDIT) &&
     (props.quoteRequest.quote_status_id ===
       page.props.quoteStatusEnum.TransactionApproved ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyIssued ||
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyIssued ||
       props.quoteRequest.quote_status_id ===
         page.props.quoteStatusEnum.PolicySentToCustomer)
   ) {
@@ -319,14 +301,14 @@ const onCopyPaymentLink = (paymentLink, paymentStatus) => {
   if (paymentStatus == paymentStatusEnum.PAID) {
     notification.error({
       title: "Payment already 'Paid', button deactivated for this transaction",
-      position: 'top',
+      position: "top",
     });
   } else {
     copy(paymentLink);
     if (copied)
       notification.success({
-        title: 'Link copied to clipboard',
-        position: 'top',
+        title: "Link copied to clipboard",
+        position: "top",
       });
   }
 };
@@ -349,16 +331,14 @@ const zoomOut = () => {
   zoomLevel.value = Math.max(zoomLevel.value - 0.25, 0.25);
 };
 
-const openInnerModal = fileId => {
+const openInnerModal = (fileId) => {
   //filesTest.value = fileUploadModels.value.flat();
   filesTest.value = [
     ...fileUploadModels.value.flat(),
     ...approvedDocumentModel.value.flat(),
     ...discountDocumentModel.value.flat(),
   ];
-  currentFileIndex.value = filesTest.value.findIndex(
-    item => item.id === fileId,
-  );
+  currentFileIndex.value = filesTest.value.findIndex((item) => item.id === fileId);
   isGalleryModelOpen.value = true;
   setTimeout(() => {
     if (modal2Ref.value) {
@@ -374,10 +354,10 @@ const previousFile = () => {
   }
 };
 
-const handleKeyDown = event => {
-  if (event.key === 'ArrowLeft' && hasPreviousFile) {
+const handleKeyDown = (event) => {
+  if (event.key === "ArrowLeft" && hasPreviousFile) {
     previousFile();
-  } else if (event.key === 'ArrowRight' && hasNextFile) {
+  } else if (event.key === "ArrowRight" && hasNextFile) {
     nextFile();
   }
 };
@@ -388,7 +368,7 @@ const currentFile = computed(() => {
 
 // Define a computed property to calculate the initial total price without VAT
 const initialTotalPriceWithoutVat = computed(() => {
-  if (props.quoteType === 'Health') {
+  if (props.quoteType === "Health") {
     return props.eCommercePriceWithLP; // premium with loading price,excluding vat
   }
   const vatRate = vatValue ? vatValue / 100 : 0;
@@ -419,41 +399,38 @@ const hasPreviousFile = computed(() => {
 });
 
 const rules = {
-  isRequired: v => !!v || 'This field is required',
-  isBankReferenceRequird: v => {
+  isRequired: (v) => !!v || "This field is required",
+  isBankReferenceRequird: (v) => {
     if (
-      paymentMethodsForm.collection_type === 'insurer' &&
+      paymentMethodsForm.collection_type === "insurer" &&
       paymentMethodsModels.value[splitPaymentNo.value] ===
         page.props.paymentMethodsEnum?.Cheque &&
-      paymentMethodsForm.credit_approval != ''
+      paymentMethodsForm.credit_approval != ""
     ) {
       return true;
     } else {
-      return !!v || 'This field is required';
+      return !!v || "This field is required";
     }
     return true;
   },
-  reference: v => {
-    if (
-      paymentMethodsForm.payment_method !==
-      page.props.paymentMethodsEnum?.CreditCard
-    ) {
-      return !!v || 'This field is required';
+  reference: (v) => {
+    if (paymentMethodsForm.payment_method !== page.props.paymentMethodsEnum?.CreditCard) {
+      return !!v || "This field is required";
     }
     return true;
   },
-  amount: v => {
+  amount: (v) => {
     const regex = /^\d+(\.\d{1,2})?$/;
     if (regex.test(v)) {
       return true;
     }
-    return 'Amount must be a valid number';
+    return "Amount must be a valid number";
   },
-  notEmptyOrZero: v => {
-    if (v !== '') {
+  notEmptyOrZero: (v) => {
+    if (v !== "") {
       return true;
     }
-    return 'Value cannot be empty';
+    return "Value cannot be empty";
   },
 };
 
@@ -469,7 +446,7 @@ const isPaymentLocked = computed(() => {
     quoteStatusEnum.POLICY_BOOKING_QUEUED,
   ]);
 
-  if (status === 'edit') {
+  if (status === "edit") {
     if (props.sendUpdate && can(permissionEnum.BOOKING_FAILED_EDIT)) {
       return false;
     }
@@ -508,16 +485,14 @@ const validatePaymentOption = () => {
   isPaymentCalculationError.value = false;
   isPaymentFrequencyNotSelected.value = false;
   // Check if payment frequency is selected
-  if (paymentMethodsForm.frequency === '') {
+  if (paymentMethodsForm.frequency === "") {
     isPaymentFrequencyNotSelected.value = true;
     issueFound = true;
   }
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
     totalSplitAmount =
       parseFloat(totalSplitAmount) + parseFloat(splitAmountModels.value[i]);
-    const validationResult = rules.notEmptyOrZero(
-      paymentMethodsModels.value[i],
-    );
+    const validationResult = rules.notEmptyOrZero(paymentMethodsModels.value[i]);
     isPaymentMetodNotSelected.value[i] = false;
     if (validationResult !== true) {
       isPaymentMetodNotSelected.value[i] = true;
@@ -527,8 +502,7 @@ const validatePaymentOption = () => {
 
   if (isPolicyIssuanceDiscount.value === true) {
     if (
-      totalSplitAmount.toFixed(2) ===
-        parseFloat(totalAmount.value).toFixed(2) ||
+      totalSplitAmount.toFixed(2) === parseFloat(totalAmount.value).toFixed(2) ||
       discountValue.value > 0
     ) {
       isPaymentCalculationError.value = false;
@@ -536,9 +510,7 @@ const validatePaymentOption = () => {
       isPaymentCalculationError.value = true;
       issueFound = true;
     }
-  } else if (
-    totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)
-  ) {
+  } else if (totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)) {
     isPaymentCalculationError.value = true;
     issueFound = true;
   }
@@ -550,9 +522,8 @@ const validatePaymentOption = () => {
   ];
   if (
     validFrequencies.includes(paymentMethodsForm.frequency) &&
-    paymentMethodsModels.value[1] ===
-      page.props.paymentMethodsEnum?.InsurerPayment &&
-    paymentMethodsForm.collection_type === 'insurer'
+    paymentMethodsModels.value[1] === page.props.paymentMethodsEnum?.InsurerPayment &&
+    paymentMethodsForm.collection_type === "insurer"
   ) {
     if (
       fileUploadModels.value[1] === undefined ||
@@ -567,13 +538,11 @@ const validatePaymentOption = () => {
       if (
         (paymentMethodsModels.value[i] ==
           page.props.paymentMethodsEnum?.InsureNowPayLater ||
-          paymentMethodsModels.value[i] ==
-            page.props.paymentMethodsEnum?.BankTransfer ||
-          paymentMethodsModels.value[i] ==
-            page.props.paymentMethodsEnum?.Cheque ||
+          paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.BankTransfer ||
+          paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.Cheque ||
           paymentMethodsModels.value[i] ==
             page.props.paymentMethodsEnum?.PostDatedCheque ||
-          (paymentMethodsForm.credit_approval === '' &&
+          (paymentMethodsForm.credit_approval === "" &&
             paymentMethodsModels.value[i] ==
               page.props.paymentMethodsEnum?.InsurerPayment)) &&
         (fileUploadModels.value[i] === undefined ||
@@ -582,8 +551,7 @@ const validatePaymentOption = () => {
         isDocumentNotUploaded.value[i] = true;
         issueFound = true;
       } else if (
-        paymentMethodsModels.value[i] ==
-          page.props.paymentMethodsEnum?.CreditApproval &&
+        paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.CreditApproval &&
         i === 1 &&
         (fileUploadModels.value[i] === undefined ||
           fileUploadModels.value[i].length === 0)
@@ -593,10 +561,7 @@ const validatePaymentOption = () => {
       }
     }
   }
-  if (
-    isDiscountEnabled.value === true &&
-    isCreditApprovalView.value === false
-  ) {
+  if (isDiscountEnabled.value === true && isCreditApprovalView.value === false) {
     isDiscountError.value = false;
     // Check if discount document uploaded
     if (
@@ -609,31 +574,31 @@ const validatePaymentOption = () => {
       isDiscountDocumentNotUploaded.value = false;
     }
 
-    if (discountValue.value === '' || parseFloat(discountValue.value) <= 0) {
+    if (discountValue.value === "" || parseFloat(discountValue.value) <= 0) {
       issueFound = true;
       isDiscountError.value = true;
-      discountError.value = 'This field is required';
+      discountError.value = "This field is required";
     }
     const regex = /^\d+(\.\d{1,2})?$/;
     if (!regex.test(discountValue.value)) {
       issueFound = true;
       isDiscountError.value = true;
-      discountError.value = 'Discount must be a valid number';
+      discountError.value = "Discount must be a valid number";
     }
     if (parseFloat(discountValue.value) > parseFloat(totalPrice.value)) {
       issueFound = true;
       isDiscountError.value = true;
       totalAmount.value = totalPrice.value;
       calculatePaymentBreakup();
-      discountError.value = 'Discount should not exceed total amount';
+      discountError.value = "Discount should not exceed total amount";
     }
     if (
-      paymentMethodsForm.discount_reason === 'refer_a_friend' ||
-      paymentMethodsForm.discount === 'incentive_offset' ||
-      paymentMethodsForm.discount === 'managerial_approval_discount'
+      paymentMethodsForm.discount_reason === "refer_a_friend" ||
+      paymentMethodsForm.discount === "incentive_offset" ||
+      paymentMethodsForm.discount === "managerial_approval_discount"
     ) {
       isDiscountReasonEnabled.value = true;
-      if (paymentMethodsForm.discount_reason === '') {
+      if (paymentMethodsForm.discount_reason === "") {
         issueFound = true;
         isDiscountReasonError.value = true;
       } else {
@@ -643,23 +608,21 @@ const validatePaymentOption = () => {
       // Check if the discount exceeds 50 and return an error message
       if (
         discountValue.value > 50 &&
-        paymentMethodsForm.discount_reason === 'refer_a_friend'
+        paymentMethodsForm.discount_reason === "refer_a_friend"
       ) {
         issueFound = true;
         isDiscountError.value = true;
-        discountError.value = 'Discount should not exceed 50 AED';
+        discountError.value = "Discount should not exceed 50 AED";
       }
     } else if (
-      paymentMethodsForm.discount === 'employee_discount' ||
-      paymentMethodsForm.discount === 'family_employee_discount'
+      paymentMethodsForm.discount === "employee_discount" ||
+      paymentMethodsForm.discount === "family_employee_discount"
     ) {
-      if (
-        parseFloat(discountValue.value) > parseFloat(calculatedDiscount.value)
-      ) {
+      if (parseFloat(discountValue.value) > parseFloat(calculatedDiscount.value)) {
         issueFound = true;
         isDiscountError.value = true;
         discountError.value =
-          'Discount should not exceed ' + calculatedDiscount.value + ' AED';
+          "Discount should not exceed " + calculatedDiscount.value + " AED";
       }
     } else {
       isDiscountReasonEnabled.value = false;
@@ -672,41 +635,41 @@ const validatePaymentOption = () => {
   return false;
 };
 
-const totalPayments = ref([{ value: '1', label: '1' }]);
+const totalPayments = ref([{ value: "1", label: "1" }]);
 
 const paymentTypes = ref(
   props.paymentMethods.filter(
-    item =>
+    (item) =>
       ![
         page.props.paymentMethodsEnum?.GMApproval,
         page.props.paymentMethodsEnum?.CMOApproval,
         page.props.paymentMethodsEnum?.COOApproval,
         page.props.paymentMethodsEnum?.Credit,
-      ].includes(item.value),
-  ),
+      ].includes(item.value)
+  )
 );
-paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
+paymentTypes.value.unshift({ value: "", label: "Select Payment" });
 
-const getPaymentTypeLabel = code => {
-  const paymentType = paymentTypes.value.find(item => item.value === code);
+const getPaymentTypeLabel = (code) => {
+  const paymentType = paymentTypes.value.find((item) => item.value === code);
   if (paymentType) {
     return paymentType.label;
   }
-  return '';
+  return "";
 };
 
 // Define payment collection types
 const collectionTypes = computed(() => {
-  if (paymentMethodsForm.status != 'view' && !isBrokerHavePermission()) {
+  if (paymentMethodsForm.status != "view" && !isBrokerHavePermission()) {
     return paymentLookups.paymentCollectionTypes
-      .filter(item => item.code !== 'broker')
-      .map(item => ({
+      .filter((item) => item.code !== "broker")
+      .map((item) => ({
         value: item.code,
         label: item.text,
         tooltip: item.description,
       }));
   }
-  return paymentLookups.paymentCollectionTypes.map(item => ({
+  return paymentLookups.paymentCollectionTypes.map((item) => ({
     value: item.code,
     label: item.text,
     tooltip: item.description,
@@ -715,61 +678,58 @@ const collectionTypes = computed(() => {
 
 // Define frequency types
 const frequencyTypes = ref(
-  paymentLookups.paymentFrequencyTypes.map(item => ({
+  paymentLookups.paymentFrequencyTypes.map((item) => ({
     value: item.code,
     label: item.text,
     tooltip: item.description,
-  })),
+  }))
 );
 
 // Define payment decline reasons
-const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
+const declinedReasons = paymentLookups.paymentDeclineReasons.map((item) => ({
   value: item.id,
   label: item.text,
 }));
-declinedReasons.unshift({ value: '', label: 'Select Reason' });
+declinedReasons.unshift({ value: "", label: "Select Reason" });
 
 // Define payment approval reasons
-const creditApprovalReasons = paymentLookups.paymentCreditApprovalReasons.map(
-  item => ({
-    value: item.code,
-    label: item.text,
-    tooltip: item.description,
-  }),
-);
-creditApprovalReasons.unshift({ value: '', label: 'Approval Reason' });
-
-// Define payment discount types
-let discountTypes = paymentLookups.paymentDispountTypes.map(item => ({
+const creditApprovalReasons = paymentLookups.paymentCreditApprovalReasons.map((item) => ({
   value: item.code,
   label: item.text,
   tooltip: item.description,
 }));
-discountTypes.unshift({ value: '', label: 'Discount Type' });
+creditApprovalReasons.unshift({ value: "", label: "Approval Reason" });
+
+// Define payment discount types
+let discountTypes = paymentLookups.paymentDispountTypes.map((item) => ({
+  value: item.code,
+  label: item.text,
+  tooltip: item.description,
+}));
+discountTypes.unshift({ value: "", label: "Discount Type" });
 if (!familyEmployeDiscount.includes(props.quoteType)) {
   discountTypes = discountTypes.filter(
-    type =>
-      type.value !== 'employee_discount' &&
-      type.value !== 'family_employee_discount',
+    (type) =>
+      type.value !== "employee_discount" && type.value !== "family_employee_discount"
   );
 }
 
 // Define payment discount reasons
-const discountReasons = paymentLookups.paymentDiscountReasons.map(item => ({
+const discountReasons = paymentLookups.paymentDiscountReasons.map((item) => ({
   value: item.code,
   label: item.text,
   tooltip: item.description,
 }));
-discountReasons.unshift({ value: '', label: 'Select a reason' });
+discountReasons.unshift({ value: "", label: "Select a reason" });
 
 const handleDiscountReasonChange = () => {
   isDiscountReasonError.value = false;
   isCustomDiscountReasonEnabled.value = false;
-  if (paymentMethodsForm.discount_reason === 'refer_a_friend') {
+  if (paymentMethodsForm.discount_reason === "refer_a_friend") {
     calculateTotalAmount();
   }
-  if (paymentMethodsForm.discount_reason === 'discount_custom_reason') {
-    paymentMethodsForm.discount_custom_reason = '';
+  if (paymentMethodsForm.discount_reason === "discount_custom_reason") {
+    paymentMethodsForm.discount_custom_reason = "";
     isCustomDiscountReasonEnabled.value = true;
   }
 };
@@ -795,13 +755,11 @@ const isProformaPaymentRequest = computed(() => {
   );
 });
 
-const handlePaymentOptions = count => {
+const handlePaymentOptions = (count) => {
   isPaymentMetodNotSelected.value[count] = false;
   if (
-    paymentMethodsModels.value[count] ===
-      page.props.paymentMethodsEnum?.Cheque ||
-    paymentMethodsModels.value[count] ===
-      page.props.paymentMethodsEnum?.PostDatedCheque
+    paymentMethodsModels.value[count] === page.props.paymentMethodsEnum?.Cheque ||
+    paymentMethodsModels.value[count] === page.props.paymentMethodsEnum?.PostDatedCheque
   ) {
     isCheckDetailsEnabled.value[count] = true;
   } else {
@@ -822,50 +780,41 @@ const handleCollectionTypeChange = () => {
 
   if (isInsureNowPayLaterAllowed.value) {
     excludedPaymentTypes = excludedPaymentTypes.filter(
-      paymentType =>
-        paymentType !== page.props.paymentMethodsEnum?.InsureNowPayLater,
+      (paymentType) => paymentType !== page.props.paymentMethodsEnum?.InsureNowPayLater
     );
   }
 
   if (paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT) {
     /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
-    excludedPaymentTypes.push(
-      page.props.paymentMethodsEnum?.ProformaPaymentRequest,
-    );
-  } else if (
-    can(permissionEnum.ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION) == false
-  ) {
+    excludedPaymentTypes.push(page.props.paymentMethodsEnum?.ProformaPaymentRequest);
+  } else if (can(permissionEnum.ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION) == false) {
     /*Add Proforma Payment Request to excluded Payment Methods When dont have ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION permission */
-    excludedPaymentTypes.push(
-      page.props.paymentMethodsEnum?.ProformaPaymentRequest,
-    );
+    excludedPaymentTypes.push(page.props.paymentMethodsEnum?.ProformaPaymentRequest);
   }
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-    item => !excludedPaymentTypes.includes(item.value),
+    (item) => !excludedPaymentTypes.includes(item.value)
   );
 
-  if (paymentMethodsForm.collection_type === 'insurer') {
+  if (paymentMethodsForm.collection_type === "insurer") {
     const excludedPaymentMethods = [
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
       page.props.paymentMethodsEnum?.Cash,
     ];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item => !excludedPaymentMethods.includes(item.value),
+      (item) => !excludedPaymentMethods.includes(item.value)
     );
-    paymentMethodsModels.value[1] =
-      page.props.paymentMethodsEnum?.InsurerPayment;
+    paymentMethodsModels.value[1] = page.props.paymentMethodsEnum?.InsurerPayment;
   } else {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item =>
-        ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value),
+      (item) => ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value)
     );
-    paymentMethodsModels.value[1] = '';
+    paymentMethodsModels.value[1] = "";
   }
   applyPermissions();
 };
 
-const handlePaymentTypes = count => {
+const handlePaymentTypes = (count) => {
   var paymentTypesWithoutCheck = paymentTypesFiltered.value;
   const frequenciesToFilterForCount = [
     paymentFrequencyEnum.SEMI_ANNUAL,
@@ -881,10 +830,7 @@ const handlePaymentTypes = count => {
     paymentFrequencyEnum.MONTHLY,
   ];
 
-  if (
-    count >= 2 &&
-    frequenciesToFilterForCount.includes(paymentMethodsForm.frequency)
-  ) {
+  if (count >= 2 && frequenciesToFilterForCount.includes(paymentMethodsForm.frequency)) {
     paymentTypesWithoutCheck = filterPaymentTypes(paymentTypesFiltered.value, [
       page.props.paymentMethodsEnum.Cheque,
     ]);
@@ -899,17 +845,16 @@ const handlePaymentTypes = count => {
     ]);
   }
 
-  if (paymentMethodsForm.collection_type === 'insurer') {
+  if (paymentMethodsForm.collection_type === "insurer") {
     const frequenciesToFilter = isMultiPaymentsEnabled.value
       ? frequenciesToFilterForCount
       : frequenciesToFilterForInsurer;
 
     if (count >= 2 || !isMultiPaymentsEnabled.value) {
       if (frequenciesToFilter.includes(paymentMethodsForm.frequency)) {
-        paymentTypesWithoutCheck = filterPaymentTypes(
-          paymentTypesWithoutCheck,
-          [page.props.paymentMethodsEnum.CreditCard],
-        );
+        paymentTypesWithoutCheck = filterPaymentTypes(paymentTypesWithoutCheck, [
+          page.props.paymentMethodsEnum.CreditCard,
+        ]);
       }
     }
   }
@@ -918,39 +863,36 @@ const handlePaymentTypes = count => {
 };
 
 const handleCreditApproval = () => {
-  if (paymentMethodsForm.credit_approval !== '') {
+  if (paymentMethodsForm.credit_approval !== "") {
     if (paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT) {
       paymentMethodsForm.frequency = paymentFrequencyEnum.CUSTOM;
     }
     if (paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM) {
-      if (
-        paymentMethodsForm.status === 'edit' &&
-        isAnyPaid(props.payments[0])
-      ) {
+      if (paymentMethodsForm.status === "edit" && isAnyPaid(props.payments[0])) {
         return;
       }
       resetTotalPayments();
       isPaymentNoEnabled.value = true;
-      paymentMethodsForm.payment_no = '1';
+      paymentMethodsForm.payment_no = "1";
     }
   }
 };
 
 const handleApprovalReasonChange = (noPaymentUpdate = true) => {
-  if (paymentMethodsForm.credit_approval === 'other_reasons') {
+  if (paymentMethodsForm.credit_approval === "other_reasons") {
     isCustomReasonEnabled.value = true;
   } else {
     isCustomReasonEnabled.value = false;
   }
   //customize payment method based on collection type
-  if (paymentMethodsForm.credit_approval !== '') {
+  if (paymentMethodsForm.credit_approval !== "") {
     if (noPaymentUpdate) {
       handleCreditApproval();
     }
     paymentTypesFiltered.value = paymentTypes.value;
 
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item =>
+      (item) =>
         ![
           isInsureNowPayLaterAllowed.value
             ? null
@@ -960,10 +902,10 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
           page.props.paymentMethodsEnum?.PartialPayment,
         ]
           .filter(Boolean)
-          .includes(item.value),
+          .includes(item.value)
     );
 
-    if (paymentMethodsForm.collection_type === 'insurer') {
+    if (paymentMethodsForm.collection_type === "insurer") {
       if (paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT) {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is  UpFront*/
         const excludedPaymentMethods = [
@@ -973,11 +915,9 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
           page.props.paymentMethodsEnum?.PostDatedCheque,
         ];
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item => !excludedPaymentMethods.includes(item.value),
+          (item) => !excludedPaymentMethods.includes(item.value)
         );
-      } else if (
-        paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
-      ) {
+      } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS) {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
         const excludedPaymentMethods = [
           page.props.paymentMethodsEnum?.PostDatedCheque,
@@ -987,7 +927,7 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
           page.props.paymentMethodsEnum?.BankTransfer,
         ];
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item => !excludedPaymentMethods.includes(item.value),
+          (item) => !excludedPaymentMethods.includes(item.value)
         );
       } else {
         const excludedPaymentMethods = [
@@ -996,37 +936,32 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
           page.props.paymentMethodsEnum?.BankTransfer,
         ];
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item => !excludedPaymentMethods.includes(item.value),
+          (item) => !excludedPaymentMethods.includes(item.value)
         );
       }
     } else {
       if (paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT) {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is upfront*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item =>
+          (item) =>
             ![
               page.props.paymentMethodsEnum?.PostDatedCheque,
               page.props.paymentMethodsEnum?.InsurerPayment,
-            ].includes(item.value),
+            ].includes(item.value)
         );
-      } else if (
-        paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
-      ) {
+      } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS) {
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item =>
+          (item) =>
             ![
               page.props.paymentMethodsEnum?.PostDatedCheque,
               page.props.paymentMethodsEnum?.ProformaPaymentRequest,
               page.props.paymentMethodsEnum?.InsurerPayment,
-            ].includes(item.value),
+            ].includes(item.value)
         );
       } else {
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item =>
-            ![page.props.paymentMethodsEnum?.InsurerPayment].includes(
-              item.value,
-            ),
+          (item) => ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value)
         );
       }
     }
@@ -1034,8 +969,7 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
       if (readOnlyPayments.value[i] === true) {
         continue;
       }
-      paymentMethodsModels.value[i] =
-        page.props.paymentMethodsEnum?.CreditApproval;
+      paymentMethodsModels.value[i] = page.props.paymentMethodsEnum?.CreditApproval;
     }
   } else {
     if (isTotalPriceUpdated.value === true && isPaymentLocked.value === false) {
@@ -1045,7 +979,7 @@ const handleApprovalReasonChange = (noPaymentUpdate = true) => {
 };
 
 const resetCreditApproval = () => {
-  paymentMethodsForm.credit_approval = '';
+  paymentMethodsForm.credit_approval = "";
   isResetCreditApproval.value = true;
   isCustomReasonEnabled.value = false;
   if (isCustomFrequency.value && isSinglePayment.value) {
@@ -1053,13 +987,13 @@ const resetCreditApproval = () => {
   }
   handleApprovalReasonChange();
   handleFrequencyChange(false);
-  if (isPaymentLocked.value && paymentMethodsForm.status == 'edit') {
+  if (isPaymentLocked.value && paymentMethodsForm.status == "edit") {
     // If payment is locked, reset the payment method for split payments
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
       if (readOnlyPayments.value[i] === true) {
         continue;
       }
-      paymentMethodsModels.value[i] = '';
+      paymentMethodsModels.value[i] = "";
     }
   }
 };
@@ -1067,10 +1001,10 @@ const resetCreditApproval = () => {
 const resetDiscount = (callDiscountChang = true) => {
   isDiscountEnabled.value = false;
   isDiscountReasonEnabled.value = false;
-  paymentMethodsForm.discount = '';
+  paymentMethodsForm.discount = "";
   totalAmount.value = totalPrice.value;
   discountValue.value = 0;
-  paymentMethodsForm.discount_reason = '';
+  paymentMethodsForm.discount_reason = "";
   if (callDiscountChang) {
     handleDiscountChange();
   }
@@ -1080,71 +1014,50 @@ const resetDiscount = (callDiscountChang = true) => {
 
 const handleDiscountChange = (editDiscountValue = 0) => {
   isDiscountError.value = false;
-  discountError.value = '';
-  if (paymentMethodsForm.status === 'create') {
+  discountError.value = "";
+  if (paymentMethodsForm.status === "create") {
     discountValue.value = 0;
-    paymentMethodsForm.discount_reason = '';
+    paymentMethodsForm.discount_reason = "";
   }
-  if (resetDiscountReason.value === '') {
-    paymentMethodsForm.discount_reason = '';
+  if (resetDiscountReason.value === "") {
+    paymentMethodsForm.discount_reason = "";
   }
 
   isDiscountReasonEnabled.value = false;
-  if (
-    paymentMethodsForm.discount === '' ||
-    paymentMethodsForm.discount === undefined
-  ) {
+  if (paymentMethodsForm.discount === "" || paymentMethodsForm.discount === undefined) {
     resetDiscount(false);
     isDiscountEnabled.value = false;
   } else {
     isDiscountEnabled.value = true;
     isDiscountReasonEnabled.value = true;
   }
-  if (paymentMethodsForm.discount === 'managerial_approval_discount') {
+  if (paymentMethodsForm.discount === "managerial_approval_discount") {
     isDiscountReasonEnabled.value = true;
   } else {
     isDiscountReasonEnabled.value = false;
   }
 
-  if (paymentMethodsForm.discount === 'employee_discount') {
-    if (props.quoteType === 'Health') {
-      discountValue.value = (
-        initialTotalPriceWithoutVat.value *
-        (5 / 100)
-      ).toFixed(2);
-    } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
-      discountValue.value = (
-        initialTotalPriceWithoutVat.value *
-        (15 / 100)
-      ).toFixed(2);
+  if (paymentMethodsForm.discount === "employee_discount") {
+    if (props.quoteType === "Health") {
+      discountValue.value = (initialTotalPriceWithoutVat.value * (5 / 100)).toFixed(2);
+    } else if (props.quoteType === "Home" || props.quoteType === "Travel") {
+      discountValue.value = (initialTotalPriceWithoutVat.value * (15 / 100)).toFixed(2);
     } else {
-      discountValue.value = (
-        initialTotalPriceWithoutVat.value *
-        (12.5 / 100)
-      ).toFixed(2); // for car
+      discountValue.value = (initialTotalPriceWithoutVat.value * (12.5 / 100)).toFixed(2); // for car
     }
   }
-  if (paymentMethodsForm.discount === 'family_employee_discount') {
-    if (props.quoteType === 'Health') {
-      discountValue.value = (
-        initialTotalPriceWithoutVat.value *
-        (2.5 / 100)
-      ).toFixed(2);
-    } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
-      discountValue.value = (
-        initialTotalPriceWithoutVat.value *
-        (12.5 / 100)
-      ).toFixed(2);
+  if (paymentMethodsForm.discount === "family_employee_discount") {
+    if (props.quoteType === "Health") {
+      discountValue.value = (initialTotalPriceWithoutVat.value * (2.5 / 100)).toFixed(2);
+    } else if (props.quoteType === "Home" || props.quoteType === "Travel") {
+      discountValue.value = (initialTotalPriceWithoutVat.value * (12.5 / 100)).toFixed(2);
     } else {
-      discountValue.value = (
-        initialTotalPriceWithoutVat.value *
-        (7.5 / 100)
-      ).toFixed(2); // for car
+      discountValue.value = (initialTotalPriceWithoutVat.value * (7.5 / 100)).toFixed(2); // for car
     }
   }
   if (
-    paymentMethodsForm.discount === 'family_employee_discount' ||
-    paymentMethodsForm.discount === 'employee_discount'
+    paymentMethodsForm.discount === "family_employee_discount" ||
+    paymentMethodsForm.discount === "employee_discount"
   ) {
     calculatedDiscount.value = discountValue.value;
     if (editDiscountValue > 0) {
@@ -1154,7 +1067,7 @@ const handleDiscountChange = (editDiscountValue = 0) => {
   calculateTotalAmount();
 };
 
-const notPaidDates = serialNo => {
+const notPaidDates = (serialNo) => {
   if (
     readOnlyPayments.value[serialNo] != undefined &&
     readOnlyPayments.value[serialNo] === true
@@ -1217,9 +1130,7 @@ const calculateDueDates = () => {
         dueDateModels.value[i] = nextDueDate;
       }
     }
-  } else if (
-    paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL
-  ) {
+  } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL) {
     if (notPaidDates(1)) {
       dueDateModels.value[1] = paymentMethodsForm.collection_date;
     }
@@ -1238,9 +1149,9 @@ const calculatePaymentBreakup = (changeMethod = true) => {
     (
       (totalAmount.value - paidAmountSum.value) /
       (paymentMethodsForm.payment_no - totalPaidAmount.value)
-    ).toFixed(2),
+    ).toFixed(2)
   );
-  if (paymentMethodsForm.status === 'edit') {
+  if (paymentMethodsForm.status === "edit") {
     var trueValuesArray = readOnlyPayments.value.filter(function (value) {
       return value === true;
     });
@@ -1255,17 +1166,14 @@ const calculatePaymentBreakup = (changeMethod = true) => {
     }
   }
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
-    if (
-      readOnlyPayments.value[i] != undefined &&
-      readOnlyPayments.value[i] === true
-    ) {
+    if (readOnlyPayments.value[i] != undefined && readOnlyPayments.value[i] === true) {
       continue;
     }
     splitAmountModels.value[i] = perInstallmentPrice.toFixed(2);
 
     const isFirstChildPayment = i === 1;
     const isCreditApprovalReset = isResetCreditApproval.value;
-    const isCreditApprovalEmpty = paymentMethodsForm.credit_approval === '';
+    const isCreditApprovalEmpty = paymentMethodsForm.credit_approval === "";
 
     if (
       changeMethod &&
@@ -1274,7 +1182,7 @@ const calculatePaymentBreakup = (changeMethod = true) => {
       isisUpfrontFrequency.value &&
       isCreditApprovalEmpty
     ) {
-      paymentMethodsModels.value[i] = '';
+      paymentMethodsModels.value[i] = "";
     }
 
     if (i > 1 && changeMethod) {
@@ -1286,22 +1194,20 @@ const calculatePaymentBreakup = (changeMethod = true) => {
       ) {
         if (
           paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM &&
-          paymentMethodsForm.credit_approval !== ''
+          paymentMethodsForm.credit_approval !== ""
         ) {
-          paymentMethodsModels.value[i] =
-            page.props.paymentMethodsEnum?.CreditApproval;
+          paymentMethodsModels.value[i] = page.props.paymentMethodsEnum?.CreditApproval;
         } else {
           paymentMethodsModels.value[i] = paymentMethodsModels.value[i];
         }
       } else {
         if (
           paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM &&
-          paymentMethodsForm.credit_approval !== ''
+          paymentMethodsForm.credit_approval !== ""
         ) {
-          paymentMethodsModels.value[i] =
-            page.props.paymentMethodsEnum?.CreditApproval;
+          paymentMethodsModels.value[i] = page.props.paymentMethodsEnum?.CreditApproval;
         } else {
-          paymentMethodsModels.value[i] = '';
+          paymentMethodsModels.value[i] = "";
         }
       }
     }
@@ -1311,40 +1217,40 @@ const calculatePaymentBreakup = (changeMethod = true) => {
 
 const formatDate = (date, timeFlag = false) => {
   const parsedDate = new Date(date);
-  const day = parsedDate.getDate().toString().padStart(2, '0');
-  const month = (parsedDate.getMonth() + 1).toString().padStart(2, '0');
+  const day = parsedDate.getDate().toString().padStart(2, "0");
+  const month = (parsedDate.getMonth() + 1).toString().padStart(2, "0");
   const year = parsedDate.getFullYear();
   const formatedDate = `${day}-${month}-${year}`;
   if (!timeFlag) {
     return formatedDate;
   }
-  const hours = parsedDate.getHours().toString().padStart(2, '0');
-  const minutes = parsedDate.getMinutes().toString().padStart(2, '0');
-  const seconds = parsedDate.getSeconds().toString().padStart(2, '0');
+  const hours = parsedDate.getHours().toString().padStart(2, "0");
+  const minutes = parsedDate.getMinutes().toString().padStart(2, "0");
+  const seconds = parsedDate.getSeconds().toString().padStart(2, "0");
   const formattedTime = `${hours}:${minutes}:${seconds}`;
-  return formatedDate.concat(' ', formattedTime);
+  return formatedDate.concat(" ", formattedTime);
 };
 
 function formatString(input) {
-  if (input === '' || input === undefined || input === null) {
-    return '';
+  if (input === "" || input === undefined || input === null) {
+    return "";
   }
   const lowercaseString = input.toLowerCase();
-  const words = lowercaseString.replace(/_/g, ' ').split(' ');
+  const words = lowercaseString.replace(/_/g, " ").split(" ");
   for (let i = 0; i < words.length; i++) {
     words[i] = words[i][0].toUpperCase() + words[i].slice(1);
   }
-  const formattedString = words.join(' ');
+  const formattedString = words.join(" ");
   return formattedString;
 }
 
-const formatAmount = amount => {
+const formatAmount = (amount) => {
   const parsedAmount = parseFloat(amount);
   if (isNaN(parsedAmount)) {
-    return '0.00';
+    return "0.00";
   }
-  const formattedAmount = parsedAmount.toLocaleString('en-US', {
-    style: 'decimal',
+  const formattedAmount = parsedAmount.toLocaleString("en-US", {
+    style: "decimal",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -1362,8 +1268,8 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
   var resetPaymentMethod = false;
   isPaymentFrequencyNotSelected.value = false;
   totalPayments.value = [];
-  if (paymentMethodsForm.status === 'create') {
-    paymentMethodsForm.credit_approval = '';
+  if (paymentMethodsForm.status === "create") {
+    paymentMethodsForm.credit_approval = "";
   }
 
   isCustomReasonEnabled.value = false;
@@ -1373,46 +1279,41 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
   isPaymentNoEnabled.value = false;
   if (paymentMethodsForm.frequency === paymentFrequencyEnum.MONTHLY) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '12';
+    paymentMethodsForm.payment_no = "12";
   } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.QUARTERLY) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '4';
-  } else if (
-    paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL
-  ) {
+    paymentMethodsForm.payment_no = "4";
+  } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL) {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '2';
-  } else if (
-    paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
-  ) {
+    paymentMethodsForm.payment_no = "2";
+  } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS) {
     isPaymentNoEnabled.value = true;
     if (noPaymentUpdate) {
-      paymentMethodsForm.payment_no = '2';
+      paymentMethodsForm.payment_no = "2";
     }
     totalPayments.value.splice(-15);
     totalPayments.value.splice(0, 1);
   } else if (paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM) {
     isPaymentNoEnabled.value = true;
     if (noPaymentUpdate) {
-      paymentMethodsForm.payment_no = '2';
+      paymentMethodsForm.payment_no = "2";
       handleCreditApproval();
     }
     if (
       !(
-        paymentMethodsForm.credit_approval !== '' &&
+        paymentMethodsForm.credit_approval !== "" &&
         paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM
       )
     ) {
       totalPayments.value.splice(0, 1);
     }
   } else {
-    paymentMethodsForm.payment_no = '1';
+    paymentMethodsForm.payment_no = "1";
   }
   calculatePaymentBreakup();
   // readOnlyPayments.value[1]===undefined this condition is missed from incoming (feat/insly-project-central), that's why added.
   if (
-    paymentMethodsModels.value[1] ===
-      page.props.paymentMethodsEnum?.CreditCard &&
+    paymentMethodsModels.value[1] === page.props.paymentMethodsEnum?.CreditCard &&
     resetPaymentMethod &&
     readOnlyPayments.value[1] === undefined
   ) {
@@ -1424,11 +1325,11 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
   if (paymentStatus == paymentStatusEnum.PAID) {
     notification.error({
       title: "Payment already 'Paid', button deactivated for this transaction",
-      position: 'top',
+      position: "top",
     });
   } else {
     try {
-      const response = await axios.post('/generate-payment-link-new', {
+      const response = await axios.post("/generate-payment-link-new", {
         quoteId: props.quoteRequest.id,
         modelType: props.quoteType,
         paymentCode: code,
@@ -1438,27 +1339,27 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
       });
 
       if (response.data.success) {
-        const el = document.createElement('textarea');
+        const el = document.createElement("textarea");
         el.value = response.data.payment_link;
         document.body.appendChild(el);
         el.select();
-        document.execCommand('copy');
+        document.execCommand("copy");
         document.body.removeChild(el);
 
         notification.success({
-          title: 'Link copied to clipboard',
-          position: 'top',
+          title: "Link copied to clipboard",
+          position: "top",
         });
       } else {
         notification.error({
-          title: 'Payment Link Generation Failed',
-          position: 'top',
+          title: "Payment Link Generation Failed",
+          position: "top",
         });
       }
     } catch (err) {
       notification.error({
-        title: 'Payment Link Generation Failed',
-        position: 'top',
+        title: "Payment Link Generation Failed",
+        position: "top",
       });
     }
   }
@@ -1466,10 +1367,10 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
 // Function to verify if the broker has permission to add payment
 const isBrokerHavePermission = () => {
   const hasPermissionToBroker = can(
-    permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD,
+    permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD
   );
   const hasPermissionToTermFrequencies = can(
-    permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD,
+    permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD
   );
   if (!hasPermissionToBroker && !hasPermissionToTermFrequencies) {
     return false;
@@ -1482,12 +1383,12 @@ const isProformaPaymentRequestExportable = (payment, documents) => {
   let proformaPaymentRequestDocuments = null;
   if (documents) {
     proformaPaymentRequestDocuments = documents.filter(
-      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
+      (doc) => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest
     );
   } else if (!proformaPaymentRequestDocuments) {
     // For some LOBs, Documents are not available in the quote object, so we need to check the quoteDocuments object
     proformaPaymentRequestDocuments = quoteDocuments.filter(
-      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
+      (doc) => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest
     );
   }
   if (proformaPaymentRequestDocuments.length == 0) return true;
@@ -1498,52 +1399,51 @@ const isProformaPaymentRequestExportable = (payment, documents) => {
   let paymentUpdateAt = moment(payment.updated_at);
   let latestProformaRequestDocumentCreatedAt = moment(
     latestProformaPaymentRequestDocument.created_at,
-    'DD-MM-YYYY HH:mm:s',
-  ).format('YYYY-MM-DD HH:mm:ss');
+    "DD-MM-YYYY HH:mm:s"
+  ).format("YYYY-MM-DD HH:mm:ss");
 
   return paymentUpdateAt.isAfter(latestProformaRequestDocumentCreatedAt);
 };
 
 const downloadProformaPayment = async () => {
-  let errorMsg = '';
+  let errorMsg = "";
   if (paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id) {
-    errorMsg =
-      paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+    errorMsg = paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
     notification.error({
       title: errorMsg,
-      position: 'top',
+      position: "top",
     });
     return;
   }
   /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documents */
   let exportProformaRequest = isProformaPaymentRequestExportable(
     props.proformaPayment,
-    props.quoteRequest.documents,
+    props.quoteRequest.documents
   );
   if (!exportProformaRequest) {
     notification.error({
-      title: 'Please update the Payment details for this Proforma Request.',
-      position: 'top',
+      title: "Please update the Payment details for this Proforma Request.",
+      position: "top",
     });
     return;
   }
   if (totalPrice.value < 0 && planDetail.value) {
-    errorMsg = 'Please update the Total Price in the Plan Details section.';
+    errorMsg = "Please update the Total Price in the Plan Details section.";
     if (quoteTypesToCheck.includes(props.quoteType)) {
-      errorMsg = 'Please select a plan.';
+      errorMsg = "Please select a plan.";
     }
     notification.error({
       title: errorMsg,
-      position: 'top',
+      position: "top",
     });
     return;
   }
   if (props.proformaPayment) {
-    let isSendUpdateLogRoute = route().current() == 'send-update.show';
+    let isSendUpdateLogRoute = route().current() == "send-update.show";
     try {
       NProgress.start();
       const response = await axios.get(
-        route('create.proforma.payment.request', [
+        route("create.proforma.payment.request", [
           props.quoteType,
           props.quoteRequest.uuid,
         ]),
@@ -1552,7 +1452,7 @@ const downloadProformaPayment = async () => {
             paymentCode: props.proformaPayment.code,
             isSendUpdateLogRoute: isSendUpdateLogRoute,
           },
-        },
+        }
       );
       NProgress.done();
       if (response.data.success) {
@@ -1560,11 +1460,9 @@ const downloadProformaPayment = async () => {
           let proforma_request = response.data.proforma_request;
           let proforma_request_id = proforma_request.id;
           /* Create the link and download Proforma Request document*/
-          const a = document.createElement('a');
-          a.href = route('download.proforma.payment.request', [
-            proforma_request_id,
-          ]);
-          a.target = '_blank';
+          const a = document.createElement("a");
+          a.href = route("download.proforma.payment.request", [proforma_request_id]);
+          a.target = "_blank";
           a.download = proforma_request.original_name;
           document.body.appendChild(a);
           await a.click();
@@ -1572,37 +1470,37 @@ const downloadProformaPayment = async () => {
           document.body.removeChild(a);
 
           notification.success({
-            title: 'Proforma payment request has been saved',
-            position: 'top',
+            title: "Proforma payment request has been saved",
+            position: "top",
           });
           notification.success({
-            title: 'File exported',
-            position: 'top',
+            title: "File exported",
+            position: "top",
           });
           router.visit(location.href);
         }
       } else {
         notification.error({
-          title: 'Proforma Payment Request Generation Failed',
-          position: 'top',
+          title: "Proforma Payment Request Generation Failed",
+          position: "top",
         });
       }
     } catch (err) {
       notification.error({
         title: err,
-        position: 'top',
+        position: "top",
       });
       notification.error({
-        title: 'Proforma Payment Request Generation Failed',
-        position: 'top',
+        title: "Proforma Payment Request Generation Failed",
+        position: "top",
       });
     }
     return;
   } else {
-    errorMsg = 'No Proforma Payment found';
+    errorMsg = "No Proforma Payment found";
     notification.error({
       title: errorMsg,
-      position: 'top',
+      position: "top",
     });
     return;
   }
@@ -1627,15 +1525,15 @@ const addPaymentModal = () => {
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
-        title: 'Please update indicative additional price.',
-        position: 'top',
+        title: "Please update indicative additional price.",
+        position: "top",
       });
       return;
     }
     if (isCPD.value && !props.sendUpdate?.price_with_vat) {
       notification.error({
-        title: 'Please update the Total Price in the Plan Details section.',
-        position: 'top',
+        title: "Please update the Total Price in the Plan Details section.",
+        position: "top",
       });
       return;
     }
@@ -1643,12 +1541,12 @@ const addPaymentModal = () => {
   if (props.payments.length > 0) {
     notification.error({
       title: "Payment already added, click 'Edit' for changes.",
-      position: 'top',
+      position: "top",
     });
     return;
   }
   paymentMethodsForm.reset();
-  paymentMethodsForm.payment_method = 'CHQ';
+  paymentMethodsForm.payment_method = "CHQ";
   paymentMethodsModels.value = [];
   splitAmountModels.value = [];
   dueDateModels.value = [];
@@ -1662,7 +1560,7 @@ const addPaymentModal = () => {
   isPaymentMetodNotSelected.value[1] = false;
   isDocumentNotUploaded.value = [];
   isDiscountError.value = false;
-  discountError.value = '';
+  discountError.value = "";
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
 
@@ -1672,25 +1570,25 @@ const addPaymentModal = () => {
   ) {
     totalAmount.value = totalPrice.value;
   } else {
-    let errorMsg = 'Please update the Total Price in the Plan Details section.';
+    let errorMsg = "Please update the Total Price in the Plan Details section.";
     if (quoteTypesToCheck.includes(props.quoteType)) {
-      errorMsg = 'Please select a plan.';
+      errorMsg = "Please select a plan.";
     }
     notification.error({
       title: errorMsg,
-      position: 'top',
+      position: "top",
     });
     return;
   }
 
   const quoteCollectedBy = [
-    'Business',
-    'Health',
-    'Life',
-    'Marine',
-    'Pet',
-    'Cycle',
-    'Yacht',
+    "Business",
+    "Health",
+    "Life",
+    "Marine",
+    "Pet",
+    "Cycle",
+    "Yacht",
   ];
 
   if (
@@ -1698,26 +1596,26 @@ const addPaymentModal = () => {
       props.quoteSubType != quoteTypeCodeEnum.CORPLINE) ||
     !isBrokerHavePermission()
   ) {
-    paymentMethodsForm.collection_type = 'insurer';
+    paymentMethodsForm.collection_type = "insurer";
   } else {
-    paymentMethodsForm.collection_type = 'broker';
+    paymentMethodsForm.collection_type = "broker";
   }
 
-  paymentMethodsForm.amount = '';
-  paymentMethodsForm.payment_reference = '';
-  paymentMethodsForm.paymentCode = '';
+  paymentMethodsForm.amount = "";
+  paymentMethodsForm.payment_reference = "";
+  paymentMethodsForm.paymentCode = "";
 
-  paymentMethodsForm.status = 'create';
+  paymentMethodsForm.status = "create";
   paymentMethodsForm.collection_date = new Date();
   paymentMethodsForm;
   createPaymentModal.value = true;
 
   paymentMethodsForm.frequency = paymentFrequencyEnum.UPFRONT;
-  paymentMethodsForm.discount = '';
-  paymentMethodsForm.credit_approval = '';
+  paymentMethodsForm.discount = "";
+  paymentMethodsForm.credit_approval = "";
   totalPayments.value = [];
-  totalPayments.value.push({ value: '1', label: '1' });
-  paymentMethodsForm.payment_no = '1';
+  totalPayments.value.push({ value: "1", label: "1" });
+  paymentMethodsForm.payment_no = "1";
   handleCollectionTypeChange();
   calculatePaymentBreakup();
   applyPermissions();
@@ -1740,20 +1638,20 @@ const handleRetryPayment = async () => {
     quote_id: props.quoteRequest.id,
   };
   retryForm
-    .transform(data => retryData)
-    .post('/payments/' + props.quoteType + '/retry-payment', {
+    .transform((data) => retryData)
+    .post("/payments/" + props.quoteType + "/retry-payment", {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
-          title: 'Payment has been retried',
-          position: 'top',
+          title: "Payment has been retried",
+          position: "top",
         });
         isRetryModalOpen.value = false;
       },
       onError: () => {
         notification.error({
-          title: 'Payment retry failed',
-          position: 'top',
+          title: "Payment retry failed",
+          position: "top",
         });
       },
     });
@@ -1777,31 +1675,26 @@ const handleDeletePayment = async () => {
     quote_id: props.quoteRequest.id,
   };
   deleteForm
-    .transform(data => retryData)
-    .post('/payments/' + props.quoteType + '/delete-split-payment', {
+    .transform((data) => retryData)
+    .post("/payments/" + props.quoteType + "/delete-split-payment", {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
-          title: 'Split Payment has been deleted',
-          position: 'top',
+          title: "Split Payment has been deleted",
+          position: "top",
         });
         isDeleteModalOpen.value = false;
       },
       onError: () => {
         notification.error({
-          title: 'Payment delete failed',
-          position: 'top',
+          title: "Payment delete failed",
+          position: "top",
         });
       },
     });
 };
 
-const editPaymentModal = (
-  payment,
-  split_payment_id,
-  sr_no,
-  capture_approval,
-) => {
+const editPaymentModal = (payment, split_payment_id, sr_no, capture_approval) => {
   if (
     sr_no === 0 &&
     payment.payment_status.id === paymentStatusEnum.PAID &&
@@ -1809,14 +1702,14 @@ const editPaymentModal = (
     isPaidEditable.value === false
   ) {
     notification.error({
-      title: 'No further actions allowed to paid payments',
-      position: 'top',
+      title: "No further actions allowed to paid payments",
+      position: "top",
     });
     return false;
   }
 
   if (
-    payment.collection_type === 'insurer' &&
+    payment.collection_type === "insurer" &&
     isEditPaymentEnabled() &&
     split_payment_id == 0 &&
     sr_no == 0 &&
@@ -1824,7 +1717,7 @@ const editPaymentModal = (
   ) {
     notification.error({
       title: paymentTooltipEnum.PAYMENT_AUTHORISED_CANNOT_EDIT,
-      position: 'top',
+      position: "top",
       timeout: 10000,
     });
     return false;
@@ -1850,8 +1743,8 @@ const resetPaymentForm = () => {
   isFieldReadonly.value = false;
   isViewEnabled.value = false;
   paymentMethodsForm.splitPaymentId = 0;
-  paymentMethodsForm.status = 'edit';
-  paymentMethodsForm.declined_reason = '1';
+  paymentMethodsForm.status = "edit";
+  paymentMethodsForm.declined_reason = "1";
   isPaymentCalculationError.value = false;
   isDowngradeFrequencyError.value = false;
   isApproveClicked.value = false;
@@ -1861,21 +1754,21 @@ const resetPaymentForm = () => {
   isDeclineClicked.value = false;
   isDiscountReasonError.value = false;
   isApprovedDocumentNotUploaded.value = false;
-  approvedDocument.value = '';
+  approvedDocument.value = "";
   approvedDocumentModel.value = [];
   isPaymentMetodNotSelected.value = [];
   isDocumentNotUploaded.value = [];
-  resetDiscountReason.value = '';
+  resetDiscountReason.value = "";
   isApproveConfirm.value = false;
   isCreditApprovalView.value = false;
   isCreditCardView.value = false;
-  approveErrorMessage.value = '';
+  approveErrorMessage.value = "";
   isCreditPaymentInvalid.value = [];
   isCreditPaymentInvalidError.value = [];
-  paymentMethodsForm.declined_custom_reason = '';
+  paymentMethodsForm.declined_custom_reason = "";
   paidAmountSum.value = 0;
   isDiscountError.value = false;
-  discountError.value = '';
+  discountError.value = "";
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
   trashedFilesModal.value = [];
@@ -1888,26 +1781,20 @@ const resetPaymentForm = () => {
   isAmlApprovalRequired.value = false;
 };
 
-const initializePaymentForm = (
-  payment,
-  split_payment_id,
-  sr_no,
-  capture_approval,
-) => {
+const initializePaymentForm = (payment, split_payment_id, sr_no, capture_approval) => {
   if (sr_no > 0) {
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
     isViewEnabled.value = true;
     paymentMethodsForm.splitPaymentId = split_payment_id;
-    paymentMethodsForm.status = 'view';
-    paymentMethodsForm.collection_amount = '';
+    paymentMethodsForm.status = "view";
+    paymentMethodsForm.collection_amount = "";
     paymentMethodsForm.payment_method = payment.payment_method.code;
-    paymentMethodsForm.bank_reference_number = '';
+    paymentMethodsForm.bank_reference_number = "";
     splitPaymentRecord.value = payment.payment_splits.find(
-      item => item.sr_no === sr_no,
+      (item) => item.sr_no === sr_no
     );
-    paymentMethodsForm.system_adjusted_discount =
-      payment.system_adjusted_discount;
+    paymentMethodsForm.system_adjusted_discount = payment.system_adjusted_discount;
   }
 
   masterPaymentStatus.value = payment.payment_status.text;
@@ -1919,7 +1806,7 @@ const initializePaymentForm = (
   paymentMethodsForm.frequency = payment.frequency;
   showDiscountOptions.value = true;
   paymentMethodsForm.discount_reason =
-    payment.discount_reason !== null ? payment.discount_reason : '';
+    payment.discount_reason !== null ? payment.discount_reason : "";
 
   if (payment.discount_reason !== null && payment.discount_type !== null) {
     resetDiscountReason.value = payment.discount_reason;
@@ -1933,26 +1820,26 @@ const initializePaymentForm = (
   paymentMethodsForm.collection_date = payment.collection_date;
   discountValue.value = payment.discount_value; // discount amount
 
-  if (paymentMethodsForm.status === 'view' || capture_approval > 0) {
+  if (paymentMethodsForm.status === "view" || capture_approval > 0) {
     paymentMethodsForm.credit_approval =
-      payment.credit_approval !== null ? payment.credit_approval : 'N/A';
+      payment.credit_approval !== null ? payment.credit_approval : "N/A";
     paymentMethodsForm.discount =
-      payment.discount_type !== null ? payment.discount_type : 'N/A';
+      payment.discount_type !== null ? payment.discount_type : "N/A";
   } else {
     paymentMethodsForm.credit_approval =
-      payment.credit_approval !== null ? payment.credit_approval : '';
+      payment.credit_approval !== null ? payment.credit_approval : "";
     paymentMethodsForm.discount =
-      payment.discount_type !== null ? payment.discount_type : '';
+      payment.discount_type !== null ? payment.discount_type : "";
   }
   paymentMethodsForm.declined_reason =
     splitPaymentRecord.value.decline_reason_id == null
-      ? ''
+      ? ""
       : splitPaymentRecord.value.decline_reason_id;
   paymentMethodsForm.declined_custom_reason =
     splitPaymentRecord.value.decline_custom_reason;
 };
 
-const processPaymentSplits = payment => {
+const processPaymentSplits = (payment) => {
   const paidStatusIds = [
     paymentStatusEnum.PAID,
     paymentStatusEnum.PARTIALLY_PAID,
@@ -1974,18 +1861,18 @@ const processPaymentSplits = payment => {
     paymentMethodsModels.value[i] = split.payment_method.code;
     splitAmountModels.value[i] = split.payment_amount;
     dueDateModels.value[i] = split.due_date
-      ? moment(split.due_date).format('YYYY-MM-DD')
-      : '';
+      ? moment(split.due_date).format("YYYY-MM-DD")
+      : "";
     collectionAmountModels.value[i] = split.collection_amount;
 
-    if (['CHQ', 'PDC'].includes(split.payment_method.code)) {
+    if (["CHQ", "PDC"].includes(split.payment_method.code)) {
       isCheckDetailsEnabled.value[i] = true;
       checkDetailModels.value[i] = split.check_detail;
     }
 
     if (split.documents.length > 0) {
-      split.documents.forEach(doc => {
-        if (doc.payment_split_type === 'discount') {
+      split.documents.forEach((doc) => {
+        if (doc.payment_split_type === "discount") {
           if (!discountDocumentModel.value[0]) {
             discountDocumentModel.value[0] = [];
           }
@@ -2001,8 +1888,8 @@ const processPaymentSplits = payment => {
   }
 
   if (
-    paymentMethodsForm.status == 'view' &&
-    paymentMethodsForm.collection_type === 'insurer'
+    paymentMethodsForm.status == "view" &&
+    paymentMethodsForm.collection_type === "insurer"
   ) {
     approvedDocumentModel.value = fileUploadModels.value.slice();
   }
@@ -2057,9 +1944,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
   const handleDiscount = () => {
     if (
-      ['family_employee_discount', 'employee_discount'].includes(
-        payment.discount_type,
-      ) &&
+      ["family_employee_discount", "employee_discount"].includes(payment.discount_type) &&
       payment.discount_value > 0
     ) {
       discountValue.value = payment.discount_value;
@@ -2069,13 +1954,12 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
   const handleTravelQuoteType = () => {
     if (
-      props.quoteType === 'Travel' &&
-      ['edit', 'view'].includes(paymentMethodsForm.status)
+      props.quoteType === "Travel" &&
+      ["edit", "view"].includes(paymentMethodsForm.status)
     ) {
       planDetail.value = payment.travel_plan;
       if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-        planDetail.value['insurance_provider'] =
-          payment.travel_plan.insurance_provider;
+        planDetail.value["insurance_provider"] = payment.travel_plan.insurance_provider;
       }
     }
   };
@@ -2095,9 +1979,9 @@ const finalizePaymentForm = (payment, capture_approval) => {
     }
   };
 
-  if (paymentMethodsForm.status == 'edit') {
+  if (paymentMethodsForm.status == "edit") {
     handleEditStatus();
-  } else if (paymentMethodsForm.status == 'view') {
+  } else if (paymentMethodsForm.status == "view") {
     handleViewStatus();
   }
 
@@ -2108,7 +1992,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
   createPaymentModal.value = true;
 };
 
-const isAnyPaid = payment => {
+const isAnyPaid = (payment) => {
   const paidStatusIds = [
     paymentStatusEnum.PAID,
     paymentStatusEnum.PARTIALLY_PAID,
@@ -2117,29 +2001,28 @@ const isAnyPaid = payment => {
     paymentStatusEnum.PARTIAL_CAPTURED,
   ];
 
-  return payment.payment_splits.some(split =>
-    paidStatusIds.includes(split.payment_status_id),
+  return payment.payment_splits.some((split) =>
+    paidStatusIds.includes(split.payment_status_id)
   );
 };
 
 const paymentMethodsForm = useForm({
-  payment_method: '',
-  collection_type: '',
-  amount: '',
-  payment_reference: '',
-  paymentCode: '',
-  status: 'create',
-  approvalModal: '',
+  payment_method: "",
+  collection_type: "",
+  amount: "",
+  payment_reference: "",
+  paymentCode: "",
+  status: "create",
+  approvalModal: "",
 });
 
-const validateViewPayment = isValid => {
+const validateViewPayment = (isValid) => {
   let amountExceeded = false;
   if (
     parseFloat(splitAmountModels.value[splitPaymentNo.value]) >
     parseFloat(paymentMethodsForm.collection_amount)
   ) {
-    approveErrorMessage.value =
-      'The entered amount is smaller than the total amount.';
+    approveErrorMessage.value = "The entered amount is smaller than the total amount.";
     isApprovePaymentError.value = true;
     return true;
   }
@@ -2149,14 +2032,14 @@ const validateViewPayment = isValid => {
     parseFloat(splitAmountModels.value[splitPaymentNo.value])
   ) {
     approveErrorMessage.value =
-      'Collected amount exceeds total amount, do you still want to continue?';
+      "Collected amount exceeds total amount, do you still want to continue?";
     isApprovePaymentError.value = true;
     amountExceeded = true;
     //return true;
   }
 
   // document validdation for insurer
-  if (paymentMethodsForm.collection_type === 'insurer') {
+  if (paymentMethodsForm.collection_type === "insurer") {
     if (
       approvedDocumentModel.value[splitPaymentNo.value] === undefined ||
       approvedDocumentModel.value[splitPaymentNo.value].length === 0
@@ -2171,7 +2054,7 @@ const validateViewPayment = isValid => {
     if (!amountExceeded) {
       isApprovePaymentError.value = false;
     }
-    paymentMethodsForm.approvalModal = 'child';
+    paymentMethodsForm.approvalModal = "child";
     isApproveConfirmed.value = true;
     return true;
   }
@@ -2182,7 +2065,7 @@ const validateViewPayment = isValid => {
   return false;
 };
 
-const validateCapturePayment = isValid => {
+const validateCapturePayment = (isValid) => {
   if (isApproveConfirm.value === false && isValid) {
     let noError = true;
     let regex = /^\d+(\.\d{1,2})?$/;
@@ -2190,20 +2073,19 @@ const validateCapturePayment = isValid => {
     if (isCreditCardView.value === true) {
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
         //isCreditPaymentInvalid.value[i] = false;
-        if (paymentMethodsModels.value[i] === 'CC') {
+        if (paymentMethodsModels.value[i] === "CC") {
           if (
             collectionAmountModels.value[i] === null ||
             collectionAmountModels.value[i] === undefined ||
             collectionAmountModels.value[i] === 0
           ) {
             isCreditPaymentInvalid.value[i] = true;
-            isCreditPaymentInvalidError.value[i] = 'This field is required';
+            isCreditPaymentInvalidError.value[i] = "This field is required";
           }
 
           if (!regex.test(collectionAmountModels.value[i])) {
             isCreditPaymentInvalid.value[i] = true;
-            isCreditPaymentInvalidError.value[i] =
-              'Amount must be a valid number';
+            isCreditPaymentInvalidError.value[i] = "Amount must be a valid number";
           }
 
           if (
@@ -2212,7 +2094,7 @@ const validateCapturePayment = isValid => {
           ) {
             isCreditPaymentInvalid.value[i] = true;
             isCreditPaymentInvalidError.value[i] =
-              'Capture amount should not exceed total amount';
+              "Capture amount should not exceed total amount";
           }
         }
       }
@@ -2220,7 +2102,7 @@ const validateCapturePayment = isValid => {
     if (isCreditPaymentInvalid.value.includes(true)) {
       return true;
     }
-    paymentMethodsForm.approvalModal = 'master';
+    paymentMethodsForm.approvalModal = "master";
     isApproveConfirm.value = true;
     isApproveConfirmed.value = true;
     return true;
@@ -2228,16 +2110,15 @@ const validateCapturePayment = isValid => {
   return false;
 };
 
-const validatePaymentAmount = isValid => {
+const validatePaymentAmount = (isValid) => {
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
     isSplitAmountInvalid.value[i] = false;
     if (
-      parseFloat(splitAmountModels.value[i]) >
-      parseFloat(collectionAmountModels.value[i])
+      parseFloat(splitAmountModels.value[i]) > parseFloat(collectionAmountModels.value[i])
     ) {
       isSplitAmountInvalid.value[i] = true;
       isSplitAmountInvalidError.value[i] =
-        'Amount should not exceed ' + collectionAmountModels.value[i] + ' AED';
+        "Amount should not exceed " + collectionAmountModels.value[i] + " AED";
     }
   }
   if (isSplitAmountInvalid.value.includes(true)) {
@@ -2246,22 +2127,22 @@ const validatePaymentAmount = isValid => {
   return false;
 };
 
-const addPayment = isValid => {
+const addPayment = (isValid) => {
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
   ) {
     notification.error({
-      title: 'Please select an insurance provider.',
-      position: 'top',
+      title: "Please select an insurance provider.",
+      position: "top",
     });
     return;
   }
   if (isCreditApprovalView.value === true && isDeclineClicked.value === false) {
     if (validateCapturePayment(isValid)) return;
-  } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
+  } else if (paymentMethodsForm.status === "view" && isApproveClicked.value) {
     if (validateViewPayment(isValid)) return;
-  } else if (paymentMethodsForm.status !== 'view') {
+  } else if (paymentMethodsForm.status !== "view") {
     if (validatePaymentOption()) return;
     if (isPaidEditable.value === true) {
       if (validatePaymentAmount()) return;
@@ -2274,23 +2155,23 @@ const addPayment = isValid => {
     ? paymentMethodsModels.value[0]
     : paymentMethodsModels.value[1];
   if (
-    paymentMethodsForm.credit_approval !== '' &&
+    paymentMethodsForm.credit_approval !== "" &&
     paymentMethodsForm.credit_approval !== null
   ) {
-    mainPaymentMethod = 'CA';
+    mainPaymentMethod = "CA";
   } else if (
     paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM ||
     paymentMethodsForm.frequency === paymentFrequencyEnum.MONTHLY ||
     paymentMethodsForm.frequency === paymentFrequencyEnum.QUARTERLY ||
     paymentMethodsForm.frequency === paymentFrequencyEnum.SEMI_ANNUAL
   ) {
-    mainPaymentMethod = 'PP';
-  } else if (paymentMethodsForm.frequency === 'split_payments') {
-    mainPaymentMethod = 'MP';
+    mainPaymentMethod = "PP";
+  } else if (paymentMethodsForm.frequency === "split_payments") {
+    mainPaymentMethod = "MP";
   }
 
-  if (mainPaymentMethod === '' || mainPaymentMethod === null) {
-    mainPaymentMethod = 'CSH';
+  if (mainPaymentMethod === "" || mainPaymentMethod === null) {
+    mainPaymentMethod = "CSH";
   }
 
   let data = {
@@ -2336,11 +2217,11 @@ const addPayment = isValid => {
         check_detail: checkDetailModels.value[i],
       };
       if (i === 1) {
-        splitPayments[i]['discount_documents'] = discountDocumentModel.value;
+        splitPayments[i]["discount_documents"] = discountDocumentModel.value;
       }
     }
   }
-  splitPayments = splitPayments.filter(item => item !== null);
+  splitPayments = splitPayments.filter((item) => item !== null);
   data.payment.payment_splits = splitPayments;
 
   let declinedCustomReason = paymentMethodsForm.declined_custom_reason;
@@ -2362,20 +2243,20 @@ const addPayment = isValid => {
       collection_type: paymentMethodsForm.collection_type,
     };
     paymentMethodsForm
-      .transform(data => viewData)
-      .post('/payments/' + props.quoteType + '/split-payments-approve', {
+      .transform((data) => viewData)
+      .post("/payments/" + props.quoteType + "/split-payments-approve", {
         preserveScroll: true,
-        onSuccess: res => {
+        onSuccess: (res) => {
           createPaymentModal.value = false;
           setTimeout(() => {
             location.reload();
           }, 500);
         },
-        onError: errors => {
+        onError: (errors) => {
           Object.keys(errors).forEach(function (key) {
             notification.error({
               title: errors[key],
-              position: 'top',
+              position: "top",
             });
           });
         },
@@ -2383,7 +2264,7 @@ const addPayment = isValid => {
     return;
   }
 
-  if (paymentMethodsForm.status === 'view' && !isApproveNotChecked.value) {
+  if (paymentMethodsForm.status === "view" && !isApproveNotChecked.value) {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -2401,8 +2282,8 @@ const addPayment = isValid => {
       collection_type: paymentMethodsForm.collection_type,
     };
     paymentMethodsForm
-      .transform(data => viewData)
-      .post('/payments/' + props.quoteType + '/split-update', {
+      .transform((data) => viewData)
+      .post("/payments/" + props.quoteType + "/split-update", {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
@@ -2410,25 +2291,25 @@ const addPayment = isValid => {
             location.reload();
           }
         },
-        onError: res => {
+        onError: (res) => {
           notification.error({
             title: res.error,
-            position: 'top',
+            position: "top",
           });
         },
       });
     return;
   }
 
-  if (paymentMethodsForm.status === 'edit') {
+  if (paymentMethodsForm.status === "edit") {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
       isPolicyIssuanceDiscount.value === false &&
       isPaidEditable.value === false
     ) {
       notification.error({
-        title: 'No further actions allowed to paid payments',
-        position: 'top',
+        title: "No further actions allowed to paid payments",
+        position: "top",
       });
       return false;
     }
@@ -2441,16 +2322,16 @@ const addPayment = isValid => {
       isPaidEditable: isPaidEditable.value,
     };
     paymentMethodsForm
-      .transform(data => editData)
-      .post('/payments/' + props.quoteType + '/update-new', {
+      .transform((data) => editData)
+      .post("/payments/" + props.quoteType + "/update-new", {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
         },
         onError: () => {
           notification.error({
-            title: 'Payment Update Failed',
-            position: 'top',
+            title: "Payment Update Failed",
+            position: "top",
           });
         },
       });
@@ -2461,23 +2342,23 @@ const addPayment = isValid => {
   };
 
   paymentMethodsForm
-    .transform(data => storeData)
-    .post('/payments/' + props.quoteType + '/store-new', {
+    .transform((data) => storeData)
+    .post("/payments/" + props.quoteType + "/store-new", {
       preserveScroll: true,
       onSuccess: () => {
         createPaymentModal.value = false;
       },
       onError: () => {
         notification.error({
-          title: 'Payment Add Failed',
-          position: 'top',
+          title: "Payment Add Failed",
+          position: "top",
         });
       },
     });
 };
 
 const setFrequencyTypes = () => {
-  let allFrequencyTypes = paymentLookups.paymentFrequencyTypes.map(item => ({
+  let allFrequencyTypes = paymentLookups.paymentFrequencyTypes.map((item) => ({
     value: item.code,
     label: item.text,
     tooltip: item.description,
@@ -2488,80 +2369,73 @@ const setFrequencyTypes = () => {
 const applyPermissions = () => {
   const setDiscountAndCreditApprovalPermissions = () => {
     isDiscountAllowed.value = can(permissionEnum.PAYMENTS_DISCOUNT_ADD);
-    isCreditApprovalAllowed.value = can(
-      permissionEnum.PAYMENTS_CREDIT_APPROVAL_ADD,
-    );
+    isCreditApprovalAllowed.value = can(permissionEnum.PAYMENTS_CREDIT_APPROVAL_ADD);
   };
 
   const setBrokerPermissions = () => {
     const hasPermissionToBroker = can(
-      permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD,
+      permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD
     );
     const hasPermissionToTermFrequencies = can(
-      permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD,
+      permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD
     );
 
     if (!hasPermissionToBroker) {
       frequencyTypes.value = frequencyTypes.value.filter(
-        item =>
+        (item) =>
           item.value !== paymentFrequencyEnum.UPFRONT &&
-          item.value !== paymentFrequencyEnum.SPLIT_PAYMENTS,
+          item.value !== paymentFrequencyEnum.SPLIT_PAYMENTS
       );
     } else if (
-      paymentMethodsForm.status === 'create' &&
-      paymentMethodsForm.frequency === ''
+      paymentMethodsForm.status === "create" &&
+      paymentMethodsForm.frequency === ""
     ) {
       paymentMethodsForm.frequency = paymentFrequencyEnum.UPFRONT;
     }
 
     if (!hasPermissionToTermFrequencies) {
       frequencyTypes.value = frequencyTypes.value.filter(
-        item =>
+        (item) =>
           ![
             paymentFrequencyEnum.CUSTOM,
             paymentFrequencyEnum.MONTHLY,
             paymentFrequencyEnum.QUARTERLY,
             paymentFrequencyEnum.SEMI_ANNUAL,
-          ].includes(item.value),
+          ].includes(item.value)
       );
     }
 
     isVerificationAllowed.value =
-      paymentMethodsForm.status === 'view' &&
+      paymentMethodsForm.status === "view" &&
       can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_BROKER);
   };
 
   const setInsurerPermissions = () => {
-    if (
-      !can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD)
-    ) {
+    if (!can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD)) {
       frequencyTypes.value = frequencyTypes.value.filter(
-        item =>
+        (item) =>
           ![
             paymentFrequencyEnum.CUSTOM,
             paymentFrequencyEnum.MONTHLY,
             paymentFrequencyEnum.QUARTERLY,
             paymentFrequencyEnum.SEMI_ANNUAL,
-          ].includes(item.value),
+          ].includes(item.value)
       );
     }
 
-    if (
-      paymentMethodsForm.status === 'create' &&
-      paymentMethodsForm.frequency === ''
-    ) {
+    if (paymentMethodsForm.status === "create" && paymentMethodsForm.frequency === "") {
       paymentMethodsForm.frequency = paymentMethodsForm.frequency =
         paymentFrequencyEnum.UPFRONT;
     }
 
     isVerificationAllowed.value =
-      paymentMethodsForm.status === 'view' &&
+      paymentMethodsForm.status === "view" &&
       can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_INSURER);
   };
 
   const setInplApproverPermission = () => {
     if (
-      paymentMethodsForm.status === 'view' &&
+      paymentMethodsForm.status === "view" &&
       can(permissionEnum.INPL_APPROVER) &&
       splitPaymentRecord.value.payment_method.code ===
         page.props.paymentMethodsEnum?.InsureNowPayLater
@@ -2573,9 +2447,9 @@ const applyPermissions = () => {
   setFrequencyTypes();
   setDiscountAndCreditApprovalPermissions();
 
-  if (paymentMethodsForm.collection_type === 'broker') {
+  if (paymentMethodsForm.collection_type === "broker") {
     setBrokerPermissions();
-  } else if (paymentMethodsForm.collection_type === 'insurer') {
+  } else if (paymentMethodsForm.collection_type === "insurer") {
     setInsurerPermissions();
   }
 
@@ -2599,39 +2473,39 @@ const deleteForm = useForm({
 });
 
 const deleteDocument = (docName, count, docId) => {
-  if (paymentMethodsForm.status == 'edit') {
+  if (paymentMethodsForm.status == "edit") {
     if (fileUploadModels.value[count]) {
       fileUploadModels.value[count] = fileUploadModels.value[count].filter(
-        item => item.doc_name !== docName,
+        (item) => item.doc_name !== docName
       );
     }
     if (approvedDocumentModel.value[count]) {
-      approvedDocumentModel.value[count] = approvedDocumentModel.value[
-        count
-      ].filter(item => item.doc_name !== docName);
+      approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(
+        (item) => item.doc_name !== docName
+      );
     }
     if (discountDocumentModel.value[count]) {
       discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(
-        item => item.doc_name !== docName,
+        (item) => item.doc_name !== docName
       );
     }
     trashedFilesModal.value.push(docId);
   } else if (
-    paymentMethodsForm.status == 'view' &&
-    paymentMethodsForm.collection_type === 'insurer' &&
+    paymentMethodsForm.status == "view" &&
+    paymentMethodsForm.collection_type === "insurer" &&
     approvedDocumentModel.value[count]
   ) {
-    approvedDocumentModel.value[count] = approvedDocumentModel.value[
-      count
-    ].filter(item => item.doc_name !== docName);
+    approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(
+      (item) => item.doc_name !== docName
+    );
   } else if (
-    paymentMethodsForm.status == 'view' &&
-    paymentMethodsForm.collection_type === 'insurer' &&
+    paymentMethodsForm.status == "view" &&
+    paymentMethodsForm.collection_type === "insurer" &&
     approvedDocumentModel.value[count]
   ) {
-    approvedDocumentModel.value[count] = approvedDocumentModel.value[
-      count
-    ].filter(item => item.doc_name !== docName);
+    approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(
+      (item) => item.doc_name !== docName
+    );
   } else {
     router.post(
       `/documents/delete`,
@@ -2643,23 +2517,22 @@ const deleteDocument = (docName, count, docId) => {
         preserveScroll: true,
         onFinish: () => {
           if (fileUploadModels.value[count]) {
-            fileUploadModels.value[count] = fileUploadModels.value[
-              count
-            ].filter(item => item.doc_name !== docName);
+            fileUploadModels.value[count] = fileUploadModels.value[count].filter(
+              (item) => item.doc_name !== docName
+            );
           }
           if (approvedDocumentModel.value[count]) {
             approvedDocumentModel.value[count] = approvedDocumentModel.value[
               count
-            ].filter(item => item.doc_name !== docName);
+            ].filter((item) => item.doc_name !== docName);
           }
           if (discountDocumentModel.value[count]) {
-            discountDocumentModel.value[0] =
-              discountDocumentModel.value[0].filter(
-                item => item.doc_name !== docName,
-              );
+            discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(
+              (item) => item.doc_name !== docName
+            );
           }
         },
-      },
+      }
     );
   }
 };
@@ -2669,17 +2542,17 @@ const uploadDocument = (doc, files, count) => {
   // Error if invalid files are selected
   if (files.length == 0) {
     notification.error({
-      title: 'Document upload failed, invalid file selected',
-      position: 'top',
+      title: "Document upload failed, invalid file selected",
+      position: "top",
     });
     return;
   }
 
-  let url = '/quotes/' + props.quoteType + '/documents/store-multiple';
+  let url = "/quotes/" + props.quoteType + "/documents/store-multiple";
   let splitPaymentDocType = null;
   if (count === 0) {
     // documents for master discount
-    splitPaymentDocType = 'discount';
+    splitPaymentDocType = "discount";
   }
 
   if (!discountDocumentModel.value[0]) {
@@ -2700,13 +2573,13 @@ const uploadDocument = (doc, files, count) => {
     ...discountDocumentModel.value.flat(),
   ];
 
-  let duplicateFileNames = files.map(file => file.file.name);
+  let duplicateFileNames = files.map((file) => file.file.name);
   isFileError.value = false;
 
   if (
     allUploadedDocuments &&
-    allUploadedDocuments.some(uploadedFile =>
-      duplicateFileNames.includes(uploadedFile.original_name),
+    allUploadedDocuments.some((uploadedFile) =>
+      duplicateFileNames.includes(uploadedFile.original_name)
     )
   ) {
     isFileError.value = true;
@@ -2718,7 +2591,7 @@ const uploadDocument = (doc, files, count) => {
 
   return new Promise((resolve, reject) => {
     documentForm
-      .transform(data => ({
+      .transform((data) => ({
         ...data,
         quote_type_id: doc.quote_type_id,
         document_type_code: doc.code,
@@ -2730,19 +2603,19 @@ const uploadDocument = (doc, files, count) => {
       .post(url, {
         preserveScroll: true,
         preserveState: true,
-        onError: errors => {
+        onError: (errors) => {
           documentForm.setError(errors.error);
           notification.error({
-            title: 'File upload failed',
-            position: 'top',
+            title: "File upload failed",
+            position: "top",
           });
           reject(errors);
         },
-        onSuccess: data => {
+        onSuccess: (data) => {
           let quoteDocuments = [];
           if (
             quoteTypesToCheck.includes(props.quoteType) ||
-            props.quoteType === 'Home' ||
+            props.quoteType === "Home" ||
             props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
           ) {
@@ -2762,7 +2635,7 @@ const uploadDocument = (doc, files, count) => {
             return;
           }
 
-          if (paymentMethodsForm.status === 'view') {
+          if (paymentMethodsForm.status === "view") {
             isApprovedDocumentNotUploaded.value = false;
             for (let i = 0; i < files.length; i++) {
               approvedDocumentModel.value[count].push(quoteDocuments[i]);
@@ -2786,30 +2659,27 @@ const uploadDocument = (doc, files, count) => {
 };
 
 // Will check if the payment is ready for capture
-const shouldProcessUpdate = payment => {
+const shouldProcessUpdate = (payment) => {
   const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
   const calculatedTotal =
     Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
   const hasPayments = props.payments.length > 0;
   const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
   const isAmlCleared =
-    props.quoteRequest.aml_status ===
-    page.props.amlStatusEnum.AMLScreeningCleared;
+    props.quoteRequest.aml_status === page.props.amlStatusEnum.AMLScreeningCleared;
   const isTransactionDeclined =
-    props.quoteRequest.quote_status_id ===
-    page.props.quoteStatusEnum.TransactionDeclined;
+    props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined;
   const isTransactionApproved =
-    props.quoteRequest.quote_status_id ===
-    page.props.quoteStatusEnum.TransactionApproved;
-  const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
-  const isTravelQuote = props.quoteType === 'Travel';
+    props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved;
+  const isKycComplete = props.quoteRequest.kyc_decision === "Complete";
+  const isTravelQuote = props.quoteType === "Travel";
   const shouldSendUpdate = props.sendUpdate;
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
-  const isCarQuote = props.quoteType === 'Car';
+  const isCarQuote = props.quoteType === "Car";
   const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
-  const isInsurer = payment?.collection_type == 'insurer';
+  const isInsurer = payment?.collection_type == "insurer";
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
   let isAMlAndKycTravelComplete =
@@ -2833,7 +2703,7 @@ const shouldProcessUpdate = payment => {
     isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
   }
 
-  if (captureOption === 'approve') {
+  if (captureOption === "approve") {
     return hasPayments;
   }
 
@@ -2845,7 +2715,7 @@ const shouldProcessUpdate = payment => {
   );
 };
 
-const getValidStatuses = paymentSplitRec => {
+const getValidStatuses = (paymentSplitRec) => {
   const validStatuses = [
     paymentStatusEnum.AUTHORISED,
     paymentStatusEnum.PAID,
@@ -2854,78 +2724,72 @@ const getValidStatuses = paymentSplitRec => {
   return validStatuses.includes(paymentSplitRec.payment_status_id);
 };
 
-const validateUpfrontCapture = paymentRecord => {
+const validateUpfrontCapture = (paymentRecord) => {
   let paymentSplitRec = paymentRecord.payment_splits[0];
-  if (paymentSplitRec.payment_method.code === 'CC')
+  if (paymentSplitRec.payment_method.code === "CC")
     return getValidStatuses(paymentSplitRec);
   const isIPPending =
-    paymentSplitRec.payment_method.code === 'IP' &&
+    paymentSplitRec.payment_method.code === "IP" &&
     paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
   const isCAPayment =
-    paymentSplitRec.payment_method.code === 'CA' &&
+    paymentSplitRec.payment_method.code === "CA" &&
     paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
-  const isPaidPayment =
-    paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
+  const isPaidPayment = paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
   return isIPPending || isCAPayment || isPaidPayment;
 };
 
-const filterCCPayments = payment => {
+const filterCCPayments = (payment) => {
+  return payment.payment_splits.filter((item) => item.payment_method.code === "CC");
+};
+
+const filterCAPayments = (payment) => {
   return payment.payment_splits.filter(
-    item => item.payment_method.code === 'CC',
+    (item) => item.payment_status_id == paymentStatusEnum.CREDIT_APPROVED
   );
 };
 
-const filterCAPayments = payment => {
-  return payment.payment_splits.filter(
-    item => item.payment_status_id == paymentStatusEnum.CREDIT_APPROVED,
-  );
-};
-
-const validateSplitPaymentsCapture = paymentRecord => {
+const validateSplitPaymentsCapture = (paymentRecord) => {
   const paymentMethodCC = filterCCPayments(paymentRecord);
   const creditApprovedPayments = filterCAPayments(paymentRecord);
   if (paymentMethodCC.length > 0 && creditApprovedPayments.length == 0) {
     let totalSplitPayments = paymentRecord.payment_splits.length;
     let paidPaymentStatus = paymentRecord.payment_splits.filter(
-      item =>
+      (item) =>
         item.payment_status_id === paymentStatusEnum.PAID ||
-        item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID,
+        item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID
     );
     let ccPaymentStatus = paymentMethodCC.filter(
-      item => item.payment_status_id === paymentStatusEnum.AUTHORISED,
+      (item) => item.payment_status_id === paymentStatusEnum.AUTHORISED
     );
-    return (
-      totalSplitPayments == ccPaymentStatus.length + paidPaymentStatus.length
-    );
+    return totalSplitPayments == ccPaymentStatus.length + paidPaymentStatus.length;
   } else {
     let ipPaymentStatus = paymentRecord.payment_splits.filter(
-      item => item.payment_method.code === 'IP',
+      (item) => item.payment_method.code === "IP"
     );
     if (ipPaymentStatus.length > 0) {
       let ipPending = ipPaymentStatus.filter(
-        item =>
+        (item) =>
           item.payment_status_id === paymentStatusEnum.PENDING ||
-          item.payment_status_id === paymentStatusEnum.PAID,
+          item.payment_status_id === paymentStatusEnum.PAID
       );
       return ipPending.length === ipPaymentStatus.length;
     } else {
       if (verifyCreditApproved(paymentRecord)) return true;
       let paidPaymentStatus = paymentRecord.payment_splits.filter(
-        item => item.payment_status_id === paymentStatusEnum.PAID,
+        (item) => item.payment_status_id === paymentStatusEnum.PAID
       );
       return paidPaymentStatus.length === paymentRecord.payment_splits.length;
     }
   }
 };
 
-const validateNonUpfrontAndSplitCapture = paymentRecord => {
+const validateNonUpfrontAndSplitCapture = (paymentRecord) => {
   if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
     if (verifyCreditApproved(paymentRecord)) return true;
   } else if (
-    (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
-      paymentRecord.payment_splits[0].payment_method.code === 'PDC') &&
-    paymentRecord.payment_splits[0].payment_status_id ===
-      paymentStatusEnum.PENDING
+    (paymentRecord.payment_splits[0].payment_method.code === "IP" ||
+      paymentRecord.payment_splits[0].payment_method.code === "PDC") &&
+    paymentRecord.payment_splits[0].payment_status_id === paymentStatusEnum.PENDING
   ) {
     return true;
   }
@@ -2933,15 +2797,13 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
 };
 
 const getCaptureValidation = computed(() => {
-  return payment => {
+  return (payment) => {
     if (shouldProcessUpdate(payment)) {
       if (payment.is_approved === 1) return false;
       let paymentRecord = payment;
       if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
         return validateUpfrontCapture(paymentRecord);
-      } else if (
-        paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
-      ) {
+      } else if (paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS) {
         return validateSplitPaymentsCapture(paymentRecord);
       } else {
         return validateNonUpfrontAndSplitCapture(paymentRecord);
@@ -2952,9 +2814,9 @@ const getCaptureValidation = computed(() => {
 });
 
 // verify if all credit payments are approved for capture
-const verifyCreditApproved = paymentRecord => {
+const verifyCreditApproved = (paymentRecord) => {
   let caPaymentStatus = paymentRecord.payment_splits.filter(
-    item => item.payment_method.code === 'CA',
+    (item) => item.payment_method.code === "CA"
   );
   if (caPaymentStatus.length > 0) {
     let caApproved = filterCAPayments(paymentRecord);
@@ -2962,19 +2824,19 @@ const verifyCreditApproved = paymentRecord => {
   }
   return false;
 };
-const alertCapture = payment => {
-  let errorMsg = 'Pending payment';
+const alertCapture = (payment) => {
+  let errorMsg = "Pending payment";
   if (payment.is_approved === 1) {
-    errorMsg = 'Transaction already approved';
+    errorMsg = "Transaction already approved";
   }
   notification.error({
     title: errorMsg,
-    position: 'top',
+    position: "top",
   });
 };
 
 const getCaptureOption = computed(() => {
-  return payment => {
+  return (payment) => {
     // Return early if there are no payments
     if (props.payments.length === 0) return;
 
@@ -2983,16 +2845,13 @@ const getCaptureOption = computed(() => {
 
     // Check if the conditions for 'capture' are met
     const isCreditCardPayment = paymentMethodCC.length > 0;
-    const isNotInsurerPayment = payment.collection_type !== 'insurer';
+    const isNotInsurerPayment = payment.collection_type !== "insurer";
 
     // Return 'capture' if all conditions are met, otherwise return 'approve'
-    if (
-      (isCreditCardPayment && isNotInsurerPayment && !isGIGProvider) ||
-      isGIGProvider
-    ) {
-      return 'capture';
+    if ((isCreditCardPayment && isNotInsurerPayment && !isGIGProvider) || isGIGProvider) {
+      return "capture";
     }
-    return 'approve';
+    return "approve";
   };
 });
 
@@ -3007,10 +2866,10 @@ const fetchPlans = () => {
   let url = `/get-plans/${props.quoteType}/${providerId}/${planId}`;
   axios
     .get(url)
-    .then(res => {
+    .then((res) => {
       planText.value = res.data.text;
     })
-    .catch(err => {
+    .catch((err) => {
       console.log(err);
     });
 };
@@ -3022,7 +2881,7 @@ watch(
     if (props.realQuote?.plan_id) {
       fetchPlans();
     }
-  },
+  }
 );
 
 // Insly Leads
@@ -3032,7 +2891,7 @@ watch(
     if (props.sendUpdate?.plan_id) {
       fetchPlans();
     }
-  },
+  }
 );
 
 onMounted(() => {
@@ -3044,16 +2903,16 @@ onMounted(() => {
 
 const getPlanName = computed(() => {
   const plan = planDetail.value;
-  if (props.quoteType === 'Bike') {
-    return plan ? props.quoteRequest.car_plan.text : 'Not Available';
+  if (props.quoteType === "Bike") {
+    return plan ? props.quoteRequest.car_plan.text : "Not Available";
   }
   if (props.sendUpdate) {
-    return planText.value || 'Not Available';
+    return planText.value || "Not Available";
   }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan
     ? plan.text
-    : 'Not Available';
+    : "Not Available";
 });
 
 const providerId = computed(() => {
@@ -3079,17 +2938,14 @@ const providerName = computed(() => {
   const plan = planDetail.value;
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
-      provider => provider.id === providerId.value,
+      (provider) => provider.id === providerId.value
     );
 
-    return provider.text || 'Not Available';
-  } else if (
-    quoteTypesToCheck.includes(props.quoteType) &&
-    plan.insurance_provider
-  ) {
-    return plan ? plan.insurance_provider.text : 'Not Available';
+    return provider.text || "Not Available";
+  } else if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
+    return plan ? plan.insurance_provider.text : "Not Available";
   } else {
-    return plan ? plan.text : 'Not Available';
+    return plan ? plan.text : "Not Available";
   }
 });
 
@@ -3099,25 +2955,25 @@ watch(
   (newValue, oldValue) => {
     if (newValue && oldValue) {
       // Get the date part without the time from the newValue and oldValue
-      const newDate = new Date(newValue).toISOString().split('T')[0];
-      const oldDate = new Date(oldValue).toISOString().split('T')[0];
+      const newDate = new Date(newValue).toISOString().split("T")[0];
+      const oldDate = new Date(oldValue).toISOString().split("T")[0];
       // Compare the dates
       if (newDate !== oldDate) {
         calculateDueDates();
       }
     }
-  },
+  }
 );
 
 const setPaymentInitialPrice = () => {
-  if (paymentMethodsForm.status !== 'edit') {
+  if (paymentMethodsForm.status !== "edit") {
     if (props.isPlanDetailEnabled) {
       initialAmount.value = props.quoteRequest.price_with_vat;
     } else if (props.sendUpdate) {
       initialAmount.value = props.sendUpdate?.price_with_vat;
-    } else if (props.quoteType === 'Health') {
+    } else if (props.quoteType === "Health") {
       initialAmount.value = props.eCommercePrice;
-    } else if (props.quoteType === 'Bike') {
+    } else if (props.quoteType === "Bike") {
       initialAmount.value = props.quoteRequest.premium;
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
@@ -3130,14 +2986,14 @@ const setPaymentInitialPrice = () => {
 
 const setPlanDetail = () => {
   if (
-    props.quoteType == 'Business' ||
-    props.quoteType == 'Home' ||
+    props.quoteType == "Business" ||
+    props.quoteType == "Home" ||
     props.isPlanDetailEnabled
   ) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
-  } else if (props.quoteType == 'Bike') {
+  } else if (props.quoteType == "Bike") {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
     if (props.sendUpdate) {
       initalPlanDetails =
@@ -3159,30 +3015,24 @@ watch(
     setPaymentInitialPrice();
     //refresh plan
     setPlanDetail();
-  },
+  }
 );
-const paymentAllocationStatusTooltip = payment_allocation_status => {
+const paymentAllocationStatusTooltip = (payment_allocation_status) => {
   // First convert to upper case as some of the values are in lower case & some of without space
   payment_allocation_status = formatString(payment_allocation_status);
   // Then converting to accordingly to match with the enum values
-  payment_allocation_status = payment_allocation_status
-    .replace(/ /g, '_')
-    .toLowerCase();
+  payment_allocation_status = payment_allocation_status.replace(/ /g, "_").toLowerCase();
   if (payment_allocation_status == paymentAllocationStatus.NOT_ALLOCATED) {
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED;
-  } else if (
-    payment_allocation_status == paymentAllocationStatus.PARTIALLY_ALLOCATED
-  ) {
+  } else if (payment_allocation_status == paymentAllocationStatus.PARTIALLY_ALLOCATED) {
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED;
-  } else if (
-    payment_allocation_status == paymentAllocationStatus.FULLY_ALLOCATED
-  ) {
+  } else if (payment_allocation_status == paymentAllocationStatus.FULLY_ALLOCATED) {
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED;
   } else if (payment_allocation_status == paymentAllocationStatus.UNPAID) {
     return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
   }
 
-  return '';
+  return "";
 };
 
 // verify if master payment is paid
@@ -3202,70 +3052,68 @@ onMounted(() => {
 });
 
 const is_lacking_payment = ref(
-  page.props?.bookPolicyDetails?.isLackingOfPayment || false,
+  page.props?.bookPolicyDetails?.isLackingOfPayment || false
 );
 
 const isPaidEditable = ref(
-  page.props?.bookPolicyDetails?.isPaidEditable ||
-    page.props?.isPaidEditable ||
-    false,
+  page.props?.bookPolicyDetails?.isPaidEditable || page.props?.isPaidEditable || false
 );
 
 watch(
   () => is_lacking_payment.value,
-  newVal => {
+  (newVal) => {
     if (newVal) {
       showLackingPayment();
     }
-  },
+  }
 );
 
 watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
-  newVal => {
+  (newVal) => {
     is_lacking_payment.value = newVal || false;
-  },
+  }
 );
 
 watch(
   () => page.props?.bookPolicyDetails?.isPaidEditable,
-  newVal => {
+  (newVal) => {
     isPaidEditable.value = newVal || false;
-  },
+  }
 );
 
 watch(
   () => page.props?.isPaidEditable,
-  newVal => {
+  (newVal) => {
     isPaidEditable.value = newVal || false;
-  },
+  }
 );
 
 const discountTypeLabel = computed(() => {
-  let systemAplliedDiscount = '';
+  let systemAplliedDiscount = "";
   if (
-    paymentMethodsForm.status === 'view' &&
-    (paymentMethodsForm.discount === 'system_adjusted_discount' ||
+    paymentMethodsForm.status === "view" &&
+    (paymentMethodsForm.discount === "system_adjusted_discount" ||
       paymentMethodsForm.system_adjusted_discount > 0)
   ) {
-    systemAplliedDiscount = 'System adjusted discount';
+    systemAplliedDiscount = "System adjusted discount";
   }
   let discountType = discountTypes.find(
-    item => item.value === paymentMethodsForm.discount,
+    (item) => item.value === paymentMethodsForm.discount
   );
   if (discountType) {
-    if (systemAplliedDiscount !== '') {
+    if (systemAplliedDiscount !== "") {
       if (discountType.label == systemAplliedDiscount) {
         return discountType.label;
       }
-      return discountType.label + ' + ' + systemAplliedDiscount;
+      return discountType.label + " + " + systemAplliedDiscount;
     } else {
       return discountType.label;
     }
-  } else if (systemAplliedDiscount !== '') {
+  } else if (systemAplliedDiscount !== "") {
     return systemAplliedDiscount;
   } else {
-    return 'N/A';
+    return "N/A";
   }
 });
 // Watch for Ecommerce Price changes
@@ -3275,15 +3123,15 @@ watch(
   (newValue, oldValue) => {
     initialAmount.value = newValue;
     totalPrice.value = newValue;
-  },
+  }
 );
 
 // verify if verify option is enabled
 const isVerifiedEnabled = computed(() => {
   if (
-    paymentMethodsModels.value[splitPaymentNo.value] === 'CC' ||
-    paymentMethodsModels.value[splitPaymentNo.value] === 'CA' ||
-    paymentMethodsModels.value[splitPaymentNo.value] === 'PPR'
+    paymentMethodsModels.value[splitPaymentNo.value] === "CC" ||
+    paymentMethodsModels.value[splitPaymentNo.value] === "CA" ||
+    paymentMethodsModels.value[splitPaymentNo.value] === "PPR"
   ) {
     return false;
   }
@@ -3294,7 +3142,7 @@ watch(
   () => props.sendUpdate?.price_with_vat,
   (newValue, oldValue) => {
     totalPrice.value = newValue;
-  },
+  }
 );
 
 const lookupsEnum = page.props.lookupsEnum;
@@ -3314,7 +3162,7 @@ const totalAmountFormat = computed(() => {
 const splitPaymentTotalPrice = (
   splitPaymentNo,
   splitPaymentAmount,
-  masterDiscountValue,
+  masterDiscountValue
 ) => {
   let total = 0;
   if (splitPaymentNo === 1 && masterDiscountValue > 0) {
@@ -3339,12 +3187,10 @@ const amlAndKycTooltip = computed(() => {
 });
 
 const isTotalAmountMismatched = () => {
-  const totalPriceRounded =
-    Math.round(props.payments[0]?.total_price * 100) / 100;
+  const totalPriceRounded = Math.round(props.payments[0]?.total_price * 100) / 100;
   const calculatedTotal =
     Math.round(
-      (props.payments[0]?.total_amount + props.payments[0]?.discount_value) *
-        100,
+      (props.payments[0]?.total_amount + props.payments[0]?.discount_value) * 100
     ) / 100;
 
   return totalPriceRounded === calculatedTotal;
@@ -3359,17 +3205,16 @@ const isKycVerified = () => {
     page.props?.bookingDetails?.isGIGInsuranceProvider ||
     false;
   let paymentMethodCC =
-    props.payments[0]?.payment_methods_code ===
-    page.props.paymentMethodsEnum.CreditCard;
+    props.payments[0]?.payment_methods_code === page.props.paymentMethodsEnum.CreditCard;
 
   if (isTravelQuote) {
     if (isGIGInsuranceProvider && paymentMethodCC) {
-      return props.quoteRequest.kyc_decision === 'Complete';
+      return props.quoteRequest.kyc_decision === "Complete";
     }
     return true;
   }
 
-  return props.quoteRequest.kyc_decision === 'Complete';
+  return props.quoteRequest.kyc_decision === "Complete";
 };
 
 const isAmlVerified = () => {
@@ -3380,23 +3225,18 @@ const isAmlVerified = () => {
     page.props?.bookingDetails?.isGIGInsuranceProvider ||
     false;
   let paymentMethodCC =
-    props.payments[0]?.payment_methods_code ===
-    page.props.paymentMethodsEnum.CreditCard;
+    props.payments[0]?.payment_methods_code === page.props.paymentMethodsEnum.CreditCard;
 
   if (isTravelQuote) {
     if (isGIGInsuranceProvider && paymentMethodCC) {
       return (
-        props.quoteRequest.aml_status ===
-        page.props.amlStatusEnum.AMLScreeningCleared
+        props.quoteRequest.aml_status === page.props.amlStatusEnum.AMLScreeningCleared
       );
     }
     return true;
   }
 
-  return (
-    props.quoteRequest.aml_status ===
-    page.props.amlStatusEnum.AMLScreeningCleared
-  );
+  return props.quoteRequest.aml_status === page.props.amlStatusEnum.AMLScreeningCleared;
 };
 
 const isInsurerAmlVerified = () => {
@@ -3408,16 +3248,14 @@ const isInsurerAmlVerified = () => {
     page.props?.bookingDetails?.isGIGInsuranceProvider ||
     false;
   let isPaymentMethodCC =
-    props.payments[0]?.payment_methods_code ===
-    page.props.paymentMethodsEnum.CreditCard;
+    props.payments[0]?.payment_methods_code === page.props.paymentMethodsEnum.CreditCard;
 
-  let insurerAMLStatus = props.quoteRequest?.insurer_aml_status || 'N/A';
+  let insurerAMLStatus = props.quoteRequest?.insurer_aml_status || "N/A";
   let insurerAmlClearedStatuses = [
     page.props.amlStatusEnum.InsurerAMLScreeningNA,
     page.props.amlStatusEnum.InsurerAMLScreeningCleared,
   ];
-  let isInsurerAmlCleared =
-    insurerAmlClearedStatuses.includes(insurerAMLStatus);
+  let isInsurerAmlCleared = insurerAmlClearedStatuses.includes(insurerAMLStatus);
 
   if (isTravelQuote) {
     if (isGIGInsuranceProvider && isPaymentMethodCC) {
@@ -3436,8 +3274,7 @@ const isInsurerAmlVerified = () => {
 
 const disableMainPaymentApproval = computed(() => {
   let isAmlFailed =
-    props.quoteRequest.aml_status ===
-    page.props.amlStatusEnum.AMLScreeningFailed;
+    props.quoteRequest.aml_status === page.props.amlStatusEnum.AMLScreeningFailed;
   if (isAmlFailed) {
     return true;
   }
@@ -3453,23 +3290,21 @@ const openAmlVerificationModal = () => {
 };
 
 const transactionActionText = computed(() => {
-  if (paymentMethodsForm.approvalModal === 'child') {
-    return 'PAYMENT VERIFICATION';
+  if (paymentMethodsForm.approvalModal === "child") {
+    return "PAYMENT VERIFICATION";
   } else if (isCreditApprovalView.value && isCreditCardView.value) {
-    return 'CAPTURE TRANSACTION';
+    return "CAPTURE TRANSACTION";
   } else {
-    return 'APPROVE TRANSACTION';
+    return "APPROVE TRANSACTION";
   }
 });
 
 // verify if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
-  const isNotUpfront =
-    paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
+  const isNotUpfront = paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
   const hasEditPermission = can(permissionEnum.PaymentsEdit);
   const isPolicyNotBooked =
-    props.quoteRequest.quote_status_id !==
-    page.props.quoteStatusEnum.PolicyBooked;
+    props.quoteRequest.quote_status_id !== page.props.quoteStatusEnum.PolicyBooked;
 
   if (props.sendUpdate && isNotUpfront && hasEditPermission) {
     return true;
@@ -3496,55 +3331,51 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
   );
 };
 
-const isCCEnabled = ref(
-  page.props?.bookPolicyDetails?.isCreditCardEnabled || false,
-);
+const isCCEnabled = ref(page.props?.bookPolicyDetails?.isCreditCardEnabled || false);
 
 const isMultiPaymentsEnabled = ref(
-  page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled || false,
+  page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled || false
 );
 
 const isGIGOrQICProvider = ref(
-  page.props?.bookPolicyDetails?.isGIGOrQICProvider || false,
+  page.props?.bookPolicyDetails?.isGIGOrQICProvider || false
 );
 
 watch(
   () => page.props?.bookPolicyDetails?.isCreditCardEnabled,
-  newVal => {
+  (newVal) => {
     isCCEnabled.value = newVal || false;
-  },
+  }
 );
 
 const hasAnyCCPayment = () => {
   const paymentMM = Object.values(paymentMethodsModels.value);
-  return paymentMM.some(item => item == 'CC');
+  return paymentMM.some((item) => item == "CC");
 };
 
 const hasAnyCCSplitPayment = () => {
   if (props.payments.length > 0) {
     const paymentSplits = props.payments[0].payment_splits;
-    return paymentSplits.some(item => item.payment_method.code === 'CC');
+    return paymentSplits.some((item) => item.payment_method.code === "CC");
   }
   return false;
 };
 
-const isCCPaymentDisabled = option => {
+const isCCPaymentDisabled = (option) => {
   return (
     !isCCEnabled.value &&
-    paymentMethodsForm.collection_type === 'insurer' &&
-    option == 'CC'
+    paymentMethodsForm.collection_type === "insurer" &&
+    option == "CC"
   );
 };
 
-const isPolicySendUpdateBooked = option => {
-  const isInsurerCollection = paymentMethodsForm.collection_type === 'insurer';
-  const isCCOption = option === 'CC';
+const isPolicySendUpdateBooked = (option) => {
+  const isInsurerCollection = paymentMethodsForm.collection_type === "insurer";
+  const isCCOption = option === "CC";
   const isPolicyBooked =
-    props.quoteRequest.quote_status_id ===
-    page.props.quoteStatusEnum.PolicyBooked;
+    props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.PolicyBooked;
   const isUpdateBooked =
-    props.sendUpdate &&
-    props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+    props.sendUpdate && props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
   const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
 
   if (isUpdateBooked && isCCAndInsurer) {
@@ -3554,7 +3385,7 @@ const isPolicySendUpdateBooked = option => {
 };
 
 const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
-  return paymentTypes.filter(item => !methodsToExclude.includes(item.value));
+  return paymentTypes.filter((item) => !methodsToExclude.includes(item.value));
 };
 
 const isEditPaymentEnabled = () => {
@@ -3564,8 +3395,8 @@ const isEditPaymentEnabled = () => {
     paymentStatusEnum.CAPTURED,
   ];
 
-  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
-    statusesToCheck.includes(item.payment_status_id),
+  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some((item) =>
+    statusesToCheck.includes(item.payment_status_id)
   );
 
   return !isMultiPaymentsEnabled.value && hasAnyAuthorizedPayment;
@@ -3578,10 +3409,8 @@ const isVoidPaymentEnabled = computed(() => {
   return (
     props.isFuncsEnabled.tapIntegration &&
     can(permissionEnum.PAYMENTS_VOID) &&
-    props.payments[0].payment_status_id ===
-      page.props.paymentStatusEnum.AUTHORISED &&
-    props.payments[0].payment_gateway_id ===
-      props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+    props.payments[0].payment_status_id === page.props.paymentStatusEnum.AUTHORISED &&
+    props.payments[0].payment_gateway_id === props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
   );
 });
 
@@ -3598,37 +3427,37 @@ const voidPayment = () => {
 
   axios
     .post(`/payments/${props.quoteType}/void-payment`, data)
-    .then(res => {
+    .then((res) => {
       voidPaymentProcess.value = false;
       voidPaymentModel.value = false;
       if (res.data.status === false) {
         notification.error({
           title: res.data.message,
-          position: 'top',
+          position: "top",
         });
         return;
       }
       notification.success({
-        title: 'Processed',
-        position: 'top',
+        title: "Processed",
+        position: "top",
       });
 
       router.reload({
-        only: ['payments'],
+        only: ["payments"],
       });
     })
-    .catch(err => {
+    .catch((err) => {
       console.log(err);
       voidPaymentProcess.value = false;
       if (err.response.data) {
         notification.error({
           title: err.response.data[0],
-          position: 'top',
+          position: "top",
         });
       } else {
         notification.error({
-          title: 'Void authorized payment process failed',
-          position: 'top',
+          title: "Void authorized payment process failed",
+          position: "top",
         });
       }
     });
@@ -3637,7 +3466,7 @@ const voidPayment = () => {
 const fetchInsurerAMLStatus = async () => {
   if (props.quoteRequest?.payments[0]?.payment_gateway_id == 3) {
     NProgress.start();
-    const response = await axios.get(route('insurer-aml-status-logs'), {
+    const response = await axios.get(route("insurer-aml-status-logs"), {
       params: {
         quoteRequestId: props.quoteRequest.id,
         quoteType: page.props.quoteTypeId,
@@ -3645,11 +3474,11 @@ const fetchInsurerAMLStatus = async () => {
       },
     });
     NProgress.done();
-    console.log('insurerAMLStatus:', response.data);
+    console.log("insurerAMLStatus:", response.data);
     if (response.data?.status) {
       notification.error({
         title: response.data?.message,
-        position: 'top',
+        position: "top",
         timeout: 5000,
       });
     }
@@ -3666,22 +3495,16 @@ onBeforeMount(() => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex justify-between items-center">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Manage Payments
-          </h3>
+          <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
         </div>
       </template>
       <template #body>
         <div class="flex justify-between gap-4 items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg"></h3>
           <div class="flex gap-2">
-            <template
-              v-if="can(permissionEnum.ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON)"
-            >
+            <template v-if="can(permissionEnum.ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON)">
               <template
-                v-if="
-                  proformaPayment?.payment_status_id == paymentStatusEnum.PAID
-                "
+                v-if="proformaPayment?.payment_status_id == paymentStatusEnum.PAID"
               >
                 <x-button
                   v-if="proformaPayment"
@@ -3764,15 +3587,11 @@ onBeforeMount(() => {
                       color="emerald"
                       @click="addPaymentModal"
                     >
-                      <span class="border-b border-dotted"
-                        >Add Manual Payment</span
-                      >
+                      <span class="border-b border-dotted">Add Manual Payment</span>
                     </x-button>
                   </div>
                   <template #tooltip>
-                    <span>{{
-                      paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
-                    }}</span>
+                    <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT }}</span>
                   </template>
                 </x-tooltip>
               </template>
@@ -3795,13 +3614,8 @@ onBeforeMount(() => {
                         <div
                           class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs"
                         >
-                          <span
-                            data-v-d0063695=""
-                            class="custom-tooltip-content"
-                          >
-                            {{
-                              paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_NO
-                            }}
+                          <span data-v-d0063695="" class="custom-tooltip-content">
+                            {{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_NO }}
                           </span>
                         </div>
                       </div>
@@ -3819,9 +3633,7 @@ onBeforeMount(() => {
                   </th>
                   <th class="inner-th-class">
                     <x-tooltip>
-                      <span class="border-b border-dotted"
-                        >Collection Date</span
-                      >
+                      <span class="border-b border-dotted">Collection Date</span>
                       <template #tooltip>
                         <span class="custom-tooltip-content">{{
                           paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTION_DATE
@@ -3852,9 +3664,7 @@ onBeforeMount(() => {
 
                   <th class="inner-th-class">
                     <x-tooltip>
-                      <span class="border-b border-dotted"
-                        >Price(without VAT)</span
-                      >
+                      <span class="border-b border-dotted">Price(without VAT)</span>
                       <template #tooltip>
                         <span class="custom-tooltip-content">{{
                           paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_METHOD
@@ -3905,9 +3715,7 @@ onBeforeMount(() => {
                   </th>
                   <th class="inner-th-class">
                     <x-tooltip>
-                      <span class="border-b border-dotted"
-                        >Collected Amount</span
-                      >
+                      <span class="border-b border-dotted">Collected Amount</span>
                       <template #tooltip>
                         <span class="custom-tooltip-content">{{
                           paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTED_AMOUNT
@@ -3958,12 +3766,11 @@ onBeforeMount(() => {
                         <span
                           class="expand-pointer"
                           @click="
-                            isExpandedSplitPayments[index] =
-                              !isExpandedSplitPayments[index]
+                            isExpandedSplitPayments[index] = !isExpandedSplitPayments[
+                              index
+                            ]
                           "
-                          >{{
-                            isExpandedSplitPayments[index] ? '&and;' : '&or;'
-                          }}
+                          >{{ isExpandedSplitPayments[index] ? "&and;" : "&or;" }}
                         </span>
                       </td>
                       <td>{{ item.code }}</td>
@@ -3983,14 +3790,14 @@ onBeforeMount(() => {
                             {{
                               item.payment_allocation_status !== null
                                 ? formatString(item.payment_allocation_status)
-                                : ''
+                                : ""
                             }}
                           </span>
                           <template #tooltip>
                             <span class="custom-tooltip-content">
                               {{
                                 paymentAllocationStatusTooltip(
-                                  item.payment_allocation_status,
+                                  item.payment_allocation_status
                                 )
                               }}
                             </span>
@@ -4069,8 +3876,7 @@ onBeforeMount(() => {
                                   color="orange"
                                   outlined
                                   :disabled="
-                                    isApproveConfirmed ||
-                                    disableMainPaymentApproval
+                                    isApproveConfirmed || disableMainPaymentApproval
                                   "
                                 >
                                   Approve
@@ -4093,8 +3899,8 @@ onBeforeMount(() => {
                                   !isAmlVerified() || !isKycVerified()
                                     ? openAmlVerificationModal()
                                     : getCaptureValidation(item)
-                                      ? editPaymentModal(item, 0, 0, 2)
-                                      : alertCapture(item)
+                                    ? editPaymentModal(item, 0, 0, 2)
+                                    : alertCapture(item)
                                 "
                                 :disabled="isApproveConfirmed"
                               >
@@ -4117,9 +3923,7 @@ onBeforeMount(() => {
                     </tr>
                     <template v-if="isExpandedSplitPayments[index]">
                       <tr
-                        v-for="(
-                          splitPayment, splitIndex
-                        ) in item.payment_splits"
+                        v-for="(splitPayment, splitIndex) in item.payment_splits"
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
@@ -4136,7 +3940,7 @@ onBeforeMount(() => {
                             splitPaymentTotalPrice(
                               splitPayment.sr_no,
                               splitPayment.payment_amount,
-                              item.discount_value,
+                              item.discount_value
                             )
                           }}
                         </td>
@@ -4144,7 +3948,7 @@ onBeforeMount(() => {
                           {{
                             splitPayment.sr_no == 1
                               ? formatAmount(item.discount_value)
-                              : ''
+                              : ""
                           }}
                         </td>
                         <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
@@ -4152,7 +3956,7 @@ onBeforeMount(() => {
                           {{
                             splitPayment.collection_amount > 0
                               ? formatAmount(splitPayment.collection_amount)
-                              : ''
+                              : ""
                           }}
                         </td>
                         <td>
@@ -4163,17 +3967,15 @@ onBeforeMount(() => {
                             <span class="border-b border-dotted border-black">
                               {{
                                 splitPayment.payment_allocation_status !== null
-                                  ? formatString(
-                                      splitPayment.payment_allocation_status,
-                                    )
-                                  : ''
+                                  ? formatString(splitPayment.payment_allocation_status)
+                                  : ""
                               }}
                             </span>
                             <template #tooltip>
                               <span class="custom-tooltip-content">
                                 {{
                                   paymentAllocationStatusTooltip(
-                                    splitPayment.payment_allocation_status,
+                                    splitPayment.payment_allocation_status
                                   )
                                 }}
                               </span>
@@ -4186,8 +3988,7 @@ onBeforeMount(() => {
                               !page.props.linkedQuoteDetails ||
                               props.quoteRequest.quote_status_id !=
                                 page.props.quoteStatusEnum.PolicyCancelled ||
-                              page.props.linkedQuoteDetails?.childLeadsCount ==
-                                0
+                              page.props.linkedQuoteDetails?.childLeadsCount == 0
                             "
                           >
                             <x-button
@@ -4198,7 +3999,7 @@ onBeforeMount(() => {
                                   item,
                                   splitPayment.id,
                                   splitPayment.sr_no,
-                                  0,
+                                  0
                                 )
                               "
                               outlined
@@ -4213,27 +4014,21 @@ onBeforeMount(() => {
                                 generateCCLink(
                                   splitPayment.code,
                                   splitPayment.sr_no,
-                                  splitPayment.payment_status_id,
+                                  splitPayment.payment_status_id
                                 )
                               "
                               outlined
                               >Copy Payment Link</x-button
                             >
                             <x-button
-                              v-if="
-                                canDeleteSplitPayment(
-                                  item,
-                                  splitIndex,
-                                  splitPayment,
-                                )
-                              "
+                              v-if="canDeleteSplitPayment(item, splitIndex, splitPayment)"
                               size="xs"
                               color="red"
                               class="ml-2"
                               @click="
                                 deleteSplitPaymentModal(
                                   splitPayment.id,
-                                  splitPayment.payment_status_id,
+                                  splitPayment.payment_status_id
                                 )
                               "
                               outlined
@@ -4250,7 +4045,7 @@ onBeforeMount(() => {
                               @click="
                                 retrySplitPaymentModal(
                                   splitPayment.process_job?.id,
-                                  splitPayment.process_job?.message,
+                                  splitPayment.process_job?.message
                                 )
                               "
                               outlined
@@ -4281,12 +4076,12 @@ onBeforeMount(() => {
             isCreditCardView
               ? 'Capture Transaction'
               : isCreditApprovalView
-                ? 'Approve Transaction'
-                : isViewEnabled
-                  ? 'View Payment'
-                  : paymentMethodsForm.status == 'create'
-                    ? 'New Payment'
-                    : 'Update Payment'
+              ? 'Approve Transaction'
+              : isViewEnabled
+              ? 'View Payment'
+              : paymentMethodsForm.status == 'create'
+              ? 'New Payment'
+              : 'Update Payment'
           "
           show-close
           backdrop
@@ -4342,8 +4137,7 @@ onBeforeMount(() => {
                   <span v-if="isFieldReadonly">
                     {{
                       collectionTypes.find(
-                        item =>
-                          item.value === paymentMethodsForm.collection_type,
+                        (item) => item.value === paymentMethodsForm.collection_type
                       ).label
                     }}
                   </span>
@@ -4355,10 +4149,7 @@ onBeforeMount(() => {
                     @change="handleCollectionTypeChange"
                     :disabled="isCollectedByEnabled"
                   >
-                    <template
-                      v-for="option in collectionTypes"
-                      :key="option.value"
-                    >
+                    <template v-for="option in collectionTypes" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">
                         {{ option.label }}
                       </option>
@@ -4401,7 +4192,7 @@ onBeforeMount(() => {
                   <span v-if="isFieldReadonly">
                     {{
                       frequencyTypes.find(
-                        item => item.value === paymentMethodsForm.frequency,
+                        (item) => item.value === paymentMethodsForm.frequency
                       ).label
                     }}
                   </span>
@@ -4415,10 +4206,7 @@ onBeforeMount(() => {
                     :rules="[rules.isRequired]"
                     @change="handleFrequencyChange"
                   >
-                    <template
-                      v-for="option in frequencyTypes"
-                      :key="option.value"
-                    >
+                    <template v-for="option in frequencyTypes" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">
                         {{ option.label }}
                       </option>
@@ -4476,10 +4264,7 @@ onBeforeMount(() => {
                     :disabled="!isPaymentNoEnabled"
                     @change="calculatePaymentBreakup()"
                   >
-                    <template
-                      v-for="option in totalPayments"
-                      :key="option.value"
-                    >
+                    <template v-for="option in totalPayments" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">
                         {{ option.label }}
                       </option>
@@ -4561,9 +4346,8 @@ onBeforeMount(() => {
                   <span v-if="isFieldReadonly">
                     {{
                       creditApprovalReasons.find(
-                        item =>
-                          item.value === paymentMethodsForm.credit_approval,
-                      )?.label || 'N/A'
+                        (item) => item.value === paymentMethodsForm.credit_approval
+                      )?.label || "N/A"
                     }}
                   </span>
                 </x-field>
@@ -4594,15 +4378,9 @@ onBeforeMount(() => {
                 label="CUSTOM REASON"
                 class="w-full"
               >
-                <span v-if="isFieldReadonly">{{
-                  paymentMethodsForm.custom_reason
-                }}</span>
+                <span v-if="isFieldReadonly">{{ paymentMethodsForm.custom_reason }}</span>
               </x-field>
-              <div
-                v-if="
-                  showDiscountOptions && isDiscountAllowed && !isFieldReadonly
-                "
-              >
+              <div v-if="showDiscountOptions && isDiscountAllowed && !isFieldReadonly">
                 <x-tooltip>
                   <span class="border-b-2 border-dotted border-black text-sm"
                     >DISCOUNT APPLICABLE (DISCOUNT TYPE)</span
@@ -4625,17 +4403,11 @@ onBeforeMount(() => {
                       v-model="paymentMethodsForm.discount"
                       @change="handleDiscountChange"
                     >
-                      <template
-                        v-for="option in discountTypes"
-                        :key="option.value"
-                      >
+                      <template v-for="option in discountTypes" :key="option.value">
                         <option
                           :value="option.value"
                           :title="option.tooltip"
-                          v-if="
-                            option.value !==
-                            lookupsEnum.SYSTEM_ADJUSTED_DISCOUNT
-                          "
+                          v-if="option.value !== lookupsEnum.SYSTEM_ADJUSTED_DISCOUNT"
                         >
                           {{ option.label }}
                         </option>
@@ -4663,11 +4435,7 @@ onBeforeMount(() => {
               </div>
 
               <div
-                v-if="
-                  isDiscountReasonEnabled &&
-                  isDiscountAllowed &&
-                  !isFieldReadonly
-                "
+                v-if="isDiscountReasonEnabled && isDiscountAllowed && !isFieldReadonly"
                 class=""
               >
                 <ToolTip
@@ -4675,8 +4443,7 @@ onBeforeMount(() => {
                   :tooltip="
                     isFieldReadonly
                       ? discountReasons.find(
-                          item =>
-                            item.value === paymentMethodsForm.discount_reason,
+                          (item) => item.value === paymentMethodsForm.discount_reason
                         ).tooltip
                       : paymentTooltipEnum.DISCOUNT_REASON
                   "
@@ -4691,10 +4458,7 @@ onBeforeMount(() => {
                     :rules="[rules.isRequired]"
                     @change="handleDiscountReasonChange"
                   >
-                    <template
-                      v-for="option in discountReasons"
-                      :key="option.value"
-                    >
+                    <template v-for="option in discountReasons" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">
                         {{ option.label }}
                       </option>
@@ -4714,8 +4478,7 @@ onBeforeMount(() => {
                   :tooltip="
                     isFieldReadonly
                       ? discountReasons.find(
-                          item =>
-                            item.value === paymentMethodsForm.discount_reason,
+                          (item) => item.value === paymentMethodsForm.discount_reason
                         ).tooltip
                       : paymentTooltipEnum.DISCOUNT_REASON
                   "
@@ -4725,8 +4488,7 @@ onBeforeMount(() => {
                   <span v-if="isFieldReadonly">
                     {{
                       discountReasons.find(
-                        item =>
-                          item.value === paymentMethodsForm.discount_reason,
+                        (item) => item.value === paymentMethodsForm.discount_reason
                       ).label
                     }}
                   </span>
@@ -4735,9 +4497,7 @@ onBeforeMount(() => {
 
               <x-field
                 v-if="
-                  isCustomDiscountReasonEnabled &&
-                  isDiscountAllowed &&
-                  !isFieldReadonly
+                  isCustomDiscountReasonEnabled && isDiscountAllowed && !isFieldReadonly
                 "
                 label="CUSTOM DISCOUNT REASON"
                 :required="!isFieldReadonly"
@@ -4789,9 +4549,7 @@ onBeforeMount(() => {
                         :max-files="discountProofDocument.max_files"
                         :max-size="discountProofDocument.max_size"
                         :loading="documentForm.processing"
-                        @change="
-                          uploadDocument(discountProofDocument, $event, 0)
-                        "
+                        @change="uploadDocument(discountProofDocument, $event, 0)"
                       />
                     </span>
                     <div
@@ -4801,10 +4559,7 @@ onBeforeMount(() => {
                         <div
                           class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs"
                         >
-                          <span
-                            data-v-d0063695=""
-                            class="custom-tooltip-content"
-                          >
+                          <span data-v-d0063695="" class="custom-tooltip-content">
                             {{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}
                           </span>
                         </div>
@@ -4818,10 +4573,7 @@ onBeforeMount(() => {
                     This field is required
                   </p>
                 </x-field>
-                <div
-                  v-for="fileData in discountDocumentModel[0]"
-                  :key="fileData.id"
-                >
+                <div v-for="fileData in discountDocumentModel[0]" :key="fileData.id">
                   <span style="display: flex; align-items: center">
                     <span
                       :key="fileData.id"
@@ -4855,10 +4607,7 @@ onBeforeMount(() => {
                   :tooltip="paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_VIEW"
                   :required="!isFieldReadonly"
                 />
-                <div
-                  v-for="fileData in discountDocumentModel[0]"
-                  :key="fileData.id"
-                >
+                <div v-for="fileData in discountDocumentModel[0]" :key="fileData.id">
                   <span style="display: flex; align-items: center">
                     <span
                       :key="fileData.id"
@@ -4961,6 +4710,7 @@ onBeforeMount(() => {
                 </x-field>
               </div>
             </div>
+
             <x-divider class="mb-4 mt-10" />
 
             <div
@@ -4980,8 +4730,8 @@ onBeforeMount(() => {
                 />
               </svg>
               <div>
-                The system has detected a discrepancy. You cannot downgrade the
-                frequency of the payment. Some payments are already paid.
+                The system has detected a discrepancy. You cannot downgrade the frequency
+                of the payment. Some payments are already paid.
               </div>
             </div>
 
@@ -5002,10 +4752,10 @@ onBeforeMount(() => {
                 />
               </svg>
               <div>
-                The system has detected a discrepancy. Before you hit 'Add
-                Manual Payment,' please check the each payment transaction. If
-                you spot any discrepancies, make the necessary adjustments. Once
-                everything lines up, you're good to proceed.
+                The system has detected a discrepancy. Before you hit 'Add Manual
+                Payment,' please check the each payment transaction. If you spot any
+                discrepancies, make the necessary adjustments. Once everything lines up,
+                you're good to proceed.
               </div>
             </div>
 
@@ -5063,11 +4813,7 @@ onBeforeMount(() => {
                       >PAYMENT NO</span
                     >
                     <sup
-                      v-if="
-                        !isViewEnabled &&
-                        !isCreditApprovalView &&
-                        !hasAnyCCPayment()
-                      "
+                      v-if="!isViewEnabled && !isCreditApprovalView && !hasAnyCCPayment()"
                       class="text-red-500"
                       >*</sup
                     >
@@ -5089,8 +4835,7 @@ onBeforeMount(() => {
                 <div class="w-1/5 px-2">
                   <x-tooltip>
                     <span class="text-sm">
-                      <span
-                        class="border-b-2 border-dotted border-black text-sm"
+                      <span class="border-b-2 border-dotted border-black text-sm"
                         >PAYMENT METHOD</span
                       >
                       <sup
@@ -5103,17 +4848,14 @@ onBeforeMount(() => {
                       <span v-if="isFieldReadonly">{{
                         paymentTooltipEnum.PAYMENT_METHOD_VIEW
                       }}</span>
-                      <span v-else>{{
-                        paymentTooltipEnum.PAYMENT_METHOD
-                      }}</span>
+                      <span v-else>{{ paymentTooltipEnum.PAYMENT_METHOD }}</span>
                     </template>
                   </x-tooltip>
                 </div>
                 <div class="w-1/5 px-2">
                   <x-tooltip>
                     <span class="text-sm">
-                      <span
-                        class="border-b-2 border-dotted border-black text-sm"
+                      <span class="border-b-2 border-dotted border-black text-sm"
                         >TOTAL AMOUNT</span
                       >
                       <sup
@@ -5133,15 +4875,13 @@ onBeforeMount(() => {
                 <div class="w-1/5 px-2">
                   <x-tooltip v-if="isCreditApprovalView">
                     <span v-if="isCreditCardView" class="text-sm">
-                      <span
-                        class="border-b-2 border-dotted border-black text-sm"
+                      <span class="border-b-2 border-dotted border-black text-sm"
                         >CAPTURE AMOUNT</span
                       >
                       <sup class="text-red-500">*</sup>
                     </span>
                     <span v-else class="text-sm">
-                      <span
-                        class="border-b-2 border-dotted border-black text-sm"
+                      <span class="border-b-2 border-dotted border-black text-sm"
                         >COLLECTED AMOUNT</span
                       >
                     </span>
@@ -5157,8 +4897,7 @@ onBeforeMount(() => {
 
                   <x-tooltip v-else>
                     <span class="text-sm">
-                      <span
-                        class="border-b-2 border-dotted border-black text-sm"
+                      <span class="border-b-2 border-dotted border-black text-sm"
                         >DUE DATE</span
                       >
                       <sup v-if="!isViewEnabled" class="text-red-500">*</sup>
@@ -5174,8 +4913,7 @@ onBeforeMount(() => {
                 <div class="w-1/5 px-2">
                   <x-tooltip>
                     <span class="text-sm">
-                      <span
-                        class="border-b-2 border-dotted border-black text-sm"
+                      <span class="border-b-2 border-dotted border-black text-sm"
                         >DOCUMENTS</span
                       >
                       <sup
@@ -5208,9 +4946,7 @@ onBeforeMount(() => {
                   <div class="w-1/6 px-2 text-center">{{ splitPaymentNo }}</div>
 
                   <div class="w-1/5 px-2">
-                    {{
-                      getPaymentTypeLabel(paymentMethodsModels[splitPaymentNo])
-                    }}
+                    {{ getPaymentTypeLabel(paymentMethodsModels[splitPaymentNo]) }}
                     <p>{{ checkDetailModels[splitPaymentNo] }}</p>
                   </div>
 
@@ -5231,11 +4967,7 @@ onBeforeMount(() => {
                         <span
                           :key="fileData.id"
                           class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                          style="
-                            flex: 1;
-                            text-decoration: none;
-                            cursor: pointer;
-                          "
+                          style="flex: 1; text-decoration: none; cursor: pointer"
                           @click="openInnerModal(fileData.id)"
                         >
                           {{ fileData.original_name }}
@@ -5250,8 +4982,7 @@ onBeforeMount(() => {
                   <div class="w-1/5 px-2">
                     <x-tooltip>
                       <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
+                        <span class="border-b-2 border-dotted border-black text-sm"
                           >CC PAYMENT STATUS INFO</span
                         >
                       </span>
@@ -5265,45 +4996,36 @@ onBeforeMount(() => {
                   <div class="w-1/5 px-2">
                     <x-tooltip>
                       <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
+                        <span class="border-b-2 border-dotted border-black text-sm"
                           >CC PAYMENT GATEWAY</span
                         >
                       </span>
                       <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_CC_GATEWAY
-                        }}</span>
+                        <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_GATEWAY }}</span>
                       </template>
                     </x-tooltip>
                   </div>
                   <div class="w-1/5 px-2">
                     <x-tooltip>
                       <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
+                        <span class="border-b-2 border-dotted border-black text-sm"
                           >DIGITAL WALLET</span
                         >
                       </span>
                       <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_WALLET
-                        }}</span>
+                        <span>{{ paymentTooltipEnum.PAYMENT_VIEW_WALLET }}</span>
                       </template>
                     </x-tooltip>
                   </div>
                   <div class="w-1/5 px-2">
                     <x-tooltip>
                       <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
+                        <span class="border-b-2 border-dotted border-black text-sm"
                           >SAGE RECEIPT ID</span
                         >
                       </span>
                       <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_SAGE_RECIPT
-                        }}</span>
+                        <span>{{ paymentTooltipEnum.PAYMENT_VIEW_SAGE_RECIPT }}</span>
                       </template>
                     </x-tooltip>
                   </div>
@@ -5314,36 +5036,34 @@ onBeforeMount(() => {
                     {{
                       splitPaymentRecord.cc_payment_status_info !== null
                         ? splitPaymentRecord.cc_payment_status_info
-                        : 'N/A'
+                        : "N/A"
                     }}
                   </div>
                   <div class="w-1/5 px-2">
                     {{
                       splitPaymentRecord.cc_payment_gateway !== null
                         ? splitPaymentRecord.cc_payment_gateway
-                        : 'N/A'
+                        : "N/A"
                     }}
                   </div>
                   <div class="w-1/5 px-2">
                     {{
                       splitPaymentRecord.digital_wallet !== null
                         ? splitPaymentRecord.digital_wallet
-                        : 'N/A'
+                        : "N/A"
                     }}
                   </div>
                   <div class="w-1/5 px-2">
                     {{
                       splitPaymentRecord.sage_reciept_id !== null
                         ? splitPaymentRecord.sage_reciept_id
-                        : 'N/A'
+                        : "N/A"
                     }}
                   </div>
                 </div>
                 <div class="flex w-full custombreak">
                   <div class="w-1/6 px-2 text-center"></div>
-                  <template
-                    v-if="splitPaymentRecord.payment_method.code == 'CC'"
-                  >
+                  <template v-if="splitPaymentRecord.payment_method.code == 'CC'">
                     <div class="w-1/5 px-2">
                       <span class="text-sm"> AUTHORISED AMOUNT </span>
                     </div>
@@ -5355,8 +5075,8 @@ onBeforeMount(() => {
                         {{
                           splitPaymentRecord.payment_status_id ==
                           paymentStatusEnum.PARTIALLY_PAID
-                            ? 'PARTIALLY CAPTURED AT'
-                            : 'CAPTURED AT'
+                            ? "PARTIALLY CAPTURED AT"
+                            : "CAPTURED AT"
                         }}
                       </span>
                     </div>
@@ -5364,8 +5084,7 @@ onBeforeMount(() => {
                   <div class="w-1/5 px-2">
                     <x-tooltip>
                       <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
+                        <span class="border-b-2 border-dotted border-black text-sm"
                           >CC PAYMENT ID</span
                         >
                       </span>
@@ -5378,35 +5097,33 @@ onBeforeMount(() => {
 
                 <div class="flex w-full custombreak pb-5">
                   <div class="w-1/6 px-2 text-center"></div>
-                  <template
-                    v-if="splitPaymentRecord.payment_method.code == 'CC'"
-                  >
+                  <template v-if="splitPaymentRecord.payment_method.code == 'CC'">
                     <div class="w-1/5 px-2">
                       {{
                         splitPaymentRecord.premium_authorized !== null
                           ? formatAmount(splitPaymentRecord.premium_authorized)
-                          : 'N/A'
+                          : "N/A"
                       }}
                     </div>
                     <div class="w-1/5 px-2">
                       {{
                         splitPaymentRecord.authorized_at !== null
                           ? formatDate(splitPaymentRecord.authorized_at, true)
-                          : 'N/A'
+                          : "N/A"
                       }}
                     </div>
                     <div class="w-1/5 px-2">
                       {{
                         splitPaymentRecord.captured_at !== null
                           ? formatDate(splitPaymentRecord.captured_at, true)
-                          : 'N/A'
+                          : "N/A"
                       }}
                     </div>
                     <div class="w-1/5 px-2">
                       {{
                         splitPaymentRecord.cc_payment_id !== null
                           ? splitPaymentRecord.cc_payment_id
-                          : 'N/A'
+                          : "N/A"
                       }}
                     </div>
                   </template>
@@ -5416,45 +5133,36 @@ onBeforeMount(() => {
                   <div class="w-1/5 px-2">
                     <x-tooltip>
                       <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
+                        <span class="border-b-2 border-dotted border-black text-sm"
                           >PAYMENT STATUS</span
                         >
                       </span>
                       <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_STATUS
-                        }}</span>
+                        <span>{{ paymentTooltipEnum.PAYMENT_VIEW_STATUS }}</span>
                       </template>
                     </x-tooltip>
                   </div>
                   <div class="w-1/5 px-2">
                     <x-tooltip>
                       <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
+                        <span class="border-b-2 border-dotted border-black text-sm"
                           >PAYMENT ALLOCATION STATUS</span
                         >
                       </span>
                       <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_ALLO_STATUS
-                        }}</span>
+                        <span>{{ paymentTooltipEnum.PAYMENT_VIEW_ALLO_STATUS }}</span>
                       </template>
                     </x-tooltip>
                   </div>
                   <div class="w-1/5 px-2">
                     <x-tooltip>
                       <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
+                        <span class="border-b-2 border-dotted border-black text-sm"
                           >COLLECTED AMOUNT</span
                         >
                       </span>
                       <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT
-                        }}</span>
+                        <span>{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT }}</span>
                       </template>
                     </x-tooltip>
                   </div>
@@ -5473,24 +5181,22 @@ onBeforeMount(() => {
                   <div class="w-1/5 px-2">
                     {{
                       splitPaymentRecord.payment_allocation_status !== null
-                        ? formatString(
-                            splitPaymentRecord.payment_allocation_status,
-                          )
-                        : 'N/A'
+                        ? formatString(splitPaymentRecord.payment_allocation_status)
+                        : "N/A"
                     }}
                   </div>
                   <div class="w-1/5 px-2">
                     {{
                       splitPaymentRecord.collection_amount !== null
                         ? formatAmount(splitPaymentRecord.collection_amount)
-                        : '0.00'
+                        : "0.00"
                     }}
                   </div>
                   <div class="w-1/5 px-2" v-if="isVerifiedEnabled">
                     {{
                       splitPaymentRecord.verified_at !== null
                         ? splitPaymentRecord.verified_at
-                        : 'N/A'
+                        : "N/A"
                     }}
                   </div>
                 </div>
@@ -5504,18 +5210,61 @@ onBeforeMount(() => {
                   </div>
                 </div>
 
-                <div
-                  class="flex w-full custombreak pb-5"
-                  v-if="isVerifiedEnabled"
-                >
+                <div class="flex w-full custombreak pb-5" v-if="isVerifiedEnabled">
                   <div class="w-1/6 px-2 text-center"></div>
                   <div class="w-1/5 px-2">
                     {{
                       splitPaymentRecord.verified_by !== null
                         ? splitPaymentRecord.verified_by_user.name
-                        : 'N/A'
+                        : "N/A"
                     }}
                   </div>
+                </div>
+
+                <x-divider class="mb-4 mt-1" />
+
+                <div class="p-1 mb-2">
+                  <h3>Tap Gateway Values</h3>
+                </div>
+
+                <div class="flex w-full">
+                  <div class="w-2/4 px-2 text-center">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Receipt ID</span
+                      >
+                    </span>
+                    <div class="text-sm mt-3">
+                      <span class="border-black text-sm">{{
+                        splitPaymentRecord.payment_receipt_id ?? "N/A"
+                      }}</span>
+                    </div>
+                  </div>
+
+                  <div class="w-1/2 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Charge ID</span
+                      >
+                    </span>
+                    <div class="text-sm mt-3">
+                      <span class="border-black text-sm">{{ splitPaymentRecord?.payment_charges?.transaction_id }}</span>
+                    </div>
+                  </div>
+
+                  <div class="w-1/3 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Auth Code</span
+                      >
+                    </span>
+                    <div class="text-sm mt-3">
+                      <span class="border-black text-sm">{{
+                        splitPaymentRecord.payment_auth_code ?? "N/A"
+                      }}</span>
+                    </div>
+                  </div>
+
                 </div>
               </template>
               <template v-else>
@@ -5535,8 +5284,7 @@ onBeforeMount(() => {
                         <x-tooltip v-if="isPaymentMethodEnabled">
                           <select
                             :class="{
-                              'custom-select-error':
-                                isPaymentMetodNotSelected[count],
+                              'custom-select-error': isPaymentMetodNotSelected[count],
                             }"
                             class="w-full custom-select"
                             v-model="paymentMethodsModels[count]"
@@ -5561,8 +5309,7 @@ onBeforeMount(() => {
                         <select
                           v-else
                           :class="{
-                            'custom-select-error':
-                              isPaymentMetodNotSelected[count],
+                            'custom-select-error': isPaymentMetodNotSelected[count],
                           }"
                           class="w-full custom-select"
                           v-model="paymentMethodsModels[count]"
@@ -5577,8 +5324,8 @@ onBeforeMount(() => {
                               isCCPaymentDisabled(option.value)
                                 ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED
                                 : isPolicySendUpdateBooked(option.value)
-                                  ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED
-                                  : option.tooltip
+                                ? paymentTooltipEnum.CC_PAYMENT_NOT_SUPPORTED_WHEN_BOOKED
+                                : option.tooltip
                             "
                             :disabled="
                               isCCPaymentDisabled(option.value) ||
@@ -5613,9 +5360,7 @@ onBeforeMount(() => {
                       </template>
                     </div>
                     <div class="w-1/5 px-2">
-                      <template
-                        v-if="readOnlyPayments[count] && !isPaidEditable"
-                      >
+                      <template v-if="readOnlyPayments[count] && !isPaidEditable">
                         {{ formatAmount(splitAmountModels[count]) }}
                       </template>
                       <template v-else>
@@ -5633,9 +5378,7 @@ onBeforeMount(() => {
                       </template>
                     </div>
                     <div class="w-1/5 px-2" v-if="isCreditApprovalView">
-                      <template
-                        v-if="readOnlyPayments[count] && !isCreditCardView"
-                      >
+                      <template v-if="readOnlyPayments[count] && !isCreditCardView">
                         {{ formatAmount(collectionAmountModels[count]) }}
                       </template>
                       <template v-else>
@@ -5647,8 +5390,7 @@ onBeforeMount(() => {
                           v-model="collectionAmountModels[count]"
                           class="w-full"
                           :class="{
-                            'custom-select-error':
-                              isCreditPaymentInvalid[count],
+                            'custom-select-error': isCreditPaymentInvalid[count],
                           }"
                         />
                         <span v-else>{{
@@ -5685,9 +5427,7 @@ onBeforeMount(() => {
                           :max-files="paymentProofDocument.max_files"
                           :max-size="paymentProofDocument.max_size"
                           :loading="documentForm.processing"
-                          @change="
-                            uploadDocument(paymentProofDocument, $event, count)
-                          "
+                          @change="uploadDocument(paymentProofDocument, $event, count)"
                         />
                         <template #tooltip>
                           <span>{{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}</span>
@@ -5707,32 +5447,20 @@ onBeforeMount(() => {
                           <span
                             :key="fileData?.id"
                             class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                            style="
-                              flex: 1;
-                              text-decoration: none;
-                              cursor: pointer;
-                            "
+                            style="flex: 1; text-decoration: none; cursor: pointer"
                             @click="openInnerModal(fileData?.id)"
                           >
                             {{ fileData?.original_name }}
                           </span>
                           <span
                             class="delete-pointer"
-                            @click="
-                              deleteDocument(
-                                fileData.doc_name,
-                                count,
-                                fileData.id,
-                              )
-                            "
+                            @click="deleteDocument(fileData.doc_name, count, fileData.id)"
                             v-if="!readOnlyPayments[count]"
                           >
                             <x-tooltip>
                               &#10006;
                               <template #tooltip>
-                                <span>{{
-                                  paymentTooltipEnum.DOCUMENT_DELETE_ICON
-                                }}</span>
+                                <span>{{ paymentTooltipEnum.DOCUMENT_DELETE_ICON }}</span>
                               </template>
                             </x-tooltip>
                           </span>
@@ -5753,11 +5481,7 @@ onBeforeMount(() => {
             <div class="w-full grid">
               <x-field>
                 <label v-if="!isViewEnabled">Notes</label>
-                <p
-                  v-if="
-                    (isFieldReadonly && isViewEnabled) || isCreditApprovalView
-                  "
-                >
+                <p v-if="(isFieldReadonly && isViewEnabled) || isCreditApprovalView">
                   {{ paymentMethodsForm.notes }}
                 </p>
                 <x-input
@@ -5773,24 +5497,17 @@ onBeforeMount(() => {
               v-if="
                 splitPaymentRecord.verified_by !== null &&
                 paymentMethodsForm.status == 'view' &&
-                paymentMethodsModels[splitPaymentNo] !=
-                  paymentMethodsEnums.CreditCard &&
-                paymentMethodsModels[splitPaymentNo] !=
-                  paymentMethodsEnums.CreditApproval
+                paymentMethodsModels[splitPaymentNo] != paymentMethodsEnums.CreditCard &&
+                paymentMethodsModels[splitPaymentNo] != paymentMethodsEnums.CreditApproval
               "
             >
               <p class="text-lg font-bold text-blue-400 mr-2">
                 Payment has been verified
               </p>
-              <img
-                style="width: 30px; height: 30px"
-                src="/images/payment_verified.jpg"
-              />
+              <img style="width: 30px; height: 30px" src="/images/payment_verified.jpg" />
             </div>
 
-            <template
-              v-if="(isViewEnabled || isCreditApprovalView) && isDeclineClicked"
-            >
+            <template v-if="(isViewEnabled || isCreditApprovalView) && isDeclineClicked">
               <div class="p-1 mb-2">
                 <h3 class="text-white">PAYMENT DECLINE</h3>
               </div>
@@ -5805,10 +5522,7 @@ onBeforeMount(() => {
                       :rules="[rules.isRequired]"
                       @change="handleDeclinedReasonChange"
                     >
-                      <template
-                        v-for="option in declinedReasons"
-                        :key="option.value"
-                      >
+                      <template v-for="option in declinedReasons" :key="option.value">
                         <option :value="option.value">
                           {{ option.label }}
                         </option>
@@ -5846,9 +5560,7 @@ onBeforeMount(() => {
                 <x-tooltip class="tooltip-display">
                   <h3 class="font-bold">Payment Verification</h3>
                   <template #tooltip>
-                    <span>{{
-                      paymentTooltipEnum.PAYMENT_VIEW_VERIFICATION_HEADER
-                    }}</span>
+                    <span>{{ paymentTooltipEnum.PAYMENT_VIEW_VERIFICATION_HEADER }}</span>
                   </template>
                 </x-tooltip>
               </div>
@@ -5876,10 +5588,8 @@ onBeforeMount(() => {
                 <div class="w-1/2 px-2">
                   <div>
                     <x-tooltip class="tooltip-display">
-                      <span
-                        class="border-b-2 border-dotted border-black text-sm"
-                        >COLLECTED AMOUNT
-                        <sup class="text-red-500">*</sup></span
+                      <span class="border-b-2 border-dotted border-black text-sm"
+                        >COLLECTED AMOUNT <sup class="text-red-500">*</sup></span
                       >
                       <template #tooltip>
                         <span>{{
@@ -5919,9 +5629,7 @@ onBeforeMount(() => {
                       >
                     </span>
                     <template #tooltip>
-                      <span>{{
-                        paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE
-                      }}</span>
+                      <span>{{ paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE }}</span>
                     </template>
                   </x-tooltip>
                   <x-field>
@@ -5943,9 +5651,7 @@ onBeforeMount(() => {
                       ></span
                     >
                     <template #tooltip>
-                      <span>{{
-                        paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS
-                      }}</span>
+                      <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
                     </template>
                   </x-tooltip>
                   <x-field>
@@ -5958,11 +5664,7 @@ onBeforeMount(() => {
                       :max-size="approveProofDocument.max_size"
                       :loading="documentForm.processing"
                       @change="
-                        uploadDocument(
-                          approveProofDocument,
-                          $event,
-                          splitPaymentNo,
-                        )
+                        uploadDocument(approveProofDocument, $event, splitPaymentNo)
                       "
                     />
                     <p
@@ -5988,11 +5690,7 @@ onBeforeMount(() => {
                       <span
                         class="delete-pointer"
                         @click="
-                          deleteDocument(
-                            fileData.doc_name,
-                            splitPaymentNo,
-                            fileData.id,
-                          )
+                          deleteDocument(fileData.doc_name, splitPaymentNo, fileData.id)
                         "
                         v-if="!readOnlyPayments[splitPaymentNo]"
                       >
@@ -6017,8 +5715,7 @@ onBeforeMount(() => {
                 <div
                   v-if="
                     isCreditApprovalView ||
-                    (splitPaymentRecord.payment_status_id !=
-                      paymentStatusEnum.PAID &&
+                    (splitPaymentRecord.payment_status_id != paymentStatusEnum.PAID &&
                       (can(permissionEnum.ApprovePayments) ||
                         (can(permissionEnum.INPL_APPROVER) &&
                           splitPaymentRecord.payment_method.code ==
@@ -6055,11 +5752,7 @@ onBeforeMount(() => {
                     </x-button>
                   </div>
                   <div
-                    v-if="
-                      !isApproveClicked &&
-                      isDeclineClicked &&
-                      isVerificationAllowed
-                    "
+                    v-if="!isApproveClicked && isDeclineClicked && isVerificationAllowed"
                     class="mr-4"
                   >
                     <x-button
@@ -6100,8 +5793,7 @@ onBeforeMount(() => {
                     </x-button>
                     <x-button
                       v-if="
-                        isApproveClicked ||
-                        (isCreditApprovalView && !isDeclineClicked)
+                        isApproveClicked || (isCreditApprovalView && !isDeclineClicked)
                       "
                       class="mr-2 focus:outline-black"
                       size="sm"
@@ -6114,9 +5806,7 @@ onBeforeMount(() => {
                       <template v-if="isCreditApprovalView && isCreditCardView">
                         Capture
                       </template>
-                      <template v-else-if="isVerificationAllowed">
-                        Approve
-                      </template>
+                      <template v-else-if="isVerificationAllowed"> Approve </template>
                       <template v-else> Approve </template>
                     </x-button>
                   </div>
@@ -6148,9 +5838,9 @@ onBeforeMount(() => {
                     :loading="paymentMethodsForm.processing"
                   >
                     {{
-                      paymentMethodsForm.status == 'create'
-                        ? 'Add Manual Payment'
-                        : 'Update'
+                      paymentMethodsForm.status == "create"
+                        ? "Add Manual Payment"
+                        : "Update"
                     }}
                   </x-button>
                 </div>
@@ -6208,16 +5898,14 @@ onBeforeMount(() => {
                       />
                     </div>
                     <div class="text-left">
-                      <span
-                        v-if="paymentMethodsForm.collection_type === 'insurer'"
-                        >I certify that all details provided, including the
-                        official receipt or payment confirmation, are correct
-                        and in compliance with our conduct standards.</span
+                      <span v-if="paymentMethodsForm.collection_type === 'insurer'"
+                        >I certify that all details provided, including the official
+                        receipt or payment confirmation, are correct and in compliance
+                        with our conduct standards.</span
                       >
-                      <span
-                        v-if="paymentMethodsForm.collection_type === 'broker'"
-                        >I verify that the information provided is accurate and
-                        my actions align with our standards of conduct.</span
+                      <span v-if="paymentMethodsForm.collection_type === 'broker'"
+                        >I verify that the information provided is accurate and my actions
+                        align with our standards of conduct.</span
                       >
                     </div>
                   </div>
@@ -6231,9 +5919,7 @@ onBeforeMount(() => {
                       <span>Confirm</span></x-button
                     >
                     <template #tooltip>
-                      <span>{{
-                        paymentTooltipEnum.CONFIRM_APPROVE_UNSELECT
-                      }}</span>
+                      <span>{{ paymentTooltipEnum.CONFIRM_APPROVE_UNSELECT }}</span>
                     </template>
                   </x-tooltip>
                   <x-button
@@ -6340,9 +6026,7 @@ onBeforeMount(() => {
                       </svg>
                     </div>
                     <div class="flex flex-initial w-24 justify-center">
-                      <span class="text-gray-300 font-bold"
-                        >{{ zoomLevel * 100 }}%</span
-                      >
+                      <span class="text-gray-300 font-bold">{{ zoomLevel * 100 }}%</span>
                     </div>
                     <div
                       class="flex items-center space-x-2 cursor-pointer"
@@ -6450,7 +6134,9 @@ onBeforeMount(() => {
             </div>
             <div class="mt-2 text-center">
               <Link
-                :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+                :href="`/kyc/aml/${
+                  page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+                }/details/${props.quoteRequest.id}`"
               >
                 <x-tooltip>
                   <x-button
@@ -6484,9 +6170,7 @@ onBeforeMount(() => {
               <div
                 class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
               >
-                <div class="flex items-center space-x-2">
-                  Retry Payment Verification
-                </div>
+                <div class="flex items-center space-x-2">Retry Payment Verification</div>
                 <div class="flex items-center space-x-2">
                   <span
                     @click="closeRetryModal"
@@ -6512,9 +6196,7 @@ onBeforeMount(() => {
             </div>
             <x-form @submit="handleRetryPayment" :auto-focus="false">
               <div class="w-full h-full mt-2 flex flex-col">
-                <div
-                  class="text-lg px-6 py-4 border-b flex justify-between items-start"
-                >
+                <div class="text-lg px-6 py-4 border-b flex justify-between items-start">
                   <div class="text-left">
                     <span> {{ retryPaymentErrorMessage }}</span>
                   </div>
@@ -6546,9 +6228,7 @@ onBeforeMount(() => {
               <div
                 class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
               >
-                <div class="flex items-center space-x-2">
-                  Delete Split Payment
-                </div>
+                <div class="flex items-center space-x-2">Delete Split Payment</div>
                 <div class="flex items-center space-x-2">
                   <span
                     @click="closeDeleteModal"
@@ -6574,9 +6254,7 @@ onBeforeMount(() => {
             </div>
             <x-form @submit="handleDeletePayment" :auto-focus="false">
               <div class="w-full h-full mt-2 flex flex-col">
-                <div
-                  class="text-lg px-6 py-4 border-b flex justify-between items-start"
-                >
+                <div class="text-lg px-6 py-4 border-b flex justify-between items-start">
                   <div class="text-left">
                     <span> Are you sure to delete this payment?</span>
                   </div>

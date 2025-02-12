@@ -200,6 +200,7 @@ class BusinessQuoteService extends BaseService
                             'documents',
                             'verifiedByUser',
                             'processJob',
+                            'paymentCharges'
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },
