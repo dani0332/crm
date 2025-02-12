@@ -18,9 +18,9 @@ class QuoteStatusSeeder extends Seeder
     {
         $quoteStatusSeeder = [
             [
-                'code' => 'PAYMENT LINK REQUESTED BY CUSTOMER',
-                'text' => 'PAYMENT LINK REQUESTED BY CUSTOMER',
-                'text_ar' => 'PAYMENT LINK REQUESTED BY CUSTOMER',
+                'code' => 'PaymentLinkRequestedByCustomer',
+                'text' => 'Payment Link Requested By Customer',
+                'text_ar' => 'Payment Link Requested By Customer',
                 'is_active' => 1,
                 'sort_order' => 23,
                 'is_deleted' => 0,
@@ -32,9 +32,9 @@ class QuoteStatusSeeder extends Seeder
                 'updated_by' => 'muhammad.waris@myalfred.com',
             ],
             [
-                'code' => 'PAYMENT LINK INPROGRESS',
-                'text' => 'PAYMENT LINK INPROGRESS',
-                'text_ar' => 'PAYMENT LINK INPROGRESS',
+                'code' => 'PaymentLinkInProgress',
+                'text' => 'Payment Link In Progress',
+                'text_ar' => 'Payment Link In Progress',
                 'is_active' => 1,
                 'sort_order' => 20,
                 'is_deleted' => 0,
@@ -46,9 +46,9 @@ class QuoteStatusSeeder extends Seeder
                 'updated_by' => 'muhammad.waris@myalfred.com',
             ],
             [
-                'code' => 'PAYMENT LINK SENT TO CUSTOMER',
-                'text' => 'PAYMENT LINK SENT TO CUSTOMER',
-                'text_ar' => 'PAYMENT LINK SENT TO CUSTOMER',
+                'code' => 'PaymentLinkSentToCustomer',
+                'text' => 'Payment Link Sent To Customer',
+                'text_ar' => 'Payment Link Sent ToCustomer',
                 'is_active' => 1,
                 'sort_order' => 19,
                 'is_deleted' => 0,
