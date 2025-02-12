@@ -95,7 +95,7 @@ const tableHeader = ref([
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
     text: 'Investment Frequency',
-    value: 'savings_quote.investment_frequency',
+    value: 'savings_quote.frequency',
     is_active: true,
   },
   {
