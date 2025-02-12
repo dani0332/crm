@@ -3541,7 +3541,7 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
 };
 
 const isEditPaymentEnabled = () => {
-  const statusesToCheck = [paymentStatusEnum.AUTHORISED];
+  const statusesToCheck = [paymentStatusEnum.AUTHORISED, paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED];
 
   const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
     statusesToCheck.includes(item.payment_status_id),
