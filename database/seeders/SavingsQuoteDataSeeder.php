@@ -5,9 +5,11 @@ namespace Database\Seeders;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusMap;
 use App\Models\QuoteType;
+use App\Models\Team;
 use Database\Seeders\Traits\PermissionableSeeder;
 use Illuminate\Database\Seeder;
 
@@ -30,6 +32,7 @@ class SavingsQuoteDataSeeder extends Seeder
             PermissionsEnum::SAVINGS_QUOTES_EDIT,
             PermissionsEnum::SAVINGS_QUOTES_SHOW,
         ], [RolesEnum::Engineering, RolesEnum::Admin]);
+        $this->product();
     }
 
     private function upsertQuoteType()
@@ -69,5 +72,17 @@ class SavingsQuoteDataSeeder extends Seeder
                 ]);
             }
         });
+    }
+
+    private function product()
+    {
+        if (! Team::where('code', 'Savings')->exists()) {
+            Team::create([
+                'name' => 'Savings',
+                'code' => 'Savings',
+                'type' => TeamTypeEnum::PRODUCT,
+                'is_active' => 1,
+            ]);
+        }
     }
 }
