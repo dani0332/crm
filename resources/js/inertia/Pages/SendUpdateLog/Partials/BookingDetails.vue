@@ -434,8 +434,8 @@ const calculateCommission = () => {
             brokerCommMinPer != null &&
             brokerCommMaxPer != null &&
             !(
-              commissionPercentage >= brokerCommMinPer &&
-              commissionPercentage <= brokerCommMaxPer
+              Number(commissionPercentage) >= Number(brokerCommMinPer) &&
+              Number(commissionPercentage) <= Number(brokerCommMaxPer)
             )
           ) {
             notification.error({
