@@ -9,6 +9,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteFlowType;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
@@ -17,7 +18,9 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Factories\SagePayloadFactory;
+use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
 use App\Models\BrokerInvoiceNumber;
 use App\Models\BusinessQuote;
@@ -36,10 +39,12 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\QuoteFlowDetails;
 use App\Models\QuoteTag;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
+use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -1588,7 +1593,7 @@ class SendUpdateLogService
                 }
 
                 $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
-                    return $split->payment_status_id != PaymentStatusEnum::AUTHORISED;
+                    return ! in_array($split->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID]);
                 });
 
                 if ($hasCCPayment && $hasUnpaidCCPayment) {
@@ -1598,5 +1603,104 @@ class SendUpdateLogService
         }
 
         return '';
+    }
+
+    public function sendUpdateToCustomerBirdData($sendUpdateLog, $request): object
+    {
+        $quoteTypeId = $sendUpdateLog->quote_type_id;
+        $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
+        $quoteModel = $this->getModelObject($quoteType);
+        $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
+
+        $emailData = (object) [
+            'advisorEmail' => $quote->advisor->email ?? '',
+            'advisorLandLine' => $quote->advisor->landline_no ?? '',
+            'advisorMobilePhone' => $quote->advisor->mobile_no ?? '',
+            'advisorName' => $quote->advisor->name ?? '',
+            'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
+            'appLink' => 'http://www.google.com',
+            'carDetails' => '1238723',
+            'customerFullName' => $quote->first_name.' '.$quote->last_name,
+            'policyNumber' => $sendUpdateLog->policy_number ?? '',
+            'policyPeriodEnd' => $sendUpdateLog->expiry_date ? Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '',
+            'policyPeriodStart' => $sendUpdateLog->start_date ? Carbon::parse($sendUpdateLog->start_date)->format('d-M-Y') : '',
+            'reason' => '1238723',
+            'refID' => $sendUpdateLog->code,
+            'rtaPortalLink' => '1238723',
+            'customerEmail' => $quote->email,
+            'quoteUID' => $quote->uuid,
+            'workflowType' => WorkflowTypeEnum::SU_CAR_UPDATE,
+        ];
+
+        $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? null;
+        $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? null;
+
+        if ($quoteTypeId == in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike])) {
+            $emailData->assistanceNumber = $emailData->assistanceNumber ?? $quote?->plan?->insuranceProvider?->roadside_phone_number ?? '';
+            $emailData->insuranceCompany = $emailData->insuranceCompany ?? $quote?->plan?->insuranceProvider?->text ?? '';
+            $emailData->planName = $quote?->plan?->text ?? '';
+        }
+
+        $customer = $quote->customer->insured;
+        $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
+
+        return $emailData;
+    }
+
+    public function sendUpdateToCustomerEmail($sendUpdate, $emailData)
+    {
+        try {
+            info('Sending CarUpdate followups email for lead: '.$sendUpdate->uuid.' | Time: '.now());
+            if (empty($lead->nb_flow_executed_at)) {
+                // $advisor = User::where('id', $lead->advisor_id)->first();
+                // $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::SU_CAR_UPDATE);
+
+                $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CAR_SEND_UPDATE)->first();
+                if ($birdMotorEventNB) {
+                    $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
+                    info("CarUpdate event triggered for lead  Ref-ID: {$sendUpdate->uuid} |Time: ".now());
+                    info("CarUpdate response: {$response->status_code} | Ref-ID: {$sendUpdate->uuid} |Time: ".now());
+                    // $lead->nb_flow_executed_at = now();
+                    // info("CarUpdate lead ref-id: {$sendUpdate->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+                    // $lead->save();
+
+                    if (! empty($response->headers['Run-Id'])) {
+                        $this->createQuoteFlowDetails($sendUpdate, $response);
+                    }
+                } else {
+                    info("CarUpdate key not found for lead : Ref-ID: {$sendUpdate->uuid} |Time: ".now());
+                }
+            } else {
+                info("CarUpdate already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$sendUpdate->uuid} | Time: ".now());
+            }
+
+            return $response ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "CarUpdate-Error: while sending quote workflow for lead: Ref-ID: {$sendUpdate->uuid} | Time: ".now();
+            info($errorMessage);
+            info("CarUpdate-Error: {$ex->getMessage()} | Ref-ID: {$sendUpdate->uuid} | Time: ".now());
+        }
+    }
+
+    public function createQuoteFlowDetails($lead, $response)
+    {
+        try {
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => QuoteTypeId::Car,
+                    'flow_type' => QuoteFlowType::SU_CAR_UPDATE->value,
+                    'flow_id' => $runId,
+                ]);
+                info("SendUpdate  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            } else {
+                info("SendUpdate  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Exception $ex) {
+            $errorMessage = "SendUpdate-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            info($errorMessage);
+            info("SendUpdate-Error: {$ex->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+        }
     }
 }

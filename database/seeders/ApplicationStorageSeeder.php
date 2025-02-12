@@ -165,6 +165,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         $this->seedUnavailableTimeThreshold();
+        $this->sendUpdateEmailBirdFlow();
     }
 
     private function seedHomeAdvisors()
@@ -245,6 +246,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::USER_UNAVAILABLE_TIME_THRESHOLD],
             [
                 'value' => 120,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function sendUpdateEmailBirdFlow(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_CAR_SEND_UPDATE],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/036faf20-0788-4ac1-8b55-4dcfe93ebfa7/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
