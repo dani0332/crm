@@ -419,35 +419,36 @@ const calculateCommission = () => {
         if (page.props.isTapEnabled) {
           const brokerCommission = props.bookingDetails?.brokerCommission;
           const brokerCommMinPer = brokerCommission
-              ? roundValue(brokerCommission.commission_percentage_min)
-              : null;
+            ? roundValue(brokerCommission.commission_percentage_min)
+            : null;
           const brokerCommMaxPer = brokerCommission
-              ? roundValue(brokerCommission.commission_percentage_max)
-              : null;
+            ? roundValue(brokerCommission.commission_percentage_max)
+            : null;
           if (
-              commissionPercentage > 0 &&
-              bookingDetailsForm.commission_vat_applicable &&
-              brokerCommMinPer > 0 && brokerCommMaxPer > 0
+            commissionPercentage > 0 &&
+            bookingDetailsForm.commission_vat_applicable &&
+            brokerCommMinPer > 0 &&
+            brokerCommMaxPer > 0
           ) {
             if (
-                brokerCommMinPer != null &&
-                brokerCommMaxPer != null &&
-                !(
-                    Number(commissionPercentage) >= Number(brokerCommMinPer) &&
-                    Number(commissionPercentage) <= Number(brokerCommMaxPer)
-                )
+              brokerCommMinPer != null &&
+              brokerCommMaxPer != null &&
+              !(
+                Number(commissionPercentage) >= Number(brokerCommMinPer) &&
+                Number(commissionPercentage) <= Number(brokerCommMaxPer)
+              )
             ) {
               notification.error({
                 title:
-                    'The commission amount you entered is outside the permitted range.',
+                  'The commission amount you entered is outside the permitted range.',
                 position: 'top',
               });
               bookingDetailsForm.setError({
                 commission_vat_applicable:
-                    'The commission amount you entered is outside the permitted range.',
+                  'The commission amount you entered is outside the permitted range.',
               });
               bookingDetailsForm.commission_vat_applicable =
-                  commissionPercentage = null;
+                commissionPercentage = null;
               return;
             } else {
               bookingDetailsForm.clearErrors('commission_vat_applicable');
