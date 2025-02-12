@@ -209,6 +209,7 @@ class BikeQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
         $listQuotePlans = $this->bikeQuoteService->getPlans($uuid, true, true);
+        $quote->load(['carPlan.insuranceProvider']);
 
         return inertia('BikeQuote/Show', [
             'listQuotePlans' => $listQuotePlans,
