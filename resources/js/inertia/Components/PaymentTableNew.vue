@@ -2997,11 +2997,11 @@ const getCaptureOption = computed(() => {
 
 const planText = ref();
 const fetchPlans = () => {
-  let providerId = props.realQuote?.insurance_provider_id;
-  let planId = props.realQuote?.plan_id;
+  let providerId = props.sendUpdate?.insurance_provider_id;
+  let planId = props.sendUpdate?.plan_id;
   if (!providerId || !planId) {
-    providerId = props.sendUpdate?.insurance_provider_id;
-    planId = props.sendUpdate?.plan_id;
+    providerId = props.realQuote?.insurance_provider_id;
+    planId = props.realQuote?.plan_id;
   }
   let url = `/get-plans/${props.quoteType}/${providerId}/${planId}`;
   axios
