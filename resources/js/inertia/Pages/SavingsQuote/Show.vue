@@ -629,12 +629,12 @@ const onAddUpdate = () => {
                   <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality?.text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">AGE</dt>
+                  <dd>{{ quote.age }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
@@ -649,14 +649,6 @@ const onAddUpdate = () => {
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
-                  <dd>
-                    {{
-                      quote.customer.receive_marketing_updates ? 'Yes' : 'No'
-                    }}
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
                   <dd>
                     <DatePicker
@@ -667,6 +659,25 @@ const onAddUpdate = () => {
                       :min-date="new Date()"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ quote.gender_label }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality?.text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MARITAL STATUS</dt>
+                  <dd>{{ quote?.savings_quote?.marital_status?.text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    HAVE YOU CONSUMED ANY PRODUCTS WITH NICOTINE FOR THE PAST 12
+                    MONTHS?
+                  </dt>
+                  <dd>{{ quote?.savings_quote?.takes_nicotine }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Pet'" />
               </dl>
