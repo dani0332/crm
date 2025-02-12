@@ -172,6 +172,7 @@ class SavingsQuoteService extends BaseQuoteService
                     'renewalBatchModel',
                     'nationality',
                     'customer',
+                    'customer.additionalContactInfo',
                 ])->select([
                     'personal_quotes.*',
                 ])->selectRaw("
