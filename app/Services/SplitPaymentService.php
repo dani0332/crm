@@ -1207,4 +1207,27 @@ class SplitPaymentService
 
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
     }
+
+    public function hasAnyAuthorizedPayment($splitPayment)
+    {
+        return $splitPayment->where('payment_method', PaymentMethodsEnum::CreditCard)
+            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->first();
+    }
+
+    public function validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, $businessTypeId=null, $planId = null)
+    {
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+
+        if (! $isCreditCardEnabled) {
+            $payment = Payment::where('code', $code)->with('paymentSplits')->first();
+            if ($payment && $payment->isInsurerPayment()) {
+                $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
+                if ($hasAnyAuthorizedPayment) {
+                    $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
+                }
+            }
+        }
+    }
 }
