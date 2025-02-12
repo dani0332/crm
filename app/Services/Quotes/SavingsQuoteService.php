@@ -161,6 +161,7 @@ class SavingsQuoteService extends BaseQuoteService
 
                 $q->with([
                     'savingsQuote.currency',
+                    'savingsQuote.maritalStatus',
                     'quoteStatus',
                     'currentlyInsuredWith',
                     'advisor',
