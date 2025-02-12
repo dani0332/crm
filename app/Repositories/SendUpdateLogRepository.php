@@ -295,7 +295,9 @@ class SendUpdateLogRepository extends BaseRepository
 
             $emailData = app(SendUpdateLogService::class)->sendUpdateToCustomerBirdData($sendUpdateLog, $request);
             $response = app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $emailData);
+            // TODO: connect this via jobs.
             info(json_encode($response));
+
             // SendUpdateToCustomerJob::dispatch($sendUpdateLog, $request)->onQueue('insly');
             return [];
             info('fn:SendUpdateToCustomer - Process End - SendUpdateCode: '.$sendUpdateLog->code.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
