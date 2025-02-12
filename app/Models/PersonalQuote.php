@@ -10,6 +10,7 @@ use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
@@ -43,6 +44,7 @@ class PersonalQuote extends Model implements AuditableContract
         'stale_at' => FilterTypes::NULL_CHECK,
         'previous_policy_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
+    protected $appends = ['age'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -341,5 +343,12 @@ class PersonalQuote extends Model implements AuditableContract
     public function savingsQuote()
     {
         return $this->hasOne(SavingsQuote::class);
+    }
+
+    public function age(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->dob ? Carbon::parse($this->dob)->age : null
+        );
     }
 }
