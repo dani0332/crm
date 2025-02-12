@@ -2,6 +2,7 @@
 
 namespace App\Services\Quotes;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteStatusEnum;
@@ -149,22 +150,41 @@ class SavingsQuoteService extends BaseQuoteService
         return $this->tempMockApi($data);
     }
 
-    public function getOne(string $uuid, $includeRelations = false)
+    public function getOne(string $uuid, $allDetails = false)
     {
         return $this->baseQuery()->with([
             'savingsQuote',
-            ...($includeRelations ? [
-                'quoteStatus',
-                'currentlyInsuredWith',
-                'advisor',
-                'paymentStatus',
-                'payments',
-                'quoteDetail',
-                'renewalBatchModel',
-                'nationality',
-                'customer',
-            ] : []),
-        ])->where('uuid', $uuid)->firstOrFail();
+        ])
+            ->when($allDetails, function ($q) {
+                $entityCustomerType = CustomerTypeEnum::Entity;
+                $individualCustomerType = CustomerTypeEnum::Individual;
+
+                $q->with([
+                    'savingsQuote.currency',
+                    'quoteStatus',
+                    'currentlyInsuredWith',
+                    'advisor',
+                    'paymentStatus',
+                    'payments',
+                    'quoteDetail',
+                    'quoteDetail.lostReason',
+                    'renewalBatchModel',
+                    'nationality',
+                    'customer',
+                ])->select([
+                    'personal_quotes.*',
+                ])->selectRaw("
+                IF(
+                    EXISTS (
+                        SELECT *
+                        FROM quote_request_entity_mapping
+                        WHERE quote_type_id = {$this->quoteType->id()}
+                        AND quote_request_id = personal_quotes.id
+                    ), '{$entityCustomerType}', '{$individualCustomerType}'
+                ) AS customer_type
+            ");
+            })
+            ->where('uuid', $uuid)->firstOrFail();
     }
 
     public function update(string $uuid, array $data)
