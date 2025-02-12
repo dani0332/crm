@@ -2459,9 +2459,6 @@ const addPayment = isValid => {
     ...data,
   };
 
-  console.clear()
-  console.log("storeData", storeData)
-  return
   paymentMethodsForm
     .transform(data => storeData)
     .post('/payments/' + props.quoteType + '/store-new', {
