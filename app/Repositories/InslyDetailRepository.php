@@ -108,13 +108,7 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
 
-        /* Temp Code - assign email for particular Policy id/number */
-        $tempEmail = 'vitara@inbox.ru';
-        $tempPolicyId = 66495910;
-        if ($tempPolicyId == $data['policy_oid']) {
-            $email = $tempEmail;
-        }
-        /* Temp Code - assign email for particular Policy id/number */
+
 
         if (empty($email)) {
             return [
@@ -134,6 +128,15 @@ class InslyDetailRepository extends BaseRepository
         if ($advisorName == null) {
             $advisorName = $policy['quote']['broker'] ?? null;
         }
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempSalesPerson = 'Shristi Chowdhury';
+        $tempPolicyId = 59306651;
+        if ($tempPolicyId == $data['policy_oid']) {
+            $advisorName = $tempSalesPerson;
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
         $appUrl = config('constants.APP_URL');
         $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
         if ($advisorId == null) {
