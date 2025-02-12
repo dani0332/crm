@@ -13,6 +13,7 @@ class SavingsQuote extends Model
     protected $appends = [
         'purpose',
         'frequency',
+        'takes_nicotine',
     ];
     protected $fillable = [
         'personal_quote_id',
@@ -55,8 +56,20 @@ class SavingsQuote extends Model
         );
     }
 
+    public function takesNicotine(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->has_nicotine ? 'Yes' : 'No',
+        );
+    }
+
     public function currency()
     {
         return $this->belongsTo(CurrencyType::class);
+    }
+
+    public function maritalStatus()
+    {
+        return $this->belongsTo(MartialStatus::class);
     }
 }
