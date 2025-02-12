@@ -4,14 +4,18 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\InvestmentFrequencyEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsQuoteRequest;
+use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
+use App\Repositories\LookupRepository;
+use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Services\CentralService;
 use App\Services\QuoteDocumentService;
@@ -111,9 +115,16 @@ class SavingsQuoteController extends Controller
         $bookPolicyDetails = $this->savingsQuoteService->bookPolicyPayload($quote, $this->savingsQuoteService->quoteType->value, $quote->payments, $quoteDocuments);
 
         $membersDetails = CustomerMembersRepository::getBy($quote->id, $this->savingsQuoteService->quoteType->name);
+        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        $advisors = $this->savingsQuoteService->getAdvisors();
 
         return inertia('SavingsQuote/Show', [
             'quoteType' => $this->savingsQuoteService->quoteType,
+            'advisors' => $advisors,
             'quote' => $quote,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
@@ -128,6 +139,9 @@ class SavingsQuoteController extends Controller
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote?->payments,
             'membersDetails' => $membersDetails,
+            'nationalities' => $nationalities,
+            'memberRelations' => $memberRelations,
+            'lostReasons' => $lostReasons,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
@@ -145,7 +159,6 @@ class SavingsQuoteController extends Controller
         // $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         // $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
         // $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
-        // $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         // $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::PET->id());
         // $personalPlans = PersonalPlanRepository::get();
         // $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
@@ -179,8 +192,6 @@ class SavingsQuoteController extends Controller
 
         // return inertia('PetQuote/Show', [
         //     'amlStatusName' => $amlStatusName,
-        //     'lostReasons' => $lostReasons,
-        //     'advisors' => $advisors,
         //     'paymentMethods' => $paymentMethods,
         //     'insuranceProviders' => $insuranceProviders,
         //     'personalPlans' => $personalPlans,
