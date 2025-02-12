@@ -96,7 +96,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                             'quote_uuid' => $quote->uuid,
                             'send_update_log_id' => $payment->send_update_log_id,
                             'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$payment->send_update_log_id,
-                        ])->update(['value', 0]);
+                        ])->update(['value' => 0]);
 
                         $sendUpdateRequest = (object) [
                             'quoteType' => $ccPaymentProcess->quote_type,
