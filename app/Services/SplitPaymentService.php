@@ -1215,7 +1215,7 @@ class SplitPaymentService
             ->first();
     }
 
-    public function validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, $businessTypeId=null, $planId = null)
+    public function validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, $businessTypeId = null, $planId = null)
     {
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
