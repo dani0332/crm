@@ -360,7 +360,7 @@ class CarQuoteService extends BaseService
     public function saveCarQuote(Request $request)
     {
         $registrationType = $request->registration_type ?? CarRegistrationType::PERSONAL;
-        $vehicleUse = $request->vehicle_use ?? null;
+        $vehicleUse = $request->vehicle_use ?? CarVehicleUse::PRIVATE;
         $firstName = $request->first_name ?? null;
         $lastName = $request->last_name ?? null;
 
@@ -434,7 +434,7 @@ class CarQuoteService extends BaseService
         info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
 
         $registrationType = $request->registration_type;
-        $vehicleUse = $request->vehicle_use ?? null;
+        $vehicleUse = $request->vehicle_use ?? CarVehicleUse::PRIVATE;
         $carQuote->registration_type = $registrationType;
         $carQuote->vehicle_use = $vehicleUse;
         $carQuote->business_activity_id = $request->business_activity_id ?? null;
@@ -1159,6 +1159,7 @@ class CarQuoteService extends BaseService
                 } elseif ($item == 'registration_type' && !empty($request[$item])) {
                     $this->query->where('cqr.registration_type', $request[$item]);
                 } elseif ($item == 'vehicle_use' && is_array($request[$item]) && !empty($request[$item])) {
+                    $this->query->where('cqr.registration_type', CarRegistrationType::COMPANY);
                     $this->query->whereIn('cqr.vehicle_use', $request[$item]);
                 } elseif ($item == 'company_name' && !empty($request[$item])) {
                     $this->query->where('cqr.company_name', $request[$item]);
