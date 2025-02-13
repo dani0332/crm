@@ -8,6 +8,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Services\EmailStatusService;
+use App\Enums\QuoteTypes;
 
 class EmailStatusEventJob implements ShouldQueue
 {
@@ -44,23 +46,21 @@ class EmailStatusEventJob implements ShouldQueue
             $emailStatusData = EmailStatus::where('msg_id', $this->emailData->message_id)->first();
             if (! empty($emailStatusData)) {
                 if (! empty($emailStatusData->quote_type_id) && ! empty($emailStatusData->quote_id)) {
-                    $newEmailStatus = new EmailStatus;
-                    $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
-                    $newEmailStatus->quote_id = $emailStatusData->quote_id;
-                    $newEmailStatus->email_address = $this->emailData->customer_email ?? $emailStatusData->email_address;
-                    $newEmailStatus->msg_id = $this->emailData->message_id;
-                    $newEmailStatus->email_status = $this->emailData->status;
-                    $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
-                    $newEmailStatus->save();
-                    info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
+                    $this->storeEmailStatusEvent($emailStatusData);
                     return true;
                 } else {
                     info('EmailStatusEventJob - quote_type_id not found: msg_id: '.$this->emailData->message_id.' | Time: '.now());
                 }
 
             } else {
-                info('EmailStatusEventJob - email data not found for msg_id: '.$this->emailData->message_id);
+                if($emailStatusData->quote_type_id ==  QuoteTypes::HOME->id()){
+                  info("EmailStatusEventJob - update status for home quote : msg_id: ".$this->emailData->message_id." - status" .$this->emailData->status." | Time: ".now());
+                    app(EmailStatusService::class)->updateEmailStatus($emailStatusData,$this->emailData->status);
+                }
+                else {
+                    info('EmailStatusEventJob - email data not found for msg_id: '.$this->emailData->message_id);
+                }
 
                 return true;
             }
@@ -70,4 +70,21 @@ class EmailStatusEventJob implements ShouldQueue
             return true;
         }
     }
+
+
+    public function storeEmailStatusEvent($emailStatusData)
+    {
+        $newEmailStatus = new EmailStatus;
+        $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
+        $newEmailStatus->quote_id = $emailStatusData->quote_id;
+        $newEmailStatus->email_address = $this->emailData->customer_email ?? $emailStatusData->email_address;
+        $newEmailStatus->msg_id = $this->emailData->message_id;
+        $newEmailStatus->email_status = $this->emailData->status;
+        $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
+        $newEmailStatus->save();
+        info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
+    }
+
+
+
 }
