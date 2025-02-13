@@ -10,6 +10,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SavingsPurposeEnum;
 use App\Models\CurrencyType;
+use App\Models\Customer;
 use App\Models\MartialStatus;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
@@ -18,6 +19,7 @@ use App\Models\SavingsQuote;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -84,6 +86,16 @@ class SavingsQuoteService extends BaseQuoteService
         };
 
         $uuid = $getUUID();
+
+        Customer::create([
+            'uuid' => Str::uuid(),
+            'first_name' => $data['firstName'],
+            'last_name' => $data['lastName'],
+            'email' => $data['email'],
+            'mobile_no' => $data['mobileNo'],
+            'dob' => $data['dob'],
+            'nationality_id' => $data['nationalityId'],
+        ]);
 
         $personalQuote = PersonalQuote::create([
             'first_name' => $data['firstName'],
