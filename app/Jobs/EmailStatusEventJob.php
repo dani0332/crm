@@ -35,7 +35,7 @@ class EmailStatusEventJob implements ShouldQueue
     {
         if (! empty($this->emailData->message_id) && ! empty($this->emailData->status)) {
 
-            $isEmailMessage = EmailStatus::where('msg_id', $this->emailData->message_id)->first();
+            $isEmailMessage = EmailStatus::latest()->where('msg_id', $this->emailData->message_id)->first();
 
             if (!empty($isEmailMessage->quote_type_id) && !empty($isEmailMessage->quote_id) && $isEmailMessage->quote_type_id == QuoteTypes::HOME->id()) {
                 info("EmailStatusEventJob - update status for home quote : msg_id: " . $this->emailData->message_id . " - status: " . $this->emailData->status . " | Time: " . now());
