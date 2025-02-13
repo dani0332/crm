@@ -31,6 +31,9 @@ class SavingsQuoteDataSeeder extends Seeder
             PermissionsEnum::SAVINGS_QUOTES_CREATE,
             PermissionsEnum::SAVINGS_QUOTES_EDIT,
             PermissionsEnum::SAVINGS_QUOTES_SHOW,
+            PermissionsEnum::SAVINGS_COMPREHENSIVE_DASHBOARD,
+            PermissionsEnum::SAVINGS_CONVERSION_REPORT,
+            PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
         ], [RolesEnum::Engineering, RolesEnum::Admin]);
         $this->product();
     }
