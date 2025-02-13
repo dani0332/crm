@@ -1,6 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive, ref, useTemplateRef } from 'vue';
+import { onMounted, reactive, ref, nextTick } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
@@ -1628,7 +1628,6 @@ const isCPD = computed(() => {
 
 // use in insurer payment link
 const updateFromInsurerPaymentLink = (closePaymentModal = false, paymentLinkChanged = false, closeModal = false) => {
-  debugger;
   closePaymentModal == true && (createPaymentModal.value = !createPaymentModal.value);
   confirmModalClose.value = closeModal;
   insurerPaymentLinkChanged.value = paymentLinkChanged;
@@ -3044,29 +3043,15 @@ watch(createPaymentModal, async (newVal, oldVal) => {
       if(confirmModalClose.value == false) {
         await nextTick();
         createPaymentModal.value = true;
-        insurerPaymentComponent.value.closeNotification();
+        await nextTick();
+        if (insurerPaymentComponent.value) {
+          insurerPaymentComponent.value.closeNotification();
+        }
       }
       return;
     }
   }
 });
-
-const closeNotification = () => {
-  notification.error({
-    title: 'Are you sure?',
-    message: 'your changes will be lost',
-    position: 'top',
-    timeout: 0,
-    action: {
-      label: 'Confirm',
-      onClick: () => {
-        confirmModalClose.value = true;
-        createPaymentModal.value = false;
-
-      },
-    },
-  })
-}
 
 onMounted(() => {
   if (props.sendUpdate?.plan_id) {

@@ -10,8 +10,7 @@ const notification = useNotifications('toast');
 const isLinkChanged = ref(false);
 
 const paymentLinkBtnDisabled = computed(() => {
-    isLinkChanged.value = quotePaymentLinkChanged();
-    return props.paymentForm.insurerPaymentLink == ''
+  return !props.paymentForm.insurerPaymentLink || props.paymentForm.insurerPaymentLink === '';
 });
 
 const quotePaymentLinkChanged = () => {
@@ -28,6 +27,11 @@ const closePaymentForm = (closeModal = false) => {
     emit('updateOnParent', true, isLinkChanged.value, closeModal);
 }
 
+// Watch for changes in paymentForm.insurerPaymentLink
+watch(() => props.paymentForm.insurerPaymentLink, (newVal, oldVal) => {
+  isLinkChanged.value = quotePaymentLinkChanged();
+});
+
 const closeNotification = () => {
   notification.error({
     title: 'Are you sure?',
@@ -42,6 +46,10 @@ const closeNotification = () => {
     },
   })
 }
+
+onMounted(() => {
+    isLinkChanged.value = quotePaymentLinkChanged();
+});
 
 defineExpose({
     isLinkChanged, // Now accessible via the parent ref
