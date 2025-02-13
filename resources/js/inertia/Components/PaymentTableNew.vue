@@ -2978,7 +2978,7 @@ const getCaptureOption = computed(() => {
     // Return early if there are no payments
     if (props.payments.length === 0) return;
 
-    const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+    const isCaptureButtonEnabled = page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
     const paymentMethodCC = filterCCPayments(payment);
 
     // Check if the conditions for 'capture' are met
@@ -2986,10 +2986,7 @@ const getCaptureOption = computed(() => {
     const isNotInsurerPayment = payment.collection_type !== 'insurer';
 
     // Return 'capture' if all conditions are met, otherwise return 'approve'
-    if (
-      (isCreditCardPayment && isNotInsurerPayment && !isGIGProvider) ||
-      isGIGProvider
-    ) {
+    if ((isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||isCaptureButtonEnabled) {
       return 'capture';
     }
     return 'approve';
