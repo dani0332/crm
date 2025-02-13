@@ -34,16 +34,22 @@ class EmailStatusEventJob implements ShouldQueue
     public function handle()
     {
         if (! empty($this->emailData->message_id) && ! empty($this->emailData->status)) {
+
+            $isEmailMessage = EmailStatus::where('msg_id', $this->emailData->message_id)->first();
+
+            if (!empty($isEmailMessage->quote_type_id) && !empty($isEmailMessage->quote_id) && $isEmailMessage->quote_type_id == QuoteTypes::HOME->id()) {
+                info("EmailStatusEventJob - update status for home quote : msg_id: " . $this->emailData->message_id . " - status: " . $this->emailData->status . " | Time: " . now());
+                app(EmailStatusService::class)->updateEmailStatus($isEmailMessage, $this->emailData->status);
+
+                return true;
+            }
+
             $isEmailStatus = EmailStatus::latest()->where('msg_id', $this->emailData->message_id)
                 ->where('email_status', $this->emailData->status)
                 ->first();
             if (!empty($isEmailStatus)) {
                 $msg = 'EmailStatus already exists for msg_id: '.$this->emailData->message_id;
                 info($msg);
-                if (!empty($isEmailStatus->quote_type_id) && !empty($isEmailStatus->quote_id) && $isEmailStatus->quote_type_id == QuoteTypes::HOME->id()) {
-                    info("EmailStatusEventJob - update status for home quote : msg_id: " . $this->emailData->message_id . " - status: " . $this->emailData->status . " | Time: " . now());
-                    app(EmailStatusService::class)->updateEmailStatus($isEmailStatus, $this->emailData->status);
-                }
 
                 return true;
             }
