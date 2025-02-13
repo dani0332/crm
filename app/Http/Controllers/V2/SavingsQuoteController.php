@@ -3,20 +3,29 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsQuoteRequest;
+use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
+use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
+use App\Repositories\PersonalPlanRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Services\CentralService;
 use App\Services\QuoteDocumentService;
 use App\Services\Quotes\SavingsQuoteService;
@@ -119,11 +128,26 @@ class SavingsQuoteController extends Controller
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($this->savingsQuoteService->quoteType->id());
 
         $advisors = $this->savingsQuoteService->getAdvisors();
+        $personalPlans = PersonalPlanRepository::get();
+        $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList($this->savingsQuoteService->quoteType->value, $quote->code);
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType($this->savingsQuoteService->quoteType->id(), $quote->id);
+        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $uboDetails = CustomerMembersRepository::getBy($quote->id, $this->savingsQuoteService->quoteType->name, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
+        $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::SAVINGS);
 
         return inertia('SavingsQuote/Show', [
             'quoteType' => $this->savingsQuoteService->quoteType,
+            'quoteTypeId' => $this->savingsQuoteService->quoteType->id(),
+            'duplicateAllowedLobs' => $duplicateAllowedLobs,
+            'embeddedProducts' => $embeddedProducts,
+            'storageUrl' => storageUrl(),
+            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'advisors' => $advisors,
             'quote' => $quote,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
@@ -142,9 +166,19 @@ class SavingsQuoteController extends Controller
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
             'lostReasons' => $lostReasons,
+            'insuranceProviders' => $insuranceProviders,
+            'personalPlans' => $personalPlans,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
+            'modelType' => $this->savingsQuoteService->quoteType,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::SavingsManager),
+            'industryType' => $industryType,
+            'emirates' => $emirates,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
+            'noteDocumentType' => $noteDocumentType,
+            'quoteDocuments' => $quoteNotes,
         ]);
 
         // (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::PET->value);
@@ -156,17 +190,8 @@ class SavingsQuoteController extends Controller
         //         return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         //     })->values();
         // }
-        // $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
-        // $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
         // $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
-        // $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::PET->id());
-        // $personalPlans = PersonalPlanRepository::get();
         // $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
-        // $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-        // $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name, CustomerTypeEnum::Entity);
-        // $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        // $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-
         // $sendUpdateOptions = [];
         // $sendUpdateLogs = [];
         // $sendUpdateEnum = (object) [];
@@ -179,38 +204,15 @@ class SavingsQuoteController extends Controller
         // }
 
         // $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        // $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
-        // $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::PET->id(), $quote->id);
 
         // $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::PET->id(), $quoteStatuses);
 
         // $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         // $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-        // $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
         // $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         // return inertia('PetQuote/Show', [
-        //     'amlStatusName' => $amlStatusName,
-        //     'paymentMethods' => $paymentMethods,
-        //     'insuranceProviders' => $insuranceProviders,
-        //     'personalPlans' => $personalPlans,
-        //     'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
-        //     'storageUrl' => storageUrl(),
-        //     'duplicateAllowedLobs' => $duplicateAllowedLobs,
-        //     'modelType' => QuoteTypes::PET,
-        //     'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::PetManager),
-        //     'embeddedProducts' => $embeddedProducts,
-        //     'membersDetails' => $membersDetail,
-        //     'memberRelations' => $memberRelations,
-        //     'nationalities' => $nationalities,
-        //     'quoteTypeId' => QuoteTypeId::Pet,
-        //     'industryType' => $industryType,
-        //     'emirates' => $emirates,
-        //     'UBOsDetails' => $uboDetails,
-        //     'UBORelations' => $uboRelations,
-        //     'noteDocumentType' => $noteDocumentType,
-        //     'quoteDocuments' => $quoteNotes,
         //     'cdnPath' => $cdnPath,
         //     'vatPercentage' => $vatPercentage,
         //     'bookPolicyDetails' => $bookPolicyDetails,
