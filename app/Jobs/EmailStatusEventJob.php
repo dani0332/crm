@@ -33,6 +33,8 @@ class EmailStatusEventJob implements ShouldQueue
      */
     public function handle()
     {
+        try {
+
         if (! empty($this->emailData->message_id) && ! empty($this->emailData->status)) {
 
             $isEmailMessage = EmailStatus::latest()->where('msg_id', $this->emailData->message_id)->first();
@@ -71,6 +73,10 @@ class EmailStatusEventJob implements ShouldQueue
             info('EmailStatusEventJob - email data not found');
 
             return true;
+        }
+        } catch (\Throwable $th) {
+            info('EmailStatusEventJob - Error: '.$th->getMessage().' on line: '.$th->getLine().' in file: '.$th->getFile().' | '.PHP_EOL.$th->getTraceAsString());
+            throw $th;
         }
     }
 
