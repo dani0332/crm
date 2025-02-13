@@ -87,11 +87,12 @@ class SavingsQuoteService extends BaseQuoteService
 
         $uuid = $getUUID();
 
-        $customer = Customer::create([
+        $customer = Customer::firstOrCreate([
+            'email' => $data['email'],
+        ], [
             'uuid' => Str::uuid(),
             'first_name' => $data['firstName'],
             'last_name' => $data['lastName'],
-            'email' => $data['email'],
             'mobile_no' => $data['mobileNo'],
             'dob' => $data['dob'],
             'nationality_id' => $data['nationalityId'],
