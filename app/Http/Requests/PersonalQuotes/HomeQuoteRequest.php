@@ -49,7 +49,7 @@ class HomeQuoteRequest extends FormRequest
             'addressObj.street_name' => 'required|string|max:150',
             'dob' => 'nullable|date_format:Y-m-d|before:today',
             'nationality_id' => 'nullable|exists:nationality,id',
-            'gender' => 'nullable|string|in:' . GenericRequestEnum::MALE_SINGLE . ',' . GenericRequestEnum::FEMALE . '',
+            'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
             'company_name' => 'nullable|string|max:200',
             'company_address' => 'nullable|string',
         ];

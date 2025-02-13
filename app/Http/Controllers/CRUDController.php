@@ -2237,7 +2237,7 @@ class CRUDController extends Controller
 
             $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
             if (QuoteTypes::getIdFromValue($quoteType) === (int) QuoteTypes::HOME->id()) {
-                //only for home quote if email is manually triggered then update the home automated flow executed flag
+                // only for home quote if email is manually triggered then update the home automated flow executed flag
                 app(HomeEmailService::class)->updateHomeAutomatedFlowExecuted($quoteUuId);
             }
             if ($ocbEmailJob) {

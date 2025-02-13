@@ -62,7 +62,7 @@ class HomeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/home/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     public function show($uuid)
@@ -91,7 +91,7 @@ class HomeQuoteController extends Controller
     {
         HomeQuoteRepository::update($uuid, $request->validated());
 
-        return redirect('personal-quotes/home/' . $uuid)->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/home/'.$uuid)->with('message', 'Quote updated successfully');
     }
 
     public function planDetails($quoteId, $planId)
@@ -138,7 +138,7 @@ class HomeQuoteController extends Controller
 
         // Return error as JSON for API consumption
         return response()->json([
-            'message' => 'Home Plan has not been updated. ' . $responseMessage,
+            'message' => 'Home Plan has not been updated. '.$responseMessage,
         ], 400); // 400 Bad Request or any relevant error code
     }
 
