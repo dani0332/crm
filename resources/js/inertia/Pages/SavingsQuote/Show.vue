@@ -48,7 +48,6 @@ const props = defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
-  amlStatusName: String,
 });
 
 const page = usePage();
@@ -74,8 +73,8 @@ const modals = reactive({
 });
 
 const leadDuplicateForm = useForm({
-  modelType: 'Pet',
-  parentType: 'Pet',
+  modelType: 'Savings',
+  parentType: 'Savings',
   entityId: page.props.quote.id,
   entityCode: page.props.quote.code,
   entityUId: page.props.quote.uid,
@@ -320,7 +319,10 @@ const onAddUpdate = () => {
         </x-button>
 
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('pet-quotes-edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled"
+            :href="route('savings-quotes-edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"
@@ -333,7 +335,7 @@ const onAddUpdate = () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.PetQuotesEdit)"
+            v-if="can(permissionsEnum.SavingsQuotesEdit)"
             :isDisabled="true"
           />
           <template #tooltip
@@ -343,15 +345,19 @@ const onAddUpdate = () => {
           >
         </x-tooltip>
         <template v-else>
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.PetQuotesEdit)" />
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.SavingsQuotesEdit)"
+          />
         </template>
 
         <Link
-          v-if="can(permissionsEnum.PetQuotesList)"
-          :href="route('pet-quotes-list')"
+          v-if="can(permissionsEnum.SavingsQuotesList)"
+          :href="route('savings-quotes-list')"
           preserve-scroll
         >
-          <x-button size="sm" color="primary" tag="div"> Pet Quotes </x-button>
+          <x-button size="sm" color="primary" tag="div">
+            Savings Quotes
+          </x-button>
         </Link>
       </template>
     </StickyHeader>
@@ -679,7 +685,7 @@ const onAddUpdate = () => {
                   </dt>
                   <dd>{{ quote?.savings_quote?.takes_nicotine }}</dd>
                 </div>
-                <RiskRatingScoreDetails :quote="quote" :modelType="'Pet'" />
+                <RiskRatingScoreDetails :quote="quote" :modelType="'Savings'" />
               </dl>
               <dl
                 v-if="
@@ -907,7 +913,7 @@ const onAddUpdate = () => {
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
         quote.source == $page.props.leadSource.INSLY
       "
-      modelType="Pet"
+      modelType="Savings"
       :quote="quote"
       :insly-id="quote?.quote_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
@@ -995,7 +1001,7 @@ const onAddUpdate = () => {
       :quote="quote"
       :quoteStatusEnum="quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="pet"
+      modelType="savings"
       :expanded="sectionExpanded"
       :payments="payments"
     />
@@ -1007,7 +1013,7 @@ const onAddUpdate = () => {
       :quote="quote"
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
-      quoteType="Pet"
+      quoteType="savings"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
@@ -1019,7 +1025,7 @@ const onAddUpdate = () => {
         ])
       "
       :quote="quote"
-      quoteType="pet"
+      quoteType="savings"
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
@@ -1045,7 +1051,7 @@ const onAddUpdate = () => {
     />
 
     <lead-raw-data
-      :modelType="'Pet'"
+      :modelType="'Savings'"
       :code="$page.props.quote.code"
     ></lead-raw-data>
   </div>
