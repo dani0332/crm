@@ -79,6 +79,7 @@ const props = defineProps({
     type: Array,
     default: [],
   },
+  realQuote: Object,
 });
 
 // All reactive properties are defined here
@@ -241,7 +242,7 @@ if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Bike') {
-  initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+  initalPlanDetails = props.quoteRequest?.car_plan;
 } else {
   initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
@@ -2456,6 +2457,7 @@ const addPayment = isValid => {
   let storeData = {
     ...data,
   };
+
   paymentMethodsForm
     .transform(data => storeData)
     .post('/payments/' + props.quoteType + '/store-new', {
@@ -2997,6 +2999,10 @@ const planText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
+  if (!providerId || !planId) {
+    providerId = props.realQuote?.insurance_provider_id;
+    planId = props.realQuote?.plan_id;
+  }
   let url = `/get-plans/${props.quoteType}/${providerId}/${planId}`;
   axios
     .get(url)
@@ -3008,6 +3014,17 @@ const fetchPlans = () => {
     });
 };
 
+// Ecom leads
+watch(
+  () => props.realQuote?.plan_id,
+  () => {
+    if (props.realQuote?.plan_id) {
+      fetchPlans();
+    }
+  },
+);
+
+// Insly Leads
 watch(
   () => props.sendUpdate?.plan_id,
   () => {
@@ -3018,7 +3035,7 @@ watch(
 );
 
 onMounted(() => {
-  if (props.sendUpdate?.plan_id) {
+  if (props.realQuote?.plan_id || props.sendUpdate?.plan_id) {
     fetchPlans();
   }
   showLackingPayment();
@@ -3538,17 +3555,17 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
 };
 
 const isEditPaymentEnabled = () => {
-  const statusesToCheck = [paymentStatusEnum.AUTHORISED];
+  const statusesToCheck = [
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.PAID,
+    paymentStatusEnum.CAPTURED,
+  ];
 
   const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
     statusesToCheck.includes(item.payment_status_id),
   );
 
-  return (
-    !isMultiPaymentsEnabled.value &&
-    isGIGOrQICProvider.value &&
-    hasAnyAuthorizedPayment
-  );
+  return !isMultiPaymentsEnabled.value && hasAnyAuthorizedPayment;
 };
 
 // voidPaymentModal
