@@ -238,7 +238,7 @@ class Payment extends Model implements Auditable
         return $this->collection_type == CollectionTypeEnum::INSURER;
     }
 
-    public function isGIGOrRAKInsurer($quoteTypeId, $quoteDetails)
+    public function isCaptureButtonEnabled($quoteTypeId, $quoteDetails)
     {
         $insuranceProvider = getInsuranceProvider($this, $quoteTypeId, $quoteDetails);
 
