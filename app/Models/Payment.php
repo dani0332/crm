@@ -242,7 +242,7 @@ class Payment extends Model implements Auditable
     {
         $insuranceProvider = getInsuranceProvider($this, $quoteTypeId, $quoteDetails);
 
-        return in_array($insuranceProvider?->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE]);
+        return in_array($insuranceProvider?->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE, InsurerProviderEnum::QATAR_INSURANCE]);
     }
 
     public function isPaymentGatewayTap()
