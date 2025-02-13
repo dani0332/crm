@@ -53,11 +53,23 @@ const bussinessActivityOptions = computed(() => {
   }));
 });
 
+const isCompanyCar = computed(() => {
+  return quoteForm.registration_type === carRegistrationTypeEnum.COMPANY;
+});
+
+const isPersonalCar = computed(() => {
+  return quoteForm.registration_type === carRegistrationTypeEnum.PERSONAL;
+});
+
+const isPrivateCar = computed(() => {
+  return isCompanyCar && quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE;
+});
+
 const quoteForm = useForm({
   modelType: '"Car"',
   model: props.model,
   renewal_batch: props.quote?.renewal_batch || '',
-  first_name: props.quote?.vehicle_use === carVehicleUseEnum.PRIVATE 
+  first_name: isPrivateCar 
     ? `${props.quote?.first_name || ''} ${props.quote?.last_name || ''}`.trim() 
     : props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
@@ -438,7 +450,7 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY"
+        v-if="isCompanyCar"
         label="VEHICLE USE" required>
           <x-select
             v-model="quoteForm.vehicle_use"
@@ -451,7 +463,7 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY"
+        v-if="isCompanyCar"
         label="YOUR COMPANY NAME" required>
           <x-input
             maxLength="200"
@@ -463,19 +475,19 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY"
+        v-if="isCompanyCar"
         label="POINT OF CONTACT NAME" required>
-          <x-input
+            <x-input
             maxLength="20"
             v-model="quoteForm.company_contact_name"
-            :rules="[isRequired]"
+            :rules="[isRequired, v => v.trim().split(' ').length >= 2 || 'Please enter full name']"
             class="w-full"
             :error="quoteForm.errors.company_contact_name"
-          />
+            />
         </x-field>
 
         <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY"
+        v-if="isCompanyCar"
         label="POINT OF CONTACT EMAIL" required>
           <x-input
             v-model="quoteForm.email"
@@ -488,7 +500,7 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY"
+        v-if="isCompanyCar"
         label="POINT OF CONTACT PHONE NUMBER" required>
           <x-input
             v-model="quoteForm.mobile_no"
@@ -501,7 +513,7 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY"
+        v-if="isCompanyCar"
         label="BUSINESS ACTIVITY" required>
           <ComboBox
             v-model="quoteForm.business_activity_id"
@@ -515,7 +527,7 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY"
+        v-if="isCompanyCar"
         label="COMPANY ADDRESS">
           <x-input
             v-model="quoteForm.company_address"
@@ -526,20 +538,20 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE || quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
-        :label="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY && quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE ? 'DRIVER\'S NAME' : 'FIRST NAME'"
+        v-if="isPrivateCar || isPersonalCar"
+        :label="isPrivateCar ? 'DRIVER\'S NAME' : 'FIRST NAME'"
         required>
           <x-input
             maxLength="20"
             v-model="quoteForm.first_name"
-            :rules="[isRequired]"
+            :rules="[isRequired, isPrivateCar ? v => v.trim().split(' ').length >= 2 || 'Please enter full name' : () => true]"
             class="w-full"
             :error="quoteForm.errors.first_name"
           />
         </x-field>
 
         <x-field
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
+        v-if="isPersonalCar"
         label="LAST NAME"
         required>
           <x-input
@@ -552,7 +564,7 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
+        v-if="isPersonalCar"
         label="EMAIL" required>
           <x-input
             v-model="quoteForm.email"
@@ -565,7 +577,7 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
+        v-if="isPersonalCar"
         label="PHONE NUMBER" required>
           <x-input
             v-model="quoteForm.mobile_no"
@@ -668,8 +680,8 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field
-        v-if="quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE || quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
-        :label="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY && quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE ? 'DRIVER\'S DATE OF BIRTH' : 'DATE OF BIRTH'"
+        v-if="isPrivateCar || isPersonalCar"
+        :label="isPrivateCar ? 'DRIVER\'S DATE OF BIRTH' : 'DATE OF BIRTH'"
         required>
           <DatePicker
             v-model="quoteForm.dob"
@@ -680,8 +692,8 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field
-        v-if="quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE || quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
-        :label="quoteForm.registration_type == carRegistrationTypeEnum.COMPANY && quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE ? 'DRIVER\'S NATIONALITY' : 'NATIONALITY'"
+        v-if="isPrivateCar || isPersonalCar"
+        :label="isPrivateCar ? 'DRIVER\'S NATIONALITY' : 'NATIONALITY'"
         required>
           <ComboBox
             v-model="quoteForm.nationality_id"
@@ -707,7 +719,7 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field 
-        v-if="quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE || quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
+        v-if="isPrivateCar || isPersonalCar"
         label="UAE LICENCE HELD FOR" required>
           <ComboBox
             v-model="quoteForm.uae_license_held_for_id"
@@ -726,7 +738,7 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field
-        v-if="quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE || quoteForm.registration_type == carRegistrationTypeEnum.PERSONAL"
+        v-if="isPrivateCar || isPersonalCar"
         label="HOME COUNTRY DRIVING LICENSE HELD FOR">
           <x-select
             v-model="quoteForm.back_home_license_held_for_id"

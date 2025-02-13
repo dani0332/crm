@@ -1668,13 +1668,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
 
-const isCompanyCar = computed(() => {
-  return page.props.record.registration_type === page.props.carRegistrationType.COMPANY;
-});
-
-const isPrivateCar = computed(() => {
-  return isCompanyCar && page.props.record.vehicle_use == page.props.carVehicleUse.PRIVATE;
-});
+const isCompanyCar = page.props.record.registration_type == page.props.carRegistrationType.COMPANY;
+const isPrivateCar = isCompanyCar && page.props.record.vehicle_use == page.props.carVehicleUse.PRIVATE;
 </script>
 
 <template>
