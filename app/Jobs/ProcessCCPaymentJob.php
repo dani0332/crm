@@ -82,9 +82,9 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
             $hasAnyCCPayment = $splitPayments->where('payment_method', PaymentMethodsEnum::CreditCard)->count() > 0;
             info('CC Payment Job - Payment Status ID: '.$payment->payment_status_id.' - Collected By Insurer: '.$payment->isInsurerPayment().' - Has any CC Payment:'.$hasAnyCCPayment);
 
-            if (in_array($payment->payment_status_id, [PaymentStatusEnum::CAPTURED]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
+            if (in_array($payment->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
                 $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id);
-                $isGIGInsuranceProvider = $payment->isGIGInsurer($ccPaymentProcess->quote_type, $quote);
+                $isGIGInsuranceProvider = $payment->isCaptureButtonEnabled($ccPaymentProcess->quote_type, $quote);
                 $isPaymentGatewayTap = $payment->isPaymentGatewayTap();
                 info('CC Payment Job - Insurance Provider is GIG: '.$isGIGInsuranceProvider.' - Payment Gateway TAP: '.$isPaymentGatewayTap);
                 if ($quote && ! $isGIGInsuranceProvider) {
@@ -96,7 +96,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                             'quote_uuid' => $quote->uuid,
                             'send_update_log_id' => $payment->send_update_log_id,
                             'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$payment->send_update_log_id,
-                        ])->update(['value', 0]);
+                        ])->update(['value' => 0]);
 
                         $sendUpdateRequest = (object) [
                             'quoteType' => $ccPaymentProcess->quote_type,
@@ -109,10 +109,12 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                             'throughCCPayment' => true,
                         ];
 
-                        info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode($sendUpdateRequest->toArray()));
+                        info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode((array) $sendUpdateRequest));
 
                         return app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
                     } else {
+                        info('CC Payment Job: Executing Booking Process: '.$splitPaymentCode);
+
                         QuoteTag::where('quote_uuid', $quote->uuid)
                             ->where('name', QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START)
                             ->update(['value' => 0]);

@@ -549,11 +549,11 @@ class SageApiService
 
         // This block is for collection type INSURER and having any Credit Card Payment
         // This specific block is added to handle tap payments
-        $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED])
+        $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
             ->where('payment_method', PaymentMethodsEnum::CreditCard)
             ->count() > 0;
         info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type);
-        if ($payment->isInsurerPayment() && $hasAnyCCPayment && ! $payment->isGIGInsurer($quoteTypeId, $quote)) {
+        if ($payment->isInsurerPayment() && $hasAnyCCPayment && ! $payment->isCaptureButtonEnabled($quoteTypeId, $quote)) {
             info('Skipping Policy Book & Authorizing payment for '.$payment->code);
             $successMessage = $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
             if (! $successMessage) {

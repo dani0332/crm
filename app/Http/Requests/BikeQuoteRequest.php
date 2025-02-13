@@ -47,7 +47,8 @@ class BikeQuoteRequest extends FormRequest
             'currently_insured_with' => 'required',
             'cubic_capacity' => 'required',
             'asset_value' => 'nullable|numeric',
-            'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
+            'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE,
+            'chassis_number' => 'nullable|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/',
         ];
     }
 
@@ -61,5 +62,12 @@ class BikeQuoteRequest extends FormRequest
         $this->merge([
             'dob' => isset($this->dob) ? Carbon::parse($this->dob)->format('Y-m-d') : null,
         ]);
+    }
+
+    public function messages(): array
+    {
+        return [
+            'chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
+        ];
     }
 }

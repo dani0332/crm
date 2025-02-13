@@ -66,7 +66,7 @@ class RolePermissionSeeder extends Seeder
         }
         // $this->addReceiveNotificationsPermission();
         // $this->searchModulePermissions();
-        $this->createBusinessIntelligenceUnitRole();
+        // $this->createBusinessIntelligenceUnitRole();
         $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         $this->paymentsVoid();

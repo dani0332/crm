@@ -67,6 +67,7 @@ class BikeQuoteRepository extends BaseRepository
             'currentlyInsuredWithId' => $data['currently_insured_with'],
             'cubicCapacity' => $data['cubic_capacity'],
             'gender' => $data['gender'] ?? null,
+            'chassisNumber' => $data['chassis_number'] ?? null,
         ];
 
         info('bikeQuote:'.json_encode($quoteData));
