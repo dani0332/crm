@@ -7,9 +7,11 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
@@ -25,8 +27,11 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
@@ -89,6 +94,12 @@ abstract class BaseQuoteService
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType->value, $quote);
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled($quoteType->value);
         $quoteStatuses = $this->getQuoteStatuses([QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, $quoteType->id(), $quoteStatuses);
+        if (! Auth::user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            })->values();
+        }
         $activities = ActivityRepository::where([
             'quote_type_id' => $quoteType->id(),
             'quote_request_id' => $quote->id,
@@ -118,6 +129,17 @@ abstract class BaseQuoteService
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
 
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, $quoteType->value);
+
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteType->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
 
         return [
             'quote' => $quote,
@@ -156,6 +178,12 @@ abstract class BaseQuoteService
             'quoteDocuments' => $quoteNotes,
             'storageUrl' => storageUrl(),
             'isBetaUser' => Auth::user()->hasRole(RolesEnum::BetaUser),
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'vatPercentage' => getAppStorageValueByKey(ApplicationStorageEnums::VAT_VALUE, 0),
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
         ];
     }
 }

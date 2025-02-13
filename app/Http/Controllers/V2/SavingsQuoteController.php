@@ -8,9 +8,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsQuoteRequest;
-use App\Models\Nationality;
-use App\Repositories\LostReasonRepository;
-use App\Services\CentralService;
 use App\Services\Quotes\SavingsQuoteService;
 
 class SavingsQuoteController extends Controller
@@ -89,46 +86,5 @@ class SavingsQuoteController extends Controller
         $data = $this->savingsQuoteService->getShowData($uuid);
 
         return inertia('SavingsQuote/Show', $data);
-
-        // (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::PET->value);
-        // /* End - Temporarily adding for correcting historic data */
-
-        // $quote = PetQuoteRepository::getBy('uuid', $uuid);
-        // if (! auth()->user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
-        //     $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-        //         return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-        //     })->values();
-        // }
-        // $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
-        // $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
-        // $sendUpdateOptions = [];
-        // $sendUpdateLogs = [];
-        // $sendUpdateEnum = (object) [];
-        // $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
-
-        // if ($hasPolicyIssuedStatus) {
-        //     $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::PET->id());
-        //     $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
-        //     $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        // }
-
-        // $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-
-        // $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::PET->id(), $quoteStatuses);
-
-        // $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
-
-        // $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-        // $amlStatusName = AMLStatusCode::getName($quote->aml_status);
-
-        // return inertia('PetQuote/Show', [
-        //     'cdnPath' => $cdnPath,
-        //     'vatPercentage' => $vatPercentage,
-        //     'bookPolicyDetails' => $bookPolicyDetails,
-        //     'sendUpdateOptions' => $sendUpdateOptions,
-        //     'sendUpdateLogs' => $sendUpdateLogs,
-        //     'sendUpdateEnum' => $sendUpdateEnum,
-        //     'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-        // ]);
     }
 }
