@@ -87,7 +87,7 @@ class SavingsQuoteService extends BaseQuoteService
 
         $uuid = $getUUID();
 
-        Customer::create([
+        $customer = Customer::create([
             'uuid' => Str::uuid(),
             'first_name' => $data['firstName'],
             'last_name' => $data['lastName'],
@@ -109,6 +109,7 @@ class SavingsQuoteService extends BaseQuoteService
             'uuid' => $uuid,
             'code' => "{$this->quoteType->shortCode()}{$uuid}",
             'quote_status_id' => QuoteStatusEnum::NewLead,
+            'customer_id' => $customer->id,
         ]);
 
         PersonalQuoteDetail::create([
