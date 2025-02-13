@@ -209,4 +209,15 @@ class SavingsQuoteService extends BaseQuoteService
             return $quote;
         });
     }
+
+    public function getShowData(string $uuid)
+    {
+        $quote = $this->getOne($uuid, true);
+        $data = $this->getShowCommonData($quote);
+
+        return [
+            'canAddBatchNumber' => Auth::user()->hasRole(RolesEnum::SavingsManager),
+            ...$data,
+        ];
+    }
 }
