@@ -214,54 +214,53 @@ const gender = computed(() => {
 });
 
 const chassisNumberDisabled = computed(() => {
-    let disallowedStatus = [
-        props.quoteStatusEnums.PolicySentToCustomer,
-        props.quoteStatusEnums.PolicyBooked,
-    ];
-    return disallowedStatus.includes(props?.quote?.quote_status_id);
+  let disallowedStatus = [
+    props.quoteStatusEnums.PolicySentToCustomer,
+    props.quoteStatusEnums.PolicyBooked,
+  ];
+  return disallowedStatus.includes(props?.quote?.quote_status_id);
 });
 
 const chassisNumberValidate = eventType => {
-    const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
 
-    if (eventType === 'keypress') {
-        const event = window.event || event;
-        const key = event.key;
-        if (
-            !regex.test(key) &&
-            key !== 'Backspace' &&
-            key !== 'Delete' &&
-            key !== 'ArrowLeft' &&
-            key !== 'ArrowRight'
-        ) {
-            event.preventDefault();
-        }
+  if (eventType === 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
+      event.preventDefault();
     }
+  }
 
-    if (eventType === 'blur') {
-        const lengthValid =
-            quoteForm.chassis_number.length >= 8 &&
-            quoteForm.chassis_number.length <= 17;
-        const isAlphanumeric = regex.test(quoteForm.chassis_number);
-        if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
-            quoteForm.errors.chassis_number =
-                'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
-        } else {
-            quoteForm.clearErrors('chassis_number');
-        }
+  if (eventType === 'blur') {
+    const lengthValid =
+      quoteForm.chassis_number.length >= 8 &&
+      quoteForm.chassis_number.length <= 17;
+    const isAlphanumeric = regex.test(quoteForm.chassis_number);
+    if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
+      quoteForm.errors.chassis_number =
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+    } else {
+      quoteForm.clearErrors('chassis_number');
     }
+  }
 };
 
 const chassisNumberRule = v => {
-    const regex = /^[a-zA-Z0-9]*$/;
-    const lengthValid = v.length >= 8 && v.length <= 17;
-    const isAlphanumeric = regex.test(v);
-    if (v && (!lengthValid || !isAlphanumeric)) {
-        return 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
-    }
-    return true;
+  const regex = /^[a-zA-Z0-9]*$/;
+  const lengthValid = v.length >= 8 && v.length <= 17;
+  const isAlphanumeric = regex.test(v);
+  if (v && (!lengthValid || !isAlphanumeric)) {
+    return 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+  }
+  return true;
 };
-
 </script>
 
 <template>
@@ -462,43 +461,43 @@ const chassisNumberRule = v => {
           />
         </x-field>
 
-          <div>
-              <template v-if="chassisNumberDisabled">
-                  <x-tooltip placement="bottom">
-                      <label
-                          class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
-                      >
-                          CHASSIS NUMBER
-                      </label>
-                      <template #tooltip>
-                          This lead is now locked as the policy has been booked. If
-                          changes are needed, go to 'Send Update', select 'Add Update',
-                          and choose 'Cancellation from Inception and Reissuance'
-                      </template>
-                  </x-tooltip>
-                  <x-input
-                      :disabled="chassisNumberDisabled"
-                      v-model="quoteForm.chassis_number"
-                      class="w-full"
-                      type="text"
-                      placeholder="Enter Chassis Number"
-                  />
+        <div>
+          <template v-if="chassisNumberDisabled">
+            <x-tooltip placement="bottom">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+              >
+                CHASSIS NUMBER
+              </label>
+              <template #tooltip>
+                This lead is now locked as the policy has been booked. If
+                changes are needed, go to 'Send Update', select 'Add Update',
+                and choose 'Cancellation from Inception and Reissuance'
               </template>
-              <template v-else>
-                  <x-field label="CHASSIS NUMBER">
-                      <x-input
-                          v-model="quoteForm.chassis_number"
-                          class="w-full"
-                          type="text"
-                          placeholder="Enter Chassis Number"
-                          :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
-                          @keypress="chassisNumberValidate('keypress')"
-                          @blur="chassisNumberValidate('blur')"
-                          :error="quoteForm.errors.chassis_number"
-                      />
-                  </x-field>
-              </template>
-          </div>
+            </x-tooltip>
+            <x-input
+              :disabled="chassisNumberDisabled"
+              v-model="quoteForm.chassis_number"
+              class="w-full"
+              type="text"
+              placeholder="Enter Chassis Number"
+            />
+          </template>
+          <template v-else>
+            <x-field label="CHASSIS NUMBER">
+              <x-input
+                v-model="quoteForm.chassis_number"
+                class="w-full"
+                type="text"
+                placeholder="Enter Chassis Number"
+                :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
+                @keypress="chassisNumberValidate('keypress')"
+                @blur="chassisNumberValidate('blur')"
+                :error="quoteForm.errors.chassis_number"
+              />
+            </x-field>
+          </template>
+        </div>
 
         <x-field label="EMIRATES OF REGISTRATION" required>
           <x-select
