@@ -17,11 +17,12 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
             // HealthRevivalQuotesSeeder::class,
-            // QuoteStatusSeeder::class,
+            QuoteStatusSeeder::class,
             LookupSeeder::class,
             TravelRenewalTeamSeeder::class,
             PermissionsSeeder::class,
             SavingsQuoteDataSeeder::class,
+            // TravelRenewalTeamSeeder::class,
         ]);
     }
 }

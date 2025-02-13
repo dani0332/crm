@@ -51,13 +51,22 @@ class CustomerRepository extends BaseRepository
                     return $allQuotes;
                 }
             } else {
-                $customerIds = Customer::where($filterType, $filterValue)->pluck('id');
+                if ($filterType == 'insured_first_name') {
+                    $customerIds = Customer::where(function ($query) use ($filterValue) {
+                        $query->whereHas('insured', function ($query) use ($filterValue) {
+                            $query->where('first_name', $filterValue);
+                        });
+                        $query->orWhere('insured_first_name', $filterValue);
+                    })->pluck('id');
+                } else {
+                    $customerIds = Customer::where($filterType, $filterValue)->pluck('id');
+                }
                 if ($customerIds->isEmpty()) {
                     return $allQuotes;
                 }
             }
 
-            $carQuotes = CarQuote::with(['advisor', 'customer'])
+            $carQuotes = CarQuote::with(['advisor', 'customer', 'customer.insured'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -73,7 +82,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $homeQuotes = HomeQuote::with(['advisor', 'customer'])
+            $homeQuotes = HomeQuote::with(['advisor', 'customer', 'customer.insured'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -89,7 +98,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $healthQuotes = HealthQuote::with(['advisor', 'customer'])
+            $healthQuotes = HealthQuote::with(['advisor', 'customer', 'customer.insured'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -105,7 +114,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $lifeQuotes = LifeQuote::with(['advisor', 'customer'])
+            $lifeQuotes = LifeQuote::with(['advisor', 'customer', 'customer.insured'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -121,7 +130,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $businessQuotes = BusinessQuote::with(['advisor', 'customer'])
+            $businessQuotes = BusinessQuote::with(['advisor', 'customer', 'customer.insured'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -136,7 +145,7 @@ class CustomerRepository extends BaseRepository
                     'business_type_of_insurance_id'])
                 ->orderBy('created_at', 'desc');
 
-            $travelQuotes = TravelQuote::with(['advisor', 'customer'])
+            $travelQuotes = TravelQuote::with(['advisor', 'customer', 'customer.insured'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -152,7 +161,7 @@ class CustomerRepository extends BaseRepository
                 ])
                 ->orderBy('created_at', 'desc');
 
-            $personalQuotes = PersonalQuote::with(['advisor', 'customer'])
+            $personalQuotes = PersonalQuote::with(['advisor', 'customer', 'customer.insured'])
                 ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
@@ -267,11 +276,9 @@ class CustomerRepository extends BaseRepository
 
     public function fetchUpdateCustomerDetails($customerId, $data)
     {
-        info('before updating customer details');
+        info('fn:updateCustomerDetails - Updating customer details');
 
         $customer = Customer::with('nationality')->findOrFail($customerId);
-        $customer->update($data->only(['insured_first_name', 'insured_last_name', 'nationality_id', 'dob']));
-
         $customer->detail()->updateOrCreate(['customer_id' => $customerId], $data->only([
             'place_of_birth',
             'country_of_residence',
@@ -288,7 +295,7 @@ class CustomerRepository extends BaseRepository
 
         $customer->refresh();
 
-        info('customer detail updated');
+        info('fn:updateCustomerDetails - Updated customer details');
 
         return $customer;
     }

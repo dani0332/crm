@@ -101,4 +101,5 @@ final class RolesEnum extends Enum
     public const TravelHapex = 'HAPEX';
     public const SavingsAdvisor = 'SAVINGS_ADVISOR';
     public const SavingsManager = 'SAVINGS_MANAGER';
+    public const BusinessIntelligenceUnit = 'BUSINESS_INTELLIGENCE_UNIT';
 }

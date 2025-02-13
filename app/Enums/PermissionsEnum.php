@@ -397,6 +397,8 @@ final class PermissionsEnum extends Enum
     public const RECEIVE_NOTIFICATIONS = 'receive-notifications';
     public const SEARCH_ALL_LEAD_LOB = 'search-all-lead-lob';
     public const DATA_EXTRACTION_SEARCH_ALL_LEADS = 'data-extraction-search-all-leads';
+    public const VIEW_ALL_LEADS = 'view-all-leads';
+    public const VIEW_ALL_REPORTS = 'view-all-reports';
     public const TAP_BETA_ACCESS = 'tap-beta-access';
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
     public const SAVINGS_QUOTES_LIST = 'savings-quotes-list';
@@ -407,6 +409,7 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_CONVERSION_REPORT = 'savings-conversion-report';
     public const SAVINGS_DISTRIBUTION_REPORT = 'savings-distribution-report';
     public const SAVINGS_LEAD_ALLOCATION_DASHBOARD = 'savings-lead-allocation-dashboard';
+    public const PAYMENTS_VOID = 'payments-void';
 
     public static function getAdvisorConversionReportPermissions()
     {

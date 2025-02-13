@@ -47,7 +47,7 @@ class AmtQuoteExport
             $quote->last_name,
             optional($quote->quoteStatus)->text,
             optional($quote->advisor)->name,
-            $quote->premium,
+            $quote->premium ? $quote->premium : $quote->price_with_vat,
             $quote->company_name,
             $quote->policy_number,
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,

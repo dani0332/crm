@@ -14,14 +14,14 @@ class TravelAnnual extends EmbeddedProduct
         return [
             'EP REF-ID',
             'ADVISOR NAME',
-            'PAYMENT DATE',
+            'DATE OF ISSUANCE',
             'PLAN COMMENCEMENT DATE',
             'PLAN END DATE',
-            'PASSPORT NUMBER',
             'FULL NAME',
             'EMIRATES ID NUMBER',
             'DOB',
             'AGE',
+            'PASSPORT NUMBER',
             'NATIONALITY',
             'CONTRIBUTION AMOUNT',
             'POLICY ISSUE STATUS',
@@ -148,13 +148,14 @@ class TravelAnnual extends EmbeddedProduct
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
             } else {
-                $firstName = $customer->insured_first_name ?? '';
-                $lastName = $customer->insured_last_name ?? '';
+                $firstName = ($customer?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
+                $lastName = ($customer?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
             }
 
             $item->id = $item->id;
             $item->ref_id = $item->code;
             $item->advisor_name = $advisorName;
+            $item->quote_request = $item->travelQuote ?? $item->quoteRequest;
             $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
             $item->plan_start_date = $planStartDate;
             $item->plan_end_date = $planEndDate;
