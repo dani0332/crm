@@ -133,8 +133,10 @@ const insuredFormDetails = useForm({
   dob: props.insuredPersonDetails?.insured.dob ?? null,
   screening_gender: props.insuredPersonDetails?.insured?.gender ?? null,
   chassis_number:
-    props.quoteDetails?.car_quote_request_detail?.chassis_number ?? null,
-
+      (props.quoteType.code === 'Car'
+          ? props.quoteDetails?.car_quote_request_detail?.chassis_number
+          : props.quoteDetails?.bike_quote?.chassis_number) ?? null,
+    
   entity_id: props.entityDetails?.entity?.id,
   trade_license_no: props.entityDetails?.entity?.trade_license_no,
   company_name: props.entityDetails?.entity?.company_name,
@@ -737,7 +739,7 @@ watch(
         </dl>
 
         <x-divider class="mb-4 mt-1" />
-        <div v-if="quoteType.id === page.props.quoteTypeIdEnum.Car">
+        <div v-if="quoteType.id === page.props.quoteTypeIdEnum.Car || quoteType.id === page.props.quoteTypeIdEnum.Bike">
           <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
             <h3 class="font-semibold text-primary-800 text-lg">
               Additional Vehicle Details
