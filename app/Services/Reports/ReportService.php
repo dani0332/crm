@@ -319,7 +319,7 @@ class ReportService extends BaseService
             Carbon::parse(now())->startOfDay()->format($dateFormat),
             Carbon::parse(now())->endOfDay()->format($dateFormat),
         ];
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::Cycle, quoteTypeCode::Bike, quoteTypeCode::Yacht])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::Cycle, quoteTypeCode::Bike, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS])->get();
 
         return [
             'tiers' => $tiers,
@@ -378,12 +378,14 @@ class ReportService extends BaseService
                 QuoteTypes::PET->value => QuoteTypeId::Pet,
                 QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
                 QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
+                QuoteTypes::SAVINGS->value => QuoteTypeId::Savings,
             ];
 
             $qtCode = [
                 QuoteTypes::PET->value => quoteTypeCode::Pet,
                 QuoteTypes::CYCLE->value => quoteTypeCode::Cycle,
                 QuoteTypes::YACHT->value => quoteTypeCode::Yacht,
+                QuoteTypes::SAVINGS->value => quoteTypeCode::SAVINGS,
             ];
 
             $userIds = $this->walkTree($authUserId, $qtCode[$lob]);
@@ -610,6 +612,7 @@ class ReportService extends BaseService
             quoteTypeCode::Bike => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],
             quoteTypeCode::Cycle => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Cycle],
             quoteTypeCode::Jetski => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Jetski],
+            quoteTypeCode::SAVINGS => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Savings],
         ];
 
         $quoteTypes = [
@@ -624,6 +627,7 @@ class ReportService extends BaseService
             QuoteTypes::PET,
             QuoteTypes::CYCLE,
             QuoteTypes::JETSKI,
+            QuoteTypes::SAVINGS
         ];
 
         $allowedLOBs = [];
