@@ -5171,6 +5171,19 @@ onBeforeMount(() => {
                       <span class="text-sm">VERIFIED AT</span>
                     </span>
                   </div>
+
+                  <div class="w-1/5 px-2">
+                    <x-tooltip>
+                      <span class="text-sm">
+                        <span class="border-b-2 border-dotted border-black text-sm"
+                          >COLLECTED AMOUNT</span
+                        >
+                      </span>
+                      <template #tooltip>
+                        <span>{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT }}</span>
+                      </template>
+                    </x-tooltip>
+                  </div>
                 </div>
 
                 <div class="flex w-full custombreak pb-5">
@@ -5201,6 +5214,38 @@ onBeforeMount(() => {
                   </div>
                 </div>
 
+                <div class="flex w-full custombreak">
+                  <div class="w-1/6 px-2 text-center"></div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm">Receipt ID</span>
+                    </span>
+                  </div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm">Auth Code</span>
+                    </span>
+                  </div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm">Charge ID</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex w-full custombreak pb-5">
+                  <div class="w-1/6 px-2 text-center"></div>
+                  <div class="w-1/5 px-2">
+                    {{splitPaymentRecord.payment_receipt_id ?? "N/A"}}
+                  </div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord.payment_auth_code ?? "N/A"}}
+                  </div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord?.payment_charges?.transaction_id }}
+                  </div>
+                </div>
+
                 <div class="flex w-full custombreak" v-if="isVerifiedEnabled">
                   <div class="w-1/6 px-2 text-center"></div>
                   <div class="w-1/5 px-2">
@@ -5219,52 +5264,6 @@ onBeforeMount(() => {
                         : "N/A"
                     }}
                   </div>
-                </div>
-
-                <x-divider class="mb-4 mt-1" />
-
-                <div class="p-1 mb-2">
-                  <h3>Tap Gateway Values</h3>
-                </div>
-
-                <div class="flex w-full">
-                  <div class="w-2/4 px-2 text-center">
-                    <span class="text-sm">
-                      <span class="border-b-2 border-solid border-black text-sm"
-                        >Receipt ID</span
-                      >
-                    </span>
-                    <div class="text-sm mt-3">
-                      <span class="border-black text-sm">{{
-                        splitPaymentRecord.payment_receipt_id ?? "N/A"
-                      }}</span>
-                    </div>
-                  </div>
-
-                  <div class="w-1/2 px-2">
-                    <span class="text-sm">
-                      <span class="border-b-2 border-solid border-black text-sm"
-                        >Charge ID</span
-                      >
-                    </span>
-                    <div class="text-sm mt-3">
-                      <span class="border-black text-sm">{{ splitPaymentRecord?.payment_charges?.transaction_id }}</span>
-                    </div>
-                  </div>
-
-                  <div class="w-1/3 px-2">
-                    <span class="text-sm">
-                      <span class="border-b-2 border-solid border-black text-sm"
-                        >Auth Code</span
-                      >
-                    </span>
-                    <div class="text-sm mt-3">
-                      <span class="border-black text-sm">{{
-                        splitPaymentRecord.payment_auth_code ?? "N/A"
-                      }}</span>
-                    </div>
-                  </div>
-
                 </div>
               </template>
               <template v-else>
