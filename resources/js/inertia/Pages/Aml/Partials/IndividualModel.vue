@@ -136,7 +136,7 @@ const insuredFormDetails = useForm({
       (props.quoteType.code === 'Car'
           ? props.quoteDetails?.car_quote_request_detail?.chassis_number
           : props.quoteDetails?.bike_quote?.chassis_number) ?? null,
-    
+
   entity_id: props.entityDetails?.entity?.id,
   trade_license_no: props.entityDetails?.entity?.trade_license_no,
   company_name: props.entityDetails?.entity?.company_name,
