@@ -109,7 +109,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                             'throughCCPayment' => true,
                         ];
 
-                        info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode($sendUpdateRequest->toArray()));
+                        info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode((array) $sendUpdateRequest));
 
                         return app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
                     } else {
