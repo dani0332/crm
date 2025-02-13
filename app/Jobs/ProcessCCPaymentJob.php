@@ -84,7 +84,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 
             if (in_array($payment->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID]) && $payment->isInsurerPayment() && $hasAnyCCPayment) {
                 $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id);
-                $isGIGInsuranceProvider = $payment->isGIGInsurer($ccPaymentProcess->quote_type, $quote);
+                $isGIGInsuranceProvider = $payment->isCaptureButtonEnabled($ccPaymentProcess->quote_type, $quote);
                 $isPaymentGatewayTap = $payment->isPaymentGatewayTap();
                 info('CC Payment Job - Insurance Provider is GIG: '.$isGIGInsuranceProvider.' - Payment Gateway TAP: '.$isPaymentGatewayTap);
                 if ($quote && ! $isGIGInsuranceProvider) {
