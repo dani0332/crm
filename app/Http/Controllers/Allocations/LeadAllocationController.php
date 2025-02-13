@@ -30,6 +30,7 @@ class LeadAllocationController extends Controller
             QuoteTypes::YACHT => PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::LIFE => PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::HOME => PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::SAVINGS => PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
         };
         $this->middleware("permission:{$permission}", ['only' => ['index']]);
     }

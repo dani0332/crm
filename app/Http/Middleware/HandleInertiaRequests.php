@@ -278,6 +278,12 @@ class HandleInertiaRequests extends Middleware
                         'Yacht',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::YACHT]),
                         fn ($s) => $s->attributes(['icon' => 'yacht'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD),
+                        'Savings',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::SAVINGS]),
+                        fn ($s) => $s->attributes(['icon' => 'savings'])
                     );
             });
         }
