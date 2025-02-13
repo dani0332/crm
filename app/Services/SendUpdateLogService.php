@@ -34,6 +34,7 @@ use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\SageProcess;
+use App\Models\SavingsQuote;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
@@ -262,6 +263,14 @@ class SendUpdateLogService
                         $personalQuoteRelation = [
                             'jetskiQuote' => [
                                 'parentClass' => JetskiQuote::class,
+                            ],
+                        ];
+                        break;
+
+                    case quoteTypeCode::SAVINGS:
+                        $personalQuoteRelation = [
+                            'savingsQuote' => [
+                                'parentClass' => SavingsQuote::class,
                             ],
                         ];
                         break;
