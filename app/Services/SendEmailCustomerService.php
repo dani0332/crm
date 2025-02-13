@@ -978,9 +978,12 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
+    public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId, $sendUpdateLog)
     {
         try {
+            if ($quoteTypeId == QuoteTypeId::Car) {
+                return app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $emailData);
+            }
             info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
 
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;

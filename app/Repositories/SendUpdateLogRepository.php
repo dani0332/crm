@@ -293,16 +293,10 @@ class SendUpdateLogRepository extends BaseRepository
                 $response[] = ['status' => 200, 'message' => 'Send Update to customer email is being scheduled'];
             }
 
-            $emailData = app(SendUpdateLogService::class)->sendUpdateToCustomerBirdData($sendUpdateLog, $request);
-            $response = app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $emailData);
-            // TODO: connect this via jobs.
-            info(json_encode($response));
-
-            // SendUpdateToCustomerJob::dispatch($sendUpdateLog, $request)->onQueue('insly');
-            return [];
+            SendUpdateToCustomerJob::dispatch($sendUpdateLog, $request)->onQueue('send-update');
             info('fn:SendUpdateToCustomer - Process End - SendUpdateCode: '.$sendUpdateLog->code.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
-            logger()->error('fn:SendUpdateToCustomer - Failed - SendUpdateCode: '.$sendUpdateLog->code.' - Error : '.json_encode($ex->getMessage()));
+            info('fn:SendUpdateToCustomer - Failed - SendUpdateCode: '.$sendUpdateLog->code.' - Error : '.json_encode($ex->getMessage()));
             $response = ['status' => 500, 'message' => 'Something went wrong, please try again later'];
         }
 

@@ -1160,6 +1160,10 @@ class SendUpdateLogService
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
         $quoteModel = $this->getModelObject($quoteType);
         $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
+
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            return $this->sendUpdateToCustomerBirdData($sendUpdateLog, $quote, $quoteTypeId);
+        }
         $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
@@ -1605,13 +1609,8 @@ class SendUpdateLogService
         return '';
     }
 
-    public function sendUpdateToCustomerBirdData($sendUpdateLog, $request): object
+    public function sendUpdateToCustomerBirdData($sendUpdateLog, $quote, $quoteTypeId)
     {
-        $quoteTypeId = $sendUpdateLog->quote_type_id;
-        $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
-        $quoteModel = $this->getModelObject($quoteType);
-        $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
-
         $emailData = (object) [
             'advisorEmail' => $quote->advisor->email ?? '',
             'advisorLandLine' => $quote->advisor->landline_no ?? '',
@@ -1635,7 +1634,7 @@ class SendUpdateLogService
         $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? null;
         $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? null;
 
-        if ($quoteTypeId == in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike])) {
             $emailData->assistanceNumber = $emailData->assistanceNumber ?? $quote?->plan?->insuranceProvider?->roadside_phone_number ?? '';
             $emailData->insuranceCompany = $emailData->insuranceCompany ?? $quote?->plan?->insuranceProvider?->text ?? '';
             $emailData->planName = $quote?->plan?->text ?? '';
@@ -1644,7 +1643,7 @@ class SendUpdateLogService
         $customer = $quote->customer->insured;
         $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
 
-        return $emailData;
+        return [1, $emailData, 'send-update', $quoteTypeId];
     }
 
     public function sendUpdateToCustomerEmail($sendUpdate, $emailData)
@@ -1658,8 +1657,7 @@ class SendUpdateLogService
                 $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CAR_SEND_UPDATE)->first();
                 if ($birdMotorEventNB) {
                     $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                    info("CarUpdate event triggered for lead  Ref-ID: {$sendUpdate->uuid} |Time: ".now());
-                    info("CarUpdate response: {$response->status_code} | Ref-ID: {$sendUpdate->uuid} |Time: ".now());
+                    info('CarUpdate response: '.json_encode($response)." | Ref-ID: {$sendUpdate->uuid} |Time: ".now());
                     // $lead->nb_flow_executed_at = now();
                     // info("CarUpdate lead ref-id: {$sendUpdate->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
                     // $lead->save();
@@ -1674,7 +1672,7 @@ class SendUpdateLogService
                 info("CarUpdate already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$sendUpdate->uuid} | Time: ".now());
             }
 
-            return $response ?? null;
+            return $response?->status_code ?? null;
         } catch (\Exception $ex) {
             $errorMessage = "CarUpdate-Error: while sending quote workflow for lead: Ref-ID: {$sendUpdate->uuid} | Time: ".now();
             info($errorMessage);
