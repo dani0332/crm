@@ -1038,9 +1038,9 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
-        // Determine if the provider is GIG
-        $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
+        $isCaptureButtonEnabled = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE, InsurerProviderEnum::QATAR_INSURANCE]);
 
+        $isGIGProvider = $insuranceProvider && $insuranceProvider->code ===InsurerProviderEnum::GIG_INSURANCE ;
         // Check if multiple payments are enabled for the provider
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
 
@@ -1059,6 +1059,7 @@ class CentralService extends BaseService
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'isGIGOrQICProvider' => $isGIGOrQICProvider,
             'commissionInPayments' => $commissionInPayments,
+            'isCaptureButtonEnabled' => $isCaptureButtonEnabled
         ];
 
         // If payment object is provided, check commission status and merge with TAP configuration
