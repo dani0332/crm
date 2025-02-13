@@ -132,6 +132,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                             quoteTypeCode::Cycle,
                             quoteTypeCode::Yacht,
                             quoteTypeCode::CORPLINE,
+                            quoteTypeCode::SAVINGS,
                         ]
                     )) {
                         if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(
