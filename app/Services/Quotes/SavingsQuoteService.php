@@ -13,6 +13,7 @@ use App\Models\CurrencyType;
 use App\Models\MartialStatus;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\SavingsQuote;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -96,6 +97,10 @@ class SavingsQuoteService extends BaseQuoteService
             'uuid' => $uuid,
             'code' => "{$this->quoteType->shortCode()}{$uuid}",
             'quote_status_id' => QuoteStatusEnum::NewLead,
+        ]);
+
+        PersonalQuoteDetail::create([
+            'personal_quote_id' => $personalQuote->id,
         ]);
 
         SavingsQuote::create([
