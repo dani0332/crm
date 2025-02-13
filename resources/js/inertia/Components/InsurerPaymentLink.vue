@@ -5,30 +5,55 @@ const props = defineProps({
   paymentForm: Object,
   payments: Array,
 });
+const notification = useNotifications('toast');
+
+const isLinkChanged = ref(false);
 
 const paymentLinkBtnDisabled = computed(() => {
+    isLinkChanged.value = quotePaymentLinkChanged();
     return props.paymentForm.insurerPaymentLink == ''
 });
+
+const quotePaymentLinkChanged = () => {
+    const result = props.paymentForm.insurerPaymentLink != insurerPaymentLink.value && props.paymentForm.insurerPaymentLink != '';
+    emit('updateOnParent', false, result );
+    return result;
+}
 
 const insurerPaymentLink = computed(() => {
     return props.payments[0]?.payment_splits[0]?.insurer_payment_link ?? null;
 });
 
-const quotePaymentLinkChanged = computed(() => {
-    const result = props.paymentForm.insurerPaymentLink != insurerPaymentLink.value && props.paymentForm.insurerPaymentLink != '' && props.paymentForm.status == 'edit';
-    emit('updateOnParent', { closePaymentModal: false, linkChanged: result });
-    return result;
-})
-
-const closePaymentForm = () => {
-    emit('updateOnParent', { closePaymentModal: true, linkChanged: quotePaymentLinkChanged.value });
+const closePaymentForm = (closeModal = false) => {
+    emit('updateOnParent', true, isLinkChanged.value, closeModal);
 }
+
+const closeNotification = () => {
+  notification.error({
+    title: 'Are you sure?',
+    message: 'your changes will be lost',
+    position: 'top',
+    timeout: 0,
+    action: {
+      label: 'Confirm',
+      onClick: () => {
+        closePaymentForm(true)
+      },
+    },
+  })
+}
+
+defineExpose({
+    isLinkChanged, // Now accessible via the parent ref
+    closeNotification, // Now accessible via the parent ref
+    quotePaymentLinkChanged,
+});
 
 
 </script>
 <template>
     <div>
-        <div v-if="paymentForm.status == 'edit' && !quotePaymentLinkChanged" class="mr-4">
+        <div v-if="paymentForm.status == 'edit' && !isLinkChanged" class="mr-4">
             <x-button
             @click="closePaymentForm()"
             tabindex="0"
@@ -71,7 +96,7 @@ const closePaymentForm = () => {
             v-else
         >
             {{
-                paymentForm.status == 'create' || quotePaymentLinkChanged
+                paymentForm.status == 'create' || isLinkChanged
                 ? 'Send Insurer Payment Link'
                 : 'Updates'
             }}

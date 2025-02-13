@@ -254,7 +254,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function addPaymentSplits($request, $quoteID, $quoteUUID)
     {
         $masterPayment = (object) $request->payment;
-        $sendFTCEmail = $request->sendFTCEmail;
+        $sendFTCEmail = $masterPayment->payment_methods == PaymentMethodsEnum::InsurerPaymentLink && $masterPayment->payment_splits[0]['insurer_payment_link'] != null;
         $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
         if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0) {

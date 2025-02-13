@@ -1,6 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, useTemplateRef } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
@@ -160,6 +160,8 @@ const deleteSplitPaymentStatus = ref(0);
 const isCollectedByEnabled = ref(false);
 const modal2Ref = ref(null);
 const insurerPaymentLinkChanged = ref(false);
+const confirmModalClose = ref(false);
+const insurerPaymentComponent = ref(null);
 
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
@@ -1625,12 +1627,12 @@ const isCPD = computed(() => {
 });
 
 // use in insurer payment link
-const updateFromInsurerPaymentLink = (closePaymentModal = false, paymentLinkChanged = false) => {
+const updateFromInsurerPaymentLink = (closePaymentModal = false, paymentLinkChanged = false, closeModal = false) => {
   debugger;
   closePaymentModal == true && (createPaymentModal.value = !createPaymentModal.value);
+  confirmModalClose.value = closeModal;
   insurerPaymentLinkChanged.value = paymentLinkChanged;
 }
-
 
 const addPaymentModal = () => {
   if (props.sendUpdate) {
@@ -3033,16 +3035,38 @@ const fetchPlans = () => {
 };
 
 // Watch for changes in the modal's state
-watch(createPaymentModal, (newVal, oldVal) => {
+watch(createPaymentModal, async (newVal, oldVal) => {
   if (oldVal === true && newVal === false) {
     // Modal is closing
-    debugger;
     const checkInsurerPaymentLink = paymentMethodsModels.value[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink;
     if (insurerPaymentLinkChanged.value && paymentMethodsForm.collection_type === "insurer" && checkInsurerPaymentLink ) {
-      addPayment(true, false);
+      // Prevent the close event from triggering
+      if(confirmModalClose.value == false) {
+        await nextTick();
+        createPaymentModal.value = true;
+        insurerPaymentComponent.value.closeNotification();
+      }
+      return;
     }
   }
 });
+
+const closeNotification = () => {
+  notification.error({
+    title: 'Are you sure?',
+    message: 'your changes will be lost',
+    position: 'top',
+    timeout: 0,
+    action: {
+      label: 'Confirm',
+      onClick: () => {
+        confirmModalClose.value = true;
+        createPaymentModal.value = false;
+
+      },
+    },
+  })
+}
 
 onMounted(() => {
   if (props.sendUpdate?.plan_id) {
@@ -4284,7 +4308,7 @@ onBeforeMount(() => {
         </div>
 
         <x-modal
-          v-model="createPaymentModal"
+          v-model="createPaymentModal" 
           size="xl"
           :title="
             isCreditCardView
@@ -6194,7 +6218,7 @@ onBeforeMount(() => {
                   </x-button>
                 </div>
                 <template v-if="paymentMethodsModels[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink">
-                  <InsurerPaymentLink :paymentForm="paymentMethodsForm" :payments="payments" @updateOnParent="(e) => updateFromInsurerPaymentLink(e)"/>
+                  <InsurerPaymentLink ref="insurerPaymentComponent" :paymentForm="paymentMethodsForm" :payments="payments" @updateOnParent="(e,f,g) => updateFromInsurerPaymentLink(e, f, g)"/>
                 </template>
               </div>
             </template>
