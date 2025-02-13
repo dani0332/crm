@@ -873,7 +873,7 @@ class SendUpdateLogService
         $ccPaymentProcess = false;
         if (isTapEnabled() && ! empty($preparedDetailsForEndorsement['payment']?->send_update_log_id)) {
             info('fn:preparedDataForEndorsement - TAP Enabled - SendUpdateCode: '.$sendUpdateLog->code);
-            $checkCCPayments = $preparedDetailsForEndorsement['splitPayments']->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED])
+            $checkCCPayments = $preparedDetailsForEndorsement['splitPayments']->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
                 ->where('payment_method', PaymentMethodsEnum::CreditCard)
                 ->count() > 0;
             $isInsurerPayment = $preparedDetailsForEndorsement['payment']->isInsurerPayment();

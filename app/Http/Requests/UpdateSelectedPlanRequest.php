@@ -3,8 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
-use App\Models\Payment;
-use App\Services\BrokerCommissionService;
+use App\Services\SplitPaymentService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSelectedPlanRequest extends FormRequest
@@ -49,14 +48,7 @@ class UpdateSelectedPlanRequest extends FormRequest
         $code = request()->code;
 
         $validator->after(function ($validator) use ($quoteType, $insuranceProviderId, $planId, $code) {
-            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $planId);
-            if (! $isCreditCardEnabled) {
-                $payment = Payment::where('code', $code)->first();
-                if ($payment && $payment->isPaymentAuthorized() && $payment->isInsurerPayment()) {
-                    $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
-                }
-            }
+            app(SplitPaymentService::class)->validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, null, $planId);
         });
     }
 }
