@@ -115,7 +115,7 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
             'copay' => ['index' => 8, 'title' => 'Renewal Co-Pay', 'rules' => 'required|max:300'],
             'member_names' => ['index' => 9, 'title' => 'Member Names', 'rules' => 'nullable|max:500'],
             'member_dob' => ['index' => 10, 'title' => "Customer's DOB", 'rules' => ['required', 'max:100', function ($attribute, $value, $onFailure) {
-                $dobs = explode('|', $value);
+                $dobs = array_map('trim', explode('|', $value));
                 foreach ($dobs as $dob) {
                     if (! $this->validateDate($dob)) {
                         $onFailure('Invalid value provided for '.$attribute);

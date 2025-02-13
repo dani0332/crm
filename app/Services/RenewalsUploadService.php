@@ -1134,12 +1134,12 @@ class RenewalsUploadService
                     'Employee with salary above AED 4000' => 2,
                 ];
 
-                $memberDobs = explode('|', $data['member_dob']);
-                $memberNames = explode('|', $data['member_names']);
-                $memberNationalities = explode('|', $data['member_nationality']);
-                $memberGenders = explode('|', $data['member_gender']);
-                $memberCategoriesText = explode('|', $data['member_category']);
-                $memberEmirateOfVisas = explode('|', $data['member_emirate_of_visa']);
+                $memberDobs = array_map('trim', explode('|', $data['member_dob']));
+                $memberNames = array_map('trim', explode('|', $data['member_names']));
+                $memberNationalities = array_map('trim', explode('|', $data['member_nationality']));
+                $memberGenders = array_map('trim', explode('|', $data['member_gender']));
+                $memberCategoriesText = array_map('trim', explode('|', $data['member_category']));
+                $memberEmirateOfVisas = array_map('trim', explode('|', $data['member_emirate_of_visa']));
 
                 $nationalities = Nationality::whereIn('text', $memberNationalities)->get(['id', 'text']);
                 $memberCategories = MemberCategory::whereIn('text', $memberCategoriesText)->get(['id', 'text']);
@@ -1159,22 +1159,29 @@ class RenewalsUploadService
                     $memberDetails['firstName'] = $memberNameArray[0];
                     unset($memberNameArray[0]);
                     $memberDetails['lastName'] = implode(' ', $memberNameArray);
-
-                    // continue if member already exists
+                    
+                    // continue and update if a user with same first_name and last_name exists
                     $memberExists = CustomerMembers::where([
                         ['quote_id', $quote->id],
                         ['quote_type', HealthQuote::class],
                         ['first_name', $memberDetails['firstName']],
                         ['last_name', $memberDetails['lastName']],
-                        ['dob', $memberDetails['dob']],
-                        ['emirate_of_your_visa_id', $memberDetails['emirateOfYourVisaId']],
-                        ['gender', $memberDetails['gender']],
-                        ['nationality_id', $memberDetails['nationalityId']],
-                        ['member_category_id', $memberDetails['memberCategoryId']],
-                        ['salary_band_id', $memberDetails['salaryBandId']],
                     ])->exists();
 
                     if ($memberExists) {
+                        CustomerMembers::where([
+                            ['quote_id', $quote->id],
+                            ['quote_type', HealthQuote::class],
+                            ['first_name', $memberDetails['firstName']],
+                            ['last_name', $memberDetails['lastName']],
+                        ])->update([
+                            'dob' => $memberDetails['dob'],
+                            'emirate_of_your_visa_id' => $memberDetails['emirateOfYourVisaId'],
+                            'gender' => $memberDetails['gender'],
+                            'nationality_id' => $memberDetails['nationalityId'],
+                            'member_category_id' => $memberDetails['memberCategoryId'],
+                            'salary_band_id' => $memberDetails['salaryBandId']
+                        ]);
                         continue;
                     }
 
@@ -1739,7 +1746,7 @@ class RenewalsUploadService
 
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HEA) {
                     if ($leadData->member_nationality) {
-                        $memberNationalities = explode('|', $leadData->member_nationality);
+                        $memberNationalities = array_map('trim', explode('|', $leadData->member_nationality));
                         foreach ($memberNationalities as $memberNationality) {
                             if (! Nationality::where('text', $memberNationality)->first()) {
                                 $leadValidationErrors->push('Invalid Nationality Text');
@@ -1748,7 +1755,7 @@ class RenewalsUploadService
                         }
                     }
                     if ($leadData->member_dob) {
-                        $dobs = explode('|', $leadData->member_dob);
+                        $dobs = array_map('trim', explode('|', $leadData->member_dob));
                         foreach ($dobs as $dob) {
                             if (! $this->validateDate($dob)) {
                                 $leadValidationErrors->push('Invalid Date of Birth');
