@@ -2,35 +2,16 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\CustomerTypeEnum;
-use App\Enums\DocumentTypeCode;
 use App\Enums\InvestmentFrequencyEnum;
-use App\Enums\LookupsEnum;
-use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\RolesEnum;
 use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsQuoteRequest;
-use App\Models\Emirate;
 use App\Models\Nationality;
-use App\Repositories\ActivityRepository;
-use App\Repositories\CustomerMembersRepository;
-use App\Repositories\DocumentTypeRepository;
-use App\Repositories\EmbeddedProductRepository;
-use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
-use App\Repositories\PaymentMethodRepository;
-use App\Repositories\PersonalPlanRepository;
-use App\Repositories\QuoteNoteRepository;
 use App\Services\CentralService;
-use App\Services\QuoteDocumentService;
 use App\Services\Quotes\SavingsQuoteService;
-use App\Services\SendUpdateLogService;
-use App\Services\SplitPaymentService;
 
 class SavingsQuoteController extends Controller
 {
@@ -105,81 +86,9 @@ class SavingsQuoteController extends Controller
 
     public function show($uuid)
     {
-        /* Start - Temporarily adding for correcting historic data */
-        $quote = $this->savingsQuoteService->getOne($uuid, true);
-        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled($this->savingsQuoteService->quoteType->value);
-        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->savingsQuoteService->quoteType->value, $quote);
+        $data = $this->savingsQuoteService->getShowData($uuid);
 
-        $quoteStatuses = $this->savingsQuoteService->getQuoteStatuses([QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
-
-        $activities = ActivityRepository::where([
-            'quote_type_id' => $this->savingsQuoteService->quoteType->id(),
-            'quote_request_id' => $quote->id,
-        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
-        $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes($this->savingsQuoteService->quoteType->id());
-
-        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($this->savingsQuoteService->quoteType->value, $quote->id);
-        $bookPolicyDetails = $this->savingsQuoteService->bookPolicyPayload($quote, $this->savingsQuoteService->quoteType->value, $quote->payments, $quoteDocuments);
-
-        $membersDetails = CustomerMembersRepository::getBy($quote->id, $this->savingsQuoteService->quoteType->name);
-        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
-        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-
-        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($this->savingsQuoteService->quoteType->id());
-
-        $advisors = $this->savingsQuoteService->getAdvisors();
-        $personalPlans = PersonalPlanRepository::get();
-        $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList($this->savingsQuoteService->quoteType->value, $quote->code);
-        $embeddedProducts = EmbeddedProductRepository::byQuoteType($this->savingsQuoteService->quoteType->id(), $quote->id);
-        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-        $uboDetails = CustomerMembersRepository::getBy($quote->id, $this->savingsQuoteService->quoteType->name, CustomerTypeEnum::Entity);
-        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-        $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
-        $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::SAVINGS);
-
-        return inertia('SavingsQuote/Show', [
-            'quoteType' => $this->savingsQuoteService->quoteType,
-            'quoteTypeId' => $this->savingsQuoteService->quoteType->id(),
-            'duplicateAllowedLobs' => $duplicateAllowedLobs,
-            'embeddedProducts' => $embeddedProducts,
-            'storageUrl' => storageUrl(),
-            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
-            'advisors' => $advisors,
-            'quote' => $quote,
-            'customerTypeEnum' => CustomerTypeEnum::asArray(),
-            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
-            'linkedQuoteDetails' => $linkedQuoteDetails,
-            'activities' => $activities,
-            'quoteStatuses' => $quoteStatuses,
-            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
-            'documentTypes' => $documentTypes,
-            'paymentDocument' => $paymentDocument,
-            'paymentMethods' => $paymentMethods,
-            'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $quote?->payments,
-            'membersDetails' => $membersDetails,
-            'nationalities' => $nationalities,
-            'memberRelations' => $memberRelations,
-            'lostReasons' => $lostReasons,
-            'insuranceProviders' => $insuranceProviders,
-            'personalPlans' => $personalPlans,
-            'permissions' => [
-                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-            ],
-            'modelType' => $this->savingsQuoteService->quoteType,
-            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::SavingsManager),
-            'industryType' => $industryType,
-            'emirates' => $emirates,
-            'UBOsDetails' => $uboDetails,
-            'UBORelations' => $uboRelations,
-            'noteDocumentType' => $noteDocumentType,
-            'quoteDocuments' => $quoteNotes,
-        ]);
+        return inertia('SavingsQuote/Show', $data);
 
         // (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::PET->value);
         // /* End - Temporarily adding for correcting historic data */
