@@ -403,6 +403,9 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_QUOTES_CREATE = 'savings-quotes-create';
     public const SAVINGS_QUOTES_EDIT = 'savings-quotes-edit';
     public const SAVINGS_QUOTES_SHOW = 'savings-quotes-show';
+    public const SAVINGS_COMPREHENSIVE_DASHBOARD = 'savings-comprehensive-dashboard';
+    public const SAVINGS_CONVERSION_REPORT = 'savings-conversion-report';
+    public const SAVINGS_DISTRIBUTION_REPORT = 'savings-distribution-report';
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -418,6 +421,7 @@ final class PermissionsEnum extends Enum
             self::YACHT_CONVERSION_REPORT,
             self::CORPLINE_CONVERSION_REPORT,
             self::GROUPMEDICAL_CONVERSION_REPORT,
+            self::SAVINGS_CONVERSION_REPORT,
         ];
     }
 
@@ -435,6 +439,7 @@ final class PermissionsEnum extends Enum
             self::YACHT_COMPREHENSIVE_DASHBOARD,
             self::CORPLINE_COMPREHENSIVE_DASHBOARD,
             self::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+            self::SAVINGS_COMPREHENSIVE_DASHBOARD,
         ];
     }
 
@@ -452,6 +457,7 @@ final class PermissionsEnum extends Enum
             self::YACHT_DISTRIBUTION_REPORT,
             self::CORPLINE_DISTRIBUTION_REPORT,
             self::GROUPMEDICAL_DISTRIBUTION_REPORT,
+            self::SAVINGS_DISTRIBUTION_REPORT,
         ];
     }
 
