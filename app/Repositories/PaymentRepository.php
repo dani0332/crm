@@ -173,6 +173,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $maxRetries = 2;
 
         return $this->handleWithDeadlockRetries(function () use ($request) {
+            $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             $masterPayment = (object) $request->payment;
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
@@ -231,7 +232,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if (! empty($request->trashedFilesModal)) {
                 QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
-            $this->updatePaymentSplits($request);
+            $this->updatePaymentSplits($request, $quoteModel->uuid);
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
         }, $maxRetries);
@@ -302,10 +303,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $quoteID);
     }
 
-    public function updatePaymentSplits($request)
+    public function updatePaymentSplits($request, $quoteUUID)
     {
         $masterPayment = (object) $request->payment;
-        $sendFTCEmail = false;
+        $sendFTCEmail = $masterPayment->payment_methods == PaymentMethodsEnum::InsurerPaymentLink && $masterPayment->payment_splits[0]['insurer_payment_link'] != null && $request->sendFTCEmail;
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
@@ -409,7 +410,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
         }
-        $sendFTCEmail && SendFTCEmailJob::dispatch($request->paymentCode, QuoteTypes::from($request->modelType))->delay(now()->addSeconds(5));
+        $sendFTCEmail && SendFTCEmailJob::dispatch($quoteUUID, QuoteTypes::from($request->modelType), true)->delay(now()->addSeconds(5));
         $payment = Payment::where('code', $request->paymentCode)->first();
         $this->setMasterPaymentStatus($payment);
         app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $request->paymentCode);

@@ -2260,7 +2260,7 @@ const validatePaymentAmount = isValid => {
   return false;
 };
 
-const addPayment = (isValid, sendFTCEmail = true) => {
+const addPayment = (isValid) => {
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
@@ -2282,6 +2282,9 @@ const addPayment = (isValid, sendFTCEmail = true) => {
     }
   }
   if (!isValid) return;
+
+  // making modal close after payment
+  confirmModalClose.value = true
 
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]
@@ -2314,7 +2317,7 @@ const addPayment = (isValid, sendFTCEmail = true) => {
     plan_id: planDetail?.value?.id ?? null, // handling null exception when plan is not found
     captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
-    sendFTCEmail: sendFTCEmail,
+    sendFTCEmail: insurerPaymentLinkChanged?.value ?? false,
     new_payment_structure: true,
     isInertia: true,
     send_update_id: props.sendUpdate?.id || null,
@@ -2438,6 +2441,7 @@ const addPayment = (isValid, sendFTCEmail = true) => {
   }
 
   if (paymentMethodsForm.status === 'edit') {
+    debugger;
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
       isPolicyIssuanceDiscount.value === false &&
