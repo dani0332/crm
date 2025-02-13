@@ -34,6 +34,7 @@ class SavingsQuoteDataSeeder extends Seeder
             PermissionsEnum::SAVINGS_COMPREHENSIVE_DASHBOARD,
             PermissionsEnum::SAVINGS_CONVERSION_REPORT,
             PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
         ], [RolesEnum::Engineering, RolesEnum::Admin]);
         $this->product();
     }

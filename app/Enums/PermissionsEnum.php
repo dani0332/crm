@@ -406,6 +406,7 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_COMPREHENSIVE_DASHBOARD = 'savings-comprehensive-dashboard';
     public const SAVINGS_CONVERSION_REPORT = 'savings-conversion-report';
     public const SAVINGS_DISTRIBUTION_REPORT = 'savings-distribution-report';
+    public const SAVINGS_LEAD_ALLOCATION_DASHBOARD = 'savings-lead-allocation-dashboard';
 
     public static function getAdvisorConversionReportPermissions()
     {
