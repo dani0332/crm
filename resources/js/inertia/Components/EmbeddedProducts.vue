@@ -372,7 +372,7 @@ const onActivitySubmit = isValid => {
     .catch(err => {
       let message = 'Something went wrong';
       if (err.response.data) {
-        message = err.response.data[0];         
+        message = err.response.data[0];
       }
       notification.error({
         title: message,
@@ -393,15 +393,15 @@ const onVoidSubmit = isValid => {
     .then(res => {
       modals.voidPayment = false;
       notification.success({
-      title: 'Processed',
-      position: 'top',
+        title: 'Processed',
+        position: 'top',
       });
       router.get(window.location.href);
     })
     .catch(err => {
       let message = 'Something went wrong';
       if (err.response.data) {
-        message = err.response.data[0]; 
+        message = err.response.data[0];
       }
       notification.error({
         title: message,
