@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -123,7 +125,7 @@ class QuoteDocumentService extends BaseService
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
-        dd($documentType);
+        // dd($documentType);
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
@@ -204,7 +206,7 @@ class QuoteDocumentService extends BaseService
                 'created_by_id' => auth()->id(),
             ]);
 
-            // todo: need to add 'Payment Pending' status here on the basis of payments on insurer_payment_link
+            $this->updateQuoteAndPaymentStatus($quote, $documentType, $isPaymentReceipt);
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc) {
                 WatermarkDocumentsJob::dispatch(
@@ -712,6 +714,16 @@ class QuoteDocumentService extends BaseService
         }
 
         return false;
+    }
+
+    private function updateQuoteAndPaymentStatus($quote, $documentType, $isPaymentReceipt)
+    {
+        $quote->payments->filter(function ($payment) use (&$quote) {
+            if ($payment->payment_methods_code == PaymentMethodsEnum::InsurerPaymentLink) {
+                $payment->update(['payment_status_id' => PaymentStatusEnum::PENDING]);
+                $quote->update(['quote_status_id' => QuoteStatusEnum::PaymentPending]);
+            }
+        });
     }
 
     /**
