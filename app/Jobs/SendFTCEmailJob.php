@@ -66,6 +66,7 @@ class SendFTCEmailJob implements ShouldQueue
                         'quoteUID' => $this->quoteUUID,
                         'quoteTypeId' => (int) $this->quoteType->id(),
                         'isSic' => $isSic,
+                        'isInsurerPaymentLink' => $this->isInsurerPayment 
                     ];
 
                     Marshall::request('/payment/send-payment-auth-email', 'post', $data);
