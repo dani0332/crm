@@ -405,7 +405,7 @@ const commissionVatNotApplicableTooltip = computed(() => {
 const commissionVatApplicableTooltip = computed(() => {
   let toolTip = null;
   if (checkCommissionVatApplicableEnableAgainstProvider.value) {
-      return !checkCommissionVatApplicableEnableAgainstProvider.value;
+    return !checkCommissionVatApplicableEnableAgainstProvider.value;
   }
   if (bpForm.isCommissionDisabled) {
     return bpForm.disabledCommissionTooltip;
@@ -452,19 +452,20 @@ const disableCommissionVatNotApplicable = computed(() => {
 
 const disableCommissionVatApplicable = computed(() => {
   // Enable Commission vat not applicable for all LOBs or when commission vat not applicable is  empty
-  // !checkCommissionVatApplicableEnableAgainstProvider.value 
+  // !checkCommissionVatApplicableEnableAgainstProvider.value
   return !bp.isEditing || bpForm.commission_vat_not_applicable > 0;
 });
 
 const checkCommissionVatApplicableEnableAgainstProvider = computed(() => {
-    const payment = getPayment();
-    if (payment) {
-        const paidStatusIds = [
-            paymentStatusEnum.PAID,
-        ];
-        return (paidStatusIds.includes(payment.payment_status_id) && payment.insurance_provider?.code === insuranceProviderCodeEnum.TM);
-    }
-    return false;
+  const payment = getPayment();
+  if (payment) {
+    const paidStatusIds = [paymentStatusEnum.PAID];
+    return (
+      paidStatusIds.includes(payment.payment_status_id) &&
+      payment.insurance_provider?.code === insuranceProviderCodeEnum.TM
+    );
+  }
+  return false;
 });
 
 const showSendAndBookPolicyButtonBlock = computed(() => {
