@@ -2847,7 +2847,7 @@ const shouldProcessUpdate = payment => {
   };
 
   if (isRenewalUploadConditionMet()) {
-      return true
+    return true;
   }
 
   if (captureOption === 'approve') {
