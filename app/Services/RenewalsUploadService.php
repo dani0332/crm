@@ -1118,81 +1118,6 @@ class RenewalsUploadService
 
             $quote->update($quoteData);
 
-            // Create Members for Health Quote
-            if ($quoteType->code == quoteTypeCode::Health) {
-
-                $memberCategorySalaryMapping = [
-                    'Investor or Partner' => 2,
-                    'Golden visa' => 2,
-                    'Self-employed or Freelancer' => 2,
-                    'Domestic worker' => 1,
-                    'Dependent spouse' => 2,
-                    'Dependent child' => 2,
-                    'Dependent parent' => 2,
-                    'Dependent sibling or Other relatives' => 2,
-                    'Employee with salary AED 4000 and below' => 1,
-                    'Employee with salary above AED 4000' => 2,
-                ];
-
-                $memberDobs = array_map('trim', explode('|', $data['member_dob']));
-                $memberNames = array_map('trim', explode('|', $data['member_names']));
-                $memberNationalities = array_map('trim', explode('|', $data['member_nationality']));
-                $memberGenders = array_map('trim', explode('|', $data['member_gender']));
-                $memberCategoriesText = array_map('trim', explode('|', $data['member_category']));
-                $memberEmirateOfVisas = array_map('trim', explode('|', $data['member_emirate_of_visa']));
-
-                $nationalities = Nationality::whereIn('text', $memberNationalities)->get(['id', 'text']);
-                $memberCategories = MemberCategory::whereIn('text', $memberCategoriesText)->get(['id', 'text']);
-                $emirates = Emirate::whereIn('text', $memberEmirateOfVisas)->get(['id', 'text']);
-
-                foreach ($memberDobs as $index => $dob) {
-                    $memberDetails = [
-                        'emirateOfYourVisaId' => $emirates->where('text', $memberEmirateOfVisas[$index])->first()->id ?? null,
-                        'gender' => $memberGenders[$index],
-                        'nationalityId' => $nationalities->where('text', $memberNationalities[$index])->first()->id ?? null,
-                        'memberCategoryId' => $memberCategories->where('text', $memberCategoriesText[$index])->first()->id ?? null,
-                        'salaryBandId' => array_key_exists($memberCategoriesText[$index], $memberCategorySalaryMapping) ? $memberCategorySalaryMapping[$memberCategoriesText[$index]] : 1,
-                        'dob' => Carbon::parse($this->formatDate($dob))->toDateString(),
-                        'relationCode' => '',
-                    ];
-                    $memberNameArray = explode(' ', $memberNames[$index]);
-                    $memberDetails['firstName'] = $memberNameArray[0];
-                    unset($memberNameArray[0]);
-                    $memberDetails['lastName'] = implode(' ', $memberNameArray);
-                    
-                    // continue and update if a user with same first_name and last_name exists
-                    $memberExists = CustomerMembers::where([
-                        ['quote_id', $quote->id],
-                        ['quote_type', HealthQuote::class],
-                        ['first_name', $memberDetails['firstName']],
-                        ['last_name', $memberDetails['lastName']],
-                    ])->exists();
-
-                    if ($memberExists) {
-                        CustomerMembers::where([
-                            ['quote_id', $quote->id],
-                            ['quote_type', HealthQuote::class],
-                            ['first_name', $memberDetails['firstName']],
-                            ['last_name', $memberDetails['lastName']],
-                        ])->update([
-                            'dob' => $memberDetails['dob'],
-                            'emirate_of_your_visa_id' => $memberDetails['emirateOfYourVisaId'],
-                            'gender' => $memberDetails['gender'],
-                            'nationality_id' => $memberDetails['nationalityId'],
-                            'member_category_id' => $memberDetails['memberCategoryId'],
-                            'salary_band_id' => $memberDetails['salaryBandId']
-                        ]);
-                        continue;
-                    }
-
-                    $dataArray = [
-                        'quoteUID' => $quote->uuid,
-                        'memberDetails' => [$memberDetails],
-                    ];
-
-                    Ken::request('/add-health-quote-members', 'POST', $dataArray);
-                }
-            }
             if (! checkPersonalQuotes($quoteType)) {
                 $this->syncQuote($quote, $quoteData);
             }
@@ -1240,6 +1165,88 @@ class RenewalsUploadService
 
             return $quote;
         });
+
+        // Create Members for Health Quote
+        if($quote) {
+            $quoteTypeCode = array_key_exists('quote_type', $data) ? $data['quote_type'] : $renewalQuoteProcess->quote_type;
+            $quoteType = $this->getQuoteTypeByShortCode($quoteTypeCode);
+            if ($quoteType->code == quoteTypeCode::Health) {
+
+                $memberCategorySalaryMapping = [
+                    'Investor or Partner' => 2,
+                    'Golden visa' => 2,
+                    'Self-employed or Freelancer' => 2,
+                    'Domestic worker' => 1,
+                    'Dependent spouse' => 2,
+                    'Dependent child' => 2,
+                    'Dependent parent' => 2,
+                    'Dependent sibling or Other relatives' => 2,
+                    'Employee with salary AED 4000 and below' => 1,
+                    'Employee with salary above AED 4000' => 2,
+                ];
+
+                $memberDobs = array_map('trim', explode('|', $data['member_dob']));
+                $memberNames = array_map('trim', explode('|', $data['member_names']));
+                $memberNationalities = array_map('trim', explode('|', $data['member_nationality']));
+                $memberGenders = array_map('trim', explode('|', $data['member_gender']));
+                $memberCategoriesText = array_map('trim', explode('|', $data['member_category']));
+                $memberEmirateOfVisas = array_map('trim', explode('|', $data['member_emirate_of_visa']));
+
+                $nationalities = Nationality::whereIn('text', $memberNationalities)->get(['id', 'text']);
+                $memberCategories = MemberCategory::whereIn('text', $memberCategoriesText)->get(['id', 'text']);
+                $emirates = Emirate::whereIn('text', $memberEmirateOfVisas)->get(['id', 'text']);
+
+                foreach ($memberDobs as $index => $dob) {
+                    $memberDetails = [
+                        'emirateOfYourVisaId' => $emirates->where('text', $memberEmirateOfVisas[$index])->first()->id ?? null,
+                        'gender' => $memberGenders[$index],
+                        'nationalityId' => $nationalities->where('text', $memberNationalities[$index])->first()->id ?? null,
+                        'memberCategoryId' => $memberCategories->where('text', $memberCategoriesText[$index])->first()->id ?? null,
+                        'salaryBandId' => array_key_exists($memberCategoriesText[$index], $memberCategorySalaryMapping) ? $memberCategorySalaryMapping[$memberCategoriesText[$index]] : 1,
+                        'dob' => Carbon::parse($this->formatDate($dob))->toDateString(),
+                        'relationCode' => '',
+                    ];
+                    $memberNameArray = explode(' ', $memberNames[$index]);
+                    $memberDetails['firstName'] = $memberNameArray[0];
+                    unset($memberNameArray[0]);
+                    $memberDetails['lastName'] = implode(' ', $memberNameArray);
+                    
+                    // continue and update if a user with same first_name and last_name exists
+                    $memberExists = CustomerMembers::where([
+                        ['quote_id', $quote->id],
+                        ['quote_type', HealthQuote::class],
+                        ['first_name', $memberDetails['firstName']],
+                        ['last_name', $memberDetails['lastName']],
+                    ])
+                    ->whereNull('deleted_at')
+                    ->exists();
+
+                    if ($memberExists) {
+                        CustomerMembers::where([
+                            ['quote_id', $quote->id],
+                            ['quote_type', HealthQuote::class],
+                            ['first_name', $memberDetails['firstName']],
+                            ['last_name', $memberDetails['lastName']],
+                        ])->update([
+                            'dob' => $memberDetails['dob'],
+                            'emirate_of_your_visa_id' => $memberDetails['emirateOfYourVisaId'],
+                            'gender' => $memberDetails['gender'],
+                            'nationality_id' => $memberDetails['nationalityId'],
+                            'member_category_id' => $memberDetails['memberCategoryId'],
+                            'salary_band_id' => $memberDetails['salaryBandId']
+                        ]);
+                        continue;
+                    }
+
+                    $dataArray = [
+                        'quoteUID' => $quote->uuid,
+                        'memberDetails' => [$memberDetails],
+                    ];
+
+                    Ken::request('/add-health-quote-members', 'POST', $dataArray);
+                }
+            }
+        }
 
         return $quote;
     }
@@ -1776,7 +1783,7 @@ class RenewalsUploadService
                         }
                     }
                     if ($leadData->member_category) {
-                        $memberCategories = explode('|', $leadData->member_category);
+                        $memberCategories = array_map('trim', explode('|', $leadData->member_category));
                         foreach ($memberCategories as $memberCategory) {
                             if (! MemberCategory::where('text', $memberCategory)->first()) {
                                 $leadValidationErrors->push('Invalid Member Category');
@@ -1785,7 +1792,7 @@ class RenewalsUploadService
                         }
                     }
                     if ($leadData->member_emirate_of_visa) {
-                        $memberEmirates = explode('|', $leadData->member_emirate_of_visa);
+                        $memberEmirates = array_map('trim', explode('|', $leadData->member_emirate_of_visa));
                         foreach ($memberEmirates as $memberEmirate) {
                             if (! Emirate::where('text', $memberEmirate)->first()) {
                                 $leadValidationErrors->push('Invalid Emirate of Visa');
