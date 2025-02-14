@@ -67,7 +67,9 @@ const kycLogsValue = computed(() => {
 const incomeSource = computed(() => {
   if (page.props.customerDetails?.detail?.source_of_income === 'employed') {
     return 2;
-  } else if (page.props.customerDetails?.detail?.source_of_income === 'business') {
+  } else if (
+    page.props.customerDetails?.detail?.source_of_income === 'business'
+  ) {
     return 1;
   }
   return null;
@@ -93,49 +95,59 @@ const kycForm = reactive({
     props.customerDetails?.detail?.country_of_residence ?? 56, //TODO:: Why this hardcode???
   place_of_birth: page.props.customerDetails?.detail?.place_of_birth ?? null,
   resident_status:
-      page.props.customerDetails?.detail?.residential_status ?? 'uaeResident',
+    page.props.customerDetails?.detail?.residential_status ?? 'uaeResident',
   residential_address:
-      page.props.customerDetails?.detail?.residential_address ?? null,
+    page.props.customerDetails?.detail?.residential_address ?? null,
   mobile_number: props.quote.mobile_no,
   email: props.quote.email,
   customer_tenure: page.props.customerDetails?.detail?.customer_tenure ?? null,
   id_type: page.props.customerDetails?.detail?.id_type ?? 'emiratesId',
   id_number:
-      page.props.customerDetails?.detail?.id_number ??
-      page.props.customerDetails?.emirates_id_number ??
+    page.props.customerDetails?.detail?.id_number ??
+    page.props.customerDetails?.emirates_id_number ??
     null,
-  id_issue_date: convertDate(page.props.customerDetails?.detail?.id_issuance_date),
+  id_issue_date: convertDate(
+    page.props.customerDetails?.detail?.id_issuance_date,
+  ),
   id_expiry_date: convertDate(
-      page.props.customerDetails?.detail?.id_expiry_date ??
+    page.props.customerDetails?.detail?.id_expiry_date ??
       page.props.customerDetails?.emirates_id_expiry_date,
   ),
   mode_of_contact:
-      page.props.customerDetails?.detail?.mode_of_contact ?? 'phoneAndEmail',
+    page.props.customerDetails?.detail?.mode_of_contact ?? 'phoneAndEmail',
   mode_of_delivery:
-      page.props.customerDetails?.detail?.mode_of_delivery ?? 'mod-delivery-pse',
+    page.props.customerDetails?.detail?.mode_of_delivery ?? 'mod-delivery-pse',
   income_source: page.props.customerDetails?.detail?.source_of_income ?? null,
-  company_name: page.props.customerDetails?.detail?.employer_company_name ?? null,
+  company_name:
+    page.props.customerDetails?.detail?.employer_company_name ?? null,
   professional_title: page.props.customerDetails?.detail?.job_title ?? null,
-  employment_sector: page.props.customerDetails?.detail?.employment_sector ?? null,
+  employment_sector:
+    page.props.customerDetails?.detail?.employment_sector ?? null,
   trade_license: page.props.customerDetails?.detail?.trade_license_no ?? null,
-  company_position: page.props.customerDetails?.detail?.position_in_company ?? null,
+  company_position:
+    page.props.customerDetails?.detail?.position_in_company ?? null,
   pep: page.props.customerDetails?.detail?.pep ?? props.amlQuoteStatus,
   financial_sanctions:
-      page.props.customerDetails?.detail?.financial_sanctions ?? props.amlQuoteStatus,
+    page.props.customerDetails?.detail?.financial_sanctions ??
+    props.amlQuoteStatus,
   dual_nationality:
-      page.props.customerDetails?.detail?.dual_nationality ?? props.amlQuoteStatus,
+    page.props.customerDetails?.detail?.dual_nationality ??
+    props.amlQuoteStatus,
   transaction_pattern:
-      page.props.customerDetails?.detail?.transaction_pattern ?? 'no_changes',
+    page.props.customerDetails?.detail?.transaction_pattern ?? 'no_changes',
   premium_tenure:
-      page.props.customerDetails?.detail?.premium_tenure ?? 'single_premium',
+    page.props.customerDetails?.detail?.premium_tenure ?? 'single_premium',
   in_sanction_list:
-      page.props.customerDetails?.detail?.in_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
-  deal_sanction_list:
-      page.props.customerDetails?.detail?.deal_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
-  is_operation_high_risk:
-      page.props.customerDetails?.detail?.is_operation_high_risk ??
+    page.props.customerDetails?.detail?.in_sanction_list ??
     props.amlQuoteStatus, // kycLogsValue.value
-  is_partner: page.props.customerDetails?.detail?.is_partner ?? incomeSource.value,
+  deal_sanction_list:
+    page.props.customerDetails?.detail?.deal_sanction_list ??
+    props.amlQuoteStatus, // kycLogsValue.value
+  is_operation_high_risk:
+    page.props.customerDetails?.detail?.is_operation_high_risk ??
+    props.amlQuoteStatus, // kycLogsValue.value
+  is_partner:
+    page.props.customerDetails?.detail?.is_partner ?? incomeSource.value,
 });
 
 const incomeSourceFields = reactive({
@@ -320,7 +332,9 @@ onMounted(() => {
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
   );
   activePatternField();
-  changeIncomeSource(page.props.customerDetails?.detail?.source_of_income ?? null);
+  changeIncomeSource(
+    page.props.customerDetails?.detail?.source_of_income ?? null,
+  );
 });
 </script>
 
