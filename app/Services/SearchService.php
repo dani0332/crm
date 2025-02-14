@@ -140,6 +140,7 @@ class SearchService extends BaseService
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::SAVINGS->value,
         ];
 
         // Get manager roles based on quote types
@@ -166,6 +167,7 @@ class SearchService extends BaseService
             RolesEnum::PetAdvisor,
             RolesEnum::CycleAdvisor,
             RolesEnum::JetskiAdvisor,
+            RolesEnum::SavingsAdvisor,
         ];
 
         return auth()->user()->hasAnyRole($advisorRoles);

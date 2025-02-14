@@ -104,6 +104,7 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::SAVINGS->value,
         ])) {
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
