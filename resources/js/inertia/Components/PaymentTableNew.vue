@@ -2807,7 +2807,6 @@ const shouldProcessUpdate = payment => {
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
-  const isCarQuote = props.quoteType === 'Car';
   const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
@@ -2818,7 +2817,6 @@ const shouldProcessUpdate = payment => {
     quoteTypeCodeEnum.Car,
     quoteTypeCodeEnum.Home,
     quoteTypeCodeEnum.Bike,
-    quoteTypeCodeEnum.Travel,
   ];
   const captureOption = getCaptureOption.value(payment);
   if (
