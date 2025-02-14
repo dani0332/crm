@@ -2826,7 +2826,8 @@ const shouldProcessUpdate = payment => {
     hasAnyCCSplitPayment() &&
     !shouldSendUpdate
   ) {
-    isInsurerAmlCleared = insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    isInsurerAmlCleared =
+      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
     isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
   }
 
