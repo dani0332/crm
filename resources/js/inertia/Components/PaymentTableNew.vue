@@ -79,6 +79,7 @@ const props = defineProps({
     type: Array,
     default: [],
   },
+  realQuote: Object,
 });
 
 // All reactive properties are defined here
@@ -243,7 +244,7 @@ if (
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Bike') {
-  initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+  initalPlanDetails = props.quoteRequest?.car_plan;
 } else {
   initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
@@ -2458,6 +2459,7 @@ const addPayment = isValid => {
   let storeData = {
     ...data,
   };
+
   paymentMethodsForm
     .transform(data => storeData)
     .post('/payments/' + props.quoteType + '/store-new', {
@@ -2805,7 +2807,6 @@ const shouldProcessUpdate = payment => {
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
-  const isCarQuote = props.quoteType === 'Car';
   const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
@@ -2816,7 +2817,6 @@ const shouldProcessUpdate = payment => {
     quoteTypeCodeEnum.Car,
     quoteTypeCodeEnum.Home,
     quoteTypeCodeEnum.Bike,
-    quoteTypeCodeEnum.Travel,
   ];
   const captureOption = getCaptureOption.value(payment);
   if (
@@ -2976,7 +2976,8 @@ const getCaptureOption = computed(() => {
     // Return early if there are no payments
     if (props.payments.length === 0) return;
 
-    const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+    const isCaptureButtonEnabled =
+      page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
     const paymentMethodCC = filterCCPayments(payment);
 
     // Check if the conditions for 'capture' are met
@@ -2985,8 +2986,8 @@ const getCaptureOption = computed(() => {
 
     // Return 'capture' if all conditions are met, otherwise return 'approve'
     if (
-      (isCreditCardPayment && isNotInsurerPayment && !isGIGProvider) ||
-      isGIGProvider
+      (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
+      isCaptureButtonEnabled
     ) {
       return 'capture';
     }
@@ -2998,6 +2999,10 @@ const planText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
+  if (!providerId || !planId) {
+    providerId = props.realQuote?.insurance_provider_id;
+    planId = props.realQuote?.plan_id;
+  }
   let url = `/get-plans/${props.quoteType}/${providerId}/${planId}`;
   axios
     .get(url)
@@ -3009,6 +3014,17 @@ const fetchPlans = () => {
     });
 };
 
+// Ecom leads
+watch(
+  () => props.realQuote?.plan_id,
+  () => {
+    if (props.realQuote?.plan_id) {
+      fetchPlans();
+    }
+  },
+);
+
+// Insly Leads
 watch(
   () => props.sendUpdate?.plan_id,
   () => {
@@ -3019,7 +3035,7 @@ watch(
 );
 
 onMounted(() => {
-  if (props.sendUpdate?.plan_id) {
+  if (props.realQuote?.plan_id || props.sendUpdate?.plan_id) {
     fetchPlans();
   }
   showLackingPayment();
@@ -3541,17 +3557,17 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
 };
 
 const isEditPaymentEnabled = () => {
-  const statusesToCheck = [paymentStatusEnum.AUTHORISED];
+  const statusesToCheck = [
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.PAID,
+    paymentStatusEnum.CAPTURED,
+  ];
 
   const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
     statusesToCheck.includes(item.payment_status_id),
   );
 
-  return (
-    !isMultiPaymentsEnabled.value &&
-    isGIGOrQICProvider.value &&
-    hasAnyAuthorizedPayment
-  );
+  return !isMultiPaymentsEnabled.value && hasAnyAuthorizedPayment;
 };
 
 // voidPaymentModal
@@ -4944,6 +4960,7 @@ onBeforeMount(() => {
                 </x-field>
               </div>
             </div>
+
             <x-divider class="mb-4 mt-10" />
 
             <div
@@ -5446,6 +5463,22 @@ onBeforeMount(() => {
                       <span class="text-sm">VERIFIED AT</span>
                     </span>
                   </div>
+
+                  <div class="w-1/5 px-2">
+                    <x-tooltip>
+                      <span class="text-sm">
+                        <span
+                          class="border-b-2 border-dotted border-black text-sm"
+                          >COLLECTED AMOUNT</span
+                        >
+                      </span>
+                      <template #tooltip>
+                        <span>{{
+                          paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </div>
                 </div>
 
                 <div class="flex w-full custombreak pb-5">
@@ -5475,6 +5508,44 @@ onBeforeMount(() => {
                         ? splitPaymentRecord.verified_at
                         : 'N/A'
                     }}
+                  </div>
+                </div>
+
+                <div class="flex w-full custombreak">
+                  <div class="w-1/6 px-2 text-center"></div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Receipt ID</span
+                      >
+                    </span>
+                  </div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Auth Code</span
+                      >
+                    </span>
+                  </div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Charge ID</span
+                      >
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex w-full custombreak pb-5">
+                  <div class="w-1/6 px-2 text-center"></div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord.payment_receipt_id ?? 'N/A' }}
+                  </div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord.payment_auth_code ?? 'N/A' }}
+                  </div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord?.payment_charges?.transaction_id }}
                   </div>
                 </div>
 
@@ -6433,7 +6504,9 @@ onBeforeMount(() => {
             </div>
             <div class="mt-2 text-center">
               <Link
-                :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+                :href="`/kyc/aml/${
+                  page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+                }/details/${props.quoteRequest.id}`"
               >
                 <x-tooltip>
                   <x-button
