@@ -2809,7 +2809,7 @@ const shouldProcessUpdate = payment => {
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
   const isInsurer = payment?.collection_type == 'insurer';
-  const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
+      const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
   let isAMlAndKycTravelComplete =
     isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
@@ -2829,6 +2829,25 @@ const shouldProcessUpdate = payment => {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
     isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+  }
+
+  const isRenewalUploadConditionMet = () => {
+    return (
+      props.quoteRequest?.source == 'Renewal_upload' &&
+      props.quoteType === quoteTypeCodeEnum.Car &&
+      isGIGProvider &&
+      isAmlCleared &&
+      isKycVerified() &&
+      isTotalPriceMatching &&
+      hasAnyCCSplitPayment() &&
+      !shouldSendUpdate &&
+      hasPayments &&
+      isInsurer
+    );
+  };
+
+  if (isRenewalUploadConditionMet()) {
+      return true
   }
 
   if (captureOption === 'approve') {
