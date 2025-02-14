@@ -167,7 +167,7 @@ class LeadAllocationController extends Controller
                                 dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), $item['userId']));
                             }
 
-                            foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE] as $quoteType) {
+                            foreach ([QuoteTypes::CORPLINE, QuoteTypes::LIFE, QuoteTypes::HOME, QuoteTypes::PET, QuoteTypes::YACHT, QuoteTypes::CYCLE, QuoteTypes::SAVINGS] as $quoteType) {
                                 $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
                                 if ($this->userHaveProduct($item['userId'], $team?->id)) {
                                     info("user belongs to {$quoteType->value} so dispatching {$quoteType->value} reassignment job");
