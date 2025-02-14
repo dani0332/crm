@@ -8,6 +8,7 @@ use App\Repositories\CycleQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
+use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\ExcelExportable;
 
 class PersonalQuotesExport
@@ -26,6 +27,7 @@ class PersonalQuotesExport
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::SAVINGS->value,
         ];
     }
 
@@ -46,6 +48,9 @@ class PersonalQuotesExport
 
             case QuoteTypes::JETSKI->value:
                 return JetskiQuoteRepository::getData(true);
+
+            case QuoteTypes::SAVINGS->value:
+                return app(SavingsQuoteService::class)->getData(forExport: true);
 
             default:
                 return abort(404);
@@ -143,6 +148,27 @@ class PersonalQuotesExport
                 ];
 
             case QuoteTypes::CYCLE->value:
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'PREMIUM',
+                    'POLICY NUMBER',
+                    'SOURCE',
+                    'IS ECOMMERCE',
+                    'RENEWAL BATCH',
+                    'PREVIOUS POLICY EXPIRY DATE',
+                    'PREVIOUS POLICY PREMIUM',
+                    'PREVIOUS POLICY NUMBER',
+                    'TRANSACTION APPROVED DATE',
+                    'BOOKING DATE',
+                ];
+
+            case QuoteTypes::SAVINGS->value:
                 return [
                     'REF-ID',
                     'FIRST NAME',
@@ -261,6 +287,27 @@ class PersonalQuotesExport
                     $quote->last_name,
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+                    $quote->premium ? $quote->premium : $quote->price_with_vat,
+                    $quote->policy_number,
+                    $quote->source,
+                    $quote->is_ecommerce ? 'Yes' : 'No',
+                    $quote->renewal_batch,
+                    $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+                    $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+                    $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
+                    $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+                    $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+                ];
+
+            case QuoteTypes::SAVINGS->value:
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    $quote->quoteStatus?->text,
+                    $quote->advisor?->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->premium ? $quote->premium : $quote->price_with_vat,
