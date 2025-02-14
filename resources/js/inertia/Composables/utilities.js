@@ -54,6 +54,7 @@ export const useGetShowPageRoute = (
     8: route('travel.show', uuid),
     9: route('pet-quotes-show', uuid),
     10: route('cycle-quotes-show', uuid),
+    18: route('savings-quotes-show', uuid),
   };
 
   return routesObj[quoteTypeId];
@@ -216,6 +217,7 @@ export const saveQueryParams = () => {
     'CorpLineQuote/Index',
     'YachtQuote/Index',
     'HomeQuote/Index',
+    'SavingsQuote/Index',
   ];
 
   if (routes.includes(component)) {
@@ -334,6 +336,7 @@ export function getQuoteType(id, returnType = 'code') {
     8: { code: 'TRA', id: 'travel', link: '/quotes' },
     9: { code: 'PET', id: 'pet', link: '/personal-quotes' },
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
+    18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
   };
   return types[id] ? types[id][returnType] : '';
 }
