@@ -123,6 +123,7 @@ class QuoteDocumentService extends BaseService
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
+        dd($documentType);
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
@@ -202,6 +203,8 @@ class QuoteDocumentService extends BaseService
                 'payment_split_id' => $data['payment_split_id'] ?? null,
                 'created_by_id' => auth()->id(),
             ]);
+
+            // todo: need to add 'Payment Pending' status here on the basis of payments on insurer_payment_link
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc) {
                 WatermarkDocumentsJob::dispatch(
