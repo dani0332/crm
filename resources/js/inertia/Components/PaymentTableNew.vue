@@ -2809,7 +2809,7 @@ const shouldProcessUpdate = payment => {
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
   const isInsurer = payment?.collection_type == 'insurer';
-      const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
+  const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
   let isAMlAndKycTravelComplete =
     isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
