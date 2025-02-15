@@ -80,6 +80,10 @@ const props = defineProps({
     default: [],
   },
   realQuote: Object,
+  isPuaOrManualPlan: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // All reactive properties are defined here
@@ -2833,7 +2837,8 @@ const shouldProcessUpdate = payment => {
 
   const isRenewalUploadConditionMet = () => {
     return (
-      props.quoteRequest?.source == 'Renewal_upload' &&
+      (props.quoteRequest?.source == 'Renewal_upload' ||
+        props.isPuaOrManualPlan) &&
       props.quoteType === quoteTypeCodeEnum.Car &&
       isGIGProvider &&
       isAmlCleared &&
@@ -2845,7 +2850,6 @@ const shouldProcessUpdate = payment => {
       isInsurer
     );
   };
-
   if (isRenewalUploadConditionMet()) {
     return true;
   }

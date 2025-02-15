@@ -1671,6 +1671,21 @@ function capitalizeString(str) {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const isPuaOrManualPlan = computed(() => {
+  let isCConditionMeet = false;
+  if (selectedProviderPlan?.value?.id && availablePlansItems?.value) {
+    const selectedPlan = availablePlansItems?.value.find(
+      plan => plan.id === selectedProviderPlan?.value?.id,
+    );
+    if (selectedPlan) {
+      if (selectedPlan.puaType || selectedPlan.isManualPlan) {
+        isCConditionMeet = true;
+      }
+    }
+  }
+  return isCConditionMeet;
+});
 </script>
 
 <template>
@@ -3717,6 +3732,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPuaOrManualPlan="isPuaOrManualPlan"
     />
     <PaymentTable
       v-else
