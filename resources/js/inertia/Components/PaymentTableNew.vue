@@ -2849,7 +2849,6 @@ const shouldProcessUpdate = payment => {
       isInsurer
     );
   };
-  console.log("isRenewalUploadConditionMet()", isRenewalUploadConditionMet())
   if (isRenewalUploadConditionMet()) {
     return true;
   }
