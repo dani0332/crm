@@ -460,7 +460,10 @@ const checkCommissionVatApplicableEnableAgainstProvider = computed(() => {
   const payment = getPayment();
   if (payment) {
     const allowedPaymentStatusIds = [paymentStatusEnum.PAID];
-    const allowedInsuranceProviders = [insuranceProviderCodeEnum.TM, insuranceProviderCodeEnum.QIC];
+    const allowedInsuranceProviders = [
+      insuranceProviderCodeEnum.TM,
+      insuranceProviderCodeEnum.QIC,
+    ];
     return (
       allowedPaymentStatusIds.includes(payment.payment_status_id) &&
       allowedInsuranceProviders.includes(payment.insurance_provider?.code)
