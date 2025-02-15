@@ -80,6 +80,10 @@ const props = defineProps({
     default: [],
   },
   realQuote: Object,
+  isPuaOrManualPlan: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // All reactive properties are defined here
@@ -2829,6 +2833,25 @@ const shouldProcessUpdate = payment => {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
     isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+  }
+
+  const isRenewalUploadConditionMet = () => {
+    return (
+      (props.quoteRequest?.source == 'Renewal_upload' ||
+        props.isPuaOrManualPlan) &&
+      props.quoteType === quoteTypeCodeEnum.Car &&
+      isGIGProvider &&
+      isAmlCleared &&
+      isKycVerified() &&
+      isTotalPriceMatching &&
+      hasAnyCCSplitPayment() &&
+      !shouldSendUpdate &&
+      hasPayments &&
+      isInsurer
+    );
+  };
+  if (isRenewalUploadConditionMet()) {
+    return true;
   }
 
   if (captureOption === 'approve') {
