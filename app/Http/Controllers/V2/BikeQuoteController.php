@@ -98,8 +98,9 @@ class BikeQuoteController extends Controller
     public function create()
     {
         $data = BikeQuoteRepository::getFormOptions();
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
 
-        return inertia('BikeQuote/Form', $data);
+        return inertia('BikeQuote/Form', array_merge($data, ['quoteStatusEnums' => $quoteStatusEnums]));
     }
 
     /**
@@ -126,12 +127,14 @@ class BikeQuoteController extends Controller
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
         $bikeQuoteRequestDetail = $quote->bikeQuote ?? null;
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
 
         return inertia(
             'BikeQuote/Form',
             array_merge($data, [
                 'quote' => $quote,
                 'bikeQuoteDetail' => $bikeQuoteRequestDetail,
+                'quoteStatusEnums' => $quoteStatusEnums,
             ])
         );
     }

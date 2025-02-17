@@ -26,6 +26,7 @@ use App\Http\Requests\UpdateAMLEntityDetailRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
+use App\Models\BikeQuote;
 use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CarQuoteRequestDetail;
@@ -250,7 +251,6 @@ class AMLController extends Controller
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'asc')->get();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-
         $isPersonalQuote = checkPersonalQuotes($quoteType->code);
 
         if ($isPersonalQuote) {
@@ -479,6 +479,15 @@ class AMLController extends Controller
                     if ($carQuoteRequestDetails->isDirty()) {
                         info('AML Screening Bridger - Chassis number updated - Ref-ID: '.$quoteRequestId);
                         $carQuoteRequestDetails->save();
+                    }
+                }
+
+                if ($quoteTypeId == QuoteTypes::BIKE->id()) {
+                    $bikeQuoteRequest = BikeQuote::where('personal_quote_id', $quoteRequestId)->first();
+                    $bikeQuoteRequest->chassis_number = $AMLCheckRequest->chassis_number;
+                    if ($bikeQuoteRequest->isDirty()) {
+                        info('AML Screening Bridger - Chassis number updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
+                        $bikeQuoteRequest->save();
                     }
                 }
 
