@@ -636,7 +636,7 @@ class CRUDService extends BaseService
                         if ($i == $maxAttempts - 1) {
                             throw $e;
                         }
-                        sleep(2); // Wait before retrying
+                        sleep(1); // Wait before retrying
                     }
                 }
 
