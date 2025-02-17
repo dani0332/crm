@@ -363,22 +363,22 @@ onMounted(() => {
 });
 
 const isManualPlan = computed(() => {
-    let isCConditionMeet = false;
-    if (selectedProviderPlan?.value?.id && availablePlansItems?.value) {
-        const selectedPlan = availablePlansItems?.value.find(
-            plan => plan.id === selectedProviderPlan?.value?.id,
-        );
-        if (selectedPlan) {
-            if (selectedPlan.isManualPlan) {
-                isCConditionMeet = true;
-            }
-        }
+  let isCConditionMeet = false;
+  if (selectedProviderPlan?.value?.id && availablePlansItems?.value) {
+    const selectedPlan = availablePlansItems?.value.find(
+      plan => plan.id === selectedProviderPlan?.value?.id,
+    );
+    if (selectedPlan) {
+      if (selectedPlan.isManualPlan) {
+        isCConditionMeet = true;
+      }
     }
-    return isCConditionMeet;
+  }
+  return isCConditionMeet;
 });
 
-watch(isManualPlan, (newValue) => {
-    emit('manual-plan-status', newValue);
+watch(isManualPlan, newValue => {
+  emit('manual-plan-status', newValue);
 });
 </script>
 

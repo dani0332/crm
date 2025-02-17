@@ -357,10 +357,9 @@ function capitalizeString(str) {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 const manualPlanStatus = ref(false);
-const handleManualPlanStatus = (status) => {
-    manualPlanStatus.value = status;
+const handleManualPlanStatus = status => {
+  manualPlanStatus.value = status;
 };
-
 </script>
 
 <template>
