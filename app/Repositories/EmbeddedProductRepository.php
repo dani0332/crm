@@ -4,8 +4,11 @@ namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\EpCategoryEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -227,6 +230,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
+            $item->can_void_payment = $this->canVoidPayment($transaction->first());
         });
 
         return $ep;
@@ -249,6 +253,18 @@ class EmbeddedProductRepository extends BaseRepository
 
                 return $paymentDate->diffInDays(Carbon::now()) <= 3;
             }
+        }
+
+        return false;
+    }
+
+    private function canVoidPayment($transaction)
+    {
+        if (
+            auth()->user()->can(PermissionsEnum::PAYMENTS_VOID)
+            && $transaction
+        ) {
+            return $transaction->payment_status_id == PaymentStatusEnum::AUTHORISED;
         }
 
         return false;
@@ -456,8 +472,8 @@ class EmbeddedProductRepository extends BaseRepository
         $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
         $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
 
-        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : $quoteObject->customer->insured_first_name ?? '';
-        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : $quoteObject->customer->insured_last_name ?? '';
+        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : ($quoteObject->customer?->insured?->first_name ?? $quoteObject->customer->insured_first_name) ?? '';
+        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : ($quoteObject->customer?->insured?->last_name ?? $quoteObject->customer->insured_first_name) ?? '';
 
         info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
         $emailData = (object) [
@@ -687,6 +703,9 @@ class EmbeddedProductRepository extends BaseRepository
                 $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED);
             })
             ->with(['payments', 'quoteRequest'])
+            ->whereHas('product.embeddedProduct', function ($query) {
+                $query->where('product_type', EmbeddedProductTypeEnum::NON_INSURANCE);
+            })
             ->get();
 
         if ($epTransaction->isNotEmpty()) {
@@ -761,7 +780,7 @@ class EmbeddedProductRepository extends BaseRepository
                         'uuid' => $data['uuid'],
                         'type_id' => $type->id,
                         'code' => $transaction->code,
-
+                        'payment_gateway_id' => $paymentSplit->payment_gateway_id,
                     ];
                     $processResponse = $this->processCancelPayment($data);
 
@@ -796,6 +815,34 @@ class EmbeddedProductRepository extends BaseRepository
         ];
     }
 
+    public function fetchVoidPayment($data)
+    {
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
+        $type = QuoteType::where('code', $data['modelType'])->first();
+
+        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest'])
+            ->where('quote_request_id', $data['quote_id'])
+            ->where('quote_type_id', $type->id)
+            ->where('is_selected', true)
+            ->whereIn('product_id', $embeddedProductOptionsIds)
+            ->first();
+
+        if (! $embededTransaction) {
+            $response = ['data' => ['Transaction does not exist'], 'code' => 403];
+        } elseif ($embededTransaction->payment_status_id !== PaymentStatusEnum::AUTHORISED) {
+            $response = ['data' => ['Invalid payment status'], 'code' => 403];
+        } else {
+            $payment = $embededTransaction->payments->first();
+            $response = $this->fetchCancelPayment([
+                'amount' => $payment->premium_authorized,
+                'reason' => 'Payment void',
+                ...$data,
+            ]);
+        }
+
+        return $response;
+    }
+
     private function processCancelPayment($data)
     {
         $planData = [
@@ -807,8 +854,9 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
             ],
         ];
-
-        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+        $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
+        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/cancel', 'post', $planData);
 
         return $response;
     }
@@ -831,16 +879,18 @@ class EmbeddedProductRepository extends BaseRepository
             ->get();
 
         $payload = [];
+        $paymentGatewayEndpoint = '';
         if ($epTransaction->isNotEmpty()) {
             foreach ($epTransaction as $item) {
+                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
                 if (empty($payload)) {
                     $payload = [
                         'quoteUID' => $item->quoteRequest->uuid,
                         'quoteTypeId' => $quoteTypeId,
                     ];
+                    $paymentGatewayEndpoint = PaymentGatewayEnum::getName($paymentSplit->payment_gateway_id);
                 }
 
-                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
                 $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
                 $payload['payments'][] = [
                     'codeRef' => $item->code.'-'.$sr,
@@ -870,7 +920,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         try {
-            Marshall::request('/payment/checkout/capture', 'post', $payload);
+            Marshall::request("/payment/{$paymentGatewayEndpoint}/capture", 'post', $payload);
         } catch (Exception $e) {
             Log::error('Capture Payment Error: '.$e->getMessage());
         }

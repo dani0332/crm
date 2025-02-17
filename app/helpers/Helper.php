@@ -26,6 +26,7 @@ use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
@@ -1315,9 +1316,9 @@ if (! function_exists('getCourierQuote')) {
                 "{$table}.policy_number as insurance_policy_number",
                 'payments.code as ep_ref_id',
                 'payments.captured_at as payment_captured_at',
-                'customer.first_name as client_first_name',
-                'customer.last_name as client_last_name',
-                'customer.email as client_email',
+                "{$table}.first_name as client_first_name",
+                "{$table}.last_name as client_last_name",
+                "{$table}.email as client_email",
                 "{$table}.mobile_no as client_phone_number",
                 'customer_addresses.type as courier_address_type',
                 'customer_addresses.office_number as courier_address_office_number',
@@ -1566,6 +1567,15 @@ if (! function_exists('isCHSAdvisor')) {
         $user = User::select('id')->chs()->first();
 
         return $user?->id == $userId;
+    }
+}
+
+if (! function_exists('isTapEnabled')) {
+    function isTapEnabled($processType = []): bool
+    {
+        $isTapEnabled = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION);
+
+        return $isTapEnabled;
     }
 }
 

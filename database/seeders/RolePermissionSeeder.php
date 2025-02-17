@@ -66,8 +66,10 @@ class RolePermissionSeeder extends Seeder
         }
         // $this->addReceiveNotificationsPermission();
         // $this->searchModulePermissions();
-        $this->createBusinessIntelligenceUnitRole();
+        // $this->createBusinessIntelligenceUnitRole();
         $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
+        $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
+        $this->paymentsVoid();
     }
 
     private function addReceiveNotificationsPermission()
@@ -151,6 +153,31 @@ class RolePermissionSeeder extends Seeder
                 'name' => $missingAdvisorRole,
                 'guard_name' => 'web',
             ]);
+        }
+    }
+
+    private function addVoidPaymentEmbeddedPermission(): void
+    {
+        $role = Role::where('name', RolesEnum::EpAdmin)->first();
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::PAYMENTS_VOID,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if (! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
+        }
+    }
+
+    private function paymentsVoid(): void
+    {
+        $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_VOID, 'web');
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+        if ($role && ! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
         }
     }
 }
