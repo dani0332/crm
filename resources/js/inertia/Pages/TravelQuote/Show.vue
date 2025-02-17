@@ -1606,25 +1606,16 @@ const applyEmiratesIdNumMasking = emiratesId =>
             View Legacy policy
           </x-button>
         </Link>
+        <x-button
+          v-if="canSendOcbEmail"
+          class="mr-2"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openSendOCBConfirmNB"
+        >
+          Send NB OCB To Customer
+        </x-button>
 
-        <x-tooltip placement="top" align="left">
-          <x-button
-            v-if="canSendOcbEmail"
-            class="mr-2"
-            size="sm"
-            color="#ff5e00"
-            @click.prevent="openSendOCBConfirmNB"
-          >
-            Send NB OCB To Customer
-          </x-button>
-          <template #tooltip>
-            <div>
-              When clicked, this button sends the One Click Buy (OCB) email to
-              the customer with updated rates and coverage options, helping them
-              finalize their purchase with ease.
-            </div>
-          </template>
-        </x-tooltip>
         <x-button
           size="sm"
           color="#ff5e00"
@@ -3108,15 +3099,24 @@ const applyEmiratesIdNumMasking = emiratesId =>
               >
                 Download PDF
               </x-button>
-              <x-button
-                @click.prevent="modals.sendConfirm = true"
-                size="sm"
-                color="orange"
-                class="mr-2"
-                :disabled="quote.advisor_id != $page.props.auth.user.id"
-              >
-                Send OCB Email to Customer
-              </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="quote.advisor_id != $page.props.auth.user.id"
+                >
+                  Send OCB Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
             </div>
           </div>
 
