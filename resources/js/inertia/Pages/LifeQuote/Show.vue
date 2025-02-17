@@ -3,6 +3,7 @@ import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -43,8 +44,10 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
-const { isRequired } = useRules();
+const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
 const modelClass = 'App\\Models\\LifeQuote';
@@ -325,12 +328,6 @@ const onLeadStatus = () => {
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
-      },
     },
   );
 };
@@ -350,9 +347,9 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  insured_first_name: page.props.quote?.insured[0]?.first_name || '',
+  insured_last_name: page.props.quote?.insured[0]?.last_name || '',
+  emirates_id_number: page.props.quote?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer.emirates_id_expiry_date || null,
 
@@ -508,6 +505,10 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -529,7 +530,10 @@ const onAddUpdate = () => {
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -575,7 +579,12 @@ const onAddUpdate = () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.LifeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -586,7 +595,12 @@ const onAddUpdate = () => {
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.LifeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
           />
         </template>
       </div>
@@ -677,8 +691,12 @@ const onAddUpdate = () => {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>N/A</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -893,6 +911,10 @@ const onAddUpdate = () => {
                   <dd>{{ quote.dob }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ quote.gender }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
                   <dd>
                     {{
@@ -905,8 +927,13 @@ const onAddUpdate = () => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -923,10 +950,6 @@ const onAddUpdate = () => {
                       :min-date="new Date()"
                     />
                   </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">GENDER</dt>
-                  <dd>{{ quote.gender }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MARITAL STATUS</dt>
@@ -1326,6 +1349,8 @@ const onAddUpdate = () => {
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <EmbeddedProducts
@@ -1362,6 +1387,7 @@ const onAddUpdate = () => {
         canAny([
           permissionsEnum.VIEW_INSLY_BOOK_POLICY,
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

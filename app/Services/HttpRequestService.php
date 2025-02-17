@@ -39,7 +39,7 @@ class HttpRequestService extends BaseService
         }
     }
 
-    public function executeGetPlansApi($id, mixed $getLatestRating, mixed $isRenewalSort, mixed $isDisabledEnabled, $quoteType = ''): mixed
+    public function executeGetPlansApi($id, mixed $getLatestRating, mixed $isRenewalSort, mixed $isDisabledEnabled, $quoteType = '', ?bool $allowUpdate = null): mixed
     {
         // Set model name
         $modelName = 'CarQuote';
@@ -83,6 +83,10 @@ class HttpRequestService extends BaseService
             ],
             'callSource' => 'imcrm',
         ];
+
+        if (! is_null($allowUpdate)) {
+            $plansDataArr['allowUpdate'] = $allowUpdate;
+        }
 
         $client = new \GuzzleHttp\Client;
         try {
@@ -134,9 +138,9 @@ class HttpRequestService extends BaseService
         }
     }
 
-    public function getPlans($id, $getLatestRating, $isRenewalSort = false, $isDisabledEnabled = false, $quoteType = '')
+    public function getPlans($id, $getLatestRating, $isRenewalSort = false, $isDisabledEnabled = false, $quoteType = '', ?bool $allowUpdate = null)
     {
-        $quotePlans = $this->executeGetPlansApi($id, $getLatestRating, $isRenewalSort, $isDisabledEnabled, $quoteType);
+        $quotePlans = $this->executeGetPlansApi($id, $getLatestRating, $isRenewalSort, $isDisabledEnabled, $quoteType, allowUpdate: $allowUpdate);
 
         // Check if the $quotePlans object has a message property
         if (isset($quotePlans->message) && $quotePlans->message != '') {

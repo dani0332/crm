@@ -32,6 +32,7 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -66,6 +67,7 @@ class LifeQuoteController extends Controller
             'advisors' => $advisors,
             'renewalBatches' => $renewalBatches,
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 
@@ -105,11 +107,11 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         $quote = LifeQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote?->payments;
@@ -232,6 +234,7 @@ class LifeQuoteController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 

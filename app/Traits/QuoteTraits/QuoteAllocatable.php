@@ -93,7 +93,9 @@ trait QuoteAllocatable
 
     public function scopeSicFlowDisabled($q)
     {
-        $q->sicFlowEnabled(false);
+        $q->where(function ($query) {
+            $query->sicFlowEnabled(false)->orWhereNull('sic_flow_enabled');
+        });
     }
 
     public function isSICFlowEnabled()
@@ -106,9 +108,16 @@ trait QuoteAllocatable
         return ! $this->isSICFlowEnabled();
     }
 
+    public function scopePaymentLinkRequested($q)
+    {
+        $q->where('quote_status_id', QuoteStatusEnum::PaymentLinkRequestedByCustomer);
+    }
+
     public function scopeHasOneOfPaidStatus($q)
     {
-        $q->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+        $q->where(function ($sq) {
+            $sq->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->orWhere->paymentLinkRequested();
+        });
     }
 
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
@@ -125,7 +134,7 @@ trait QuoteAllocatable
 
     public function isRequestedAdvisorOrPaymentAuthorized()
     {
-        return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+        return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 
     public function isRenewalUpload()

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -11,6 +12,7 @@ use App\Models\LifeQuote;
 use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class LifeQuoteRepository extends BaseRepository
 {
@@ -49,7 +51,7 @@ class LifeQuoteRepository extends BaseRepository
         $response = Capi::request('/api/v1-save-life-quote', 'post', $lifeData);
 
         if (isset($response->quoteUID)) {
-            //todo: make sure if this is required to update, or api is handling this as well
+            // todo: make sure if this is required to update, or api is handling this as well
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
             $quote->update(['premium' => $lifeData['premium']]);
         }
@@ -87,6 +89,18 @@ class LifeQuoteRepository extends BaseRepository
             })
             ->filter()
             ->withFakeLeadCriteria()
+            ->select([
+                '*',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                '),
+            ])
             ->orderBy('life_quote_request.created_at', 'desc');
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
@@ -109,7 +123,8 @@ class LifeQuoteRepository extends BaseRepository
         $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
             'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
-            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob',
+            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod',
+            'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob', 'insured',
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
@@ -141,6 +156,9 @@ class LifeQuoteRepository extends BaseRepository
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        if (isset($data['insured'][0])) {
+            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        }
 
         return $quote;
     }

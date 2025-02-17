@@ -8,6 +8,7 @@ const props = defineProps({
   accomodation_types: Object,
   possession_types: Object,
   flash: Object,
+  nationalities: Object,
 });
 
 const quoteForm = useForm({
@@ -25,6 +26,9 @@ const quoteForm = useForm({
   is_mixed_breed: props.quote ? props.quote?.pet_quote?.is_mixed_breed : null,
   has_injury: props.quote ? props.quote?.pet_quote?.has_injury : null,
   gender: props.quote?.pet_quote?.gender || '',
+  dob: props.quote?.unformatted_dob || null,
+  nationality_id: props.quote?.nationality_id || null,
+  customer_gender: props.quote?.customer?.gender || '',
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -105,6 +109,37 @@ function onSubmit(isValid) {
             :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
+          />
+        </x-field>
+        <x-field label="DATE OF BIRTH">
+          <DatePicker
+            v-model="quoteForm.dob"
+            :utc="false"
+            model-type="yyyy-MM-dd"
+            name="created_at_start"
+          />
+        </x-field>
+        <x-field label="NATIONALITY">
+          <ComboBox
+            v-model="quoteForm.nationality_id"
+            :single="true"
+            :options="
+              nationalities.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            placeholder="Nationality"
+          />
+        </x-field>
+        <x-field label="GENDER">
+          <x-select
+            v-model="quoteForm.customer_gender"
+            :options="[
+              { value: 'Male', label: 'Male' },
+              { value: 'Female', label: 'Female' },
+            ]"
+            class="w-full"
           />
         </x-field>
         <x-field label="TYPE OF PET" required>
@@ -199,7 +234,7 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.has_injury"
           />
         </x-field>
-        <x-field label="GENDER" required>
+        <x-field label="PET'S GENDER" required>
           <x-select
             v-model="quoteForm.gender"
             :rules="[isRequired]"

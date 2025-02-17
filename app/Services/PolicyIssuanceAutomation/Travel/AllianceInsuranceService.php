@@ -283,6 +283,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $payload = [
             'policy_id' => $quote->insurer_policy_id,
+            'agency_reference' => $payment->paymentSplits->first()?->paymentCharges?->transaction_id ?? null,
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
@@ -318,7 +319,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function fetchAndUploadDocument($quote, $travelType): array
     {
-        $maxRetries = 15;
+        $maxRetries = 5;
         $retryDelay = 10; // seconds
         $retryCount = 0;
 
@@ -525,7 +526,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
 
             return $response;
-        } elseif (! $policyIssuance) { /*&& $quote->insurer_api_status_id*/
+        } elseif (! $policyIssuance) { /* && $quote->insurer_api_status_id */
             $response['isEditPolicyDetailsDisabled'] = false;
             $response['isPolicyDocumentUploadDisabled'] = false;
             $response['isEditBookingDetailsDisabled'] = false;
@@ -632,7 +633,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $fileContents = Http::get($documentUrl);
         [$mimeType , $docName] = $this->getMimeTypeAndFileName($documentUrl);
 
-        //upload file to azure
+        // upload file to azure
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);

@@ -221,17 +221,21 @@ class CarAllocationService extends AllocationService
      */
     public function executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId): mixed
     {
-        if ($leadSource == LeadSourceEnum::REVIVAL_REPLIED || ($leadSource == LeadSourceEnum::RENEWAL_UPLOAD && $teamId == 0)) {
-            // if lead source is revival replied or renewal upload then we should only assign to organic advisors
+        $teamMap = [
+            LeadSourceEnum::REVIVAL_REPLIED => TeamNameEnum::ORGANIC,
+            LeadSourceEnum::RENEWAL_UPLOAD => $teamId == 0 ? TeamNameEnum::ORGANIC : null,
+            LeadSourceEnum::REVIVAL_PAID => TeamNameEnum::SIC_UNASSISTED,
+        ];
 
-            // Retrieve the ID of Organic team.
-            $organicId = Team::whereIn('name', [TeamNameEnum::ORGANIC])->pluck('id')->toArray();
+        if (isset($teamMap[$leadSource])) {
+            // Retrieve team IDs for the relevant team
+            $teamIds = Team::where('name', $teamMap[$leadSource])->pluck('id')->toArray();
 
-            // Retrieve the user IDs associated with organic team.
-            $organicUserIds = UserTeams::whereIn('team_id', $organicId)->pluck('user_id')->toArray();
+            // Retrieve user IDs associated with the relevant team
+            $userIds = UserTeams::whereIn('team_id', $teamIds)->pluck('user_id')->toArray();
 
-            // Getting common to get only organic advisors
-            $tierUserIds = array_intersect($tierUserIds->toArray(), $organicUserIds);
+            // Get only the common user IDs
+            $tierUserIds = array_intersect($tierUserIds->toArray(), $userIds);
         }
 
         return $tierUserIds;
@@ -394,7 +398,7 @@ class CarAllocationService extends AllocationService
 
         $advisors = [];
 
-        if ($lead->isBuyLeadApplicable() && ($tier->isValue() || $tier->isVolume())) {
+        if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::CAR)) && ($tier->isValue() || $tier->isVolume())) {
             $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
 
@@ -462,10 +466,10 @@ class CarAllocationService extends AllocationService
         return $query;
     }
 
-    public function getBLAdvisorsByStatus($lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
+    public function getBLAdvisorsByStatus(CarQuote $lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
     {
         info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status} for UUID: {$lead->uuid}");
-        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $tier->isValue());
+        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $lead->isSIC(QuoteTypes::CAR), $tier->isValue());
         info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
 
         $userIds = array_values(array_intersect(
@@ -570,7 +574,7 @@ class CarAllocationService extends AllocationService
             ])->get();
     }
 
-    public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
+    public function determineFinalUserId(CarQuote $lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
@@ -619,7 +623,7 @@ class CarAllocationService extends AllocationService
 
         if ($this->isBuyLeadAdvisor) {
             foreach ($finalEligibleUserIds as $advisorId) {
-                $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $advisorId, $tier->isValue());
+                $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $lead->isSIC(QuoteTypes::CAR), $advisorId, $tier->isValue());
                 if ($this->buyLeadRequest) {
                     info("Buy Lead Request {$this->buyLeadRequest->id} found for advisor ID: {$advisorId} and tier ID: {$tier->id} for uuid : {$lead->uuid}");
                     $this->buyLeadRequest->startProcessing();
@@ -668,9 +672,17 @@ class CarAllocationService extends AllocationService
             ->toArray();
     }
 
-    public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
+    public function processLeadAssignment(CarQuote $lead, $userId, $tier, $assignmentType): void
     {
         info('About to assign car lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
+
+        if ($lead->advisor_id === $userId) {
+            info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
+
+            $this->endBuyLeadProcessing();
+
+            return;
+        }
 
         if (! empty($lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
             $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
@@ -684,7 +696,7 @@ class CarAllocationService extends AllocationService
             $assignmentType = AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD;
         }
 
-        //Store the previous Assignment Type
+        // Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
 
         // Store the previous advisor ID.

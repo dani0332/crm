@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -24,6 +25,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
@@ -49,6 +51,7 @@ class JetskiQuoteController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 
@@ -101,11 +104,11 @@ class JetskiQuoteController extends Controller
     public function show($uuid)
     {
 
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         $quote = JetskiQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::JETSKI->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
@@ -178,6 +181,8 @@ class JetskiQuoteController extends Controller
             'sendUpdateEnum' => $sendUpdateEnum,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 

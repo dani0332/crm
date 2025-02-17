@@ -35,7 +35,7 @@ class TravelRenewalService extends BaseService
                 PaymentStatusEnum::PARTIAL_CAPTURED,
                 PaymentStatusEnum::CREDIT_APPROVED,
             ])
-            ->whereIn('coverage_code', [TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP]) //only for testing purpose
+            ->whereIn('coverage_code', [TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP]) // only for testing purpose
             ->where('direction_code', TravelQuoteEnum::TRAVEL_UAE_OUTBOUND)
             ->whereDate('start_date', $startDate)
             ->chunkById(100, function ($quotes) {
@@ -116,8 +116,8 @@ class TravelRenewalService extends BaseService
                 'destinationIds' => $destinationIds,
                 'emiratesIdNumber' => $customer->emirates_id_number ?? null,
                 'emiratesIdExpiryDate' => $customer->emirates_id_expiry_date ?? null,
-                'insuredFirstName' => $customer->insured_first_name ?? null,
-                'insuredLastName' => $customer->insured_last_name ?? null,
+                'insuredFirstName' => ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? null,
+                'insuredLastName' => ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? null,
                 'isEcommerce' => $quote->is_ecommerce ?? null,
                 'startDate' => $policyStartDate,
                 'policyExpiryDate' => Carbon::parse($newPolicyExpiryDate)->format('Y-m-d'),

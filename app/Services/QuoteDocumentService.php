@@ -92,7 +92,7 @@ class QuoteDocumentService extends BaseService
     {
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
-        //load quote document with provided detail
+        // load quote document with provided detail
         $quote->load(['documents' => function ($q) use ($data) {
             $q->where([
                 'doc_name' => $data['doc_name'],
@@ -100,10 +100,10 @@ class QuoteDocumentService extends BaseService
             ]);
         }]);
 
-        //check for document and delete if found
+        // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
-            //Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
+            // Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
 
             return response()->json(['message' => 'document deleted successfully']);
         }
@@ -474,11 +474,23 @@ class QuoteDocumentService extends BaseService
         $encodedUrl = $this->encodeUrl($azureFilePath);
         $fileContent = file_get_contents($encodedUrl);
 
+        if (! $fileContent) {
+            Log::error("Unable to read file azureFilePath: $azureFilePath ");
+            throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
+        }
+
         $tempFilePath = storage_path('temp/temp_'.$docName);
         file_put_contents($tempFilePath, $fileContent);
 
         // Convert the PDF to a version compatible with FPDI
         shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+
+        sleep(3);
+
+        if (! file_exists($outputFile)) {
+            Log::error("Unable to read file outputFile: $outputFile ");
+            throw new \Exception("Unable to read file outputFile: $outputFile");
+        }
 
         $pdf = new Fpdi;
 

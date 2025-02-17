@@ -15,7 +15,7 @@ class addAdvisorConvertionReportBatchStartDate extends Seeder
      */
     public function run()
     {
-        //CONVERSATION_REPORT_BATCH_START_DATE
+        // CONVERSATION_REPORT_BATCH_START_DATE
         $allocationStartDateForCar = ApplicationStorage::where('key_name', 'CONVERSATION_REPORT_BATCH_START_DATE')->get();
         if (count($allocationStartDateForCar) == 0) {
             DB::table('application_storage')->insert([[
