@@ -51,6 +51,8 @@ class SendPaymentEmail extends Command
      */
     public function handle()
     {
+        $startTime = microtime(true);
+
         $settings = ApplicationStorage::whereIn('key_name', [
             ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL,
             ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS,
@@ -83,7 +85,9 @@ class SendPaymentEmail extends Command
 
         $users = $this->getUsers(array_keys($rolesData));
 
-        foreach ($users as $user) {
+        foreach ($users as $index => $user) {
+            $iterationStartTime = microtime(true);
+
             $notificationsData = $this->getNotificationsData($user, $rolesData, $authorizedDays);
 
             if (! empty($notificationsData)) {
@@ -95,7 +99,16 @@ class SendPaymentEmail extends Command
                 info("Dispatching PaymentNotification Job For User {$user->email}");
                 PaymentNotificationEmailJob::dispatch($lead, $user);
             }
+
+            $iterationEndTime = microtime(true);
+            $iterationExecutionTime = $iterationEndTime - $iterationStartTime;
+            info("SendPaymentEmail- Time: {$index} ({$user->email}): ".number_format($iterationExecutionTime, 5).' seconds');
         }
+
+        $endTime = microtime(true);
+        $executionTime = $endTime - $startTime;
+
+        info('SendPaymentEmail - '.number_format($executionTime, 5).' seconds');
     }
 
     private function getNotificationsData(User $user, array $rolesData, $authorizedDays): array
