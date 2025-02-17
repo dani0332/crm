@@ -63,8 +63,14 @@ const insuredFormDetails = useForm({
   customer_type: props.customerTypeEnum.Entity,
   quote_type: props.quoteType.code,
 
-  insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
-  insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
+  insured_first_name:
+    props.quoteDetails?.customer?.insured?.first_name ??
+    props.quoteDetails?.customer?.insured_first_name ??
+    null,
+  insured_last_name:
+    props.quoteDetails?.customer?.insured?.last_name ??
+    props.quoteDetails?.customer?.insured_last_name ??
+    null,
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
 
@@ -350,6 +356,7 @@ const uboNationality = computed(() => {
 
         <div class="text-center space-x-4 mt-8">
           <x-button
+            class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
             size="sm"
             color="success"
             @click.prevent="modals.insuredDetailConfirmation = true"
@@ -502,7 +509,7 @@ const uboNationality = computed(() => {
           color="success"
           @click.prevent="insuredDetailsSubmit"
           :loading="insuredFormDetails.processing"
-          class=""
+          class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
         >
           Submit For AML Screening
         </x-button>
