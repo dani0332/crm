@@ -35,27 +35,27 @@ class MarshallService
      */
     public function request($path, $method = 'post', $data = [])
     {
-        $url = $this->baseUrl.$path;
+        $url = $this->baseUrl . $path;
         $response = $this->client->withBody(json_encode($data), 'application/json')
             ->send($method, $url)->onError(function ($response) use ($data, $url) {
-                $logData = [
-                    'data' => $data,
-                    'url' => $url,
-                    'status' => $response->status(),
-                ];
-                if (isset($response->json()['msg'])) {
-                    $logData['msg'] = $response->json()['msg'];
-                    info('Marshall Service Exception', $logData);
-                    vAbort('Marshall Service Exception - ' . $logData['msg']);
-                } else if (isset($response->json()['message'])) {
-                    $logData['message'] = $response->json()['message'];
-                    info('Marshall Service Exception', $logData);
-                    vAbort('Marshall Service Exception - ' . $logData['message']);
-                } else {
-                    info('Marshall Service Exception', $logData);
-                    vAbort('Marshall Service Exception');
-                }
+                $this->handleError($response, $data, $url);
             });
+
         return $response->json();
+    }
+
+    private function handleError($response, $data, $url)
+    {
+        $logData = [
+            'data' => $data,
+            'url' => $url,
+            'status' => $response->status(),
+            'response' => $response->json()
+        ];
+
+        $logData['msg'] = $response->json()['msg'] ?? $response->json()['message'] ?? 'Marshall Service Exception';
+
+        info('Marshall Service Exception', $logData);
+        vAbort('Marshall Service Exception - ' . $logData['msg']);
     }
 }
