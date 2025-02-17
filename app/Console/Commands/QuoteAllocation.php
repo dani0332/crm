@@ -73,6 +73,7 @@ class QuoteAllocation extends Command
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::SAVINGS, $to, $chunkSize, $allocationStartDate);
             */
         } else {
             info('Quote Allocation Command is turned Off');
