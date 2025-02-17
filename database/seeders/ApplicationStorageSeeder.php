@@ -217,6 +217,26 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_TAP_INTEGRATION],
+            [
+                'value' => '0',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        // TODO:: Need to confirm email addresses with Shahrukh
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS],
+            [
+                'value' => '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedUnavailableTimeThreshold()

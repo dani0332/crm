@@ -21,7 +21,7 @@ const props = defineProps({
   storageUrl: String,
   realQuote: Object,
   isNegativeValue: Boolean,
-  bookingDetails: Array,
+  bookPolicyDetails: Array,
   updateBtn: String,
   uploadedDocuments: Array,
   payments: Array,
@@ -43,6 +43,8 @@ const props = defineProps({
   isCommVatNotAppEnabled: Boolean,
   isSentOrBooked: Boolean,
   disableMainBtn: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const page = usePage();
@@ -626,6 +628,9 @@ const isLegacyPolicy = computed(() => {
       :insuranceProviders="props.insuranceProviders"
       :quoteDocuments="props.quoteDocuments"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="props.isFuncsEnabled"
+      :realQuote="props.realQuote"
     />
 
     <LazyPolicyDetails
@@ -665,7 +670,7 @@ const isLegacyPolicy = computed(() => {
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
       :is-negative-value="isNegativeValue"
-      :booking-details="props.bookingDetails"
+      :booking-details="props.bookPolicyDetails"
       :real-quote="props.realQuote"
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"

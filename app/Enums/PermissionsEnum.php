@@ -401,6 +401,7 @@ final class PermissionsEnum extends Enum
     public const VIEW_ALL_REPORTS = 'view-all-reports';
     public const TAP_BETA_ACCESS = 'tap-beta-access';
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
+    public const PAYMENTS_VOID = 'payments-void';
 
     public static function getAdvisorConversionReportPermissions()
     {
