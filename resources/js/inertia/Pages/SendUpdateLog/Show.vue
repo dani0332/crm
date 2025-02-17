@@ -504,7 +504,6 @@ const isLegacyPolicy = computed(() => {
                 </div>
                 <div
                   class="grid sm:grid-cols-2"
-                  v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
                 >
                   <dt>
                     <x-tooltip>
