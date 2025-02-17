@@ -953,8 +953,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $personalCount = DB::table('payments')
             ->distinct()
             ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->join('users', 'users.id', 'pq.advisor_id')
-            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('user_team', 'user_team.user_id', 'pq.advisor_id')
             ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
 
         if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {

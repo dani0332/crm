@@ -135,8 +135,7 @@ class SendPaymentEmail extends Command
                 DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL {$authorizedDays} DAY), NOW()) as expiry_days")
             )
             ->leftJoin($table, 'py.code', '=', "{$table}.code")
-            ->join('users', 'users.id', '=', "{$table}.advisor_id")
-            ->join('user_team', 'user_team.user_id', '=', 'users.id')
+            ->join('user_team', 'user_team.user_id', '=', "{$table}.advisor_id")
             ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->whereIn('user_team.team_id', $teamIds)
             ->when($quoteTypeId, function ($query) use ($quoteTypeId, $table) {
