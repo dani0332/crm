@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\Modelable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -19,36 +20,38 @@ class CurrencyType extends Model implements AuditableContract
         return $query->where('is_active', 1);
     }
 
-    public function getAED(float $amount): float
+    private function getCurrencyRates(): array
     {
         // These are rates as of Feb 3, 2025
-        $rates = [
+        return [
             'AED' => 1,
             'EUR' => 3.76,
             'GBP' => 4.52,
             'USD' => 3.67,
         ];
-
-        $currencyCode = $this->code;
-
-        $rate = $rates[$currencyCode] ?? 1;
-
-        return $amount * $rate;
     }
 
-    public function getUSD(float $amount): float
+    public function convertToAED(float $amount): float
     {
-        $rates = [
-            'AED' => 0.27,
-            'EUR' => 1.05,
-            'GBP' => 1.26,
-            'USD' => 1,
-        ];
+        $rates = $this->getCurrencyRates();
 
         $currencyCode = $this->code;
 
-        $rate = $rates[$currencyCode] ?? 1;
+        if (! isset($rates[$currencyCode])) {
+            throw new InvalidArgumentException("Currency code {$currencyCode} not found.");
+        }
 
-        return $amount * $rate;
+        return $amount * $rates[$currencyCode];
+    }
+
+    public function convertToUSD(float $amount): float
+    {
+        $amountInAED = $this->getAED($amount);
+
+        $rates = $this->getCurrencyRates();
+
+        $usdRate = $rates['USD'];
+
+        return $amountInAED / $usdRate;
     }
 }
