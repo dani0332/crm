@@ -773,11 +773,11 @@ class CRUDController extends Controller
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
             
             if($quote->registration_type == CarRegistrationType::COMPANY) {
-                $quoteTypeId = QuoteTypeId::CompanyCar;
+                $documentQuoteTypeId = QuoteTypeId::CompanyCar;
             } else {
-                $quoteTypeId = QuoteTypeId::Car;
+                $documentQuoteTypeId = QuoteTypeId::Car;
             }
-            @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($quoteTypeId);
+            @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes($documentQuoteTypeId);
             $quoteDocuments = array_values($quoteDocuments->toArray());
             $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;
             $storageUrl = storageUrl();
