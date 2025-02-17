@@ -1361,13 +1361,13 @@ const confirmSendEmail = () => {
         quote_uuid: page.props.quote.uuid,
         quote_cdb_id: page.props.quote.code,
         quote_previous_expiry_date:
-        page.props.quote.previous_policy_expiry_date,
+          page.props.quote.previous_policy_expiry_date,
         quote_currently_insured_with: page.props.quote.currently_insured_with,
         quote_car_make: page.props.carMakeText,
         quote_car_model: page.props.carModelText,
         quote_car_year_of_manufacture: page.props.quote.year_of_manufacture,
         quote_previous_policy_number:
-        page.props.quote.previous_quote_policy_number,
+          page.props.quote.previous_quote_policy_number,
         customer_name: `${first_name} ${last_name}`,
         customer_email: page.props.quote.email,
         advisor_name: page.props.quote.advisor
@@ -2674,7 +2674,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
         <p>Are you sure send email to customer?</p>
         <template #actions>
           <div class="text-right space-x-4">
-            <x-button size="sm" ghost @click.prevent="modals.sendConfirm = false">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.sendConfirm = false"
+            >
               Cancel
             </x-button>
             <x-button size="sm" color="error" @click.prevent="confirmSendEmail">
