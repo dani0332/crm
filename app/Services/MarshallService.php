@@ -46,16 +46,17 @@ class MarshallService
                 if (isset($response->json()['msg'])) {
                     $logData['msg'] = $response->json()['msg'];
                     info('Marshall Service Exception', $logData);
-                    vAbort('Marshall Service Exception - ' . $logData['msg']);
-                } else if (isset($response->json()['message'])) {
+                    vAbort('Marshall Service Exception - '.$logData['msg']);
+                } elseif (isset($response->json()['message'])) {
                     $logData['message'] = $response->json()['message'];
                     info('Marshall Service Exception', $logData);
-                    vAbort('Marshall Service Exception - ' . $logData['message']);
+                    vAbort('Marshall Service Exception - '.$logData['message']);
                 } else {
                     info('Marshall Service Exception', $logData);
                     vAbort('Marshall Service Exception');
                 }
             });
+
         return $response->json();
     }
 }
