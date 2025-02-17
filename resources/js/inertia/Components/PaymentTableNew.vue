@@ -80,7 +80,8 @@ const props = defineProps({
     default: [],
   },
   realQuote: Object,
-  isPuaOrManualPlan: {
+  // For bike if manual plan for Car is PAU or manual plan
+  isCapBtnEnabled: {
     type: Boolean,
     default: false,
   },
@@ -2838,8 +2839,9 @@ const shouldProcessUpdate = payment => {
   const isRenewalUploadConditionMet = () => {
     return (
       (props.quoteRequest?.source == 'Renewal_upload' ||
-        props.isPuaOrManualPlan) &&
-      props.quoteType === quoteTypeCodeEnum.Car &&
+        props.isCapBtnEnabled) &&
+      (props.quoteType === quoteTypeCodeEnum.Car ||
+        props.quoteType === quoteTypeCodeEnum.Bike) &&
       isGIGProvider &&
       isAmlCleared &&
       isKycVerified() &&
