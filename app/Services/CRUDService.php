@@ -41,6 +41,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class CRUDService extends BaseService
@@ -632,9 +633,10 @@ class CRUDService extends BaseService
                         info($quoteModel->uuid . " Attempt $i: Successfully updated or inserted payment action.");
                         break;
                     } catch (\Illuminate\Database\QueryException $e) {
-                        Log::warning($quoteModel->uuid . " Attempt $i: Failed to update or insert payment action. Error: " . $e->getMessage());
+                        Log::error($quoteModel->uuid . " Attempt $i: Failed to update or insert payment action. Error: " . $e->getMessage());
                         if ($i == $maxAttempts - 1) {
-                            throw $e;
+                            Log::error($quoteModel->uuid . " All attempts failed. Aborting operation.");
+                            vAbort('Please try again later.');
                         }
                         sleep(1); // Wait before retrying
                     }
