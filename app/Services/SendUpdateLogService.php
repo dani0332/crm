@@ -1162,7 +1162,7 @@ class SendUpdateLogService
         $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
 
         if ($quoteTypeId == QuoteTypeId::Car) {
-            return $this->sendUpdateToCustomerBirdData($sendUpdateLog, $quote, $quoteTypeId);
+            return app(CentralService::class)->prepareBirdData($quote, $quoteTypeId, WorkflowTypeEnum::SU_CAR_UPDATE, $sendUpdateLog);
         }
         $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
