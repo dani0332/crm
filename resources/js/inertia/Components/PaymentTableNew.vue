@@ -2840,7 +2840,7 @@ const shouldProcessUpdate = payment => {
     return (
       (props.quoteRequest?.source == 'Renewal_upload' ||
         props.isCapBtnEnabled) &&
-      (props.quoteType === quoteTypeCodeEnum.Car) &&
+      props.quoteType === quoteTypeCodeEnum.Car &&
       isGIGProvider &&
       isAmlCleared &&
       isKycVerified() &&
