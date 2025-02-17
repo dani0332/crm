@@ -615,16 +615,30 @@ class CRUDService extends BaseService
     {
         if ($paymentSplit) {
             if ($amount > 0) {
-                PaymentAction::updateOrInsert(
-                    ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
-                    [
-                        'is_fulfilled' => 0,
-                        'action_type' => 'CAPTURE',
-                        'amount' => $amount,
-                        'created_by' => auth()->user()->email,
-                        'is_manager_approved' => 1,
-                    ]
-                );
+                $maxAttempts = 3;
+                for ($i = 0; $i < $maxAttempts; $i++) {
+                    try {
+                        info($quoteModel->uuid . " Attempt $i: Trying to update or insert payment action.");
+                        PaymentAction::updateOrInsert(
+                            ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
+                            [
+                                'is_fulfilled' => 0,
+                                'action_type' => 'CAPTURE',
+                                'amount' => $amount,
+                                'created_by' => auth()->user()->email,
+                                'is_manager_approved' => 1,
+                            ]
+                        );
+                        info($quoteModel->uuid . " Attempt $i: Successfully updated or inserted payment action.");
+                        break;
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        Log::warning($quoteModel->uuid . " Attempt $i: Failed to update or insert payment action. Error: " . $e->getMessage());
+                        if ($i == $maxAttempts - 1) {
+                            throw $e;
+                        }
+                        sleep(2); // Wait before retrying
+                    }
+                }
 
                 $data = [
                     'uuid' => $quoteModel->uuid,
