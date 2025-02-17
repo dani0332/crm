@@ -2,6 +2,7 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\RolesEnum;
 use App\Models\Nationality;
 
@@ -22,30 +23,29 @@ class SavingsAllocation extends BaseAllocation
     private function getAdvisorEmails()
     {
         $category = $this->evaluateCategory();
-        $amount = $this->lead?->savingsQuote?->currency?->getUSD((float) $this->lead?->savingsQuote?->amount ?? 0);
-        dd(
-            $this->lead?->savingsQuote?->currency?->getAED((float) $this->lead?->savingsQuote?->amount ?? 0),
-            $this->lead?->savingsQuote?->currency?->getUSD((float) $this->lead?->savingsQuote?->amount ?? 0),
-        );
+        $amount = $this->lead?->savingsQuote?->currency?->convertToUSD((float) $this->lead?->savingsQuote?->amount ?? 0);
+        $frequency = $this->lead?->savingsQuote?->investment_frequency;
 
         $santosh = 'santhosh.ganesan@insurancemarket.ae';
         $gaurav = 'gaurav.sharma@insurancemarket.ae';
         $vivian = 'vivian.sandel@insurancemarket.ae';
-        $roshan = 'roshan.tekcham@insurancemarket.ae';
 
-        $emails = [];
+        $threshold = match ($frequency) {
+            InvestmentFrequencyEnum::REGULAR => 750,
+            InvestmentFrequencyEnum::LUMPSUM => 50000,
+            default => null,
+        };
 
-        if ($amount < 1000000 && in_array($category, [self::CAT_A])) {
-            $emails = [$gaurav, $vivian];
-        } elseif ($amount >= 1000000 && $amount <= 2000000 && in_array($category, [self::CAT_A])) {
-            $emails = [$vivian];
-        } elseif ($amount <= 2000000 && in_array($category, [self::CAT_B])) {
-            $emails = [$gaurav, $roshan];
-        } elseif ($amount > 2000000 && in_array($category, [self::CAT_A, self::CAT_B])) {
-            $emails = [$santosh];
+        if ($threshold === null) {
+            return [];
         }
 
-        return $emails;
+        return match (true) {
+            $amount <= $threshold && $category === self::CAT_A => [$vivian],
+            $amount <= $threshold && $category === self::CAT_B => [$gaurav],
+            $amount > $threshold && in_array($category, [self::CAT_A, self::CAT_B]) => [$santosh],
+            default => [],
+        };
     }
 
     private function getCountriesMapping()
