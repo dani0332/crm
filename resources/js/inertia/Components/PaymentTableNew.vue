@@ -80,6 +80,11 @@ const props = defineProps({
     default: [],
   },
   realQuote: Object,
+  // For bike if manual plan for Car is PAU or manual plan
+  isCapBtnEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // All reactive properties are defined here
@@ -2829,6 +2834,26 @@ const shouldProcessUpdate = payment => {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
     isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+  }
+
+  const isRenewalUploadConditionMet = () => {
+    return (
+      (props.quoteRequest?.source == 'Renewal_upload' ||
+        props.isCapBtnEnabled) &&
+      (props.quoteType === quoteTypeCodeEnum.Car ||
+        props.quoteType === quoteTypeCodeEnum.Bike) &&
+      isGIGProvider &&
+      isAmlCleared &&
+      isKycVerified() &&
+      isTotalPriceMatching &&
+      hasAnyCCSplitPayment() &&
+      !shouldSendUpdate &&
+      hasPayments &&
+      isInsurer
+    );
+  };
+  if (isRenewalUploadConditionMet()) {
+    return true;
   }
 
   if (captureOption === 'approve') {
