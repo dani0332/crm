@@ -74,15 +74,13 @@ const modals = reactive({
 });
 
 const availablePlansItems = computed(() => {
-  let availablePlans = [];
   if (!Array.isArray(availablePlansTable.data)) {
-    return availablePlans;
+    return [];
   }
-  availablePlans = typeof availablePlansTable.data !== 'string'
+
+  return typeof availablePlansTable.data !== 'string'
     ? availablePlansTable.data
     : [];
-
-  return availablePlans;
 });
 
 const totalPriceVAT = computed(() => {
