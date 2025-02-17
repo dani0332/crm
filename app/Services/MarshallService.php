@@ -53,9 +53,9 @@ class MarshallService
             'response' => $response->json(),
         ];
 
-        $logData['msg'] = $response->json()['msg'] ?? $response->json()['message'] ?? 'Marshall Service Exception';
+        $logData['msg'] = $response->json()['msg'] ?? $response->json()['message'];
 
         info('Marshall Service Exception', $logData);
-        vAbort('Marshall Service Exception - '.$logData['msg']);
+        vAbort($logData['msg']);
     }
 }
