@@ -358,7 +358,8 @@ function capitalizeString(str) {
 }
 const manualPlanStatus = ref(false);
 const handleManualPlanStatus = status => {
-  manualPlanStatus.value = status;
+  // Will un comment once the API is ready
+  // manualPlanStatus.value = status;
 };
 </script>
 
