@@ -1192,9 +1192,9 @@ class RenewalsUploadService
                 $memberCategoriesText = array_map('trim', explode('|', $data['member_category']));
                 $memberEmirateOfVisas = array_map('trim', explode('|', $data['member_emirate_of_visa']));
 
-                $nationalities = Nationality::whereIn('text', $memberNationalities)->get(['id', 'text']);
-                $memberCategories = MemberCategory::whereIn('text', $memberCategoriesText)->get(['id', 'text']);
-                $emirates = Emirate::whereIn('text', $memberEmirateOfVisas)->get(['id', 'text']);
+                $nationalities = Nationality::whereIn('text', $memberNationalities)->withActive()->get(['id', 'text']);
+                $memberCategories = MemberCategory::whereIn('text', $memberCategoriesText)->active()->get(['id', 'text']);
+                $emirates = Emirate::whereIn('text', $memberEmirateOfVisas)->withActive()->get(['id', 'text']);
 
                 foreach ($memberDobs as $index => $dob) {
                     $memberDetails = [
