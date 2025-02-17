@@ -19,23 +19,36 @@ class CurrencyType extends Model implements AuditableContract
         return $query->where('is_active', 1);
     }
 
-    private function getCurrencyRates()
+    public function getAED(float $amount): float
     {
         // These are rates as of Feb 3, 2025
-        return [
+        $rates = [
             'AED' => 1,
             'EUR' => 3.76,
             'GBP' => 4.52,
             'USD' => 3.67,
         ];
-    }
 
-    public function getAED(float $amount): float
-    {
         $currencyCode = $this->code;
 
-        $rates = $this->getCurrencyRates();
+        $rate = $rates[$currencyCode] ?? 1;
 
-        return $amount * ($rates[$currencyCode] ?? 1);
+        return $amount * $rate;
+    }
+
+    public function getUSD(float $amount): float
+    {
+        $rates = [
+            'AED' => 0.27,
+            'EUR' => 1.05,
+            'GBP' => 1.26,
+            'USD' => 1,
+        ];
+
+        $currencyCode = $this->code;
+
+        $rate = $rates[$currencyCode] ?? 1;
+
+        return $amount * $rate;
     }
 }
