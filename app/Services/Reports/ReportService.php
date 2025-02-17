@@ -348,6 +348,7 @@ class ReportService extends BaseService
             QuoteTypes::PET,
             QuoteTypes::CYCLE,
             QuoteTypes::CORPLINE,
+            QuoteTypes::SAVINGS,
         ];
 
         $productsName = $products->pluck('name')->toArray();
@@ -378,7 +379,7 @@ class ReportService extends BaseService
 
         $totalOp = $request->filter_by === 'total_opportunity';
 
-        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value) {
+        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value || $lob == QuoteTypes::SAVINGS->value) {
             $pqs = [
                 QuoteTypes::PET->value => QuoteTypeId::Pet,
                 QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
