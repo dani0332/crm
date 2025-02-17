@@ -3732,7 +3732,7 @@ const isPuaOrManualPlan = computed(() => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPuaOrManualPlan="isPuaOrManualPlan"
+      :isCapBtnEnabled="isPuaOrManualPlan"
     />
     <PaymentTable
       v-else
