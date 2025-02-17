@@ -206,9 +206,9 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $passportTraveller = [];
         $nationalityTraveller = [];
 
-        $customerMember = $quote->customerMembers;
-        $primaryMember = CustomerMembersRepository::where('id', $quote->primary_member_id)->first();
-        foreach ($customerMember as $member) {
+        $customerMembers = $quote->customerMembers;
+        $primaryMember = $this->getPrimaryMember($quote, $customerMembers);
+        foreach ($customerMembers as $member) {
 
             $titleTraveller[] = $this->getTitle($member->gender);
             $firstNameTraveller[] = $member->first_name;
@@ -739,6 +739,15 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         }
 
         return $coverDays;
+    }
+
+    private function getPrimaryMember($quote, $customerMembers)
+    {
+        if (count($customerMembers) > 1) {
+            return CustomerMembersRepository::where('id', $quote->primary_member_id)->first();
+        }
+
+        return $customerMembers->first();
     }
 
 }
