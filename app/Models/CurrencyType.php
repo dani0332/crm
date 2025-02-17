@@ -46,7 +46,7 @@ class CurrencyType extends Model implements AuditableContract
 
     public function convertToUSD(float $amount): float
     {
-        $amountInAED = $this->getAED($amount);
+        $amountInAED = $this->convertToAED($amount);
 
         $rates = $this->getCurrencyRates();
 
