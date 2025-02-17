@@ -35,7 +35,6 @@ const props = defineProps({
   quoteRequest: Object,
   quoteDocuments: Object,
   cdnPath: String,
-  vatPercentage: Number,
   paymentTooltipEnum: Object,
   permissions: Object,
   enums: Object,
@@ -935,14 +934,6 @@ const onAddUpdate = () => {
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
       :expanded="sectionExpanded"
-    />
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :vatPrice="vatPercentage"
-      :expanded="sectionExpanded"
-      :isAddUpdate="isAddUpdate"
     />
 
     <MigratePayment
