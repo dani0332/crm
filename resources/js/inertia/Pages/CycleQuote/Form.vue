@@ -1,4 +1,6 @@
 <script setup>
+import { XInput } from '@indielayer/ui';
+
 const props = defineProps({
   genderOptions: Object,
   nationalities: Object,
@@ -25,6 +27,10 @@ const quoteForm = useForm({
   has_accident: String(props.quote?.cycle_quote?.has_accident) || null,
   has_good_condition:
     String(props.quote?.cycle_quote?.has_good_condition) || null,
+
+  dob: props.quote?.unformatted_dob || null,
+  nationality_id: props.quote?.nationality_id || null,
+  gender: props.quote?.customer?.gender || null,
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -58,6 +64,13 @@ function onSubmit(isValid) {
     });
   }
 }
+
+const gender = computed(() => {
+  return [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+  ];
+});
 </script>
 
 <template>
@@ -118,6 +131,33 @@ function onSubmit(isValid) {
             :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
+          />
+        </x-field>
+        <x-field label="Date of Birth">
+          <DatePicker
+            v-model="quoteForm.dob"
+            :utc="false"
+            model-type="yyyy-MM-dd"
+            name="created_at_start"
+          />
+        </x-field>
+        <x-field label="Nationality">
+          <ComboBox
+            v-model="quoteForm.nationality_id"
+            :single="true"
+            :options="
+              nationalities.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+          />
+        </x-field>
+        <x-field label="Gender">
+          <x-select
+            v-model="quoteForm.gender"
+            :options="gender"
+            placeholder="Gender"
           />
         </x-field>
         <x-field label="Cycle Make" required>

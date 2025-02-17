@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BirdFlowStatusEnum;
@@ -20,6 +21,7 @@ use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
@@ -191,9 +193,9 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 5 THEN "Bought Lead"
                 WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
-                'c.insured_first_name',
-                'c.insured_last_name',
-                'c.emirates_id_number',
+                'insured.first_name as insured_first_name',
+                'insured.last_name as insured_last_name',
+                DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
                 'qrem.entity_id',
@@ -221,6 +223,18 @@ class CarQuoteService extends BaseService
                 DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'cqr.insly_migrated',
                 'cqr.aml_status',
+                'cqr.insurer_aml_status',
+                'cqrd.chassis_number',
+                'c.gender',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                ')
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -263,6 +277,11 @@ class CarQuoteService extends BaseService
             })
             ->leftJoin('user_team as ut', 'u.id', '=', 'ut.user_id')
             ->leftJoin('teams as team', 'team.id', '=', 'ut.team_id')
+            ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
+                $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
+                $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
+            })
+            ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->groupBy('cqr.id');
 
         $this->exportQuery = DB::table('car_quote_request as cqr')
@@ -361,6 +380,8 @@ class CarQuoteService extends BaseService
             'currentlyInsuredWith' => $request->currently_insured_with,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
+            'gender' => $request->gender ?? null,
+            'chassisNumber' => $request->chassis_number,
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -446,6 +467,9 @@ class CarQuoteService extends BaseService
         if ($request->currently_insured_with) {
             $carQuote->currently_insured_with = $request->currently_insured_with;
         }
+        if ($request->gender) {
+            $carQuote->gender = $request->gender;
+        }
         $carQuote->quote_updated_at = Carbon::now();
         $carQuote->is_quote_locked = true;
         if ($request->trim) {
@@ -482,6 +506,17 @@ class CarQuoteService extends BaseService
 
         if ($deleteValuationResponse) {
             $carQuote->save();
+
+            $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
+            $carQuoteDetails->chassis_number = $request->chassis_number;
+            if ($carQuoteDetails->isDirty()) {
+                $carQuoteDetails->chassis_number = $request->chassis_number;
+                $carQuoteDetails->save();
+            }
+
+            if (isset($request->gender)) {
+                Customer::where('id', $carQuote->customer_id)->update(['gender' => $request->gender]);
+            }
 
             $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';
             // update embedded products list
@@ -627,6 +662,7 @@ class CarQuoteService extends BaseService
                             'documents',
                             'verifiedByUser',
                             'processJob',
+                            'paymentCharges',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },
@@ -1015,6 +1051,10 @@ class CarQuoteService extends BaseService
                 $query->where('cqr.policy_number', $request->previous_quote_policy_number)
                     ->orWhere('cqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             });
+        }
+
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('cqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'cqr');
@@ -1816,6 +1856,7 @@ class CarQuoteService extends BaseService
             'car_make_id' => 'required', // ID
             'car_model_id' => 'required', // ID
             'currently_insured_with' => 'required|string',
+            'chassis_number' => 'nullable|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/',
         ];
     }
 
