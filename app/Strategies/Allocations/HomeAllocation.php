@@ -174,7 +174,9 @@ class HomeAllocation extends BaseAllocation
     private function isPropertyRentedForHolidayHome(string $uuid): bool
     {
         $quoteRequest = HomeQuote::where('uuid', $uuid)
-            ->with('rangeLookup')
+            ->with(['rangeLookup' => function ($query) {
+                $query->where('code', self::SHORT_TERM_CODE);
+            }])
             ->first();
 
         if (!$quoteRequest || !$quoteRequest->rangeLookup) {
