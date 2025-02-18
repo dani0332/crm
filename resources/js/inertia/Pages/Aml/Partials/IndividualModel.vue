@@ -513,8 +513,8 @@ const validatePassportNumber = eventType => {
 
   if (eventType == 'blur') {
     const lengthValid =
-      insuredFormDetails?.screening_id_number?.length >= 8 &&
-      insuredFormDetails?.screening_id_number?.length <= 9;
+      insuredFormDetails?.screening_id_number?.length >= 6 &&
+      insuredFormDetails?.screening_id_number?.length <= 14;
     const isAlphanumeric = regex.test(insuredFormDetails.screening_id_number);
     if (
       insuredFormDetails.screening_id_number &&
