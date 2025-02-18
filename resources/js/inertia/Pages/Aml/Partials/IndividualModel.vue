@@ -521,7 +521,7 @@ const validatePassportNumber = eventType => {
       (!lengthValid || !isAlphanumeric)
     ) {
       insuredFormDetails.errors.screening_id_number =
-        'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.';
+        'The entered value does not meet the required length of 6 to 14 characters. Please check and confirm.';
       event.preventDefault();
       return true;
     } else {
