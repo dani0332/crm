@@ -173,11 +173,11 @@ const rules = {
 
   passportNumberCheck: v => {
     const regex = /^[A-Za-z0-9]+$/;
-    const lengthValid = v?.length >= 8 && v?.length <= 9;
+    const lengthValid = v?.length >= 6 && v?.length <= 14;
     const isAlphanumeric = regex.test(v);
     return (
       (lengthValid && isAlphanumeric) ||
-      'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.'
+      'The entered value does not meet the required length of 6 to 14 characters. Please check and confirm.'
     );
   },
 };
