@@ -325,7 +325,7 @@ class SageCustomApiService
 
                             return $returnMessage;
                         }
-                        //7
+                        // 7
                         $isLiveApiCallStep7 = true;
                         if (isset($sageLogArray[7]) && $sageLogArray[7]['status'] == 'success') {
                             info('SAGE API:  Patch Request  Sent Already for '.$quote->uuid);
@@ -437,7 +437,7 @@ class SageCustomApiService
             info($e->getMessage());
         }
 
-        //return $quotes;
+        // return $quotes;
 
     }
 

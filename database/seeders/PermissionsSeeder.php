@@ -15,10 +15,16 @@ class PermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->paidLeads();
-        $this->seedProcessTrackerPermissions();
-        $this->buyLeads();
-        $this->leadAllocationDashboards();
+        // $this->paidLeads();
+        // $this->seedProcessTrackerPermissions();
+        // $this->buyLeads();
+        // $this->leadAllocationDashboards();\
+        $this->impersonate();
+    }
+
+    private function impersonate()
+    {
+        Permission::findOrCreate(PermissionsEnum::ENABLE_IMPERSONATION, 'web');
     }
 
     private function leadAllocationDashboards()

@@ -4,6 +4,7 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
@@ -302,6 +303,23 @@ class TravelEmailService extends BaseService
         return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user, QuoteTypes::TRAVEL->value);
     }
 
+    public function SendOCBTravelRenewalIntroEmail(TravelQuote $lead)
+    {
+        $advisor = User::where('id', $lead->advisor_id)->first();
+
+        $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_RENEWALS_OCB);
+        $travelRenewalEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_TRAVEL_RENEWALS_OCB)->first();
+        if ($travelRenewalEvent) {
+            $response = app(BirdService::class)->triggerWebHookRequest($travelRenewalEvent->value, $emailData);
+            info("SendOCBTravelRenewalIntroEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+            $lead->quote_status_id = QuoteStatusEnum::Quoted;
+            $lead->save();
+
+            return $response->status_code;
+        } else {
+            info("SendOCBTravelRenewalIntroEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+        }
+    }
     public function sendTravelAllianceFailedAllocationEmail($lead)
     {
         $advisor = User::where('id', $lead->advisor_id)->first();

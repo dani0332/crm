@@ -16,7 +16,7 @@ class PaymentService extends BaseService
      *
      * @return float
      */
-    public function processMasterPayment($payment, $quoteObject)
+    public function processMasterPayment($payment, $quoteObject, $isCreditCardEnabled = true)
     {
         $infoMessage = 'Quote Code: '.$payment->code;
         $priceWithVat = round($quoteObject->price_with_vat, 2);
@@ -39,6 +39,10 @@ class PaymentService extends BaseService
 
         $payment->total_price = $priceWithVat;
         $this->setTotalAmount($payment);
+
+        if (! $isCreditCardEnabled && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
+            $payment->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
+        }
 
         if ($payment->isDirty()) {
             $payment->save();
@@ -77,7 +81,7 @@ class PaymentService extends BaseService
         if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
             $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
             // If status is partially paid & total price is less than price with vat then set status to partially paid
-            if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $priceWithVat && ($difference > 0.99)) {
+            if (in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED]) && $payment->total_price < $priceWithVat && ($difference > 0.99)) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
             } elseif ($priceWithVat <= $captureAndDiscount) {
                 $payment->payment_status_id = PaymentStatusEnum::PAID;

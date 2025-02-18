@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
@@ -81,11 +82,13 @@ class BusinessQuoteService extends BaseService
                 'bqr.kyc_decision',
                 'bqr.stale_at',
                 DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
-                'c.insured_first_name',
-                'c.insured_last_name',
+                'c.insured_first_name as customer_insured_first_name',
+                'c.insured_last_name as customer_insured_last_name',
                 'c.emirates_id_number',
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
+                'i.first_name as insured_first_name',
+                'i.last_name as insured_last_name',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -116,6 +119,15 @@ class BusinessQuoteService extends BaseService
                 'bqr.payment_status_id',
                 'bqr.insly_migrated',
                 'bqr.aml_status',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                ')
             )
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
@@ -132,6 +144,11 @@ class BusinessQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
             })
+            ->leftJoin('customer_insured as ci', function ($query) {
+                $query->on('ci.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
+                $query->on('ci.quote_request_id', '=', 'bqr.id');
+            })
+            ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
@@ -183,6 +200,7 @@ class BusinessQuoteService extends BaseService
                             'documents',
                             'verifiedByUser',
                             'processJob',
+                            'paymentCharges',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },
@@ -261,7 +279,9 @@ class BusinessQuoteService extends BaseService
         }
 
         if (! isset($request->code) && ! isset($request->advisor_assigned_date) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date)
-        && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
+        && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)
+        && ! isset($request->policy_expiry_date) && ! isset($request->policy_expiry_date_end)
+        ) {
             $this->query->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         // if ($request->ajax()) {
@@ -313,6 +333,8 @@ class BusinessQuoteService extends BaseService
             && ! isset($request->previous_quote_policy_number)
             && ! isset($request->insurer_tax_invoice_number)
             && ! isset($request->insurer_commission_tax_invoice_number)
+            && ! isset($request->policy_expiry_date)
+            && ! isset($request->policy_expiry_date_end)
         ) {
             $dateFrom = Carbon::parse($request['created_at_start'])->startOfDay()->toDateTimeString();
             $dateTo = Carbon::parse($request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -391,6 +413,10 @@ class BusinessQuoteService extends BaseService
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
             $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
         foreach ($searchProperties as $item) {

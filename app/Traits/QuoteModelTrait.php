@@ -3,8 +3,8 @@
 namespace App\Traits;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -14,13 +14,13 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
-use Carbon\Carbon;
+use App\Traits\QuoteTraits\QuoteAllocatable;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable;
+    use Filterable, QuoteAllocatable;
 
     /**
      * @return mixed|void
@@ -88,7 +88,7 @@ trait QuoteModelTrait
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
-                ])->where("{$alias}.source", 'like', '%'.LeadSourceEnum::INSURANCE_MARKET.'%');
+                ])->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -96,7 +96,7 @@ trait QuoteModelTrait
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                })->where("{$alias}.source", 'like', '%'.LeadSourceEnum::INSURANCE_MARKET.'%');
+                })->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
                 $query->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,
@@ -150,122 +150,27 @@ trait QuoteModelTrait
         return ! $this->isSIC($quoteType);
     }
 
-    public function markLeadAllocationFailed()
+    public function isStale()
     {
-        if ($this->lead_allocation_failed_at) {
-            self::withoutEvents(function () {
-                $this->update([
-                    'lead_allocation_started_at' => null,
-                ]);
-            });
-
-            return; // Already marked as failed
-        }
-
-        self::withoutEvents(function () {
-            $this->update([
-                'lead_allocation_failed_at' => now(),
-                'lead_allocation_started_at' => null,
-            ]);
-        });
+        return ! empty($this->stale_at);
     }
 
-    public function markLeadAllocationPassed()
+    public function isBuyLeadApplicable(bool $isSIC = false): bool
     {
-        if (! $this->lead_allocation_failed_at || ! $this->advisor_id) {
-            self::withoutEvents(function () {
-                $this->update([
-                    'lead_allocation_started_at' => null,
-                ]);
-            });
-
-            return; // Already marked as passed or advisor not assigned
-        }
-
-        self::withoutEvents(function () {
-            $this->update([
-                'lead_allocation_failed_at' => null,
-                'lead_allocation_started_at' => null,
-            ]);
-        });
-    }
-
-    public function scopeLeadAllocationFailed($q)
-    {
-        $q->whereNotNull('lead_allocation_failed_at');
-    }
-
-    public function scopeSicFlowEnabled($q, bool $enabled = true, bool $or = false)
-    {
-        if ($or) {
-            $q->orWhere('sic_flow_enabled', $enabled);
-
-            return;
-        }
-
-        $q->where('sic_flow_enabled', $enabled);
-    }
-
-    public function scopeOrSicFlowEnabled($q)
-    {
-        $q->sicFlowEnabled(or: true);
-    }
-
-    public function scopeSicFlowDisabled($q)
-    {
-        $q->sicFlowEnabled(false);
-    }
-
-    public function scopeOrSicFlowDisabled($q)
-    {
-        $q->sicFlowEnabled(false, true);
-    }
-
-    public function scopeRequestedAdvisorOrPaymentAuthorized($q)
-    {
-        $q->where(function ($sq) {
-            $sq->where('sic_advisor_requested', 1)->orWhereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
-        });
-    }
-
-    public function isBuyLeadApplicable(): bool
-    {
-        return request('isRequestedForAnAdvisor', false) ||
+        if ($isSIC) {
+            return (! $this->isStale() && ! $this->isPaid()) &&
+            (request('isRequestedForAnAdvisor', false) ||
             $this->sic_advisor_requested == 1 ||
             $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
-            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_TO_BOUGHT_LEAD;
-    }
-
-    public function startAllocation()
-    {
-        if ($this->lead_allocation_started_at) {
-            return; // Already Started
+            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD);
         }
 
-        self::withoutEvents(function () {
-            $this->update([
-                'lead_allocation_started_at' => now(),
-            ]);
-        });
-    }
+        // If lead is not stale and not paid, or previously lead is bought lead or reassigned as bought lead
 
-    public function isAllocationInProgress(): bool
-    {
-        // We will consider the lead to be in progress if attempted within 10 minutes of the last attempt
-        return ! empty($this->lead_allocation_started_at) && Carbon::parse($this->lead_allocation_started_at)->greaterThanOrEqualTo(now()->subMinutes(10));
-    }
-
-    public function endAllocation()
-    {
-        if (! $this->lead_allocation_started_at) {
-            return; // Already Ended
-        }
-
-        self::withoutEvents(function () {
-            $this->update([
-                'lead_allocation_started_at' => null,
-            ]);
-        });
+        return (! $this->isStale() && ! $this->isPaid()) || in_array(
+            $this->assignment_type,
+            [AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]
+        );
     }
 
     public function getForeignKey()

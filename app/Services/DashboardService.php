@@ -160,23 +160,29 @@ class DashboardService extends BaseService
 
     public function getTeamWiseLeadStats($filters)
     {
-        $todaysLeads = CarQuote::select('car_quote_request.id', 'car_quote_request.advisor_id')
+        $leadsData = CarQuote::select('car_quote_request.advisor_id', DB::raw('COUNT(car_quote_request.id) as leads_count'))
             ->join('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'car_quote_request.id')
             ->whereNotNull('car_quote_request.advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
-            ->whereBetween('cqrd.advisor_assigned_date', [$filters['startDate'], $filters['endDate']])->get();
+            ->whereBetween('cqrd.advisor_assigned_date', [$filters['startDate'], $filters['endDate']])
+            ->groupBy('car_quote_request.advisor_id')
+            ->get()
+            ->keyBy('advisor_id');
+
+        $advisors = $this->getAdvisorsByRole(RolesEnum::CarAdvisor)->groupBy('u_team_id');
 
         $teamWiseLeadsAssignedAverage = [];
 
-        $advisors = $this->getAdvisorsByRole(RolesEnum::CarAdvisor);
-
         foreach ($filters['teams'] as $team) {
-            $teamUserIds = $advisors->filter(fn ($user) => $user->u_team_id == $team->id)->pluck('id');
-            $usersCount = count($teamUserIds);
+            $teamUserIds = $advisors->get($team->id, collect())->pluck('id');
+            $usersCount = $teamUserIds->count();
 
-            $leadsCount = $todaysLeads->whereIn('advisor_id', array_unique($teamUserIds->toArray()))->count();
-            $stats = $leadsCount.' / '.$usersCount.' =  '.number_format((float) $usersCount == 0 ? 0 : $leadsCount / $usersCount, 2, '.', '');
+            $leadsCount = $teamUserIds->reduce(function ($count, $advisorId) use ($leadsData) {
+                return $count + ($leadsData->get($advisorId)->leads_count ?? 0);
+            }, 0);
+
+            $stats = $usersCount == 0 ? '0 / 0 = 0.00' : "{$leadsCount} / {$usersCount} = ".number_format($leadsCount / $usersCount, 2);
 
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => $usersCount,

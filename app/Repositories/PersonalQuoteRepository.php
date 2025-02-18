@@ -15,6 +15,7 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -86,7 +87,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUploadDocument($id, $file, $data)
     {
         try {
-
+            $fileName = $file->getClientOriginalName();
             info('fn: fetchUploadDocument called');
             $quoteType = '';
             $insuranceProviderId = null;
@@ -113,11 +114,11 @@ class PersonalQuoteRepository extends BaseRepository
             $originalName = sanitizeFileName($file->getClientOriginalName());
             $docName = preg_replace('/\s+/', '', $originalName);
             $fileMimeType = $file->getClientMimeType();
-            //upload file to azure
+            // upload file to azure
             $fileNameAzure = uniqid().'_'.$quote->uuid.'_original_'.$docName;
             $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
 
-            //generate unique uuid
+            // generate unique uuid
             $docUuid = uniqid();
             while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
                 $docUuid = uniqid().rand(1, 100);
@@ -180,12 +181,12 @@ class PersonalQuoteRepository extends BaseRepository
             } catch (\Exception $exception) {
                 info('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
 
-                return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
+                return ['status' => false, 'message' => $fileName.' :  '.($exception->getMessage() ?? 'Error uploading file')];
             }
         } catch (\Exception $exception) {
             info('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
 
-            return ['status' => true, 'message' => 'Document upload failed, please try again'];
+            return ['status' => true, 'message' => $fileName.' :  Document upload failed, please try again'];
         }
     }
 

@@ -28,7 +28,7 @@ final class ApplicationStorageEnums extends Enum
     public const TIER_ASSIGNMENT_PROCESS_START_DATE = 'TIER_ASSIGNMENT_PROCESS_START_DATE';
     public const CAR_LEAD_PICKUP_FIFO = 'CAR_LEAD_PICKUP_FIFO';
     public const CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS = 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS';
-    public const JOB_FAILED_EMAIL_RECIPIENTS = 'ahsan.ashfaq@insurancemarket.ae,hussain.fakhruddin@insurancemarket.ae,daniyal.shahid@insurancemarket.ae,faisal.abbas@insurancemarket.ae';
+    public const JOB_FAILED_EMAIL_RECIPIENTS = 'ahsan.ashfaq@myalfred.com,hussain.fakhruddin@insurancemarket.ae,daniyal.shahid@myalfred.com,faisal.abbas@myalfred.com,afzal.khan@myalfred.com';
     public const CAR_SOLD_STATUS_REJECTION_TEMPLATE = 'CAR_SOLD_STATUS_REJECTION_TEMPLATE';
     public const UNCONTACTABLE_STATUS_REJECTION_TEMPLATE = 'UNCONTACTABLE_STATUS_REJECTION_TEMPLATE';
     public const CAR_SOLD_RESUBMISSIONS_TEMPLATE = 'CAR_SOLD_RESUBMISSIONS_TEMPLATE';
@@ -67,9 +67,11 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_LEAD_REASSIGNMENT = 'ENABLE_LEAD_REASSIGNMENT';
     public const DUBAI_NOW_CC_GROUP = 'DUBAI_NOW_CC_GROUP';
     public const SAGE_ENABLED = 'SAGE_ENABLED';
+    public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
     public const DTT_ENABLED = 'DTT_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
+    public const DTT_HEALTH_ENABLED = 'DTT_HEALTH_ENABLED';
     public const DTT_HEALTH_REPLY_TO = 'DTT_HEALTH_REPLY_TO';
     public const ENABLE_PLAN_MODIFY_VALIDATION = 'ENABLE_PLAN_MODIFY_VALIDATION';
     public const EP_MDX_V2_FROM = 'EP_MDX_V2_FROM';
@@ -121,6 +123,7 @@ final class ApplicationStorageEnums extends Enum
     public const SUKOON_TEMPLATE_TAX_INVOICE = 'SUKOON_TEMPLATE_TAX_INVOICE';
     public const SUKOON_TEMPLATE_TAX_INVOICE_BUYER = 'SUKOON_TEMPLATE_TAX_INVOICE_BUYER';
     public const LEAD_SOURCE_ECOMMERCE = 'LEAD_SOURCE_ECOMMERCE';
+    public const FAKE_LEAD_DOMAINS = 'FAKE_LEAD_DOMAINS';
 
     // Travel SIC 2.0
     public const SIC_TRAVEL_WORKFLOW_ENABLE = 'SIC_TRAVEL_WORKFLOW_ENABLE';
@@ -170,10 +173,12 @@ final class ApplicationStorageEnums extends Enum
     public const HOME_VOLUME_ADVISORS = 'HOME_VOLUME_ADVISORS';
     public const IS_CAMPAIGN = 'IS_CAMPAIGN';
     public const NB_MOTOR_FOLLOWUP_DELAY_DURATION = 'NB_MOTOR_FOLLOWUP_DELAY_DURATION';
+    public const BIRD_TRAVEL_RENEWALS_OCB = 'BIRD_TRAVEL_RENEWALS_OCB';
     public const COURIER_QUOTES_SYNC_ENABLED = 'COURIER_QUOTES_SYNC_ENABLED';
     public const PROCESS_CC_PAYMENTS_ENABLED = 'PROCESS_CC_PAYMENTS_ENABLED';
+    public const TRAVEL_RENEWALS_SWITCH = 'TRAVEL_RENEWALS_SWITCH';
 
-    /*Policy Issuance Automation */
+    /* Policy Issuance Automation */
     public const ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
     public const ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
     public const TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL = 'TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL';
@@ -182,4 +187,11 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW = 'BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW';
     public const PUBLIC_HOLIDAY_START_DATE = 'PUBLIC_HOLIDAY_START_DATE';
     public const PUBLIC_HOLIDAY_END_DATE = 'PUBLIC_HOLIDAY_END_DATE';
+    public const TRAVEL_RENEWALS_DAYS_THRESHOLD = 'TRAVEL_RENEWALS_DAYS_THRESHOLD';
+    public const ENABLE_TAP_INTEGRATION = 'ENABLE_TAP_INTEGRATION';
+    public const USER_UNAVAILABLE_TIME_THRESHOLD = 'USER_UNAVAILABLE_TIME_THRESHOLD';
+
+    /* Bike LMS Intro Email BCC */
+    public const LMS_INTRO_BIKE_EMAIL_BCC = 'LMS_INTRO_BIKE_EMAIL_BCC';
+    public const TAP_AUTHORIZED_EMAILS = 'TAP_AUTHORIZED_EMAILS';
 }

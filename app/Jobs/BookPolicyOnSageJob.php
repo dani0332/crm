@@ -83,7 +83,15 @@ class BookPolicyOnSageJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
+        $message = $exception->getMessage();
+
+        if (str_contains($message, SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
+        } else {
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
+        }
+
+        Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$message);
 
         info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
@@ -91,7 +99,6 @@ class BookPolicyOnSageJob implements ShouldQueue
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
         info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' Insurer - '.$this->sageRequest->insurerID);
 
-        Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
     }
 
     public function middleware()

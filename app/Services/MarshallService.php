@@ -38,14 +38,24 @@ class MarshallService
         $url = $this->baseUrl.$path;
         $response = $this->client->withBody(json_encode($data), 'application/json')
             ->send($method, $url)->onError(function ($response) use ($data, $url) {
-                info('Marhsall Service Exception', ['data' => $data, 'url' => $url]);
-                if (isset($response->json()['msg'])) {
-                    vAbort($response->json()['msg']);
-                } else {
-                    vAbort('Marshall Service Exception');
-                }
+                $this->handleError($response, $data, $url);
             });
 
         return $response->json();
+    }
+
+    private function handleError($response, $data, $url)
+    {
+        $logData = [
+            'data' => $data,
+            'url' => $url,
+            'status' => $response->status(),
+            'response' => $response->json(),
+        ];
+
+        $logData['msg'] = $response->json()['msg'] ?? $response->json()['message'];
+
+        info('Marshall Service Exception', $logData);
+        vAbort($logData['msg']);
     }
 }

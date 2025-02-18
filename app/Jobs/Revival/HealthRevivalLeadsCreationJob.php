@@ -48,9 +48,9 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
-        $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ENABLED)->value('value');
+        $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_HEALTH_ENABLED)->value('value');
         if ($dttEnabled == 0) {
-            info('HealthRevivalLeadsCreationJob - Dtt is not enabled from cms');
+            info('HealthRevivalLeadsCreationJob - DTT_HEALTH is not enabled from cms');
 
             return false;
         }
@@ -126,6 +126,19 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID);
                 }
 
+                $healthRevival = DttRevival::firstOrCreate(
+                    [
+                        'quote_type_id' => QuoteTypes::HEALTH->id(),
+                        'quote_id' => $healthQuote->id,
+                        'uuid' => $capiResponse->quoteUID,
+                    ],
+                    [
+                        'revival_quote_batch_id' => $quoteBatch->id,
+                        'email_sent' => false,
+                        'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
+                    ]
+                );
+
                 $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
                 sleep(5);
                 if (empty($healthQuote->health_plan_type_id)) {
@@ -133,18 +146,22 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM;
 
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                    $response = Ken::request('/get-health-cheapest-plans', 'post', [
+                    $response = Ken::renewalRequest('/get-health-cheapest-plans', 'post', [
                         'quoteUID' => $capiResponse->quoteUID,
                         'isPlanTypes' => true,
                     ]);
+                    if (! isset($response['planTypes'])) {
+                        info($logPrefix.'noPlansReturned - UUID -'.$capiResponse->quoteUID.'-'.json_encode($response));
 
+                        return false;
+                    }
                     $emailData = new \stdClass;
                     $emailData->planTypes = $response['planTypes'];
 
                     $emailData->subject = 'Renew your health insurance policy today! '.$healthQuote->code;
                 } else {
 
-                    $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
+                    $response = Ken::renewalRequest('/get-health-quote-plans-order-priority', 'post', [
                         'quoteUID' => $healthQuote->uuid,
                         'isModified' => true,
                     ]);
@@ -197,14 +214,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 if ($response == 201) {
                     info($logPrefix.'ParentLead - '.$this->lead->uuid.' - childLead - '.$capiResponse->quoteUID.' - emailSent - '.$emailData->customerEmail);
 
-                    DttRevival::create([
-                        'quote_type_id' => QuoteTypes::HEALTH->id(),
-                        'quote_id' => $healthQuote->id,
-                        'uuid' => $capiResponse->quoteUID,
-                        'revival_quote_batch_id' => $quoteBatch->id,
-                        'email_sent' => true,
-                        'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
-                    ]);
+                    $healthRevival->update(['email_sent' => true]);
                     // update child lead
                     HealthQuote::find($healthQuote->id)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
                     // update parent lead

@@ -95,7 +95,7 @@ class TravelAllocation implements Allocation
 
     private function fetchLead()
     {
-        return $this->travelAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId);
+        return $this->travelAllocationService->fetchLead($this->tracker, $this->allocationId, $this->overrideAdvisorId);
     }
 
     private function fetchAvailableAdvisor(TravelQuote $lead)

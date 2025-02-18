@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Lab404\Impersonate\Models\Impersonate;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
@@ -22,6 +23,7 @@ class User extends Authenticatable implements AuditableContract
     use Auditable;
     use HasFactory;
     use HasRoles;
+    use Impersonate;
     use Notifiable;
 
     /**
@@ -231,6 +233,11 @@ class User extends Authenticatable implements AuditableContract
         return Team::whereIn('id', $userTeamIds)->get()->pluck('name');
     }
 
+    public function getUserTeamIds()
+    {
+        return UserTeams::where('user_id', $this->id)->pluck('team_id')->toArray();
+    }
+
     public function hasMyLeadAccess()
     {
         return Auth::user()->hasAnyRole([
@@ -374,6 +381,11 @@ class User extends Authenticatable implements AuditableContract
     public function department()
     {
         return $this->belongsTo(Department::class)->select('id', 'name');
+    }
+
+    public function advisors()
+    {
+        return $this->hasMany(InslyAdvisor::class);
     }
 
     public function businessTypes()

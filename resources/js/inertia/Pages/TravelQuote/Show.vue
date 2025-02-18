@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -63,6 +64,8 @@ defineProps({
   isAmlClearedForQuote: Boolean,
   amlStatusName: String,
   access: Object,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -131,6 +134,7 @@ const {
   policy_start_date,
   isEmail,
   isMobileNo,
+  emiratesNumber,
 } = useRules();
 const confirmDeleteData = reactive({
   docs: null,
@@ -224,6 +228,7 @@ const modals = reactive({
   activityConfirm: false,
   planDetails: false,
   mixInquiryConfirm: false,
+  sendConfirm: false,
 });
 
 const travelFields = computed(() => {
@@ -271,15 +276,6 @@ const onLeadStatus = () => {
       preserveScroll: true,
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
-      },
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages) {
-          notification.success({
-            title: 'Lead Status Updated',
-            position: 'top',
-          });
-        }
       },
     },
   );
@@ -1352,6 +1348,59 @@ const selectedPlanIds = computed(() => {
     : [];
 });
 
+const confirmSendEmail = () => {
+  const first_name = page.props.quote.first_name || '';
+  const last_name = page.props.quote.last_name || '';
+
+  axios
+    .post(
+      `/quotes/travel/${page.props.quote.uuid}/send-email-one-click-buy`,
+      {
+        quote_type_id: page.props.quoteTypeId,
+        quote_id: page.props.quote.id,
+        quote_uuid: page.props.quote.uuid,
+        quote_cdb_id: page.props.quote.code,
+        quote_previous_expiry_date:
+          page.props.quote.previous_policy_expiry_date,
+        quote_currently_insured_with: page.props.quote.currently_insured_with,
+        quote_car_make: page.props.carMakeText,
+        quote_car_model: page.props.carModelText,
+        quote_car_year_of_manufacture: page.props.quote.year_of_manufacture,
+        quote_previous_policy_number:
+          page.props.quote.previous_quote_policy_number,
+        customer_name: `${first_name} ${last_name}`,
+        customer_email: page.props.quote.email,
+        advisor_name: page.props.quote.advisor
+          ? page.props.quote.advisor.name
+          : null,
+        advisor_email: page.props.quote.advisor
+          ? page.props.quote.advisor.email
+          : null,
+        advisor_mobile_no: page.props.quote.advisor
+          ? page.props.quote.advisor.mobile_no
+          : null,
+        advisor_landline_no: page.props.quote.advisor
+          ? page.props.quote.advisor.landline_no
+          : null,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+
+    .then(response => {
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      modals.sendConfirm = false;
+    });
+};
 const selectedProviderPlan = ref({
   id: page.props.quote.plan_id,
   planName: page.props.ecomDetails.planName,
@@ -1367,7 +1416,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
   });
 };
 
@@ -1500,6 +1549,15 @@ const allowStatusUpdate = computed(() => {
     page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
   );
 });
+
+function capitalizeString(str) {
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -1531,7 +1589,10 @@ const allowStatusUpdate = computed(() => {
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -1554,6 +1615,7 @@ const allowStatusUpdate = computed(() => {
         >
           Send NB OCB To Customer
         </x-button>
+
         <x-button
           size="sm"
           color="#ff5e00"
@@ -1737,8 +1799,12 @@ const allowStatusUpdate = computed(() => {
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">AML STATUS</dt>
+                <dt class="font-medium uppercase">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -2128,20 +2194,29 @@ const allowStatusUpdate = computed(() => {
                   <dd>{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality_id_text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ quote.gender }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality_id_text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -2584,6 +2659,25 @@ const allowStatusUpdate = computed(() => {
           </x-button>
         </template>
       </x-modal>
+
+      <x-modal v-model="modals.sendConfirm" show-close backdrop>
+        <template #header> Send Email </template>
+        <p>Are you sure send email to customer?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.sendConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button size="sm" color="error" @click.prevent="confirmSendEmail">
+              Send
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
     </div>
 
     <UBODetails
@@ -2811,7 +2905,13 @@ const allowStatusUpdate = computed(() => {
           </h3>
           <div class="flex gap-2">
             <Link
-              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+              v-if="
+                quote?.insly_id &&
+                canAny([
+                  permissionsEnum.VIEW_LEGACY_DETAILS,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
               :href="`/legacy-policy/${quote.insly_id}`"
               preserve-scroll
             >
@@ -2999,6 +3099,24 @@ const allowStatusUpdate = computed(() => {
               >
                 Download PDF
               </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="quote.advisor_id != $page.props.auth.user.id"
+                >
+                  Send OCB Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
             </div>
           </div>
 
@@ -3082,6 +3200,8 @@ const allowStatusUpdate = computed(() => {
                         selectedPlansIds: selectedPlanIds,
                         planType: 'normalPlans',
                       }"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
                     />
                     <x-button
                       v-else
@@ -3172,6 +3292,8 @@ const allowStatusUpdate = computed(() => {
                           selectedPlansIds: selectedPlanIds,
                           planType: 'seniorPlans',
                         }"
+                        :insuranceProviderId="item.id"
+                        :code="quote.code"
                       />
                       <x-button
                         v-else
@@ -3244,6 +3366,8 @@ const allowStatusUpdate = computed(() => {
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PaymentTable
@@ -3299,6 +3423,7 @@ const allowStatusUpdate = computed(() => {
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\HealthTeamType;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -189,6 +190,7 @@ class HealthRevivalQuoteController extends Controller
             'paymentDocument' => $paymentDocument,
             'ecomHealthInsuranceQuoteUrl' => $ecomHealthInsuranceQuoteUrl,
             'bookPolicyDetails' => $bookPolicyDetails,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
         ]);
     }
 
