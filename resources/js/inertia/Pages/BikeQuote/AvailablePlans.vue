@@ -1,9 +1,9 @@
 <script setup>
+import LazyCreatePlan from '@/inertia/Pages/BikeQuote/CreatePlan.vue';
+import UpdateShowPlan from '@/inertia/Pages/BikeQuote/UpdateShowPlans.vue';
 import { defineEmits } from 'vue';
 // Define the emit function
 const emit = defineEmits(['plan-selected', 'manual-plan-status']);
-import LazyCreatePlan from '@/inertia/Pages/BikeQuote/CreatePlan.vue';
-import UpdateShowPlan from '@/inertia/Pages/BikeQuote/UpdateShowPlans.vue';
 
 defineProps({
   carPlanTypeEnum: Object,
@@ -414,15 +414,24 @@ watch(isManualPlan, newValue => {
         >
           Download PDF
         </x-button>
-        <x-button
-          @click.prevent="modals.sendConfirm = true"
-          size="sm"
-          color="orange"
-          class="mr-2"
-          :disabled="quote.advisor_id != $page.props.auth.user.id"
-        >
-          Send OCB Email to Customer
-        </x-button>
+        <x-tooltip placement="top" align="left">
+          <x-button
+            @click.prevent="modals.sendConfirm = true"
+            size="sm"
+            color="orange"
+            class="mr-2"
+            :disabled="quote.advisor_id != $page.props.auth.user.id"
+          >
+            Send OCB Email to Customer
+          </x-button>
+          <template #tooltip>
+            <div>
+              When clicked, this button sends the One Click Buy (OCB) email to
+              the customer with updated rates and coverage options, helping them
+              finalize their purchase with ease.
+            </div>
+          </template>
+        </x-tooltip>
 
         <x-button
           @click.prevent="modals.createPlan = true"
