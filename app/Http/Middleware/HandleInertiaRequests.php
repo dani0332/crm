@@ -118,7 +118,7 @@ class HandleInertiaRequests extends Middleware
             'amlStatusEnum' => AMLStatusCode::asArray(),
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
-            'authorisePaymentCount' => app(PaymentRepository::class)->getAuthorisePaymentCount($userId = null),
+            'authorisePaymentCount' => app(PaymentRepository::class)->getAuthorisePaymentCount(),
             'checkAuthUserRole' => checkAuthUserRole(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),

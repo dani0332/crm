@@ -3585,8 +3585,10 @@ const isEditPaymentEnabled = () => {
     paymentStatusEnum.CAPTURED,
   ];
 
-  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
-    statusesToCheck.includes(item.payment_status_id),
+  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(
+    item =>
+      statusesToCheck.includes(item.payment_status_id) &&
+      item.payment_method.code === 'CC',
   );
 
   return !isMultiPaymentsEnabled.value && hasAnyAuthorizedPayment;

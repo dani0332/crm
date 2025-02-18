@@ -41,6 +41,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class CRUDService extends BaseService
@@ -615,16 +616,31 @@ class CRUDService extends BaseService
     {
         if ($paymentSplit) {
             if ($amount > 0) {
-                PaymentAction::updateOrInsert(
-                    ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
-                    [
-                        'is_fulfilled' => 0,
-                        'action_type' => 'CAPTURE',
-                        'amount' => $amount,
-                        'created_by' => auth()->user()->email,
-                        'is_manager_approved' => 1,
-                    ]
-                );
+                $maxAttempts = 3;
+                for ($i = 0; $i < $maxAttempts; $i++) {
+                    try {
+                        info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action.");
+                        PaymentAction::updateOrInsert(
+                            ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
+                            [
+                                'is_fulfilled' => 0,
+                                'action_type' => 'CAPTURE',
+                                'amount' => $amount,
+                                'created_by' => auth()->user()->email,
+                                'is_manager_approved' => 1,
+                            ]
+                        );
+                        info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
+                        break;
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        Log::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
+                        if ($i == $maxAttempts - 1) {
+                            Log::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');
+                            vAbort('Capture failed please try again later.');
+                        }
+                        sleep(1); // Wait before retrying
+                    }
+                }
 
                 $data = [
                     'uuid' => $quoteModel->uuid,
