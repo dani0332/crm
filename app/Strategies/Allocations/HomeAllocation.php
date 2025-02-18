@@ -173,20 +173,16 @@ class HomeAllocation extends BaseAllocation
      */
     private function isPropertyRentedForHolidayHome(string $uuid): bool
     {
-        $result = DB::table('home_quote_request')
-            ->join('range_lookups', 'range_lookups.id', '=', 'home_quote_request.owner_occupancy_type_id')
-            ->where('home_quote_request.uuid', $uuid)
-            ->where('range_lookups.code', self::SHORT_TERM_CODE)
-            ->select('home_quote_request.owner_occupancy_type_id', 'range_lookups.id as short_term_id')
+        $quoteRequest = HomeQuote::where('uuid', $uuid)
+            ->with('rangeLookup')
             ->first();
 
-        if (! $result) {
+        if (!$quoteRequest || !$quoteRequest->rangeLookup) {
             info('No matching record found for UUID: ' . $uuid);
-
             return false;
         }
 
-        // Compare the owner_occupancy_type_id with the short_term_id
-        return $result->owner_occupancy_type_id === $result->short_term_id;
+        // Compare the owner_occupancy_type_id with the range lookup's id
+        return $quoteRequest->owner_occupancy_type_id === $quoteRequest->rangeLookup->id;
     }
 }
