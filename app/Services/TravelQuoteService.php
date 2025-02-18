@@ -585,6 +585,11 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+
+        if (isset($request->travel_start_date) && $request->travel_start_date != '') {
+            $this->query->whereDate('tqr.start_date', Carbon::parse($request->travel_start_date));
+        }
+
         $this->query->filterBySegment();
         $this->adjustQueryByDateFilters($this->query, 'tqr');
 
@@ -651,6 +656,7 @@ class TravelQuoteService extends BaseService
                             'documents',
                             'verifiedByUser',
                             'processJob',
+                            'paymentCharges',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },

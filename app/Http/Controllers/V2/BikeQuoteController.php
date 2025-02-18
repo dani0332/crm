@@ -98,8 +98,9 @@ class BikeQuoteController extends Controller
     public function create()
     {
         $data = BikeQuoteRepository::getFormOptions();
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
 
-        return inertia('BikeQuote/Form', $data);
+        return inertia('BikeQuote/Form', array_merge($data, ['quoteStatusEnums' => $quoteStatusEnums]));
     }
 
     /**
@@ -126,12 +127,14 @@ class BikeQuoteController extends Controller
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
         $bikeQuoteRequestDetail = $quote->bikeQuote ?? null;
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
 
         return inertia(
             'BikeQuote/Form',
             array_merge($data, [
                 'quote' => $quote,
                 'bikeQuoteDetail' => $bikeQuoteRequestDetail,
+                'quoteStatusEnums' => $quoteStatusEnums,
             ])
         );
     }
@@ -208,8 +211,11 @@ class BikeQuoteController extends Controller
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+        $listQuotePlans = $this->bikeQuoteService->getPlans($uuid, true, true);
+        $quote->load(['carPlan.insuranceProvider']);
 
         return inertia('BikeQuote/Show', [
+            'listQuotePlans' => $listQuotePlans,
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
             'record' => $quote,

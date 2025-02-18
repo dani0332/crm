@@ -1316,9 +1316,9 @@ if (! function_exists('getCourierQuote')) {
                 "{$table}.policy_number as insurance_policy_number",
                 'payments.code as ep_ref_id',
                 'payments.captured_at as payment_captured_at',
-                'customer.first_name as client_first_name',
-                'customer.last_name as client_last_name',
-                'customer.email as client_email',
+                "{$table}.first_name as client_first_name",
+                "{$table}.last_name as client_last_name",
+                "{$table}.email as client_email",
                 "{$table}.mobile_no as client_phone_number",
                 'customer_addresses.type as courier_address_type',
                 'customer_addresses.office_number as courier_address_office_number',
@@ -1585,15 +1585,5 @@ if (! function_exists('userHasProduct')) {
         $productIds = auth()->user()->products->pluck('product_id');
 
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
-    }
-}
-
-if (! function_exists('isTapEnabled')) {
-    function isTapEnabled($processType = []): bool
-    {
-        $isTapEnabled = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION);
-        $tapAuthorizedEmails = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS);
-
-        return $isTapEnabled;
     }
 }

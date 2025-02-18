@@ -166,8 +166,8 @@ class CentralController extends Controller
     {
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
             $emiratesDetails = [
-                str_replace('-', '', $customerProfileRequest->emirates_id_number),
-                $customerProfileRequest->emirates_id_expiry_date,
+                'emirates_id_number' => str_replace('-', '', $customerProfileRequest->emirates_id_number),
+                'emirates_id_expiry_date' => $customerProfileRequest->emirates_id_expiry_date,
             ];
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
             $customer->update($emiratesDetails);

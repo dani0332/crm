@@ -398,12 +398,6 @@ const onLeadStatus = () => {
           response.props.quoteRequest?.stale_at,
         );
         router.reload({ only: ['quoteRequest'] });
-        if (!flash_messages) {
-          notification.success({
-            title: 'Lead Status Updated',
-            position: 'top',
-          });
-        }
       },
     },
   );
@@ -2076,7 +2070,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <!-- Reminder:: Insurer AML Status applies only to Travel and Car, so it shows as N/A otherwise. -->
@@ -3264,15 +3258,25 @@ const applyEmiratesIdNumMasking = emiratesId =>
             >
               Download PDF
             </x-button>
-            <x-button
-              @click.prevent="validateEmailSending"
-              size="sm"
-              color="orange"
-              :disabled="doesEmailStatusExist || isOcaButtonDisabled"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Send OCA Email to Customer
-            </x-button>
+            <x-tooltip placement="top" align="left">
+              <x-button
+                @click.prevent="validateEmailSending"
+                size="sm"
+                color="orange"
+                :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Send OCA Email to Customer
+              </x-button>
+              <template #tooltip>
+                <div>
+                  When clicked, this button sends the One Click Apply (OCA)
+                  email to the customer with updated rates and coverage options,
+                  helping them finalize their purchase with ease.
+                </div>
+              </template>
+            </x-tooltip>
+
             <x-button
               v-if="plansTable.data.length > 0"
               size="sm"

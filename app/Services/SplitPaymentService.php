@@ -666,6 +666,7 @@ class SplitPaymentService
                     'advisor_id' => $quoteModel->advisor_id,
                 ]);
 
+                // 1- This case will run
                 $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
                 if ($sageResponse['status'] == 'success') {
                     info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Sage receipt created successfully with Document Number: '.$sageResponse['response']);
@@ -1206,5 +1207,30 @@ class SplitPaymentService
         }
 
         return ['isCommissionDisabled' => false, 'disabledCommissionTooltip' => ''];
+    }
+
+    public function hasAnyAuthorizedPayment($splitPayment)
+    {
+        return $splitPayment->where('payment_method', PaymentMethodsEnum::CreditCard)
+            ->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
+            ->first();
+    }
+
+    public function validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, $businessTypeId = null, $planId = null)
+    {
+
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+
+        if (! $isCreditCardEnabled) {
+            $payment = Payment::where('code', $code)->with('paymentSplits')->first();
+            // Get insurance provider details
+            if ($payment && $payment->isInsurerPayment()) {
+                $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
+                if ($hasAnyAuthorizedPayment) {
+                    $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
+                }
+            }
+        }
     }
 }

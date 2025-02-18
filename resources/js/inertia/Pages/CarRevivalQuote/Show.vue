@@ -131,12 +131,6 @@ const onLeadStatus = () => {
     onError: errors => {
       console.log(errors);
     },
-    onSuccess: () => {
-      notification.success({
-        title: 'Lead Status Updated',
-        position: 'top',
-      });
-    },
   });
 };
 

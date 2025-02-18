@@ -1115,12 +1115,6 @@ const onLeadStatus = () => {
           position: 'top',
         });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
-      },
     });
 };
 const toggleLoader = ref(false);
@@ -1677,6 +1671,21 @@ function capitalizeString(str) {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const isPuaOrManualPlan = computed(() => {
+  let isCConditionMeet = false;
+  if (selectedProviderPlan?.value?.id && availablePlansItems?.value) {
+    const selectedPlan = availablePlansItems?.value.find(
+      plan => plan.id === selectedProviderPlan?.value?.id,
+    );
+    if (selectedPlan) {
+      if (selectedPlan.puaType || selectedPlan.isManualPlan) {
+        isCConditionMeet = true;
+      }
+    }
+  }
+  return isCConditionMeet;
+});
 </script>
 
 <template>
@@ -1899,7 +1908,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ quote.car_company_address }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -3204,19 +3213,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
               >
                 Download PDF
               </x-button>
-              <x-button
-                @click.prevent="modals.sendConfirm = true"
-                size="sm"
-                color="orange"
-                class="mr-2"
-                :disabled="
-                  record.advisor_id != $page.props.auth.user.id ||
-                  page.props.linkedQuoteDetails.childLeadsCount > 0
-                "
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Send OCB Email to Customer
-              </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="
+                    record.advisor_id != $page.props.auth.user.id ||
+                    page.props.linkedQuoteDetails.childLeadsCount > 0
+                  "
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Send OCB Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
             </template>
 
             <AddPlanButtonTemplate v-slot="{ isDisabled }">
@@ -3723,6 +3741,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isCapBtnEnabled="isPuaOrManualPlan"
     />
     <PaymentTable
       v-else
