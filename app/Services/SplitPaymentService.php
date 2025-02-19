@@ -649,7 +649,7 @@ class SplitPaymentService
         if ($isFromJob && ! $quoteModel) {
             CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
 
-            return;
+            return false;
         }
 
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
@@ -684,7 +684,7 @@ class SplitPaymentService
                         CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $sageMessage]);
                         $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
 
-                        return;
+                        return false;
                     } else {
                         vAbort($sageMessage);
                     }
@@ -764,6 +764,7 @@ class SplitPaymentService
                 if ($isFromJob) {
                     CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $retryResponse['message']]);
                     $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
+                    return false;
                 } else {
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
                 }
@@ -772,11 +773,14 @@ class SplitPaymentService
                     $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
                 }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
+                return true;
             }
 
         } elseif ($isFromJob) {
             CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
+            return true;
         }
+        return true;
     }
 
     private function handleCapturePaymentError($error, $isFromJob, $splitPaymentId, $quoteCode)

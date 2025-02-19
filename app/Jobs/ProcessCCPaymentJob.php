@@ -62,13 +62,18 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
             info("Status changed from {$previousStatus} to {$ccPaymentProcess->status}: for Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
 
             // Process the split payment approval
-            app(SplitPaymentService::class)->processSplitPaymentApprove(
+            $isProcessComplete = app(SplitPaymentService::class)->processSplitPaymentApprove(
                 $ccPaymentProcess->quote_type,
                 $ccPaymentProcess->quoteable_id,
                 $ccPaymentProcess->payment_splits_id,
                 $ccPaymentProcess->amount_captured,
                 true
             );
+
+            if (! $isProcessComplete) {
+                info("CC Payments Job Failed for Payment Split {$splitPaymentCode} - Error: Process not completed. We cannot process further like booking process.");
+                return;
+            }
 
             $paymentSplit = PaymentSplits::find($ccPaymentProcess->payment_splits_id);
             if (! $paymentSplit || ! $paymentSplit->payment) {
