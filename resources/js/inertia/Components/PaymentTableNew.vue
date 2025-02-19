@@ -3012,7 +3012,7 @@ const getCaptureOption = computed(() => {
     // Return 'capture' if all conditions are met, otherwise return 'approve'
     if (
       (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
-      isCaptureButtonEnabled
+      (isCaptureButtonEnabled && hasAnyCCSplitPayment())
     ) {
       return 'capture';
     }
