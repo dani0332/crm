@@ -630,6 +630,7 @@ const isLegacyPolicy = computed(() => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="props.isFuncsEnabled"
+      :realQuote="props.realQuote"
     />
 
     <LazyPolicyDetails

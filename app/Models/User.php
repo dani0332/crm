@@ -233,6 +233,11 @@ class User extends Authenticatable implements AuditableContract
         return Team::whereIn('id', $userTeamIds)->get()->pluck('name');
     }
 
+    public function getUserTeamIds()
+    {
+        return UserTeams::where('user_id', $this->id)->pluck('team_id')->toArray();
+    }
+
     public function hasMyLeadAccess()
     {
         return Auth::user()->hasAnyRole([
