@@ -1055,10 +1055,10 @@ class SplitPaymentService
             }
             $priceWithoutVat = $priceWithoutVat + $priceVatNotApplicable;
 
-            return [$priceWithoutVat, $vat];
+            return [round($priceWithoutVat, 2), round($vat, 2)];
         }
 
-        return [$priceWithoutVat, $vat];
+        return [round($priceWithoutVat, 2), round($vat, 2)];
     }
 
     // function to delete split payment
@@ -1193,11 +1193,13 @@ class SplitPaymentService
     {
         if (isTapEnabled() && $payment && $payment->isInsurerPayment()) {
             $paymentSplits = $payment->paymentSplits;
+            $insuranceProvider = $payment->insuranceProvider;
             if ($paymentSplits->isNotEmpty()) {
                 $hasPaidCreditCardPayment = $paymentSplits->contains(function ($split) {
                     return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id == PaymentStatusEnum::PAID;
                 });
-                if ($hasPaidCreditCardPayment) {
+                $excludingProviders = in_array($insuranceProvider?->code, [InsuranceProvidersEnum::TM, InsuranceProvidersEnum::QIC, InsuranceProvidersEnum::ALNC]);
+                if ($hasPaidCreditCardPayment && ! $excludingProviders) {
                     return [
                         'isCommissionDisabled' => true,
                         'disabledCommissionTooltip' => PaymentTooltip::DISABLED_COMMISSION,
