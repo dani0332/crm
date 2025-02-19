@@ -10,7 +10,7 @@ class LifeAllocation extends BaseAllocation
     private const CAT_A = 'categoryA';
     private const CAT_B = 'categoryB';
 
-    protected function fetchAdvisor(int $onlineStatus, ?string $uuid = null)
+    protected function fetchAdvisor(int $onlineStatus)
     {
         $emails = $this->getAdvisorEmails();
 

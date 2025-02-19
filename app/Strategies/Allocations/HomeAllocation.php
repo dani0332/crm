@@ -17,11 +17,11 @@ class HomeAllocation extends BaseAllocation
     private const BUILDING_VALUE_THRESHOLD = 5000000;
     private const SHORT_TERM_CODE = 'short_term';
 
-    protected function fetchAdvisor(int $onlineStatus, ?string $uuid = null)
+    protected function fetchAdvisor(int $onlineStatus)
     {
         // corp advisors logic needs to be implemented once its approved from business
         // If UUID is provided and the property is rented, fetch Corp Team advisors
-        if ($uuid !== null && $this->isPropertyRentedForHolidayHome($uuid)) {
+        if ($this->lead->uuid !== null && $this->isPropertyRentedForHolidayHome($this->lead->uuid)) {
             // return $this->fetchCorpLineAdvisor($onlineStatus);
             return []; // Corp advisors logic is not implemented yet so returning empty array and lead should be unassigned in this case
         }

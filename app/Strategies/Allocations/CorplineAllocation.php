@@ -6,7 +6,7 @@ use App\Enums\RolesEnum;
 
 class CorplineAllocation extends BaseAllocation
 {
-    protected function fetchAdvisor(int $onlineStatus, ?string $uuid = null)
+    protected function fetchAdvisor(int $onlineStatus)
     {
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::CorpLineAdvisor])
             ->whereIn('users.id', function ($q) {

@@ -13,7 +13,7 @@ class HomeAllocation extends BaseAllocation
     private const PERSONAL_BELONGINGS_VALUE_THRESHOLD = 100000;
     private const BUILDING_VALUE_THRESHOLD = 5000000;
 
-    protected function fetchAdvisor(int $onlineStatus, ?string $uuid = null)
+    protected function fetchAdvisor(int $onlineStatus)
     {
         $emails = [];
         if ($this->isValueLead()) {
