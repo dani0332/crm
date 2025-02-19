@@ -1058,10 +1058,10 @@ class SplitPaymentService
             }
             $priceWithoutVat = $priceWithoutVat + $priceVatNotApplicable;
 
-            return [$priceWithoutVat, $vat];
+            return [round($priceWithoutVat, 2), round($vat, 2)];
         }
 
-        return [$priceWithoutVat, $vat];
+        return [round($priceWithoutVat, 2), round($vat, 2)];
     }
 
     // function to delete split payment
