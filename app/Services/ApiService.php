@@ -99,6 +99,12 @@ class ApiService
 
         LoggerService::startQuoteLogging($allocationId);
 
+        info('request info', [
+            'url' => $request->fullUrl(),
+            'ip' => $request->ip(),
+            'agent' => $request->userAgent(),
+        ]);
+
         // Handle different scenarios based on request parameters
         if ($assignAdvisor && ! $triggerOCB) {
             return $this->assignAdvisorOnly($allocationType, $allocationId);
