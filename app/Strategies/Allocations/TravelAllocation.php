@@ -100,7 +100,7 @@ class TravelAllocation implements Allocation
 
     private function fetchAvailableAdvisor(TravelQuote $lead)
     {
-        return $this->travelAllocationService->fetchAvailableAdvisor(teamId: $this->teamId, quoteUUID: $this->allocationId, lead: $lead, tracker: $this->tracker);
+        return $this->travelAllocationService->fetchAvailableAdvisor(teamId: $this->teamId, lead: $lead, tracker: $this->tracker);
     }
 
     private function assignLead(TravelQuote $lead, User $advisor)
