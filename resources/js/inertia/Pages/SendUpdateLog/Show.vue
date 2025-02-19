@@ -502,9 +502,7 @@ const isLegacyPolicy = computed(() => {
                     </dd>
                   </template>
                 </div>
-                <div
-                  class="grid sm:grid-cols-2"
-                >
+                <div class="grid sm:grid-cols-2">
                   <dt>
                     <x-tooltip>
                       <label
