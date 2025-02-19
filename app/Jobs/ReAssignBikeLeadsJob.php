@@ -54,10 +54,10 @@ class ReAssignBikeLeadsJob implements ShouldQueue
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead->uuid);
 
-            info('--------------- ReAssignment processing current lead : '.$lead->uuid.' ---------------');
+            info('--------------- ReAssignment processing ---------------');
 
             if ($lead->isAllocationInProgress()) {
-                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+                info("Allocation is already started at {$lead->allocation_started_at}");
 
                 continue;
             }
@@ -99,8 +99,9 @@ class ReAssignBikeLeadsJob implements ShouldQueue
 
             $lead->endAllocation();
 
-            info('--------------- ReAssignment processing ended for current lead : '.$lead->uuid.' ---------------');
+            info('--------------- ReAssignment processing ended ---------------');
         }
+        LoggerService::endLogging();
         info('-------- Reassignment bike job ended at : '.now().' ---------');
     }
 

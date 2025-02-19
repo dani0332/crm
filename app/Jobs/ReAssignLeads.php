@@ -78,7 +78,7 @@ class ReAssignLeads implements ShouldQueue
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead->uuid);
 
-            info(self::class."::handle - Reassignment of lead : {$lead->uuid} started ---------");
+            info(self::class.'::handle - Reassignment started ---------');
 
             $this->quoteType->allocate(
                 uuid: $lead->uuid,
@@ -86,9 +86,10 @@ class ReAssignLeads implements ShouldQueue
                 isReAssignment: true
             );
 
-            info(self::class."::handle - Reassignment of lead : {$lead->uuid} ended ---------");
+            info(self::class.'::handle - Reassignment ended ---------');
         }
 
+        LoggerService::endLogging();
         info(self::class."::handle - Reassignment {$this->quoteType->value} job ended at : ".now());
     }
 

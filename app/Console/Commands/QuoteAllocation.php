@@ -176,7 +176,7 @@ class QuoteAllocation extends Command
         foreach ($leads->get() as $lead) {
             LoggerService::startQuoteLogging($lead->uuid);
 
-            info("Processing Health record for Quote Allocation", [
+            info('Processing Health record for Quote Allocation', [
                 'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
@@ -226,7 +226,7 @@ class QuoteAllocation extends Command
 
             LoggerService::startQuoteLogging($lead->uuid);
 
-            info("Processing Travel record for Quote Allocation", [
+            info('Processing Travel record for Quote Allocation', [
                 'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
