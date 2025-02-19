@@ -96,7 +96,7 @@ class TravelRenewalService extends BaseService
         $customer = $customerService->getCustomerByEmail($quote->customer_email);
         info(self::class." Processing renewal for old quote. Ref-ID: {$quote->uuid}. Initiating renewal process with updated policy details. | Time:".now());
         $destinationIds = collect($quote->TravelDestinations)->pluck('destination_id')->toArray();
-        if (! empty($destinationIds)) {
+        if (! empty($quote->region_cover_for_id)) {
             $travelQuotePayload = (object) [
                 'firstName' => trim($quote->first_name),
                 'lastName' => trim($quote->last_name),
