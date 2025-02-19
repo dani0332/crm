@@ -619,9 +619,7 @@ watch(
 watch(
   () => insuredFormDetails.dob,
   newValue => {
-    if (newValue !== null) {
-      dobValidationKey.value = true;
-    }
+    dobValidationKey.value = newValue !== null;
   },
 );
 </script>
