@@ -133,7 +133,9 @@ const insuredFormDetails = useForm({
   dob: props.insuredPersonDetails?.insured.dob ?? null,
   screening_gender: props.insuredPersonDetails?.insured?.gender ?? null,
   chassis_number:
-    props.quoteDetails?.car_quote_request_detail?.chassis_number ?? null,
+    (props.quoteType.code === 'Car'
+      ? props.quoteDetails?.car_quote_request_detail?.chassis_number
+      : props.quoteDetails?.bike_quote?.chassis_number) ?? null,
 
   entity_id: props.entityDetails?.entity?.id,
   trade_license_no: props.entityDetails?.entity?.trade_license_no,
@@ -177,11 +179,11 @@ const rules = {
 
   passportNumberCheck: v => {
     const regex = /^[A-Za-z0-9]+$/;
-    const lengthValid = v?.length >= 8 && v?.length <= 9;
+    const lengthValid = v?.length >= 6 && v?.length <= 14;
     const isAlphanumeric = regex.test(v);
     return (
       (lengthValid && isAlphanumeric) ||
-      'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.'
+      'The entered value does not meet the required length of 6 to 14 characters. Please check and confirm.'
     );
   },
 };
@@ -523,15 +525,15 @@ const validatePassportNumber = eventType => {
 
   if (eventType == 'blur') {
     const lengthValid =
-      insuredFormDetails?.screening_id_number?.length >= 8 &&
-      insuredFormDetails?.screening_id_number?.length <= 9;
+      insuredFormDetails?.screening_id_number?.length >= 6 &&
+      insuredFormDetails?.screening_id_number?.length <= 14;
     const isAlphanumeric = regex.test(insuredFormDetails.screening_id_number);
     if (
       insuredFormDetails.screening_id_number &&
       (!lengthValid || !isAlphanumeric)
     ) {
       insuredFormDetails.errors.screening_id_number =
-        'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.';
+        'The entered value does not meet the required length of 6 to 14 characters. Please check and confirm.';
       event.preventDefault();
       return true;
     } else {
@@ -760,7 +762,12 @@ watch(
         </dl>
 
         <x-divider class="mb-4 mt-1" />
-        <div v-if="quoteType.id === page.props.quoteTypeIdEnum.Car">
+        <div
+          v-if="
+            quoteType.id === page.props.quoteTypeIdEnum.Car ||
+            quoteType.id === page.props.quoteTypeIdEnum.Bike
+          "
+        >
           <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
             <h3 class="font-semibold text-primary-800 text-lg">
               Additional Vehicle Details

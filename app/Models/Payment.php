@@ -238,11 +238,11 @@ class Payment extends Model implements Auditable
         return $this->collection_type == CollectionTypeEnum::INSURER;
     }
 
-    public function isGIGInsurer($quoteTypeId, $quoteDetails)
+    public function isCaptureButtonEnabled($quoteTypeId, $quoteDetails)
     {
         $insuranceProvider = getInsuranceProvider($this, $quoteTypeId, $quoteDetails);
 
-        return $insuranceProvider?->code == InsurerProviderEnum::GIG_INSURANCE;
+        return in_array($insuranceProvider?->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE, InsurerProviderEnum::QATAR_INSURANCE, InsurerProviderEnum::ALLIANCE_INSURANCE]);
     }
 
     public function isPaymentGatewayTap()

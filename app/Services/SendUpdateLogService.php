@@ -873,11 +873,11 @@ class SendUpdateLogService
         $ccPaymentProcess = false;
         if (isTapEnabled() && ! empty($preparedDetailsForEndorsement['payment']?->send_update_log_id)) {
             info('fn:preparedDataForEndorsement - TAP Enabled - SendUpdateCode: '.$sendUpdateLog->code);
-            $checkCCPayments = $preparedDetailsForEndorsement['splitPayments']->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED])
+            $checkCCPayments = $preparedDetailsForEndorsement['splitPayments']->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
                 ->where('payment_method', PaymentMethodsEnum::CreditCard)
                 ->count() > 0;
             $isInsurerPayment = $preparedDetailsForEndorsement['payment']->isInsurerPayment();
-            $isInsurerGIG = $preparedDetailsForEndorsement['payment']->isGIGInsurer($sendUpdateRequest->quoteType, $quoteDetails);
+            $isInsurerGIG = $preparedDetailsForEndorsement['payment']->isCaptureButtonEnabled($sendUpdateRequest->quoteType, $quoteDetails);
             $isPaymentGatewayTap = $preparedDetailsForEndorsement['payment']->isPaymentGatewayTap();
             info('fn:preparedDataForEndorsement - Collected By Insurer: '.$isInsurerPayment.' - GIG Insurer: '.$isInsurerGIG.' - Payment Gateway Tap:'.$isPaymentGatewayTap.' - CC Payment: '.$checkCCPayments.' - SendUpdateCode: '.$sendUpdateLog->code);
 
@@ -1588,7 +1588,7 @@ class SendUpdateLogService
                 }
 
                 $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
-                    return $split->payment_status_id != PaymentStatusEnum::AUTHORISED;
+                    return ! in_array($split->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID]);
                 });
 
                 if ($hasCCPayment && $hasUnpaidCCPayment) {
