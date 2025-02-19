@@ -16,6 +16,7 @@ use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
 use App\Models\TravelQuote;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -95,6 +96,8 @@ class ApiService
         $assignAdvisor = $request->input('reAssignAdvisor', false);
         $triggerOCB = $request->input('triggerOCB', false);
         $teamId = $request->input('teamId', false);
+
+        LoggerService::startQuoteLogging($allocationId);
 
         // Handle different scenarios based on request parameters
         if ($assignAdvisor && ! $triggerOCB) {
