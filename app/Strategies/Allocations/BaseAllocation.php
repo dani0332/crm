@@ -36,11 +36,11 @@ abstract class BaseAllocation extends AllocationService
         ];
 
         try {
-            info(self::class." - executeSteps: Allocation Started for UUID : {$this->uuid}");
+            info(self::class." - executeSteps: Allocation Started");
             $this->resolveLead();
 
             if (! $this->lead) {
-                info(self::class." - executeSteps: Lead not found for : {$this->uuid}");
+                info(self::class." - executeSteps: Lead not found");
                 $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 $advisor = $this->fetchAvailableAdvisor();
@@ -48,7 +48,7 @@ abstract class BaseAllocation extends AllocationService
                 if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
 
-                    info(self::class." - executeSteps: No advisor found against lead : {$this->lead->uuid}");
+                    info(self::class." - executeSteps: No advisor found");
 
                     $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
@@ -105,7 +105,7 @@ abstract class BaseAllocation extends AllocationService
 
     public function fetchAvailableAdvisor()
     {
-        info(self::class." - fetchAvailableAdvisor: {$this->isReAssignment} - {$this->teamId} - {$this->uuid}");
+        info(self::class." - fetchAvailableAdvisor: {$this->isReAssignment} - {$this->teamId}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -117,11 +117,11 @@ abstract class BaseAllocation extends AllocationService
         }
 
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$this->uuid}");
+            info(self::class." - trying to get advisors with current status as {$status}");
             $eligibleUser = $this->fetchAdvisor($status);
 
             if ($eligibleUser) {
-                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$this->uuid}");
+                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 
                 return User::find($eligibleUser->user_id);
             }
@@ -135,7 +135,7 @@ abstract class BaseAllocation extends AllocationService
         DB::beginTransaction();
         try {
             $assignmentType = $this->isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED;
-            info(self::class." - assignLead: Going to Assign Advisor to Lead: {$this->lead->uuid}");
+            info(self::class." - assignLead: Going to Assign Advisor");
             $previousAssignmentType = $this->lead->assignment_type;
             $previousUserId = $this->lead->advisor_id;
             $this->lead->advisor_id = $advisor->id;
@@ -143,7 +143,7 @@ abstract class BaseAllocation extends AllocationService
             $quoteBatch = QuoteBatches::latest()->first();
             $this->lead->quote_batch_id = $quoteBatch->id;
             $this->lead->save();
-            info(self::class." - Lead Id {$this->lead->uuid} assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
+            info(self::class." - Assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
 
             $previousAdvisorAssignedDate = $this->updateQuoteDetail($this->lead->id);
 
@@ -164,7 +164,7 @@ abstract class BaseAllocation extends AllocationService
 
     private function updateQuoteDetail()
     {
-        info(self::class." - about to update quote detail record for : {$this->lead->uuid}");
+        info(self::class." - about to update quote detail record");
 
         $oldAdvisorAssignedDate = $this->lead->quoteDetail?->advisor_assigned_date ?? '';
 
