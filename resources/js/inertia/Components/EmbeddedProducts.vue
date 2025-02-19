@@ -342,10 +342,16 @@ const toggleProduct = (ep, event) => {
   axios
     .post(requestUrl, data)
     .then(res => {
-      notification.success('Updated');
+      notification.success({
+        title: 'Updated',
+        position: 'top',
+      });
     })
     .catch(err => {
-      notification.error('Something went wrong');
+      notification.error({
+        title: 'Something went wrong',
+        position: 'top',
+      });
     });
 };
 const onActivitySubmit = isValid => {
@@ -357,14 +363,21 @@ const onActivitySubmit = isValid => {
     .post(url, paymentForm)
     .then(res => {
       modals.cancelPayment = false;
-      notification.success('Processed');
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+      router.get(window.location.href);
     })
     .catch(err => {
+      let message = 'Something went wrong';
       if (err.response.data) {
-        notification.error(err.response.data[0]);
-      } else {
-        notification.error('Something went wrong');
+        message = err.response.data[0];
       }
+      notification.error({
+        title: message,
+        position: 'top',
+      });
     })
     .finally(() => {
       paymentForm.processing = false;
@@ -379,14 +392,21 @@ const onVoidSubmit = isValid => {
     .post(url, voidPaymentForm)
     .then(res => {
       modals.voidPayment = false;
-      notification.success('Processed');
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+      router.get(window.location.href);
     })
     .catch(err => {
+      let message = 'Something went wrong';
       if (err.response.data) {
-        notification.error(err.response.data[0]);
-      } else {
-        notification.error('Something went wrong');
+        message = err.response.data[0];
       }
+      notification.error({
+        title: message,
+        position: 'top',
+      });
     })
     .finally(() => {
       voidPaymentForm.processing = false;

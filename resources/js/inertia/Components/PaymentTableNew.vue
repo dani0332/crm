@@ -3588,8 +3588,10 @@ const isEditPaymentEnabled = () => {
     paymentStatusEnum.CAPTURED,
   ];
 
-  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
-    statusesToCheck.includes(item.payment_status_id),
+  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(
+    item =>
+      statusesToCheck.includes(item.payment_status_id) &&
+      item.payment_method.code === 'CC',
   );
 
   return !isMultiPaymentsEnabled.value && hasAnyAuthorizedPayment;
@@ -5487,22 +5489,6 @@ onBeforeMount(() => {
                     <span class="text-sm">
                       <span class="text-sm">VERIFIED AT</span>
                     </span>
-                  </div>
-
-                  <div class="w-1/5 px-2">
-                    <x-tooltip>
-                      <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
-                          >COLLECTED AMOUNT</span
-                        >
-                      </span>
-                      <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT
-                        }}</span>
-                      </template>
-                    </x-tooltip>
                   </div>
                 </div>
 

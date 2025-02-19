@@ -168,16 +168,22 @@ const rules = {
 
   emirateNumberCheck: v => {
     const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
-    return pattern.test(v) || 'Enter the correct EID number format';
+    if (v.length == 15 || v.length > 18 || pattern.test(v)) {
+      insuredFormDetails.errors.screening_id_number = '';
+    } else {
+      return 'Enter the correct EID number format';
+    }
+
+    return true;
   },
 
   passportNumberCheck: v => {
     const regex = /^[A-Za-z0-9]+$/;
-    const lengthValid = v?.length >= 8 && v?.length <= 9;
+    const lengthValid = v?.length >= 6 && v?.length <= 14;
     const isAlphanumeric = regex.test(v);
     return (
       (lengthValid && isAlphanumeric) ||
-      'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.'
+      'The entered value does not meet the required length of 6 to 14 characters. Please check and confirm.'
     );
   },
 };
@@ -407,6 +413,9 @@ const insuredSearchValidation = computed(() => {
   return true;
 });
 
+const validationKey = ref(false);
+const dobValidationKey = ref(false);
+
 const submitInsuredPersonSearch = () => {
   if (insuredSearchValidation.value) {
     loader.value.search = true;
@@ -434,6 +443,9 @@ const submitInsuredPersonSearch = () => {
             position: 'top',
           });
         }
+
+        validationKey.value = true;
+        dobValidationKey.value = true;
       })
       .catch(err => {
         console.log(err);
@@ -513,15 +525,15 @@ const validatePassportNumber = eventType => {
 
   if (eventType == 'blur') {
     const lengthValid =
-      insuredFormDetails?.screening_id_number?.length >= 8 &&
-      insuredFormDetails?.screening_id_number?.length <= 9;
+      insuredFormDetails?.screening_id_number?.length >= 6 &&
+      insuredFormDetails?.screening_id_number?.length <= 14;
     const isAlphanumeric = regex.test(insuredFormDetails.screening_id_number);
     if (
       insuredFormDetails.screening_id_number &&
       (!lengthValid || !isAlphanumeric)
     ) {
       insuredFormDetails.errors.screening_id_number =
-        'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.';
+        'The entered value does not meet the required length of 6 to 14 characters. Please check and confirm.';
       event.preventDefault();
       return true;
     } else {
@@ -603,6 +615,13 @@ watch(
     if (newValue !== null) {
       isEmptyNationality.value = false;
     }
+  },
+);
+
+watch(
+  () => insuredFormDetails.dob,
+  newValue => {
+    dobValidationKey.value = newValue !== null;
   },
 );
 </script>
@@ -687,6 +706,7 @@ watch(
           <x-field label="Insured First Name">
             <x-input
               v-model="insuredFormDetails.insured_first_name"
+              :key="validationKey"
               :rules="[isRequired, rules.nameCheck]"
               placeholder="Insured First Name"
               type="text"
@@ -696,6 +716,7 @@ watch(
           <x-field label="Insured Last Name">
             <x-input
               v-model="insuredFormDetails.insured_last_name"
+              :key="validationKey"
               :rules="[isRequired, rules.nameCheck]"
               placeholder="Insured Last Name"
               type="text"
@@ -716,6 +737,7 @@ watch(
           <x-field label="Date of Birth">
             <DatePicker
               v-model="insuredFormDetails.dob"
+              :key="dobValidationKey"
               :rules="[isRequired]"
               placeholder="Date of Birth"
               class="w-full"
@@ -724,6 +746,7 @@ watch(
           <x-field label="Gender" required>
             <x-select
               v-model="insuredFormDetails.screening_gender"
+              :key="validationKey"
               :options="gender"
               placeholder="Gender"
               :rules="[isRequired]"

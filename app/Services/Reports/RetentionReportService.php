@@ -142,6 +142,16 @@ class RetentionReportService extends BaseService
 
         // Apply additional filters based on the 'displayBy' parameter in the request
         $this->applyDisplayByFilters($query, $request, $isDetailsFilter);
+
+        // Apply department filter
+        $this->applyDepartmentFilter($query, $request);
+    }
+
+    private function applyDepartmentFilter($query, $request)
+    {
+        if (isset($request['department'])) {
+            $query->where('users.department_id', $request['department']);
+        }
     }
 
     /**
