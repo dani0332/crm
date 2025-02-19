@@ -2,49 +2,50 @@
 
 namespace App\Enums;
 
-use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
-use App\Enums\Traits\QuoteTypable;
-use App\Jobs\OCB\SendCarOCBIntroEmailJob;
-use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
-use App\Jobs\SendHealthOCBIntroEmailJob;
-use App\Models\BikeQuote;
-use App\Models\BikeQuoteRequestDetail;
-use App\Models\BusinessQuote;
-use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
-use App\Models\CarQuoteRequestDetail;
-use App\Models\CycleQuote;
-use App\Models\HealthQuote;
-use App\Models\HealthQuoteRequestDetail;
-use App\Models\HomeQuote;
-use App\Models\HomeQuoteRequestDetail;
-use App\Models\JetskiQuote;
-use App\Models\LifeQuote;
-use App\Models\LifeQuoteRequestDetail;
-use App\Models\PersonalQuote;
-use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
-use App\Models\PetQuoteRequestDetail;
-use App\Models\TravelQuote;
-use App\Models\TravelQuoteRequestDetail;
+use App\Models\BikeQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
+use App\Models\CycleQuote;
 use App\Models\YachtQuote;
+use App\Models\HealthQuote;
+use App\Models\JetskiQuote;
+use App\Models\TravelQuote;
+use App\Models\BusinessQuote;
+use App\Models\PersonalQuote;
+use App\Enums\Traits\QuoteTypable;
+use App\Models\PersonalQuoteDetail;
+use App\Models\CarQuoteRequestDetail;
+use App\Models\PetQuoteRequestDetail;
+use Illuminate\Support\Facades\Route;
+use App\Models\BikeQuoteRequestDetail;
+use App\Models\HomeQuoteRequestDetail;
+use App\Models\LifeQuoteRequestDetail;
+use App\Services\CarAllocationService;
+use App\Services\Logger\LoggerService;
 use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
-use App\Services\CarAllocationService;
+use Illuminate\Database\Eloquent\Model;
+use App\Jobs\SendHealthOCBIntroEmailJob;
+use App\Models\HealthQuoteRequestDetail;
+use App\Models\TravelQuoteRequestDetail;
+use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Services\HealthAllocationService;
 use App\Services\TravelAllocationService;
-use App\Strategies\Allocations\BikeAllocation;
+use App\Models\BusinessQuoteRequestDetail;
+use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Strategies\Allocations\CarAllocation;
-use App\Strategies\Allocations\CorplineAllocation;
-use App\Strategies\Allocations\CycleAllocation;
-use App\Strategies\Allocations\HealthAllocation;
+use App\Strategies\Allocations\PetAllocation;
+use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\HomeAllocation;
 use App\Strategies\Allocations\LifeAllocation;
-use App\Strategies\Allocations\PetAllocation;
-use App\Strategies\Allocations\TravelAllocation;
+use App\Strategies\Allocations\CycleAllocation;
 use App\Strategies\Allocations\YachtAllocation;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Route;
+use App\Strategies\Allocations\HealthAllocation;
+use App\Strategies\Allocations\TravelAllocation;
+use App\Strategies\Allocations\CorplineAllocation;
+use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
 
 enum QuoteTypes: string
 {
@@ -260,6 +261,8 @@ enum QuoteTypes: string
 
     public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false)
     {
+        LoggerService::startQuoteLogging($uuid);
+
         $allocationService = match ($this) {
             self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
             self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
