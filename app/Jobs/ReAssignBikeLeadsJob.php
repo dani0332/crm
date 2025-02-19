@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\BikeAllocationService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -51,6 +52,8 @@ class ReAssignBikeLeadsJob implements ShouldQueue
             return false; // when lead is not on criteria or not found
         }
         foreach ($leads as $lead) {
+            LoggerService::startQuoteLogging($lead->uuid);
+
             info('--------------- ReAssignment processing current lead : '.$lead->uuid.' ---------------');
 
             if ($lead->isAllocationInProgress()) {

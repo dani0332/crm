@@ -15,6 +15,7 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 
 class QuoteAllocation extends Command
@@ -125,6 +126,8 @@ class QuoteAllocation extends Command
                 continue;
             }
 
+            LoggerService::startQuoteLogging($lead->uuid);
+
             info('Processing record for Quote Allocation with uuid: '.$lead->uuid, [
                 'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
@@ -170,6 +173,8 @@ class QuoteAllocation extends Command
         info("For Health - leads fetch query is : {$leads->toRawSql()}");
 
         foreach ($leads->get() as $lead) {
+            LoggerService::startQuoteLogging($lead->uuid);
+
             info("Processing Health record for Quote Allocation with uuid: {$lead->uuid}", [
                 'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
@@ -217,6 +222,8 @@ class QuoteAllocation extends Command
 
                 continue;
             }
+
+            LoggerService::startQuoteLogging($lead->uuid);
 
             info("Processing Travel record for Quote Allocation with uuid: {$lead->uuid}", [
                 'uuid' => $lead->uuid,
@@ -271,6 +278,9 @@ class QuoteAllocation extends Command
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
+
+            LoggerService::startQuoteLogging($lead->uuid);
+
             info('Processing record for Bike Quote Allocation with uuid: '.$lead->uuid);
             QuoteTypes::BIKE->allocate(uuid: $lead->uuid);
             $processedRecords++;
@@ -293,6 +303,8 @@ class QuoteAllocation extends Command
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
+            LoggerService::startQuoteLogging($lead->uuid);
+
             info("Processing record for Quote Allocation with uuid: {$lead->uuid} and Quote Type: {$quoteType->value}");
             $quoteType->allocate(uuid: $lead->uuid);
             $processedRecords++;

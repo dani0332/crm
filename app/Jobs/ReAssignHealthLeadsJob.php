@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\AssignmentTypeEnum;
 use App\Models\HealthQuote;
 use App\Services\HealthAllocationService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -48,6 +49,8 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         }
 
         foreach ($leads as $lead) {
+            LoggerService::startQuoteLogging($lead->uuid);
+
             info('-------- Reassignment of lead : '.$lead->uuid.' started ---------');
 
             if ($lead->isAllocationInProgress()) {
