@@ -613,7 +613,7 @@ class CarAllocationService extends AllocationService
 
     private function getCompanyUsageRules($lead, $ruleName = null)
     {
-        if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_CAR_QUOTE) {
+        // if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_CAR_QUOTE) {
             info(self::class." - Applying rule: {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} | Time: ".now());
 
             return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
@@ -626,9 +626,9 @@ class CarAllocationService extends AllocationService
                 ->select(
                     DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
                 )->get();
-        } else {
-            info(self::class." -No rule found for {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} Time: ".now());
-        }
+        // } else {
+        //     info(self::class." -No rule found for {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} Time: ".now());
+        // }
 
         return [];
     }
