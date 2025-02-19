@@ -8,11 +8,11 @@ class LoggerService
 {
     public static function startQuoteLogging(string $uuid, array $extra = [])
     {
-        self::endContext();
+        self::endLogging();
         Log::withContext(['uuid' => $uuid, ...$extra]);
     }
 
-    public static function endContext()
+    public static function endLogging()
     {
         Log::withoutContext();
     }
