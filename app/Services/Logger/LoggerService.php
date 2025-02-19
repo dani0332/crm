@@ -14,6 +14,6 @@ class LoggerService
 
     public static function endContext()
     {
-        Log::withContext();
+        Log::withoutContext();
     }
 }
