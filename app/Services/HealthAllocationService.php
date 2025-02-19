@@ -45,7 +45,7 @@ class HealthAllocationService extends AllocationService
     {
         $lead = HealthQuote::where('uuid', $quoteId)->first();
         if ($lead) {
-            info("Processing Health record for Quote Allocation", [
+            info('Processing Health record for Quote Allocation', [
                 'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
@@ -107,12 +107,12 @@ class HealthAllocationService extends AllocationService
 
     public function assignTeamBasedOnPrices($lead)
     {
-        info("Inside assignTeamBasedOnPrices");
+        info('Inside assignTeamBasedOnPrices');
 
         $priceStartingFrom = $this->determinePriceStartingFrom($lead);
 
         if ($priceStartingFrom == null) {
-            info("No team found");
+            info('No team found');
             $lead->is_error_email_sent = true;
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
         }
@@ -126,7 +126,7 @@ class HealthAllocationService extends AllocationService
             info("Filtered team is: {$healthTeam->name}");
             $lead->health_team_type = ($healthTeam->name === HealthTeamType::PCP && $lead->members->count() > 2) ? HealthTeamType::RM_NB : $healthTeam->name;
         } else {
-            info("No team found");
+            info('No team found');
             $lead->is_error_email_sent = true;
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
         }

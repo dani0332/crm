@@ -36,11 +36,11 @@ abstract class BaseAllocation extends AllocationService
         ];
 
         try {
-            info(self::class." - executeSteps: Allocation Started");
+            info(self::class.' - executeSteps: Allocation Started');
             $this->resolveLead();
 
             if (! $this->lead) {
-                info(self::class." - executeSteps: Lead not found");
+                info(self::class.' - executeSteps: Lead not found');
                 $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 $advisor = $this->fetchAvailableAdvisor();
@@ -48,7 +48,7 @@ abstract class BaseAllocation extends AllocationService
                 if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
 
-                    info(self::class." - executeSteps: No advisor found");
+                    info(self::class.' - executeSteps: No advisor found');
 
                     $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
@@ -135,7 +135,7 @@ abstract class BaseAllocation extends AllocationService
         DB::beginTransaction();
         try {
             $assignmentType = $this->isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED;
-            info(self::class." - assignLead: Going to Assign Advisor");
+            info(self::class.' - assignLead: Going to Assign Advisor');
             $previousAssignmentType = $this->lead->assignment_type;
             $previousUserId = $this->lead->advisor_id;
             $this->lead->advisor_id = $advisor->id;
@@ -164,7 +164,7 @@ abstract class BaseAllocation extends AllocationService
 
     private function updateQuoteDetail()
     {
-        info(self::class." - about to update quote detail record");
+        info(self::class.' - about to update quote detail record');
 
         $oldAdvisorAssignedDate = $this->lead->quoteDetail?->advisor_assigned_date ?? '';
 

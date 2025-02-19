@@ -45,7 +45,7 @@ class TravelAllocation implements Allocation
             $lead = $this->fetchLead();
 
             if (! $lead) {
-                info(self::class." - executeSteps: Lead not found");
+                info(self::class.' - executeSteps: Lead not found');
 
                 $this->tracker->saveResult(ProcessTrackerAllocationEnum::LEAD_NOT_FOUND, [
                     '@statuses' => ['Fake', 'Duplicate', 'Lost'],
@@ -66,7 +66,7 @@ class TravelAllocation implements Allocation
                 if (! $advisor) {
                     $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
 
-                    info(self::class." - executeSteps: No advisor found");
+                    info(self::class.' - executeSteps: No advisor found');
 
                     $response = $this->travelAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
 

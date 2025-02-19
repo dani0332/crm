@@ -57,7 +57,7 @@ class CarAllocationService extends AllocationService
 
     private function verifyPreChecks(CarQuote $lead, bool $overrideAssignment): bool
     {
-        info(self::class." - Processing Car ILA", [
+        info(self::class.' - Processing Car ILA', [
             'uuid' => $lead->uuid,
             'payment_status_id' => $lead->payment_status_id,
             'source' => $lead->source,
@@ -77,20 +77,20 @@ class CarAllocationService extends AllocationService
         } elseif ($lead->hasExemptedSource()) {
             info(self::class."::verifyPreChecks - Lead has exempted source {$lead->source}, skipping assignment");
         } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
-            info(self::class."::verifyPreChecks - Lead has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment");
+            info(self::class.'::verifyPreChecks - Lead has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment');
             $continueAssignment = true;
         } elseif ($lead->isRenewalTierEmailSent()) {
-            info(self::class."::verifyPreChecks - Lead has renewal tier email sent, skipping assignment");
+            info(self::class.'::verifyPreChecks - Lead has renewal tier email sent, skipping assignment');
         } elseif ($lead->isSICFlowDisabled() && ! $lead->isRenewalUpload()) {
-            info(self::class."::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, skipping assignment");
+            info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, skipping assignment');
             $continueAssignment = true;
         } elseif ($lead->isRevivalRepliedOrPaid()) {
-            info(self::class."::verifyPreChecks - Lead is a Revival lead, continuing assignment");
+            info(self::class.'::verifyPreChecks - Lead is a Revival lead, continuing assignment');
             $continueAssignment = true;
         } elseif ($lead->isRenewalUpload()) {
-            info(self::class."::verifyPreChecks - Lead is Renewal Upload, skipping assignment");
+            info(self::class.'::verifyPreChecks - Lead is Renewal Upload, skipping assignment');
         } else {
-            info(self::class."::verifyPreChecks - Lead does not meet any criteria, skipping assignment");
+            info(self::class.'::verifyPreChecks - Lead does not meet any criteria, skipping assignment');
         }
 
         return $continueAssignment;
@@ -365,7 +365,7 @@ class CarAllocationService extends AllocationService
 
         if ($rules->isEmpty()) {
             $ruleUserIds = $this->getRuleUsers();
-            info("No rules found, excluding rule users: ".json_encode($ruleUserIds));
+            info('No rules found, excluding rule users: '.json_encode($ruleUserIds));
 
             return array_diff(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $ruleUserIds);
         }
@@ -381,11 +381,11 @@ class CarAllocationService extends AllocationService
             $eligibleUsers = $this->{$findAdvisorFn}($lead, $status, $tier, $tierUserIds, $advisorId, $teamId);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info(self::class."::fetchAdvisors - Eligble Users found with the availability status of: ".UserStatusEnum::getUserStatusText($status));
+                info(self::class.'::fetchAdvisors - Eligble Users found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
 
                 return $eligibleUsers->toArray();
             }
-            info(self::class."::fetchAdvisors - No Users were found with the availability status of: ".UserStatusEnum::getUserStatusText($status));
+            info(self::class.'::fetchAdvisors - No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
         }
 
         return [];
@@ -487,7 +487,7 @@ class CarAllocationService extends AllocationService
 
         $this->isBuyLeadAdvisor = $advisors->count() > 0;
 
-        $advisors->count() > 0 && info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray())." found");
+        $advisors->count() > 0 && info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray()).' found');
 
         return $advisors;
     }
