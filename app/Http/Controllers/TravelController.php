@@ -8,6 +8,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
@@ -25,6 +26,7 @@ use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelPlanUpdateManualProcessRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
@@ -36,6 +38,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -51,6 +54,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 use RuntimeException;
@@ -99,6 +103,7 @@ class TravelController extends Controller
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
@@ -119,6 +124,7 @@ class TravelController extends Controller
             'amlStatuses' => AMLStatusCode::getStatuses(),
             'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),
             'travelPlans' => TravelPlan::all(),
+            'insurerAMLStatus' => $insurerAMLStatus,
         ]);
     }
 
@@ -343,6 +349,8 @@ class TravelController extends Controller
             'paymentDocument' => $paymentDocument,
             'access' => $access,
             'lockStatusOfPolicyIssuanceSteps' => $lockStatusOfPolicyIssuanceSteps,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 
@@ -586,5 +594,14 @@ class TravelController extends Controller
     public function travelPlanUpdateManualProcess(TravelPlanUpdateManualProcessRequest $request)
     {
         app(TravelQuoteService::class)->travelPlanModify($request->validated());
+    }
+
+    public function sendEmailOneClickBuy(Request $request)
+    {
+        Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
+
+        SendTravelOCBIntroEmailJob::dispatch($request->quote_uuid);
+
+        return response()->json(['success' => 'OCB email sent to customer']);
     }
 }
