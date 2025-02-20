@@ -10,7 +10,10 @@ use Illuminate\Http\Request;
 
 class QueryBenchmarkerController extends Controller
 {
-    public function __construct(public QueryBenchmarkerService $queryBenchmarkerService) {}
+    public function __construct(public QueryBenchmarkerService $queryBenchmarkerService)
+    {
+        $this->middleware('readonly_db');
+    }
 
     public function process(Request $request): JsonResponse
     {
