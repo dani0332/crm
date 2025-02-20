@@ -11,6 +11,8 @@ class ImpersonateController extends Controller
 {
     public function loginAs($id)
     {
+        abort_unless(Auth::user()->can_impersonate, 403, 'You are not authorized to impersonate');
+
         abort_if(auth()->user()->cannot(PermissionsEnum::ENABLE_IMPERSONATION), 403, 'You are not authorized to impersonate');
 
         abort_if(app('impersonate')->isImpersonating(), 403, 'You are already impersonating a user');
