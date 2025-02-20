@@ -24,9 +24,9 @@ class InstantAlfredService extends BaseService
         $aliases = [];
 
         $subQuery = DB::table('quote_tags as qt1')
-        ->select('qt1.quote_uuid', 'qt1.id', 'qt1.name') // Selecting only needed fields
-        ->where('qt1.quote_type_id', $quoteTypeId)
-        ->whereRaw('qt1.updated_at = (SELECT MAX(qt2.updated_at) FROM quote_tags as qt2 WHERE qt2.quote_uuid = qt1.quote_uuid AND qt2.quote_type_id = ?)', [$quoteTypeId]);
+            ->select('qt1.quote_uuid', 'qt1.id', 'qt1.name') // Selecting only needed fields
+            ->where('qt1.quote_type_id', $quoteTypeId)
+            ->whereRaw('qt1.updated_at = (SELECT MAX(qt2.updated_at) FROM quote_tags as qt2 WHERE qt2.quote_uuid = qt1.quote_uuid AND qt2.quote_type_id = ?)', [$quoteTypeId]);
 
         $this->personalQuery = DB::table('personal_quotes as pqr')
             ->select(
