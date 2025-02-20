@@ -12,6 +12,7 @@ class QueryBenchmarkerService
     public function validateQuery(string $query): void
     {
         $query = trim($query);
+        $query = trim($query, ';');
 
         if (! preg_match('/^\s*select\b[^;]*$/i', $query)) {
             throw new Exception('Only single SELECT queries are allowed.');
