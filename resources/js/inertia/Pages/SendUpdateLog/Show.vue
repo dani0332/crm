@@ -300,7 +300,9 @@ const isLegacyPolicy = computed(() => {
 });
 
 const isBookUpdate = computed(() => {
-  return props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED;
+  return (
+    props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED
+  );
 });
 </script>
 
