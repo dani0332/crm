@@ -693,10 +693,7 @@ watch(
           </template>
           <template v-else>
             <x-field class="mt-3">
-              <x-button
-                color="info"
-                @click.prevent="clearInsuredPersonDetails"
-              >
+              <x-button color="info" @click.prevent="clearInsuredPersonDetails">
                 Cancel
               </x-button>
             </x-field>
