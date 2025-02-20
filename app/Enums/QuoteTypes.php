@@ -32,6 +32,7 @@ use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
+use App\Services\Logger\LoggerService;
 use App\Services\TravelAllocationService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
@@ -260,6 +261,8 @@ enum QuoteTypes: string
 
     public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false)
     {
+        LoggerService::startQuoteLogging($uuid);
+
         $allocationService = match ($this) {
             self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
             self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),

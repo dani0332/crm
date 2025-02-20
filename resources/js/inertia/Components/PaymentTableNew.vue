@@ -3012,7 +3012,7 @@ const getCaptureOption = computed(() => {
     // Return 'capture' if all conditions are met, otherwise return 'approve'
     if (
       (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
-      isCaptureButtonEnabled
+      (isCaptureButtonEnabled && hasAnyCCSplitPayment())
     ) {
       return 'capture';
     }
@@ -5489,22 +5489,6 @@ onBeforeMount(() => {
                     <span class="text-sm">
                       <span class="text-sm">VERIFIED AT</span>
                     </span>
-                  </div>
-
-                  <div class="w-1/5 px-2">
-                    <x-tooltip>
-                      <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
-                          >COLLECTED AMOUNT</span
-                        >
-                      </span>
-                      <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT
-                        }}</span>
-                      </template>
-                    </x-tooltip>
                   </div>
                 </div>
 
