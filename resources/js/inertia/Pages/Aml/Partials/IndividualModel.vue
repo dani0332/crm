@@ -643,8 +643,8 @@ watch(
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
-          <x-field label="ID type" required>
+        <div class="flex gap-4">
+          <x-field class="flex-1" label="ID type" required>
             <x-select
               v-model="insuredFormDetails.screening_id_type"
               :options="documentIDTypeForScreening"
@@ -652,7 +652,7 @@ watch(
               :rules="[isRequired]"
             />
           </x-field>
-          <x-field label="ID number" required>
+          <x-field class="flex-1" label="ID number" required>
             <template
               v-if="insuredFormDetails.screening_id_type === 'emiratesId'"
             >
@@ -680,11 +680,10 @@ watch(
             </template>
           </x-field>
           <template v-if="!insuredPersonDetailsFound">
-            <x-field>
+            <x-field class="mt-3">
               <x-button
                 @click.prevent="submitInsuredPersonSearch"
                 class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
-                size="sm"
                 color="primary"
                 :loading="loader.search"
               >
@@ -693,16 +692,17 @@ watch(
             </x-field>
           </template>
           <template v-else>
-            <div class="text-left space-x-4">
+            <x-field class="mt-3">
               <x-button
-                size="sm"
                 color="info"
                 @click.prevent="clearInsuredPersonDetails"
               >
                 Cancel
               </x-button>
-            </div>
+            </x-field>
           </template>
+        </div>
+        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
           <x-field label="Insured First Name">
             <x-input
               v-model="insuredFormDetails.insured_first_name"
