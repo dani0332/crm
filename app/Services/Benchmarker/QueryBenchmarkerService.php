@@ -48,7 +48,6 @@ class QueryBenchmarkerService
             $time = Benchmark::measure(fn () => $this->runQuery($query), $iterations);
 
             return [
-                'query' => $query,
                 'iterations' => $iterations,
                 'execution_time_ms' => number_format($time, 2).' ms',
             ];
