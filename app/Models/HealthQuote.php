@@ -8,6 +8,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
+use App\Http\Traits\HasFtcEmailTrack;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use HasFtcEmailTrack, Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'health_quote_request';
     protected $fillable = [];

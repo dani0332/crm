@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 
 const props = defineProps({
   quote: Object,
@@ -3991,6 +3992,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
       :expanded="sectionExpanded"
+    />
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
     />
 
     <AuditLogs

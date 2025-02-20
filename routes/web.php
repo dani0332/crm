@@ -18,6 +18,7 @@ use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\FtcEmailTrackController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -535,6 +536,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
+    });
+
+    Route::group(['prefix' => 'ftc'], function () {
+        Route::resource('email-tracks', FtcEmailTrackController::class)
+            ->only(['index'])
+            ->parameters(['email-tracks' => 'emailTrack']);
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
