@@ -140,7 +140,7 @@ const onUpdatePlan = () => {
     return;
   }
 
-    updatePlanLoading.value = true;
+  updatePlanLoading.value = true;
   axios
     .post(
       '/home-plan-manual-update-process',
@@ -203,25 +203,26 @@ const formattedCategories = computed(() => {
       formattedKey = camelCaseToSpacedText(key);
     }
 
-    formattedKey = formattedKey.replace(/\(S\)/g, '(s)').replace(/\(s\)/g, '(s)');
+    formattedKey = formattedKey
+      .replace(/\(S\)/g, '(s)')
+      .replace(/\(s\)/g, '(s)');
 
-    formattedKey = formattedKey.replace(/\b\w/g, (char) => char.toUpperCase());
+    formattedKey = formattedKey.replace(/\b\w/g, char => char.toUpperCase());
 
-    formattedKey = formattedKey.replace(/\(S\)/g, '(s)').replace(/\(s\)/g, '(s)');
+    formattedKey = formattedKey
+      .replace(/\(S\)/g, '(s)')
+      .replace(/\(s\)/g, '(s)');
 
     acc[key] = formattedKey;
     return acc;
   }, {});
 });
 
-
-
 function camelCaseToSpacedText(camelCaseStr) {
   return camelCaseStr.replace(/([A-Z])/g, ' $1').trim();
 }
 
 const updatePlanLoading = ref(false);
-
 </script>
 
 <template>
@@ -298,11 +299,19 @@ const updatePlanLoading = ref(false);
 
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Building Value:</dt>
-              <x-input v-model="planForm.buildingValue" size="sm" type="number" />
+              <x-input
+                v-model="planForm.buildingValue"
+                size="sm"
+                type="number"
+              />
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Contents Value:</dt>
-              <x-input v-model="planForm.contentsValue" size="sm" type="number" />
+              <x-input
+                v-model="planForm.contentsValue"
+                size="sm"
+                type="number"
+              />
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Personal Belongings Value:</dt>
@@ -322,22 +331,22 @@ const updatePlanLoading = ref(false);
               />
             </div>
             <div class="grid sm:grid-cols-2">
-                <dt class="mt-2">Discounted Price:</dt>
-                <x-tooltip placement="bottom">
-                  <x-input
-                    v-model="planForm.discounted_premium"
-                    size="sm"
-                    type="number"
-                    disabled
-                  />
-                  <template #tooltip>
-                    Is there a special discount? please specify its type in
-                    'Manage Payments'. Ensure that it has been approved before
-                    applying. If you're unclear about discounts, please contact
-                    your supervisor.
-                  </template>
-                </x-tooltip>
-                </div>
+              <dt class="mt-2">Discounted Price:</dt>
+              <x-tooltip placement="bottom">
+                <x-input
+                  v-model="planForm.discounted_premium"
+                  size="sm"
+                  type="number"
+                  disabled
+                />
+                <template #tooltip>
+                  Is there a special discount? please specify its type in
+                  'Manage Payments'. Ensure that it has been approved before
+                  applying. If you're unclear about discounts, please contact
+                  your supervisor.
+                </template>
+              </x-tooltip>
+            </div>
             <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Code</dt>
               <dd>{{ props.plan.providerCode }}</dd>
@@ -368,10 +377,7 @@ const updatePlanLoading = ref(false);
               class="mb-6"
             >
               <!-- Heading for each category (e.g., "Buildings", "Contents") -->
-              <h6
-                v-if="items && items.length > 0"
-                class="font-bold mb-1"
-              >
+              <h6 v-if="items && items.length > 0" class="font-bold mb-1">
                 {{ formattedCategories[category] }}:
               </h6>
 

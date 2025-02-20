@@ -716,7 +716,7 @@ const getPlanDetails = async item => {
         building: building,
         contents: content,
         personalBelongings: personalBelonging,
-        contentsAndPersonalBelongings : contentAndPersonalBelonging,
+        contentsAndPersonalBelongings: contentAndPersonalBelonging,
         'Fine Art And Collectible(s)': fineArtAndCollectible,
         'Jewellery And Valuable(s)': jewlleryAndValuable,
       },

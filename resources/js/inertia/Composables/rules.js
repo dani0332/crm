@@ -132,12 +132,8 @@ export const useRules = () => {
     );
   };
   // Add minValue rule
-  const minValue = (min) => (v) => {
-    return (
-      !v ||
-      (Number(v) >= min) ||
-      `The minimum value is ${min}.`
-    );
+  const minValue = min => v => {
+    return !v || Number(v) >= min || `The minimum value is ${min}.`;
   };
 
   return {

@@ -109,12 +109,12 @@ const updateSelectedPlan = () => {
         emit('update:selectedPlanChanged', selectedPlan);
       } else {
         emit('update:selectedPlanChanged', {
-            id: props.plan.id,
-            providerName: props.plan.providerName,
-            planName: props.plan.name,
-            premium: premium.toFixed(2),
-            planType: props.plan.plan_type,
-          });
+          id: props.plan.id,
+          providerName: props.plan.providerName,
+          planName: props.plan.name,
+          premium: premium.toFixed(2),
+          planType: props.plan.plan_type,
+        });
       }
       notification.success({
         title: 'Selected plan updated',
