@@ -50,13 +50,16 @@ class InstantAlfredService extends BaseService
                 DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
                 DB::raw("
                     CASE 
-                    WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
                     WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
                         AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
-                        THEN 'SIC-REVIVAL'
+                    THEN 'SIC-REVIVAL'
+
                     WHEN qt.name = '".QuoteSegmentEnum::SIC_REVIVAL->tag()."'
                         AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
-                        THEN 'SIC-REVIVAL'
+                    THEN 'SIC-REVIVAL'
+
+                    WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
+                    
                     WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
                     ELSE 'N/A'
                     END as segment
