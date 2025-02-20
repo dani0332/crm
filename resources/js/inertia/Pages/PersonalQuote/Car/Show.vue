@@ -1674,7 +1674,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
 const isPuaOrManualPlan = computed(() => {
   let isCConditionMeet = false;
-  if (isPlanDetailEnabled.value){
+  if (isPlanDetailEnabled.value) {
     isCConditionMeet = true;
     return isCConditionMeet;
   }
