@@ -179,8 +179,9 @@ class HomeAllocation extends BaseAllocation
             }])
             ->first();
 
-        if (!$quoteRequest || !$quoteRequest->rangeLookup) {
-            info('No matching record found for UUID: ' . $uuid);
+        if (! $quoteRequest || ! $quoteRequest->rangeLookup) {
+            info('No matching record found for UUID: '.$uuid);
+
             return false;
         }
 
