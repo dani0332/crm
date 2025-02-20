@@ -298,6 +298,10 @@ const isLegacyPolicy = computed(() => {
     props.realQuote?.insly_id
   );
 });
+
+const isBookUpdate = computed(() => {
+  return props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED;
+});
 </script>
 
 <template>
@@ -523,7 +527,7 @@ const isLegacyPolicy = computed(() => {
                       :rules="isEndorsementNumberRequired ? [isRequired] : []"
                       v-model="sendUpdateForm.endorsement_number"
                       size="xs"
-                      :disabled="!state.edit || props.isSentOrBooked"
+                      :disabled="!state.edit || isBookUpdate"
                       placeholder="Enter Endorsement Number"
                       maxlength="23"
                       @keypress="endorsementNumberValidation"
