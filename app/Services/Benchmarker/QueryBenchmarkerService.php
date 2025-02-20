@@ -2,6 +2,7 @@
 
 namespace App\Services\Benchmarker;
 
+use App\Enums\ApplicationStorageEnums;
 use Exception;
 use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,8 @@ class QueryBenchmarkerService
 
     public function benchmark(string $query, int $iterations = 1): array
     {
+        abort_if(getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_ENABLED, 0) == 0, 403, 'Benchmarking is disabled.');
+
         try {
             $this->validateQuery($query);
 
