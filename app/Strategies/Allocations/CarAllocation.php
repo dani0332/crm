@@ -62,16 +62,17 @@ class CarAllocation implements Allocation
                 return $this->carAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
             }
 
-            $lead->startAllocation();
-
-            $tier = $this->determineTier($lead);
-
             if (isLeadSic($lead->uuid) && $lead->registration_type == CarRegistrationType::COMPANY) {
                 info(self::class." - Lead is SIC and Registration type Company Webform. Skipping allocation for Ref-ID: {$lead->uuid} | Time: ".now());
                 $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
 
                 return $this->carAllocationService->createResponse(0, 'Lead is SIC and the registration type is Company. Skipping allocation.', Response::HTTP_OK);
             }
+            
+            $lead->startAllocation();
+
+            $tier = $this->determineTier($lead);
+
             if ($tier->name == TiersEnum::TIER_R && $lead->registration_type == CarRegistrationType::COMPANY) {
                 info(self::class." - Lead is Tier R and from Company Webform. Skipping allocation for Ref-ID: {$lead->uuid} | Time: ".now());
 
