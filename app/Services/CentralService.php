@@ -1125,9 +1125,12 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
-    public function prepareBirdData($quote, $quoteTypeId, $workflowType, $sendUpdateLog = null)
+    public function prepareBirdData($quote, $quoteTypeId, $sendUpdateLog = null)
     {
         if ($sendUpdateLog) {
+            $workflowType = 'SU_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_UPDATE';
+            $workflowType = constant("App\Enums\WorkflowTypeEnum::$workflowType");
+
             return $this->prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType);
         }
     }
