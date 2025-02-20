@@ -10,4 +10,5 @@ final class InsurerProviderEnum extends Enum
     const QATAR_INSURANCE = 'QIC';
     const RAK_INSURANCE = 'RAK';
     const TOKIO_MARINE = 'TM';
+    const ALLIANCE_INSURANCE = 'ALNC';
 }
