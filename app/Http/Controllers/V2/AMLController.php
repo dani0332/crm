@@ -506,7 +506,7 @@ class AMLController extends Controller
                             $insurerAMLScreeningResponse = [
                                 'status' => $getInsurerScreeningResponse['status'],
                                 'message' => $getInsurerScreeningResponse['message'],
-                                'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false
+                                'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                             ];
                         }
                         session()->forget('insurerAMLScreeningResponse');
