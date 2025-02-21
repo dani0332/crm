@@ -764,6 +764,7 @@ class SplitPaymentService
                 if ($isFromJob) {
                     CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $retryResponse['message']]);
                     $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
+
                     return false;
                 } else {
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
