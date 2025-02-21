@@ -5,7 +5,9 @@ use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\GenericLobController;
+use App\Http\Controllers\API\V1\QueryBenchmarkerController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Middleware\BenchmarkerBasicAuth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -67,3 +69,7 @@ Route::prefix('v1')->group(function () {
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
+
+Route::middleware(BenchmarkerBasicAuth::class)->prefix('benchmarker')->group(function () {
+    Route::post('query', [QueryBenchmarkerController::class, 'process']);
+});
