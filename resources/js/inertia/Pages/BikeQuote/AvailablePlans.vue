@@ -3,7 +3,7 @@ import LazyCreatePlan from '@/inertia/Pages/BikeQuote/CreatePlan.vue';
 import UpdateShowPlan from '@/inertia/Pages/BikeQuote/UpdateShowPlans.vue';
 import { defineEmits } from 'vue';
 // Define the emit function
-const emit = defineEmits(['plan-selected', 'manual-plan-status']);
+const emit = defineEmits(['plan-selected']);
 
 defineProps({
   carPlanTypeEnum: Object,
@@ -362,24 +362,6 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
-const isManualPlan = computed(() => {
-  let isCConditionMeet = false;
-  if (selectedProviderPlan?.value?.id && availablePlansItems?.value) {
-    const selectedPlan = availablePlansItems?.value.find(
-      plan => plan.id === selectedProviderPlan?.value?.id,
-    );
-    if (selectedPlan) {
-      if (selectedPlan.isManualPlan) {
-        isCConditionMeet = true;
-      }
-    }
-  }
-  return isCConditionMeet;
-});
-
-watch(isManualPlan, newValue => {
-  emit('manual-plan-status', newValue);
-});
 </script>
 
 <template>
