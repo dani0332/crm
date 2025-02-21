@@ -9,12 +9,16 @@ use App\Http\Requests\Api\V1\QueryBenchmarkRequest;
 use App\Services\Benchmarker\QueryBenchmarkerService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class QueryBenchmarkerController extends Controller
 {
     public function __construct(public QueryBenchmarkerService $queryBenchmarkerService)
     {
+        $this->middleware('readonly_db');
+
         $this->middleware('role:'.RolesEnum::Engineering);
     }
 
@@ -25,6 +29,12 @@ class QueryBenchmarkerController extends Controller
 
     public function process(QueryBenchmarkRequest $request): JsonResponse
     {
+        Log::info('Query benchmark request', [
+            'query' => $request->input('query'),
+            'iterations' => $request->input('iterations', 1),
+            'user' => Auth::user()->email,
+        ]);
+
         $timeoutThreshold = getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS, 5000);
 
         DB::statement("SET SESSION max_execution_time = {$timeoutThreshold}");
