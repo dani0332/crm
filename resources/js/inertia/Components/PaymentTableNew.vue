@@ -2833,10 +2833,11 @@ const shouldProcessUpdate = payment => {
     hasAnyCCSplitPayment() &&
     !shouldSendUpdate
   ) {
-    isInsurerAmlCleared = insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
-    if (isTravelQuote){
+    isInsurerAmlCleared =
+      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    if (isTravelQuote) {
       isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
-    } else{
+    } else {
       isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
     }
   }
@@ -3464,7 +3465,7 @@ const isInsurerAmlVerified = () => {
 };
 
 const disableMainPaymentApproval = computed(() => {
-  if (props.sendUpdate){
+  if (props.sendUpdate) {
     return false;
   }
   let isAmlFailed =
@@ -4124,7 +4125,8 @@ onBeforeMount(() => {
                                 color="orange"
                                 outlined
                                 @click="
-                                  !props.sendUpdate && (!isAmlVerified() || !isKycVerified())
+                                  !props.sendUpdate &&
+                                  (!isAmlVerified() || !isKycVerified())
                                     ? openAmlVerificationModal()
                                     : getCaptureValidation(item)
                                       ? editPaymentModal(item, 0, 0, 2)
