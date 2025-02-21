@@ -2822,7 +2822,9 @@ const shouldProcessUpdate = payment => {
     quoteTypeCodeEnum.Car,
     quoteTypeCodeEnum.Home,
     quoteTypeCodeEnum.Bike,
+    quoteTypeCodeEnum.Travel,
   ];
+
   const captureOption = getCaptureOption.value(payment);
   if (
     isInsurer &&
@@ -2833,7 +2835,11 @@ const shouldProcessUpdate = payment => {
   ) {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
-    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    if (isTravelQuote) {
+      isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
+    } else {
+      isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    }
   }
 
   const isRenewalUploadConditionMet = () => {
@@ -3012,7 +3018,7 @@ const getCaptureOption = computed(() => {
     // Return 'capture' if all conditions are met, otherwise return 'approve'
     if (
       (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
-      isCaptureButtonEnabled
+      (isCaptureButtonEnabled && hasAnyCCSplitPayment())
     ) {
       return 'capture';
     }
@@ -3459,6 +3465,9 @@ const isInsurerAmlVerified = () => {
 };
 
 const disableMainPaymentApproval = computed(() => {
+  if (props.sendUpdate) {
+    return false;
+  }
   let isAmlFailed =
     props.quoteRequest.aml_status ===
     page.props.amlStatusEnum.AMLScreeningFailed;
@@ -4116,7 +4125,8 @@ onBeforeMount(() => {
                                 color="orange"
                                 outlined
                                 @click="
-                                  !isAmlVerified() || !isKycVerified()
+                                  !props.sendUpdate &&
+                                  (!isAmlVerified() || !isKycVerified())
                                     ? openAmlVerificationModal()
                                     : getCaptureValidation(item)
                                       ? editPaymentModal(item, 0, 0, 2)
@@ -5489,22 +5499,6 @@ onBeforeMount(() => {
                     <span class="text-sm">
                       <span class="text-sm">VERIFIED AT</span>
                     </span>
-                  </div>
-
-                  <div class="w-1/5 px-2">
-                    <x-tooltip>
-                      <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
-                          >COLLECTED AMOUNT</span
-                        >
-                      </span>
-                      <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT
-                        }}</span>
-                      </template>
-                    </x-tooltip>
                   </div>
                 </div>
 
