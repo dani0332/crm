@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Services\EmailStatusService;
 use App\Enums\QuoteTypes;
+use App\Enums\ProcessStatusCode;
 
 class EmailStatusEventJob implements ShouldQueue
 {
@@ -40,6 +41,10 @@ class EmailStatusEventJob implements ShouldQueue
             $isEmailMessage = EmailStatus::latest()->where('msg_id', $this->emailData->message_id)->first();
 
             if (!empty($isEmailMessage->quote_type_id) && !empty($isEmailMessage->quote_id) && $isEmailMessage->quote_type_id == QuoteTypes::HOME->id()) {
+                if ($isEmailMessage->email_status == ProcessStatusCode::UNSUBSCRIBED) {
+                    info("EmailStatusEventJob - status is already unsubscribe-request for msg_id: " . $this->emailData->message_id . " | Time: " . now());
+                    return true;
+                }
                 info("EmailStatusEventJob - update status for home quote : msg_id: " . $this->emailData->message_id . " - status: " . $this->emailData->status . " | Time: " . now());
                 app(EmailStatusService::class)->updateEmailStatus($isEmailMessage, $this->emailData->status);
 
