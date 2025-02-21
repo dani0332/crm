@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\API\V1;
+namespace App\Http\Controllers\V2\Admin;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\QueryBenchmarkRequest;
 use App\Services\Benchmarker\QueryBenchmarkerService;
@@ -15,6 +16,13 @@ class QueryBenchmarkerController extends Controller
     public function __construct(public QueryBenchmarkerService $queryBenchmarkerService)
     {
         $this->middleware('readonly_db');
+
+        $this->middleware('role:'.RolesEnum::Engineering);
+    }
+
+    public function show()
+    {
+        return inertia('Admin/Benchmarker/QueryBenchmarker');
     }
 
     public function process(QueryBenchmarkRequest $request): JsonResponse
