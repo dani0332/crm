@@ -72,6 +72,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 
             if (! $isProcessComplete) {
                 info("CC Payments Job Failed for Payment Split {$splitPaymentCode} - Error: Process not completed. We cannot process further like booking process.");
+
                 return;
             }
 
