@@ -1539,6 +1539,9 @@ const handlePlanSelected = plan => {
   });
 };
 
+const isCompanyCar = page.props.record.registration_type == page.props.carRegistrationType.COMPANY;
+const isPrivateCar = isCompanyCar && page.props.record.vehicle_use == page.props.carVehicleUse.PRIVATE;
+
 const isPlanDetailEnabled = computed(() => {
   if (page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD && !isCompanyCar) {
     return page.props.record.vehicle_type_id_text == 'BIKE';
@@ -1668,8 +1671,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
 
-const isCompanyCar = page.props.record.registration_type == page.props.carRegistrationType.COMPANY;
-const isPrivateCar = isCompanyCar && page.props.record.vehicle_use == page.props.carVehicleUse.PRIVATE;
 </script>
 
 <template>
