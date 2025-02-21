@@ -14,10 +14,6 @@ class QueryBenchmarkerService
         $query = trim($query);
         $query = trim($query, ';');
 
-        if (! preg_match('/^\s*select\b[^;]*$/i', $query)) {
-            throw new Exception('Only single SELECT queries are allowed.');
-        }
-
         $forbiddenPatterns = [
             '/\b(insert|update|delete|drop|alter|truncate|create|replace|execute|merge|call|grant|revoke|commit|rollback|savepoint|set|lock|unlock)\b/i', // DML & DDL operations
             '/\b(union\s+all|union\b)/i',
@@ -29,6 +25,10 @@ class QueryBenchmarkerService
             if (preg_match($pattern, $query)) {
                 throw new Exception('Forbidden keyword found in query.');
             }
+        }
+
+        if (! preg_match('/^\s*select\b[^;]*$/i', $query)) {
+            throw new Exception('Only SELECT queries are allowed.');
         }
     }
 
