@@ -15,8 +15,6 @@ class QueryBenchmarkerController extends Controller
 {
     public function __construct(public QueryBenchmarkerService $queryBenchmarkerService)
     {
-        $this->middleware('readonly_db');
-
         $this->middleware('role:'.RolesEnum::Engineering);
     }
 
