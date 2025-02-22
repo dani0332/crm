@@ -554,8 +554,8 @@ class SageApiService
             ->count() > 0;
 
         $authorizedPayments = $paymentSplits->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->where('payment_method', PaymentMethodsEnum::CreditCard)
-                ->count() > 0;
+            ->where('payment_method', PaymentMethodsEnum::CreditCard)
+            ->count() > 0;
 
         info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type . ' And authorizedPayments : '.$authorizedPayments);
         if ($payment->isInsurerPayment() && $hasAnyCCPayment && ($authorizedPayments || !$payment->isCaptureButtonEnabled($quoteTypeId, $quote))) {
