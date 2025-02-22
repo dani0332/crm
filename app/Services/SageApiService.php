@@ -557,8 +557,8 @@ class SageApiService
             ->where('payment_method', PaymentMethodsEnum::CreditCard)
             ->count() > 0;
 
-        info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type . ' And authorizedPayments : '.$authorizedPayments);
-        if ($payment->isInsurerPayment() && $hasAnyCCPayment && ($authorizedPayments || !$payment->isCaptureButtonEnabled($quoteTypeId, $quote))) {
+        info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type.' And authorizedPayments : '.$authorizedPayments);
+        if ($payment->isInsurerPayment() && $hasAnyCCPayment && ($authorizedPayments || ! $payment->isCaptureButtonEnabled($quoteTypeId, $quote))) {
             info('Skipping Policy Book & Authorizing payment for '.$payment->code);
             $successMessage = $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
             if (! $successMessage) {
