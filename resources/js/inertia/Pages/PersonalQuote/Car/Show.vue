@@ -2104,11 +2104,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
             </dl>
           </div>
-          
-          <x-divider class="my-4 mb-6 mt-6" />
 
           <div v-if="isPrivateCar">
-            <div class="flex justify-between items-center mb-5">
+            <div class="flex justify-between items-center mt-7 mb-3">
               <h3 class="font-semibold text-primary-800 text-lg">Driver Details</h3>
             </div>
             <div class="text-sm">
