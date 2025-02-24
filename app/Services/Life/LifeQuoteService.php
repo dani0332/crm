@@ -656,30 +656,18 @@ class LifeQuoteService extends BaseService
                 ]
             );
 
-            $getStatusCode = $kenRequest->getStatusCode();
-// dd($kenRequest->getBody());
-            if ($getStatusCode == 200) {
-                $getContents = $kenRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
-
-                return $getdecodeContents;
-            }
+            return $kenRequest->getStatusCode();
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            dd($e);
-            $response = $e->getResponse();
-            $contents = (string) $response->getBody();
-            $response = json_decode($contents);
+            $response = json_decode((string) $e->getResponse()->getBody());
 
-            if (isset($response->message)) {
-                $responseBodyAsString = $response->message;
-            } elseif (isset($response->error)) {
-                $responseBodyAsString = $response->error;
-            } elseif (isset($response->msg)) {
-                $responseBodyAsString = $response->msg;
-            } else {
-                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+            if (isset($response->error)) {
+                $response = $response->error;
             }
-            return $responseBodyAsString;
+            if (isset($response->msg)) {
+                $response = $response->msg;
+            }
+
+            return $response;
         }
     }
 

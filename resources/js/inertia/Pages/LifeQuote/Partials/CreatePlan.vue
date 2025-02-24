@@ -32,6 +32,8 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 
 const active = ref(false);
 
+const lifeCoverToggled = true;
+
 const paymentTerms = [
   { value: 1, label: 'Monthly' },
   { value: 3, label: 'Quarterly' },
@@ -258,7 +260,7 @@ watch(
           <span class="text-gray-700">Included</span>
           <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="createForm.sumAssured" disabled />
 
-          <x-toggle color="emerald" size="lg" disabled/>
+          <x-toggle v-model="lifeCoverToggled" color="emerald" size="lg" disabled/>
           <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="createForm.actualPremium" disabled />
         </div>
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.id">

@@ -143,9 +143,7 @@ class LifeController extends Controller
             'formData' => 'required|array',
         ]);
 
-        $this->lifeQuoteService->lifePlanCreateQuote($request->quoteUID, $request->formData);
-
-        return response()->json(['message' => 'Life Plan created successfully']);
+        return $this->lifeQuoteService->lifePlanCreateQuote($request->quoteUID, $request->formData);
     }
 
     public function getLifeProviderPlan(Request $request)
