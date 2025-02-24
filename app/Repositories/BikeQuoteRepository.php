@@ -164,6 +164,7 @@ class BikeQuoteRepository extends BaseRepository
                         'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
                         'paymentSplits.processJob',
+                        'paymentSplits.paymentCharges'
                     ]);
                 },
                 'paymentStatus',
