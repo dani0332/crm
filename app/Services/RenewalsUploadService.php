@@ -1197,6 +1197,30 @@ class RenewalsUploadService
                 $emirates = Emirate::whereIn('text', $memberEmirateOfVisas)->withActive()->get(['id', 'text']);
 
                 foreach ($memberDobs as $index => $dob) {
+                    if($index == 0) { // As first member is policy holder customer
+                        $memberNameArray = explode(' ', $memberNames[$index]);
+                        $firstName = $memberNameArray[0];
+                        unset($memberNameArray[0]);
+                        $lastName = implode(' ', $memberNameArray);
+                        $quote->dob = $this->formatDate($dob) ?? null;
+                        $quote->first_name = $firstName;
+                        $quote->last_name = $lastName;
+                        $quote->emirate_of_your_visa_id = $emirates->where('text', $memberEmirateOfVisas[$index])->first()->id ?? null;
+                        $quote->gender = $memberGenders[$index];
+                        $quote->nationality_id = $nationalities->where('text', $memberNationalities[$index])->first()->id ?? null;
+                        $quote->member_category_id = $memberCategories->where('text', $memberCategoriesText[$index])->first()->id ?? null;
+                        $quote->salary_band_id = array_key_exists($memberCategoriesText[$index], $memberCategorySalaryMapping) ? $memberCategorySalaryMapping[$memberCategoriesText[$index]] : 1;
+                        $quote->save();
+
+                        Customer::where('id', $quote->customer_id)->update([
+                            'dob' => $quote->dob,
+                            'first_name' => $quote->first_name,
+                            'last_name' => $quote->last_name,
+                            'gender' => $quote->gender,
+                            'nationality_id' => $quote->nationality_id
+                        ]);
+                        continue;
+                    }
                     $memberDetails = [
                         'emirateOfYourVisaId' => $emirates->where('text', $memberEmirateOfVisas[$index])->first()->id ?? null,
                         'gender' => $memberGenders[$index],
