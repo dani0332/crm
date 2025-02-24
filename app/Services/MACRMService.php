@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypes;
 use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Enums\QuoteTypes;
 
 class MACRMService
 {
@@ -157,9 +157,9 @@ class MACRMService
         $quoteType = QuoteTypes::getName($quoteTypeId);
         $model = $quoteType?->model();
         $quote = $model::where('uuid', $uuid)->first();
-        
+
         $leadData = getCourierQuote($quote, $quoteTypeId);
-        if (!$leadData) {
+        if (! $leadData) {
             return false;
         }
 
