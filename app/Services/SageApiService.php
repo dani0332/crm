@@ -554,8 +554,8 @@ class SageApiService
             ->select('id')
             ->count();
 
-        info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$unpaidPaymentCount.' And collection type is : '.$payment->collection_type);
-        if ($payment->isInsurerPayment() && ($unpaidPaymentCount > 0 || ! $payment->isCaptureButtonEnabled($quoteTypeId, $quote))) {
+        info($payment->code.' Policy Book : postBookPolicyToSage : unpaid payment count : '.$unpaidPaymentCount.' And collection type is : '.$payment->collection_type);
+        if ($payment->isInsurerPayment() && $unpaidPaymentCount > 0) {
             info('Skipping Policy Book & Authorizing payment for '.$payment->code);
             $successMessage = $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
             if (! $successMessage) {

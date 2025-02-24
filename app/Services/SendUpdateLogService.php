@@ -880,10 +880,9 @@ class SendUpdateLogService
                 ->count();
 
             $isInsurerPayment = $preparedDetailsForEndorsement['payment']->isInsurerPayment();
-            $isCaptureButtonEnabled = $preparedDetailsForEndorsement['payment']->isCaptureButtonEnabled($sendUpdateRequest->quoteType, $quoteDetails);
-            info('fn:preparedDataForEndorsement - Collected By Insurer: '.$isInsurerPayment.' - GIG Insurer: '.$isCaptureButtonEnabled.' - CC Payment: '.$unpaidPaymentCount.' - SendUpdateCode: '.$sendUpdateLog->code);
+            info('fn:preparedDataForEndorsement - Collected By Insurer: '.$isInsurerPayment.' - CC Payment: '.$unpaidPaymentCount.' - SendUpdateCode: '.$sendUpdateLog->code);
 
-            if ($isInsurerPayment && ($unpaidPaymentCount > 0 || !$isCaptureButtonEnabled)) {
+            if ($isInsurerPayment && $unpaidPaymentCount > 0) {
                 info('fn:preparedDataForEndorsement - Authorizing payment process started - PaymentCode: '.$preparedDetailsForEndorsement['payment']->code.' - SendUpdateCode: '.$sendUpdateLog->code);
                 $successMessage = app(SageApiService::class)->handleSplitPaymentApproval($sendUpdateRequest->quoteType, $quoteDetails, $preparedDetailsForEndorsement['payment'], $preparedDetailsForEndorsement['splitPayments']);
                 info('fn:preparedDataForEndorsement - Authorizing payment process completed - response:'.json_encode($successMessage).' - PaymentCode: '.$preparedDetailsForEndorsement['payment']->code.' - SendUpdateCode: '.$sendUpdateLog->code);
