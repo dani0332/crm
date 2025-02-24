@@ -553,9 +553,9 @@ class SageApiService
             ->where('payment_method', PaymentMethodsEnum::CreditCard)
             ->select('id')
             ->count();
-
+        $isInsurerPayment = $payment->isInsurerPayment();
         info($payment->code.' Policy Book : postBookPolicyToSage : unpaid payment count : '.$unpaidPaymentCount.' And collection type is : '.$payment->collection_type);
-        if ($payment->isInsurerPayment() && $unpaidPaymentCount > 0) {
+        if ($isInsurerPayment && $unpaidPaymentCount > 0) {
             info('Skipping Policy Book & Authorizing payment for '.$payment->code);
             $successMessage = $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
             if (! $successMessage) {
@@ -575,6 +575,8 @@ class SageApiService
             );
 
             return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
+        } else {
+            info($payment->code.' Capture payment process skip & proceeding with Policy Book proceess unpaid payment count is: '. $unpaidPaymentCount . ' and is Insurer Payment'. $isInsurerPayment);
         }
 
         // Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
