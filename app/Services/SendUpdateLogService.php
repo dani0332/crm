@@ -898,7 +898,7 @@ class SendUpdateLogService
                     'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLog?->id,
                 ], ['value' => 1]);
             } else {
-                info($preparedDetailsForEndorsement['payment']->code.' Capture payment process skip & proceeding with book update process unpaid payment count is: '. $unpaidPaymentCount . ' and is Insurer Payment'. $isInsurerPayment);
+                info($preparedDetailsForEndorsement['payment']->code.' Capture payment process skip & proceeding with book update process unpaid payment count is: '.$unpaidPaymentCount.' and is Insurer Payment'.$isInsurerPayment);
             }
         }
 

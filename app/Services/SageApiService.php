@@ -576,7 +576,7 @@ class SageApiService
 
             return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
         } else {
-            info($payment->code.' Capture payment process skip & proceeding with Policy Book proceess unpaid payment count is: '. $unpaidPaymentCount . ' and is Insurer Payment'. $isInsurerPayment);
+            info($payment->code.' Capture payment process skip & proceeding with Policy Book proceess unpaid payment count is: '.$unpaidPaymentCount.' and is Insurer Payment'.$isInsurerPayment);
         }
 
         // Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
