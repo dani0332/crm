@@ -1152,7 +1152,7 @@ class CentralService extends BaseService
             'refID' => $sendUpdateLog->code,
             'rtaPortalLink' => 'https://vls.rta.ae/renewal/identityVerification',
             'customerEmail' => $quote->email,
-            'quoteUID' => $quote->uuid,
+            'quoteUUID' => $quote->uuid,
             'workflowType' => $workflowType,
         ];
 
@@ -1167,12 +1167,11 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             $emailData->carDetails = $quote->carMake->text.' '.$quote->carModel->text.' '.$quote->carModelDetail->text;
+            $customer = $quote->customer->insured;
+            $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
         }
 
         // $emailData->documentUrl
-
-        $customer = $quote->customer->insured;
-        $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
 
         return [1, $emailData, 'send-update', $quoteTypeId];
     }
