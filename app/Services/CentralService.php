@@ -44,6 +44,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\Life\LifeQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -234,6 +235,16 @@ class CentralService extends BaseService
                 return app(CarQuoteService::class)->getPlans($id);
             case quoteTypeCode::Travel:
                 return app(TravelQuoteService::class)->sortedPlansList($id);
+            case quoteTypeCode::Life:
+                $quotePlans = app(LifeQuoteService::class)->getQuotePlans($id);
+                if (isset($quotePlans->message) && $quotePlans->message != '') {
+                    $listQuotePlans = [];
+                } else {
+                    if (gettype($quotePlans) != 'string') {
+                        $listQuotePlans[] = $quotePlans->quotes->plans;
+                    }
+                }
+                return $listQuotePlans;
             case quoteTypeCode::Health:
                 $listQuotePlans = [];
 

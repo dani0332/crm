@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\LifeRiderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
@@ -19,9 +20,11 @@ use App\Models\DocumentType;
 use App\Repositories\UserRepository;
 use App\Models\ApplicationStorage;
 use App\Models\CurrencyType;
+use App\Models\InsuranceProviderPlan;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifeNumberOfYears;
 use App\Models\LifeQuote;
+use App\Models\LifeRider;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
@@ -238,7 +241,7 @@ class LifeQuoteService extends BaseService
             'createdById' => auth()->user()->id,
         ];
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-personal-quote', $lifeQuote);
+        $response = CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
 
         return $response;
     }
@@ -367,6 +370,9 @@ class LifeQuoteService extends BaseService
         $amlStatusName = AMLStatusCode::getName($lifeQuote->aml_status);
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($lifeQuote->customer_id, $lifeQuote->mobile_no);
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($lifeQuote->payments);
+        $ecomLifeInsuranceQuoteUrl = config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL');
+        $currencies = app(CurrencyTypeService::class)->getActive();
+        $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
 
         return [
             'documentTypes' => $documentTypes,
@@ -412,6 +418,9 @@ class LifeQuoteService extends BaseService
             'paymentDocument' => $paymentDocument,
             'quoteNotes' => $quoteNotes,
             'noteDocumentType' => $noteDocumentType,
+            'ecomLifeInsuranceQuoteUrl' => $ecomLifeInsuranceQuoteUrl,
+            'currencies' => $currencies,
+            'lifeRiders' => $lifeRiders,
         ];
     }
 
@@ -549,6 +558,181 @@ class LifeQuoteService extends BaseService
         /* Start - Temporarily adding for correcting historic data */
         app(PaymentService::class)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
         /* End - Temporarily adding for correcting historic data */
+    }
+
+    public function getQuotePlans($id)
+    {
+        $quoteUuId = LifeQuote::where('uuid', '=', $id)->value('uuid');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-life-quote-plans';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+
+        $plansDataArr = [
+            'quoteUID' => $quoteUuId,
+            'lang' => 'en',
+        ];
+
+        $client = new \GuzzleHttp\Client;
+
+        try {
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'body' => json_encode($plansDataArr),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } elseif (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } elseif (isset($response->msg)) {
+                $responseBodyAsString = $response->msg;
+            } else {
+                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+            }
+            return $responseBodyAsString;
+        }
+    }
+
+    public function getProviderPlans($providerId)
+    {
+        return InsuranceProviderPlan::where(['provider_id' => $providerId, 'quote_type_id' => QuoteTypeId::Life])->get();
+    }
+
+    public function lifePlanCreateQuote($uuid, $data)
+    {
+        $reqData = [
+            'quoteUID' => $uuid,
+            'update' => $data['update'],
+            'isVariant' => $data['isVariant'],
+            'isUW' => $data['isUW'],
+            'plans' => [$data]
+        ];
+
+        $client = new \GuzzleHttp\Client;
+
+        try {
+            $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-life-quote-plan';
+            $plansApiToken = config('constants.KEN_API_TOKEN');
+            $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+            $plansApiUserName = config('constants.KEN_API_USER');
+            $plansApiPassword = config('constants.KEN_API_PWD');
+            $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'body' => json_encode($reqData),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+// dd($kenRequest->getBody());
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            dd($e);
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } elseif (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } elseif (isset($response->msg)) {
+                $responseBodyAsString = $response->msg;
+            } else {
+                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+            }
+            return $responseBodyAsString;
+        }
+    }
+
+    public function getLifeProviderPlan($data)
+    {
+        $client = new \GuzzleHttp\Client;
+
+        try {
+            $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/fetch-life-provider-plan';
+            $plansApiToken = config('constants.KEN_API_TOKEN');
+            $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+            $plansApiUserName = config('constants.KEN_API_USER');
+            $plansApiPassword = config('constants.KEN_API_PWD');
+            $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'body' => json_encode($data),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+dd($kenRequest->getBody());
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            dd($e);
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } elseif (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } elseif (isset($response->msg)) {
+                $responseBodyAsString = $response->msg;
+            } else {
+                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+            }
+            return $responseBodyAsString;
+        }
     }
 
     private function prepareActivitiesData($activities)

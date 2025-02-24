@@ -5,6 +5,8 @@ import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
+import CreatePlanVariant from './Partials/CreateVariant.vue';
 
 const page = usePage();
 defineProps({
@@ -48,6 +50,9 @@ defineProps({
   noteDocumentType: Array,
   modelType: String,
   cdnPath: String,
+  ecomLifeInsuranceQuoteUrl: String,
+  currencies: Array,
+  lifeRiders: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -62,10 +67,220 @@ const modals = reactive({
   activityConfirm: false,
   doc: false,
   docConfirm: false,
+  createPlan: false,
+  sendConfirm: false,
+  createPlanVariant: false,
 });
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
+};
+
+const { copy, copied } = useClipboard();
+const loader = ref({
+  link: false,
+});
+const selectedProviderPlan = ref({
+  id: page.props.quote.plan_id,
+});
+
+const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
+  createReusableTemplate();
+
+const variantPlan = ref(null);
+const selectedPlans = ref([]);
+// const selectedPlan = ref(null);
+
+// plans
+const planDataTable = ref();
+
+const plansTable = reactive({
+  isLoading: false,
+  data: [],
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+      sortable: true,
+      fixed: true,
+      width: 400,
+    },
+    {
+      text: 'Plan',
+      value: 'planName',
+      width: 100,
+    },
+    {
+      text: 'Variant',
+      value: 'variantVersion',
+      width: 100,
+    },
+    {
+      text: 'Type of Plan',
+      value: 'planTypeId',
+      sortable: true,
+    },
+    {
+      text: 'Insurer Quote Number',
+      value: 'insurerQuoteNo',
+    },
+    {
+      text: 'Price',
+      value: 'actualPremium',
+      sortable: true,
+    },
+    {
+      text: 'Payment Term',
+      value: 'paymentTerm',
+      sortable: true,
+    },
+    {
+      text: 'Currency',
+      value: 'currency',
+      sortable: true,
+    },
+    {
+      text: 'Sum Assured',
+      value: 'sumInsured',
+      sortable: true,
+    },
+    {
+      text: 'Policy Term (Years)',
+      value: 'policyTerm',
+      sortable: true,
+    },
+    {
+      text: 'Total Annual Premium',
+      value: 'totalAnnualPremium',
+      sortable: true,
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+
+const listQuotePlansFiltered = ref([]);
+
+// const sortPlans = incommingPlans => {
+//   incommingPlans = incommingPlans.sort((a, b) => {
+//     // Convert undefined or falsy `actualPremium` values to 0 for comparison, if needed
+//     const premiumA = a.actualPremium || 0;
+//     const premiumB = b.actualPremium || 0;
+
+//     return premiumA - premiumB;
+//   });
+
+//   const matchingIndex = incommingPlans.findIndex(
+//     x => x.id === selectedProviderPlan.value?.id,
+//   );
+
+//   if (matchingIndex > 0) {
+//     [incommingPlans[0], incommingPlans[matchingIndex]] = [
+//       incommingPlans[matchingIndex],
+//       incommingPlans[0],
+//     ];
+//   }
+//   listQuotePlansFiltered.value = [...incommingPlans];
+// };
+
+watchEffect(() => {
+  listQuotePlansFiltered.value = plansTable.data
+    .slice()
+    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+});
+
+const computedListQuotePlans = computed(() => {
+  return listQuotePlansFiltered.value;
+});
+
+const validateEmailSending = () => {
+  if (selectedPlans.value.length === 0) {
+    modals.sendConfirm = true;
+    return;
+  }
+  const hiddenPlans = selectedPlans.value.filter(plan => plan.isHidden);
+  if (hiddenPlans.length > 0) {
+    notification.error({
+      title: 'You cannot select a hidden plan',
+      position: 'top',
+    });
+    modals.sendConfirm = false;
+    return;
+  }
+  if (selectedPlans.value.length < 6) {
+    notification.error({
+      title: 'Minimum 6 plans should be selected',
+      position: 'top',
+    });
+    modals.sendConfirm = false;
+    return;
+  }
+  if (selectedPlans.value.length > 6) {
+    notification.error({
+      title: 'Maximum 6 plans can be selected',
+      position: 'top',
+    });
+    modals.sendConfirm = false;
+    return;
+  }
+  modals.sendConfirm = true;
+};
+
+const getPaymentTermTitle = (months) => {
+  const mapping = {
+          1 : "Monthly",
+          3 : "Quarterly",
+          6 : "Semi-Annually",
+          12 : "Annually",
+  };
+
+  return mapping[months] || '';
+};
+
+const getTotalAnnualPremium = (paymentTerm, premium) => {
+  const paymentTermTitle = getPaymentTermTitle(paymentTerm);
+  const mapping = {
+    "Monthly" : 12,
+    "Quarterly" : 4,
+    "Semi-Annually" : 2,
+    "Annually" : 1,
+  }
+  return premium * mapping[paymentTermTitle];
+};
+
+const onCopyText = text => {
+  copy(text);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
+
+const onCreatePlan = () => {
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['plansTable.data'],
+    onStart: () => {
+      modals.createPlan = false;
+    },
+    onFinish: () => {
+      notification.success({
+        title: 'Plan Created',
+        position: 'top',
+      });
+      location.reload();
+    },
+  });
+};
+
+const addVariant = plan => {
+  variantPlan.value = plan;
+  modals.createPlanVariant = true;
 };
 
 const advisorOptions = computed(() => {
@@ -474,8 +689,54 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
+  onLoadAvailablePlansData();
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const onLoadAvailablePlansData = async () => {
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/life/available-plans/${page.props.quote.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+      // loop on plansTable.data and set id equal to _id
+      // plansTable.data.forEach(plan => {
+      //   plan.id = 123;
+      // });
+      // listQuotePlansFiltered.value = [...plansTable.data];
+      // getSmallestCopayRateAsDefaultValue();
+      // plansTable.data.forEach(plan => {
+      //   // if (plan.isManualPlan) {
+      //   //   isManualPlansCount.value++;
+      //   // }
+
+      //   // if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
+      //   //   selectedPlan.value.needPriceUpdate = false;
+      //   // }
+      // });
+
+      // if (selectedPlan.value?.id) {
+      //   let plans = plansTable.data.filter(x => x.id == selectedPlan.value?.id);
+      //   selectedPlan.value = { ...plans[0] };
+      // }
+    })
+    .catch(err => {
+      console.log(err);
+      notification.error({
+        title: 'Error loading plans',
+        position: 'top',
+      });
+    });
+};
+
+const confirmSendEmail = () => {
+  loader.value.link = true;
+  const first_name = page.props.quote.first_name || '';
+  const last_name = page.props.quote.last_name || '';
+};
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -1235,6 +1496,279 @@ const getBMITag = () => {
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
       :quote-status-enum="page.props.quoteStatusEnum"
+    />
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Available Plans
+              <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
+            </h3>
+          </div>
+        </template>
+
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex flex-wrap gap-3 justify-end mb-3">
+            <x-button
+              @click.prevent="validateEmailSending"
+              size="sm"
+              color="orange"
+              :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+              v-if="readOnlyMode.isDisable === true"
+            >
+              Send OCA Email to Customer
+            </x-button>
+            <x-button
+              v-if="plansTable.data.length > 0"
+              size="sm"
+              color="orange"
+              @click.prevent="
+                onCopyText(ecomLifeInsuranceQuoteUrl + quote.uuid)
+              "
+            >
+              Copy Link
+            </x-button>
+            <x-modal
+              v-model="modals.sendConfirm"
+              title="Send Email"
+              show-close
+              backdrop
+            >
+              <p>Are you sure send email to customer?</p>
+              <template #actions>
+                <div class="text-right space-x-4">
+                  <x-button
+                    size="sm"
+                    ghost
+                    @click.prevent="modals.sendConfirm = false"
+                  >
+                    Cancel
+                  </x-button>
+                  <x-button
+                    size="sm"
+                    color="error"
+                    @click.prevent="confirmSendEmail"
+                    :loading="loader.link"
+                  >
+                    Send
+                  </x-button>
+                </div>
+              </template>
+            </x-modal>
+
+            <AddPlanButtonTemplate v-slot="{ isDisabled }">
+              <x-button
+                size="sm"
+                color="emerald"
+                @click.prevent="modals.createPlan = true"
+                :disabled="isDisabled"
+              >
+                Add Plan
+              </x-button>
+            </AddPlanButtonTemplate>
+
+            <x-tooltip
+              v-if="page.props.lockLeadSectionsDetails.plan_selection"
+              position="left"
+              align="center"
+              class="yoyo-tip"
+            >
+              <AddPlanButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                <div class="whitespace-normal text-xs">
+                  No further actions can be taken on an issued policy. For
+                  changes, such as a change in insurer, go to 'Send Update',
+                  select 'Add Update', and choose 'Cancellation from inception
+                  and reissuance.
+                </div>
+              </template>
+            </x-tooltip>
+            <AddPlanButtonReuseTemplate v-else />
+
+            <DataTable
+              ref="planDataTable"
+              v-model:items-selected="selectedPlans"
+              table-class-name="tablefixed compact"
+              :headers="plansTable.columns"
+              :items="computedListQuotePlans || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              class="flex-wrap"
+              :hide-footer="computedListQuotePlans.length < 15"
+            >
+              <!-- <template #item-copayName="item">
+                <p class="copay-max">
+                  {{ item.copayName }}
+                </p>
+              </template> -->
+
+              <template #item-planTypeId="item">
+                <span class="copay-max">{{ item.planType }}</span>
+              </template>
+
+              <template #item-variantVersion="item">
+                <span v-if="item.version" class="copay-max">v.{{ item.version }}</span>
+              </template>
+              <template #item-paymentTerm="item">
+                <span class="copay-max">{{ getPaymentTermTitle(item.paymentTerm) }}</span>
+              </template>
+
+              <template #item-totalAnnualPremium="item">
+                <span class="copay-max">{{ getTotalAnnualPremium(item.paymentTerm, item.actualPremium) }}</span>
+              </template>
+
+              <template
+                #item-providerName="{ providerName, isDisabled }"
+              >
+                <p>
+                  {{ providerName }}
+                </p>
+                <div class="flex gap-1">
+                  <x-tag
+                    v-if="isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Hidden
+                  </x-tag>
+                </div>
+              </template>
+
+              <template
+                #item-planName="{ planName, isUnderwritten, isManualPlan, isApi, isRateCalculator }"
+              >
+                <p>
+                  {{ planName }}
+                </p>
+                <div class="flex gap-1">
+                  <x-tag
+                    v-if="isUnderwritten"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px] bg-green-300 text-green-800 font-semibold px-2 py-1 rounded-md"
+                  >
+                    UW
+                  </x-tag>
+                  <x-tag
+                    v-else-if="isManualPlan"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px] bg-gray-200 text-gray-700 font-semibold px-2 py-1 rounded-md"
+                  >
+                    Manual
+                  </x-tag>
+                  <x-tag
+                    v-else-if="isApi"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px] bg-orange-200 text-orange-700 font-semibold px-2 py-1 rounded-md"
+                  >
+                    API
+                  </x-tag>
+                  <x-tag
+                    v-else-if="isRateCalculator"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px] bg-green-200 text-green-700 font-semibold px-2 py-1 rounded-md"
+                  >
+                    Rate Calculator
+                  </x-tag>
+                </div>
+              </template>
+
+              <template #item-action="item">
+                <div class="flex gap-2 pr-2">
+
+                  <template>
+                    <x-button
+                      size="xs"
+                      color="primary"
+                      outlined
+                      @click.prevent="planClicked(item)"
+                    >
+                      View
+                    </x-button>
+                  </template>
+                  <x-button
+                    size="xs"
+                    color="emerald"
+                    outlined
+                    @click.prevent="
+                      onCopyText(
+                        ecomLifeInsuranceQuoteUrl +
+                          quote.uuid +
+                          `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
+                      )
+                    "
+                  >
+                    Copy
+                  </x-button>
+                  <span>
+                    <SelectPlan
+                      v-if="selectedProviderPlan.id != item._id"
+                      @update:selectedPlanChanged="handlePlanSelected"
+                      :plan="item"
+                      :quoteType="quoteType"
+                      :uuid="quote.uuid"
+                    />
+
+                    <x-button
+                      v-else
+                      size="xs"
+                      color="orange"
+                      outlined
+                      :disabled="true"
+                    >
+                      Selected
+                    </x-button>
+                  </span>
+                  <span v-if="!item.isUnderwritten">
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      @click.prevent="addVariant(item)"
+                    >
+                      Add Variant
+                    </x-button>
+                  </span>
+                </div>
+              </template>
+            </DataTable>
+
+           
+          </div>
+        </template>
+      </Collapsible>
+    </div>
+
+    <LazyCreatePlan
+      v-model="modals.createPlan"
+      :uuid="quote.uuid"
+      :insuranceProviders="insuranceProviders"
+      :currencies="currencies"
+      :plans="computedListQuotePlans"
+      :lifeRiders="lifeRiders"
+      
+      @success="onCreatePlan"
+      @error="onPlanError"
+    />
+
+    <CreatePlanVariant
+      v-model="modals.createPlanVariant"
+      :uuid="quote.uuid"
+      :insuranceProviders="insuranceProviders"
+      :currencies="currencies"
+      :plan="variantPlan"
+      :plans="computedListQuotePlans"
+      :lifeRiders="lifeRiders"
+      
+      @success="onCreatePlan"
+      @error="onPlanError"
     />
 
     <PlanDetails

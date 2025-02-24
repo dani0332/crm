@@ -1,0 +1,304 @@
+<script setup>
+const props = defineProps({
+  uuid: String,
+  insuranceProviders: Array,
+  plans: Array,
+  currencies: Array,
+  lifeRiders: Array,
+  plan: Object,
+});
+
+const { isRequired } = useRules();
+
+const shown = computed({
+  get: () => props.modelValue,
+  set: value => emit('update:modelValue', value),
+});
+
+const riders = props.lifeRiders.map(rider => ({
+  riderId: rider.id,
+  active: 0,
+  price: 0,
+  coverValue: 0,
+  text: rider.text,
+}));
+
+const ridersData = ref(riders);
+
+const page = usePage();
+
+const emit = defineEmits(['success', 'error']);
+
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
+
+const active = ref(false);
+
+const paymentTerms = [
+  { value: 1, label: 'Monthly' },
+  { value: 3, label: 'Quarterly' },
+  { value: 6, label: 'Semi-Annually' },
+  { value: 12, label: 'Annually' },
+];
+
+const options = reactive({
+  providerPlans: [],
+  loading: false,
+});
+
+const availableInsuranceProviders = computed(() => {
+  return props.insuranceProviders;
+});
+
+const createForm = reactive({
+  providerId: null,
+  planId: null,
+  loading: false,
+  isUW: 0,
+  currency: null,
+  paymentTerm: null,
+  sumAssured: null,
+  policyTerm: null,
+  actualPremium: null,
+  insurerQuoteNo: null,
+  isVariant: false,
+  update: false,
+  // riders: ref(riders),
+});
+
+watch(() => props.plan, (newVal) => {
+  createForm.providerId = props.plan?.providerId;
+  createForm.planId = props.plan?.planId
+}, { deep: true });
+
+// onMounted(() => {
+//     createForm.providerId = props.plan?.providerId;
+// });
+
+const getQuote = () => {
+  axios
+    .post(`/personal-quotes/get-life-provider-plan`, {
+        data: {
+        quoteUID: props.uuid,
+        planId: props.plan.planId,
+        providerCode: props.plan.providerCode,
+        isIndividualLoading: true,
+        planData: {
+            currency: props.plan.currency,
+            sumAssured: props.plan.sumInsured,
+            policyTerm: props.plan.policyTerm,
+            paymentTerm: props.plan.paymentTerm,
+            riders: props.plan.riders,
+        },
+        lang: "en"
+        }
+    })
+    .then(res => {
+      if (res.data) {
+        createForm.isUW = res.data.isUW;
+      }
+    })
+    .catch(err => {
+      emit('error');
+    });
+};
+
+const onSubmit = isValid => {
+
+  if (!isValid) {
+    return;
+  }
+  createForm.loading = true;
+  createForm.riders = ridersData.value;
+  // remove loading from createForm
+  const data  = createForm.filter((item) => item !== 'loading');
+  axios
+    .post('/personal-quotes/life-plan-manual-create', {
+      quoteUID: props.uuid,
+      formData: data,
+    })
+    .then(res => {
+      if (res.data == 200) {
+        emit('success');
+      } else {
+        emit('error', res.data);
+      }
+    })
+    .catch(err => {
+      emit('error');
+    })
+    .finally(() => {
+      createForm.loading = false;
+    });
+};
+
+watch(
+  () => createForm?.providerId,
+  value => {
+    if (value) {
+      options.loading = true;
+      options.providerPlans = [];
+      axios
+        .get(`/personal-quotes/life/provider-plans/${value}`)
+        .then(res => {
+          if (res.data.plans) {
+            options.providerPlans = res.data.plans;
+          } else {
+            options.providerPlans = [];
+          }
+        })
+        .catch(err => {
+          emit('error');
+        })
+        .finally(() => {
+          options.loading = false;
+        });
+    }
+  },
+);
+
+</script>
+
+<template>
+  <x-modal
+    v-model="shown"
+    size="lg"
+    title="Add Variant"
+    show-close
+    backdrop
+    is-form
+    @submit="onSubmit"
+  >
+    <div class="mx-auto p-6 bg-white rounded-lg">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Insurance Provider <span class="text-red-500">*</span></label>
+          <x-select
+            v-model="createForm.providerId"
+            :options="
+              availableInsuranceProviders.map((insuranceProver, index) => ({
+                value: insuranceProver.id,
+                label: insuranceProver.text,
+              }))
+            "
+            :rules="[isRequired]"
+            placeholder=""
+            class="w-full"
+            disabled
+          />
+        </div>
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Plan <span class="text-red-500">*</span></label>
+          <x-select
+            v-model="createForm.planId"
+            placeholder="Select Plan"
+            class="w-full"
+            :options="
+              options.providerPlans?.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            :loading="options.loading"
+            :rules="[isRequired]"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">Currency <span class="text-red-500">*</span></label>
+            <x-select
+              v-model="createForm.currency"
+              placeholder="AED"
+              class="w-full"
+              :options="
+                props.currencies?.map(currency => ({
+                  value: currency.id,
+                  label: currency.text,
+                }))
+              "
+              :rules="[isRequired]"
+            />
+          </div>
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">Sum Assured <span class="text-red-500">*</span></label>
+            <x-input
+              v-model="createForm.sumAssured"
+              placeholder="Enter Sum Assured"
+              :rules="[isRequired]"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Policy Term <span class="text-red-500">*</span></label>
+           <x-input
+              v-model="createForm.policyTerm"
+              placeholder="Enter Policy Term"
+              :rules="[isRequired]"
+              class="w-full"
+            />
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Payment Terms <span class="text-red-500">*</span></label>
+           <x-select
+              v-model="createForm.paymentTerm"
+              placeholder="Select Payment Terms"
+              class="w-full"
+              :options="paymentTerms"
+              :rules="[isRequired]"
+            />
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Price (VAT not applicable) <span class="text-red-500">*</span></label>
+          <x-input
+              v-model="createForm.actualPremium"
+              placeholder="Enter Price"
+              :rules="[isRequired]"
+              class="w-full"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Insurer Quote Number <span class="text-red-500">*</span></label>
+          <x-input
+              v-model="createForm.insurerQuoteNo"
+              placeholder="Enter Insurer Quote Number"
+              :rules="[isRequired]"
+              class="w-full"
+          />
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-semibold bg-gray-100 p-4 rounded-md text-gray-700">RIDERS</h3>
+        <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
+          <span class="text-gray-700 col-span-2">Life Cover</span>
+          <span class="text-gray-700">Included</span>
+          <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="createForm.sumAssured" disabled />
+
+          <x-toggle color="emerald" size="lg" disabled/>
+          <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="createForm.actualPremium" disabled />
+        </div>
+        <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.id">
+          <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
+          <span class="text-gray-700">{{rider.active ? 'Included' : 'Optional'}}</span>
+          <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="rider.coverValue" />
+          <x-toggle v-model="rider.active" color="success" size="lg" />
+          <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="rider.price"/>
+        </div>
+      </div>
+    </div>
+
+<button @click="getQuote">get quote</button>
+    <template #actions>
+      <div class="flex justify-end">
+        <x-button type="submit" color="emerald" :loading="createForm.loading">
+          Save
+        </x-button>
+      </div>
+    </template>
+  </x-modal>
+</template>

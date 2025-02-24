@@ -128,4 +128,30 @@ class LifeController extends Controller
     {
         return $this->lifeQuoteService->getCardsViewLoadMore($request->validated());
     }
+
+    public function getProviderPlans($providerId)
+    {
+        $providerPlans = $this->lifeQuoteService->getProviderPlans($providerId);
+
+        return response()->json(['plans' => $providerPlans]);
+    }
+
+    public function lifePlanCreateQuote(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required',
+            'formData' => 'required|array',
+        ]);
+
+        $this->lifeQuoteService->lifePlanCreateQuote($request->quoteUID, $request->formData);
+
+        return response()->json(['message' => 'Life Plan created successfully']);
+    }
+
+    public function getLifeProviderPlan(Request $request)
+    {
+        $providerPlan = $this->lifeQuoteService->getLifeProviderPlan($request->data);
+
+        return response()->json(['providerPlan' => $providerPlan]);
+    }
 }
