@@ -18,8 +18,6 @@ const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
 
-console.log('Home Quote Index Page', page.props.quotes);
-
 const loader = reactive({
   table: false,
   export: false,

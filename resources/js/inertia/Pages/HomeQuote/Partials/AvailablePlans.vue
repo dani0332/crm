@@ -11,7 +11,6 @@ const permissionsEnum = props.plan.permissionsEnum;
 
 const emit = defineEmits(['onLoadAvailablePlansData']);
 
-console.log('props.plan', props.plan);
 const notification = useToast();
 
 const toggleLoader = ref(false);
@@ -44,8 +43,6 @@ const planForm = useForm({
   contentsValue: props.plan.contentsValue || '',
   personalBelongingsValue: props.plan.personalBelongingsValue || '',
 });
-
-console.log('planForm', planForm);
 
 watch(
   () => planForm.actual_premium,
@@ -130,8 +127,6 @@ onMounted(() => {
 });
 
 const onUpdatePlan = () => {
-  console.log('onUpdatePlan', props.plan);
-
   if (planForm.discounted_premium > planForm.actual_premium) {
     notification.error({
       title: 'Discounted Price must be lower than Actual Price',
@@ -153,8 +148,6 @@ const onUpdatePlan = () => {
       },
     )
     .then(response => {
-      console.log('response', response);
-
       notification.success({
         title: 'Plan updated successfully',
         position: 'top',

@@ -27,8 +27,6 @@ const personalBelongingsAED = computed(
   () => props.quote?.home_quote?.personal_belongings_value_id || null,
 );
 
-console.log('PROPS: ', page.props);
-
 const quoteForm = useForm({
   modelType: '"Home"',
   model: props.model,
@@ -67,8 +65,6 @@ const quoteForm = useForm({
   company_name: props.quote?.company_name || null,
   company_address: props.quote?.company_address || null,
 });
-
-console.log('quoteForm:', quoteForm);
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -122,7 +118,6 @@ const checkForPossesionTypeIdValidation = () => {
 };
 
 function onSubmit(isValid) {
-  console.log('onSubmit:', quoteForm);
   try {
     if (!isFormValid() || !isValid) {
       console.info('Form validation failed.');
@@ -431,7 +426,6 @@ const isMatchingCoverage = (
 watch(
   () => quoteForm.iam_possesion_type_id,
   newVal => {
-    console.log('in watcher iam_possesion_type_id:', newVal);
     setCoverageBasedOnBooleans();
   },
   { immediate: true },
