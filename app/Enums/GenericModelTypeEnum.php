@@ -17,4 +17,5 @@ final class GenericModelTypeEnum extends Enum
     const TIER = 'tier';
     const QUADRANT = 'quadrant';
     const RULE = 'rule';
+    const GIG_INSURER_SCREENIN_DEFAULT_EMAIL = 'hitesh.motwani@insurancemarket.ae';
 }
