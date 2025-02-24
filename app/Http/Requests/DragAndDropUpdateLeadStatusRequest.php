@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteStatusEnum;
+use App\Models\QuoteStatusMap;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DragAndDropUpdateLeadStatusRequest extends FormRequest
@@ -43,7 +44,7 @@ class DragAndDropUpdateLeadStatusRequest extends FormRequest
     {
         $validator->after(function ($validator) {
 
-            if (in_array(request()->get('data')['to']['quote_status_id'], [QuoteStatusEnum::TransactionApproved, quoteStatusEnum::PolicyIssued])) {
+            if (in_array(request()->get('data')['to']['quote_status_id'], [QuoteStatusEnum::TransactionApproved, quoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
                 $validator->errors()->add('value', 'Transaction approval is required');
             }
 
