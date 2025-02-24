@@ -45,7 +45,7 @@ class TravelAllocation implements Allocation
             $lead = $this->fetchLead();
 
             if (! $lead) {
-                info(self::class." - executeSteps: Lead not found for : {$this->allocationId}");
+                info(self::class.' - executeSteps: Lead not found');
 
                 $this->tracker->saveResult(ProcessTrackerAllocationEnum::LEAD_NOT_FOUND, [
                     '@statuses' => ['Fake', 'Duplicate', 'Lost'],
@@ -54,7 +54,7 @@ class TravelAllocation implements Allocation
                 $response = $this->travelAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 if ($lead->isAllocationInProgress()) {
-                    info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+                    info("Allocation is already started at {$lead->allocation_started_at}");
 
                     return $this->travelAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
                 }
@@ -66,7 +66,7 @@ class TravelAllocation implements Allocation
                 if (! $advisor) {
                     $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
 
-                    info(self::class." - executeSteps: No advisor found against lead : {$lead->uuid}");
+                    info(self::class.' - executeSteps: No advisor found');
 
                     $response = $this->travelAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
 
@@ -100,7 +100,7 @@ class TravelAllocation implements Allocation
 
     private function fetchAvailableAdvisor(TravelQuote $lead)
     {
-        return $this->travelAllocationService->fetchAvailableAdvisor(teamId: $this->teamId, quoteUUID: $this->allocationId, lead: $lead, tracker: $this->tracker);
+        return $this->travelAllocationService->fetchAvailableAdvisor(teamId: $this->teamId, lead: $lead, tracker: $this->tracker);
     }
 
     private function assignLead(TravelQuote $lead, User $advisor)
