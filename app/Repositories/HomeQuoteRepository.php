@@ -32,6 +32,7 @@ use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailStatusService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
@@ -157,17 +158,6 @@ class HomeQuoteRepository extends BaseRepository
         }
     }
 
-    public function fetchGetFormOptions()
-    {
-        $lookUpData = app(LookupService::class)->getHomeLookUpData();
-
-        return [
-            'lookUpData' => $lookUpData,
-            'homePossessionTypeEnum' => HomePossessionType::asArray(),
-            'nationalities' => NationalityRepository::withActive()->get(),
-        ];
-    }
-
     public function fetchCreate($data)
     {
         $baseQuoteData = [
@@ -213,13 +203,12 @@ class HomeQuoteRepository extends BaseRepository
 
         $quoteData = $baseQuoteData;
 
-        info('Home Quote Create :'.json_encode($quoteData));
-
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 
         try {
             if (isset($response->quoteUID)) {
-                info('Dispatching SaveCustomerAddressJob for quoteUID: '.$response->quoteUID);
+                LoggerService::startQuoteLogging($response->quoteUID);
+                info('Dispatching SaveCustomerAddressJob');
                 // add Address fields to Customer Address table
                 $addressData = $data['addressObj'] ?? [];
                 if (! empty($addressData)) {
@@ -230,96 +219,13 @@ class HomeQuoteRepository extends BaseRepository
                 if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                     SendHomeOCBIntroEmailJob::dispatch($response->quoteUID)->delay(now()->addMinutes(1));
                 }
+                LoggerService::endLogging();
             }
         } catch (\Exception $e) {
             info('Failed to dispatch SaveCustomerAddressJob', ['error' => $e->getMessage()]);
         }
 
-        info('Home Quote Create Response :'.json_encode($response));
-
-        // if (isset($response->quoteUID)) {
-        //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);
-        // }
-
         return $response;
-    }
-
-    public function fetchGetBy($column, $value)
-    {
-
-        $quote = $this->byQuoteTypeId(QuoteTypes::HOME->id())
-            ->where($column, $value)
-            ->with([
-                'homeQuote' => function ($q) {
-                    $q->with(['nationality', 'possessionType', 'accommodationType', 'homeQuoteRequestDetail', 'homeQuoteRequestDetail.lostReason']);
-                },
-                'insuranceProvider',
-                'quoteDetail.lostReason',
-                'quoteStatus',
-                'advisor',
-                'nationality',
-                'plans',
-                'plans.insuranceProvider',
-                'createdBy',
-                'updatedBy',
-                'customer.additionalContactInfo',
-                'documents' => function ($q) {
-                    $q->with('createdBy')->orderBy('created_at', 'desc');
-                },
-                'quoteRequestEntityMapping' => function ($entityMapping) {
-                    $entityMapping->with('entity');
-                },
-                'payments' => function ($q) {
-                    $q->with([
-                        'paymentStatus',
-                        'personalPlan',
-                        'paymentMethod',
-                        'paymentStatusLogs',
-                        'insuranceProvider',
-                        'paymentable',
-                        'paymentSplits' => function ($paymentSplit) {
-                            $paymentSplit->with([
-                                'paymentStatus',
-                                'paymentMethod',
-                                'documents',
-                                'verifiedByUser',
-                                'processJob',
-                                'paymentCharges',
-                            ]);
-                            $paymentSplit->orderBy('sr_no');
-                        },
-                    ]);
-                },
-            ])
-            ->select([
-                $this->getTable().'.*',
-                DB::raw('IF(EXISTS (
-                    SELECT *
-                    FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
-            ])
-            ->firstOrFail();
-        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
-
-        $data = ! empty($quote) ? $quote->toArray() : [];
-        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
-        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
-
-        // fetch look up data
-        $lookUpData = app(LookupService::class)->getHomeLookUpData();
-        if ($lookUpData) {
-            $quote->lookUpData = $lookUpData;
-        }
-
-        $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
-        if ($customerAddressData) {
-            $quote->customerAddressData = $customerAddressData;
-        }
-
-        return $quote;
     }
 
     public function fetchGetShowFormOptions($quote)
@@ -603,5 +509,135 @@ class HomeQuoteRepository extends BaseRepository
             'insurer_tax_invoice_number' => fn ($query, $value) => $query->where('insurer_tax_invoice_number', $value),
             'insurer_commission_tax_invoice_number' => fn ($query, $value) => $query->where('insurer_commission_tax_invoice_number', $value),
         ];
+    }
+
+    public function fetchGetFormOptions()
+    {
+        // Fetch look up data
+        $lookUpData = $this->getHomeLookUpData();
+        
+        // Fetch active nationalities
+        $nationalities = $this->getNationalities();
+        
+        return $this->prepareResponse($lookUpData, $nationalities);
+    }
+
+    private function getHomeLookUpData()
+    {
+        return app(LookupService::class)->getHomeLookUpData();
+    }
+
+    private function getNationalities()
+    {
+        return NationalityRepository::withActive()->get();
+    }
+
+    private function prepareResponse($lookUpData, $nationalities)
+    {
+        return [
+            'lookUpData' => $lookUpData,
+            'homePossessionTypeEnum' => HomePossessionType::asArray(),
+            'nationalities' => $nationalities,
+        ];
+    }
+
+    public function fetchGetBy($column, $value)
+    {
+        try {
+            $quote = $this->getQuoteWithRelations($column, $value);
+            
+            $this->setQuoteAdditionalData($quote);
+
+            $this->appendExternalData($quote);
+
+            return $quote;
+        } catch (\Exception $e) {
+            info('Error fetching quote data: ' . $e->getMessage());
+        }
+    }
+
+    private function getQuoteWithRelations($column, $value)
+    {
+        return $this->byQuoteTypeId(QuoteTypes::HOME->id())
+            ->where($column, $value)
+            ->with([
+                'homeQuote' => function ($q) {
+                    $q->with(['nationality', 'possessionType', 'accommodationType', 'homeQuoteRequestDetail', 'homeQuoteRequestDetail.lostReason']);
+                },
+                'insuranceProvider',
+                'quoteDetail.lostReason',
+                'quoteStatus',
+                'advisor',
+                'nationality',
+                'plans',
+                'plans.insuranceProvider',
+                'createdBy',
+                'updatedBy',
+                'customer.additionalContactInfo',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+                'quoteRequestEntityMapping' => function ($entityMapping) {
+                    $entityMapping->with('entity');
+                },
+                'payments' => function ($q) {
+                    $q->with([
+                        'paymentStatus',
+                        'personalPlan',
+                        'paymentMethod',
+                        'paymentStatusLogs',
+                        'insuranceProvider',
+                        'paymentable',
+                        'paymentSplits' => function ($paymentSplit) {
+                            $paymentSplit->with([
+                                'paymentStatus',
+                                'paymentMethod',
+                                'documents',
+                                'verifiedByUser',
+                                'processJob',
+                                'paymentCharges',
+                            ]);
+                            $paymentSplit->orderBy('sr_no');
+                        },
+                    ]);
+                },
+            ])
+            ->select([
+                $this->getTable().'.*',
+                DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
+            ])
+            ->firstOrFail();
+    }
+
+    private function setQuoteAdditionalData($quote)
+    {
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        
+        // Setting permissions or appending additional fields to payments
+        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+    }
+
+    private function appendExternalData($quote)
+    {
+        // fetch look up data
+        $lookUpData = app(LookupService::class)->getHomeLookUpData();
+        if ($lookUpData) {
+            $quote->lookUpData = $lookUpData;
+        }
+
+        // fetch customer address data and append it
+        $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
+        if ($customerAddressData) {
+            $quote->customerAddressData = $customerAddressData;
+        }
     }
 }

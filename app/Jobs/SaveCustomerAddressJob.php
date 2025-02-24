@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\CustomerAddress;
 use App\Services\HomeQuoteService;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,7 +38,8 @@ class SaveCustomerAddressJob implements ShouldQueue
      */
     public function handle(): void
     {
-        info('SaveCustomerAddressJob started', ['quoteUID' => $this->quoteUID]);
+        LoggerService::startQuoteLogging($this->quoteUID);
+        info('SaveCustomerAddressJob started');
 
         try {
             // Validate address data
@@ -45,12 +47,12 @@ class SaveCustomerAddressJob implements ShouldQueue
                 throw new InvalidArgumentException('Address data is empty.');
             }
 
-            info('Attempting to save the customer address', ['quoteUID' => $this->quoteUID]);
+            info('Attempting to save the customer address');
 
             $quoteData = app(HomeQuoteService::class)->getQuoteData($this->quoteUID);
 
             if (! $quoteData) {
-                info('Quote data not found', ['quoteUID' => $this->quoteUID]);
+                info('Quote data not found');
 
                 return;
             }
@@ -59,7 +61,7 @@ class SaveCustomerAddressJob implements ShouldQueue
             $subArea = $quoteData->homeQuote->subArea ?? null;
 
             if (! $subArea) {
-                throw new ModelNotFoundException("SubArea not found for quote: {$this->quoteUID}");
+                throw new ModelNotFoundException("SubArea not found");
             }
 
             if (! $subArea->emirate) {
@@ -81,28 +83,26 @@ class SaveCustomerAddressJob implements ShouldQueue
             // Create or update the customer address
             if ($customerAddressRecord) {
                 $customerAddressRecord->update($customerAddress);
-                info('Customer address updated successfully', ['quoteUID' => $this->quoteUID]);
+                info('Customer address updated successfully');
             } else {
                 CustomerAddress::create($customerAddress);
-                info('Customer address created successfully', ['quoteUID' => $this->quoteUID]);
+                info('Customer address created successfully');
             }
         } catch (InvalidArgumentException $e) {
             info('Invalid address data', [
-                'quoteUID' => $this->quoteUID,
                 'error' => $e->getMessage(),
             ]);
         } catch (ModelNotFoundException $e) {
             info('Quote data not found', [
-                'quoteUID' => $this->quoteUID,
                 'error' => $e->getMessage(),
             ]);
         } catch (Exception $e) {
             info('Unexpected error saving customer address', [
-                'quoteUID' => $this->quoteUID,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
         }
+        LoggerService::endLogging();
     }
 
     /**

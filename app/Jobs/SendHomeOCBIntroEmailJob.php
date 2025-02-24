@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Services\EmailServices\HomeEmailService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -29,13 +30,15 @@ class SendHomeOCBIntroEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
+        LoggerService::startQuoteLogging($this->quoteUuid);
         $homeOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH)->first();
         $personalQuote = PersonalQuote::where('uuid', $this->quoteUuid)->first();
         if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
             app(HomeEmailService::class)->sendHomeOCBIntroEmail($personalQuote);
-            info(self::class." - Home OCB Automated Followups Switch is on - Ref ID: {$personalQuote->uuid} | Time: ".now());
+            info(self::class." - Home OCB Automated Followups Switch is on | Time: ".now());
         } else {
-            info(self::class." - Home OCB Automated Followups Switch is off - Ref ID: {$personalQuote->uuid} | Time: ".now());
+            info(self::class." - Home OCB Automated Followups Switch is off | Time: ".now());
         }
+        LoggerService::endLogging();
     }
 }

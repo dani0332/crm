@@ -22,6 +22,7 @@ use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
+use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -755,13 +756,15 @@ class HomeQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
+            LoggerService::startQuoteLogging($leadId);
             $lead = $this->getEntityPlain($leadId);
 
             $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::PERSONAL, PersonalQuoteDetail::class, 'personal_quote_id');
         }
+        LoggerService::endLogging();
 
         return $result;
     }
@@ -1019,6 +1022,7 @@ class HomeQuoteService extends BaseService
     {
         $logPrefix = self::class.' fn: isPlanModifyAllowed ';
         $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
+        LoggerService::startQuoteLogging($quote->uuid);
 
         $isAllowed = false;
 
@@ -1032,17 +1036,17 @@ class HomeQuoteService extends BaseService
                 $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
 
                 if (Auth::user()->hasRole(RolesEnum::HomeAdvisor) && $today->lte($dateLimitForAdvisor)) {
-                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
+                    info($logPrefix.' plan modify allowed to advisor and captured days diff is '.$paymentCapturedAt);
                     $isAllowed = true;
                 } elseif (Auth::user()->hasRole(RolesEnum::HomeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
-                    info($logPrefix.' plan modify allowed to home manager for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
+                    info($logPrefix.' plan modify allowed to home manager and captured days diff is '.$paymentCapturedAt);
                     $isAllowed = true;
                 }
             }
         }
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager])) {
-            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+            info($logPrefix.' plan modify allowed to advisor');
             $isAllowed = true;
         }
 
@@ -1051,15 +1055,16 @@ class HomeQuoteService extends BaseService
             (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT]) &&
                 Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager]))
         ) {
-            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+            info($logPrefix.' plan modify allowed');
             $isAllowed = true;
         }
 
         if (! $isAllowed) {
-            info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+            info($logPrefix.' plan modification is not allowed');
 
             return 'Plan Modification is not allowed';
         }
+        LoggerService::endLogging();
 
         return true;
     }
