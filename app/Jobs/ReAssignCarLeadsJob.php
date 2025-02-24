@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -46,10 +47,12 @@ class ReAssignCarLeadsJob implements ShouldQueue
             return false; // when lead is not on criteria or not found
         }
         foreach ($leads as $lead) {
-            info('--------------- ReAssignment processing current lead : '.$lead->uuid.' ---------------');
+            LoggerService::startQuoteLogging($lead->uuid);
+
+            info('--------------- ReAssignment processing ---------------');
 
             if ($lead->isAllocationInProgress()) {
-                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+                info("Allocation is already started at {$lead->allocation_started_at}");
 
                 continue;
             }
@@ -88,14 +91,15 @@ class ReAssignCarLeadsJob implements ShouldQueue
                 }
             } else {
                 // Log that tier was not found for the lead and skip processing
-                info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+                info('Tier not found. Skipping for now.');
             }
 
             $lead->endAllocation();
 
-            info('--------------- ReAssignment processing ended for current lead : '.$lead->uuid.' ---------------');
+            info('--------------- ReAssignment processing ended ---------------');
         }
 
+        LoggerService::endLogging();
         info('-------- Reassignment car job ended at : '.now().' ---------');
     }
 

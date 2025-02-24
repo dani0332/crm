@@ -53,7 +53,7 @@ class MarshallService
             'response' => $response->json(),
         ];
 
-        $logData['msg'] = $response->json()['msg'] ?? $response->json()['message'];
+        $logData['msg'] = $response->json()['msg'] ?? $response->json()['message'] ?? 'Capture failed, something went wrong';
 
         info('Marshall Service Exception', $logData);
         vAbort($logData['msg']);

@@ -597,6 +597,10 @@ class AMLService
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
                 'chassisNumber' => $request['chassis_number'] ?? '',
                 'gender' => $this->formatGender($insuredDetails?->gender),
+                'dateOfBirth' => $insuredDetails?->dob,
+                'getQuoteEmail' => $request['get_quote_email_gig'] ?? null,
+                'insuredFirstName' => $insuredDetails?->first_name,
+                'insuredLastName' => $insuredDetails?->last_name,
             ];
 
             info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);

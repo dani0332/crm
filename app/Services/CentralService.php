@@ -323,6 +323,10 @@ class CentralService extends BaseService
 
             $quote->update($data->toArray());
 
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                $quote->carQuoteRequestDetail->update(['insurer_quote_number' => $data->insurer_quote_number]);
+            }
+
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
             $businessTypeId = $quote->business_type_of_insurance_id ?? null;
             $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId);
@@ -1038,7 +1042,7 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
-        $isCaptureButtonEnabled = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE, InsurerProviderEnum::QATAR_INSURANCE]);
+        $isCaptureButtonEnabled = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE, InsurerProviderEnum::QATAR_INSURANCE, InsurerProviderEnum::ALLIANCE_INSURANCE]);
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         // Check if multiple payments are enabled for the provider
