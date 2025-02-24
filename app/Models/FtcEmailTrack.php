@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class FtcEmailTrack extends Model
 {
     protected $fillable = [];
-
+    protected $guarded = [];
 
     public function quoteTrackable(): MorphTo
     {

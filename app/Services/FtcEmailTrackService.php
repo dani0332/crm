@@ -7,29 +7,15 @@ use Illuminate\Http\Request;
 
 class FtcEmailTrackService
 {
-    public function createTrackEmail(Request $request)
+    public function createTrackEmail($payload)
     {
-        $payload = [
-            'email' => $request->email,
-            'subject' => $request->subject,
-            'status' => $request->status,
-            'link' => $request->link,
-            'quote_trackable_id' => $request->quote_trackable_id,
-            'quote_trackable_type' => $request->quote_trackable_type,
-        ];
         $trackEmail = FtcEmailTrack::create($payload);
         return $trackEmail;
     }
 
-    public function updateTrackEmail(Request $request, $id)
+    public function updateTrackEmail($payload, $id, $link = null)
     {
-        $trackEmail = FtcEmailTrack::find($id);
-        $payload = [
-            'email' => $request->email,
-            'subject' => $request->subject,
-            'status' => $request->status,
-            'link' => $request->link,
-        ];
+        $trackEmail = $link == null ? FtcEmailTrack::find($id) : FtcEmailTrack::where('link', $link)->first();
         $trackEmail->update($payload);
         return $trackEmail;
     }
