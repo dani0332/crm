@@ -73,8 +73,6 @@ const can = permission => useCan(permission);
 const modelClass = 'App\\Models\\HomeQuote';
 const processingOCBEmailNB = ref(false);
 
-console.log('SHOW PROPS', page.props);
-
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
 );
@@ -507,6 +505,7 @@ onMounted(() => {
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
@@ -594,13 +593,10 @@ const onLoadAvailablePlansData = async () => {
       // Assuming the normal plans are stored in `data` field
       const homePlans = response.data;
 
-      console.log('Available plans:', homePlans);
-
       // If you need to update the table and store the ids
       availablePlansTable.data = homePlans.quotes.plans;
       availableAllPlans.value = homePlans.quotes.plans;
       homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
-      console.log('homePlansIds :', homePlansIds);
     } else {
       console.error('Error: Unexpected status code', status);
     }
@@ -614,7 +610,6 @@ const onTogglePlans = toggle => {
 
   const planIds = useArrayUnique(
     selectedPlans.value.map(p => {
-      console.log('p.planId', p.id);
       return p.id;
     }),
   ).value;
@@ -662,10 +657,6 @@ const getPlanDetails = async item => {
   }
 
   viewPlanDetailsLoader.value[item.id] = true;
-  console.log(
-    `Loading state set for plan: ${item.id}`,
-    viewPlanDetailsLoader.value,
-  );
 
   try {
     if (!availableAllPlans.value || !Array.isArray(availableAllPlans.value)) {
@@ -745,10 +736,6 @@ const getPlanDetails = async item => {
     });
   } finally {
     viewPlanDetailsLoader.value[item.id] = false;
-    console.log(
-      `Loading state reset for plan: ${item.id}`,
-      viewPlanDetailsLoader.value,
-    );
   }
 };
 
@@ -774,8 +761,6 @@ const onExportPlans = () => {
   const planIds = selectedPlans.value.map(p => {
     return p.id;
   });
-  console.log('selectedPlans', planIds);
-
   axios
     .post(
       '/api/v1/quotes/home/export-plans-pdf',
@@ -814,10 +799,7 @@ const selectedProviderPlan = ref({
   premium: page.props?.quote?.plans?.premium,
 });
 
-console.log('selectedProviderPlan', selectedProviderPlan.value.id);
-
 const handlePlanSelected = plan => {
-  console.log('handlePlanSelected', plan);
   selectedProviderPlan.value.id = plan.id;
   selectedProviderPlan.value.planName = plan.name;
   selectedProviderPlan.value.providerName = plan.providerName;
@@ -839,7 +821,6 @@ const onMemberUpdated = async () => {
 };
 
 const copyLink = () => {
-  console.log('copy link', page.props.planURL);
   copy(page.props.planURL);
   if (copied)
     notification.success({
@@ -957,7 +938,6 @@ const ownerOccupancyText = computed(() => {
 });
 
 const confirmSendEmail = () => {
-  console.log('confirmSendEmail');
   processingOCBEmailNB.value = true;
   axios
     .post(`/quotes/home/${page.props.quote.uuid}/send-email-ocb-nb`, {
@@ -1047,7 +1027,7 @@ const viewPlanDetailsLoader = ref({});
         <LeadEditBtnReuseTemplate v-else />
       </template>
     </StickyHeader>
-
+    <x-divider class="my-4" />
     <x-modal
       v-model="modals.duplicate"
       title="Duplicate Lead"
@@ -1101,68 +1081,77 @@ const viewPlanDetailsLoader = ref({});
 
     <!-- Home Ecom Details -->
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center flex-wrap gap-2">
-        <h2 class="text-lg font-semibold text-primary-800">E-COM Detail</h2>
-      </div>
-      <x-divider class="my-4" />
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PRICE</dt>
-            <dd>{{ quote?.premium ?? '' }}</dd>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <h3 class="text-lg font-semibold text-primary-800">E-COM Detail</h3>
           </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PAID AT</dt>
-            <dd>{{ quote?.paid_at ?? '' }}</dd>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRICE</dt>
+                <dd>{{ quote?.premium ?? '' }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAID AT</dt>
+                <dd>{{ quote?.paid_at ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote?.payment_status?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT METHOD</dt>
+                <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ quote?.car_plan?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ECOMMERCE</dt>
+                <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">QUOTE LINK</dt>
+                <dd>{{ quote?.quote_link ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ORDER REFERENCE</dt>
+                <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT REFERENCE</dt>
+                <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
+              </div>
+            </dl>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">AML STATUS</dt>
-            <dd>{{ amlStatusName ?? '' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ quote?.payment_status?.text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PAYMENT METHOD</dt>
-            <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ quote?.car_plan?.text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ECOMMERCE</dt>
-            <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">QUOTE LINK</dt>
-            <dd>{{ quote?.quote_link ?? '' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ORDER REFERENCE</dt>
-            <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PAYMENT REFERENCE</dt>
-            <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
-          </div>
-        </dl>
-      </div>
+        </template>
+      </Collapsible>
     </div>
     <!-- Home Ecom Details -->
 
-    <div class="p-4 rounded shadow mt-6 mmmbmb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2"></div>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Home Details</h3>
+          </div>
         </template>
         <template #body>
+          <x-divider class="my-4 mb-3" />
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -1389,7 +1378,7 @@ const viewPlanDetailsLoader = ref({});
       </Collapsible>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -1744,8 +1733,8 @@ const viewPlanDetailsLoader = ref({});
       :nationalities="nationalities"
       :memberRelations="memberRelations"
       :quote_type="modelType"
-      :expanded="sectionExpanded"
       @memberUpdated="onMemberUpdated"
+      :expanded="sectionExpanded"
     />
 
     <UBODetails
@@ -1787,99 +1776,6 @@ const viewPlanDetailsLoader = ref({});
       :lost-reasons="lostReasons"
       :quote-status-enum="quoteStatusEnum"
     />
-
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-50">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="leadStatusForm.leadStatus"
-                  :options="leadStatusOptions"
-                  :disabled="
-                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                  "
-                  placeholder="Lead Status"
-                  class="w-full"
-                  label="Status"
-                  filterable
-                />
-
-                <x-select
-                  v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
-                  label="Lost Reason"
-                  v-model="leadStatusForm.lostReason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                  :disabled="
-                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                  "
-                />
-                <x-textarea
-                  v-model="leadStatusForm.notes"
-                  type="text"
-                  label="Notes"
-                  placeholder="Lead Notes"
-                  class="w-full"
-                  :disabled="
-                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                  "
-                />
-              </div>
-            </div>
-          </div>
-          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-              :disabled="allowStatusUpdate || isDisabled"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Change Status
-            </x-button>
-          </StatusUpdateButtonTemplate>
-          <div class="flex justify-end">
-            <x-tooltip
-              v-if="lockLeadSectionsDetails.lead_status"
-              placement="bottom"
-            >
-              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
-              <template #tooltip>
-                The lead status cannot be manually updated once it has reached
-                'Transaction Approved'
-              </template>
-            </x-tooltip>
-            <StatusUpdateButtonReuseTemplate v-else />
-          </div>
-        </template>
-      </Collapsible>
-    </div> -->
-
-    <!-- <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :expanded="sectionExpanded"
-      :vatPrice="vatPercentage"
-      :isAddUpdate="isAddUpdate"
-    /> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2216,22 +2112,30 @@ const viewPlanDetailsLoader = ref({});
       :data="sendUpdateLogs"
       @onAddUpdate="onAddUpdate"
     />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="emailTableColumns.columns"
-        :items="emailStatuses || []"
-        show-index
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      >
-      </DataTable>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <DataTable
+            table-class-name="tablefixed compact"
+            :headers="emailTableColumns.columns"
+            :items="emailStatuses || []"
+            show-index
+            border-cell
+            hide-rows-per-page
+            hide-footer
+          >
+          </DataTable>
+        </template>
+      </Collapsible>
     </div>
-    <x-divider class="my-4" />
+
     <QuoteActivities
       :can="can"
       :quote="quote"
