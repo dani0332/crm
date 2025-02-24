@@ -325,6 +325,10 @@ class CentralService extends BaseService
 
             $quote->update($data->toArray());
 
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                $quote->carQuoteRequestDetail->update(['insurer_quote_number' => $data->insurer_quote_number]);
+            }
+
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
             $businessTypeId = $quote->business_type_of_insurance_id ?? null;
             $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId);

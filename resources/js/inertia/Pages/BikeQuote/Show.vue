@@ -356,10 +356,6 @@ function capitalizeString(str) {
   if (!str) return 'N/A';
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
-const manualPlanStatus = ref(false);
-const handleManualPlanStatus = status => {
-  manualPlanStatus.value = status;
-};
 </script>
 
 <template>
@@ -1304,7 +1300,6 @@ const handleManualPlanStatus = status => {
       :websiteURL="websiteURL"
       :linkedQuoteDetails="linkedQuoteDetails"
       @plan-selected="fetchUpdatedQuote"
-      @manual-plan-status="handleManualPlanStatus"
     />
 
     <PaymentTableNew
@@ -1331,7 +1326,6 @@ const handleManualPlanStatus = status => {
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isCapBtnEnabled="manualPlanStatus"
     />
 
     <QuotePayments

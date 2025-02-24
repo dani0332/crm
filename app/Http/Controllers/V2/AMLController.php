@@ -7,6 +7,7 @@ use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\GenericModelTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -329,6 +330,7 @@ class AMLController extends Controller
             'cardHolderName' => $cardHolderName,
             'quoteTypeIdEnum' => QuoteTypeId::asArray(),
             'quoteStatusEnums' => QuoteStatusEnum::asArray(),
+            'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -503,10 +505,11 @@ class AMLController extends Controller
                         session()->put('insurerAMLScreeningResponse');
                         InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
                         $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                        if (! empty($insurerAMLScreeningResponse)) {
+                        if (! empty($getInsurerScreeningResponse)) {
                             $insurerAMLScreeningResponse = [
                                 'status' => $getInsurerScreeningResponse['status'],
                                 'message' => $getInsurerScreeningResponse['message'],
+                                'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                             ];
                         }
                         session()->forget('insurerAMLScreeningResponse');
@@ -598,7 +601,7 @@ class AMLController extends Controller
 
             $response = redirect()->back()->with('success', 'Quote is updated');
             if (! empty($insurerAMLScreeningResponse)) {
-                $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
+                $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
             }
 
             return $response;
