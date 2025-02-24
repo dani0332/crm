@@ -3609,12 +3609,12 @@ const isEditPaymentEnabled = () => {
 let voidPaymentObject = {};
 const voidPaymentProcess = ref(false);
 const voidPaymentModelPopup = ref(false);
-const voidPaymentModel = (payment) => {
+const voidPaymentModel = payment => {
   voidPaymentModelPopup.value = true;
   voidPaymentObject = payment;
-}
+};
 
-const isVoidPaymentEnabled = (payment) => {
+const isVoidPaymentEnabled = payment => {
   return (
     props.isFuncsEnabled.tapIntegration &&
     can(permissionEnum.PAYMENTS_VOID) &&
