@@ -1129,7 +1129,7 @@ class CentralService extends BaseService
     {
         if ($sendUpdateLog) {
             $workflowType = 'SU_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_UPDATE';
-            $workflowType = constant("App\Enums\WorkflowTypeEnum::$workflowType");
+            $workflowType = constant("App\Enums\WorkflowTypeEnum::{$workflowType}");
 
             return $this->prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType);
         }
@@ -1144,14 +1144,13 @@ class CentralService extends BaseService
             'advisorName' => $quote->advisor->name ?? '',
             'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
             'appLink' => 'http://www.google.com',
-            'carDetails' => '1238723',
             'customerFullName' => $quote->first_name.' '.$quote->last_name,
-            'policyNumber' => $sendUpdateLog->policy_number ?? '',
-            'policyPeriodEnd' => $sendUpdateLog->expiry_date ? Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '',
-            'policyPeriodStart' => $sendUpdateLog->start_date ? Carbon::parse($sendUpdateLog->start_date)->format('d-M-Y') : '',
-            'reason' => '1238723',
+            'policyNumber' => $sendUpdateLog->policy_number ?? $quote->policy_number ?? '',
+            'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d-M-Y'),
+            'policyPeriodEnd' => Carbon::parse($sendUpdateLog->expiry_date ?? $quote->policy_expiry_date)->format('d-M-Y'),
+            'reason' => $sendUpdateLog->notes,
             'refID' => $sendUpdateLog->code,
-            'rtaPortalLink' => '1238723',
+            'rtaPortalLink' => 'https://vls.rta.ae/renewal/identityVerification',
             'customerEmail' => $quote->email,
             'quoteUID' => $quote->uuid,
             'workflowType' => $workflowType,
@@ -1165,6 +1164,12 @@ class CentralService extends BaseService
             $emailData->insuranceCompany = $emailData->insuranceCompany ?? $quote?->plan?->insuranceProvider?->text ?? '';
             $emailData->planName = $quote?->plan?->text ?? '';
         }
+
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $emailData->carDetails = $quote->carMake->text.' '.$quote->carModel->text.' '.$quote->carModelDetail->text;
+        }
+
+        // $emailData->documentUrl
 
         $customer = $quote->customer->insured;
         $emailData->insuredName = $customer->first_name.' '.$customer->last_name;

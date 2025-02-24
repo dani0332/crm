@@ -982,7 +982,7 @@ class SendEmailCustomerService extends BaseService
     {
         try {
             if ($quoteTypeId == QuoteTypeId::Car) {
-                return app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $emailData);
+                return app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $emailData, $quoteTypeId);
             }
             info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
 

@@ -1154,7 +1154,7 @@ class SendUpdateLogService
         return (isset($carQuote->plan->carAddons)) ? $carQuote?->plan?->carAddons->toArray() : [];
     }
 
-    public function sendUpdateToCustomerEmailData($sendUpdateLog, $action): array
+    public function sendUpdateToCustomerEmailData($sendUpdateLog): array
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
@@ -1617,7 +1617,7 @@ class SendUpdateLogService
             'advisorMobilePhone' => $quote->advisor->mobile_no ?? '',
             'advisorName' => $quote->advisor->name ?? '',
             'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
-            'appLink' => 'http://www.google.com',
+            'appLink' => '',
             'carDetails' => '1238723',
             'customerFullName' => $quote->first_name.' '.$quote->last_name,
             'policyNumber' => $sendUpdateLog->policy_number ?? '',
@@ -1646,49 +1646,45 @@ class SendUpdateLogService
         return [1, $emailData, 'send-update', $quoteTypeId];
     }
 
-    public function sendUpdateToCustomerEmail($sendUpdate, $emailData)
+    public function sendUpdateToCustomerEmail($sendUpdate, $emailData, $quoteTypeId)
     {
+        $birdUrlKey = 'BIRD_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_SEND_UPDATE';
         try {
-            info('Sending CarUpdate followups email for lead: '.$sendUpdate->uuid.' | Time: '.now());
-            if (empty($lead->nb_flow_executed_at)) {
-                // $advisor = User::where('id', $lead->advisor_id)->first();
-                // $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::SU_CAR_UPDATE);
+            info("Sending {$birdUrlKey} followups email for lead: ".$sendUpdate->uuid.' | Time: '.now());
+            $birdUrlKey = constant("App\Enums\ApplicationStorageEnums::{$birdUrlKey}");
 
-                $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CAR_SEND_UPDATE)->first();
-                if ($birdMotorEventNB) {
-                    $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                    info('CarUpdate response: '.json_encode($response)." | Ref-ID: {$sendUpdate->uuid} |Time: ".now());
-                    // $lead->nb_flow_executed_at = now();
-                    // info("CarUpdate lead ref-id: {$sendUpdate->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-                    // $lead->save();
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            if ($birdUrl) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
+                info("{$birdUrlKey} response: ".json_encode($response)." | Ref-ID: {$sendUpdate->uuid} |Time: ".now());
 
-                    if (! empty($response->headers['Run-Id'])) {
-                        $this->createQuoteFlowDetails($sendUpdate, $response);
-                    }
-                } else {
-                    info("CarUpdate key not found for lead : Ref-ID: {$sendUpdate->uuid} |Time: ".now());
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($sendUpdate, $response, $quoteTypeId);
                 }
             } else {
-                info("CarUpdate already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$sendUpdate->uuid} | Time: ".now());
+                info("{$birdUrlKey} key not found for lead : Ref-ID: {$sendUpdate->uuid} |Time: ".now());
             }
 
             return $response?->status_code ?? null;
         } catch (\Exception $ex) {
-            $errorMessage = "CarUpdate-Error: while sending quote workflow for lead: Ref-ID: {$sendUpdate->uuid} | Time: ".now();
+            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for lead: Ref-ID: {$sendUpdate->uuid} | Time: ".now();
             info($errorMessage);
-            info("CarUpdate-Error: {$ex->getMessage()} | Ref-ID: {$sendUpdate->uuid} | Time: ".now());
+            info("{$birdUrlKey}-Error: {$ex->getMessage()} | Ref-ID: {$sendUpdate->uuid} | Time: ".now());
         }
     }
 
-    public function createQuoteFlowDetails($lead, $response)
+    public function createQuoteFlowDetails($lead, $response, $quoteTypeId)
     {
         try {
+            $flowType = 'SU_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_UPDATE';
+            $flowType = constant("App\Enums\QuoteFlowType::{$flowType}");
+
             $runId = collect($response->headers['Run-Id'])->first();
             if (! empty($runId)) {
                 QuoteFlowDetails::create([
                     'quote_uuid' => $lead->uuid,
-                    'quote_type_id' => QuoteTypeId::Car,
-                    'flow_type' => QuoteFlowType::SU_CAR_UPDATE->value,
+                    'quote_type_id' => $quoteTypeId,
+                    'flow_type' => $flowType,
                     'flow_id' => $runId,
                 ]);
                 info("SendUpdate  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
