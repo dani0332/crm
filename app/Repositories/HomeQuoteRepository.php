@@ -250,18 +250,16 @@ class HomeQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId(QuoteTypes::HOME->id())
             ->where($column, $value)
             ->with([
+                'homeQuote' => function ($q) {
+                    $q->with(['nationality', 'possessionType', 'accommodationType', 'homeQuoteRequestDetail', 'homeQuoteRequestDetail.lostReason']);
+                },
                 'insuranceProvider',
                 'quoteDetail.lostReason',
                 'quoteStatus',
                 'advisor',
                 'nationality',
                 'plans',
-                'homeQuote',
-                'homeQuote.nationality',
-                'homeQuote.possessionType',
-                'homeQuote.accommodationType',
-                'homeQuote.homeQuoteRequestDetail',
-                'homeQuote.homeQuoteRequestDetail.lostReason',
+                'plans.insuranceProvider',
                 'createdBy',
                 'updatedBy',
                 'customer.additionalContactInfo',
@@ -278,14 +276,17 @@ class HomeQuoteRepository extends BaseRepository
                         'paymentMethod',
                         'paymentStatusLogs',
                         'insuranceProvider',
-                        'paymentSplits' => function ($q) {
-                            $q->with([
+                        'paymentable',
+                        'paymentSplits' => function ($paymentSplit) {
+                            $paymentSplit->with([
                                 'paymentStatus',
                                 'paymentMethod',
                                 'documents',
                                 'verifiedByUser',
-                            ])
-                                ->orderBy('sr_no', 'asc');
+                                'processJob',
+                                'paymentCharges',
+                            ]);
+                            $paymentSplit->orderBy('sr_no');
                         },
                     ]);
                 },

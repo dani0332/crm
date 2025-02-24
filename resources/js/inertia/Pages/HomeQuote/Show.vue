@@ -807,7 +807,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'quote'],
+    only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
   });
   onLoadAvailablePlansData();
 };

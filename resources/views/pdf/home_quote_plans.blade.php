@@ -708,8 +708,10 @@
                         </th>
                     @endforeach
                 </tr>
+                {{--  make these rows dynamic as per discussion with Anne --}}
+                
                 {{-- rows for building, content and personal belonging value --}}
-                <tr>
+                {{-- <tr>
                     <th class="bg-light-blue">
                         <p class="quote-info"><b>Contents value</b></p>
                     </th>
@@ -744,7 +746,7 @@
                             </p>
                         </th>
                     @endforeach
-                </tr>
+                </tr> --}}
                 {{-- rows for building, content and personal belonging value --}}
                 <tr>
                     <th class="bg-light-blue">
