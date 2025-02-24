@@ -551,14 +551,21 @@ class SageApiService
         // This specific block is added to handle tap payments
         $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
             ->where('payment_method', PaymentMethodsEnum::CreditCard)
+            ->select('id')
             ->count() > 0;
 
-        $authorizedPayments = $paymentSplits->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('payment_method', PaymentMethodsEnum::CreditCard)
-            ->count() > 0;
+
+        $CCPaymentCount = $paymentSplits->where('payment_method', PaymentMethodsEnum::CreditCard)
+                ->select('id')
+                ->count();
+
+        $capturePaymentsCount = $paymentSplits->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
+                ->where('payment_method', PaymentMethodsEnum::CreditCard)
+                ->select('id')
+                ->count() > 0;
 
         info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type.' And authorizedPayments : '.$authorizedPayments);
-        if ($payment->isInsurerPayment() && $hasAnyCCPayment && ($authorizedPayments || ! $payment->isCaptureButtonEnabled($quoteTypeId, $quote))) {
+        if ($payment->isInsurerPayment() && $hasAnyCCPayment && (($capturePaymentsCount != $CCPaymentCount) || ! $payment->isCaptureButtonEnabled($quoteTypeId, $quote))) {
             info('Skipping Policy Book & Authorizing payment for '.$payment->code);
             $successMessage = $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
             if (! $successMessage) {
