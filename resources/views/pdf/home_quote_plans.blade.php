@@ -708,6 +708,44 @@
                         </th>
                     @endforeach
                 </tr>
+                {{-- rows for building, content and personal belonging value --}}
+                <tr>
+                    <th class="bg-light-blue">
+                        <p class="quote-info"><b>Contents value</b></p>
+                    </th>
+                    @foreach ($planIds as $planId)
+                        <th>
+                            <p class="text-center" style="font-size: 16px">
+                                AED {{ number_format($plans[$planId]->contentsValue ?? 0, 2) }}
+                            </p>
+                        </th>
+                    @endforeach
+                </tr>
+                <tr>
+                    <th class="bg-light-blue">
+                        <p class="quote-info"><b>Personal belongings value</b></p>
+                    </th>
+                    @foreach ($planIds as $planId)
+                        <th>
+                            <p class="text-center" style="font-size: 16px">
+                                AED {{ number_format($plans[$planId]->personalBelongingsValue ?? 0, 2) }}
+                            </p>
+                        </th>
+                    @endforeach
+                </tr>
+                <tr>
+                    <th class="bg-light-blue">
+                        <p class="quote-info"><b>Building value</b></p>
+                    </th>
+                    @foreach ($planIds as $planId)
+                        <th>
+                            <p class="text-center" style="font-size: 16px">
+                                AED {{ number_format($plans[$planId]->buildingValue ?? 0, 2) }}
+                            </p>
+                        </th>
+                    @endforeach
+                </tr>
+                {{-- rows for building, content and personal belonging value --}}
                 <tr>
                     <th class="bg-light-blue">
                         <p class="quote-info"><b>Gross Price</b></p>
