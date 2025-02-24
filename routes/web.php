@@ -53,6 +53,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
+use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
 use App\Http\Controllers\V2\Admin\RulesController;
 use App\Http\Controllers\V2\Admin\TierController;
 use App\Http\Controllers\V2\AlfredChatController;
@@ -473,6 +474,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::get('show', [BuyLeadConfigController::class, 'show'])->name('admin.buy-leads.config.show');
                 Route::post('fetch', [BuyLeadConfigController::class, 'fetch'])->name('admin.buy-leads.config.fetch');
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
+            });
+        });
+
+        Route::prefix('benchmarker')->group(function () {
+            Route::prefix('query')->group(function () {
+                Route::get('show', [QueryBenchmarkerController::class, 'show'])->name('admin.benchmarker.query.show');
+                Route::post('process', [QueryBenchmarkerController::class, 'process'])->name('admin.benchmarker.query.process');
             });
         });
     });

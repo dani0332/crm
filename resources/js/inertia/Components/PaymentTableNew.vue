@@ -2821,7 +2821,9 @@ const shouldProcessUpdate = payment => {
     quoteTypeCodeEnum.Car,
     quoteTypeCodeEnum.Home,
     quoteTypeCodeEnum.Bike,
+    quoteTypeCodeEnum.Travel,
   ];
+
   const captureOption = getCaptureOption.value(payment);
   if (
     isInsurer &&
@@ -2832,7 +2834,11 @@ const shouldProcessUpdate = payment => {
   ) {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
-    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    if (isTravelQuote) {
+      isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
+    } else {
+      isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    }
   }
 
   const isRenewalUploadConditionMet = () => {
@@ -3456,6 +3462,9 @@ const isInsurerAmlVerified = () => {
 };
 
 const disableMainPaymentApproval = computed(() => {
+  if (props.sendUpdate) {
+    return false;
+  }
   let isAmlFailed =
     props.quoteRequest.aml_status ===
     page.props.amlStatusEnum.AMLScreeningFailed;
@@ -4113,7 +4122,8 @@ onBeforeMount(() => {
                                 color="orange"
                                 outlined
                                 @click="
-                                  !isAmlVerified() || !isKycVerified()
+                                  !props.sendUpdate &&
+                                  (!isAmlVerified() || !isKycVerified())
                                     ? openAmlVerificationModal()
                                     : getCaptureValidation(item)
                                       ? editPaymentModal(item, 0, 0, 2)
