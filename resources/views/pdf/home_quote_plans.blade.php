@@ -538,7 +538,7 @@
     <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_home_first_page.jpg') }}" class="page-image" />
 
     @php
-        $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
+        $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
         $benefits = ['exclusion', 'inclusion', 'content', 'personalBelonging', 'building', 'additionalCover'];
         $vatPercentage =
@@ -546,7 +546,7 @@
                 ->value ?? 0;
 
         $buyNow = 'Buy Now';
-        $buyNowLink = $websitURL . '/home-insurance/quote/' . $quote->uuid . '/payment/';
+        $buyNowLink = $websiteURL . '/home-insurance/quote/' . $quote->uuid . '/payment/';
         if (isset($selectedPlanIds)) {
         } else {
             $selectedPlanIds = [];
@@ -742,10 +742,10 @@
                                 @php
                                     if (isset($plans[$planId])) {
                                         if (isset($selectedPlanIds) && in_array($planId, $selectedPlanIds)) {
-                                            $buyNowfullLink = '#';
+                                            $buyNowFullLink = '#';
                                             $buyNowText = 'Selected';
                                         } else {
-                                            $buyNowfullLink =
+                                            $buyNowFullLink =
                                                 $buyNowLink .
                                                 '?providerCode=' .
                                                 $plans[$planId]->providerCode .
@@ -760,7 +760,7 @@
 
                                         if ($plans[$planId]->actualPremium) {
                                             echo '<a target="_blank" class="btn-buy" href="' .
-                                                $buyNowfullLink .
+                                                $buyNowFullLink .
                                                 '">' .
                                                 $buyNowText .
                                                 '<br>' .
@@ -864,7 +864,7 @@
                 <tr>
                     <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
                         <a target="_blank" class="btn-all-quotes"
-                            href="{{ $websitURL . '/home-insurance/quote/' . $quote->uuid }}">View all quotes</a>
+                            href="{{ $websiteURL . '/home-insurance/quote/' . $quote->uuid }}">View all quotes</a>
                     </td>
                 </tr>
 
