@@ -680,7 +680,7 @@ class SendUpdateLogService
     {
         $payments = $sendUpdateLog->payments;
         if ($payments) {
-            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser', 'paymentSplits.processJob']);
+            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser', 'paymentSplits.processJob', 'paymentSplits.paymentCharges']);
             if ($quoteType == quoteTypeCode::Travel) {
                 $payments->load(['travelPlan']);
             }
@@ -1588,7 +1588,8 @@ class SendUpdateLogService
                 }
 
                 $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
-                    return ! in_array($split->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID]);
+                    return ! in_array($split->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID]) &&
+                        $split->payment_method == PaymentMethodsEnum::CreditCard;
                 });
 
                 if ($hasCCPayment && $hasUnpaidCCPayment) {

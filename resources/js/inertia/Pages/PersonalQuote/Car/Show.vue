@@ -1674,6 +1674,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
 const isPuaOrManualPlan = computed(() => {
   let isCConditionMeet = false;
+  if (isPlanDetailEnabled.value) {
+    isCConditionMeet = true;
+    return isCConditionMeet;
+  }
   if (selectedProviderPlan?.value?.id && availablePlansItems?.value) {
     const selectedPlan = availablePlansItems?.value.find(
       plan => plan.id === selectedProviderPlan?.value?.id,
