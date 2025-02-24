@@ -554,7 +554,6 @@ class SageApiService
             ->select('id')
             ->count() > 0;
 
-
         $CCPaymentCount = $paymentSplits->where('payment_method', PaymentMethodsEnum::CreditCard)
             ->select('id')
             ->count();
