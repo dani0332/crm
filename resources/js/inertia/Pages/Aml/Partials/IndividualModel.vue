@@ -205,6 +205,7 @@ const submitQuoteUpdateForm = isValid => {
         });
       }
       if (
+        response.props.flash.info &&
         typeof response.props.flash.info !== 'undefined' &&
         response.props.flash.info?.length > 0
       ) {
