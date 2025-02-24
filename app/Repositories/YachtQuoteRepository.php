@@ -130,7 +130,7 @@ class YachtQuoteRepository extends BaseRepository
                         'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
                         'paymentSplits.processJob',
-                        'paymentSplits.paymentCharges'
+                        'paymentSplits.paymentCharges',
                     ]);
                 },
                 'createdBy',
