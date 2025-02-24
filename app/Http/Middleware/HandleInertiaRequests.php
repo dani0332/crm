@@ -86,7 +86,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth.user' => fn () => $request->user()
-                ? $request->user()->only('id', 'name', 'email', 'profile_photo_path', 'status')
+                ? $request->user()->only('id', 'name', 'email', 'profile_photo_path', 'status', 'can_impersonate')
                 : null,
             'auth.permissions' => fn () => $permissions,
             'auth.roles' => fn () => $roles,
@@ -654,6 +654,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
                         'Buy Lead Config',
                         route('admin.buy-leads.config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering]) && getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_ENABLED, 0) == 1,
+                        'Query Benchmarker',
+                        route('admin.benchmarker.query.show'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
