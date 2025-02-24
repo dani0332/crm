@@ -24,6 +24,7 @@ use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
 use App\Http\Requests\UpdateAMLCustomerDetailRequest;
 use App\Http\Requests\UpdateAMLEntityDetailRequest;
+use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
@@ -40,6 +41,7 @@ use App\Models\Entity;
 use App\Models\Insured;
 use App\Models\KycLog;
 use App\Models\Lookup;
+use App\Models\ManualAMLLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
@@ -833,5 +835,39 @@ class AMLController extends Controller
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
 
         return true;
+    }
+
+    public function tempSkipBridgerAML(SkipBridgerScreeningRequest $skipBridgerScreeningRequest)
+    {
+        try {
+            DB::transaction(function () use ($skipBridgerScreeningRequest) {
+                $quoteDetails = $this->getQuoteObject($skipBridgerScreeningRequest->quote_type_code, $skipBridgerScreeningRequest->quote_request_id);
+                QuoteStatusLog::create([
+                    'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
+                    'quote_request_id' => $skipBridgerScreeningRequest->quote_request_id,
+                    'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
+                    'previous_quote_status_id' => $quoteDetails->quote_status_id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+    
+                $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
+                $quoteDetails->save();
+    
+                ManualAMLLog::updateOrCreate([
+                    'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
+                    'quote_uuid' => $skipBridgerScreeningRequest->quote_uuid,
+                ], [
+                    'created_by' => auth()->id()
+                ]);
+            });
+
+            return response()->json(['response' => true, 'message' => 'Skip AML Screening for this Quote']);
+
+        } catch (\Exception $exception) {
+            info('fn:tempSkipBridgerAML - Skip AML Screening Failed - error - '.$exception->getMessage());
+
+            return response()->json(['response' => false, 'message' => 'Something went wrong']);
+        }
     }
 }

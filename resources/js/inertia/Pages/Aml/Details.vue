@@ -28,6 +28,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const notification = useToast();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
@@ -123,6 +124,41 @@ function activeComments() {
     activeField.value = false;
   }
 }
+
+const skipBridgerAMLBtnProcess = ref(false);
+const tempSkipBridgerAML = () => {
+  skipBridgerAMLBtnProcess.value = true;
+  let data = {
+    quote_type_id: props.quoteType.id,
+    quote_type_code: props.quoteType.code,
+    quote_uuid: props.quoteRequest.uuid,
+    quote_request_id: props.quoteRequest.id,
+    current_aml_status: props.quoteRequest.aml_status
+  };
+
+  axios
+    .post(route('temp-skip-bridger-aml'), data)
+    .then(res => {
+      skipBridgerAMLBtnProcess.value = false;
+      if (res.data.response) {
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      } 
+    })
+    .catch(err => {
+      skipBridgerAMLBtnProcess.value = false;
+      let errors = err.response.data.errors.error;
+      Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+    })
+};
+
 onMounted(() => {
   activeComments();
 });
@@ -672,6 +708,16 @@ onMounted(() => {
         </dl>
         <div class="flex justify-end">
           <x-button
+            class="mt-4 mr-2"
+            color="#ff5e00"
+            size="sm"
+            :disabled="!(quoteRequest.aml_status == 'AML_SCREENING_FAILED')"
+            :loading="skipBridgerAMLBtnProcess"
+            @click="tempSkipBridgerAML"
+          >
+            Skip Bridger AML
+          </x-button>
+          <x-button
             class="mt-4"
             color="#ff5e00"
             size="sm"
@@ -679,6 +725,7 @@ onMounted(() => {
           >
             Update & Verify
           </x-button>
+          
         </div>
       </div>
     </div>
