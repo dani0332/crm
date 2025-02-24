@@ -206,7 +206,8 @@ const submitQuoteUpdateForm = isValid => {
         });
       }
       if (
-        Object.keys(response.props.flash.info).length > 0 && response.props.flash.info?.isEmailMismatched
+        Object.keys(response.props.flash.info).length > 0 &&
+        response.props.flash.info?.isEmailMismatched
       ) {
         notification.error({
           title:
@@ -759,7 +760,10 @@ watch(
               <x-radio :value="0" label="No" />
             </x-form-group>
           </div>
-          <x-field label="Email in GIG portal" v-if="quoteType.id === page.props.quoteTypeIdEnum.Car">
+          <x-field
+            label="Email in GIG portal"
+            v-if="quoteType.id === page.props.quoteTypeIdEnum.Car"
+          >
             <x-input
               v-model="insuredFormDetails.get_quote_email_gig"
               placeholder="Email in GIG portal"
