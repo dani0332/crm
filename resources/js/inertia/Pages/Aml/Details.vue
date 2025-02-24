@@ -24,6 +24,7 @@ const props = defineProps({
   amlStatusName: String,
   quoteTypeIdEnum: Array,
   quoteStatusEnums: Array,
+  gigInsurerDefaultEmail: String,
 });
 
 const page = usePage();

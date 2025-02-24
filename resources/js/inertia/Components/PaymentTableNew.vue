@@ -80,11 +80,6 @@ const props = defineProps({
     default: [],
   },
   realQuote: Object,
-  // For bike if manual plan for Car is PAU or manual plan
-  isCapBtnEnabled: {
-    type: Boolean,
-    default: false,
-  },
 });
 
 // All reactive properties are defined here
@@ -2822,7 +2817,9 @@ const shouldProcessUpdate = payment => {
     quoteTypeCodeEnum.Car,
     quoteTypeCodeEnum.Home,
     quoteTypeCodeEnum.Bike,
+    quoteTypeCodeEnum.Travel,
   ];
+
   const captureOption = getCaptureOption.value(payment);
   if (
     isInsurer &&
@@ -2833,27 +2830,11 @@ const shouldProcessUpdate = payment => {
   ) {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
-    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
-  }
-
-  const isRenewalUploadConditionMet = () => {
-    return (
-      (props.quoteRequest?.source == 'Renewal_upload' ||
-        props.isCapBtnEnabled) &&
-      (props.quoteType === quoteTypeCodeEnum.Car ||
-        props.quoteType === quoteTypeCodeEnum.Bike) &&
-      isGIGProvider &&
-      isAmlCleared &&
-      isKycVerified() &&
-      isTotalPriceMatching &&
-      hasAnyCCSplitPayment() &&
-      !shouldSendUpdate &&
-      hasPayments &&
-      isInsurer
-    );
-  };
-  if (isRenewalUploadConditionMet()) {
-    return true;
+    if (isTravelQuote) {
+      isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
+    } else {
+      isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    }
   }
 
   if (captureOption === 'approve') {
@@ -3459,6 +3440,9 @@ const isInsurerAmlVerified = () => {
 };
 
 const disableMainPaymentApproval = computed(() => {
+  if (props.sendUpdate) {
+    return false;
+  }
   let isAmlFailed =
     props.quoteRequest.aml_status ===
     page.props.amlStatusEnum.AMLScreeningFailed;
@@ -4116,7 +4100,8 @@ onBeforeMount(() => {
                                 color="orange"
                                 outlined
                                 @click="
-                                  !isAmlVerified() || !isKycVerified()
+                                  !props.sendUpdate &&
+                                  (!isAmlVerified() || !isKycVerified())
                                     ? openAmlVerificationModal()
                                     : getCaptureValidation(item)
                                       ? editPaymentModal(item, 0, 0, 2)

@@ -7,7 +7,7 @@ const page = usePage();
 const params = useUrlSearchParams('history');
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-const authUserId = page.props.auth.user.id;
+const user = page.props.auth.user;
 const impersonatingUser = page.props.impersonatingUser;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 
@@ -137,8 +137,9 @@ onMounted(() => {
         placement="top"
         v-if="
           can(permissionsEnum.ENABLE_IMPERSONATION) &&
+          user.can_impersonate &&
           !impersonatingUser &&
-          authUserId !== item.id
+          user.id !== item.id
         "
       >
         <a :href="route('login-as.id.login', item.id)">
