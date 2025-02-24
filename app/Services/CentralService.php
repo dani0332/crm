@@ -1143,7 +1143,6 @@ class CentralService extends BaseService
             'advisorMobilePhone' => $quote->advisor->mobile_no ?? '',
             'advisorName' => $quote->advisor->name ?? '',
             'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
-            'appLink' => 'http://www.google.com',
             'customerFullName' => $quote->first_name.' '.$quote->last_name,
             'policyNumber' => $sendUpdateLog->policy_number ?? $quote->policy_number ?? '',
             'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d-M-Y'),
@@ -1152,7 +1151,6 @@ class CentralService extends BaseService
             'refID' => $sendUpdateLog->code,
             'rtaPortalLink' => 'https://vls.rta.ae/renewal/identityVerification',
             'customerEmail' => $quote->email,
-            'quoteUUID' => $quote->uuid,
             'workflowType' => $workflowType,
         ];
 
@@ -1169,6 +1167,11 @@ class CentralService extends BaseService
             $emailData->carDetails = $quote->carMake->text.' '.$quote->carModel->text.' '.$quote->carModelDetail->text;
             $customer = $quote->customer->insured;
             $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Travel) {
+            $emailData->planType = is_null($quote->coverage_code) ? '' : ucwords(convertFromCamelCase($quote->coverage_code));
+            $emailData->primaryTraveler = $quote?->primaryMember?->first_name.' '.$quote?->primaryMember?->last_name;
         }
 
         // $emailData->documentUrl

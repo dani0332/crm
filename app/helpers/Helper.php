@@ -1587,3 +1587,10 @@ if (! function_exists('userHasProduct')) {
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
+
+if (! function_exists('convertFromCamelCase')) {
+    function convertFromCamelCase($string): string
+    {
+        return preg_replace('/(?<!^)([A-Z])/', ' $1', $string);
+    }
+}

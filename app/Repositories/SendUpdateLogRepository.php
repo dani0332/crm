@@ -293,6 +293,9 @@ class SendUpdateLogRepository extends BaseRepository
                 $response[] = ['status' => 200, 'message' => 'Send Update to customer email is being scheduled'];
             }
 
+            // $test = app(SendUpdateLogService::class)->sendUpdateToCustomerEmailData($sendUpdateLog);
+            // dd($test);
+            // need to change queue send-update to insly.
             SendUpdateToCustomerJob::dispatch($sendUpdateLog, $request)->onQueue('send-update');
             info('fn:SendUpdateToCustomer - Process End - SendUpdateCode: '.$sendUpdateLog->code.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
