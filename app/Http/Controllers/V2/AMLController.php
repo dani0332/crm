@@ -22,9 +22,9 @@ use App\Exports\KycLogs;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Http\Requests\UpdateAMLCustomerDetailRequest;
 use App\Http\Requests\UpdateAMLEntityDetailRequest;
-use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
@@ -850,15 +850,15 @@ class AMLController extends Controller
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
                 ]);
-    
+
                 $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
                 $quoteDetails->save();
-    
+
                 ManualAMLLog::updateOrCreate([
                     'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
                     'quote_uuid' => $skipBridgerScreeningRequest->quote_uuid,
                 ], [
-                    'created_by' => auth()->id()
+                    'created_by' => auth()->id(),
                 ]);
             });
 
