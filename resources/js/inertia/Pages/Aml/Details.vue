@@ -22,12 +22,14 @@ const props = defineProps({
   lookups: Object,
   cardHolderName: Object,
   amlStatusName: String,
+  amlStatusCode: Array,
   quoteTypeIdEnum: Array,
   quoteStatusEnums: Array,
   gigInsurerDefaultEmail: String,
 });
 
 const page = usePage();
+const notification = useToast();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
@@ -123,6 +125,41 @@ function activeComments() {
     activeField.value = false;
   }
 }
+
+const skipBridgerAMLBtnProcess = ref(false);
+const tempSkipBridgerAML = () => {
+  skipBridgerAMLBtnProcess.value = true;
+  let data = {
+    quote_type_id: props.quoteType.id,
+    quote_type_code: props.quoteType.code,
+    quote_uuid: props.quoteRequest.uuid,
+    quote_request_id: props.quoteRequest.id,
+    current_aml_status: props.quoteRequest.aml_status,
+  };
+
+  axios
+    .post(route('temp-skip-bridger-aml'), data)
+    .then(res => {
+      skipBridgerAMLBtnProcess.value = false;
+      if (res.data.response) {
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      }
+    })
+    .catch(err => {
+      skipBridgerAMLBtnProcess.value = false;
+      let errors = err.response.data.errors.error;
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
+    });
+};
+
 onMounted(() => {
   activeComments();
 });
@@ -670,7 +707,24 @@ onMounted(() => {
             </dd>
           </div>
         </dl>
+
         <div class="flex justify-end">
+          <x-button
+            v-if="can(permissionsEnum.SKIP_BRIDGER_AML)"
+            class="mt-4 mr-2"
+            color="red"
+            size="sm"
+            :loading="skipBridgerAMLBtnProcess"
+            :disabled="
+              !(
+                quoteRequest.aml_status ==
+                props.amlStatusCode.AMLScreeningFailed
+              )
+            "
+            @click="tempSkipBridgerAML"
+          >
+            Skip Bridger AML
+          </x-button>
           <x-button
             class="mt-4"
             color="#ff5e00"

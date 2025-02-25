@@ -206,6 +206,7 @@ const submitQuoteUpdateForm = isValid => {
         });
       }
       if (
+        response.props.flash.info &&
         Object.keys(response.props.flash.info).length > 0 &&
         response.props.flash.info?.isEmailMismatched
       ) {
