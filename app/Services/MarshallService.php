@@ -40,6 +40,7 @@ class MarshallService
             ->send($method, $url)->onError(function ($response) use ($data, $url) {
                 $this->handleError($response, $data, $url);
             });
+
         return $response->json();
     }
 
