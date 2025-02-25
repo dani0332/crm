@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteStatusEnum;
-use App\Models\QuoteStatusMap;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DragAndDropUpdateLeadStatusRequest extends FormRequest
