@@ -900,11 +900,10 @@ const handlePaymentTypes = count => {
   }
 
   if (paymentMethodsForm.collection_type === 'insurer') {
-
     let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
-    if(props.quoteType === 'Travel' && !props.sendUpdate){
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
       // need to fix this for payments
-      isMultiPaymentEnabled  = props.payments[0].isMultiPaymentsEnabled
+      isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
     }
     const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
@@ -1956,12 +1955,13 @@ const initializePaymentForm = (
       : splitPaymentRecord.value.decline_reason_id;
   paymentMethodsForm.declined_custom_reason =
     splitPaymentRecord.value.decline_custom_reason;
-    if(props.quoteType === 'Travel' && !props.sendUpdate){
-        paymentMethodsForm.isCreditCardEnabled = payment.isCreditCardEnabled
-        paymentMethodsForm.isGIGProvider = payment.isGIGProvider
-        paymentMethodsForm.isMultiplePaymentsEnabled = payment.isMultiplePaymentsEnabled
-        paymentMethodsForm.isCaptureButtonEnabled = payment.isCaptureButtonEnabled
-    }
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    paymentMethodsForm.isCreditCardEnabled = payment.isCreditCardEnabled;
+    paymentMethodsForm.isGIGProvider = payment.isGIGProvider;
+    paymentMethodsForm.isMultiplePaymentsEnabled =
+      payment.isMultiplePaymentsEnabled;
+    paymentMethodsForm.isCaptureButtonEnabled = payment.isCaptureButtonEnabled;
+  }
 };
 
 const processPaymentSplits = payment => {
@@ -2820,8 +2820,8 @@ const shouldProcessUpdate = payment => {
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   let isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
-  if (isTravelQuote&& !props.sendUpdate){
-      isGIGProvider = payment.isGIGProvider
+  if (isTravelQuote && !props.sendUpdate) {
+    isGIGProvider = payment.isGIGProvider;
   }
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
@@ -2997,9 +2997,10 @@ const getCaptureOption = computed(() => {
     // Return early if there are no payments
     if (props.payments.length === 0) return;
 
-    let isCaptureButtonEnabled = page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
-    if(props.quoteType === 'Travel' && !props.sendUpdate){
-        isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false
+    let isCaptureButtonEnabled =
+      page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+      isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
     }
 
     const paymentMethodCC = filterCCPayments(payment);
@@ -3551,9 +3552,9 @@ const hasAnyCCSplitPayment = () => {
 };
 
 const isCCPaymentDisabled = option => {
-  let isCreditCardEnabled = isCCEnabled.value
-  if(props.quoteType === 'Travel' && !props.sendUpdate){
-     isCreditCardEnabled = paymentMethodsForm.isCreditCardEnabled
+  let isCreditCardEnabled = isCCEnabled.value;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    isCreditCardEnabled = paymentMethodsForm.isCreditCardEnabled;
   }
   return (
     !isCreditCardEnabled &&
@@ -3597,8 +3598,8 @@ const isEditPaymentEnabled = () => {
   );
 
   let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
-  if(props.quoteType === 'Travel' && !props.sendUpdate){
-      isMultiPaymentEnabled  = props.payments[0].isMultiPaymentsEnabled
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
   }
   return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
