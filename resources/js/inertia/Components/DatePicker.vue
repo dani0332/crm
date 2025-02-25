@@ -122,7 +122,7 @@ const iconPosition = computed(() => {
 
 .fixed-datepicker .dp__arrow_bottom {
   @apply top-0;
-  transform: translate(-50%,-50%) rotate(-45deg);
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .fixed-datepicker .dp__outer_menu_wrap.dp--menu-wrapper {
