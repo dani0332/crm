@@ -41,7 +41,6 @@ use App\Models\Entity;
 use App\Models\Insured;
 use App\Models\KycLog;
 use App\Models\Lookup;
-use App\Models\ManualAMLLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;

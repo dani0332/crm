@@ -174,7 +174,7 @@ class BridgerInsightService
                                 'quote_type_id' => $quoteTypeId,
                                 'quote_uuid' => $quoteDetails->uuid,
                             ])->update(['is_executed' => 1]);
-                            
+
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail);
                                 info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
