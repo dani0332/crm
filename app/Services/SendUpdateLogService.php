@@ -1650,28 +1650,33 @@ class SendUpdateLogService
 
     public function sendUpdateToCustomerEmail($sendUpdate, $emailData, $quoteTypeId)
     {
-        $birdUrlKey = 'BIRD_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_SEND_UPDATE';
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            $birdUrlKey = 'BIRD_MOTOR_SEND_UPDATE';
+        } else {
+            $birdUrlKey = "BIRD_{$quoteType}_SEND_UPDATE";
+        }
         try {
-            info("Sending {$birdUrlKey} followups email for lead: ".$sendUpdate->uuid.' | Time: '.now());
+            info("Sending {$quoteType} followups email for Send Update uuid: ".$sendUpdate->uuid.' | Time: '.now());
             $birdUrlKey = constant("App\Enums\ApplicationStorageEnums::{$birdUrlKey}");
 
             $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
             if ($birdUrl) {
                 $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
-                info("{$birdUrlKey} response: ".json_encode($response)." | Ref-ID: {$sendUpdate->uuid} |Time: ".now());
+                info("{$quoteType} response: ".json_encode($response)." | Send Update uuid: {$sendUpdate->uuid} |Time: ".now());
 
                 if (! empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($sendUpdate, $response, $quoteTypeId);
                 }
             } else {
-                info("{$birdUrlKey} key not found for lead : Ref-ID: {$sendUpdate->uuid} |Time: ".now());
+                info("{$birdUrlKey} key not found for Send Update uuid: {$sendUpdate->uuid} |Time: ".now());
             }
 
             return $response?->status_code ?? null;
         } catch (\Exception $ex) {
-            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for lead: Ref-ID: {$sendUpdate->uuid} | Time: ".now();
+            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for Send Update: uuid: {$sendUpdate->uuid} | Time: ".now();
             info($errorMessage);
-            info("{$birdUrlKey}-Error: {$ex->getMessage()} | Ref-ID: {$sendUpdate->uuid} | Time: ".now());
+            info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$sendUpdate->uuid} | Time: ".now());
         }
     }
 
