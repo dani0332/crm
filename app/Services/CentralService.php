@@ -1164,13 +1164,22 @@ class CentralService extends BaseService
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike])) {
             $emailData->assistanceNumber = $emailData->assistanceNumber ?? $quote?->plan?->insuranceProvider?->roadside_phone_number ?? '';
             $emailData->insuranceCompany = $emailData->insuranceCompany ?? $quote?->plan?->insuranceProvider?->text ?? '';
-            $emailData->planName = $quote?->plan?->text ?? '';
+            $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '';
+        }
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            $customer = $quote->customer->insured;
+            $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
+            $emailData->quoteUID = $sendUpdateLog->quote_uuid;
+            $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             $emailData->carDetails = $quote->carMake->text.' '.$quote->carModel->text.' '.$quote->carModelDetail->text;
-            $customer = $quote->customer->insured;
-            $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Bike) {
+            $emailData->bikeDetails = $quote->bikeQuote->bikeMake->text.' '.$quote->bikeQuote->bikeModel->text.' '.$quote->bikeQuote->cubic_capacity;
         }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {

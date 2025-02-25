@@ -46,6 +46,7 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -1159,10 +1160,15 @@ class SendUpdateLogService
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
-        $quoteModel = $this->getModelObject($quoteType);
-        $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
+        if (checkPersonalQuotes($quoteType)) {
+            $quoteModel = $this->getRepositoryObject($quoteType);
+            $quote = $quoteModel::getBy('uuid', $sendUpdateLog->quote_uuid);
+        } else {
+            $quoteModel = $this->getModelObject($quoteType);
+            $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
+        }
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike])) {
             return app(CentralService::class)->prepareBirdData($quote, $quoteTypeId, $sendUpdateLog);
         }
         $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
