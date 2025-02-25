@@ -708,6 +708,7 @@ onMounted(() => {
         </dl>
         <div class="flex justify-end">
           <x-button
+            can(permissionsEnum.SkipBridgerAML)
             class="mt-4 mr-2"
             color="#ff5e00"
             size="sm"

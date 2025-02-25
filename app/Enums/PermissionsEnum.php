@@ -402,6 +402,7 @@ final class PermissionsEnum extends Enum
     public const TAP_BETA_ACCESS = 'tap-beta-access';
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
     public const PAYMENTS_VOID = 'payments-void';
+    public const SkipBridgerAML = 'skip-bridger-aml';
 
     public static function getAdvisorConversionReportPermissions()
     {
