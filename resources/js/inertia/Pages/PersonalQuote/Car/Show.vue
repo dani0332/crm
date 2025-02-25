@@ -1679,7 +1679,6 @@ const isCommercialVehicle = computed(() => {
   }
   return isCConditionMeet;
 });
-
 </script>
 
 <template>
