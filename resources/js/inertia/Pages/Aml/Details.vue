@@ -709,12 +709,18 @@ onMounted(() => {
         </dl>
 
         <div class="flex justify-end">
-          <x-button v-if="can(permissionsEnum.SKIP_BRIDGER_AML)"
+          <x-button
+            v-if="can(permissionsEnum.SKIP_BRIDGER_AML)"
             class="mt-4 mr-2"
             color="red"
             size="sm"
             :loading="skipBridgerAMLBtnProcess"
-            :disabled="!(quoteRequest.aml_status == props.amlStatusCode.AMLScreeningFailed)"
+            :disabled="
+              !(
+                quoteRequest.aml_status ==
+                props.amlStatusCode.AMLScreeningFailed
+              )
+            "
             @click="tempSkipBridgerAML"
           >
             Skip Bridger AML

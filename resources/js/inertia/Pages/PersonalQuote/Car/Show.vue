@@ -1671,6 +1671,14 @@ function capitalizeString(str) {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const isCommercialVehicle = computed(() => {
+  let isCConditionMeet = false;
+  if (isPlanDetailEnabled.value) {
+    isCConditionMeet = true;
+  }
+  return isCConditionMeet;
+});
 </script>
 
 <template>
@@ -3726,6 +3734,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isCapBtnEnabled="isCommercialVehicle"
     />
 
     <PaymentTable
