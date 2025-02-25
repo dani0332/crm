@@ -9,7 +9,6 @@ import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
-  quote: Object,
   documentTypes: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
