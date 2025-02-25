@@ -133,7 +133,7 @@ const tempSkipBridgerAML = () => {
     quote_type_code: props.quoteType.code,
     quote_uuid: props.quoteRequest.uuid,
     quote_request_id: props.quoteRequest.id,
-    current_aml_status: props.quoteRequest.aml_status
+    current_aml_status: props.quoteRequest.aml_status,
   };
 
   axios
@@ -145,18 +145,18 @@ const tempSkipBridgerAML = () => {
           title: res.data.message,
           position: 'top',
         });
-      } 
+      }
     })
     .catch(err => {
       skipBridgerAMLBtnProcess.value = false;
       let errors = err.response.data.errors.error;
       Object.keys(errors).forEach(function (key) {
-          notification.error({
-            title: errors[key],
-            position: 'top',
-          });
+        notification.error({
+          title: errors[key],
+          position: 'top',
         });
-    })
+      });
+    });
 };
 
 onMounted(() => {
@@ -726,7 +726,6 @@ onMounted(() => {
           >
             Update & Verify
           </x-button>
-          
         </div>
       </div>
     </div>
