@@ -3397,7 +3397,6 @@ const onAddUpdate = () => {
                   </x-tag>
                   <x-tag
                     v-if="
-                      selectedProviderPlan.id == id &&
                       copayCode == quote.renewal_upload_copay_code &&
                       planCode == quote.renewal_upload_plan_code
                     "
