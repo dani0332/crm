@@ -42,6 +42,7 @@ use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
@@ -230,6 +231,8 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchGetShowFormOptions($quote)
     {
+        $cacheExpiry = now()->endOfDay();
+
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::HOME->id(),
             'quote_request_id' => $quote->id,
@@ -250,10 +253,15 @@ class HomeQuoteRepository extends BaseRepository
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::HOME->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::HOME->value, $quote->payments, $quoteDocuments);
 
-        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Home);
+        @[$documentTypes, $paymentDocument] = Cache::remember('home_document_types', $cacheExpiry, function () {
+            return app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Home);
+        });
+
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::HOME->value);
-        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
+        $leadStatuses = Cache::remember('home_lead_statuses', $cacheExpiry, function () {
+            return app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
+        });
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         // fetch sub area for the quote
@@ -263,17 +271,20 @@ class HomeQuoteRepository extends BaseRepository
             $quote->homeQuote->subArea = $subArea ?? null;
         }
 
-        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::HOME->id())->get();
-        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
-        })->values();
+        $quoteStatuses = Cache::remember('home_quote_statuses', $cacheExpiry, function () {
+            $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::HOME->id())->get();
+
+            return collect($quoteStatuses)->filter(function ($value) {
+                return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+            })->values();
+        });
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::HOME->id(), $quoteStatuses);
 
         $planURL = $this->getEcomQuoteLink(QuoteTypes::HOME, $quote->uuid);
         $allowedDuplicateLOB = app(CRUDService::class)->getAllowedDuplicateLOB('home', $quote->code);
         $emailStatuses = app(EmailStatusService::class)->getEmailStatus(QuoteTypeId::Home, $quote->id);
-        $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
-        $lookUpData = app(LookupService::class)->getHomeLookUpData();
+        $customerAddressData = $quote->customerAddressData ?: app(CustomerService::class)->getCustomerAddressData($quote);
+        $lookUpData = $quote->lookUpData ?: app(LookupService::class)->getHomeLookUpData();
 
         // Check if TAP integration is enabled
         $isFuncsEnabled = ['tapIntegration' => isTapEnabled()];
@@ -473,7 +484,9 @@ class HomeQuoteRepository extends BaseRepository
             return null;
         }
 
-        return SubArea::select('id', 'text')->where('id', $subAreaId)->first();
+        return Cache::remember("sub_area_{$subAreaId}", now()->endOfDay(), function () use ($subAreaId) {
+            return SubArea::select('id', 'text')->where('id', $subAreaId)->first();
+        });
     }
 
     /**
