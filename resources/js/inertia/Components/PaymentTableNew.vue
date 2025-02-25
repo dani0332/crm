@@ -3598,10 +3598,8 @@ const isEditPaymentEnabled = () => {
 
   let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
   if(props.quoteType === 'Travel' && !props.sendUpdate){
-      // need to fix this for payments
       isMultiPaymentEnabled  = props.payments[0].isMultiPaymentsEnabled
   }
-
   return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
 
