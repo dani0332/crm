@@ -29,6 +29,7 @@ use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -41,7 +42,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Traits\GenericQueriesAllLobs;
 
 if (! function_exists('generate_code')) {
     /**
@@ -1557,13 +1557,16 @@ if (! function_exists('getInsuranceProvider')) {
         if (! $insuranceProvider) {
             $insuranceProvider = $payment?->insuranceProvider;
             if (! $insuranceProvider) {
-                $genericQueriesAllLobs = new class {
+                $genericQueriesAllLobs = new class
+                {
                     use GenericQueriesAllLobs;
                 };
                 $model = $genericQueriesAllLobs->getModelObject($quoteType);
+
                 return $model::where('code', $quote->code)->first()?->insuranceProvider;
             }
         }
+
         return $insuranceProvider;
     }
 }
