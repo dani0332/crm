@@ -1167,7 +1167,7 @@ class CentralService extends BaseService
             $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '';
         }
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle])) {
             $customer = $quote->customer->insured;
             $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
             $emailData->quoteUID = $sendUpdateLog->quote_uuid;
@@ -1180,6 +1180,11 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Bike) {
             $emailData->bikeDetails = $quote->bikeQuote->bikeMake->text.' '.$quote->bikeQuote->bikeModel->text.' '.$quote->bikeQuote->cubic_capacity;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Cycle) {
+            $emailData->cycleDetails = $quote->cycleQuote->cycle_make.' '.$quote->cycleQuote->cycle_model.' '.$quote->cycleQuote->yearOfManufacture->text;
+            $emailData->planName = 'NA';
         }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
