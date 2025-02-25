@@ -46,7 +46,6 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
-use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
