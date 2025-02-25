@@ -61,7 +61,7 @@ class SaveCustomerAddressJob implements ShouldQueue
             $subArea = $quoteData->homeQuote->subArea ?? null;
 
             if (! $subArea) {
-                throw new ModelNotFoundException("SubArea not found");
+                throw new ModelNotFoundException('SubArea not found');
             }
 
             if (! $subArea->emirate) {

@@ -27,18 +27,18 @@ class HomeEmailService extends BaseService
             return false;
         }
 
-        info("sendHomeOCBIntroEmail - Initiating process | Time: ".now());
+        info('sendHomeOCBIntroEmail - Initiating process | Time: '.now());
 
         // Fetch the advisor
         $advisor = User::find($lead->advisor_id);
         if (! $advisor) {
-            info("sendHomeOCBIntroEmail - Advisor not found | Time: ".now());
+            info('sendHomeOCBIntroEmail - Advisor not found | Time: '.now());
         }
 
         // Fetch home quote
         $homeQuote = $this->getHomeQuoteData($lead->uuid);
         if (! $homeQuote) {
-            info("sendHomeOCBIntroEmail - HomeQuote not found | Time: ".now());
+            info('sendHomeOCBIntroEmail - HomeQuote not found | Time: '.now());
 
             return false;
         }
@@ -55,7 +55,7 @@ class HomeEmailService extends BaseService
         $homeAutomatedEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS)->first();
 
         if (! $homeAutomatedEvent) {
-            info("sendHomeOCBIntroEmail - Workflow configuration not found | Time: ".now());
+            info('sendHomeOCBIntroEmail - Workflow configuration not found | Time: '.now());
 
             return false;
         }
@@ -66,11 +66,11 @@ class HomeEmailService extends BaseService
             if (empty($homeQuote->automated_flow_executed_at)) {
                 $homeQuote->automated_flow_executed_at = now();
                 $homeQuote->save();
-                info("sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote | Time: ".now());
-                info("sendHomeOCBIntroEmail - Successfully triggered event | Time: ".now());
+                info('sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote | Time: '.now());
+                info('sendHomeOCBIntroEmail - Successfully triggered event | Time: '.now());
                 if ($response && $response->status_code === 200) {
                     $this->createQuoteFlowDetails($lead, $response);
-                    info("sendHomeOCBIntroEmail - Quote flow details created for HomeQuote | Time: ".now());
+                    info('sendHomeOCBIntroEmail - Quote flow details created for HomeQuote | Time: '.now());
                 } else {
                     info("sendHomeOCBIntroEmail - Error triggering event having response status code: {$response?->status_code}");
                 }
@@ -134,7 +134,7 @@ class HomeEmailService extends BaseService
     public function attachHomeOCBPDFToEmail($quoteUID)
     {
         try {
-            info(self::class." - attachHomeOCBPDFToEmail - Generating PDF | Time: ".now());
+            info(self::class.' - attachHomeOCBPDFToEmail - Generating PDF | Time: '.now());
 
             $quotePlans = app(HomeQuoteService::class)->getQuotePlans($quoteUID);
 
@@ -152,7 +152,7 @@ class HomeEmailService extends BaseService
             }
 
             if (empty($planIds)) {
-                info(self::class." - attachHomeOCBPDFToEmail - No plans found | Time: ".now());
+                info(self::class.' - attachHomeOCBPDFToEmail - No plans found | Time: '.now());
 
                 return '';
             }
@@ -160,7 +160,7 @@ class HomeEmailService extends BaseService
             $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
             $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
 
-            info(self::class." - attachHomeOCBPDFToEmail - Storing PDF temporarily | Time: ".now());
+            info(self::class.' - attachHomeOCBPDFToEmail - Storing PDF temporarily | Time: '.now());
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/'.uniqid().'.pdf';
@@ -174,7 +174,7 @@ class HomeEmailService extends BaseService
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            info(self::class." - attachHomeOCBPDFToEmail - Public URL generated | Time: ".now());
+            info(self::class.' - attachHomeOCBPDFToEmail - Public URL generated | Time: '.now());
 
             return $publicUrl;
         } catch (\Exception $e) {
@@ -201,12 +201,12 @@ class HomeEmailService extends BaseService
                     'flow_type' => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
                     'flow_id' => $runId,
                 ]);
-                info(self::class." HomeAutomated | workflow run id created |Time: ".now());
+                info(self::class.' HomeAutomated | workflow run id created |Time: '.now());
             } else {
-                info(self::class." HomeAutomated | workflow run id not found |Time: ".now());
+                info(self::class.' HomeAutomated | workflow run id not found |Time: '.now());
             }
         } catch (\Throwable $th) {
-            $errorMessage = self::class." - Error while creating quote flow details | Time: ".now();
+            $errorMessage = self::class.' - Error while creating quote flow details | Time: '.now();
             info($errorMessage);
             info("Error: {$th->getMessage()} | Time: ".now());
             throw $th;

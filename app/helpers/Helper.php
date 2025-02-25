@@ -1558,7 +1558,7 @@ if (! function_exists('getInsuranceProvider')) {
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
         }
 
-        if(ucfirst($quoteType) == QuoteTypes::HOME->value) {
+        if (ucfirst($quoteType) == QuoteTypes::HOME->value) {
             $insuranceProvider = $quote?->insuranceProvider;
         }
 

@@ -515,10 +515,10 @@ class HomeQuoteRepository extends BaseRepository
     {
         // Fetch look up data
         $lookUpData = $this->getHomeLookUpData();
-        
+
         // Fetch active nationalities
         $nationalities = $this->getNationalities();
-        
+
         return $this->prepareResponse($lookUpData, $nationalities);
     }
 
@@ -545,82 +545,82 @@ class HomeQuoteRepository extends BaseRepository
     {
         try {
             $quote = $this->getQuoteWithRelations($column, $value);
-            
+
             $this->setQuoteAdditionalData($quote);
 
             $this->appendExternalData($quote);
 
             return $quote;
         } catch (\Exception $e) {
-            info('Error fetching quote data: ' . $e->getMessage());
+            info('Error fetching quote data: '.$e->getMessage());
         }
     }
 
     private function getQuoteWithRelations($column, $value)
     {
         return $this->byQuoteTypeId(QuoteTypes::HOME->id())
-        ->where($column, $value)
-        ->with([
-            'insuranceProvider',
-            'quoteDetail.lostReason',
-            'quoteStatus',
-            'advisor',
-            'nationality',
-            'plans',
-            'homeQuote',
-            'homeQuote.nationality',
-            'homeQuote.possessionType',
-            'homeQuote.accommodationType',
-            'homeQuote.homeQuoteRequestDetail',
-            'homeQuote.homeQuoteRequestDetail.lostReason',
-            'createdBy',
-            'updatedBy',
-            'customer.additionalContactInfo',
-            'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            },
-            'quoteRequestEntityMapping' => function ($entityMapping) {
-                $entityMapping->with('entity');
-            },
-            'payments' => function ($q) {
-                $q->with([
-                    'paymentStatus',
-                    'personalPlan',
-                    'paymentMethod',
-                    'paymentStatusLogs',
-                    'insuranceProvider',
-                    'paymentSplits' => function ($q) {
-                        $q->with([
-                            'paymentStatus',
-                            'paymentMethod',
-                            'documents',
-                            'verifiedByUser',
-                        ])
-                            ->orderBy('sr_no', 'asc');
-                    },
-                ]);
-            },
-        ])
-        ->select([
-            $this->getTable() . '.*',
-            DB::raw('IF(EXISTS (
+            ->where($column, $value)
+            ->with([
+                'insuranceProvider',
+                'quoteDetail.lostReason',
+                'quoteStatus',
+                'advisor',
+                'nationality',
+                'plans',
+                'homeQuote',
+                'homeQuote.nationality',
+                'homeQuote.possessionType',
+                'homeQuote.accommodationType',
+                'homeQuote.homeQuoteRequestDetail',
+                'homeQuote.homeQuoteRequestDetail.lostReason',
+                'createdBy',
+                'updatedBy',
+                'customer.additionalContactInfo',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+                'quoteRequestEntityMapping' => function ($entityMapping) {
+                    $entityMapping->with('entity');
+                },
+                'payments' => function ($q) {
+                    $q->with([
+                        'paymentStatus',
+                        'personalPlan',
+                        'paymentMethod',
+                        'paymentStatusLogs',
+                        'insuranceProvider',
+                        'paymentSplits' => function ($q) {
+                            $q->with([
+                                'paymentStatus',
+                                'paymentMethod',
+                                'documents',
+                                'verifiedByUser',
+                            ])
+                                ->orderBy('sr_no', 'asc');
+                        },
+                    ]);
+                },
+            ])
+            ->select([
+                $this->getTable().'.*',
+                DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
-                WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
-                "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
-        ])
-        ->firstOrFail();
+            ])
+            ->firstOrFail();
     }
 
     private function setQuoteAdditionalData($quote)
     {
         $data = ! empty($quote) ? $quote->toArray() : [];
-        
+
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
-        
+
         // Setting permissions or appending additional fields to payments
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
     }
