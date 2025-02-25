@@ -3198,19 +3198,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
               >
                 Download PDF
               </x-button>
-              <x-button
-                @click.prevent="modals.sendConfirm = true"
-                size="sm"
-                color="orange"
-                class="mr-2"
-                :disabled="
-                  record.advisor_id != $page.props.auth.user.id ||
-                  page.props.linkedQuoteDetails.childLeadsCount > 0
-                "
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Send OCB Email to Customer
-              </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="
+                    record.advisor_id != $page.props.auth.user.id ||
+                    page.props.linkedQuoteDetails.childLeadsCount > 0
+                  "
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Send OCB Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
             </template>
 
             <AddPlanButtonTemplate v-slot="{ isDisabled }">
@@ -3718,6 +3727,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
     />
+
     <PaymentTable
       v-else
       :payments="payments"
