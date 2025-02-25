@@ -96,7 +96,7 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
  */
-// dd(config('constants.KEN_API_ENDPOINT'));
+
 Route::get('/', function () {
     return redirect('login');
 });

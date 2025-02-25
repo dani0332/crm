@@ -612,7 +612,7 @@ class LifeQuoteService extends BaseService
             } elseif (isset($response->msg)) {
                 $responseBodyAsString = $response->msg;
             } else {
-                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+                $responseBodyAsString = 'No Plans were found for the selected quote.';
             }
             return $responseBodyAsString;
         }
@@ -697,7 +697,7 @@ class LifeQuoteService extends BaseService
             );
 
             $getStatusCode = $kenRequest->getStatusCode();
-dd($kenRequest->getBody());
+
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
@@ -705,7 +705,6 @@ dd($kenRequest->getBody());
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            dd($e);
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -717,7 +716,7 @@ dd($kenRequest->getBody());
             } elseif (isset($response->msg)) {
                 $responseBodyAsString = $response->msg;
             } else {
-                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+                $responseBodyAsString = 'Failedt to fetch provider plan.';
             }
             return $responseBodyAsString;
         }

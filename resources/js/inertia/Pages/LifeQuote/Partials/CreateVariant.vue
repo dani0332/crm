@@ -2,7 +2,6 @@
 const props = defineProps({
   uuid: String,
   insuranceProviders: Array,
-  plans: Array,
   currencies: Array,
   lifeRiders: Array,
   plan: Object,
@@ -24,13 +23,10 @@ const riders = props.lifeRiders.map(rider => ({
 }));
 
 const ridersData = ref(riders);
-
 const page = usePage();
-
 const emit = defineEmits(['success', 'error']);
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
-
 const active = ref(false);
 
 const paymentTerms = [
@@ -40,14 +36,11 @@ const paymentTerms = [
   { value: 12, label: 'Annually' },
 ];
 
-const options = reactive({
-  providerPlans: [],
-  loading: false,
-});
-
 const availableInsuranceProviders = computed(() => {
   return props.insuranceProviders;
 });
+
+let errorMessage = null;
 
 const createForm = reactive({
   providerId: null,
@@ -60,22 +53,37 @@ const createForm = reactive({
   policyTerm: null,
   actualPremium: null,
   insurerQuoteNo: null,
-  isVariant: false,
+  isVariant: true,
   update: false,
-  // riders: ref(riders),
+  getQuoteLoading: false,
 });
 
 watch(() => props.plan, (newVal) => {
-  createForm.providerId = props.plan?.providerId;
-  createForm.planId = props.plan?.planId
+    createForm.providerId = props.plan?.providerId;
+    createForm.planId = props.plan?.planId;
+    createForm.currency = props.plan?.currency;
+    createForm.sumAssured = props.plan?.sumInsured;
+    createForm.policyTerm = props.plan?.policyTerm;
+    createForm.paymentTerm = props.plan?.paymentTerm;
+    createForm.actualPremium = null;
+    if(!props.plan?.isApi) {
+        createForm.actualPremium = props.plan?.actualPremium;
+    }
+    createForm.insurerQuoteNo = null;
+    errorMessage = null;
+
+    ridersData.value = props.lifeRiders.map(rider => ({
+        riderId: rider.id,
+        active: 0,
+        price: 0,
+        coverValue: 0,
+        text: rider.text,
+    }));
 }, { deep: true });
 
-// onMounted(() => {
-//     createForm.providerId = props.plan?.providerId;
-// });
-
 const getQuote = () => {
-  axios
+    createForm.getQuoteLoading = true;
+    axios
     .post(`/personal-quotes/get-life-provider-plan`, {
         data: {
         quoteUID: props.uuid,
@@ -83,22 +91,30 @@ const getQuote = () => {
         providerCode: props.plan.providerCode,
         isIndividualLoading: true,
         planData: {
-            currency: props.plan.currency,
-            sumAssured: props.plan.sumInsured,
-            policyTerm: props.plan.policyTerm,
-            paymentTerm: props.plan.paymentTerm,
-            riders: props.plan.riders,
+            currency: createForm.currency,
+            sumAssured: createForm.sumAssured,
+            policyTerm: createForm.policyTerm,
+            paymentTerm: createForm.paymentTerm,
+            riders: ridersData.value,
         },
         lang: "en"
         }
     })
     .then(res => {
-      if (res.data) {
-        createForm.isUW = res.data.isUW;
-      }
+        if (res.data.providerPlan.message) {
+            errorMessage = res.data.providerPlan.message;
+           return; 
+        }
+        if (res.data) {
+            createForm.actualPremium = res.data.providerPlan.plan.actualPremium;
+            errorMessage = null;
+        }
     })
     .catch(err => {
-      emit('error');
+      errorMessage = err.response.data.message;
+    })
+    .finally(() => {
+      createForm.getQuoteLoading = false;
     });
 };
 
@@ -110,11 +126,11 @@ const onSubmit = isValid => {
   createForm.loading = true;
   createForm.riders = ridersData.value;
   // remove loading from createForm
-  const data  = createForm.filter((item) => item !== 'loading');
+//   const data  = createForm.filter((item) => item !== 'loading');
   axios
     .post('/personal-quotes/life-plan-manual-create', {
       quoteUID: props.uuid,
-      formData: data,
+      formData: createForm,
     })
     .then(res => {
       if (res.data == 200) {
@@ -131,31 +147,6 @@ const onSubmit = isValid => {
     });
 };
 
-watch(
-  () => createForm?.providerId,
-  value => {
-    if (value) {
-      options.loading = true;
-      options.providerPlans = [];
-      axios
-        .get(`/personal-quotes/life/provider-plans/${value}`)
-        .then(res => {
-          if (res.data.plans) {
-            options.providerPlans = res.data.plans;
-          } else {
-            options.providerPlans = [];
-          }
-        })
-        .catch(err => {
-          emit('error');
-        })
-        .finally(() => {
-          options.loading = false;
-        });
-    }
-  },
-);
-
 </script>
 
 <template>
@@ -169,6 +160,9 @@ watch(
     @submit="onSubmit"
   >
     <div class="mx-auto p-6 bg-white rounded-lg">
+        <h2 class="bg-gray-100 text-gray-700 font-semibold text-center rounded-lg px-6 py-3 -mt-4 mb-2">
+            {{plan.planName}}
+        </h2>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block font-medium text-gray-700 mb-1">Insurance Provider <span class="text-red-500">*</span></label>
@@ -193,13 +187,15 @@ watch(
             placeholder="Select Plan"
             class="w-full"
             :options="
-              options.providerPlans?.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
+            [
+                {
+                    value: plan.planId,
+                    label: plan.planName,
+                },
+            ]
             "
-            :loading="options.loading"
             :rules="[isRequired]"
+            disabled
           />
         </div>
 
@@ -212,7 +208,7 @@ watch(
               class="w-full"
               :options="
                 props.currencies?.map(currency => ({
-                  value: currency.id,
+                  value: currency.text,
                   label: currency.text,
                 }))
               "
@@ -258,18 +254,23 @@ watch(
               placeholder="Enter Price"
               :rules="[isRequired]"
               class="w-full"
+              :disabled="plan.isApi"
           />
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1">Insurer Quote Number <span class="text-red-500">*</span></label>
+          <label class="block font-medium text-gray-700 mb-1">Insurer Quote Number</label>
           <x-input
               v-model="createForm.insurerQuoteNo"
               placeholder="Enter Insurer Quote Number"
-              :rules="[isRequired]"
               class="w-full"
+              :disabled="plan.isApi"
           />
         </div>
+        <div v-if="errorMessage" class="flex items-center justify-center text-red-500 font-medium">
+            <span>{{ errorMessage }}</span>
+        </div>
+
       </div>
 
       <div class="mt-6">
@@ -292,10 +293,12 @@ watch(
       </div>
     </div>
 
-<button @click="getQuote">get quote</button>
     <template #actions>
       <div class="flex justify-end">
-        <x-button type="submit" color="emerald" :loading="createForm.loading">
+        <x-button @click="getQuote" v-if="!createForm.actualPremium && plan.isApi" color="emerald" :loading="createForm.getQuoteLoading">
+            Get Quote
+        </x-button>
+        <x-button v-else type="submit" color="emerald" :loading="createForm.loading">
           Save
         </x-button>
       </div>

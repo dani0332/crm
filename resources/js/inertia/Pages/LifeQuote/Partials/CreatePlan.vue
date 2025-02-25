@@ -66,7 +66,6 @@ const createForm = reactive({
   insurerQuoteNo: null,
   isVariant: false,
   update: false,
-  // riders: ref(riders),
 });
 
 const onSubmit = isValid => {
@@ -193,7 +192,7 @@ watch(
               class="w-full"
               :options="
                 props.currencies?.map(currency => ({
-                  value: currency.id,
+                  value: currency.text,
                   label: currency.text,
                 }))
               "

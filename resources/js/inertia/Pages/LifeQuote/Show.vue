@@ -164,28 +164,6 @@ const plansTable = reactive({
 
 const listQuotePlansFiltered = ref([]);
 
-// const sortPlans = incommingPlans => {
-//   incommingPlans = incommingPlans.sort((a, b) => {
-//     // Convert undefined or falsy `actualPremium` values to 0 for comparison, if needed
-//     const premiumA = a.actualPremium || 0;
-//     const premiumB = b.actualPremium || 0;
-
-//     return premiumA - premiumB;
-//   });
-
-//   const matchingIndex = incommingPlans.findIndex(
-//     x => x.id === selectedProviderPlan.value?.id,
-//   );
-
-//   if (matchingIndex > 0) {
-//     [incommingPlans[0], incommingPlans[matchingIndex]] = [
-//       incommingPlans[matchingIndex],
-//       incommingPlans[0],
-//     ];
-//   }
-//   listQuotePlansFiltered.value = [...incommingPlans];
-// };
-
 watchEffect(() => {
   listQuotePlansFiltered.value = plansTable.data
     .slice()
@@ -270,13 +248,31 @@ const onCreatePlan = () => {
     },
     onFinish: () => {
       notification.success({
-        title: 'Plan Created',
+        title: 'Life Plan created successfully',
         position: 'top',
       });
       location.reload();
     },
   });
 };
+
+const onCreateVariant = () => {
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['plansTable.data'],
+    onStart: () => {
+      modals.createPlanVariant = false;
+    },
+    onFinish: () => {
+      notification.success({
+        title: 'Plan Variant created successfully',
+        position: 'top',
+      });
+      location.reload();
+    },
+  });
+}
 
 const addVariant = plan => {
   variantPlan.value = plan;
@@ -702,26 +698,6 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
-      // loop on plansTable.data and set id equal to _id
-      // plansTable.data.forEach(plan => {
-      //   plan.id = 123;
-      // });
-      // listQuotePlansFiltered.value = [...plansTable.data];
-      // getSmallestCopayRateAsDefaultValue();
-      // plansTable.data.forEach(plan => {
-      //   // if (plan.isManualPlan) {
-      //   //   isManualPlansCount.value++;
-      //   // }
-
-      //   // if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
-      //   //   selectedPlan.value.needPriceUpdate = false;
-      //   // }
-      // });
-
-      // if (selectedPlan.value?.id) {
-      //   let plans = plansTable.data.filter(x => x.id == selectedPlan.value?.id);
-      //   selectedPlan.value = { ...plans[0] };
-      // }
     })
     .catch(err => {
       console.log(err);
@@ -1764,10 +1740,9 @@ const getBMITag = () => {
       :insuranceProviders="insuranceProviders"
       :currencies="currencies"
       :plan="variantPlan"
-      :plans="computedListQuotePlans"
       :lifeRiders="lifeRiders"
       
-      @success="onCreatePlan"
+      @success="onCreateVariant"
       @error="onPlanError"
     />
 
