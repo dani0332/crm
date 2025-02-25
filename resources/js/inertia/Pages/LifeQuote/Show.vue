@@ -7,6 +7,7 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
+import LazyEditPlan from './Partials/EditPlan.vue'; 
 
 const page = usePage();
 defineProps({
@@ -70,6 +71,7 @@ const modals = reactive({
   createPlan: false,
   sendConfirm: false,
   createPlanVariant: false,
+  editPlan: false
 });
 
 const rules = {
@@ -89,7 +91,13 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
 
 const variantPlan = ref(null);
 const selectedPlans = ref([]);
-// const selectedPlan = ref(null);
+let selectedPlan = ref(null);
+
+const viewPlan = item => {
+  selectedPlan = item;
+  modals.editPlan = true;
+};
+
 
 // plans
 const planDataTable = ref();
@@ -1660,16 +1668,15 @@ const getBMITag = () => {
               <template #item-action="item">
                 <div class="flex gap-2 pr-2">
 
-                  <template>
+              
                     <x-button
                       size="xs"
                       color="primary"
                       outlined
-                      @click.prevent="planClicked(item)"
+                        @click.prevent="viewPlan(item)"
                     >
                       View
                     </x-button>
-                  </template>
                   <x-button
                     size="xs"
                     color="emerald"
@@ -1745,6 +1752,18 @@ const getBMITag = () => {
       @success="onCreateVariant"
       @error="onPlanError"
     />
+
+    <LazyEditPlan 
+        v-model="modals.editPlan"
+        :selectedPlan="{}"
+        :uuid="quote.uuid"
+        :insuranceProviders="insuranceProviders"
+        :currencies="currencies"
+        :plans="computedListQuotePlans"
+        :lifeRiders="lifeRiders"
+    />
+
+    
 
     <PlanDetails
       :insuranceProviders="insuranceProviders"
