@@ -981,7 +981,7 @@ class SendEmailCustomerService extends BaseService
     public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId, $sendUpdateLog)
     {
         try {
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life])) {
                 return app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $emailData, $quoteTypeId);
             }
             info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);

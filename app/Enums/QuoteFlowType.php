@@ -17,6 +17,7 @@ enum QuoteFlowType: int
     case SU_CYCLE_UPDATE = 11;
     case SU_YACHT_UPDATE = 12;
     case SU_HOME_UPDATE = 13;
+    case SU_LIFE_UPDATE = 14;
 
     public function label(): string
     {
@@ -34,6 +35,7 @@ enum QuoteFlowType: int
             QuoteFlowType::SU_CYCLE_UPDATE => 'su_cycle_update',
             QuoteFlowType::SU_YACHT_UPDATE => 'su_yacht_update',
             QuoteFlowType::SU_HOME_UPDATE => 'su_home_update',
+            QuoteFlowType::SU_LIFE_UPDATE => 'su_life_update',
         };
     }
 
@@ -53,6 +55,7 @@ enum QuoteFlowType: int
             11 => QuoteFlowType::SU_CYCLE_UPDATE,
             12 => QuoteFlowType::SU_YACHT_UPDATE,
             13 => QuoteFlowType::SU_HOME_UPDATE,
+            14 => QuoteFlowType::SU_LIFE_UPDATE,
             default => null,  // Return null if the value doesn't match any case
         };
     }
