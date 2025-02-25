@@ -80,6 +80,11 @@ const props = defineProps({
     default: [],
   },
   realQuote: Object,
+  // For car commercial vehicles
+  isCapBtnEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // All reactive properties are defined here
@@ -2850,7 +2855,23 @@ const shouldProcessUpdate = payment => {
       isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
     }
   }
-
+  const isRenewalUploadConditionMet = () => {
+    return (
+      props.isCapBtnEnabled &&
+      props.quoteType === quoteTypeCodeEnum.Car &&
+      isGIGProvider &&
+      isAmlCleared &&
+      isKycVerified() &&
+      isTotalPriceMatching &&
+      hasAnyCCSplitPayment() &&
+      !shouldSendUpdate &&
+      hasPayments &&
+      isInsurer
+    );
+  };
+  if (isRenewalUploadConditionMet()) {
+    return true;
+  }
   if (captureOption === 'approve') {
     return hasPayments;
   }
