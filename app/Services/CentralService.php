@@ -1160,8 +1160,8 @@ class CentralService extends BaseService
             'workflowType' => $workflowType,
         ];
 
-        $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? null;
-        $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? null;
+        $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
+        $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
         $emailData->planName = 'NA';
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike])) {
@@ -1170,7 +1170,7 @@ class CentralService extends BaseService
             $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '';
         }
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home])) {
             $customer = $quote->customer->insured;
             $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
             $emailData->quoteUID = $sendUpdateLog->quote_uuid;
@@ -1190,12 +1190,18 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Yacht) {
+            // need to confirm.
             $emailData->yachtDetails = $quote->yachtQuote->boat_details;
         }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
             $emailData->planType = is_null($quote->coverage_code) ? '' : ucwords(convertFromCamelCase($quote->coverage_code));
             $emailData->primaryTraveler = $quote?->primaryMember?->first_name.' '.$quote?->primaryMember?->last_name;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Home) {
+            // need to confirm.
+            $emailData->homeDetails = $quote->address;
         }
 
         // $emailData->documentUrl

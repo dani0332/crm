@@ -26,5 +26,6 @@ final class WorkflowTypeEnum extends Enum
     public const SU_CYCLE_UPDATE = 'su_cycle_update';
     public const SU_YACHT_UPDATE = 'su_yacht_update';
     public const SU_TRAVEL_UPDATE = 'su_travel_update';
+    public const SU_HOME_UPDATE = 'su_home_update';
     public const CAR_NEW_POLICY = 'car_new_policy';
 }
