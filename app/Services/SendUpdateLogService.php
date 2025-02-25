@@ -1167,7 +1167,7 @@ class SendUpdateLogService
             $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
         }
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Cycle])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
             return app(CentralService::class)->prepareBirdData($quote, $quoteTypeId, $sendUpdateLog);
         }
         $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
@@ -1656,7 +1656,7 @@ class SendUpdateLogService
     public function sendUpdateToCustomerEmail($sendUpdate, $emailData, $quoteTypeId)
     {
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
             $birdUrlKey = 'BIRD_MOTOR_SEND_UPDATE';
         } else {
             $birdUrlKey = "BIRD_{$quoteType}_SEND_UPDATE";
