@@ -559,59 +559,58 @@ class HomeQuoteRepository extends BaseRepository
     private function getQuoteWithRelations($column, $value)
     {
         return $this->byQuoteTypeId(QuoteTypes::HOME->id())
-            ->where($column, $value)
-            ->with([
-                'homeQuote' => function ($q) {
-                    $q->with(['nationality', 'possessionType', 'accommodationType', 'homeQuoteRequestDetail', 'homeQuoteRequestDetail.lostReason']);
-                },
-                'insuranceProvider',
-                'quoteDetail.lostReason',
-                'quoteStatus',
-                'advisor',
-                'nationality',
-                'plans',
-                'plans.insuranceProvider',
-                'createdBy',
-                'updatedBy',
-                'customer.additionalContactInfo',
-                'documents' => function ($q) {
-                    $q->with('createdBy')->orderBy('created_at', 'desc');
-                },
-                'quoteRequestEntityMapping' => function ($entityMapping) {
-                    $entityMapping->with('entity');
-                },
-                'payments' => function ($q) {
-                    $q->with([
-                        'paymentStatus',
-                        'personalPlan',
-                        'paymentMethod',
-                        'paymentStatusLogs',
-                        'insuranceProvider',
-                        'paymentable',
-                        'paymentSplits' => function ($paymentSplit) {
-                            $paymentSplit->with([
-                                'paymentStatus',
-                                'paymentMethod',
-                                'documents',
-                                'verifiedByUser',
-                                'processJob',
-                                'paymentCharges',
-                            ]);
-                            $paymentSplit->orderBy('sr_no');
-                        },
-                    ]);
-                },
-            ])
-            ->select([
-                $this->getTable().'.*',
-                DB::raw('IF(EXISTS (
-                    SELECT *
-                    FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
-            ])
-            ->firstOrFail();
+        ->where($column, $value)
+        ->with([
+            'insuranceProvider',
+            'quoteDetail.lostReason',
+            'quoteStatus',
+            'advisor',
+            'nationality',
+            'plans',
+            'homeQuote',
+            'homeQuote.nationality',
+            'homeQuote.possessionType',
+            'homeQuote.accommodationType',
+            'homeQuote.homeQuoteRequestDetail',
+            'homeQuote.homeQuoteRequestDetail.lostReason',
+            'createdBy',
+            'updatedBy',
+            'customer.additionalContactInfo',
+            'documents' => function ($q) {
+                $q->with('createdBy')->orderBy('created_at', 'desc');
+            },
+            'quoteRequestEntityMapping' => function ($entityMapping) {
+                $entityMapping->with('entity');
+            },
+            'payments' => function ($q) {
+                $q->with([
+                    'paymentStatus',
+                    'personalPlan',
+                    'paymentMethod',
+                    'paymentStatusLogs',
+                    'insuranceProvider',
+                    'paymentSplits' => function ($q) {
+                        $q->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                        ])
+                            ->orderBy('sr_no', 'asc');
+                    },
+                ]);
+            },
+        ])
+        ->select([
+            $this->getTable() . '.*',
+            DB::raw('IF(EXISTS (
+                SELECT *
+                FROM quote_request_entity_mapping
+                WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
+                "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+            as customer_type'),
+        ])
+        ->firstOrFail();
     }
 
     private function setQuoteAdditionalData($quote)
