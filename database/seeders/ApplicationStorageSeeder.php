@@ -257,7 +257,7 @@ class ApplicationStorageSeeder extends Seeder
     private function sendUpdateEmailBirdFlow(): void
     {
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_CAR_SEND_UPDATE],
+            ['key_name' => ApplicationStorageEnums::BIRD_MOTOR_SEND_UPDATE],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/036faf20-0788-4ac1-8b55-4dcfe93ebfa7/invoke-sync',
                 'created_at' => now(),
