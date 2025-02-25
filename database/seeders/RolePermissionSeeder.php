@@ -136,7 +136,7 @@ class RolePermissionSeeder extends Seeder
     private function addBridgerSkipPermission(): void
     {
         Permission::firstOrCreate([
-            'name' => PermissionsEnum::SkipBridgerAML,
+            'name' => PermissionsEnum::SKIP_BRIDGER_AML,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

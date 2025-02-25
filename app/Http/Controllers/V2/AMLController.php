@@ -315,6 +315,7 @@ class AMLController extends Controller
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
             'amlStatusName' => $amlStatusName,
+            'amlStatusCode' => AMLStatusCode::asArray(),
             'entityDetails' => $entityDetails,
             'membersDetails' => $membersDetail,
             'uboDetails' => $uboDetails,
@@ -839,35 +840,8 @@ class AMLController extends Controller
 
     public function tempSkipBridgerAML(SkipBridgerScreeningRequest $skipBridgerScreeningRequest)
     {
-        try {
-            DB::transaction(function () use ($skipBridgerScreeningRequest) {
-                $quoteDetails = $this->getQuoteObject($skipBridgerScreeningRequest->quote_type_code, $skipBridgerScreeningRequest->quote_request_id);
-                QuoteStatusLog::create([
-                    'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
-                    'quote_request_id' => $skipBridgerScreeningRequest->quote_request_id,
-                    'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
-                    'previous_quote_status_id' => $quoteDetails->quote_status_id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ]);
+        $skipBrigerAMLResponse = app(AMLService::class)->tempSkipBridgerAML($skipBridgerScreeningRequest);
 
-                $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
-                $quoteDetails->save();
-
-                ManualAMLLog::updateOrCreate([
-                    'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
-                    'quote_uuid' => $skipBridgerScreeningRequest->quote_uuid,
-                ], [
-                    'created_by' => auth()->id(),
-                ]);
-            });
-
-            return response()->json(['response' => true, 'message' => 'Skip AML Screening for this Quote']);
-
-        } catch (\Exception $exception) {
-            info('fn:tempSkipBridgerAML - Skip AML Screening Failed - error - '.$exception->getMessage());
-
-            return response()->json(['response' => false, 'message' => 'Something went wrong']);
-        }
+        return response()->json(['response' => $skipBrigerAMLResponse['status'], 'message' => $skipBrigerAMLResponse['response']]);
     }
 }

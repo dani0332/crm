@@ -22,6 +22,7 @@ const props = defineProps({
   lookups: Object,
   cardHolderName: Object,
   amlStatusName: String,
+  amlStatusCode: Array,
   quoteTypeIdEnum: Array,
   quoteStatusEnums: Array,
   gigInsurerDefaultEmail: String,
@@ -706,14 +707,14 @@ onMounted(() => {
             </dd>
           </div>
         </dl>
+
         <div class="flex justify-end">
-          <x-button
-            can(permissionsEnum.SkipBridgerAML)
+          <x-button v-if="can(permissionsEnum.SKIP_BRIDGER_AML)"
             class="mt-4 mr-2"
-            color="#ff5e00"
+            color="red"
             size="sm"
-            :disabled="!(quoteRequest.aml_status == 'AML_SCREENING_FAILED')"
             :loading="skipBridgerAMLBtnProcess"
+            :disabled="!(quoteRequest.aml_status == props.amlStatusCode.AMLScreeningFailed)"
             @click="tempSkipBridgerAML"
           >
             Skip Bridger AML

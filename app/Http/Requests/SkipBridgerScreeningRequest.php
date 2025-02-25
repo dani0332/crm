@@ -23,11 +23,11 @@ class SkipBridgerScreeningRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quote_type_id' => 'required',
+            'quote_type_id' => 'required|int',
             'quote_type_code' => 'required|string',
-            'quote_request_id' => 'required',
-            'quote_uuid' => 'required',
-            'current_aml_status' => 'required',
+            'quote_request_id' => 'required|int',
+            'quote_uuid' => 'required|string',
+            'current_aml_status' => 'required|string',
         ];
     }
 
@@ -36,7 +36,7 @@ class SkipBridgerScreeningRequest extends FormRequest
         $validator->after(function ($validator) {
 
             if (request()->current_aml_status !== AMLStatusCode::AMLScreeningFailed) {
-                $validator->errors()->add('error', 'AML Screening should be failed to execute skip bridger process');
+                $validator->errors()->add('error', 'AML screening must failed to execute the Skip Bridger Process');
             }
         });
     }
