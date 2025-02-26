@@ -1616,43 +1616,6 @@ class SendUpdateLogService
         return '';
     }
 
-    public function sendUpdateToCustomerBirdData($sendUpdateLog, $quote, $quoteTypeId)
-    {
-        $emailData = (object) [
-            'advisorEmail' => $quote->advisor->email ?? '',
-            'advisorLandLine' => $quote->advisor->landline_no ?? '',
-            'advisorMobilePhone' => $quote->advisor->mobile_no ?? '',
-            'advisorName' => $quote->advisor->name ?? '',
-            'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
-            'appLink' => '',
-            'carDetails' => '1238723',
-            'customerFullName' => $quote->first_name.' '.$quote->last_name,
-            'policyNumber' => $sendUpdateLog->policy_number ?? '',
-            'policyPeriodEnd' => $sendUpdateLog->expiry_date ? Carbon::parse($sendUpdateLog->expiry_date)->format('d-M-Y') : '',
-            'policyPeriodStart' => $sendUpdateLog->start_date ? Carbon::parse($sendUpdateLog->start_date)->format('d-M-Y') : '',
-            'reason' => '1238723',
-            'refID' => $sendUpdateLog->code,
-            'rtaPortalLink' => '1238723',
-            'customerEmail' => $quote->email,
-            'quoteUID' => $quote->uuid,
-            'workflowType' => WorkflowTypeEnum::SU_CAR_UPDATE,
-        ];
-
-        $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? null;
-        $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? null;
-
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Travel, QuoteTypeId::Bike])) {
-            $emailData->assistanceNumber = $emailData->assistanceNumber ?? $quote?->plan?->insuranceProvider?->roadside_phone_number ?? '';
-            $emailData->insuranceCompany = $emailData->insuranceCompany ?? $quote?->plan?->insuranceProvider?->text ?? '';
-            $emailData->planName = $quote?->plan?->text ?? '';
-        }
-
-        $customer = $quote->customer->insured;
-        $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
-
-        return [1, $emailData, 'send-update', $quoteTypeId];
-    }
-
     public function sendUpdateToCustomerEmail($sendUpdate, $emailData, $quoteTypeId)
     {
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
