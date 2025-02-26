@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Models\PersonalQuote;
 use App\Models\RenewalBatch;
@@ -80,11 +81,27 @@ class RetentionReportService extends BaseService
         return [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED];
     }
 
-    private function getSalesQuery($asAtDate)
+    private function getSalesQuery($asAtDate, $quoteType)
     {
+        $quoteType = QuoteTypes::from($quoteType);
+
+        $tableName = $quoteType->model()->getTable();
+        $isPersonalQuote = $quoteType->isPersonalQuote();
+
         $bookedStatuses = implode(',', $this->getPolicyBookedStatuses());
         $cancelledStatuses = implode(',', [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]);
         $policyBooked = QuoteStatusEnum::PolicyBooked;
+
+        if ($isPersonalQuote) {
+            $quoteRequestCondition = 'AND qsl.quote_request_id = personal_quotes.id';
+        } else {
+            $quoteRequestCondition = "
+                AND qsl.quote_request_id = (
+                    SELECT id FROM {$tableName}
+                    WHERE personal_quote_id = personal_quotes.id
+                    LIMIT 1
+                )";
+        }
 
         $queryTemplate = '
             SUM(
@@ -94,7 +111,7 @@ class RetentionReportService extends BaseService
                         AND EXISTS (
                             SELECT 1 FROM quote_status_log qsl
                             WHERE qsl.quote_type_id = personal_quotes.quote_type_id
-                            AND qsl.quote_request_id = personal_quotes.id
+                            {quoteRequestCondition}
                             AND qsl.previous_quote_status_id = :policyBooked
                             AND qsl.current_quote_status_id = personal_quotes.quote_status_id
                         ) THEN 1
@@ -107,6 +124,7 @@ class RetentionReportService extends BaseService
 
         return strtr($queryTemplate, [
             '{dateCondition}' => $dateCondition,
+            '{quoteRequestCondition}' => $quoteRequestCondition,
             ':bookingStatuses' => $bookedStatuses,
             ':cancelledStatuses' => $cancelledStatuses,
             ':policyBooked' => $policyBooked,
@@ -131,7 +149,7 @@ class RetentionReportService extends BaseService
             COUNT(DISTINCT(personal_quotes.id)) - SUM(CASE WHEN personal_quotes.quote_status_id = {$policyCanceledAndReissued} THEN 1 ELSE 0 END) AS total,
             SUM(CASE WHEN quote_status_id = ".QuoteStatusEnum::Lost.' THEN 1 ELSE 0 END) as lost,
             SUM(CASE WHEN quote_status_id IN ('.QuoteStatusEnum::Fake.', '.QuoteStatusEnum::Duplicate.") THEN 1 ELSE 0 END) as invalid,
-            {$this->getSalesQuery($asAtDate)},
+            {$this->getSalesQuery($asAtDate, $this->getQuoteType($request))},
             advisor_id")
             ->join('users', 'advisor_id', '=', 'users.id');
         // Apply general filters to the query based on the request parameters
