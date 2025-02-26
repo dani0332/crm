@@ -7,6 +7,7 @@ use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -54,6 +55,7 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
+use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
@@ -759,8 +761,11 @@ class AMLController extends Controller
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
-                if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid) {
+                $isPassportDocumentExist = app(QuoteDocumentService::class)->isDocumentExists(quoteTypeCode::Travel, $quoteDetails->id, DocumentTypeCode::TRVLPAS);
+                if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid && ! $isPassportDocumentExist) {
                     $this->sendHapexReminder($quoteDetails);
+                } else {
+                    info(self::class.' - Hapex reminder not sent as passport document exists. Quote UUID: '.$quoteDetails->uuid.', isPassportDocumentExist: '.$isPassportDocumentExist.', is_documents_valid: '.$quoteDetails->is_documents_valid);
                 }
             }
             info('AML Screening Bridger - Potential Matches Found, Quote Status changed to AML Screening Failed');

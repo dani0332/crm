@@ -134,6 +134,7 @@ const {
   policy_start_date,
   isEmail,
   isMobileNo,
+  maxCharacters,
   emiratesNumber,
 } = useRules();
 const confirmDeleteData = reactive({
@@ -2594,7 +2595,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             v-model="travelerForm.first_name"
             label="Member Name*"
             placeholder="Member Name"
-            :rules="[isRequired]"
+            :rules="[isRequired, maxCharacters(40)]"
             :hasError="travelerForm.errors.first_name"
           />
           <ComboBox

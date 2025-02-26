@@ -1568,7 +1568,7 @@ if (! function_exists('getInsuranceProvider')) {
                 };
                 $model = $genericQueriesAllLobs->getModelObject($quoteType);
 
-                return $model::where('code', $quote->code)->first()?->insuranceProvider;
+                return $quote ? $model::where('code', $quote->code)->first()?->insuranceProvider : null;
             }
         }
 
