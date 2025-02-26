@@ -29,6 +29,7 @@ use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -1530,11 +1531,12 @@ if (! function_exists('getInsuranceProvider')) {
     {
         $insuranceProvider = null;
         $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        $planRelationName = strtolower($quoteType).'Plan';
 
         //        Reminder:: Add Commercial vehicle logic for fetch correct provider
         if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
 
-            $quoteDetails = $payment->paymentable; // For Main Lead
+            $quoteDetails = $payment?->paymentable; // For Main Lead
 
             if (empty($quoteDetails) && isset($quote->personal_quote_id) && $quote?->personal_quote_id) { // For Endorsements
                 $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
@@ -1553,7 +1555,6 @@ if (! function_exists('getInsuranceProvider')) {
         }
 
         if (in_array(ucfirst($quoteType), $allowedQuoteTypes) && isset($payment)) {
-            $planRelationName = strtolower($quoteType).'Plan';
             $payment->load($planRelationName);
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
         }
@@ -1564,6 +1565,15 @@ if (! function_exists('getInsuranceProvider')) {
 
         if (! $insuranceProvider) {
             $insuranceProvider = $payment?->insuranceProvider;
+            if (! $insuranceProvider) {
+                $genericQueriesAllLobs = new class
+                {
+                    use GenericQueriesAllLobs;
+                };
+                $model = $genericQueriesAllLobs->getModelObject($quoteType);
+
+                return $model::where('code', $quote->code)->first()?->insuranceProvider;
+            }
         }
 
         return $insuranceProvider;
