@@ -50,6 +50,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  range: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const selectedData = computed({
