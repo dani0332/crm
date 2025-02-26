@@ -18,12 +18,13 @@ URLs:
 
 Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
 
-## Other stack & libraries
+### Other stack & libraries
 
 - [Vue](https://vuejs.org/)
 - [InertiaJS](https://inertiajs.com/)
 - [TailwindCSS](https://tailwindcss.com/)
 - [UI - indielayer](https://indielayer.com/)
+- Test
 
 ## Setting up Laravel
 

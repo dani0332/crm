@@ -1,11 +1,11 @@
 {
   "resources/js/inertia/inertia.js": {
-    "file": "assets/inertia-B2dUdCuF.js",
+    "file": "assets/inertia-BmN7PqB8.js",
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
     "css": [
-      "assets/inertia-BYZCKazo.css"
+      "assets/inertia-3fZghWlK.css"
     ]
   }
 }

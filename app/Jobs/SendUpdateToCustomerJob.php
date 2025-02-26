@@ -76,10 +76,11 @@ class SendUpdateToCustomerJob implements ShouldQueue
             }
         }
 
-        if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU && isset($this->payload['dispatchSageCall'])) {
+        if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU && isset($this->payload['dispatchSageCall']) && ! $this->payload['ccPaymentProcess']) {
             info('job:SendUpdateToCustomerJob - Calling updateSageProcessForDispatching function through sendUpdateToCustomer - SendUpdateCode: '.$sendUpdateLog->code);
             $sageRequestPayload = $this->payload['sageRequestPayload'];
             unset($this->payload['sageRequestPayload']);
+            unset($this->payload['ccPaymentProcess']);
             $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);
 
             (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);
