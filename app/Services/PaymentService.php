@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\DiscountTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
