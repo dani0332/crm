@@ -1562,7 +1562,8 @@ if (! function_exists('getInsuranceProvider')) {
                     use GenericQueriesAllLobs;
                 };
                 $model = $genericQueriesAllLobs->getModelObject($quoteType);
-                return $quote ? $model::where('code', $quote->code)->first()?->insuranceProvider: null;
+
+                return $quote ? $model::where('code', $quote->code)->first()?->insuranceProvider : null;
             }
         }
 
