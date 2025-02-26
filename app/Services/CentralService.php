@@ -1046,7 +1046,6 @@ class CentralService extends BaseService
     public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null, $sendUpdateLog = null)
     {
         // Retrieve necessary IDs from the quote object
-        $insuranceProviderId = $quote->insurance_provider_id;
         $businessTypeId = $quote->business_type_of_insurance_id ?? null;
 
         $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
@@ -1058,8 +1057,7 @@ class CentralService extends BaseService
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
 
         // Get insurance provider details
-        $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
-
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType, $quote);
         $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
 
         // Get broker commission details
