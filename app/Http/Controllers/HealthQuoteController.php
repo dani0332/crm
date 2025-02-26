@@ -19,6 +19,7 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class HealthQuoteController extends Controller
 {
@@ -442,5 +443,66 @@ class HealthQuoteController extends Controller
             'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
             'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
         ]);
+    }
+
+    public function duplicateEntires()
+    {
+        $duplicates = DB::table('car_quote_request_detail_duplicate')
+        ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
+        ->groupBy('car_quote_request_id')
+        ->havingRaw('COUNT(*) > 1')
+        ->get();
+
+        foreach ($duplicates as $group) {
+            $ids = explode(',', $group->ids);
+            
+            $latestUpdatedRecord = DB::table('car_quote_request_detail_duplicate')
+                ->whereIn('id', $ids)
+                ->orderby('updated_at', 'desc')
+                ->first();
+            
+            $lastId = $latestUpdatedRecord->id;
+            $lastRecordData = (array) $latestUpdatedRecord;
+
+            $records = DB::table('car_quote_request_detail_duplicate')
+            ->whereIn('id', $ids)
+            ->where('id', '!=' , $lastId)
+            ->get();
+
+            $updatedData = [];
+
+            $recentAdvisorData = DB::table('car_quote_request_detail_duplicate')
+                ->whereIn('id', $ids)
+                ->orderBy('advisor_assigned_date', 'desc')
+                ->first(['advisor_assigned_by_id', 'advisor_assigned_date']);
+                
+
+            if ($recentAdvisorData && !empty($recentAdvisorData)) {
+                $updatedData['advisor_assigned_by_id'] = $recentAdvisorData->advisor_assigned_by_id;
+                $updatedData['advisor_assigned_date'] = $recentAdvisorData->advisor_assigned_date;
+            }
+
+            foreach ($records as $record) {
+                $currentRecord = (array) $record;
+
+                foreach ($lastRecordData as $column => $lastValue) {
+                    if (!in_array($column, ['id', 'created_at', 'updated_at', 'car_quote_request_id', 'advisor_assigned_date', 'advisor_assigned_by_id'])) {
+                        if ((empty($lastValue) || is_null($lastValue)) 
+                            && !empty($currentRecord[$column]) 
+                            && !is_null($currentRecord[$column]) 
+                            && !array_key_exists($column, $updatedData)) {
+
+                            $updatedData[$column] = $currentRecord[$column];
+                        }
+                    }
+                }
+            }
+
+            $updatedData = $updatedData + array_diff_key($lastRecordData, $updatedData);
+
+            DB::table('car_quote_request_detail_duplicate')
+                ->where('id', $lastId)
+                ->update($updatedData);
+        }
     }
 }

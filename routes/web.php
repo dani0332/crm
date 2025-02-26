@@ -731,6 +731,8 @@ Route::get('/add-batch-number', function () {
     echo 'Done';
 });
 
+Route::get('duplicate-entires', [HealthQuoteController::class, 'duplicateEntires']);
+
 // Migration Not Required For Now 21 Nov 24
 // Route::get('run-insly-email-fix', function () {
 
