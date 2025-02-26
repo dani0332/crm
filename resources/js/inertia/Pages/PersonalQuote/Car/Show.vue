@@ -1672,17 +1672,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
 
-const isPuaOrManualPlan = computed(() => {
+const isCommercialVehicle = computed(() => {
   let isCConditionMeet = false;
-  if (selectedProviderPlan?.value?.id && availablePlansItems?.value) {
-    const selectedPlan = availablePlansItems?.value.find(
-      plan => plan.id === selectedProviderPlan?.value?.id,
-    );
-    if (selectedPlan) {
-      if (selectedPlan.puaType || selectedPlan.isManualPlan) {
-        isCConditionMeet = true;
-      }
-    }
+  if (isPlanDetailEnabled.value) {
+    isCConditionMeet = true;
   }
   return isCConditionMeet;
 });
@@ -3741,8 +3734,9 @@ const isPuaOrManualPlan = computed(() => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isCapBtnEnabled="isPuaOrManualPlan"
+      :isCapBtnEnabled="isCommercialVehicle"
     />
+
     <PaymentTable
       v-else
       :payments="payments"

@@ -145,6 +145,7 @@ const insuredFormDetails = useForm({
   industry_type_code: props.entityDetails?.entity?.industry_type_code ?? null,
   emirate_of_registration_id:
     props.entityDetails?.entity?.emirate_of_registration_id ?? null,
+  get_quote_email_gig: page.props.gigInsurerDefaultEmail,
 });
 
 const rules = {
@@ -168,7 +169,13 @@ const rules = {
 
   emirateNumberCheck: v => {
     const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
-    return pattern.test(v) || 'Enter the correct EID number format';
+    if (v.length == 15 || v.length > 18 || pattern.test(v)) {
+      insuredFormDetails.errors.screening_id_number = '';
+    } else {
+      return 'Enter the correct EID number format';
+    }
+
+    return true;
   },
 
   passportNumberCheck: v => {
@@ -199,8 +206,9 @@ const submitQuoteUpdateForm = isValid => {
         });
       }
       if (
-        typeof response.props.flash.info !== 'undefined' &&
-        response.props.flash.info?.length > 0
+        response.props.flash.info &&
+        Object.keys(response.props.flash.info).length > 0 &&
+        response.props.flash.info?.isEmailMismatched
       ) {
         notification.error({
           title:
@@ -407,6 +415,9 @@ const insuredSearchValidation = computed(() => {
   return true;
 });
 
+const validationKey = ref(false);
+const dobValidationKey = ref(false);
+
 const submitInsuredPersonSearch = () => {
   if (insuredSearchValidation.value) {
     loader.value.search = true;
@@ -434,6 +445,9 @@ const submitInsuredPersonSearch = () => {
             position: 'top',
           });
         }
+
+        validationKey.value = true;
+        dobValidationKey.value = true;
       })
       .catch(err => {
         console.log(err);
@@ -605,6 +619,13 @@ watch(
     }
   },
 );
+
+watch(
+  () => insuredFormDetails.dob,
+  newValue => {
+    dobValidationKey.value = newValue !== null;
+  },
+);
 </script>
 
 <template>
@@ -687,6 +708,7 @@ watch(
           <x-field label="Insured First Name">
             <x-input
               v-model="insuredFormDetails.insured_first_name"
+              :key="validationKey"
               :rules="[isRequired, rules.nameCheck]"
               placeholder="Insured First Name"
               type="text"
@@ -696,6 +718,7 @@ watch(
           <x-field label="Insured Last Name">
             <x-input
               v-model="insuredFormDetails.insured_last_name"
+              :key="validationKey"
               :rules="[isRequired, rules.nameCheck]"
               placeholder="Insured Last Name"
               type="text"
@@ -716,6 +739,7 @@ watch(
           <x-field label="Date of Birth">
             <DatePicker
               v-model="insuredFormDetails.dob"
+              :key="dobValidationKey"
               :rules="[isRequired]"
               placeholder="Date of Birth"
               class="w-full"
@@ -724,6 +748,7 @@ watch(
           <x-field label="Gender" required>
             <x-select
               v-model="insuredFormDetails.screening_gender"
+              :key="validationKey"
               :options="gender"
               placeholder="Gender"
               :rules="[isRequired]"
@@ -736,6 +761,17 @@ watch(
               <x-radio :value="0" label="No" />
             </x-form-group>
           </div>
+          <x-field
+            label="Email in GIG portal"
+            v-if="quoteType.id === page.props.quoteTypeIdEnum.Car"
+          >
+            <x-input
+              v-model="insuredFormDetails.get_quote_email_gig"
+              placeholder="Email in GIG portal"
+              type="text"
+              class="w-full"
+            />
+          </x-field>
         </dl>
 
         <x-divider class="mb-4 mt-1" />

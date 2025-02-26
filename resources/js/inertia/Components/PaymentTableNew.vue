@@ -80,7 +80,7 @@ const props = defineProps({
     default: [],
   },
   realQuote: Object,
-  // For bike if manual plan for Car is PAU or manual plan
+  // For car commercial vehicles
   isCapBtnEnabled: {
     type: Boolean,
     default: false,
@@ -905,11 +905,16 @@ const handlePaymentTypes = count => {
   }
 
   if (paymentMethodsForm.collection_type === 'insurer') {
-    const frequenciesToFilter = isMultiPaymentsEnabled.value
+    let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+      // need to fix this for payments
+      isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+    }
+    const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
       : frequenciesToFilterForInsurer;
 
-    if (count >= 2 || !isMultiPaymentsEnabled.value) {
+    if (count >= 2 || !isMultiPaymentEnabled) {
       if (frequenciesToFilter.includes(paymentMethodsForm.frequency)) {
         paymentTypesWithoutCheck = filterPaymentTypes(
           paymentTypesWithoutCheck,
@@ -1955,6 +1960,13 @@ const initializePaymentForm = (
       : splitPaymentRecord.value.decline_reason_id;
   paymentMethodsForm.declined_custom_reason =
     splitPaymentRecord.value.decline_custom_reason;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    paymentMethodsForm.isCreditCardEnabled = payment.isCreditCardEnabled;
+    paymentMethodsForm.isGIGProvider = payment.isGIGProvider;
+    paymentMethodsForm.isMultiplePaymentsEnabled =
+      payment.isMultiplePaymentsEnabled;
+    paymentMethodsForm.isCaptureButtonEnabled = payment.isCaptureButtonEnabled;
+  }
 };
 
 const processPaymentSplits = payment => {
@@ -2812,7 +2824,10 @@ const shouldProcessUpdate = payment => {
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
-  const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+  let isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+  if (isTravelQuote && !props.sendUpdate) {
+    isGIGProvider = payment.isGIGProvider;
+  }
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
@@ -2822,7 +2837,9 @@ const shouldProcessUpdate = payment => {
     quoteTypeCodeEnum.Car,
     quoteTypeCodeEnum.Home,
     quoteTypeCodeEnum.Bike,
+    quoteTypeCodeEnum.Travel,
   ];
+
   const captureOption = getCaptureOption.value(payment);
   if (
     isInsurer &&
@@ -2833,15 +2850,16 @@ const shouldProcessUpdate = payment => {
   ) {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
-    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    if (isTravelQuote) {
+      isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
+    } else {
+      isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    }
   }
-
   const isRenewalUploadConditionMet = () => {
     return (
-      (props.quoteRequest?.source == 'Renewal_upload' ||
-        props.isCapBtnEnabled) &&
-      (props.quoteType === quoteTypeCodeEnum.Car ||
-        props.quoteType === quoteTypeCodeEnum.Bike) &&
+      props.isCapBtnEnabled &&
+      props.quoteType === quoteTypeCodeEnum.Car &&
       isGIGProvider &&
       isAmlCleared &&
       isKycVerified() &&
@@ -2855,7 +2873,6 @@ const shouldProcessUpdate = payment => {
   if (isRenewalUploadConditionMet()) {
     return true;
   }
-
   if (captureOption === 'approve') {
     return hasPayments;
   }
@@ -3001,8 +3018,12 @@ const getCaptureOption = computed(() => {
     // Return early if there are no payments
     if (props.payments.length === 0) return;
 
-    const isCaptureButtonEnabled =
+    let isCaptureButtonEnabled =
       page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+      isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
+    }
+
     const paymentMethodCC = filterCCPayments(payment);
 
     // Check if the conditions for 'capture' are met
@@ -3012,7 +3033,7 @@ const getCaptureOption = computed(() => {
     // Return 'capture' if all conditions are met, otherwise return 'approve'
     if (
       (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
-      isCaptureButtonEnabled
+      (isCaptureButtonEnabled && hasAnyCCSplitPayment())
     ) {
       return 'capture';
     }
@@ -3459,6 +3480,9 @@ const isInsurerAmlVerified = () => {
 };
 
 const disableMainPaymentApproval = computed(() => {
+  if (props.sendUpdate) {
+    return false;
+  }
   let isAmlFailed =
     props.quoteRequest.aml_status ===
     page.props.amlStatusEnum.AMLScreeningFailed;
@@ -3528,10 +3552,6 @@ const isMultiPaymentsEnabled = ref(
   page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled || false,
 );
 
-const isGIGOrQICProvider = ref(
-  page.props?.bookPolicyDetails?.isGIGOrQICProvider || false,
-);
-
 watch(
   () => page.props?.bookPolicyDetails?.isCreditCardEnabled,
   newVal => {
@@ -3553,8 +3573,12 @@ const hasAnyCCSplitPayment = () => {
 };
 
 const isCCPaymentDisabled = option => {
+  let isCreditCardEnabled = isCCEnabled.value;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    isCreditCardEnabled = paymentMethodsForm.isCreditCardEnabled;
+  }
   return (
-    !isCCEnabled.value &&
+    !isCreditCardEnabled &&
     paymentMethodsForm.collection_type === 'insurer' &&
     option == 'CC'
   );
@@ -3594,7 +3618,11 @@ const isEditPaymentEnabled = () => {
       item.payment_method.code === 'CC',
   );
 
-  return !isMultiPaymentsEnabled.value && hasAnyAuthorizedPayment;
+  let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+  }
+  return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
 
 // voidPaymentModal
@@ -3671,7 +3699,6 @@ const fetchInsurerAMLStatus = async () => {
       },
     });
     NProgress.done();
-    console.log('insurerAMLStatus:', response.data);
     if (response.data?.status) {
       notification.error({
         title: response.data?.message,
@@ -4116,7 +4143,8 @@ onBeforeMount(() => {
                                 color="orange"
                                 outlined
                                 @click="
-                                  !isAmlVerified() || !isKycVerified()
+                                  !props.sendUpdate &&
+                                  (!isAmlVerified() || !isKycVerified())
                                     ? openAmlVerificationModal()
                                     : getCaptureValidation(item)
                                       ? editPaymentModal(item, 0, 0, 2)
@@ -5489,22 +5517,6 @@ onBeforeMount(() => {
                     <span class="text-sm">
                       <span class="text-sm">VERIFIED AT</span>
                     </span>
-                  </div>
-
-                  <div class="w-1/5 px-2">
-                    <x-tooltip>
-                      <span class="text-sm">
-                        <span
-                          class="border-b-2 border-dotted border-black text-sm"
-                          >COLLECTED AMOUNT</span
-                        >
-                      </span>
-                      <template #tooltip>
-                        <span>{{
-                          paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT
-                        }}</span>
-                      </template>
-                    </x-tooltip>
                   </div>
                 </div>
 
