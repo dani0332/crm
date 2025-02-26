@@ -101,7 +101,12 @@ class TravelRenewalService extends BaseService
         $customerService = app(CustomerService::class);
         $customer = $customerService->getCustomerByEmail($quote->customer_email);
         info(self::class . " Processing renewal for old quote. Ref-ID: {$quote->uuid}. Initiating renewal process with updated policy details. | Time:" . now());
-        $destinationIds =   collect($quote->TravelDestinations)->pluck('destination_id')->toArray() ?? $this->getDestinationId($quote->regionCoverFor);
+        $destinationIds =   collect($quote->TravelDestinations)->pluck('destination_id')->toArray();
+        if(count($destinationIds) < 1 ){
+            info(self::class . " - TravelRenewalService No destination found for Ref-ID: {$quote->uuid} | Time:" . now());
+            $destinationIds = $this->getDestinationId($quote->regionCoverFor);
+        }
+
         $members = $this->mapCustomerMembers($quote->customerMembers, $quote->primary_member_id) ?? [];
         if (! empty($quote->region_cover_for_id) &&  count($members) > 0) {
             $travelQuotePayload = (object) [
