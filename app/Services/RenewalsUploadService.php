@@ -1219,7 +1219,35 @@ class RenewalsUploadService
                             'gender' => $quote->gender,
                             'nationality_id' => $quote->nationality_id
                         ]);
-                        continue;
+
+                        // check if only one member then also create one customer member
+                        if(count($memberDobs) == 1) {
+                            $existingMembersCount = CustomerMembers::where([
+                                ['quote_id', $quote->id],
+                                ['quote_type', HealthQuote::class],
+                            ])->count();
+                            if($existingMembersCount == 1) {
+                                CustomerMembers::where([
+                                    ['quote_id', $quote->id],
+                                    ['quote_type', HealthQuote::class],
+                                ])->update([
+                                    'dob' => $quote->dob,
+                                    'first_name' => $quote->first_name,
+                                    'last_name' => $quote->last_name,
+                                    'emirate_of_your_visa_id' => $quote->emirate_of_your_visa_id,
+                                    'gender' => $quote->gender,
+                                    'nationality_id' => $quote->nationality_id,
+                                    'member_category_id' => $quote->member_category_id,
+                                    'salary_band_id' => $quote->salary_band_id
+                                ]);
+                            }
+                            if($existingMembersCount > 1) {
+                                continue;
+                            }
+                        }
+                        else {
+                            continue;
+                        }
                     }
                     $memberDetails = [
                         'emirateOfYourVisaId' => $emirates->where('text', $memberEmirateOfVisas[$index])->first()->id ?? null,
