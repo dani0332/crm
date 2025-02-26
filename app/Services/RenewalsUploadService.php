@@ -1225,7 +1225,7 @@ class RenewalsUploadService
                             $existingMembersCount = CustomerMembers::where([
                                 ['quote_id', $quote->id],
                                 ['quote_type', HealthQuote::class],
-                            ])->count();
+                            ])->whereNull('deleted_at')->count();
                             if($existingMembersCount == 1) {
                                 CustomerMembers::where([
                                     ['quote_id', $quote->id],
