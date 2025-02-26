@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
@@ -20,12 +21,14 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
+use App\Models\Payment;
 use App\Models\QuoteFlowDetails;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -233,5 +236,34 @@ class ApiController extends Controller
     public function Ken2Connectivity()
     {
         return Ken::renewalRequest('/get-connectivity-check', 'get');
+    }
+
+    public function markAutoCaptureFailed($quoteUuid, $quoteType)
+    {
+        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType);
+
+        $quote = $this->getQuoteObject($quoteType, $quoteUuid);
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->with('paymentSplits')->first();
+        }
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        if ($insuranceProvider) {
+            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.' Insurance Provider: '.$insuranceProvider->code.' Update status and lead allocate');
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.' Insurance Provider: '.$insuranceProvider->code.' status updated and allocation triggered');
+
+            return response()->json(['status' => true, 'message' => 'Auto Capture Failed status updated and Lead allocation is triggered successfully']);
+        }
+
+        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.' Insurance Provider: '.$insuranceProvider?->code.' status update and allocation failed');
+
+        return response()->json(['success' => false, 'message' => 'Status update and lead allocation failed']);
     }
 }
