@@ -1530,7 +1530,7 @@ if (! function_exists('getInsuranceProvider')) {
     function getInsuranceProvider($payment, $quoteType, $quote = null)
     {
         $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value,QuoteTypes::HOME->value];
         $planRelationName = strtolower($quoteType).'Plan';
 
         //        Reminder:: Add Commercial vehicle logic for fetch correct provider
@@ -1559,9 +1559,9 @@ if (! function_exists('getInsuranceProvider')) {
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
         }
 
-        if (ucfirst($quoteType) == QuoteTypes::HOME->value) {
-            $insuranceProvider = $quote?->insuranceProvider;
-        }
+        // if (ucfirst($quoteType) == QuoteTypes::HOME->value) {
+        //     $insuranceProvider = $quote?->insuranceProvider;
+        // }
 
         if (! $insuranceProvider) {
             $insuranceProvider = $payment?->insuranceProvider;
