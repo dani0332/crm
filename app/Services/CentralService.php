@@ -40,6 +40,7 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteExportLog;
+use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
@@ -1131,7 +1132,7 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
-    public function prepareBirdData($quote, $quoteTypeId, $sendUpdateLog = null)
+    public function prepareBirdData($quote, $quoteTypeId, $sendUpdateLog = null, $existingEmailData = null)
     {
         if ($sendUpdateLog) {
             $workflowType = 'SU_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_UPDATE';
@@ -1139,6 +1140,43 @@ class CentralService extends BaseService
 
             return $this->prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType);
         }
+
+        $workflowType = strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_NEW_POLICY';
+        $workflowType = constant("App\Enums\WorkflowTypeEnum::{$workflowType}");
+
+        return $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData);
+    }
+
+    public function preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData)
+    {
+        $emailData = (object) [
+            'advisorEmail' => $quote->advisor->email ?? '',
+            'advisorLandLine' => $quote->advisor->landline_no ?? '',
+            'advisorMobilePhone' => $quote->advisor->mobile_no ?? '',
+            'advisorName' => $quote->advisor->name ?? '',
+            'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
+            'appLink' => $existingEmailData->appDownloadLink ?? '',
+            'customerFullName' => $quote->first_name.' '.$quote->last_name,
+            'policyNumber' => $quote->policy_number ?? '',
+            'policyPeriodStart' => Carbon::parse($quote->policy_start_date)->format('d-M-Y'),
+            'policyPeriodEnd' => Carbon::parse($quote->policy_expiry_date)->format('d-M-Y'),
+            'refID' => $quote->code,
+            'rtaPortalLink' => 'https://vls.rta.ae/renewal/identityVerification',
+            'customerEmail' => $quote->email,
+            'workflowType' => $workflowType,
+        ];
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Car])) {
+            $emailData->assistanceNumber = $existingEmailData->roadsideAssistance;
+            $emailData->carDetails = $quote->carMake->text.' '.$quote->carModel->text.' '.$quote->carModelDetail->text;
+            $emailData->insuranceCompany = $existingEmailData->currentInsurer;
+            $customer = $quote->customer->insured;
+            $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
+            $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '';
+            $emailData->quoteUID = $quote->uuid;
+        }
+
+        return $emailData;
     }
 
     public function prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType)
@@ -1217,5 +1255,62 @@ class CentralService extends BaseService
         // $emailData->documentUrl
 
         return [1, $emailData, 'send-update', $quoteTypeId];
+    }
+
+    public function sendInslyEmailToCustomer($sendUpdate, $emailData, $quoteTypeId, $emailType = '')
+    {
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
+            $birdUrlKey = 'BIRD_MOTOR_SEND_UPDATE';
+        } else {
+            $birdUrlKey = "BIRD_{$quoteType}_SEND_UPDATE";
+        }
+        try {
+            info("Sending {$quoteType} followups email for {$emailType} uuid: ".$sendUpdate->uuid.' | Time: '.now());
+            $birdUrlKey = constant("App\Enums\ApplicationStorageEnums::{$birdUrlKey}");
+
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            if ($birdUrl) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
+                info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$sendUpdate->uuid} |Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($sendUpdate, $response, $quoteTypeId);
+                }
+            } else {
+                info("{$birdUrlKey} key not found for {$emailType} uuid: {$sendUpdate->uuid} |Time: ".now());
+            }
+
+            return $response?->status_code ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$sendUpdate->uuid} | Time: ".now();
+            info($errorMessage);
+            info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$sendUpdate->uuid} | Time: ".now());
+        }
+    }
+
+    public function createQuoteFlowDetails($lead, $response, $quoteTypeId)
+    {
+        try {
+            $flowType = 'SU_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_UPDATE';
+            $flowType = constant("App\Enums\QuoteFlowType::{$flowType}");
+
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (! empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => $quoteTypeId,
+                    'flow_type' => $flowType,
+                    'flow_id' => $runId,
+                ]);
+                info("SendUpdate  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            } else {
+                info("SendUpdate  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Exception $ex) {
+            $errorMessage = "SendUpdate-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            info($errorMessage);
+            info("SendUpdate-Error: {$ex->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+        }
     }
 }

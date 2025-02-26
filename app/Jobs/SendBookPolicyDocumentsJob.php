@@ -5,11 +5,13 @@ namespace App\Jobs;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\ApplicationStorage;
 use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\ActivitiesService;
+use App\Services\CentralService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -157,7 +159,15 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-            $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
+            if (in_array($quoteTypeId, [QuoteTypeId::Car])) {
+                $emailData = app(CentralService::class)->prepareBirdData(quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $emailData);
+
+                if (! empty($emailData)) {
+                    $response = app(CentralService::class)->sendInslyEmailToCustomer($quote, $emailData, $quoteTypeId, 'Main Lead');
+                }
+            } else {
+                $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
+            }
             info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
         }
 
