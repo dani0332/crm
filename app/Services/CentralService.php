@@ -1008,11 +1008,25 @@ class CentralService extends BaseService
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
                 if (app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote)) {
+                    $oldQuoteStatus = $quote->quote_status_id;
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
                         'policy_issuance_status_other' => '',
                     ]);
+
+                    if($quote->isDirty('quote_status_id')){
+                        info('Quote code: '.$quote->code.' - Quote status updated from '.$oldQuoteStatus.' to '.$quote->quote_status_id);
+                        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+                        QuoteStatusLog::create([
+                            'quote_type_id' => $quoteTypeId,
+                            'quote_request_id' => $quote->id,
+                            'current_quote_status_id' => $quote->quote_status_id,
+                            'previous_quote_status_id' => $oldQuoteStatus,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now(),
+                        ]);
+                    }
                 }
                 info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
