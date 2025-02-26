@@ -249,4 +249,9 @@ class Payment extends Model implements Auditable
     {
         return $this->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP;
     }
+
+    public function homePlan()
+    {
+        return $this->belongsTo(PersonalPlan::class, 'plan_id');
+    }
 }
