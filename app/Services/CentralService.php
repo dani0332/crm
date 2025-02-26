@@ -1015,8 +1015,8 @@ class CentralService extends BaseService
                         'policy_issuance_status_other' => '',
                     ]);
 
-                    info('Quote code: '.$quote->code.' - Quote status updated from '.$oldQuoteStatus.' to '.$quote->quote_status_id);
 
+                    info('Quote code: '.$quote->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quote->quote_status_id);
                     if($oldQuoteStatus != $quote->quote_status_id) {
                         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
                         QuoteStatusLog::create([
