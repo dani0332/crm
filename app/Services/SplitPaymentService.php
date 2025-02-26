@@ -801,6 +801,7 @@ class SplitPaymentService
     {
         DB::beginTransaction();
         try {
+            $oldQuoteStatus = null;
             if ($sendUpdateId > 0) {
                 $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
             } else {
@@ -865,7 +866,7 @@ class SplitPaymentService
                 }
                 $quoteModel->save();
                 info('Quote code: '.$quoteModel->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quoteModel->quote_status_id);
-                if ($quoteModel->quote_status_id != $oldQuoteStatus && ! $sendUpdateId) {
+                if (! $sendUpdateId && $oldQuoteStatus != null && $quoteModel->quote_status_id != $oldQuoteStatus) {
                     QuoteStatusLog::create([
                         'quote_type_id' => $quoteTypeId,
                         'quote_request_id' => $quoteModel->id,
