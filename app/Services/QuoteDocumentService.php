@@ -731,4 +731,14 @@ class QuoteDocumentService extends BaseService
 
         return $encodedUrl;
     }
+
+    public function isDocumentExists($quoteType, $quoteId, $documentType)
+    {
+        $quoteModel = 'App\\Models\\'.ucfirst($quoteType).'Quote';
+
+        return QuoteDocument::where('quote_documentable_type', $quoteModel)
+            ->where('quote_documentable_id', $quoteId)
+            ->where('document_type_code', $documentType)
+            ->exists();
+    }
 }
