@@ -1170,7 +1170,7 @@ class CentralService extends BaseService
             $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '';
         }
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business])) {
             $customer = $quote->customer->insured;
             $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
             $emailData->quoteUID = $sendUpdateLog->quote_uuid;
@@ -1207,6 +1207,11 @@ class CentralService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Home) {
             // need to confirm.
             $emailData->homeDetails = $quote->address;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            $emailData->companyName = $quote->company_name;
+            $emailData->details = $quote->brief_details;
         }
 
         // $emailData->documentUrl
