@@ -130,7 +130,7 @@ const filteredTableHeader = computed(() => {
     filteredHeader = filteredHeader.filter(
       column =>
         column.value !== 'vehicle_use'
-        && column.value !== 'company_name'
+        && column.value !== 'car_company_name'
     );
   }
 
