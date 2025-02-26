@@ -864,7 +864,7 @@ class SplitPaymentService
 
                 }
                 $quoteModel->save();
-                if ($quoteModel->isDirty('quote_status_id') && ! $sendUpdateId) {
+                if ($quoteModel->quote_status_id != $oldQuoteStatus && ! $sendUpdateId) {
                     info('Quote code: '.$quoteModel->code.' - Quote status updated from '.$oldQuoteStatus.' to '.$quoteModel->quote_status_id);
                     QuoteStatusLog::create([
                         'quote_type_id' => $quoteTypeId,
