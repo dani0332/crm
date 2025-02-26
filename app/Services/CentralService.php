@@ -1032,6 +1032,7 @@ class CentralService extends BaseService
     {
         // Retrieve necessary IDs from the quote object
         $businessTypeId = $quote->business_type_of_insurance_id ?? null;
+
         $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
         if ($payment && in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
             $planId = $payment->plan_id ?? null;
@@ -1042,7 +1043,6 @@ class CentralService extends BaseService
 
         // Get insurance provider details
         $insuranceProvider = getInsuranceProvider($payment, $quoteType, $quote);
-
         $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
 
         // Get broker commission details

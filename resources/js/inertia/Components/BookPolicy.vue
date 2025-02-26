@@ -1049,10 +1049,7 @@ const isDisabledSendPCB = computed(() => {
                         @change="calculateCommission"
                         placeholder="Commission VAT APPLICABLE"
                         class="w-full"
-                        :disabled="
-                          disableCommissionVatApplicable ||
-                          bpForm.isCommissionDisabled
-                        "
+                        :disabled="disableCommissionVatApplicable"
                       />
                       <div
                         v-if="
