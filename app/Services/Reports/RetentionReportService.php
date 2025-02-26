@@ -75,6 +75,44 @@ class RetentionReportService extends BaseService
         ];
     }
 
+    private function getPolicyBookedStatuses()
+    {
+        return [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED];
+    }
+
+    private function getSalesQuery($asAtDate)
+    {
+        $bookedStatuses = implode(',', $this->getPolicyBookedStatuses());
+        $cancelledStatuses = implode(',', [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]);
+        $policyBooked = QuoteStatusEnum::PolicyBooked;
+
+        $queryTemplate = '
+            SUM(
+                CASE
+                    WHEN quote_status_id IN (:bookingStatuses) {dateCondition} THEN 1
+                    WHEN quote_status_id IN (:cancelledStatuses)
+                        AND EXISTS (
+                            SELECT 1 FROM quote_status_log qsl
+                            WHERE qsl.quote_type_id = personal_quotes.quote_type_id
+                            AND qsl.quote_request_id = personal_quotes.id
+                            AND qsl.previous_quote_status_id = :policyBooked
+                            AND qsl.current_quote_status_id = personal_quotes.quote_status_id
+                        ) THEN 1
+                    ELSE 0
+                END
+            ) as sales
+        ';
+
+        $dateCondition = $asAtDate ? "AND personal_quotes.policy_booking_date <= '{$asAtDate}'" : '';
+
+        return strtr($queryTemplate, [
+            '{dateCondition}' => $dateCondition,
+            ':bookingStatuses' => $bookedStatuses,
+            ':cancelledStatuses' => $cancelledStatuses,
+            ':policyBooked' => $policyBooked,
+        ]);
+    }
+
     /**
      * Builds the query for retrieving retention report data based on the provided model and request parameters.
      *
@@ -84,23 +122,16 @@ class RetentionReportService extends BaseService
     {
         $asAtDate = isset($request['asAtDate']) ? Carbon::parse($request['asAtDate'])->endOfDay() : null;
 
-        $getSalesSumQuery = function () use ($asAtDate) {
-            $bookedStatus = QuoteStatusEnum::PolicyBooked;
-            if ($asAtDate) {
-                return "SUM(CASE WHEN quote_status_id = {$bookedStatus} AND personal_quotes.policy_booking_date <= '{$asAtDate}' THEN 1 ELSE 0 END) as sales";
-            }
-
-            return "SUM(CASE WHEN quote_status_id = {$bookedStatus} THEN 1 ELSE 0 END) as sales";
-        };
+        $policyCanceledAndReissued = QuoteStatusEnum::PolicyCancelledReissued;
 
         // Initialize the query with the necessary select statements and joins
         $query = PersonalQuote::query()
             ->selectRaw("renewal_batch_id, renewal_batch, MONTHNAME({$this->monthColumnName}) as `month`,
             users.name as `advisor_name`,
-            COUNT(DISTINCT(personal_quotes.id)) AS total,
+            COUNT(DISTINCT(personal_quotes.id)) - SUM(CASE WHEN personal_quotes.quote_status_id = {$policyCanceledAndReissued} THEN 1 ELSE 0 END) AS total,
             SUM(CASE WHEN quote_status_id = ".QuoteStatusEnum::Lost.' THEN 1 ELSE 0 END) as lost,
             SUM(CASE WHEN quote_status_id IN ('.QuoteStatusEnum::Fake.', '.QuoteStatusEnum::Duplicate.") THEN 1 ELSE 0 END) as invalid,
-            {$getSalesSumQuery()},
+            {$this->getSalesQuery($asAtDate)},
             advisor_id")
             ->join('users', 'advisor_id', '=', 'users.id');
         // Apply general filters to the query based on the request parameters
@@ -222,7 +253,7 @@ class RetentionReportService extends BaseService
                     break;
                 case RetentionReportEnum::SALES:
                     // Filter for sales (policy booked)
-                    $query->where('quote_status_id', QuoteStatusEnum::PolicyBooked);
+                    $query->whereIn('quote_status_id', $this->getPolicyBookedStatuses());
                     break;
             }
         }
