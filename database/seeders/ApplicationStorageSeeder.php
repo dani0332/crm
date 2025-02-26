@@ -274,5 +274,24 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::GROUP_MEDICAL_MICRO_ADVISORS],
+            [
+                'value' => 'loren.fronda@insurancemarket.ae,amandeep.bindra@insurancemarket.ae,ashfaq.mohammed@insurancemarket.ae,sumit.kumar@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::GROUP_MEDICAL_NON_MICRO_ADVISORS],
+            [
+                'value' => 'ali.riaz@insurancemarket.ae,tarique.mahar@insurancemarket.ae,vipin.das@insurancemarket.ae,umar.khan@insurancemarket.ae,sudhir.veedu@insurancemarket.ae,quinn.menezes@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }
