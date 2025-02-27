@@ -140,9 +140,15 @@ class TravelRenewalService extends BaseService
             TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
             info(self::class." - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid} | Time:".now());
         } else {
-            info(self::class.' - TravelRenewalService No destination '.count($destinationIds)." found for Ref-ID: {$quote->uuid} | Time:".now());
-            info(self::class." - region_cover_for_id is empty for Ref-ID: {$quote->uuid} | Time:".now());
-            info(self::class.' - members '.count($members)."  is empty for Ref-ID: {$quote->uuid} | Time:".now());
+            $logData = [
+                'message' => 'TravelRenewalService No destination or members found',
+                'destination_count' => count($destinationIds),
+                'quote_ref_id' => $quote->uuid,
+                'region_cover_for_id' => $quote->region_cover_for_id,
+                'members_count' => count($members),
+                'time' => now(),
+            ];
+            info(self::class.' - '.json_encode($logData) . ' | Time: '.now());
         }
     }
     public function getDestinationId($regionCoverFor)
