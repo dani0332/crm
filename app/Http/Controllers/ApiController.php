@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class ApiController extends Controller
 {
@@ -113,5 +114,91 @@ class ApiController extends Controller
         ];
 
         return response()->json($error, $status);
+    }
+
+    public function duplicateEntires()
+    {
+        DB::table('car_quote_request_detail_duplicate')
+        ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
+        ->groupBy('car_quote_request_id')
+        ->havingRaw('COUNT(*) > 1')
+        ->whereNull('is_deleted')
+        ->orderBy('car_quote_request_id')
+        ->chunk(1000, function ($duplicates) {
+
+            $allIds = $duplicates->pluck('ids')
+            ->map(fn($ids) => explode(',', $ids))
+            ->flatten()
+            ->unique()
+            ->values()
+            ->toArray();
+
+            $mainQuery = DB::table('car_quote_request_detail_duplicate')
+            ->whereIn('id', $allIds)->whereNull('is_deleted')->get();
+            
+            $lastGroupArray = [];
+            
+            foreach ($duplicates as $group) {
+            
+                $query = $mainQuery->whereIn('id', explode(',', $group->ids));
+    
+                $latestUpdatedRecord = $query->sortByDesc('updated_at')->first();
+        
+                $lastId = $latestUpdatedRecord->id;
+                $lastRecordData = (array) $latestUpdatedRecord;
+
+                $filteredRecords = $query->filter(function ($record) use ($lastId) {
+                    return $record->id != $lastId;
+                })->values();
+                
+                $updatedData = [];
+                
+                $recentAdvisorData = $query->sortByDesc('advisor_assigned_date')->first();
+
+                if ($recentAdvisorData && !empty($recentAdvisorData)) {
+                    $updatedData['advisor_assigned_by_id'] = $recentAdvisorData->advisor_assigned_by_id;
+                    $updatedData['advisor_assigned_date'] = $recentAdvisorData->advisor_assigned_date;
+                }
+ 
+                foreach ($filteredRecords as $record) {
+                    $currentRecord = (array) $record;
+
+                    foreach ($lastRecordData as $column => $lastValue) {
+                        if (!in_array($column, ['id', 'created_at', 'updated_at', 'car_quote_request_id', 'advisor_assigned_date', 'advisor_assigned_by_id'])) {
+                            if ((empty($lastValue) || is_null($lastValue)) 
+                                && !empty($currentRecord[$column]) 
+                                && !is_null($currentRecord[$column]) 
+                                && !array_key_exists($column, $updatedData)) {
+
+                                $updatedData[$column] = $currentRecord[$column];
+                            }
+                        }
+                    }
+                }
+
+                $updatedData = $updatedData + array_diff_key($lastRecordData, $updatedData);
+
+                DB::table('car_quote_request_detail_duplicate')
+                    ->where('id', $lastId)
+                    ->update($updatedData);
+
+                $array = explode(',', $group->ids);
+                $filteredArray  = array_diff($array, [$lastId]);
+                $lastGroupArray[] = implode(',', $filteredArray);      
+            }
+
+            $deleteAt = collect($lastGroupArray)
+            ->map(fn($ids) => explode(',', $ids))
+            ->flatten()
+            ->unique()
+            ->values()
+            ->toArray();
+
+            DB::table('car_quote_request_detail_duplicate')
+            ->whereIn('id', $deleteAt)
+            ->update(['is_deleted' => true]);
+
+            sleep(1);
+        });
     }
 }
