@@ -8,9 +8,11 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\WatermarkDocTypesEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
@@ -26,8 +28,6 @@ use Intervention\Image\ImageManager;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
-use App\Enums\WorkflowTypeEnum;
-use App\Enums\QuoteTypes;
 
 class QuoteDocumentService extends BaseService
 {
@@ -205,7 +205,7 @@ class QuoteDocumentService extends BaseService
                 'created_by_id' => auth()->id(),
             ]);
 
-            if(ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value   && $documentType->code == DocumentTypeCode::TRVLPAS) {
+            if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
                 SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
                 info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
