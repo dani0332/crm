@@ -453,7 +453,7 @@ class HealthQuoteController extends Controller
         ->havingRaw('COUNT(*) > 1')
         ->whereNull('is_deleted')
         ->orderBy('car_quote_request_id')
-        ->chunk(3, function ($duplicates) {
+        ->chunk(1000, function ($duplicates) {
 
             $allIds = $duplicates->pluck('ids')
             ->map(fn($ids) => explode(',', $ids))
@@ -526,7 +526,7 @@ class HealthQuoteController extends Controller
             DB::table('car_quote_request_detail_duplicate')
             ->whereIn('id', $deleteAt)
             ->update(['is_deleted' => true]);
-            
+
             sleep(1);
         });
     }
