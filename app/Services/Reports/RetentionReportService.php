@@ -23,6 +23,7 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RetentionReportService extends BaseService
 {
@@ -81,6 +82,11 @@ class RetentionReportService extends BaseService
         return [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED];
     }
 
+    private function getPolicyCancelledStatuses()
+    {
+        return [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending];
+    }
+
     private function getSalesQuery($asAtDate, $quoteType)
     {
         $quoteType = QuoteTypes::from($quoteType);
@@ -89,7 +95,7 @@ class RetentionReportService extends BaseService
         $isPersonalQuote = $quoteType->isPersonalQuote();
 
         $bookedStatuses = implode(',', $this->getPolicyBookedStatuses());
-        $cancelledStatuses = implode(',', [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending]);
+        $cancelledStatuses = implode(',', $this->getPolicyCancelledStatuses());
         $policyBooked = QuoteStatusEnum::PolicyBooked;
 
         if ($isPersonalQuote) {
@@ -270,8 +276,36 @@ class RetentionReportService extends BaseService
                     $query->whereIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
                     break;
                 case RetentionReportEnum::SALES:
-                    // Filter for sales (policy booked)
+                    $quoteType = QuoteTypes::from($this->getQuoteType($filters));
+
                     $query->whereIn('quote_status_id', $this->getPolicyBookedStatuses());
+
+                    $query->orWhere(function ($subQuery) use ($quoteType) {
+                        $tableName = $quoteType->model()->getTable();
+                        $isPersonalQuote = $quoteType->isPersonalQuote();
+                        $cancelledStatuses = $this->getPolicyCancelledStatuses();
+                        $policyBooked = QuoteStatusEnum::PolicyBooked;
+
+                        if ($isPersonalQuote) {
+                            $quoteRequestCondition = 'qsl.quote_request_id = personal_quotes.id';
+                        } else {
+                            $quoteRequestCondition = "qsl.quote_request_id = (
+                                SELECT id FROM {$tableName}
+                                WHERE personal_quote_id = personal_quotes.id
+                                LIMIT 1
+                            )";
+                        }
+
+                        $subQuery->whereIn('quote_status_id', $cancelledStatuses)
+                            ->whereExists(function ($existsQuery) use ($quoteRequestCondition, $policyBooked) {
+                                $existsQuery->select(DB::raw(1))
+                                    ->from('quote_status_log as qsl')
+                                    ->whereRaw('qsl.quote_type_id = personal_quotes.quote_type_id')
+                                    ->whereRaw($quoteRequestCondition)
+                                    ->where('qsl.previous_quote_status_id', $policyBooked)
+                                    ->whereRaw('qsl.current_quote_status_id = personal_quotes.quote_status_id');
+                            });
+                    });
                     break;
             }
         }
