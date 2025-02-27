@@ -447,62 +447,87 @@ class HealthQuoteController extends Controller
 
     public function duplicateEntires()
     {
-        $duplicates = DB::table('car_quote_request_detail_duplicate')
+        DB::table('car_quote_request_detail_duplicate')
         ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
         ->groupBy('car_quote_request_id')
         ->havingRaw('COUNT(*) > 1')
-        ->get();
+        ->whereNull('is_deleted')
+        ->orderBy('car_quote_request_id')
+        ->chunk(3, function ($duplicates) {
 
-        foreach ($duplicates as $group) {
-            $ids = explode(',', $group->ids);
+            $allIds = $duplicates->pluck('ids')
+            ->map(fn($ids) => explode(',', $ids))
+            ->flatten()
+            ->unique()
+            ->values()
+            ->toArray();
+
+            $mainQuery = DB::table('car_quote_request_detail_duplicate')
+            ->whereIn('id', $allIds)->whereNull('is_deleted')->get();
             
-            $latestUpdatedRecord = DB::table('car_quote_request_detail_duplicate')
-                ->whereIn('id', $ids)
-                ->orderby('updated_at', 'desc')
-                ->first();
+            $lastGroupArray = [];
             
-            $lastId = $latestUpdatedRecord->id;
-            $lastRecordData = (array) $latestUpdatedRecord;
+            foreach ($duplicates as $group) {
+            
+                $query = $mainQuery->whereIn('id', explode(',', $group->ids));
+    
+                $latestUpdatedRecord = $query->sortByDesc('updated_at')->first();
+        
+                $lastId = $latestUpdatedRecord->id;
+                $lastRecordData = (array) $latestUpdatedRecord;
 
-            $records = DB::table('car_quote_request_detail_duplicate')
-            ->whereIn('id', $ids)
-            ->where('id', '!=' , $lastId)
-            ->get();
-
-            $updatedData = [];
-
-            $recentAdvisorData = DB::table('car_quote_request_detail_duplicate')
-                ->whereIn('id', $ids)
-                ->orderBy('advisor_assigned_date', 'desc')
-                ->first(['advisor_assigned_by_id', 'advisor_assigned_date']);
+                $filteredRecords = $query->filter(function ($record) use ($lastId) {
+                    return $record->id != $lastId;
+                })->values();
                 
+                $updatedData = [];
+                
+                $recentAdvisorData = $query->sortByDesc('advisor_assigned_date')->first();
 
-            if ($recentAdvisorData && !empty($recentAdvisorData)) {
-                $updatedData['advisor_assigned_by_id'] = $recentAdvisorData->advisor_assigned_by_id;
-                $updatedData['advisor_assigned_date'] = $recentAdvisorData->advisor_assigned_date;
-            }
+                if ($recentAdvisorData && !empty($recentAdvisorData)) {
+                    $updatedData['advisor_assigned_by_id'] = $recentAdvisorData->advisor_assigned_by_id;
+                    $updatedData['advisor_assigned_date'] = $recentAdvisorData->advisor_assigned_date;
+                }
+ 
+                foreach ($filteredRecords as $record) {
+                    $currentRecord = (array) $record;
 
-            foreach ($records as $record) {
-                $currentRecord = (array) $record;
+                    foreach ($lastRecordData as $column => $lastValue) {
+                        if (!in_array($column, ['id', 'created_at', 'updated_at', 'car_quote_request_id', 'advisor_assigned_date', 'advisor_assigned_by_id'])) {
+                            if ((empty($lastValue) || is_null($lastValue)) 
+                                && !empty($currentRecord[$column]) 
+                                && !is_null($currentRecord[$column]) 
+                                && !array_key_exists($column, $updatedData)) {
 
-                foreach ($lastRecordData as $column => $lastValue) {
-                    if (!in_array($column, ['id', 'created_at', 'updated_at', 'car_quote_request_id', 'advisor_assigned_date', 'advisor_assigned_by_id'])) {
-                        if ((empty($lastValue) || is_null($lastValue)) 
-                            && !empty($currentRecord[$column]) 
-                            && !is_null($currentRecord[$column]) 
-                            && !array_key_exists($column, $updatedData)) {
-
-                            $updatedData[$column] = $currentRecord[$column];
+                                $updatedData[$column] = $currentRecord[$column];
+                            }
                         }
                     }
                 }
+
+                $updatedData = $updatedData + array_diff_key($lastRecordData, $updatedData);
+
+                DB::table('car_quote_request_detail_duplicate')
+                    ->where('id', $lastId)
+                    ->update($updatedData);
+
+                $array = explode(',', $group->ids);
+                $filteredArray  = array_diff($array, [$lastId]);
+                $lastGroupArray[] = implode(',', $filteredArray);      
             }
 
-            $updatedData = $updatedData + array_diff_key($lastRecordData, $updatedData);
+            $deleteAt = collect($lastGroupArray)
+            ->map(fn($ids) => explode(',', $ids))
+            ->flatten()
+            ->unique()
+            ->values()
+            ->toArray();
 
             DB::table('car_quote_request_detail_duplicate')
-                ->where('id', $lastId)
-                ->update($updatedData);
-        }
+            ->whereIn('id', $deleteAt)
+            ->update(['is_deleted' => true]);
+            
+            sleep(1);
+        });
     }
 }
