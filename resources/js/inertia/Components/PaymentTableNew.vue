@@ -1983,7 +1983,7 @@ const processPaymentSplits = payment => {
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = split.payment_method.code;
     splitAmountModels.value[i] = split.payment_amount;
-    if(i === 1) {
+    if(i === insurerPaymentLinkIndex.value){ 
       paymentMethodsForm.insurerPaymentLink = split.insurer_payment_link;
     }
     dueDateModels.value[i] = split.due_date
@@ -2340,7 +2340,6 @@ const addPayment = (isValid) => {
     total_price: totalPrice.value,
     discount_value: discountValue.value, // discount amount
   };
-
   let splitPayments = [];
   for (let i = 1; i < splitAmountModels.value.length; i++) {
     if (i <= paymentMethodsForm.payment_no) {
@@ -2354,9 +2353,11 @@ const addPayment = (isValid) => {
         check_detail: checkDetailModels.value[i],
       };
       if (i === 1) {
+        splitPayments[i]['discount_documents'] = discountDocumentModel.value;
+      }
+      if (i === insurerPaymentLinkIndex.value) {
         // Todo: For time being only saving insurer_payment_link for only first split payment
         splitPayments[i]['insurer_payment_link'] = paymentMethodsForm.insurerPaymentLink;
-        splitPayments[i]['discount_documents'] = discountDocumentModel.value;
       }
     }
   }
@@ -2441,7 +2442,6 @@ const addPayment = (isValid) => {
   }
 
   if (paymentMethodsForm.status === 'edit') {
-    debugger;
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
       isPolicyIssuanceDiscount.value === false &&
@@ -3036,6 +3036,13 @@ const fetchPlans = () => {
       console.log(err);
     });
 };
+
+const insurerPaymentLinkIndex = computed(() => {
+  var insurerPaymentIndex = paymentMethodsModels.value.findIndex((item) => {
+    return item === page.props.paymentMethodsEnum?.InsurerPaymentLink;
+  });
+  return insurerPaymentIndex;
+});
 
 // Watch for changes in the modal's state
 watch(createPaymentModal, async (newVal, oldVal) => {
@@ -4982,10 +4989,10 @@ onBeforeMount(() => {
                   </span>
                 </x-field>
               </div>
-              <div class="col-span-2" v-if="paymentMethodsModels[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink ">
+              <div class="col-span-2" v-if="insurerPaymentLinkIndex >= 0">
                 <x-tooltip>
                   <span class="border-b-2 border-dotted border-black text-sm"
-                    >INSURER PAYMENT LINK - {{ paymentMethodsModels[1] }}</span
+                    >INSURER PAYMENT LINK - {{ paymentMethodsModels[insurerPaymentLinkIndex] }}</span
                   >
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_LIST_IPL }}</span>
@@ -4993,7 +5000,7 @@ onBeforeMount(() => {
                 </x-tooltip>
                 <x-field class="w-full">
                   <span v-if="isFieldReadonly">
-                    {{ paymentMethodsModels[1] }}
+                    {{ paymentMethodsModels[insurerPaymentLinkIndex] }}
                   </span>
                   <x-input
                     v-if="!isFieldReadonly"
@@ -6176,7 +6183,7 @@ onBeforeMount(() => {
             </template>
             <template v-else>
               <div class="w-full md:col-span-4 flex justify-end">
-                <div v-if="paymentMethodsForm.status == 'edit' && paymentMethodsModels[1] !== page.props.paymentMethodsEnum?.InsurerPaymentLink" class="mr-4">
+                <div v-if="paymentMethodsForm.status == 'edit' && insurerPaymentLinkIndex < 0" class="mr-4">
                   <x-button
                     @click="createPaymentModal = !createPaymentModal"
                     tabindex="0"
@@ -6187,7 +6194,7 @@ onBeforeMount(() => {
                 </div>
                 <div
                   v-if="
-                    paymentMethodsModels[1] !== page.props.paymentMethodsEnum?.InsurerPaymentLink &&
+                    insurerPaymentLinkIndex < 0 &&
                    ( paymentMethodsForm.status == 'create' ||
                     paymentMethodsForm.status == 'edit')
                   "
@@ -6206,7 +6213,7 @@ onBeforeMount(() => {
                     }}
                   </x-button>
                 </div>
-                <template v-if="paymentMethodsModels[1] === page.props.paymentMethodsEnum?.InsurerPaymentLink">
+                <template v-if="paymentMethodsModels[insurerPaymentLinkIndex] === page.props.paymentMethodsEnum?.InsurerPaymentLink">
                   <InsurerPaymentLink ref="insurerPaymentComponent" :paymentForm="paymentMethodsForm" :payments="payments" @updateOnParent="(e,f,g) => updateFromInsurerPaymentLink(e, f, g)"/>
                 </template>
               </div>

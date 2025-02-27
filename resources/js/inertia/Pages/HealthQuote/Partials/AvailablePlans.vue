@@ -158,6 +158,7 @@ const selectedCopay = ref([]);
 const defaultCopayId = ref(props.plan?.selectedCopayId);
 
 const onCoPaySelect = copayId => {
+  debugger;
   props.plan.ratesPerCopay?.forEach(element => {
     if (element.healthPlanCoPaymentId == copayId) {
       let copayDetails = {
@@ -275,6 +276,7 @@ const vatAmount = ref(0);
 const loadingPriceBeingUpdated = ref(false);
 
 const handleLoadingPrice = (event, memberId) => {
+  debugger;
   loadingPriceBeingUpdated.value = true;
   const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
   if (index > -1) {
@@ -321,6 +323,7 @@ const memberIndexPerId = id => {
 };
 
 const updateGeneralInfo = () => {
+  debugger;
   //   if (confirm('Do you want to update this values?')) {
   totalLoadingPrice.value = 0;
   if (loadingPrices.value.length > 0) {
@@ -335,6 +338,7 @@ const updateGeneralInfo = () => {
 };
 
 const onLoadingPricesUpdate = (member, updateManual = 1) => {
+  debugger;
   updateGeneralInfo();
   const memberData = {
     quoteUID: usePage().props.quote.uuid,
@@ -426,6 +430,7 @@ const markMemberBasePriceRevise = (event, id) => {
 };
 
 onUpdated(() => {
+  debugger;
   defaultCopayId.value = props.plan?.selectedCopayId;
   hidePlan.value = props.plan?.isHidden;
   loadingPrices.value = [];
@@ -439,87 +444,41 @@ onUpdated(() => {
 
   props.plan?.memberPremiumBreakdown?.forEach(members => {
     members?.ratesPerCopay?.forEach(data => {
-      if (
-        data.healthPlanCoPaymentId == selectedCopay.value.id &&
-        (!data.premium || data.premium == undefined)
-      ) {
+      const isSelectedCopayMatch = data.healthPlanCoPaymentId === selectedCopay.value?.id;
+      const isDefaultCopayMatch = (selectedCopay.value === undefined || 
+                                selectedCopay.value?.length === 0) && 
+                                data.healthPlanCoPaymentId === defaultCopayId.value;
+      
+      // Handle premium calculations
+      const premiumValue = data.premium ?? 0;
+      if (isDefaultCopayMatch) {
         manualPlansMembersPremium.value.push({
           memberId: members.memberId,
-          premium: 0,
+          premium: premiumValue,
         });
-      } else if (
-        data.healthPlanCoPaymentId == selectedCopay.value.id &&
-        data.premium != undefined
-      ) {
+      } else if (isSelectedCopayMatch) {
         manualPlansMembersPremium.value.push({
           memberId: members.memberId,
-          premium: data.premium,
-        });
-      } else if (
-        (selectedCopay.value === undefined ||
-          selectedCopay.value.length == 0) &&
-        data.healthPlanCoPaymentId == defaultCopayId.value &&
-        (!data.premium || data.premium == undefined)
-      ) {
-        manualPlansMembersPremium.value.push({
-          memberId: members.memberId,
-          premium: 0,
-        });
-      } else if (
-        (selectedCopay.value === undefined ||
-          selectedCopay.value.length == 0) &&
-        data.healthPlanCoPaymentId == defaultCopayId.value &&
-        data.premium != undefined
-      ) {
-        manualPlansMembersPremium.value.push({
-          memberId: members.memberId,
-          premium: 0,
+          premium: premiumValue,
         });
       }
 
-      if (
-        data.healthPlanCoPaymentId == selectedCopay.value.id &&
-        data.loadingPrice != undefined
-      ) {
+      // Handle loading prices
+      const loadingPriceValue = data.loadingPrice ?? 0;
+      if (isDefaultCopayMatch) {
         loadingPrices.value.push({
           memberId: members.memberId,
-          price: data.loadingPrice,
+          price: loadingPriceValue,
         });
-      } else if (
-        data.healthPlanCoPaymentId == selectedCopay.value.id &&
-        data.loadingPrice == undefined
-      ) {
+      } else if (isSelectedCopayMatch) {
         loadingPrices.value.push({
           memberId: members.memberId,
-          price: 0,
-        });
-      } else if (
-        (selectedCopay.value === undefined ||
-          selectedCopay.value.length == 0) &&
-        data.healthPlanCoPaymentId == defaultCopayId.value &&
-        data.loadingPrice != undefined
-      ) {
-        loadingPrices.value.push({
-          memberId: members.memberId,
-          price: data.loadingPrice,
-        });
-      } else if (
-        (selectedCopay.value === undefined ||
-          selectedCopay.value.length == 0) &&
-        data.healthPlanCoPaymentId == defaultCopayId.value &&
-        data.loadingPrice == undefined
-      ) {
-        loadingPrices.value.push({
-          memberId: members.memberId,
-          price: 0,
+          price: loadingPriceValue,
         });
       }
 
-      if (data.notifyAgent && data.notifyAgent === true) {
-        data.priceIsRevised = false;
-      } else {
-        data.priceIsRevised = true;
-      }
+      // Handle price revision flag
+      data.priceIsRevised = !data.notifyAgent || data.notifyAgent !== true;
     });
   });
 
@@ -862,6 +821,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                   { text: 'DOB', value: 'dobText' },
                   { text: 'Gender', value: 'genderText' },
                   { text: 'Base Price', value: 'premium' },
+                  { text: 'Adjusted Price', value: 'adjustedPrice' },
                   { text: 'Loading Price', value: 'loadingPrice' },
                   { text: 'Final Price', value: 'finalPrice' },
                 ]"
@@ -1030,6 +990,11 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                     </x-button> -->
                   </section>
                 </template>
+
+                <template #item-adjustedPrice="item">
+                
+                </template>
+
 
                 <template #item-loadingPrice="item">
                   <section v-for="data in item.ratesPerCopay">

@@ -255,7 +255,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function addPaymentSplits($request, $quoteID, $quoteUUID)
     {
         $masterPayment = (object) $request->payment;
-        $sendFTCEmail = $masterPayment->payment_methods == PaymentMethodsEnum::InsurerPaymentLink && $masterPayment->payment_splits[0]['insurer_payment_link'] != null;
+        $isInsurerPaymentLink = collect($masterPayment->payment_splits)->contains('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+        $isPaymentLinkNotNull = collect($masterPayment->payment_splits)->filter(function ($split) {
+            return isset($split['insurer_payment_link']) && $split['insurer_payment_link'] !== null;
+        })->isNotEmpty();
+        $sendFTCEmail = $isInsurerPaymentLink && $isPaymentLinkNotNull;
         $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
         if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0) {
@@ -306,7 +310,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function updatePaymentSplits($request, $quoteUUID)
     {
         $masterPayment = (object) $request->payment;
-        $sendFTCEmail = $masterPayment->payment_methods == PaymentMethodsEnum::InsurerPaymentLink && $masterPayment->payment_splits[0]['insurer_payment_link'] != null && $request->sendFTCEmail;
+        $isInsurerPaymentLink = collect($masterPayment->payment_splits)->contains('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+        // $insurerPaymentLinkIndex = current(array_filter($masterPayment->payment_splits, function ($e) use ($name) {
+        //     return $e->name == $name;
+        // }));
+        $isPaymentLinkNotNull = collect($masterPayment->payment_splits)->filter(function ($split) {
+            return isset($split['insurer_payment_link']) && $split['insurer_payment_link'] !== null;
+        })->isNotEmpty();
+        $sendFTCEmail = $isInsurerPaymentLink && $isPaymentLinkNotNull && $request->sendFTCEmail;
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
