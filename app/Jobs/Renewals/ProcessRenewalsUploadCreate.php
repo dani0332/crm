@@ -40,7 +40,7 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        return $renewalsUploadService->processUploadCreate($this->renewalsUploadLead);      
+        return $renewalsUploadService->processUploadCreate($this->renewalsUploadLead);   
     }
 
     /**
