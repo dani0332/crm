@@ -271,7 +271,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
-                    'insurer_payment_link' => $splitPayment['insurer_payment_link'],
+                    'insurer_payment_link' => $splitPayment['insurer_payment_link'] ?? null,
                     'payment_method' => $splitPayment['payment_method'],
                     'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
                     'payment_amount' => $splitPayment['payment_amount'],
