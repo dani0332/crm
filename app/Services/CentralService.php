@@ -1002,7 +1002,7 @@ class CentralService extends BaseService
 
         $quote = $this->getQuoteObject($type, $id);
         info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called');
-        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyIssued]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
@@ -1016,17 +1016,15 @@ class CentralService extends BaseService
                     ]);
 
                     info('Quote code: '.$quote->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quote->quote_status_id);
-                    if ($oldQuoteStatus != $quote->quote_status_id) {
-                        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
-                        QuoteStatusLog::create([
-                            'quote_type_id' => $quoteTypeId,
-                            'quote_request_id' => $quote->id,
-                            'current_quote_status_id' => $quote->quote_status_id,
-                            'previous_quote_status_id' => $oldQuoteStatus,
-                            'created_at' => Carbon::now(),
-                            'updated_at' => Carbon::now(),
-                        ]);
-                    }
+                    $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+                    QuoteStatusLog::create([
+                        'quote_type_id' => $quoteTypeId,
+                        'quote_request_id' => $quote->id,
+                        'current_quote_status_id' => $quote->quote_status_id,
+                        'previous_quote_status_id' => $oldQuoteStatus,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ]);
                 }
                 info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
