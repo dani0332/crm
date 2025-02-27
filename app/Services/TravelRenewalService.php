@@ -148,7 +148,7 @@ class TravelRenewalService extends BaseService
                 'members_count' => count($members),
                 'time' => now(),
             ];
-            info(self::class.' - '.json_encode($logData) . ' | Time: '.now());
+            info(self::class.' - '.json_encode($logData).' | Time: '.now());
         }
     }
     public function getDestinationId($regionCoverFor)
