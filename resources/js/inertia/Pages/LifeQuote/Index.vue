@@ -2,11 +2,14 @@
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
+  renewalBatches: Array,
   advisors: Array,
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
+let params = useUrlSearchParams('history');
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -53,7 +56,9 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   quote_status_id: [],
+  insurer_aml_status: [],
   advisor_id: [],
+  renewal_batch_id: [],
   is_ecommerce: '',
   payment_status_id: '',
   previous_quote_policy_number_text: '',
@@ -80,6 +85,11 @@ const tableHeader = reactive([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   {
@@ -111,7 +121,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Renewal Batch',
-    value: 'renewal_batch',
+    value: 'renewal_batch_model',
     is_active: true,
   },
 ]);
@@ -124,6 +134,14 @@ const advisorOptions = computed(() => {
       : advisor.name,
   }));
 });
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+});
+
 function filterQuotes(isValid) {
   if (!isValid) {
     return;
@@ -172,21 +190,14 @@ function resetFilters() {
 }
 
 function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
-
-      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-        let id = key.slice(0, -2);
-        if (filters[id]) {
-          filters[id].push(parseInt(value));
-        }
-      } else {
-        filters[key] = value;
-      }
-    });
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+    } else {
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
+    }
   }
 }
 const quotesSelected = ref([]);
@@ -227,6 +238,7 @@ const canExport = ref(false);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const exportLoader = ref(false);
 const onExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'life');
@@ -234,7 +246,13 @@ const onExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Life'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 watch(
@@ -379,6 +397,13 @@ watch(
   },
   { deep: true },
 );
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -487,6 +512,12 @@ watch(
             "
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -526,6 +557,14 @@ watch(
             { value: '', label: 'All' },
           ]"
         />
+
+        <x-field label="Renewal Batch">
+          <ComboBox
+            v-model="filters.renewal_batch_id"
+            placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
+          />
+        </x-field>
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -587,6 +626,7 @@ watch(
             color="emerald"
             class="justify-self-start"
             @click.prevent="onExport"
+            :loading="exportLoader"
           >
             Export
           </x-button>
@@ -706,6 +746,11 @@ watch(
           </x-tag>
         </div>
       </template> -->
+      <template #item-renewal_batch_model="item">
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
+      </template>
     </DataTable>
 
     <Pagination

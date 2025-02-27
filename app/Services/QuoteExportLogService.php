@@ -19,7 +19,7 @@ class QuoteExportLogService extends BaseService
 
             return true;
         } catch (\Exception $e) {
-            Log::error('Error qoute export log: '.$e->getMessage());
+            Log::error('Error quote export log: '.$e->getMessage());
 
             return false;
         }

@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -62,11 +63,15 @@ defineProps({
   travelDestinations: Object,
   isAmlClearedForQuote: Boolean,
   amlStatusName: String,
+  access: Object,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const leadSource = page.props.leadSource;
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
@@ -129,6 +134,8 @@ const {
   policy_start_date,
   isEmail,
   isMobileNo,
+  maxCharacters,
+  emiratesNumber,
 } = useRules();
 const confirmDeleteData = reactive({
   docs: null,
@@ -222,6 +229,7 @@ const modals = reactive({
   activityConfirm: false,
   planDetails: false,
   mixInquiryConfirm: false,
+  sendConfirm: false,
 });
 
 const travelFields = computed(() => {
@@ -270,15 +278,6 @@ const onLeadStatus = () => {
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages) {
-          notification.success({
-            title: 'Lead Status Updated',
-            position: 'top',
-          });
-        }
-      },
     },
   );
 };
@@ -314,7 +313,9 @@ const emiratesOptions = computed(() => {
 const travelerForm = useForm({
   travel_quote_request_id: page.props.quote.id,
   quote_type: page.props.modelType,
-  first_name: null,
+  first_name: '',
+  last_name: '',
+  name: '',
   dob: '',
   nationality_id: null,
   relation_code: null,
@@ -388,10 +389,19 @@ const submitTraveler = isValid => {
     addTravelMember(isValid);
   }
 };
-
+const showErrors = errors => {
+  Object.keys(errors).forEach(function (key) {
+    notification.error({
+      title: errors[key],
+      position: 'top',
+      timeout: 10000,
+    });
+  });
+};
 const addTravelMember = isValid => {
   if (!isValid) return;
-  // '/travelers'
+
+  travelerForm.name = travelerForm.first_name;
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -404,10 +414,15 @@ const addTravelMember = isValid => {
       });
       onLoadAvailablePlansData();
     },
+    onError: errors => {
+      showErrors(errors);
+    },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
       travelerForm.first_name = '';
+      travelerForm.last_name = '';
+      travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
@@ -424,6 +439,8 @@ const addTravelMember = isValid => {
 const onAddTraveler = () => {
   travelerForm.reset();
   travelerForm.first_name = '';
+  travelerForm.last_name = '';
+  travelerForm.name = '';
   travelerForm.dob = '';
   travelerForm.nationality_id = '';
   travelerForm.relation_code = '';
@@ -441,6 +458,8 @@ const onEditTraveler = traveler => {
   travelerName.value = `Traveler ${traveler.index}`;
   travelerForm.id = traveler.id;
   travelerForm.first_name = traveler.first_name;
+  travelerForm.last_name = traveler.last_name;
+  travelerForm.name = traveler.first_name + ' ' + traveler.last_name ?? '';
   travelerForm.dob = traveler.dob;
   travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
@@ -453,10 +472,14 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
+  travelerForm.name = travelerForm.first_name;
   travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
       travelerForm.processing = true;
+    },
+    onError: errors => {
+      showErrors(errors);
     },
     onSuccess: () => {
       notification.success({
@@ -469,6 +492,8 @@ const editTraveler = isValid => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
       travelerForm.first_name = '';
+      travelerForm.last_name = '';
+      travelerForm.name = '';
       travelerForm.dob = '';
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
@@ -734,6 +759,89 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
+const selectedPlanType = ref(null);
+
+const updateSelectedPlan = async selectedPlanData => {
+  let data = {
+    plan_id: selectedPlanData.plan.id,
+  };
+
+  data.planType = selectedPlanData.extraDetails?.planType;
+  if (selectedPlanData.extraDetails?.selectedPlansIds.length > 0) {
+    for (
+      let i = 0;
+      i < selectedPlanData.extraDetails?.selectedPlansIds.length;
+      i++
+    ) {
+      if (
+        selectedPlanData.extraDetails?.planType == 'normalPlans' &&
+        selectedPlanData.extraDetails?.seniorPlansIds.includes(
+          selectedPlanData.extraDetails?.selectedPlansIds[i],
+        )
+      ) {
+        data.plan_id = selectedPlanData.plan.id;
+        data.selected_plan_id =
+          selectedPlanData.extraDetails?.selectedPlansIds[i];
+      }
+
+      if (
+        selectedPlanData.extraDetails?.planType == 'seniorPlans' &&
+        selectedPlanData.extraDetails?.normalPlansIds.includes(
+          selectedPlanData.extraDetails?.selectedPlansIds[i],
+        )
+      ) {
+        data.selected_plan_id = selectedPlanData.plan.id;
+        data.plan_id = selectedPlanData.extraDetails?.selectedPlansIds[i];
+      }
+    }
+  } else {
+    data.plan_id = selectedPlanData.plan.id;
+  }
+
+  axios
+    .post(
+      `/personal-quotes/${selectedPlanData.quoteType}/${page.props.quote.uuid}/update-selected-plan`,
+      data,
+    )
+    .then(res => {
+      let premium = 0;
+      if (res.data.plan.planProcessValue[0]) {
+        premium = res.data.plan.planProcessValue[0].totalPremium;
+      }
+      let selectedPlan = {
+        id: selectedPlanData.plan.id,
+        providerName: selectedPlanData.plan.providerName,
+        planName: selectedPlanData.plan.name,
+      };
+
+      if (res.data.plan.planProcessValue[0]) {
+        selectedPlan.premium = premium.toFixed(2);
+      }
+      handlePlanSelected(selectedPlan);
+    })
+    .catch(err => {
+      console.log(err);
+      isLoading.value = false;
+      notification.error({
+        title: err?.response?.data?.message ?? 'something went wrong',
+        position: 'top',
+      });
+    });
+};
+
+const onLoadAvailablePlansDataAndPlanDetails = async selectedPlanData => {
+  // In case of update made in selected plan, we need to call the update plan api to make the required changes according to selected plan
+  if (
+    selectedPlanData.extraDetails?.selectedPlansIds.includes(
+      parseInt(selectedPlanData.plan.id),
+    )
+  ) {
+    await updateSelectedPlan(selectedPlanData);
+  }
+  getPlanDetails(planDetails.value.id);
+  await onLoadAvailablePlansData();
+};
+
 const emailStatusesTable = reactive({
   isLoading: false,
   columns: [
@@ -797,16 +905,20 @@ const availablePlansTable = reactive({
       value: 'name',
     },
     {
+      text: 'Insurer Quote Number',
+      value: 'insurerQuoteId',
+    },
+    {
       text: 'Travel Type',
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
-      value: 'discountPremium',
+      text: 'Total Price',
+      value: 'premiumWithVat',
     },
     {
       text: 'Action',
@@ -827,16 +939,20 @@ const availableSeniorPlansTable = reactive({
       value: 'name',
     },
     {
+      text: 'Insurer Quote Number',
+      value: 'insurerQuoteId',
+    },
+    {
       text: 'Travel Type',
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
-      value: 'discountPremium',
+      text: 'Total Price',
+      value: 'premiumWithVat',
     },
     {
       text: 'Action',
@@ -1062,6 +1178,18 @@ const onCopyText = text => {
     });
 };
 
+const getAddonVat = item => {
+  let addonVat = 0;
+  item.addons.forEach(addon => {
+    addon.addonOptions.forEach(option => {
+      if (option.isSelected && option.price != 0) {
+        addonVat += parseInt(option.price) + option.vat;
+      }
+    });
+  });
+  return addonVat;
+};
+
 const isProfileUpdateAllow = computed(() => {
   return hasAnyRole([
     page.props.rolesEnum.PA,
@@ -1221,6 +1349,59 @@ const selectedPlanIds = computed(() => {
     : [];
 });
 
+const confirmSendEmail = () => {
+  const first_name = page.props.quote.first_name || '';
+  const last_name = page.props.quote.last_name || '';
+
+  axios
+    .post(
+      `/quotes/travel/${page.props.quote.uuid}/send-email-one-click-buy`,
+      {
+        quote_type_id: page.props.quoteTypeId,
+        quote_id: page.props.quote.id,
+        quote_uuid: page.props.quote.uuid,
+        quote_cdb_id: page.props.quote.code,
+        quote_previous_expiry_date:
+          page.props.quote.previous_policy_expiry_date,
+        quote_currently_insured_with: page.props.quote.currently_insured_with,
+        quote_car_make: page.props.carMakeText,
+        quote_car_model: page.props.carModelText,
+        quote_car_year_of_manufacture: page.props.quote.year_of_manufacture,
+        quote_previous_policy_number:
+          page.props.quote.previous_quote_policy_number,
+        customer_name: `${first_name} ${last_name}`,
+        customer_email: page.props.quote.email,
+        advisor_name: page.props.quote.advisor
+          ? page.props.quote.advisor.name
+          : null,
+        advisor_email: page.props.quote.advisor
+          ? page.props.quote.advisor.email
+          : null,
+        advisor_mobile_no: page.props.quote.advisor
+          ? page.props.quote.advisor.mobile_no
+          : null,
+        advisor_landline_no: page.props.quote.advisor
+          ? page.props.quote.advisor.landline_no
+          : null,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+
+    .then(response => {
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      modals.sendConfirm = false;
+    });
+};
 const selectedProviderPlan = ref({
   id: page.props.quote.plan_id,
   planName: page.props.ecomDetails.planName,
@@ -1236,7 +1417,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
   });
 };
 
@@ -1360,6 +1541,24 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
 };
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
+
+function capitalizeString(str) {
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -1391,7 +1590,10 @@ const onAddUpdate = () => {
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -1414,6 +1616,7 @@ const onAddUpdate = () => {
         >
           Send NB OCB To Customer
         </x-button>
+
         <x-button
           size="sm"
           color="#ff5e00"
@@ -1585,11 +1788,24 @@ const onAddUpdate = () => {
                   <dd>{{ field?.value }}</dd>
                 </div>
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
-                <dd>{{ field?.value }}</dd>
+                <dd>
+                  {{
+                    field.title == 'Advisor'
+                      ? quote.api_issuance_status ==
+                        policyIssuanceEnum.POLICY_ISSUANCE_API_STATUS_YES_ID
+                        ? policyIssuanceEnum.API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL
+                        : field?.value
+                      : field?.value
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">AML STATUS</dt>
+                <dt class="font-medium uppercase">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -1685,31 +1901,15 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip placement="bottom">
-                    <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                    >
-                      TRAVELING WHERE
-                    </label>
-                    <template #tooltip> Traveling Where</template>
-                  </x-tooltip>
+                  <label class="font-medium text-gray-800 text-sm">
+                    DEPARTING FROM
+                  </label>
                 </dt>
                 <dt class="font-medium uppercase">
                   {{
-                    quote.direction_code != null
-                      ? quote.direction_code
-                      : quote?.currently_located_in_id_text ==
-                            enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                          quote?.region_cover_for_id !=
-                            enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                        ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                        : quote?.destination_id_text ==
-                              enums.travelQuoteEnum
-                                .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                            quote?.region_cover_for_id ==
-                              enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                          ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                          : ''
+                    quote.departure_country_text != null
+                      ? quote.departure_country_text
+                      : ''
                   }}
                 </dt>
               </div>
@@ -1859,6 +2059,14 @@ const onAddUpdate = () => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote.insurer_api_status }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.api_issuance_status }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1987,20 +2195,29 @@ const onAddUpdate = () => {
                   <dd>{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality_id_text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ quote.gender }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality_id_text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -2378,7 +2595,8 @@ const onAddUpdate = () => {
             v-model="travelerForm.first_name"
             label="Member Name*"
             placeholder="Member Name"
-            :rules="[isRequired]"
+            :rules="[isRequired, maxCharacters(40)]"
+            :hasError="travelerForm.errors.first_name"
           />
           <ComboBox
             v-model="travelerForm.nationality_id"
@@ -2440,6 +2658,25 @@ const onAddUpdate = () => {
           >
             {{ travelerForm.id ? 'Update' : 'Save' }}
           </x-button>
+        </template>
+      </x-modal>
+
+      <x-modal v-model="modals.sendConfirm" show-close backdrop>
+        <template #header> Send Email </template>
+        <p>Are you sure send email to customer?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.sendConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button size="sm" color="error" @click.prevent="confirmSendEmail">
+              Send
+            </x-button>
+          </div>
         </template>
       </x-modal>
     </div>
@@ -2517,9 +2754,7 @@ const onAddUpdate = () => {
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
                     :disabled="
-                      quote.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
-                      lockLeadSectionsDetails.lead_status
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
                     "
                     placeholder="Lead Status"
                     class="w-full"
@@ -2533,9 +2768,7 @@ const onAddUpdate = () => {
                     placeholder="Lead Notes"
                     class="w-full"
                     :disabled="
-                      quote.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
-                      lockLeadSectionsDetails.lead_status
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
                     "
                   />
                 </x-field>
@@ -2572,10 +2805,7 @@ const onAddUpdate = () => {
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                isDisabled
-              "
+              :disabled="allowStatusUpdate || isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Change Status
@@ -2676,7 +2906,13 @@ const onAddUpdate = () => {
           </h3>
           <div class="flex gap-2">
             <Link
-              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+              v-if="
+                quote?.insly_id &&
+                canAny([
+                  permissionsEnum.VIEW_LEGACY_DETAILS,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
               :href="`/legacy-policy/${quote.insly_id}`"
               preserve-scroll
             >
@@ -2864,6 +3100,24 @@ const onAddUpdate = () => {
               >
                 Download PDF
               </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="quote.advisor_id != $page.props.auth.user.id"
+                >
+                  Send OCB Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
             </div>
           </div>
 
@@ -2909,10 +3163,15 @@ const onAddUpdate = () => {
               <template #item-name="item">
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
-              <template #item-discountPremium="item">
-                <span class="text-primary-600">
-                  {{ item.discountPremium + item.vat }}
-                </span>
+              <template #item-actualPremium="item">
+                {{ parseFloat(item.actualPremium).toFixed(2) }}
+              </template>
+              <template #item-premiumWithVat="item">
+                {{
+                  parseFloat(
+                    item.discountPremium + item.vat + getAddonVat(item),
+                  ).toFixed(2)
+                }}
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
@@ -2920,7 +3179,10 @@ const onAddUpdate = () => {
                     size="xs"
                     color="error"
                     outlined
-                    @click.prevent="getPlanDetails(item.id)"
+                    @click.prevent="
+                      selectedPlanType = 'normalPlans';
+                      getPlanDetails(item.id);
+                    "
                   >
                     View
                   </x-button>
@@ -2939,6 +3201,8 @@ const onAddUpdate = () => {
                         selectedPlansIds: selectedPlanIds,
                         planType: 'normalPlans',
                       }"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
                     />
                     <x-button
                       v-else
@@ -2992,10 +3256,15 @@ const onAddUpdate = () => {
                     item.name
                   }}</span>
                 </template>
-                <template #item-discountPremium="item">
-                  <span class="text-primary-600">
-                    {{ item.discountPremium + item.vat }}
-                  </span>
+                <template #item-actualPremium="item">
+                  {{ parseFloat(item.actualPremium).toFixed(2) }}
+                </template>
+                <template #item-premiumWithVat="item">
+                  {{
+                    parseFloat(
+                      item.discountPremium + item.vat + getAddonVat(item),
+                    ).toFixed(2)
+                  }}
                 </template>
                 <template #item-action="item">
                   <div class="flex gap-2">
@@ -3003,7 +3272,10 @@ const onAddUpdate = () => {
                       size="xs"
                       color="error"
                       outlined
-                      @click.prevent="getPlanDetails(item.id)"
+                      @click.prevent="
+                        selectedPlanType = 'seniorPlans';
+                        getPlanDetails(item.id);
+                      "
                     >
                       View
                     </x-button>
@@ -3021,6 +3293,8 @@ const onAddUpdate = () => {
                           selectedPlansIds: selectedPlanIds,
                           planType: 'seniorPlans',
                         }"
+                        :insuranceProviderId="item.id"
+                        :code="quote.code"
                       />
                       <x-button
                         v-else
@@ -3045,7 +3319,19 @@ const onAddUpdate = () => {
             show-close
             backdrop
           >
-            <LazyAvailablePlan :plan="planDetails" />
+            <LazyAvailablePlan
+              :plan="planDetails"
+              :quote="quote"
+              :quoteType="modelType"
+              :extraDetails="{
+                normalPlansIds: normalPlansIds.ids,
+                seniorPlansIds: seniorPlansIds.ids,
+                selectedPlansIds: selectedPlanIds,
+                planType: selectedPlanType,
+              }"
+              :access="access"
+              @onLoadAvailablePlansData="onLoadAvailablePlansDataAndPlanDetails"
+            />
           </x-modal>
         </template>
       </Collapsible>
@@ -3081,6 +3367,8 @@ const onAddUpdate = () => {
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PaymentTable
@@ -3136,6 +3424,7 @@ const onAddUpdate = () => {
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"
@@ -3394,6 +3683,13 @@ const onAddUpdate = () => {
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :quoteType="$page.props.modelType"
+      :expanded="sectionExpanded"
+    />
+
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
 

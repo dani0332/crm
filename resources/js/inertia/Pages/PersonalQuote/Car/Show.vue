@@ -4,6 +4,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -96,7 +97,11 @@ defineProps({
   lockLeadSectionsDetails: Object,
   customerAddressData: Object,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
+  insurerAMLStatus: String,
 });
+
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
@@ -167,7 +172,7 @@ const dateFormat = date => {
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
-const { isRequired, isEmail, isNumber, isMobile } = useRules();
+const { isRequired, isEmail, isNumber, isMobile, emiratesNumber } = useRules();
 
 const isCarLostStatus = statusId => {
   return (
@@ -333,6 +338,9 @@ const availablePlansTable = reactive({
   ],
 });
 
+const lazyEmbeddedProducts = ref([]);
+const lazyEmbeddedProductsLoading = ref(false);
+
 /*
 // comment for now, will be used in later after confirmation
 watch(availablePlansTable, (newPlans) =>  {
@@ -431,6 +439,25 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       availablePlansTable.data = res.data;
+
+      loadEmbeddedProducts();
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+const loadEmbeddedProducts = async () => {
+  let url = `/embedded/get-by-quote?quote_id=${page.props.record.id}&quote_type_id=${page.props.quoteTypeId}`;
+  let data = {
+    jsonData: true,
+  };
+  lazyEmbeddedProductsLoading.value = true;
+  axios
+    .get(url, data)
+    .then(res => {
+      lazyEmbeddedProducts.value = res.data;
+      lazyEmbeddedProductsLoading.value = false;
     })
     .catch(err => {
       console.log(err);
@@ -536,6 +563,9 @@ const leadStatusOptions = computed(() => {
 });
 
 const leadStatusDisabled = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
   return (
     page.props.record.quote_status_id ==
       page.props.quoteStatusEnum.TransactionApproved ||
@@ -1085,12 +1115,6 @@ const onLeadStatus = () => {
           position: 'top',
         });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
-      },
     });
 };
 const toggleLoader = ref(false);
@@ -1312,7 +1336,6 @@ onMounted(() => {
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
-  // setLeadStatuses();
 });
 
 //activities
@@ -1512,7 +1535,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'paymentEntityModel'],
+    only: ['payments', 'paymentEntityModel', 'bookPolicyDetails'],
   });
 };
 
@@ -1606,6 +1629,41 @@ const fullAddress = computed(() => {
   // Filter out null or undefined parts and join the rest with comma and space
   return parts.filter(part => part).join(', ');
 });
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
+
+const convertToNumber = (value, decimalPlace = 2) => {
+  return useRoundIt(value).toFixed(2);
+};
+
+function genderFormatForProfile(gender) {
+  if (!gender) return gender;
+  return gender === 'M' || gender === 'Male' ? 'Male' : 'Female';
+}
+
+function capitalizeString(str) {
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
+
+const isCommercialVehicle = computed(() => {
+  let isCConditionMeet = false;
+  if (isPlanDetailEnabled.value) {
+    isCConditionMeet = true;
+  }
+  return isCConditionMeet;
+});
 </script>
 
 <template>
@@ -1617,7 +1675,13 @@ const fullAddress = computed(() => {
       </template>
       <template #default>
         <Link
-          v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+          v-if="
+            record?.insly_id &&
+            canAny([
+              permissionEnum.VIEW_LEGACY_DETAILS,
+              permissionEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="`/legacy-policy/${record.insly_id}`"
           preserve-scroll
         >
@@ -1814,8 +1878,20 @@ const fullAddress = computed(() => {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">COMPANY NAME</dt>
+                <dd>{{ quote.car_company_name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">COMPANY ADDRESS</dt>
+                <dd>{{ quote.car_company_address }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BATCH</dt>
@@ -1840,6 +1916,10 @@ const fullAddress = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CYLINDER</dt>
                 <dd>{{ record.cylinder }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CHASSIS NUMBER</dt>
+                <dd>{{ record.chassis_number }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRIM</dt>
@@ -2164,7 +2244,7 @@ const fullAddress = computed(() => {
                       v-model="customerProfileForm.insured_first_name"
                       :rules="[isRequired]"
                       placeholder="INSURED FIRST NAME"
-                      class="w-full"
+                      class="!mb-0 w-full"
                       :disabled="
                         !isProfileUpdateAllow ||
                         linkedQuoteDetails.childLeadsCount > 0
@@ -2179,7 +2259,7 @@ const fullAddress = computed(() => {
                       v-model="customerProfileForm.insured_last_name"
                       :rules="[isRequired]"
                       placeholder="INSURED LAST NAME"
-                      class="w-full"
+                      class="!mb-0 w-full"
                       :disabled="
                         !isProfileUpdateAllow ||
                         linkedQuoteDetails.childLeadsCount > 0
@@ -2211,13 +2291,18 @@ const fullAddress = computed(() => {
                   <dd>{{ fullAddress }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ record.nationality_id_text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ record.dob }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ genderFormatForProfile(record.gender) }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ record.nationality_id_text }}</dd>
+                </div>
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
                   <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
@@ -2227,9 +2312,14 @@ const fullAddress = computed(() => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
-                      class="w-full"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
+                      class="!mb-0 w-full"
                       :disabled="
                         !isProfileUpdateAllow ||
                         linkedQuoteDetails.childLeadsCount > 0
@@ -2249,6 +2339,7 @@ const fullAddress = computed(() => {
                         linkedQuoteDetails.childLeadsCount > 0
                       "
                       :min-date="new Date()"
+                      class="!mb-0"
                     />
                   </dd>
                 </div>
@@ -2283,6 +2374,21 @@ const fullAddress = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
                   <dd>{{ record.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
@@ -2605,8 +2711,7 @@ const fullAddress = computed(() => {
                     "
                     :error="leadStatusForm.errors.notes"
                     :disabled="
-                      record.quote_status_id ==
-                        quoteStatusEnum.TransactionApproved ||
+                      allowStatusUpdate ||
                       isCarLostStatus(record.quote_status_id) ||
                       lockLeadSectionsDetails.lead_status
                     "
@@ -2798,7 +2903,7 @@ const fullAddress = computed(() => {
               color="emerald"
               size="sm"
               :disabled="
-                record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                allowStatusUpdate ||
                 (!carLostChangeStatus && !allowQuoteLogAction) ||
                 isDisabled
               "
@@ -3086,19 +3191,28 @@ const fullAddress = computed(() => {
               >
                 Download PDF
               </x-button>
-              <x-button
-                @click.prevent="modals.sendConfirm = true"
-                size="sm"
-                color="orange"
-                class="mr-2"
-                :disabled="
-                  record.advisor_id != $page.props.auth.user.id ||
-                  page.props.linkedQuoteDetails.childLeadsCount > 0
-                "
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Send OCB Email to Customer
-              </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="
+                    record.advisor_id != $page.props.auth.user.id ||
+                    page.props.linkedQuoteDetails.childLeadsCount > 0
+                  "
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Send OCB Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
             </template>
 
             <AddPlanButtonTemplate v-slot="{ isDisabled }">
@@ -3341,9 +3455,9 @@ const fullAddress = computed(() => {
             </template>
             <template #item-premiumWithVat="item">
               {{
-                parseFloat(
+                convertToNumber(
                   item.discountPremium + item.vat + getAddonVat(item),
-                ).toFixed(2)
+                )
               }}
             </template>
             <template #item-action="item">
@@ -3406,6 +3520,8 @@ const fullAddress = computed(() => {
                       page.props.linkedQuoteDetails.childLeadsCount > 0
                     "
                     :uuid="quote.uuid"
+                    :insuranceProviderId="item.id"
+                    :code="quote.code"
                   />
 
                   <x-button
@@ -3460,6 +3576,7 @@ const fullAddress = computed(() => {
         :source="page.props.record.source"
         :followUpId="followUpId"
         :kyoEndPoint="kyoEndPoint"
+        :quoteUuid="page.props.record.uuid"
       />
 
       <x-modal
@@ -3600,7 +3717,11 @@ const fullAddress = computed(() => {
       :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
+      :isCapBtnEnabled="isCommercialVehicle"
     />
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -3687,12 +3808,14 @@ const fullAddress = computed(() => {
     </div>
 
     <EmbeddedProducts
-      :data="embeddedProducts"
+      :data="lazyEmbeddedProducts || []"
       :link="record.uuid"
       :code="record.code"
       :quote="record"
       :modelType="quoteType"
       :expanded="sectionExpanded"
+      :isEpLoading="lazyEmbeddedProductsLoading"
+      :key="lazyEmbeddedProductsLoading"
     />
 
     <PolicyDetail
@@ -3720,6 +3843,7 @@ const fullAddress = computed(() => {
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"
@@ -4000,7 +4124,6 @@ const fullAddress = computed(() => {
               v-model="activityForm.description"
               :adjust-to-text="false"
               class="w-full"
-              :rules="[isRequired]"
             />
           </x-field>
           <x-field label="Assignee" required>

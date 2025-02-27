@@ -7,6 +7,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -39,11 +40,13 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -63,8 +66,9 @@ class YachtQuoteController extends Controller
         $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
             return $value['id'] != QuoteStatusEnum::Lost;
         })->values();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
-        //PD Revert
+        // PD Revert
         // $count = $personalQuotes->count();
 
         $count = 0;
@@ -75,8 +79,10 @@ class YachtQuoteController extends Controller
             'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'renewalBatches' => $renewalBatches,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : YachtQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 
@@ -85,7 +91,9 @@ class YachtQuoteController extends Controller
      */
     public function create()
     {
-        return inertia('YachtQuote/Form');
+        $data = YachtQuoteRepository::getFormOptions();
+
+        return inertia('YachtQuote/Form', $data);
     }
 
     /**
@@ -111,9 +119,12 @@ class YachtQuoteController extends Controller
      */
     public function edit($uuid)
     {
+        $data = YachtQuoteRepository::getFormOptions();
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('YachtQuote/Form', ['quote' => $quote]);
+        return inertia('YachtQuote/Form', array_merge($data, [
+            'quote' => $quote,
+        ]));
     }
 
     /**
@@ -122,11 +133,11 @@ class YachtQuoteController extends Controller
     public function show($uuid)
     {
 
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         $quote = YachtQuoteRepository::where('uuid', $uuid)->first();
         abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::YACHT->value);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);
@@ -227,6 +238,8 @@ class YachtQuoteController extends Controller
             'payments' => $quote?->payments,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 

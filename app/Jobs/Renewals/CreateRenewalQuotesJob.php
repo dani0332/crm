@@ -42,8 +42,6 @@ class CreateRenewalQuotesJob implements ShouldQueue, StackableJob
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        // update haystack count for this process, so we can restart after last update
-        $this->setHaystackData('count', $this->getHaystackData('count') + 1);
         $renewalsUploadService->createQuote($this->renewalQuoteProcess);
     }
 

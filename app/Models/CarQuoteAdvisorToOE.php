@@ -48,11 +48,6 @@ class CarQuoteAdvisorToOE extends BaseModel
         return ['advisor_id', 'oe_id'];
     }
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
-
     public function saveForm($request, $update = false)
     {
         try {

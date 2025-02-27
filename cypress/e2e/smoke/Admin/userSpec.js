@@ -21,7 +21,7 @@ describe('Group Mediacl Qoutes', () => {
         cy.visit('/admin/users')
         commonPage.verifyURL('/admin/users')
         //Search User
-        userPage.getEmailField('im.automation4@gmail.com')
+        userPage.getEmailField('qa_automation@myalfred.com')
         userPage.getResetButton()
         userPage.getSearchNameField('Im.Automation.Testing')
         userPage.getResetButton()

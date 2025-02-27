@@ -18,15 +18,6 @@ class BaseModel extends Model implements AuditableContract
     public $isGetList = false;
     public $APIController = null;
 
-    public function processGetBaseDSL($filters = [], $table = true)
-    {
-        if ($table) {
-            return self::table($filters);
-        } else {
-            return self::relation($filters);
-        }
-    }
-
     public static function boot()
     {
         parent::boot();
@@ -114,7 +105,7 @@ class BaseModel extends Model implements AuditableContract
 
     private function table($filters)
     {
-        $role = strtolower(Auth::user()->usersroles[0]->name); //'advisor';
+        $role = strtolower(Auth::user()->usersroles[0]->name); // 'advisor';
         $collection = collect($this->access);
         $access = collect($collection->get('list'));
         if (! $access->has($role)) {
@@ -155,7 +146,7 @@ class BaseModel extends Model implements AuditableContract
 
     private function relation($filters)
     {
-        $role = strtolower(Auth::user()->usersroles[0]->name); //'advisor';
+        $role = strtolower(Auth::user()->usersroles[0]->name); // 'advisor';
         $collection = collect($this->access);
         $access = collect($collection->get('list'));
         if (! $access->has($role)) {
@@ -194,7 +185,7 @@ class BaseModel extends Model implements AuditableContract
             ->relationWhere($this->isGetList, $filters)
             ->get();
 
-        //dd($response);exit;
+        // dd($response);exit;
         // $query = DB::getQueryLog();
         // dd($query);exit;
         return $response;

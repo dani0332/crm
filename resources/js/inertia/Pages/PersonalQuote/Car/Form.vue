@@ -1,4 +1,6 @@
 <script setup>
+import QuoteStatus from '@/inertia/Pages/PersonalQuote/Partials/QuoteStatus.vue';
+
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -8,6 +10,7 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  quoteStatusEnums: Array,
 });
 
 const { isRequired, isEmail, maxValue } = useRules();
@@ -46,6 +49,8 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  company_name: props.quote?.car_company_name || null,
+  company_address: props.quote?.car_company_address || null,
   dob: props.quote?.dob ? props.quote?.dob.split('-').reverse().join('-') : '',
   cylinder: props.quote?.cylinder || null,
   uae_license_held_for_id: props.quote?.uae_license_held_for_id || null,
@@ -60,6 +65,7 @@ const quoteForm = useForm({
   trim: props.quote?.trim || null,
   additional_notes: props.quote?.additional_notes || '',
   car_model_id: props.quote?.car_model_id || null,
+  chassis_number: props.quote?.chassis_number || null,
   year_of_manufacture: props.quote?.year_of_manufacture || null,
   emirate_of_registration_id: props.quote?.emirate_of_registration_id || null,
   car_type_insurance_id: props.quote?.car_type_insurance_id || null,
@@ -80,6 +86,7 @@ const quoteForm = useForm({
     city: page.props.customerAddressData?.city || null,
     landmark: page.props.customerAddressData?.landmark || null,
   },
+  courierQuoteStatus: page.props.courierQuoteStatus || 'Pending',
 });
 
 const isDisbaled =
@@ -215,10 +222,112 @@ const cylinderValidation = event => {
 };
 
 const addressTypes = [
-  { value: '', label: 'No Address Type' }, // option for leaving it blank
+  { value: '', label: 'No Address' }, // option for leaving it blank
   { value: 'Home', label: 'Home' },
   { value: 'Office', label: 'Office' },
 ];
+
+const villaApartmentOfficeLabel = computed(() => {
+  let label;
+
+  if (quoteForm.addressObj.address_type === 'Home') {
+    label = 'Villa / Apartment Number';
+  } else if (quoteForm.addressObj.address_type === 'Office') {
+    label = 'Office Name';
+  } else {
+    label = 'Villa / Apartment / Office No.';
+  }
+
+  return label;
+});
+
+const villaBuildingLabel = computed(() => {
+  let label;
+
+  if (quoteForm.addressObj.address_type === 'Home') {
+    label = 'Community / Building Name';
+  } else if (quoteForm.addressObj.address_type === 'Office') {
+    label = 'Building Name';
+  } else {
+    label = 'Villa / Building Name';
+  }
+
+  return label;
+});
+
+const floorLabel = computed(() => {
+  let label;
+
+  if (quoteForm.addressObj.address_type === 'Home') {
+    label = 'Floor / Block';
+  } else if (quoteForm.addressObj.address_type === 'Office') {
+    label = 'Floor';
+  } else {
+    label = 'Floor No.';
+  }
+
+  return label;
+});
+
+const isCourierStatusPending = computed(() => {
+  return quoteForm.courierQuoteStatus !== 'Pending';
+});
+
+const chassisNumberDisabled = computed(() => {
+  let disallowedStatus = [
+    props.quoteStatusEnums.PolicySentToCustomer,
+    props.quoteStatusEnums.PolicyBooked,
+  ];
+  return disallowedStatus.includes(props?.quote?.quote_status_id);
+});
+
+const chassisNumberValidate = eventType => {
+  const regex = /^[a-zA-Z0-9]*$/; // Allow only alphanumeric characters
+
+  if (eventType == 'keypress') {
+    const event = window.event || event;
+    const key = event.key;
+    if (
+      !regex.test(key) &&
+      key !== 'Backspace' &&
+      key !== 'Delete' &&
+      key !== 'ArrowLeft' &&
+      key !== 'ArrowRight'
+    ) {
+      event.preventDefault();
+    }
+  }
+
+  if (eventType == 'blur') {
+    const lengthValid =
+      quoteForm.chassis_number.length >= 8 &&
+      quoteForm.chassis_number.length <= 17;
+    const isAlphanumeric = regex.test(quoteForm.chassis_number);
+    if (quoteForm.chassis_number && (!lengthValid || !isAlphanumeric)) {
+      quoteForm.errors.chassis_number =
+        'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+    } else {
+      quoteForm.clearErrors('chassis_number');
+    }
+  }
+};
+
+const chassisNumberRule = v => {
+  const regex = /^[a-zA-Z0-9]*$/;
+  const lengthValid = v.length >= 8 && v.length <= 17;
+  const isAlphanumeric = regex.test(v);
+  if (v && (!lengthValid || !isAlphanumeric)) {
+    return 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.';
+  }
+  return true;
+};
+
+const gender = computed(() => {
+  return [
+    { value: 'M', label: 'Male' },
+    { value: 'F', label: 'Female' },
+  ];
+});
 </script>
 
 <template>
@@ -240,18 +349,6 @@ const addressTypes = [
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-alert
-          v-if="quoteForm.errors.length > 0"
-          color="error"
-          class="sm:col-span-2"
-        >
-          <ul class="list-disc list-inside">
-            <li v-for="error in quoteForm.errors" :key="error">
-              {{ error }}
-            </li>
-          </ul>
-        </x-alert>
-
         <!-- <x-field label="RENEWAL BATCH" v-if="isEdit" :required="isDisbaled ? false : hasRole(rolesEnum.CarManager)">
 					<x-input
 						v-model="quoteForm.renewal_batch"
@@ -304,46 +401,79 @@ const addressTypes = [
           />
         </x-field>
 
+        <x-field label="COMPANY NAME">
+          <x-input
+            v-model="quoteForm.company_name"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_name"
+          />
+        </x-field>
+
+        <x-field label="COMPANY ADDRESS">
+          <x-input
+            v-model="quoteForm.company_address"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_address"
+          />
+        </x-field>
+
         <x-field label="Address Type">
           <ComboBox
             v-model="quoteForm.addressObj.address_type"
             placeholder="Select address type"
             :options="addressTypes"
             :single="true"
+            :disabled="isCourierStatusPending"
           />
         </x-field>
-        <x-field label="ADDRESS">
+        <x-field
+          label="ADDRESS"
+          required
+          v-if="
+            quoteForm.addressObj.address_type === 'Home' ||
+            quoteForm.addressObj.address_type === 'Office'
+          "
+        >
           <div class="flex flex-wrap -mx-2">
             <div class="w-1/2 px-2">
               <x-input
                 type="text"
                 v-model="quoteForm.addressObj.villa_apartment_office_no"
-                placeholder="Villa/Apartment/Office No."
+                :placeholder="villaApartmentOfficeLabel"
+                :rules="[isRequired]"
                 class="w-full"
+                :disabled="isCourierStatusPending"
               />
             </div>
             <div class="w-1/2 px-2">
               <x-input
                 type="text"
                 v-model="quoteForm.addressObj.floor_no"
-                placeholder="Floor No."
+                :placeholder="floorLabel"
+                :rules="[isRequired]"
                 class="w-full"
+                :disabled="isCourierStatusPending"
               />
             </div>
             <div class="w-1/2 px-2">
               <x-input
                 type="text"
                 v-model="quoteForm.addressObj.villa_building_name"
-                placeholder="Villa/Building Name"
+                :placeholder="villaBuildingLabel"
+                :rules="[isRequired]"
                 class="w-full"
+                :disabled="isCourierStatusPending"
               />
             </div>
             <div class="w-1/2 px-2">
               <x-input
                 type="text"
                 v-model="quoteForm.addressObj.street_name"
-                placeholder="Street"
+                placeholder="Street (Optional)"
                 class="w-full"
+                :disabled="isCourierStatusPending"
               />
             </div>
             <div class="w-1/2 px-2">
@@ -351,7 +481,9 @@ const addressTypes = [
                 type="text"
                 v-model="quoteForm.addressObj.area"
                 placeholder="Area"
+                :rules="[isRequired]"
                 class="w-full"
+                :disabled="isCourierStatusPending"
               />
             </div>
             <div class="w-1/2 px-2">
@@ -359,15 +491,18 @@ const addressTypes = [
                 type="text"
                 v-model="quoteForm.addressObj.city"
                 placeholder="City"
+                :rules="[isRequired]"
                 class="w-full"
+                :disabled="isCourierStatusPending"
               />
             </div>
             <div class="w-1/2 px-2">
               <x-input
                 type="text"
                 v-model="quoteForm.addressObj.landmark"
-                placeholder="Landmark"
+                placeholder="Landmark (Optional)"
                 class="w-full"
+                :disabled="isCourierStatusPending"
               />
             </div>
           </div>
@@ -395,6 +530,14 @@ const addressTypes = [
             :hasError="quoteForm.errors.nationality_id"
             :error="quoteForm.errors.nationality_id"
             :rules="[isRequired]"
+          />
+        </x-field>
+
+        <x-field label="GENDER">
+          <x-select
+            v-model="quoteForm.gender"
+            :options="gender"
+            placeholder="Gender"
           />
         </x-field>
 
@@ -464,6 +607,44 @@ const addressTypes = [
             @keypress="cylinderValidation"
           />
         </x-field>
+
+        <div>
+          <template v-if="chassisNumberDisabled">
+            <x-tooltip placement="bottom">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+              >
+                CHASSIS NUMBER
+              </label>
+              <template #tooltip>
+                This lead is now locked as the policy has been booked. If
+                changes are needed, go to 'Send Update', select 'Add Update',
+                and choose 'Cancellation from Inception and Reissuance'
+              </template>
+            </x-tooltip>
+            <x-input
+              :disabled="chassisNumberDisabled"
+              v-model="quoteForm.chassis_number"
+              class="w-full"
+              type="text"
+              placeholder="Enter Chassis Number"
+            />
+          </template>
+          <template v-else>
+            <x-field label="CHASSIS NUMBER">
+              <x-input
+                v-model="quoteForm.chassis_number"
+                class="w-full"
+                type="text"
+                placeholder="Enter Chassis Number"
+                :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
+                @keypress="chassisNumberValidate('keypress')"
+                @blur="chassisNumberValidate('blur')"
+                :error="quoteForm.errors.chassis_number"
+              />
+            </x-field>
+          </template>
+        </div>
 
         <x-field label="TRIM">
           <ComboBox

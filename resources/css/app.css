@@ -91,7 +91,7 @@ label {
 
 /* Table header th tag */
 .vue3-easy-data-table__header tr th {
-  @apply text-left p-3 font-bold text-xs uppercase relative whitespace-nowrap select-none text-white;
+  @apply text-left p-3 font-bold text-xs uppercase relative whitespace-nowrap select-none text-white bg-primary-500;
 }
 
 /* Fixed header */
@@ -115,7 +115,7 @@ label {
 }
 
 .tablefixed .vue3-easy-data-table__body tr td {
-  @apply whitespace-nowrap;
+  @apply whitespace-nowrap bg-white;
 }
 
 .table-fixed-width {

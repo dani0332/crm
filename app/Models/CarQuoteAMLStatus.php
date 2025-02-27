@@ -24,11 +24,6 @@ class CarQuoteAMLStatus extends BaseModel
         'list' => ['id', 'status', 'notes', 'updated_at'],
     ];
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
-
     public function saveForm($request, $update)
     {
         if (Auth::user()->hasRole('pa') || Auth::user()->hasRole('production_approval_manager')) {

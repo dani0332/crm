@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Jobs\EP\SendEPJob;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\SageApiService;
@@ -61,16 +63,24 @@ class SendUpdateToCustomerJob implements ShouldQueue
                         'is_email_sent' => true,
                     ]);
                     $sendUpdateLog->refresh();
+
+                    if ($sendUpdateLog->category->code === SendUpdateLogStatusEnum::EN) {
+                        $quoteType = QuoteTypeId::getOptions()[$sendUpdateLog->quote_type_id];
+                        $quote = $this->getQuoteObject($quoteType, $sendUpdateLog->quote_uuid);
+                        SendEPJob::dispatch($quote->id, $quoteType, null, true);
+                    }
+
                 } else {
                     info('job:SendUpdateToCustomerJob - SendUpdateCode: '.$sendUpdateLog->uuid.' - Job failed - SendUpdateCode: '.$sendUpdateLog->code);
                 }
             }
         }
 
-        if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU && isset($this->payload['dispatchSageCall'])) {
+        if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU && isset($this->payload['dispatchSageCall']) && ! $this->payload['ccPaymentProcess']) {
             info('job:SendUpdateToCustomerJob - Calling updateSageProcessForDispatching function through sendUpdateToCustomer - SendUpdateCode: '.$sendUpdateLog->code);
             $sageRequestPayload = $this->payload['sageRequestPayload'];
             unset($this->payload['sageRequestPayload']);
+            unset($this->payload['ccPaymentProcess']);
             $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);
 
             (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);

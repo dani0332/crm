@@ -22,9 +22,4 @@ class CarQuoteDocuments extends BaseModel
         ],
         'list' => ['id', 'code', 'text', 'text_ar'],
     ];
-
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters);
-    }
 }

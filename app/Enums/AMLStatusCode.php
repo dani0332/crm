@@ -4,25 +4,33 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-/**
- * @method static static OptionOne()
- * @method static static OptionTwo()
- * @method static static OptionThree()
- */
 final class AMLStatusCode extends Enum
 {
     const AMLPending = 'AML_PENDING';
     const AMLScreeningCleared = 'AML_SCREENING_CLEARED';
     const AMLScreeningFailed = 'AML_SCREENING_FAILED';
+    const InsurerAMLScreeningNA = 'N/A';
+    const InsurerAMLScreeningPending = 'PENDING';
+    const InsurerAMLScreeningCleared = 'CLEARED';
+    const InsurerAMLScreeningFailed = 'FAILED';
 
-    public static function getName($value)
+    private static $statuses = [
+        'AML_PENDING' => 'AML Pending',
+        'AML_SCREENING_CLEARED' => 'AML Screening Cleared',
+        'AML_SCREENING_FAILED' => 'AML Screening Failed',
+        'N/A' => 'N/A',
+        'PENDING' => 'Pending',
+        'CLEARED' => 'Cleared',
+        'FAILED' => 'Failed',
+    ];
+
+    public static function getStatuses()
     {
-        $statuses = [
-            'AML_PENDING' => 'AML Pending',
-            'AML_SCREENING_CLEARED' => 'AML Screening Cleared',
-            'AML_SCREENING_FAILED' => 'AML Screening Failed',
-        ];
-
-        return $statuses[$value] ?? 'AML Pending';
+        return self::$statuses;
     }
+    public static function getName($value, $defaultValue = 'AML Pending')
+    {
+        return self::$statuses[$value] ?? $defaultValue;
+    }
+
 }

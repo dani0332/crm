@@ -1,15 +1,18 @@
 <script setup>
+import { ref } from 'vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   quoteType: {
     type: String,
     default: 'jetski',
   },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
@@ -33,10 +36,12 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
+  renewal_batch_id: [],
   previous_quote_policy_number: '',
   previous_quote_policy_number_text: '',
   is_ecommerce: '',
   quote_status_id: '',
+  insurer_aml_status: [],
   page: 1,
   policy_expiry_date: '',
   policy_expiry_date_end: '',
@@ -53,6 +58,7 @@ const permissionAssignLeads = ref(false);
 const hasRole = role => useHasRole(role);
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -122,6 +128,13 @@ const advisorOptionsFilter = computed(() => {
   }));
 });
 
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(renewalBatch => ({
+    value: renewalBatch.id,
+    label: renewalBatch.name,
+  }));
+});
+
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
@@ -164,6 +177,7 @@ const tableHeader = [
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'quote_status' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'CREATED DATE', value: 'created_at' },
@@ -187,9 +201,10 @@ const tableHeader = [
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
+  { text: 'Renewal Batch', value: 'renewal_batch_model' },
 ];
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'jetski');
@@ -197,7 +212,14 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Jetski'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 watch(
@@ -275,6 +297,13 @@ watch(
   },
   { deep: true },
 );
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -366,12 +395,10 @@ watch(
           />
         </x-field>
         <x-field label="Renewal Batch">
-          <x-input
-            v-model="filters.renewal_batch"
-            type="search"
-            name="renewal_batch"
-            class="w-full"
+          <ComboBox
+            v-model="filters.renewal_batch_id"
             placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
           />
         </x-field>
         <x-field label="Lead Status">
@@ -387,6 +414,12 @@ watch(
             "
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -469,6 +502,7 @@ watch(
             color="emerald"
             @click.prevent="onDataExport"
             class="justify-self-start"
+            :loading="exportLoader"
           >
             Export
           </x-button>
@@ -516,7 +550,12 @@ watch(
     >
       <template #item-uuid="{ code, uuid }">
         <Link
-          v-if="can(permissionsEnum.JetskiQuotesShow)"
+          v-if="
+            canAny([
+              permissionsEnum.JetskiQuotesShow,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="route('jetski-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
@@ -565,6 +604,11 @@ watch(
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-renewal_batch_model="item">
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
       </template>
     </DataTable>
 

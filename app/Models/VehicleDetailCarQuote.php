@@ -42,9 +42,4 @@ class VehicleDetailCarQuote extends BaseModel
     {
         return ['car_quote_id.quote_status_id'];
     }
-
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
 }

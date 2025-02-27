@@ -30,11 +30,11 @@ final class SendUpdateLogStatusEnum extends Enum
     const CI = 'CI';    // Cancellation from Inception
     const CIR = 'CIR';  // Cancellation from Inception and Reissuance
     const CPD = 'CPD';  // Correction of Policy Details
-    const MPC = 'MPC'; //Midterm policy cancellation
-    const MDOM = 'MDOM'; //Midterm deletion of member
-    const MDOV = 'MDOV'; //Midterm deletion of vehicle
-    const ED = 'ED'; //Employee deletion
-    const DM = 'DM'; //Delete member
+    const MPC = 'MPC'; // Midterm policy cancellation
+    const MDOM = 'MDOM'; // Midterm deletion of member
+    const MDOV = 'MDOV'; // Midterm deletion of vehicle
+    const ED = 'ED'; // Employee deletion
+    const DM = 'DM'; // Delete member
     const CPU = 'CPU'; // Correction of Policy Upload.
     const CAA = 'CAA'; // Correction and amendments.
     const EIU = 'EIU'; // Emirates ID update.
@@ -49,9 +49,9 @@ final class SendUpdateLogStatusEnum extends Enum
     const RFSOA = 'RFSOA'; // Request for statement of account (SOA).
 
     // send update log button.
-    const SUC = 'Send update to customer'; // send update to customer.
+    const SUC = 'Send Update To Customer'; // send update to customer.
     const SU = 'Book Update'; // send update.
-    const SNBU = 'Send and Book Update'; // send and book update.
+    const SNBU = 'Send And Book Update'; // send and book update.
     const ACTION_SNBU = 'SNBU';
     const ACTION_SUC = 'SUC';
     const ACTION_SU = 'SU';
@@ -88,7 +88,27 @@ final class SendUpdateLogStatusEnum extends Enum
     const CTD_NFI = 'CTD_NFI'; // Change travel dates (with no financial impact)
     const DTSI = 'DTSI'; // Decrease the sum insured
     const DOV = 'DOV'; // Deletion of vehicle
-    const ACB = 'ACB'; // Additional commission booking
+    const ACB = 'ACB'; // Additional tax invoice raised by buyer booking
     const ATIB = 'ATIB'; // Additional tax invoice booking
     const ATICB = 'ATICB'; // Additional tax invoice and commission booking
+    const CAAFE = 'CAAFE'; // Correction and amendments (with Financial Effect).
+    const ATCRNB = 'ATCRNB'; // Additional tax credit note booking
+    const ATCRNB_RBB = 'ATCRNB_RBB'; // Additional tax credit note raised by buyer booking
+    const ATCRN_CRNRBB = 'ATCRN_CRNRBB'; // Additional tax credit note and tax credit note raised by buyer booking
+
+    public static function sendUpdateStatuses(): array
+    {
+        return [
+            self::NEW_REQUEST,
+            self::REQUEST_IN_PROGRESS,
+            self::TRANSACTION_DECLINE,
+            self::TRANSACTION_APPROVED,
+            self::UPDATE_ISSUED,
+            self::UPDATE_SENT_TO_CUSTOMER,
+            self::UPDATE_BOOKING_QUEUED,
+            self::UPDATE_BOOKING_FAILED,
+            self::UPDATE_BOOKED,
+
+        ];
+    }
 }

@@ -61,8 +61,6 @@ class HealthEmailService extends BaseService
             'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
             'docUploadLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/thankyou',
             'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
-            'ApiToken' => config('constants.KEN_API_TOKEN'),
-            'basicAuth' => 'Basic '.base64_encode(config('constants.KEN_API_USER').':'.config('constants.KEN_API_PWD')),
             'landLine' => (! empty($advisor?->landline_no) ? $advisor->landline_no : ''),
             'mobilePhone' => (! empty($advisor?->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
@@ -102,7 +100,7 @@ class HealthEmailService extends BaseService
                 return $currentPlan->discountPremium;
             }
 
-            if (property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
                 return $currentPlan->ratesPerCopay?->discountPremium ?? 0;
             }
         };
@@ -112,7 +110,7 @@ class HealthEmailService extends BaseService
                 return $currentPlan->vat;
             }
 
-            if (property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
                 return $currentPlan->ratesPerCopay?->vat ?? 0;
             }
         };

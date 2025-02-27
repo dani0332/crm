@@ -103,7 +103,8 @@ use App\Enums\PermissionsEnum;
                 PermissionsEnum::YachtQuotesList,
                 PermissionsEnum::JetskiQuotesList,
                 PermissionsEnum::UtmLeadsSalesReport,
-                PermissionsEnum::CAR_REVIVAL_QUOTE_LIST
+                PermissionsEnum::CAR_REVIVAL_QUOTE_LIST,
+                PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST
                 ])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
@@ -122,9 +123,18 @@ use App\Enums\PermissionsEnum;
                                 </ul>
                             </li>
                             @endcanany
-                            @can(PermissionsEnum::HealthQuotesList)
-                            <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
-                            @endcan
+
+                            <li><a>Health<span class="fa fa-chevron-down" style="color: white;"></span></a>
+                                <ul class="nav child_menu">
+                                    @can(PermissionsEnum::HealthQuotesList)
+                                    <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
+                                    @endcan
+
+                                    @can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST)
+                                    <li><a href={{ url('quotes/health-revival') }}>Health Revival Quotes</a></li>
+                                    @endcan
+                                </ul>
+                            </li>
                             @can(PermissionsEnum::TravelQuotesList)
                             <li><a href="{{ url('quotes/travel') }}">Travel Quotes</a></li>
                             @endcan
@@ -135,31 +145,19 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                             @endcan
                             @can(PermissionsEnum::PetQuotesList)
-                            @if(in_array(quoteTypeCode::Pet, newUi()))
                             <li><a href="{{ url('personal-quotes/pet') }}">Pet Quotes</a></li>
-                            @else
-                            <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::BikeQuotesList)
-                            @if(in_array(quoteTypeCode::Bike, newUi()))
                             <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::CycleQuotesList)
-                            @if(in_array(quoteTypeCode::Cycle, newUi()))
                             <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::YachtQuotesList)
-                            @if(in_array(quoteTypeCode::Yacht, newUi()))
                             <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
-                            @endif
                             @endcan
                             @can(PermissionsEnum::JetskiQuotesList)
-                            @if(in_array(quoteTypeCode::Jetski, newUi()))
                             <li><a href="{{ url('personal-quotes/jetski') }}">JetSki Quotes</a></li>
-                            @endif
                             @endcan
                         </ul>
                     </li>

@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   type: {
     required: false,
@@ -19,10 +21,18 @@ const props = defineProps({
   },
 });
 
+const page = usePage();
 const insuranceProviderId = ref(null);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 const modals = reactive({
   apiLog: false,
+});
+
+const insuranceProviders = computed(() => {
+  return page.props.insuranceProviders.map(item => ({
+    value: item.value ? item.value : item.id,
+    label: item.label ? item.label : item.text,
+  }));
 });
 
 const selectedLog = ref({});
@@ -106,12 +116,7 @@ const onLoadAuditLogData = async () => {
                 :single="true"
                 class="w-full"
                 v-model="insuranceProviderId"
-                :options="
-                  $page.props.insuranceProviders.map(item => ({
-                    value: item.id,
-                    label: item.text,
-                  }))
-                "
+                :options="insuranceProviders"
               />
             </x-field>
             <x-button
@@ -139,7 +144,9 @@ const onLoadAuditLogData = async () => {
                 :color="status === 'failed' ? 'red' : 'success'"
                 class="mt-0.5 text-[10px]"
               >
-                <p>{{ status.toUpperCase() }}</p>
+                <p>
+                  {{ status === 'success' ? 'PASSED' : status.toUpperCase() }}
+                </p>
               </x-tag>
             </template>
             <template #item-created_at="{ created_at }">
@@ -188,7 +195,11 @@ const onLoadAuditLogData = async () => {
               :color="selectedLog.status === 'failed' ? 'red' : 'success'"
               class="mt-0.5 text-[10px]"
             >
-              {{ selectedLog.status.toUpperCase() }}
+              {{
+                selectedLog.status === 'success'
+                  ? 'PASSED'
+                  : selectedLog.status.toUpperCase()
+              }}
             </x-tag>
           </dd>
         </div>

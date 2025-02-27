@@ -5,6 +5,7 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  renewalBatches: Array,
   quoteType: {
     type: String,
     default: 'yacht',
@@ -14,6 +15,7 @@ defineProps({
     default: 0,
   },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -37,6 +39,8 @@ let availableFilters = {
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
+  insurer_aml_status: [],
+  renewal_batch_id: [],
   page: 1,
   previous_quote_policy_number_text: '',
   payment_status: [],
@@ -88,6 +92,11 @@ const tableHeader = ref([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
     text: 'CREATED DATE',
@@ -127,13 +136,14 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
 ]);
 
 const quotesSelected = ref([]);
 const permissionAssignLeads = ref(false);
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 
 function onSubmit(isValid) {
@@ -199,6 +209,7 @@ const handleSelectedFilters = selectedFilters => {
   onSubmit(true);
 };
 
+const exportLoader = ref(false);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'yacht');
@@ -206,7 +217,14 @@ const onDataExport = () => {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Yacht'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 const advisorOptionsFilter = computed(() => {
@@ -215,6 +233,13 @@ const advisorOptionsFilter = computed(() => {
     label: advisor.roles[0].name
       ? advisor.name + ' - ' + advisor.roles[0]?.name
       : advisor.name,
+  }));
+});
+
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
   }));
 });
 
@@ -363,6 +388,13 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -534,6 +566,12 @@ const validateDateRange = () => {
             "
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -575,12 +613,10 @@ const validateDateRange = () => {
           />
         </x-field>
         <x-field label="Renewal Batch">
-          <x-input
-            v-model="filters.renewal_batch"
-            type="search"
-            name="renewal_batch"
-            class="w-full"
+          <ComboBox
+            v-model="filters.renewal_batch_id"
             placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
           />
         </x-field>
         <x-field label="Renewal">
@@ -661,6 +697,7 @@ const validateDateRange = () => {
             v-if="canExport"
             size="sm"
             color="emerald"
+            :loading="exportLoader"
             @click.prevent="onDataExport"
             class="justify-self-start"
           >
@@ -720,7 +757,12 @@ const validateDateRange = () => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
-          v-if="can(permissionsEnum.YachtQuotesShow)"
+          v-if="
+            canAny([
+              permissionsEnum.YachtQuotesShow,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="route('yacht-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
@@ -769,6 +811,11 @@ const validateDateRange = () => {
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-renewal_batch_model="item">
+        <p>
+          {{ item?.renewal_batch_model?.name ?? '' }}
+        </p>
       </template>
     </DataTable>
 

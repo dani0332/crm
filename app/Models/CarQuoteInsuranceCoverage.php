@@ -2,12 +2,8 @@
 
 namespace App\Models;
 
-use App\Transformers\CarQuoteInsuranceCoverageTransformer;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use League\Fractal;
-use League\Fractal\Manager;
-use League\Fractal\Serializer\ArraySerializer;
 
 class CarQuoteInsuranceCoverage extends BaseModel
 {
@@ -70,19 +66,6 @@ class CarQuoteInsuranceCoverage extends BaseModel
         } else {
             return ['insurance_company_id', 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id', 'car_quote_id.plan_id'];
         }
-    }
-
-    public function processGetDSL($filters)
-    {
-        $fractal = new Manager;
-        $fractal->setSerializer(new ArraySerializer);
-        $data = self::processGetBaseDSL($filters, false);
-        if ($data->count() < 1) {
-            return null;
-        }
-        $resource = new Fractal\Resource\Item($data, new CarQuoteInsuranceCoverageTransformer);
-
-        return $fractal->createData($resource)->toArray();
     }
 
     public function saveForm($request, $update = false)

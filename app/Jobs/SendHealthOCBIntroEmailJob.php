@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\LeadSourceEnum;
 use App\Models\HealthQuote;
 use App\Services\HealthEmailService;
 use Exception;
@@ -49,6 +50,12 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
 
             if ($lead->isApplicationPending()) {
                 info("SendHealthOCBIntroEmailJob - Skipping OCB Email becuase Application is Pending for UUID: {$this->quoteUuid}");
+
+                return;
+            }
+
+            if ($lead->source == LeadSourceEnum::REVIVAL) {
+                info("SendHealthOCBIntroEmailJob - Skipping OCB Email because REVIVAL - UUID: {$this->quoteUuid}");
 
                 return;
             }

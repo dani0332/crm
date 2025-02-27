@@ -27,6 +27,11 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  isSentOrBooked: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 });
 
 const page = usePage();
@@ -143,6 +148,10 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
     docForm.setError({ error: useFileUploadErrorMessage(doc, rejectReason) });
     return false;
   }
+  let docFiles = [];
+  files.forEach(file => {
+    docFiles.push(file.file);
+  });
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -150,7 +159,7 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
       quote_type_id: doc.quote_type_id,
       document_type_code: doc.code,
       folder_path: doc.folder_path,
-      file: files[0].file,
+      files: docFiles,
       member_detail_id: memberId || null,
     }))
     .post(url, {
@@ -361,7 +370,12 @@ const getS3TempUrl = async docURL => {
               View Legacy policy
             </x-button>
           </Link>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="orange"
+            class="focus:ring-2 focus:ring-black"
+          >
             Upload Documents
           </x-button>
         </div>
@@ -397,11 +411,24 @@ const getS3TempUrl = async docURL => {
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
           >
             <div>
+              <x-tooltip placement="bottom" v-if="props.isSentOrBooked">
+                <x-button size="xs" color="error" outlined disabled>
+                  Delete
+                </x-button>
+                <template #tooltip>
+                  This request is now locked as the update has been booked. If
+                  changes are needed, go to 'Send Update', select 'Add Update',
+                  and choose 'Correction of Policy Upload'.
+                </template>
+              </x-tooltip>
+
               <x-button
+                v-else
                 size="xs"
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
+                class="focus:ring-2 focus:ring-black"
               >
                 Delete
               </x-button>
@@ -446,6 +473,11 @@ const getS3TempUrl = async docURL => {
           :value="index"
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
+          :key="index"
+          :disabled="
+            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
+            !quote.insurance_provider_id
+          "
         >
           <div
             v-for="documentType in docType"
@@ -480,6 +512,7 @@ const getS3TempUrl = async docURL => {
                     documentTypeCodeEnum.SEND_UPDATE_AUDIT_RECORD &&
                   !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
                 "
+                :multiple="true"
               />
               <div v-if="isSendUpdatePage">
                 <a
@@ -546,6 +579,7 @@ const getS3TempUrl = async docURL => {
     <x-modal
       v-model="modals.docConfirm"
       title="Delete Document"
+      size="md"
       show-close
       backdrop
     >
@@ -581,7 +615,8 @@ const getS3TempUrl = async docURL => {
 
     <x-modal
       v-model="modals.sendConfirm"
-      title="Send Update"
+      :title="props.updateBtn"
+      size="md"
       show-close
       backdrop
     >

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\GenericRequestEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class YachtQuoteRequest extends FormRequest
@@ -28,12 +29,17 @@ class YachtQuoteRequest extends FormRequest
             'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required',
+            'company_name' => 'max:250',
+            'company_address' => 'max:1000',
             'boat_details' => 'required|max:1000',
             'engine_details' => 'required|max:2000',
             'claim_experience' => 'required|max:1000',
             'asset_value' => 'required|numeric',
             'use' => 'required|max:1000',
             'operator_experience' => 'required|max:1000',
+            'dob' => 'nullable|before:today',
+            'gender' => 'nullable|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
+            'nationality_id' => 'nullable|exists:nationality,id',
         ];
     }
 }

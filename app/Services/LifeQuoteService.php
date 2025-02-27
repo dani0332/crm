@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -90,6 +91,7 @@ class LifeQuoteService extends BaseService
                 'lqr.insurer_quote_number',
                 'lqr.policy_issuance_date',
                 'lqrd.insly_id',
+                'lu.text as transaction_type_text',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -102,6 +104,7 @@ class LifeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'lqr.transaction_type_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'lqr.insurance_provider_id');
     }
 
@@ -429,17 +432,6 @@ class LifeQuoteService extends BaseService
         return $query;
     }
 
-    public function updateChildRecord($id)
-    {
-        LifeQuoteRequestDetail::updateOrCreate(
-            ['life_quote_request_id' => $id],
-            [
-                'advisor_assigned_date' => Carbon::now(),
-                'advisor_assigned_by_id' => auth()->id(),
-            ]
-        );
-    }
-
     public function fillModelProperties()
     {
         return [
@@ -616,10 +608,8 @@ class LifeQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->quote_batch_id = $quoteBatch->id;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::LIFE, LifeQuoteRequestDetail::class, 'life_quote_request_id');
         }
 
         return $result;

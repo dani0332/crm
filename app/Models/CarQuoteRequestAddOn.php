@@ -41,9 +41,4 @@ class CarQuoteRequestAddOn extends Model
     {
         return ['addon_option_id'];
     }
-
-    public function processGetDSL($filters, $update)
-    {
-        return self::processGetBaseDSL($filters, $update);
-    }
 }

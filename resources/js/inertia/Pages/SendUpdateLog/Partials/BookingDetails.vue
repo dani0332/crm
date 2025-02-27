@@ -55,11 +55,9 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
-  modelClass: {
-    type: String,
-    default: '',
-  },
   isEditDisabledForQueuedBooking: Boolean,
+  isCommVatNotAppEnabled: Boolean,
+  disableMainBtn: String,
 });
 
 const state = reactive({
@@ -135,6 +133,8 @@ const checkSectionToEdit = () => {
   const additionalInvoiceTypes = [
     sendUpdateStatusEnum.ACB,
     sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
   ];
 
   if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
@@ -162,7 +162,9 @@ const checkSectionToEdit = () => {
     additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)
   ) {
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB &&
+      [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
+        props.sendUpdateLog?.option?.code,
+      ) &&
       !props.uploadedDocuments.includes('SUTAXINVRB')
     ) {
       notification.error({
@@ -173,7 +175,9 @@ const checkSectionToEdit = () => {
     }
 
     if (
-      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB &&
+      [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
+        props.sendUpdateLog?.option?.code,
+      ) &&
       !props.uploadedDocuments.includes('SUTAXINV')
     ) {
       notification.error({
@@ -281,6 +285,8 @@ const bookingDetailsForm = useForm({
   price_with_vat: props.sendUpdateLog?.price_with_vat || '0.00',
   // new entry section related.
   reversal_invoice: props.sendUpdateLog?.reversal_invoice || null,
+  isCommissionDisabled: props?.bookingDetails?.isCommissionDisabled,
+  disabledCommissionTooltip: props?.bookingDetails?.disabledCommissionTooltip,
 });
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
@@ -348,9 +354,17 @@ const calculatePriceDetailsForATIB = () => {
 
 const calculateCommission = () => {
   ignoreCheckDiscount.value = false;
-  if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
+  if (
+    [sendUpdateStatusEnum.ACB, sendUpdateStatusEnum.ATCRNB_RBB].includes(
+      props.sendUpdateLog?.option?.code,
+    )
+  ) {
     calculateCommisionDetailsForACB();
-  } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
+  } else if (
+    [sendUpdateStatusEnum.ATIB, sendUpdateStatusEnum.ATCRNB].includes(
+      props.sendUpdateLog?.option?.code,
+    )
+  ) {
     calculatePriceDetailsForATIB();
   } else {
     if (
@@ -388,11 +402,60 @@ const calculateCommission = () => {
           Number(total_vat_amount);
         bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
-        bookingDetailsForm.commission_percentage = convertToNegative(
-          (Number(bookingDetailsForm.commission_vat_applicable) /
+        let commissionVatApplicable = Number(
+          bookingDetailsForm.commission_vat_applicable,
+        );
+        let commissionVatNotApplicable = Number(
+          bookingDetailsForm.commission_vat_not_applicable,
+        );
+
+        let commissionPercentage = convertToNegative(
+          (Number(commissionVatApplicable + commissionVatNotApplicable) /
             total_price_with_vat_and_not_vat_applicable) *
             100,
         );
+
+        // TAP PAYMENT FLAG.
+        if (page.props.isTapEnabled) {
+          const brokerCommission = props.bookingDetails?.brokerCommission;
+          const brokerCommMinPer = brokerCommission
+            ? roundValue(brokerCommission.commission_percentage_min)
+            : null;
+          const brokerCommMaxPer = brokerCommission
+            ? roundValue(brokerCommission.commission_percentage_max)
+            : null;
+          if (
+            commissionPercentage > 0 &&
+            bookingDetailsForm.commission_vat_applicable &&
+            brokerCommMinPer > 0 &&
+            brokerCommMaxPer > 0
+          ) {
+            if (
+              brokerCommMinPer != null &&
+              brokerCommMaxPer != null &&
+              !(
+                Number(commissionPercentage) >= Number(brokerCommMinPer) &&
+                Number(commissionPercentage) <= Number(brokerCommMaxPer)
+              )
+            ) {
+              notification.error({
+                title:
+                  'The commission amount you entered is outside the permitted range.',
+                position: 'top',
+              });
+              bookingDetailsForm.setError({
+                commission_vat_applicable:
+                  'The commission amount you entered is outside the permitted range.',
+              });
+              bookingDetailsForm.commission_vat_applicable =
+                commissionPercentage = null;
+              return;
+            } else {
+              bookingDetailsForm.clearErrors('commission_vat_applicable');
+            }
+          }
+        }
+        bookingDetailsForm.commission_percentage = commissionPercentage;
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -436,7 +499,11 @@ function convertToNegative(value) {
   }
   value = isNaN(value) ? 0 : Number(value);
 
-  return value.toFixed(2);
+  return roundValue(value);
+}
+
+function roundValue(value) {
+  return (Math.round(value * 100) / 100).toFixed(2);
 }
 
 function thousandSeparator(value) {
@@ -1077,6 +1144,9 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.ED,
     sendUpdateStatusEnum.ATIB,
     sendUpdateStatusEnum.ACB,
+    sendUpdateStatusEnum.ATCRNB,
+    sendUpdateStatusEnum.ATCRNB_RBB,
+    sendUpdateStatusEnum.ATCRN_CRNRBB,
   ];
 
   return (
@@ -1100,6 +1170,45 @@ watch(
     bookingDetailsForm.broker_invoice_number = newValue;
   },
 );
+
+const disableCommissionVatNotApplicable = ref(false);
+
+watch(
+  () => bookingDetailsForm.commission_vat_applicable,
+  (newValue, oldValue) => {
+    if (props.isCommVatNotAppEnabled && newValue > 0) {
+      disableCommissionVatNotApplicable.value = true;
+    } else {
+      disableCommissionVatNotApplicable.value = false;
+    }
+  },
+);
+
+const disableCommissionVatApplicable = ref(false);
+
+watch(
+  () => bookingDetailsForm.commission_vat_not_applicable,
+  (newValue, oldValue) => {
+    if (props.isCommVatNotAppEnabled && newValue > 0) {
+      disableCommissionVatApplicable.value = true;
+    } else {
+      disableCommissionVatApplicable.value = false;
+    }
+  },
+);
+
+const isTapCaptureProcessStart = computed(() => {
+  return props.bookingDetails?.isTapCaptureProcessStart || false;
+});
+
+watch(
+  () => props.bookingDetails?.isTapCaptureProcessStart,
+  (newValue, oldValue) => {
+    if (newValue) {
+      isTapCaptureProcessStart.value = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -1120,7 +1229,7 @@ watch(
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div class="text-right"></div>
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="text-[#308BCA] text-sm font-bold underline decoration-dotted decoration-primary-700"
                   >
@@ -1149,7 +1258,7 @@ watch(
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1171,7 +1280,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1189,7 +1298,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1210,7 +1319,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1231,7 +1340,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1251,7 +1360,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1267,7 +1376,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1288,7 +1397,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1305,7 +1414,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1326,7 +1435,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1348,7 +1457,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1371,7 +1480,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1392,7 +1501,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1414,7 +1523,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1435,7 +1544,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1459,7 +1568,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1482,7 +1591,7 @@ watch(
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1504,7 +1613,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1530,7 +1639,7 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1558,6 +1667,7 @@ watch(
           <template v-if="!state.reversalSectionEdit">
             <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 @click="onReversalEdit"
                 :disabled="props.isEditDisabledForQueuedBooking"
@@ -1571,10 +1681,18 @@ watch(
                 </span>
               </template>
             </x-tooltip>
-            <x-button v-else size="sm" @click="onReversalEdit"> Edit </x-button>
+            <x-button
+              v-else
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              @click="onReversalEdit"
+            >
+              Edit
+            </x-button>
           </template>
           <template v-else>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="orange"
               @click="state.reversalSectionEdit = false"
@@ -1584,6 +1702,7 @@ watch(
               Cancel
             </x-button>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="primary"
               :loading="loader.selectInvoice"
@@ -1615,7 +1734,7 @@ watch(
             <div class="grid md:grid-cols-2 gap-x-4 gap-y-2 py-4 items-center">
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1639,7 +1758,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1657,14 +1776,17 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2 pb-1.5"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1683,7 +1805,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1704,7 +1826,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1731,7 +1853,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1747,12 +1869,15 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1779,7 +1904,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1800,12 +1925,15 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1834,14 +1962,17 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1863,12 +1994,15 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1904,14 +2038,17 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1932,12 +2069,15 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1977,12 +2117,15 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2003,12 +2146,15 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="pt-1 font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2023,7 +2169,33 @@ watch(
                   </x-tooltip>
                 </div>
                 <div>
+                  <x-tooltip
+                    v-if="
+                      disableCommissionVatApplicable ||
+                      bookingDetailsForm.isCommissionDisabled
+                    "
+                  >
+                    <x-input
+                      v-model="bookingDetailsForm.commission_vat_applicable"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="
+                        !state.isEdit || disableCommissionVatApplicable
+                      "
+                      placeholder="Enter Commission Amount"
+                      size="xs"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                    <template #tooltip>
+                      {{
+                        bookingDetailsForm.isCommissionDisabled
+                          ? bookingDetailsForm.disabledCommissionTooltip
+                          : 'This option is disabled because Commission (VAT not applicable) has already been entered.'
+                      }}
+                    </template>
+                  </x-tooltip>
                   <x-input
+                    v-else
                     type="number"
                     min="0"
                     add
@@ -2032,22 +2204,26 @@ watch(
                     @change="calculateCommission"
                     class="!mb-0 w-full"
                     :class="isNegativeValue ? ' icon-padding' : ''"
-                    :disabled="!state.isEdit"
+                    :disabled="!state.isEdit || disableCommissionVatApplicable"
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
                     size="xs"
+                    :error="bookingDetailsForm.errors.commission_vat_applicable"
                     :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2069,12 +2245,15 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                  ![
+                    sendUpdateStatusEnum.ATIB,
+                    sendUpdateStatusEnum.ATCRNB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2086,7 +2265,51 @@ watch(
                     </template>
                   </x-tooltip>
                 </div>
-                <div>
+                <div v-if="props.isCommVatNotAppEnabled">
+                  <x-tooltip
+                    v-if="
+                      disableCommissionVatNotApplicable ||
+                      bookingDetailsForm.isCommissionDisabled
+                    "
+                  >
+                    <x-input
+                      type="number"
+                      v-model="bookingDetailsForm.commission_vat_not_applicable"
+                      class="!mb-0 w-full"
+                      :class="isNegativeValue ? ' icon-padding' : ''"
+                      :disabled="
+                        !state.isEdit || disableCommissionVatNotApplicable
+                      "
+                      placeholder="Enter Commission Amount"
+                      size="xs"
+                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    />
+                    <template #tooltip>
+                      {{
+                        bookingDetailsForm.isCommissionDisabled
+                          ? bookingDetailsForm.disabledCommissionTooltip
+                          : 'This option is disabled because Commission (VAT applicable) has already been entered.'
+                      }}
+                    </template>
+                  </x-tooltip>
+                  <x-input
+                    v-else
+                    type="number"
+                    min="0"
+                    add
+                    step="any"
+                    v-model="bookingDetailsForm.commission_vat_not_applicable"
+                    @change="calculateCommission"
+                    class="!mb-0 w-full"
+                    :class="isNegativeValue ? ' icon-padding' : ''"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Commission Amount"
+                    :rules="[isRequired]"
+                    size="xs"
+                    :icon-left="isNegativeValue ? 'minus' : ''"
+                  />
+                </div>
+                <div v-else>
                   <span>{{
                     bookingDetailsForm.commission_vat_not_applicable !== null
                       ? bookingDetailsForm.commission_vat_not_applicable
@@ -2096,12 +2319,15 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2127,12 +2353,15 @@ watch(
               </div>
               <div
                 v-if="
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                  ![
+                    sendUpdateStatusEnum.ACB,
+                    sendUpdateStatusEnum.ATCRNB_RBB,
+                  ].includes(props.sendUpdateLog.option?.code)
                 "
                 class="grid sm:grid-cols-2"
               >
                 <div>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -2168,6 +2397,7 @@ watch(
             <template v-if="!state.isEdit">
               <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   @click="checkSectionToEdit"
                   :disabled="props.isEditDisabledForQueuedBooking"
@@ -2181,35 +2411,58 @@ watch(
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="checkSectionToEdit">
+              <x-button
+                v-else
+                class="focus:ring-2 focus:ring-black"
+                size="sm"
+                @click="checkSectionToEdit"
+              >
                 Edit
               </x-button>
 
-              <template v-if="isLackingPayment">
-                <x-tooltip>
-                  <x-button
-                    size="sm"
-                    color="orange"
-                    v-if="props.updateBtn"
-                    :loading="loader.sendUpdateSectionBtn"
-                    @click="sendUpdateValidation"
-                    :disabled="sendUpdatePermissionCheck || isLackingPayment"
-                  >
-                    {{ props.updateBtn }}
-                  </x-button>
-                  <template #tooltip>
-                    <span class="custom-tooltip-content">
-                      Action Needed: Please revise payment details to reflect
-                      plan changes.
-                    </span>
-                  </template>
-                </x-tooltip>
+              <template
+                v-if="
+                  props.updateBtn &&
+                  (isLackingPayment ||
+                    disableMainBtn ||
+                    isTapCaptureProcessStart)
+                "
+              >
+                <div>
+                  <x-tooltip>
+                    <x-button
+                      class="focus:ring-2 focus:ring-black"
+                      size="sm"
+                      color="orange"
+                      :loading="loader.sendUpdateSectionBtn"
+                      @click="sendUpdateValidation"
+                      :disabled="
+                        isLackingPayment ||
+                        disableMainBtn ||
+                        isTapCaptureProcessStart
+                      "
+                    >
+                      {{ props.updateBtn }}
+                    </x-button>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{
+                          disableMainBtn
+                            ? disableMainBtn
+                            : isTapCaptureProcessStart
+                              ? 'Update booking already in queued.'
+                              : 'Action Needed: Please revise payment details to reflect plan changes.'
+                        }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </div>
               </template>
-              <template v-else>
+              <template v-else-if="props.updateBtn">
                 <x-button
+                  class="focus:ring-2 focus:ring-black"
                   size="sm"
                   color="orange"
-                  v-if="props.updateBtn"
                   :loading="loader.sendUpdateSectionBtn"
                   @click="sendUpdateValidation"
                   :disabled="sendUpdatePermissionCheck"
@@ -2220,6 +2473,7 @@ watch(
             </template>
             <template v-else>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="orange"
                 @click="onCancel"
@@ -2229,6 +2483,7 @@ watch(
                 Cancel
               </x-button>
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 color="#0CA789"
                 type="submit"
@@ -2245,6 +2500,7 @@ watch(
 
     <sendUpdateCustConfirmBtnTemp>
       <x-button
+        class="focus:ring-2 focus:ring-black"
         size="sm"
         color="error"
         @click.prevent="submitToCustomer"
@@ -2257,7 +2513,8 @@ watch(
 
     <x-modal
       v-model="modals.sendConfirm"
-      title="Send Update"
+      size="md"
+      :title="props.updateBtn"
       show-close
       backdrop
     >
@@ -2270,13 +2527,18 @@ watch(
       >
         {{ isStating }}
       </x-alert>
-      <x-checkbox
-        v-model="modals.isConfirmed"
-        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
-      />
+      <x-label class="flex items-center gap-2">
+        <x-checkbox v-model="modals.isConfirmed" />
+        <div>
+          I confirm and attest that all information recorded is correct.
+          <br />
+          I confirm I am in compliance with the COC.
+        </div>
+      </x-label>
       <template #actions>
-        <div class="text-right space-x-4">
+        <div class="flex gap-4 justify-end">
           <x-button
+            class="focus:ring-2 focus:ring-black"
             size="sm"
             ghost
             :disabled="isLoading"
@@ -2284,15 +2546,17 @@ watch(
           >
             Cancel
           </x-button>
-          <template v-if="!modals.isConfirmed">
-            <x-tooltip placement="left">
-              <SendUpdateCustReuseBtnTemp />
-              <template #tooltip>
-                Please select the checkbox to proceed
-              </template>
-            </x-tooltip>
-          </template>
-          <SendUpdateCustReuseBtnTemp v-else />
+          <div>
+            <template v-if="!modals.isConfirmed">
+              <x-tooltip>
+                <SendUpdateCustReuseBtnTemp />
+                <template #tooltip>
+                  Please select the checkbox to proceed
+                </template>
+              </x-tooltip>
+            </template>
+            <SendUpdateCustReuseBtnTemp v-else />
+          </div>
         </div>
       </template>
     </x-modal>
@@ -2312,6 +2576,7 @@ watch(
             Go Back
           </x-button>
           <x-button
+            class="focus:ring-2 focus:ring-black"
             size="sm"
             color="error"
             :loading="isSendUpdateWithEmail ? isLoading : loader.sendUpdate"
@@ -2329,6 +2594,7 @@ watch(
 
     <sendUpdateConfirmBtnTemp>
       <x-button
+        class="focus:ring-2 focus:ring-black"
         size="sm"
         color="error"
         :disabled="!confirmationCheck"
@@ -2342,16 +2608,24 @@ watch(
     <x-modal
       v-model="modals.attestRecord"
       size="md"
-      title="Send Update"
+      :title="
+        props.updateBtn === sendUpdateStatusEnum.SU
+          ? 'Book Update'
+          : props.updateBtn
+      "
       show-close
       backdrop
     >
-      <x-checkbox
-        v-model="confirmationCheck"
-        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
-      />
+      <x-label class="flex items-center gap-2">
+        <x-checkbox v-model="confirmationCheck" />
+        <div>
+          I confirm and attest that all information recorded is correct.
+          <br />
+          I confirm I am in compliance with the COC.
+        </div>
+      </x-label>
       <template #actions>
-        <div class="text-right space-x-4">
+        <div class="flex gap-4 justify-end">
           <x-button
             size="sm"
             ghost
@@ -2360,23 +2634,29 @@ watch(
           >
             Cancel
           </x-button>
-          <template v-if="!confirmationCheck">
-            <x-tooltip placement="left">
-              <SendUpdateReuseBtnTemp />
-              <template #tooltip>
-                Please select the checkbox to proceed
-              </template>
-            </x-tooltip>
-          </template>
-          <SendUpdateReuseBtnTemp v-else />
+          <div>
+            <template v-if="!confirmationCheck">
+              <x-tooltip>
+                <SendUpdateReuseBtnTemp />
+                <template #tooltip>
+                  Please select the checkbox to proceed
+                </template>
+              </x-tooltip>
+            </template>
+            <SendUpdateReuseBtnTemp v-else />
+          </div>
         </div>
       </template>
     </x-modal>
   </div>
 </template>
 
-<style>
+<style scoped>
 .icon-padding input {
   padding-left: 4vh !important;
+}
+
+.v-popper {
+  width: 100% !important;
 }
 </style>

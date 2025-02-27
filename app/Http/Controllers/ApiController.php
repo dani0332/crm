@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Response;
-use League\Fractal\Manager;
-use League\Fractal\Resource\Collection;
 
 class ApiController extends Controller
 {
@@ -69,23 +67,6 @@ class ApiController extends Controller
         }
 
         return response()->json($response, $errorCode, []);
-    }
-
-    /**
-     * response for collection
-     *
-     * @param  Collection  $data
-     * @param  Transformer  $transformer
-     * @param  string  $type
-     * @return Response json
-     */
-    public function respondCollection($data, $transformer)
-    {
-        $manager = new Manager;
-        $resource = new Collection($data, $transformer);
-        $res = $manager->createData($resource)->toArray();
-
-        return response()->json($res, Response::HTTP_OK);
     }
 
     public function respondSuccess($message = 'Success', $data = [])

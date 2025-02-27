@@ -345,7 +345,7 @@ watch(
             { value: 'Pet', label: 'Pet' },
             { value: 'Cycle', label: 'Cycle' },
             { value: 'Home', label: 'Home' },
-            { value: 'Corpline', label: 'Corpline' },
+            { value: 'CorpLine', label: 'Corpline' },
           ]"
           class="w-full"
           :single="true"

@@ -114,7 +114,31 @@ export const useRules = () => {
     );
   };
 
+  const isRequiredNumber = v => {
+    if (v === 0) return true;
+
+    if (!v) return 'This field is required';
+
+    return (
+      /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number'
+    );
+  };
+
+  const maxCharacters = max => v =>
+    !v ||
+    v.length <= max ||
+    `This field may not be greater than ${max} characters.`;
+
+  const emiratesNumber = v => {
+    const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
+    return (
+      pattern.test(v) ||
+      'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.'
+    );
+  };
+
   return {
+    name,
     isEmail,
     isMobile,
     isRequired,
@@ -133,5 +157,8 @@ export const useRules = () => {
     vat,
     amount_with_vat,
     emptyOrNumericAndNoSpecialChar,
+    isRequiredNumber,
+    maxCharacters,
+    emiratesNumber,
   };
 };

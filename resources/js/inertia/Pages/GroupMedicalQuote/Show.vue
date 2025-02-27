@@ -36,6 +36,8 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const page = usePage();
@@ -150,12 +152,6 @@ const onLeadStatus = () => {
           position: 'top',
         });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
-      },
     },
   );
 };
@@ -213,8 +209,14 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
+  insured_first_name:
+    page.props.quote.insured_first_name ??
+    page.props.quote.customer_insured_first_name ??
+    '',
+  insured_last_name:
+    page.props.quote.insured_last_name ??
+    page.props.quote.customer_insured_last_name ??
+    '',
   emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer.emirates_id_expiry_date || null,
@@ -379,6 +381,15 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
   createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
+
+const allowStatusUpdate = computed(() => {
+  if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
+    return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
+  }
+  return (
+    page.props.quote.quote_status_id == quoteStatusEnum.TransactionApproved
+  );
+});
 </script>
 
 <template>
@@ -392,7 +403,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       >
         <Link
           v-if="
-            quoteDetails?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            quoteDetails?.insly_id &&
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="`/legacy-policy/${quoteDetails?.insly_id}`"
           preserve-scroll
@@ -405,7 +420,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
             quote.previous_quote_policy_number != null &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -545,8 +563,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>N/A</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">FIRST NAME</dt>
@@ -997,9 +1019,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   label="Status"
                   :options="leadStatusOptions"
                   :disabled="
-                    quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved ||
-                    lockLeadSectionsDetails.lead_status
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
                   "
                   placeholder="Lead Status"
                   class="w-full"
@@ -1012,9 +1032,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   placeholder="Lead Notes"
                   class="w-full"
                   :disabled="
-                    quote.quote_status_id ==
-                      quoteStatusEnum.TransactionApproved ||
-                    lockLeadSectionsDetails.lead_status
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
                   "
                 />
               </div>
@@ -1052,10 +1070,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
-                isDisabled
-              "
+              :disabled="allowStatusUpdate || isDisabled"
               v-if="readOnlyMode.isDisable === true"
             >
               Change Status
@@ -1117,6 +1132,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       quoteSubType="Group Medical"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
     />
 
     <PolicyDetail
@@ -1142,6 +1159,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"

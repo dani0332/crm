@@ -4,11 +4,13 @@ defineProps({
   dropdownSource: Object,
   session: Object,
   isManualAllocationAllowed: Boolean,
+  renewalBatches: Array,
   totalCount: {
     type: Number,
     default: 0,
   },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -59,6 +61,7 @@ const filters = reactive({
   created_at_start: new Date().toISOString() || '',
   created_at_end: new Date().toISOString() || '',
   quote_status_id: [],
+  insurer_aml_status: [],
   advisor_id: [],
   business_type_of_insurance_id: [],
   company_name: '',
@@ -109,6 +112,13 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const renewalBatchOptions = computed(() => {
+  return page.props.renewalBatches.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
+});
+
 const insuranceTypeOptions = computed(() => {
   return page.props.dropdownSource.business_type_of_insurance_id.map(
     advisor => ({
@@ -131,6 +141,11 @@ const tableHeader = ref([
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   {
     text: 'CREATED DATE',
     value: 'created_at',
@@ -172,7 +187,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
 ]);
 
 const setIntialState = () => {
@@ -191,6 +206,7 @@ const setIntialState = () => {
     page: 1,
     previous_quote_policy_number: '',
     renewal_batch: '',
+    renewal_batches: [],
     is_renewal: '',
     payment_status: [],
     is_cold: false,
@@ -316,10 +332,12 @@ function displayNotification() {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const exportLoader = ref(false);
 const onDataExport = () => {
+  let copyFilters = JSON.parse(JSON.stringify(cleanObj(filters)));
   let diff = calculateDaysDifference(
-    filters.created_at_start,
-    filters.created_at_end,
+    copyFilters.created_at_start ?? copyFilters.booking_date[0],
+    copyFilters.created_at_end ?? copyFilters.booking_date[1],
   );
 
   if (diff > 31) {
@@ -330,28 +348,24 @@ const onDataExport = () => {
     return;
   }
 
-  filters.created_at_start = useDateFormat(
-    filters.created_at_start,
-    'YYYY-MM-DD',
-  ).value;
-
-  filters.created_at_end = useDateFormat(
-    filters.created_at_end,
-    'YYYY-MM-DD',
-  ).value;
-
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Business'),
     url: url + '?' + new URLSearchParams(data).toString(),
   };
-  logAndExportQuotes(payload);
+  exportLoader.value = true;
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
 
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
-    if (key == 'created_at_start' || key == 'created_at_end') {
+    if (/date/i.test(key) && params[key]) {
       filters[key] = useDateFormat(params[key], 'YYYY-MM-DD').value;
     } else if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key].map(value =>
@@ -453,7 +467,7 @@ const resetDateFilters = filterName => {
     (filterName.startsWith('created_at') ? filterMappings.created_at : []);
 
   filtersToReset.forEach(filter => {
-    filters[filter] = '';
+    filters[filter] = null;
   });
 };
 
@@ -497,6 +511,13 @@ watch(() => {
     filters.created_at_start = '';
     filters.created_at_end = '';
   }
+});
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
 });
 </script>
 
@@ -651,7 +672,8 @@ watch(() => {
               filters.payment_due_date ||
               filters.booking_date ||
               filters.company_name ||
-              filters.advisor_assigned_date
+              filters.advisor_assigned_date ||
+              (filters.policy_expiry_date && filters.policy_expiry_date_end)
                 ? []
                 : [isRequired]
             "
@@ -669,7 +691,8 @@ watch(() => {
               filters.payment_due_date ||
               filters.booking_date ||
               filters.company_name ||
-              filters.advisor_assigned_date
+              filters.advisor_assigned_date ||
+              (filters.policy_expiry_date && filters.policy_expiry_date_end)
                 ? []
                 : [isRequired]
             "
@@ -682,6 +705,12 @@ watch(() => {
             :options="leadStatusOptions"
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -724,14 +753,13 @@ watch(() => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="text"
-          name="renewal_batch"
-          label="Renewal Batch"
-          class="w-full"
-          placeholder="Search by Renewal Batch"
-        />
+        <x-field label="Renewal Batch">
+          <ComboBox
+            v-model="filters.renewal_batches"
+            placeholder="Search by Renewal Batch"
+            :options="renewalBatchOptions"
+          />
+        </x-field>
         <x-select
           v-model="filters.is_renewal"
           label="Renewal"
@@ -804,6 +832,7 @@ watch(() => {
             color="emerald"
             @click.prevent="onDataExport"
             class="justify-self-start"
+            :loading="exportLoader"
           >
             Export
           </x-button>

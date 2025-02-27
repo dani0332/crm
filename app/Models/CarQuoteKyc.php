@@ -32,9 +32,4 @@ class CarQuoteKyc extends BaseModel
             'payment' => ['id', 'car_quote_id', 'profession', 'organization', 'designation'],
         ],
     ];
-
-    public function processGetDSL($filters, $request)
-    {
-        return self::processGetBaseDSL($filters);
-    }
 }

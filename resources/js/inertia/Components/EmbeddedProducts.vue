@@ -31,6 +31,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  isEpLoading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const propsDataReactive = ref(props.data);
@@ -38,10 +42,13 @@ const documentsReactive = ref([]);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const embeddedProductEnum = page.props.embeddedProductEnum;
+const embeddedProductTypeEnum = page.props.embeddedProductTypeEnum;
+const paymentGatewayEnum = page.props.paymentGatewayEnum;
 const modals = reactive({
   cancelPayment: false,
   viewDocuments: false,
   addDocument: false,
+  voidPayment: false,
 });
 
 const { isRequired, isEmail, isNumberOrDecimal, isMobileNo } = useRules();
@@ -61,6 +68,21 @@ const paymentForm = useForm({
   quote_id: null,
   processing: false,
 });
+
+const voidPaymentForm = useForm({
+  modelType: props.modelType,
+  embedded_id: null,
+  quote_id: null,
+  processing: false,
+});
+
+const voidPaymentFormAction = item => {
+  voidPaymentForm.reset();
+  voidPaymentForm.embedded_id = item.id;
+  voidPaymentForm.quote_id = props.quote.id;
+  voidPaymentForm.uuid = props.quote.uuid;
+  modals.voidPayment = true;
+};
 
 const syncDocumentLoader = ref(false);
 const downloadLoader = ref(false);
@@ -197,7 +219,7 @@ const epTable = reactive({
       value: 'prices',
     },
     {
-      text: 'Last Updated Date',
+      text: 'Payment Captured date',
       value: 'updated_at',
     },
     {
@@ -235,27 +257,6 @@ const getBlog = file => useObjectUrl(file);
 const ppDoc = str => {
   const doc = JSON.parse(str);
   return doc[0]?.path !== '' ? usePage().props.cdnPath + doc[0]?.path : '';
-};
-const checkTransactionExist = item => {
-  for (let price of item.prices) {
-    for (let transaction of price.transactions) {
-      const paymentStatusDate = transaction.payment_status_date;
-      if (paymentStatusDate) {
-        var timeStart = new Date(paymentStatusDate);
-        var timeEnd = new Date();
-        var timeDifferenceInMiliseconds =
-          timeEnd.getTime() - timeStart.getTime();
-        if (
-          (transaction.payment_status_id == 6 ||
-            transaction.payment_status_id == 4) &&
-          timeDifferenceInMiliseconds <= 259200000
-        ) {
-          return false;
-        }
-      }
-    }
-  }
-  return true;
 };
 
 const { copy, copied } = useClipboard();
@@ -304,7 +305,11 @@ const toggleProduct = (ep, event) => {
   propsDataReactive.value?.forEach(item => {
     if (item.id === ep.embedded_product_id) {
       item.prices.forEach(price => {
-        if (price.id !== ep.id && price.transactions[0].is_selected !== false) {
+        if (
+          price.id !== ep.id &&
+          price.transactions.length > 0 &&
+          price.transactions[0].is_selected !== false
+        ) {
           price.transactions[0].is_selected = false;
           removeIdFromSelection.push(price.id);
         }
@@ -337,10 +342,16 @@ const toggleProduct = (ep, event) => {
   axios
     .post(requestUrl, data)
     .then(res => {
-      notification.success('Updated');
+      notification.success({
+        title: 'Updated',
+        position: 'top',
+      });
     })
     .catch(err => {
-      notification.error('Something went wrong');
+      notification.error({
+        title: 'Something went wrong',
+        position: 'top',
+      });
     });
 };
 const onActivitySubmit = isValid => {
@@ -352,17 +363,53 @@ const onActivitySubmit = isValid => {
     .post(url, paymentForm)
     .then(res => {
       modals.cancelPayment = false;
-      notification.success('Processed');
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+      router.get(window.location.href);
     })
     .catch(err => {
+      let message = 'Something went wrong';
       if (err.response.data) {
-        notification.error(err.response.data[0]);
-      } else {
-        notification.error('Something went wrong');
+        message = err.response.data[0];
       }
+      notification.error({
+        title: message,
+        position: 'top',
+      });
     })
     .finally(() => {
       paymentForm.processing = false;
+    });
+};
+const onVoidSubmit = isValid => {
+  if (!isValid) return;
+  const method = 'post';
+  const url = '/quotes/void-payment';
+  voidPaymentForm.processing = true;
+  axios
+    .post(url, voidPaymentForm)
+    .then(res => {
+      modals.voidPayment = false;
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+      router.get(window.location.href);
+    })
+    .catch(err => {
+      let message = 'Something went wrong';
+      if (err.response.data) {
+        message = err.response.data[0];
+      }
+      notification.error({
+        title: message,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      voidPaymentForm.processing = false;
     });
 };
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -482,6 +529,7 @@ const onAddDocumentSubmit = event => {
           border-cell
           hide-rows-per-page
           hide-footer
+          :loading="isEpLoading"
         >
           <template #item-code="{ short_code }">
             {{ short_code + '-' + props.code }}
@@ -524,8 +572,27 @@ const onAddDocumentSubmit = event => {
             }}
           </template>
 
-          <template #item-updated_at="{ updated_at }">
-            {{ dateFormat(updated_at) }}
+          <template #item-updated_at="item">
+            <span
+              v-if="
+                getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                  ?.payment_status_id == paymentStatusEnum.CAPTURED
+              "
+            >
+              <span v-if="item.short_code == embeddedProductEnum.TRAVEL">
+                {{
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.travel_annual_payments?.captured_at
+                }}
+              </span>
+              <span v-else>
+                {{
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payments[0]?.captured_at
+                }}
+              </span>
+            </span>
+            <span v-else> - </span>
           </template>
 
           <template #item-actions="item">
@@ -565,13 +632,48 @@ const onAddDocumentSubmit = event => {
                 View Documents
               </x-button>
               <x-button
-                v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+                v-if="
+                  can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL) &&
+                  (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payment_status_id == paymentStatusEnum.DRAFT ||
+                    getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payments[0]?.payment_gateway_id ==
+                      paymentGatewayEnum.PAYMENT_GATEWAY_CHECKOUT ||
+                    (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id == paymentStatusEnum.CAPTURED &&
+                      item.product_type ==
+                        embeddedProductTypeEnum.NON_INSURANCE &&
+                      getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                        ?.payments[0]?.payment_gateway_id ==
+                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP))
+                "
                 size="xs"
                 color="#ff5e00"
-                :disabled="checkTransactionExist(item)"
+                :disabled="!item.can_cancel_payment"
                 @click.prevent="cancelPaymentForm(item)"
               >
                 Cancel Payments
+              </x-button>
+              <x-button
+                v-if="
+                  [
+                    paymentStatusEnum.DRAFT,
+                    paymentStatusEnum.AUTHORISED,
+                    paymentStatusEnum.CANCELLED,
+                  ].includes(
+                    getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id,
+                  ) &&
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payments[0]?.payment_gateway_id ==
+                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+                "
+                size="xs"
+                color="#ff5e00"
+                :disabled="!item.can_void_payment"
+                @click.prevent="voidPaymentFormAction(item)"
+              >
+                Void Payment
               </x-button>
             </div>
           </template>
@@ -621,6 +723,41 @@ const onAddDocumentSubmit = event => {
               type="submit"
             >
               Cancel Payment
+            </x-button>
+          </template>
+        </x-modal>
+        <x-modal
+          title="Void Authorized Payment"
+          v-model="modals.voidPayment"
+          size="md"
+          show-close
+          backdrop
+          is-form
+          @submit="onVoidSubmit"
+        >
+          <div>
+            <p>Are you sure to void this payment?</p>
+          </div>
+
+          <template #secondary-action>
+            <x-button
+              size="sm"
+              ghost
+              tabindex="-1"
+              :disabled="voidPaymentForm.processing"
+              @click.prevent="modals.voidPayment = false"
+            >
+              Cancel
+            </x-button>
+          </template>
+          <template #primary-action>
+            <x-button
+              size="sm"
+              color="#ff5e00"
+              :loading="voidPaymentForm.processing"
+              type="submit"
+            >
+              Confirm
             </x-button>
           </template>
         </x-modal>

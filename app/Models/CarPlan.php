@@ -48,11 +48,6 @@ class CarPlan extends BaseModel implements AuditableContract
         return [];
     }
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
-
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = config('constants.datetime_format');

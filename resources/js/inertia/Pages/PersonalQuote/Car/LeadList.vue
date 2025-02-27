@@ -15,6 +15,8 @@ defineProps({
   isBetaUser: Boolean,
   teams: Object,
   authorizedDays: Number,
+  assignmentTypes: Object,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -27,6 +29,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
 const cleanObj = obj => useCleanObj(obj);
+const exportLoader = ref(false);
 
 const createLead = reactive({
   modal: false,
@@ -69,6 +72,7 @@ const tableHeader = [
   { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'LEAD COST', value: 'cost_per_lead' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
   { text: 'ECOMMERCE', value: 'is_ecommerce' },
   { text: 'TIER NAME', value: 'tier_id_text' },
@@ -98,14 +102,6 @@ const ecommerceOptions = [
   { value: '', label: 'Please select is ecommerce' },
   { value: 'Yes', label: 'Yes' },
   { value: 'No', label: 'No' },
-];
-
-const assignmentTypeOptions = [
-  { value: '', label: 'Please select is assignment type' },
-  { value: 1, label: 'System Assigned' },
-  { value: 2, label: 'System ReAssigned' },
-  { value: 3, label: 'Manual Assigned' },
-  { value: 4, label: 'Manual ReAssigned' },
 ];
 
 const filteredTableHeader = computed(() => {
@@ -226,6 +222,7 @@ const filters = reactive({
   email: '',
   mobile_no: '',
   quote_status_id: [],
+  insurer_aml_status: [],
   created_at_start: '',
   currently_insured_with: '',
   is_ecommerce: '',
@@ -536,13 +533,27 @@ watch(
   },
   { deep: true },
 );
-const onExport = url => {
+
+const onExport = (url, isLoading = false) => {
+  exportLoader.value = isLoading;
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
     url: `${window.location.origin}${url}`,
   };
-  logAndExportQuotes(payload);
+  logAndExportQuotes(payload).then(result => {
+    if (result)
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
+  });
 };
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -690,6 +701,12 @@ const onExport = url => {
           :options="leadStatuses"
         />
         <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
+        <ComboBox
           v-model="filters.tier_id"
           label="Tier Name"
           name="tier_id"
@@ -768,7 +785,7 @@ const onExport = url => {
           v-model="filters.assignment_type"
           label="Assignment Type"
           placeholder="Please select assignment type"
-          :options="assignmentTypeOptions"
+          :options="assignmentTypes"
           :single="true"
           class="w-full"
         />
@@ -866,7 +883,8 @@ const onExport = url => {
             v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
-            @click="onExport(`/car/leads-export?${objToUrl(filters)}`)"
+            :loading="exportLoader"
+            @click="onExport(`/car/leads-export?${objToUrl(filters)}`, true)"
             class="justify-self-start mr-3"
           >
             Export
@@ -930,8 +948,10 @@ const onExport = url => {
                 `/car/leads-details-with-email/${
                   genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
                 }?${objToUrl(filters)}`,
+                true,
               )
             "
+            :loading="exportLoader"
             class="justify-self-start mr-3"
           >
             Extract leads detail with email/mobile_no
@@ -971,7 +991,8 @@ const onExport = url => {
             v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
             size="sm"
             color="emerald"
-            @click="onExport('/pua-leads-export')"
+            :loading="exportLoader"
+            @click="onExport('/pua-leads-export', true)"
             class="justify-self-start mr-3"
           >
             Export PUA Updates
@@ -987,7 +1008,10 @@ const onExport = url => {
     </x-form>
 
     <Transition name="fade" v-if="!hasRole(rolesEnum.CarAdvisor)">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
+      <div
+        v-if="quotesSelected.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)"
+        class="mb-4"
+      >
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"

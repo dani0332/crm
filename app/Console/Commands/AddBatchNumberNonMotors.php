@@ -51,7 +51,7 @@ class AddBatchNumberNonMotors extends Command
             if ($lastBatch == null) {
                 $this->processBatchesFromScratch('2024-07-29', $type);
             } elseif (! $this->isBatchCurrent($lastBatch)) {
-                $this->processBatchesFromLastEndDate($lastBatch, $type);
+                $this->processBatchesFromLastEndDate(type: $type);
             } else {
                 info('non motor batches are update to date');
 

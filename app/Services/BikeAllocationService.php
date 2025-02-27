@@ -91,7 +91,7 @@ class BikeAllocationService extends AllocationService
                 $bikeValue = $firstAxaValuation->bikeValue;
             }
 
-            info('bike value as per valuation engine for GIG is '.$bikeValue.' for lead : '.$bikeLead->uuid);
+            info('bike value as per valuation engine for GIG is '.$bikeValue);
             $tiersQuery->where('min_price', '<=', $bikeValue)->where('max_price', '>=', $bikeValue);
         }
     }
@@ -207,7 +207,7 @@ class BikeAllocationService extends AllocationService
         if ($bikeLead->bikeQuote->year_of_manufacture < $yearOfManufacture) {
             // Check if more than one plan is found against the bike lead.
             if (count($plans) > 0) {
-                info('More than one plan found against bike lead: '.$bikeLead->uuid);
+                info('More than one plan found');
                 // Determine the tier based on a value and return the first matching tier.
                 $this->getTierBasedOnValue($bikeLead, $tiersQuery);
 
@@ -292,6 +292,7 @@ class BikeAllocationService extends AllocationService
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
             ->where('quote_type_id', QuoteTypes::BIKE->id())
+            ->activeUser()
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -391,7 +392,7 @@ class BikeAllocationService extends AllocationService
             // If no rules are found, get user IDs from rule lead sources.
             $ruleUsers = $this->getRuleUsers();
 
-            info('No rule found against this lead ('.$lead->uuid.'), so filtering rule users: '.json_encode($ruleUsers));
+            info('No rule found so filtering rule users: '.json_encode($ruleUsers));
 
             // Find the difference between available user IDs and rule users.
             $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
@@ -440,9 +441,9 @@ class BikeAllocationService extends AllocationService
 
     public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
     {
-        info('About to assign bike lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
+        info('About to assign bike lead to user with ID: '.$userId);
 
-        //Store the previous Assignment Type
+        // Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
 
         // Store the previous advisor ID.
@@ -451,7 +452,7 @@ class BikeAllocationService extends AllocationService
         // Assign the lead to the user and get the associated quote.
         $bikeQuote = $this->assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType);
 
-        info('Advisor and tier assignment completed for lead with UUID: '.$bikeQuote->uuid.' to user with ID: '.$userId.' and tier name: '.$tier->name);
+        info('Advisor and tier assignment completed to user with ID: '.$userId.' and tier name: '.$tier->name);
 
         // Update the bike lead detail record and store the previous advisor assigned date.
         $previousAdvisorAssignedDate = $this->updateBikeLeadDetailRecord($bikeQuote->id);
@@ -469,7 +470,7 @@ class BikeAllocationService extends AllocationService
         // Assign the lead to the advisor and send an email
         // Check if the lead was previously assigned to an advisor and log the change.
         if (! empty($lead->advisor_id)) {
-            info('Lead with UUID: '.$lead->uuid.' was previously assigned to User ID: '.$lead->advisor_id.' and is now being assigned to User ID: '.$userId);
+            info('Was previously assigned to User ID: '.$lead->advisor_id.' and is now being assigned to User ID: '.$userId);
         }
 
         // Update lead properties.
@@ -484,10 +485,12 @@ class BikeAllocationService extends AllocationService
         $lead->quote_batch_id = $quoteBatch->id;
 
         // Log information about the quote batch assignment.
-        info('About to assign Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' to Quote with UUID: '.$lead->uuid);
+        info('About to assign Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
         // Save the updated lead.
         $lead->save();
+
+        $lead->endAllocation();
 
         return $lead;
     }
@@ -560,11 +563,7 @@ class BikeAllocationService extends AllocationService
 
     public function shouldProceed(): bool
     {
-        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
-        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
-        $shouldProceed = now()->between($start_time, $end_time) && ((int) config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 1);
-
-        return $shouldProceed;
+        return $this->shouldProceedWithReAllocation('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
     }
 
     public function isLeadReassigned($lead)
@@ -583,7 +582,7 @@ class BikeAllocationService extends AllocationService
             'tier_id' => $tier->id,
         ]);
 
-        info('Tier with name : '.$tier->name.' is assigned to bike lead with uuid : '.$lead->uuid);
+        info('Tier with name : '.$tier->name.' is assigned');
     }
 
     public function fetchOnlyBikeEligibleAdvisors($userIds)

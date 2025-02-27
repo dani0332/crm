@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Arr;
 use LookUpModel;
 
 class CarQuotePolicy extends BaseModel
@@ -44,24 +43,6 @@ class CarQuotePolicy extends BaseModel
     public function relations()
     {
         return ['transactions_id', 'transactions_id.insurance_company_id', 'transactions_id.type_of_insurance_id', 'transactions_id.payment_mode_id', 'transactions_id.customer'];
-    }
-
-    public function processGetDSL($filters, $request)
-    {
-        if ($request->form_id) {
-            return self::processGetBaseDSL($filters, false);
-        }
-
-        $response = self::processGetBaseDSL($filters, false)->first();
-
-        if ($response) {
-            $collection = $response->toArray();
-            if (Arr::exists($collection, 'transactions_id')) {
-                $response = array_merge($collection['transactions_id'], $collection);
-            }
-        }
-
-        return $response;
     }
 
     public function saveForm($request, $update = false)

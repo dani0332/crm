@@ -22,10 +22,6 @@ class UpdateAMLCustomerDetailRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'insured_first_name' => 'required',
-            'insured_last_name' => 'required',
-            'nationality_id' => 'required',
-            'dob' => 'required',
             'place_of_birth' => 'required',
             'country_of_residence' => 'required',
             'residential_address' => 'required',

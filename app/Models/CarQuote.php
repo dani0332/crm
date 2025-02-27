@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\FilterTypes;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -11,7 +13,6 @@ use Auth;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use LookUpModel;
 use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
@@ -397,89 +398,6 @@ class CarQuote extends BaseModel
         ],
     ];
 
-    public function processGetDSL($filters, $request)
-    {
-        if ($request->form_id) {
-            return parent::processGetBaseDSL($filters, false);
-        } else {
-            $restrictFilter = [];
-
-            if (Auth::user()->hasRole('advisor')) {
-                if (empty($filters)) {
-                    $restrictFilter['advisor_id'] = Auth::user()->id;
-                } else {
-                    $restrictFilter['advisor_id'] = Auth::user()->id;
-                    $restrictFilter = array_merge($restrictFilter, $filters);
-                }
-
-                // $restrictFilter["insurance_coverage.car_quote_id"] = 12222;
-            }
-
-            if (Auth::user()->hasRole('oe')) {
-                if (empty($filters)) {
-                    $restrictFilter['oe_id'] = Auth::user()->id;
-                } else {
-                    $restrictFilter['oe_id'] = Auth::user()->id;
-                    $restrictFilter = array_merge($restrictFilter, $filters);
-                }
-            }
-
-            if (Auth::user()->hasRole('pa')) {
-                if (! array_key_exists('pa_id', $filters)) {
-                    return [];
-                } else {
-                    $valuesIn = [];
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_accepted']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'kyc_cleared']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'missing_documents_requested']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_resubmitted']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']));
-
-                    $pa_id = $filters['pa_id'] == 0 ? null : Auth::user()->id;
-                    $restrictFilter['pa_id'] = $pa_id;
-                    $restrictFilter['advisor_id'] = ['op' => '<>', 'val' => ''];
-
-                    $restrictFilter['quote_status_id'] = ['op' => 'in', 'val' => $valuesIn];
-                }
-            }
-
-            if (Auth::user()->hasRole('payment')) {
-                if (! array_key_exists('pa_id', $filters)) {
-                    return [];
-                } else {
-                    $valuesIn = [];
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'AMLScreeningCleared']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_declined']));
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']));
-
-                    $pa_id = $filters['pa_id'] == 0 ? null : Auth::user()->id;
-                    $restrictFilter['payment_id'] = $pa_id;
-                    $restrictFilter['advisor_id'] = ['op' => '<>', 'val' => ''];
-                    $restrictFilter['quote_status_id'] = ['op' => 'in', 'val' => $valuesIn];
-                }
-            } //invoicing
-
-            if (Auth::user()->hasRole('invoicing')) {
-                if (! array_key_exists('pa_id', $filters)) {
-                    return [];
-                } else {
-                    $valuesIn = [];
-                    array_push($valuesIn, LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'policy_issued']));
-                    $pa_id = $filters['pa_id'] == 0 ? null : Auth::user()->id;
-                    $restrictFilter['invoicing'] = $pa_id;
-                    $restrictFilter['advisor_id'] = ['op' => '<>', 'val' => ''];
-                    $restrictFilter['quote_status_id'] = ['op' => 'in', 'val' => $valuesIn];
-                }
-            }
-
-            if (empty($restrictFilter)) {
-                return [];
-            }
-
-            return parent::processGetBaseDSL($restrictFilter, false);
-        }
-    }
-
     public function saveForm($request, $update = false)
     {
         if (Auth::user()->hasRole('pa') && $request->has('action')) {
@@ -547,5 +465,26 @@ class CarQuote extends BaseModel
     public function insuranceProviderDetails()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
+
+    public function hasExemptedSource()
+    {
+        // Check if Dubai Now exclusion should be applied
+        $shouldIncludeDubaiNow = getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
+
+        // List of exempted lead sources
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
+
+        // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
+        if ($shouldIncludeDubaiNow) {
+            $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
+        }
+
+        return in_array($this->source, $exemptedLeadSources);
+    }
+
+    public function isRenewalTierEmailSent()
+    {
+        return $this->is_renewal_tier_email_sent == 1;
     }
 }

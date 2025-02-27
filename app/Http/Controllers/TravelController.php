@@ -7,10 +7,12 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -20,10 +22,14 @@ use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
+use App\Http\Requests\TravelPlanUpdateManualProcessRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
+use App\Models\Nationality;
+use App\Models\TravelPlan;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -31,18 +37,22 @@ use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
+use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 use RuntimeException;
@@ -82,16 +92,23 @@ class TravelController extends Controller
     {
         $searchProperties = array_flip($this->genericModel->searchProperties);
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
+        $insurerApiStatus = PolicyIssuanceEnum::getInsurerAPIStatuses();
+        $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
+        $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
+            'insurerApiStatus' => $insurerApiStatus,
+            'issuanceStatuses' => $issuanceStatuses,
             'dropdownSource' => $dropdownSource,
+            'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
             'session' => $request->session()->only(['success', 'error', 'message']),
             'permissions' => [
@@ -102,6 +119,10 @@ class TravelController extends Controller
                 'isManagerORDeputy' => $isManager,
             ],
             'authorizedDays' => intval($authorizedDays->value),
+            'amlStatuses' => AMLStatusCode::getStatuses(),
+            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel),
+            'travelPlans' => TravelPlan::all(),
+            'insurerAMLStatus' => $insurerAMLStatus,
         ]);
     }
 
@@ -116,9 +137,9 @@ class TravelController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
-        /* Start - Temporarily adding for correcting historic data  */
+        /* Start - Temporarily adding for correcting historic data */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
-        /* End - Temporarily adding for correcting historic data  */
+        /* End - Temporarily adding for correcting historic data */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::TRAVEL->value, $record);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
@@ -181,6 +202,7 @@ class TravelController extends Controller
         $this->travelQuoteService->fillData();
         $nationalities = NationalityRepository::withActive()->get();
         $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
+        $record->departure_country_text = $record->departure_country_id ? Nationality::find($record->departure_country_id)->country_name : null;
 
         $ecomDetails = [
             'premium' => $record->premium,
@@ -206,6 +228,9 @@ class TravelController extends Controller
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
+        if (isset($fields['advisor_id']) && ! empty($fields['advisor_id']) && isset($fields['advisor_id']['value']) && $fields['advisor_id']['value'] === 'Customer Happiness Centre') {
+            $fields['advisor_id']['value'] = 'Auto Issued';
+        }
         $travelDestinations = $this->travelQuoteService->getTravelDestinations($record->id);
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
@@ -234,6 +259,9 @@ class TravelController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $isAmlClearedForQuote = $record->aml_status === AMLStatusCode::AMLScreeningCleared;
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
+        $access = $this->travelQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+
+        $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($record, self::TYPE);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -287,7 +315,7 @@ class TravelController extends Controller
                 'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
-                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
+                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit') || (userHasProduct(quoteTypeCode::Travel) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS)),
                 'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                 'isPA' => auth()->user()->hasRole(RolesEnum::PA),
 
@@ -311,6 +339,10 @@ class TravelController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'access' => $access,
+            'lockStatusOfPolicyIssuanceSteps' => $lockStatusOfPolicyIssuanceSteps,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 
@@ -480,6 +512,9 @@ class TravelController extends Controller
                 $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                 $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
                 $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+                $addons = $listQuotePlan->addons;
+                $vat = $listQuotePlan->vat;
+                $insurerQuoteNo = $listQuotePlan->insurerQuoteId;
 
                 foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                     $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
@@ -504,6 +539,10 @@ class TravelController extends Controller
             'listQuotePlansMembers' => $listQuotePlansMembers,
             'listQuotePlanBenefitstravelInconvenienceCover' => $listQuotePlanBenefitstravelInconvenienceCover,
             'listQuotePlanBenefitsemergencyMedicalCover' => $listQuotePlanBenefitsemergencyMedicalCover,
+            'addons' => $addons,
+            'id' => $planId,
+            'vat' => $vat,
+            'insurerQuoteNo' => $insurerQuoteNo,
         ];
 
         return response()->json($data, 200);
@@ -542,5 +581,19 @@ class TravelController extends Controller
     public function renewalsUploadCreate(TravelRenewalsUploadRequest $request)
     {
         return $this->renewalQuoteService->travelRenewalsUploadCreate($request->validated());
+    }
+
+    public function travelPlanUpdateManualProcess(TravelPlanUpdateManualProcessRequest $request)
+    {
+        app(TravelQuoteService::class)->travelPlanModify($request->validated());
+    }
+
+    public function sendEmailOneClickBuy(Request $request)
+    {
+        Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
+
+        SendTravelOCBIntroEmailJob::dispatch($request->quote_uuid);
+
+        return response()->json(['success' => 'OCB email sent to customer']);
     }
 }

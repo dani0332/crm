@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-import { formatDate } from '../../Composables/utilities.js';
 import EntityModel from './Partials/EntityModel.vue';
 import IndividualModel from './Partials/IndividualModel.vue';
 
@@ -18,14 +17,19 @@ const props = defineProps({
   businessCommuModeText: Array,
   kycLogs: Array,
   kycStatus: String,
-  customerDetails: Object,
+  insuredPersonDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
   cardHolderName: Object,
   amlStatusName: String,
+  amlStatusCode: Array,
+  quoteTypeIdEnum: Array,
+  quoteStatusEnums: Array,
+  gigInsurerDefaultEmail: String,
 });
 
 const page = usePage();
+const notification = useToast();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
@@ -121,6 +125,41 @@ function activeComments() {
     activeField.value = false;
   }
 }
+
+const skipBridgerAMLBtnProcess = ref(false);
+const tempSkipBridgerAML = () => {
+  skipBridgerAMLBtnProcess.value = true;
+  let data = {
+    quote_type_id: props.quoteType.id,
+    quote_type_code: props.quoteType.code,
+    quote_uuid: props.quoteRequest.uuid,
+    quote_request_id: props.quoteRequest.id,
+    current_aml_status: props.quoteRequest.aml_status,
+  };
+
+  axios
+    .post(route('temp-skip-bridger-aml'), data)
+    .then(res => {
+      skipBridgerAMLBtnProcess.value = false;
+      if (res.data.response) {
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      }
+    })
+    .catch(err => {
+      skipBridgerAMLBtnProcess.value = false;
+      let errors = err.response.data.errors.error;
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
+    });
+};
+
 onMounted(() => {
   activeComments();
 });
@@ -170,7 +209,7 @@ onMounted(() => {
             <dd>{{ quoteRequest?.quote_status?.text ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">AML STATUS</dt>
+            <dt class="font-medium">IM AML STATUS</dt>
             <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -285,7 +324,10 @@ onMounted(() => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">DATE OF BIRTH</dt>
-              <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
+              <dd>
+                {{ dateFormat(quoteRequest.dob) }}
+                <!-- {{ dateFormat(quoteRequest.dob) }} -->
+              </dd>
             </div>
           </template>
           <template v-if="quoteType.code == quoteTypeCodeEnum.Health">
@@ -665,7 +707,24 @@ onMounted(() => {
             </dd>
           </div>
         </dl>
+
         <div class="flex justify-end">
+          <x-button
+            v-if="can(permissionsEnum.SKIP_BRIDGER_AML)"
+            class="mt-4 mr-2"
+            color="red"
+            size="sm"
+            :loading="skipBridgerAMLBtnProcess"
+            :disabled="
+              !(
+                quoteRequest.aml_status ==
+                props.amlStatusCode.AMLScreeningFailed
+              )
+            "
+            @click="tempSkipBridgerAML"
+          >
+            Skip Bridger AML
+          </x-button>
           <x-button
             class="mt-4"
             color="#ff5e00"
@@ -707,7 +766,7 @@ onMounted(() => {
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
       :quote-aml-status="page.props.quoteAmlStatus"
-      :customer-details="props.customerDetails"
+      :insuredPersonDetails="props.insuredPersonDetails"
       :cardHolderName="cardHolderName"
       :kycLogs="kycLogs"
     />

@@ -10,6 +10,7 @@ const props = defineProps({
   filters: Array,
   productName: String,
   retentionReportEnum: Array,
+  departments: Array,
 });
 
 const page = usePage();
@@ -49,6 +50,7 @@ const getFiltersObject = () => {
   return {
     lob: props.productName,
     displayBy: '',
+    department: '',
     policyExpiryDate: [],
     asAtDate: '',
     teams: [],
@@ -172,6 +174,34 @@ const loadAdvisorsByLob = e => {
     });
 };
 
+const loadAdvisorsByDepartment = e => {
+  if (e.length == 0) {
+    return;
+  }
+
+  if (isMounted.value) {
+    isDirty.value = true;
+  }
+
+  loaders.advisorOptions = true;
+
+  axios
+    .post(`/reports/fetch-advisors-by-department`, {
+      department_id: e,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
+};
+
 const onTeamChange = (e, isOnMounted = false) => {
   if (!isOnMounted) {
     filters.advisors = [];
@@ -180,11 +210,20 @@ const onTeamChange = (e, isOnMounted = false) => {
   loadAdvisors(e);
 };
 
+const onDepartmentChange = (e, isOnMounted = false) => {
+  if (!isOnMounted) {
+    filters.advisors = [];
+    advisorOptions.value = [];
+  }
+  loadAdvisorsByDepartment(e);
+};
+
 const onLobChange = (e, isOnMounted = false) => {
   if (!isOnMounted) {
     filters.teams = [];
     filters.advisors = [];
     advisorOptions.value = [];
+    filters.department = '';
     filters.displayBy = '';
     filters.policyExpiryDate = [];
     filters.asAtDate = '';
@@ -194,9 +233,7 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.insurance_type = '';
   }
 
-  if (
-    [quoteTypeCodeEnum.Health, quoteTypeCodeEnum.CORPLINE].includes(filters.lob)
-  ) {
+  if ([quoteTypeCodeEnum.CORPLINE].includes(filters.lob)) {
     loadTeams(e);
   } else {
     loadAdvisorsByLob(e);
@@ -224,9 +261,7 @@ const isDisabled = element => {
 const getAdvisorLabel = () => {
   let label = 'Advisors';
   if (
-    [quoteTypeCodeEnum.Health, quoteTypeCodeEnum.CORPLINE].includes(
-      filters.lob,
-    ) &&
+    [quoteTypeCodeEnum.CORPLINE].includes(filters.lob) &&
     (!filters.teams || filters.teams.length == 0)
   ) {
     label = 'Advisors (select teams first)';
@@ -278,10 +313,17 @@ onMounted(() => {
     filters.displayBy = RetentionReportEnum.BATCH;
     filters.lob = props.productName;
   }
-  if (
-    [quoteTypeCodeEnum.Health, quoteTypeCodeEnum.CORPLINE].includes(filters.lob)
-  ) {
+  filters.department = queryParams.get('department')
+    ? +queryParams.get('department')
+    : '';
+
+  if ([quoteTypeCodeEnum.CORPLINE].includes(filters.lob)) {
     loadTeams(filters.lob);
+  } else if (
+    [quoteTypeCodeEnum.Health].includes(filters.lob) &&
+    filters.department
+  ) {
+    loadAdvisorsByDepartment(filters.department);
   } else {
     loadAdvisorsByLob(filters.lob);
   }
@@ -446,7 +488,7 @@ const totalLeads = reactive({
   ],
 });
 
-function onFetchLeadsInfo(advisor_id, renewal_batch_id, type, page = 1) {
+function onFetchLeadsInfo(advisor_id, renewal_batch_id, type, month, page = 1) {
   totalLeads.data = [];
   totalLeads.modal = true;
   totalLeads.loader = true;
@@ -454,6 +496,7 @@ function onFetchLeadsInfo(advisor_id, renewal_batch_id, type, page = 1) {
   filters.page = page;
   filters.renewal_batch_id = renewal_batch_id;
   filters.advisor_id = advisor_id;
+  filters.month = month;
   // Deep copy filters to payload
   let payload = JSON.parse(JSON.stringify(filters));
   payload = cleanFilters(payload);
@@ -486,6 +529,7 @@ const setPageTable = page => {
     filters.advisor_id,
     filters.renewal_batch_id,
     filters.type,
+    filters.month,
     page,
   );
 };
@@ -733,6 +777,17 @@ function handleDateChange(dateRange) {
         />
 
         <ComboBox
+          v-if="canShow('department')"
+          v-model="filters.department"
+          placeholder="Select Department"
+          label="Department"
+          :options="departments"
+          class="w-full"
+          @update:model-value="onDepartmentChange"
+          :single="true"
+        />
+
+        <ComboBox
           v-if="canShow('advisors')"
           :disabled="!isDisabled('advisors')"
           :class="{
@@ -833,6 +888,7 @@ function handleDateChange(dateRange) {
                 item.advisor_id,
                 item.renewal_batch_id,
                 RetentionReportEnum.TOTAL,
+                item.month,
               )
             "
             class="text-primary underline"
@@ -856,6 +912,7 @@ function handleDateChange(dateRange) {
                 item.advisor_id,
                 item.renewal_batch_id,
                 RetentionReportEnum.LOST,
+                item.month,
               )
             "
             class="text-primary underline"
@@ -879,6 +936,7 @@ function handleDateChange(dateRange) {
                 item.advisor_id,
                 item.renewal_batch_id,
                 RetentionReportEnum.INVALID,
+                item.month,
               )
             "
             class="text-primary underline"
@@ -902,6 +960,7 @@ function handleDateChange(dateRange) {
                 item.advisor_id,
                 item.renewal_batch_id,
                 RetentionReportEnum.SALES,
+                item.month,
               )
             "
             class="text-primary underline"

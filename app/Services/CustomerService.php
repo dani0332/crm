@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
+use App\Models\CustomerMembers;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
@@ -228,7 +229,7 @@ class CustomerService extends BaseService
                 if (isset($removeEmail->id)) {
                     $removeEmail->delete();
                 }
-                //ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
+                // ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
                 $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                     ->where('key', 'email')
                     ->where(function ($query) {
@@ -268,7 +269,7 @@ class CustomerService extends BaseService
                     }
                 }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
-                //Remove @insurancemarket.ae and @afia.ae Domain Email From Additional Contact
+                // Remove @insurancemarket.ae and @afia.ae Domain Email From Additional Contact
                 $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                     ->where('key', 'email')
                     ->where(function ($query) {
@@ -398,5 +399,12 @@ class CustomerService extends BaseService
                 }
             }
         }
+    }
+
+    public function getPrimaryCustomerById($id, $memberId = null)
+    {
+        $customer = CustomerMembers::find($id);
+
+        return $customer && $customer->id == $memberId;
     }
 }

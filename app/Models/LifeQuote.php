@@ -10,6 +10,7 @@ use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -29,7 +30,9 @@ class LifeQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
         'renewal_batch' => FilterTypes::EXACT,
         'quote_status_id' => FilterTypes::IN,
+        'insurer_aml_status' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
+        'renewal_batch_id' => FilterTypes::IN,
         'source' => FilterTypes::EXACT,
         'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
@@ -172,5 +175,27 @@ class LifeQuote extends Model implements AuditableContract
     public function customerMembers()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
+    public function quoteDetail()
+    {
+        return $this->hasOne(LifeQuoteRequestDetail::class);
+    }
+
+    public function renewalBatchModel()
+    {
+        return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
+    }
+
+    public function insured(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id, relation between life_quote and customer_insured.
+            'id', // insured.id
+            'id', // life_quote_request.id
+            'insured_id' // customer_insured.insured_id
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Life);
     }
 }

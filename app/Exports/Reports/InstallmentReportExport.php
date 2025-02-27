@@ -44,6 +44,7 @@ class InstallmentReportExport extends BaseReportsExport
             'Commission Percentage',
             'Transaction Type',
             'Lead Source',
+            'Sage Receipt ID',
         ];
     }
 
@@ -85,6 +86,7 @@ class InstallmentReportExport extends BaseReportsExport
             $quote->commmission_percentage ?? 'N/A',
             $quote->transaction_type ?? 'N/A',
             $quote->source ?? 'N/A',
+            $quote->sage_reciept_id ?? 'N/A',
         ];
     }
 

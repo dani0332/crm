@@ -3,7 +3,9 @@
 namespace App\Jobs;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Models\HealthQuote;
 use App\Services\HealthAllocationService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -47,26 +49,45 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         }
 
         foreach ($leads as $lead) {
-            info('-------- Reassignment of lead : '.$lead->uuid.' started ---------');
+            LoggerService::startQuoteLogging($lead->uuid);
+
+            info('-------- Reassignment started ---------');
+
+            if ($lead->isAllocationInProgress()) {
+                info("Allocation is already started at {$lead->allocation_started_at}");
+
+                continue;
+            }
+
+            $lead->startAllocation();
+
             $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
-                info('No health team found against lead : '.$lead->uuid);
+                info('No health team found');
 
-                return false; // when system is not able to identify sub team based on price
+                $lead->endAllocation();
+
+                continue;
             }
 
-            $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
+            $advisor = $this->fetchAvailableAdvisor($lead->health_team_type, $lead);
 
             if (! $advisor) {
-                info('No advisors found against lead : '.$lead->uuid);
+                info('No advisors found');
 
-                return false; // when no advisor is found
+                $lead->endAllocation();
+
+                continue;
             }
 
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
-            info('-------- Reassignment of lead : '.$lead->uuid.' ended ---------');
+
+            $lead->endAllocation();
+            info('-------- Reassignment ended ---------');
         }
+
+        LoggerService::endLogging();
         info('-------- Reassignment health job ended at : '.now().' ---------');
     }
 
@@ -80,9 +101,9 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         $this->healthAllocationService->assignTeamBasedOnPrices($lead);
     }
 
-    private function fetchAvailableAdvisor($leadTeam)
+    private function fetchAvailableAdvisor($leadTeam, HealthQuote $lead)
     {
-        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, true);
+        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, true, $lead);
     }
 
     private function assignLead($lead, $advisor)
@@ -93,6 +114,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
+            $this->healthAllocationService->endBuyLeadProcessing();
             Log::error($e->getMessage());
         }
     }

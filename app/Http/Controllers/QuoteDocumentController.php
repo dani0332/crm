@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -15,6 +16,7 @@ use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\ExportDocumentService;
@@ -38,6 +40,7 @@ class QuoteDocumentController extends Controller
     protected $customerService;
     protected $userService;
     protected $exportDocumentService;
+    protected $applicationStorageService;
 
     public function __construct(
         CRUDService $crudService,
@@ -122,8 +125,12 @@ class QuoteDocumentController extends Controller
 
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
 
+        if ($request->document_type_code === DocumentTypeCode::TRVLPAS) {
+            $this->stopHapexReminder($quote);
+        }
+
         // update quote status - production process
-        $this->updateQuoteStatus($quoteType, $request->quote_id);
+        app(CentralService::class)->updateQuoteInformation($quoteType, $request->quote_id);
 
         return redirect()->back()->with('success', 'File Uploaded');
     }
@@ -323,6 +330,7 @@ class QuoteDocumentController extends Controller
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+        info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
 
         return true;
     }

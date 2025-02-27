@@ -42,7 +42,6 @@ class CreateTravelRenewalQuotesJob implements ShouldQueue, StackableJob
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        $this->setHaystackData('count', $this->getHaystackData('count') + 1);
         $renewalsUploadService->createTravelProcessQuote($this->renewalQuoteProcess);
     }
 

@@ -30,9 +30,4 @@ class CarQuoteAMLStatusLookup extends Model
             'invoicing' => ['code', 'text'],
         ],
     ];
-
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters);
-    }
 }

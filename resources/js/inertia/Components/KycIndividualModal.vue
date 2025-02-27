@@ -65,69 +65,89 @@ const kycLogsValue = computed(() => {
   return 2;
 });
 const incomeSource = computed(() => {
-  if (props.customerDetails?.detail?.source_of_income === 'employed') {
+  if (page.props.customerDetails?.detail?.source_of_income === 'employed') {
     return 2;
-  } else if (props.customerDetails?.detail?.source_of_income === 'business') {
+  } else if (
+    page.props.customerDetails?.detail?.source_of_income === 'business'
+  ) {
     return 1;
   }
   return null;
 });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
+
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
   first_name:
-    props.quote?.customer.insured_first_name ?? props.quote.first_name,
-  last_name: props.quote?.customer.insured_last_name ?? props.quote.last_name,
-  dob: convertDate(props.quote.dob) || '',
+    props.quote?.customer?.insured?.first_name ??
+    props.quote?.customer.insured_first_name ??
+    props.quote.first_name,
+  last_name:
+    props.quote?.customer?.insured?.last_name ??
+    props.quote?.customer.insured_last_name ??
+    props.quote.last_name,
+  dob: dateFormat(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id ?? null,
   country_of_residence:
-    props.customerDetails?.detail?.country_of_residence ?? 56,
-  place_of_birth: props.customerDetails?.detail?.place_of_birth ?? null,
+    props.customerDetails?.detail?.country_of_residence ?? 56, //TODO:: Why this hardcode???
+  place_of_birth: page.props.customerDetails?.detail?.place_of_birth ?? null,
   resident_status:
-    props.customerDetails?.detail?.residential_status ?? 'uaeResident',
+    page.props.customerDetails?.detail?.residential_status ?? 'uaeResident',
   residential_address:
-    props.customerDetails?.detail?.residential_address ?? null,
+    page.props.customerDetails?.detail?.residential_address ?? null,
   mobile_number: props.quote.mobile_no,
   email: props.quote.email,
-  customer_tenure: props.customerDetails?.detail?.customer_tenure ?? null,
-  id_type: props.customerDetails?.detail?.id_type ?? 'emiratesId',
+  customer_tenure: page.props.customerDetails?.detail?.customer_tenure ?? null,
+  id_type: page.props.customerDetails?.detail?.id_type ?? 'emiratesId',
   id_number:
-    props.customerDetails?.detail?.id_number ??
-    props.customerDetails?.emirates_id_number ??
+    page.props.customerDetails?.detail?.id_number ??
+    page.props.customerDetails?.emirates_id_number ??
     null,
-  id_issue_date: convertDate(props.customerDetails?.detail?.id_issuance_date),
+  id_issue_date: convertDate(
+    page.props.customerDetails?.detail?.id_issuance_date,
+  ),
   id_expiry_date: convertDate(
-    props.customerDetails?.detail?.id_expiry_date ??
-      props.customerDetails?.emirates_id_expiry_date,
+    page.props.customerDetails?.detail?.id_expiry_date ??
+      page.props.customerDetails?.emirates_id_expiry_date,
   ),
   mode_of_contact:
-    props.customerDetails?.detail?.mode_of_contact ?? 'phoneAndEmail',
+    page.props.customerDetails?.detail?.mode_of_contact ?? 'phoneAndEmail',
   mode_of_delivery:
-    props.customerDetails?.detail?.mode_of_delivery ?? 'mod-delivery-pse',
-  income_source: props.customerDetails?.detail?.source_of_income ?? null,
-  company_name: props.customerDetails?.detail?.employer_company_name ?? null,
-  professional_title: props.customerDetails?.detail?.job_title ?? null,
-  employment_sector: props.customerDetails?.detail?.employment_sector ?? null,
-  trade_license: props.customerDetails?.detail?.trade_license_no ?? null,
-  company_position: props.customerDetails?.detail?.position_in_company ?? null,
-  pep: props.customerDetails?.detail?.pep ?? props.amlQuoteStatus,
+    page.props.customerDetails?.detail?.mode_of_delivery ?? 'mod-delivery-pse',
+  income_source: page.props.customerDetails?.detail?.source_of_income ?? null,
+  company_name:
+    page.props.customerDetails?.detail?.employer_company_name ?? null,
+  professional_title: page.props.customerDetails?.detail?.job_title ?? null,
+  employment_sector:
+    page.props.customerDetails?.detail?.employment_sector ?? null,
+  trade_license: page.props.customerDetails?.detail?.trade_license_no ?? null,
+  company_position:
+    page.props.customerDetails?.detail?.position_in_company ?? null,
+  pep: page.props.customerDetails?.detail?.pep ?? props.amlQuoteStatus,
   financial_sanctions:
-    props.customerDetails?.detail?.financial_sanctions ?? props.amlQuoteStatus,
+    page.props.customerDetails?.detail?.financial_sanctions ??
+    props.amlQuoteStatus,
   dual_nationality:
-    props.customerDetails?.detail?.dual_nationality ?? props.amlQuoteStatus,
+    page.props.customerDetails?.detail?.dual_nationality ??
+    props.amlQuoteStatus,
   transaction_pattern:
-    props.customerDetails?.detail?.transaction_pattern ?? 'no_changes',
+    page.props.customerDetails?.detail?.transaction_pattern ?? 'no_changes',
   premium_tenure:
-    props.customerDetails?.detail?.premium_tenure ?? 'single_premium',
+    page.props.customerDetails?.detail?.premium_tenure ?? 'single_premium',
   in_sanction_list:
-    props.customerDetails?.detail?.in_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
-  deal_sanction_list:
-    props.customerDetails?.detail?.deal_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
-  is_operation_high_risk:
-    props.customerDetails?.detail?.is_operation_high_risk ??
+    page.props.customerDetails?.detail?.in_sanction_list ??
     props.amlQuoteStatus, // kycLogsValue.value
-  is_partner: props.customerDetails?.detail?.is_partner ?? incomeSource.value,
+  deal_sanction_list:
+    page.props.customerDetails?.detail?.deal_sanction_list ??
+    props.amlQuoteStatus, // kycLogsValue.value
+  is_operation_high_risk:
+    page.props.customerDetails?.detail?.is_operation_high_risk ??
+    props.amlQuoteStatus, // kycLogsValue.value
+  is_partner:
+    page.props.customerDetails?.detail?.is_partner ?? incomeSource.value,
 });
 
 const incomeSourceFields = reactive({
@@ -312,7 +332,9 @@ onMounted(() => {
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
   );
   activePatternField();
-  changeIncomeSource(props.customerDetails?.detail?.source_of_income ?? null);
+  changeIncomeSource(
+    page.props.customerDetails?.detail?.source_of_income ?? null,
+  );
 });
 </script>
 

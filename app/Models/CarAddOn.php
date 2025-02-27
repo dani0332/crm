@@ -39,11 +39,6 @@ class CarAddOn extends Model implements AuditableContract
         return [];
     }
 
-    public function processGetDSL($filters, $update)
-    {
-        return self::processGetBaseDSL($filters, $update);
-    }
-
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */

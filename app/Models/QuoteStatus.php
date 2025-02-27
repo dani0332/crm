@@ -42,11 +42,6 @@ class QuoteStatus extends BaseModel
         return [];
     }
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
-
     public function quoteStatusMap()
     {
         return $this->hasMany(QuoteStatusMap::class);

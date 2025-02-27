@@ -57,12 +57,12 @@ class UpdateLeadStatusRequest extends FormRequest
         if (! empty(request()->leadStatus) && ! empty(request()->modelType) && strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)
             && isCarLostStatus(request()->leadStatus)
         ) {
-            //check for valid quote
+            // check for valid quote
             if (! $quote = $this->getQuoteObject(request()->modelType, request()->quote_uuid)) {
                 vAbort('Invalid quote type or uuid provided');
             }
 
-            //once quote is marked as sold/uncontactable, quote should be locked until have pending request
+            // once quote is marked as sold/uncontactable, quote should be locked until have pending request
             if (isCarLostStatus($quote->quote_status_id) && auth()->user()->hasAnyrole([RolesEnum::CarAdvisor])) {
                 $quote->load('carLostQuoteLog');
                 if (isset($quote->carLostQuoteLog->id) && $quote->carLostQuoteLog->status == GenericRequestEnum::PENDING) {
@@ -70,7 +70,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
 
-            //check for deadline date
+            // check for deadline date
             $batch = RenewalBatch::where([
                 'name' => $quote->renewal_batch,
             ])->with('deadline', function ($q) {
@@ -88,7 +88,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 $rules['proof_document'] = 'required';
             }
 
-            //todo: lost_approval_status should be required, and can be approved or rejected also reason_id should be required
+            // todo: lost_approval_status should be required, and can be approved or rejected also reason_id should be required
             if (auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                 $rules['lost_approval_status'] = 'required|in:'.GenericRequestEnum::APPROVED.','.GenericRequestEnum::REJECTED;
                 $rules['approve_reason_id'] = 'required_without:reject_reason_id';
@@ -129,7 +129,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 $validator->errors()->add('value', 'Lead not found please try again.');
             }
 
-            if ($quoteObject->quote_status_id == QuoteStatusEnum::Lost) {
+            if (! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE) && $quoteObject->quote_status_id == QuoteStatusEnum::Lost) {
                 $validator->errors()->add('value', 'The lead is marked as '.quoteStatusCode::LOST.' and cannot be changed.');
             }
 
@@ -139,7 +139,8 @@ class UpdateLeadStatusRequest extends FormRequest
             ])->where(function ($ryuFilter) {
                 $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $ryuFilter->orWhereNull('decision');
-            })->whereNull('screenshot')->latest()->first();
+            })->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
+                ->whereNull('screenshot')->latest()->first();
 
             $isTravelLeadTransactionApproved = false;
             if ((auth()->user()->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
@@ -149,12 +150,19 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
             if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelLeadTransactionApproved == false) {
-                $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
-                    'insured_first_name',
-                    'insured_last_name',
-                    'emirates_id_number',
-                    'emirates_id_expiry_date',
-                ])->toArray();
+                $customer = Customer::with([
+                    'insured' => function ($query) use ($quoteTypesIds) {
+                        $query->where('quote_request_id', request()->leadId)
+                            ->where('quote_type_id', $quoteTypesIds[request()->modelType]);
+                    },
+                ])->where('id', $quoteObject->customer_id)->first();
+
+                $customerProfileDetails = [
+                    'insured_first_name' => ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? null,
+                    'insured_last_name' => ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? null,
+                    'emirates_id_number' => ($customer?->insured?->id_type == 'emiratesId') ? $customer?->insured?->id_number : ($customer->emirates_id_number ?? null),
+                    'emirates_id_expiry_date' => $customer->emirates_id_expiry_date ?? null,
+                ];
 
                 if (in_array(null, $customerProfileDetails) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
                     $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');

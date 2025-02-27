@@ -154,4 +154,9 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
+
+    public function quoteDetail()
+    {
+        return $this->hasOne(HomeQuoteRequestDetail::class);
+    }
 }

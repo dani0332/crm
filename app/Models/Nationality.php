@@ -41,9 +41,4 @@ class Nationality extends BaseModel
     {
         return $query->where('is_active', 1);
     }
-
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, 'nationality', ['code', 'id', 'text']);
-    }
 }

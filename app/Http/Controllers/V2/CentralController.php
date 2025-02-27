@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -51,12 +53,15 @@ use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
+use App\Models\CustomerInsured;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
@@ -160,11 +165,31 @@ class CentralController extends Controller
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
+            $emiratesDetails = [
+                'emirates_id_number' => str_replace('-', '', $customerProfileRequest->emirates_id_number),
+                'emirates_id_expiry_date' => $customerProfileRequest->emirates_id_expiry_date,
+            ];
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
+            $customer->update($emiratesDetails);
 
-            $customer->update($customerProfileRequest->only([
-                'insured_first_name', 'insured_last_name', 'emirates_id_number', 'emirates_id_expiry_date',
-            ]));
+            $insuredPersonDetails = Insured::updateOrCreate([
+                'id_type' => 'emiratesId',
+                'id_number' => $customerProfileRequest->emirates_id_number,
+            ], [
+                'first_name' => $customerProfileRequest->insured_first_name,
+                'last_name' => $customerProfileRequest->insured_last_name,
+                'dob' => $customer->dob,
+                'nationality_id' => $customer->nationality_id,
+                'gender' => $customer->screening_gender,
+            ]);
+
+            CustomerInsured::updateOrCreate([
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id,
+            ], [
+                'customer_id' => $customerProfileRequest->customer_id,
+                'insured_id' => $insuredPersonDetails->id,
+            ]);
         }
 
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
@@ -200,34 +225,50 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
+        try {
+            $validatedData = $bookPolicyRequest->validated();
+            info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
-        $validatedData = $bookPolicyRequest->validated();
-        info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
+            $paymentInformation = [
+                'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
+                'transaction_payment_status' => $validatedData['transaction_payment_status'],
+                'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
+                'broker_invoice_number' => $validatedData['broker_invoice_number'],
+                'insurer_invoice_date' => $validatedData['invoice_date'],
+                'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
+                'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
+                'commmission_percentage' => $validatedData['commission_percentage'],
+                'commission_vat' => $validatedData['vat_on_commission'],
+                'commission' => $validatedData['total_commission'],
+                'invoice_description' => $validatedData['invoice_description'],
+            ];
 
-        $paymentInformation = [
-            'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
-            'transaction_payment_status' => $validatedData['transaction_payment_status'],
-            'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
-            'broker_invoice_number' => $validatedData['broker_invoice_number'],
-            'insurer_invoice_date' => $validatedData['invoice_date'],
-            'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
-            'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
-            'commmission_percentage' => $validatedData['commission_percentage'],
-            'commission_vat' => $validatedData['vat_on_commission'],
-            'commission' => $validatedData['total_commission'],
-            'invoice_description' => $validatedData['invoice_description'],
-        ];
-        $payment = Payment::where('code', $validatedData['payment_code'])->first();
-        if (! $payment) {
-            return back()->with('message', 'Payment record not found');
+            $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
+
+            $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+            $payment = Payment::where('code', $quote->code)->mainLeadPayment()->first();
+
+            if ($isDuplicateOrCIRLead && empty($payment)) {
+                $payment = Payment::where([
+                    'paymentable_id' => $quote->id,
+                    'paymentable_type' => $quote->getMorphClass(),
+                ])->mainLeadPayment()->first();
+            }
+
+            $payment->update($paymentInformation);
+            info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
+
+            $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
+            if (! $response['status']) {
+                return back()->with('error', $response['message']);
+            }
+            info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
+
+            return redirect()->back()->with('success', 'Booking details has been updated.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-        $payment->update($paymentInformation);
-        info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
-        (new SplitPaymentService)->updateCommissionSchedule($payment);
-        info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
-
-        return redirect()->back()->with('success', 'Booking details has been updated.');
     }
 
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
@@ -599,5 +640,40 @@ class CentralController extends Controller
         $zip->close();
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $response = app(CentralService::class)->voidPayment($request);
+
+        return response()->json(['status' => $response['status'], 'message' => $response['message']]);
+    }
+
+    public function getInsurerAMLResponse(Request $request)
+    {
+        $insurerAMLFailureStatus = [
+            AMLStatusCode::InsurerAMLScreeningPending,
+            AMLStatusCode::InsurerAMLScreeningFailed,
+        ];
+
+        $response = ['status' => false, 'message' => ''];
+        if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
+            $responseMessage = 'GIG server connection issue. Please check API logs for details of the error';
+
+            if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
+                $insurerAMLScreeningResponse = AML::where([
+                    'quote_type_id' => $request->quoteType,
+                    'quote_request_id' => $request->quoteRequestId,
+                    'screening_type' => 'INSURER_'.InsuranceProvidersEnum::AXA,
+                ])->latest()->first();
+
+                $amlResponse = ! empty($insurerAMLScreeningResponse) ? json_decode($insurerAMLScreeningResponse->results) : [];
+
+                return ['status' => true, 'message' => $amlResponse?->message ?? $responseMessage];
+            }
+            $response = ['status' => true, 'message' => $responseMessage];
+        }
+
+        return $response;
     }
 }

@@ -77,10 +77,13 @@ const updatePriceWithVat = () => {
       (priceVatApplicable / 100) * vat +
       priceVatApplicable +
       priceVatNotApplicable;
+    priceWithVat = Number(useRoundIt(priceWithVat).toFixed(2));
   } else if (priceVatApplicable) {
     priceWithVat = (priceVatApplicable / 100) * vat + priceVatApplicable;
+    priceWithVat = Number(useRoundIt(priceWithVat).toFixed(2));
   } else if (priceVatNotApplicable) {
     priceWithVat = priceVatNotApplicable;
+    priceWithVat = Number(useRoundIt(priceWithVat).toFixed(2));
   }
 
   planDetailsForm.price_with_vat = roundDecimal(priceWithVat);
@@ -123,7 +126,11 @@ const onUpdate = () => {
 };
 
 const onKeyPress = event => {
-  if (event.key === 'e' || event.key === 'E') {
+  const charCode = event.charCode || event.keyCode;
+  const char = String.fromCharCode(charCode);
+  const regex = /^[0-9.]$/;
+
+  if (!regex.test(char)) {
     event.preventDefault();
   }
 };
@@ -167,7 +174,7 @@ onMounted(() => {
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <x-tooltip v-if="!isPlanDetails" placement="left">
+          <x-tooltip v-if="!isPlanDetails">
             <label
               class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700"
             >
@@ -191,7 +198,7 @@ onMounted(() => {
             <!-- price VAT not applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -213,7 +220,7 @@ onMounted(() => {
                   "
                   :error="planDetailsForm.errors.price_vat_not_applicable"
                   placeholder="Enter price (VAT not applicable)"
-                  type="number"
+                  maxlength="13"
                   min="0"
                   @change="updatePriceWithVat"
                   @keypress="onKeyPress"
@@ -230,7 +237,7 @@ onMounted(() => {
                 "
               >
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -261,7 +268,7 @@ onMounted(() => {
             <!-- price VAT applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -288,7 +295,7 @@ onMounted(() => {
                   "
                   :error="planDetailsForm.errors.price_vat_applicable"
                   placeholder="Enter price (VAT applicable)"
-                  type="number"
+                  maxlength="13"
                   min="0"
                   @change="updatePriceWithVat"
                   @keypress="onKeyPress"
@@ -306,7 +313,7 @@ onMounted(() => {
                 "
               >
                 <dt>
-                  <x-tooltip placement="left">
+                  <x-tooltip>
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -337,7 +344,7 @@ onMounted(() => {
             <!-- Total price -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip placement="left">
+                <x-tooltip>
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -359,6 +366,7 @@ onMounted(() => {
           <template v-if="!state.isEdit">
             <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
               <x-button
+                class="focus:ring-2 focus:ring-black"
                 size="sm"
                 @click="onEdit"
                 :disabled="props.isEditDisabledForQueuedBooking"
@@ -372,11 +380,19 @@ onMounted(() => {
                 </span>
               </template>
             </x-tooltip>
-            <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+            <x-button
+              v-else
+              class="focus:ring-2 focus:ring-black"
+              size="sm"
+              @click="onEdit"
+            >
+              Edit
+            </x-button>
           </template>
 
           <template v-else>
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="orange"
               @click="onCancel"
@@ -385,6 +401,7 @@ onMounted(() => {
               >Cancel</x-button
             >
             <x-button
+              class="focus:ring-2 focus:ring-black"
               size="sm"
               color="primary"
               @click="onUpdate"

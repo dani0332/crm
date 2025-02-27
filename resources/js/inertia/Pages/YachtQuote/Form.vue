@@ -3,6 +3,7 @@ const notification = useNotifications('toast');
 
 const props = defineProps({
   quote: { type: Object, default: null },
+  nationalities: Object,
 });
 
 const quoteForm = useForm({
@@ -10,19 +11,24 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
+  company_name: props.quote?.company_name || null,
+  company_address: props.quote?.company_address || null,
   boat_details: props.quote?.yacht_quote?.boat_details || '',
   engine_details: props.quote?.yacht_quote?.engine_details || '',
   claim_experience: props.quote?.yacht_quote?.claim_experience || '',
   asset_value: props.quote?.asset_value || null,
   use: props.quote?.yacht_quote?.use || '',
   operator_experience: props.quote?.yacht_quote?.operator_experience || '',
+
+  dob: props.quote?.unformatted_dob || null,
+  nationality_id: props.quote?.nationality_id || null,
+  gender: props.quote?.customer?.gender || null,
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
 const editMode = computed(() => {
   return props.quote && props.quote.uuid ? true : false;
 });
-const isEmptyField = ref(false);
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.clearErrors();
@@ -38,6 +44,13 @@ function onSubmit(isValid) {
     });
   }
 }
+
+const gender = computed(() => {
+  return [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+  ];
+});
 </script>
 
 <template>
@@ -98,6 +111,50 @@ function onSubmit(isValid) {
             :disabled="editMode"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
+          />
+        </x-field>
+        <x-field label="DATE OF BIRTH">
+          <DatePicker
+            v-model="quoteForm.dob"
+            :utc="false"
+            model-type="yyyy-MM-dd"
+            name="created_at_start"
+          />
+        </x-field>
+        <x-field label="NATIONALITY">
+          <ComboBox
+            v-model="quoteForm.nationality_id"
+            :single="true"
+            :options="
+              nationalities.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            placeholder="Nationality"
+          />
+        </x-field>
+        <x-field label="GENDER">
+          <x-select
+            v-model="quoteForm.gender"
+            :options="gender"
+            placeholder="Gender"
+          />
+        </x-field>
+        <x-field label="COMPANY NAME">
+          <x-input
+            v-model="quoteForm.company_name"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_name"
+          />
+        </x-field>
+        <x-field label="COMPANY ADDRESS">
+          <x-input
+            v-model="quoteForm.company_address"
+            type="text"
+            class="w-full"
+            :error="quoteForm?.errors?.company_address"
           />
         </x-field>
         <x-field label="BOAT DETAILS" required>

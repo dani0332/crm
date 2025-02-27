@@ -19,7 +19,7 @@ const props = defineProps({
     type: Object,
   },
 });
-
+const page = usePage();
 const notification = useToast();
 const can = permission => useCan(permission);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
@@ -45,10 +45,41 @@ const isSageLogButtonEnable = computed(() => {
   return can(props.permissionsEnum.VIEW_SAGE_API_LOGS);
 });
 
+const fetchLatestSageError = async () => {
+  const { modelClass, record } = props;
+  const { sendUpdateLogStatusEnum, quoteStatusEnum } = page.props;
+
+  let isPolicyOrEndorsementBookingFailed =
+    modelClass === 'App\\Models\\SendUpdateLog'
+      ? record?.status === sendUpdateLogStatusEnum.UPDATE_BOOKING_FAILED
+      : record?.quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED;
+
+  NProgress.start();
+  const response = await axios.get(
+    route('sage-api-logs-latest-error', [record.id]),
+    {
+      params: {
+        modelClass: modelClass,
+      },
+    },
+  );
+  NProgress.done();
+  if (response.data?.success)
+    console.log('fetchLatestSageError:', response.data);
+  if (response?.data?.error && isPolicyOrEndorsementBookingFailed) {
+    notification.error({
+      title: 'Sage API Error',
+      message: response?.data?.error,
+      position: 'top',
+      timeout: 30000,
+    });
+  }
+};
+
 const fetchSageAPILogs = async () => {
   NProgress.start();
   sageAPILogs.loader = true;
-  const response = await axios.get(route('sage.api.logs', [props.record.id]), {
+  const response = await axios.get(route('sage-api-logs', [props.record.id]), {
     params: {
       modelClass: props.modelClass,
     },
@@ -100,9 +131,9 @@ const copyToClipboard = item => {
     });
 };
 
-/*onBeforeMount(() => {
-  fetchSageAPILogs();
-});*/
+onBeforeMount(() => {
+  fetchLatestSageError();
+});
 </script>
 
 <template>
@@ -111,6 +142,7 @@ const copyToClipboard = item => {
   >
     <x-button
       v-if="isSageLogButtonEnable"
+      class="focus:ring-2 focus:ring-black"
       size="sm"
       color="primary"
       outlined
@@ -128,6 +160,7 @@ const copyToClipboard = item => {
   <template v-else>
     <x-button
       v-if="isSageLogButtonEnable"
+      class="focus:ring-2 focus:ring-black"
       size="sm"
       color="primary"
       outlined

@@ -10,11 +10,6 @@ class ClaimHistory extends BaseModel
 
     use HasFactory;
 
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, 'claim_history', ['code', 'id', 'text']);
-    }
-
     /**
      * scope to get active records
      *

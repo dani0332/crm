@@ -10,6 +10,7 @@ class InsuranceProvider extends BaseModel implements AuditableContract
 {
     use Auditable, HasFactory;
 
+    protected $connection = 'mysql';
     protected $table = 'insurance_provider';
     protected $guarded = ['id'];
     public $access = [
@@ -41,11 +42,6 @@ class InsuranceProvider extends BaseModel implements AuditableContract
     public function scopeWithActive($query)
     {
         return $query->where('is_active', 1);
-    }
-
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters, false);
     }
 
     public function getCreatedAtAttribute($table)

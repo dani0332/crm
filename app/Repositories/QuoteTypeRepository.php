@@ -14,12 +14,9 @@ class QuoteTypeRepository extends BaseRepository
         return QuoteType::class;
     }
 
-    public function fetchGetList()
+    public function fetchGetList($orderBy = 'sort_order', $order = 'asc')
     {
-        $query = $this->withActive()
-            ->orderBy('sort_order');
-
-        return $query->get();
+        return $this->withActive()->orderBy($orderBy, $order)->get();
     }
 
     public function fetchAllowedQuoteForAml()

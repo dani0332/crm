@@ -32,9 +32,4 @@ class KycLog extends BaseModel
             'payment' => ['id', 'results', 'quote_request_id', 'results_found'],
         ],
     ];
-
-    public function processGetDSL($filters)
-    {
-        return self::processGetBaseDSL($filters);
-    }
 }

@@ -5,10 +5,13 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -33,6 +36,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\QuoteTag;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
@@ -447,6 +451,9 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::DM,
                 SendUpdateLogStatusEnum::DTSI,
                 SendUpdateLogStatusEnum::DOV,
+                SendUpdateLogStatusEnum::ATCRNB,
+                SendUpdateLogStatusEnum::ATCRNB_RBB,
+                SendUpdateLogStatusEnum::ATCRN_CRNRBB,
             ])) {
                 return true;
             }
@@ -521,6 +528,7 @@ class SendUpdateLogService
             'invoice_description' => $invoiceDescription ?? '',
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
             'is_non_self_billing_enabled' => $isNonSelfBillingEnabled,
+            'insurance_provider_id' => $insuranceProviderId,
         ];
 
         $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
@@ -570,6 +578,7 @@ class SendUpdateLogService
         $category = $sendUpdateLog->category->code;
         $option = $sendUpdateLog?->option?->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
+
         $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
@@ -589,7 +598,7 @@ class SendUpdateLogService
 
         if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::EF]) &&
             (($requiredDocumentsCheck == 0) && ($sendUpdateLog->is_booking_filled)) &&
-            ! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])
+            ! in_array($option, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATCRNB, SendUpdateLogStatusEnum::ATCRNB_RBB, SendUpdateLogStatusEnum::ATCRN_CRNRBB])
         ) {
             return SendUpdateLogStatusEnum::SNBU;
         }
@@ -598,6 +607,24 @@ class SendUpdateLogService
             ($isPolicyCertOrScheduleUploaded && ! $sendUpdateLog->is_booking_filled)
         ) {
             return SendUpdateLogStatusEnum::SUC;
+        }
+
+        if (in_array($option, [
+            SendUpdateLogStatusEnum::ATCRNB,
+            SendUpdateLogStatusEnum::ATCRNB_RBB,
+            SendUpdateLogStatusEnum::ATCRN_CRNRBB,
+        ]) && $sendUpdateLog->is_booking_filled) {
+            if ($option == SendUpdateLogStatusEnum::ATCRN_CRNRBB && $requiredDocumentsCheck == 0) {
+                return SendUpdateLogStatusEnum::SU;
+            }
+
+            if ($option == SendUpdateLogStatusEnum::ATCRNB && in_array(DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, $uploadedDocuments)) {
+                return SendUpdateLogStatusEnum::SU;
+            }
+
+            if ($option == SendUpdateLogStatusEnum::ATCRNB_RBB && in_array(DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER, $uploadedDocuments)) {
+                return SendUpdateLogStatusEnum::SU;
+            }
         }
 
         return '';
@@ -635,6 +662,9 @@ class SendUpdateLogService
             SendUpdateLogStatusEnum::ATIB,
             SendUpdateLogStatusEnum::DTSI,
             SendUpdateLogStatusEnum::DOV,
+            SendUpdateLogStatusEnum::ATCRNB,
+            SendUpdateLogStatusEnum::ATCRNB_RBB,
+            SendUpdateLogStatusEnum::ATCRN_CRNRBB,
         ];
 
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
@@ -650,7 +680,7 @@ class SendUpdateLogService
     {
         $payments = $sendUpdateLog->payments;
         if ($payments) {
-            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser', 'paymentSplits.processJob']);
+            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser', 'paymentSplits.processJob', 'paymentSplits.paymentCharges']);
             if ($quoteType == quoteTypeCode::Travel) {
                 $payments->load(['travelPlan']);
             }
@@ -763,7 +793,7 @@ class SendUpdateLogService
                 'policy_expiry_date' => $sendUpdateLog->expiry_date,
                 'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
                 'frequency' => PaymentFrequency::UPFRONT,
-                'insurance_provider_id' => ($checkInslyMigratedLead) ? $sendUpdateLog->insurance_provider_id : $payment->insurance_provider_id,
+                'insurance_provider_id' => ($checkInslyMigratedLead) ? $sendUpdateLog?->insurance_provider_id : $payment->insurance_provider_id,
             ]);
 
             $splitPayments->first()->fill([
@@ -831,13 +861,46 @@ class SendUpdateLogService
             'policy_expiry_date' => $sendUpdateLog->expiry_date,
             'policy_number' => $sendUpdateLog->policy_number,
             'transaction_type_id' => $quoteDetails->transaction_type_id,
-            'advisor_id' => $sendUpdateLog->advisor_id,
+            'advisor_id' => $quoteDetails?->advisor_id ?? null,
             'price_vat_applicable' => abs($preparedDetailsForEndorsement['payment']->total_price),
             'price_with_vat' => abs($sendUpdateLog->price_with_vat),
             'insly_migrated' => $quoteDetails->insly_migrated,
-            'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+            'insurance_provider_id' => $preparedDetailsForEndorsement['payment']->insurance_provider_id, // TODO:: Need to verify this field
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
         ];
+
+        // Handle TapPay insurer payment against credit card and if payment available in Send update then create Receipt
+        $ccPaymentProcess = false;
+        if (isTapEnabled() && ! empty($preparedDetailsForEndorsement['payment']?->send_update_log_id)) {
+            info('fn:preparedDataForEndorsement - TAP Enabled - SendUpdateCode: '.$sendUpdateLog->code);
+
+            $unpaidPaymentCount = $preparedDetailsForEndorsement['splitPayments']->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
+                ->where('payment_method', PaymentMethodsEnum::CreditCard)
+                ->select('id')
+                ->count();
+
+            $isInsurerPayment = $preparedDetailsForEndorsement['payment']->isInsurerPayment();
+            info('fn:preparedDataForEndorsement - Collected By Insurer: '.$isInsurerPayment.' - CC Payment: '.$unpaidPaymentCount.' - SendUpdateCode: '.$sendUpdateLog->code);
+
+            if ($isInsurerPayment && $unpaidPaymentCount > 0) {
+                info('fn:preparedDataForEndorsement - Authorizing payment process started - PaymentCode: '.$preparedDetailsForEndorsement['payment']->code.' - SendUpdateCode: '.$sendUpdateLog->code);
+                $successMessage = app(SageApiService::class)->handleSplitPaymentApproval($sendUpdateRequest->quoteType, $quoteDetails, $preparedDetailsForEndorsement['payment'], $preparedDetailsForEndorsement['splitPayments']);
+                info('fn:preparedDataForEndorsement - Authorizing payment process completed - response:'.json_encode($successMessage).' - PaymentCode: '.$preparedDetailsForEndorsement['payment']->code.' - SendUpdateCode: '.$sendUpdateLog->code);
+                if (! $successMessage) {
+                    return ['status' => false, 'message' => 'Error while approving send update payment'];
+                }
+
+                $ccPaymentProcess = true;
+                QuoteTag::updateOrCreate([
+                    'quote_type_id' => QuoteTypes::getIdFromValue($sendUpdateRequest->quoteType),
+                    'quote_uuid' => $quoteDetails->uuid,
+                    'send_update_log_id' => $sendUpdateLog?->id,
+                    'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLog?->id,
+                ], ['value' => 1]);
+            } else {
+                info($preparedDetailsForEndorsement['payment']->code.' Capture payment process skip & proceeding with book update process unpaid payment count is: '.$unpaidPaymentCount.' and is Insurer Payment'.$isInsurerPayment);
+            }
+        }
 
         info('fn:preparedDataForEndorsement - Preparing Sage Payload for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
         $sageRequestPayload = SagePayloadFactory::sagePayLoad($sendUpdateRequest->quoteType, $preparedDetailsForEndorsement['payment'], (object) $sendUpdateLogDetails, $preparedDetailsForEndorsement['splitPayments']);
@@ -855,10 +918,21 @@ class SendUpdateLogService
             return $checkRequiredSageValidations;
         }
 
+        if (isset($sendUpdateRequest->throughCCPayment)) {
+            info('fn:preparedDataForEndorsement - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
+            app(SendUpdateLogService::class)->updateSageProcessForDispatching((array) $sendUpdateRequest, $sendUpdateLog, $sageRequestPayload);
+
+            (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);
+            info('fn:preparedDataForEndorsement - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
+
+            return ['status' => true, 'message' => 'Send update sage process scheduled'];
+        }
+
         return [
             'status' => true,
             'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status',
             'sageRequestPayload' => $sageRequestPayload,
+            'ccPaymentProcess' => $ccPaymentProcess,
         ];
     }
 
@@ -879,8 +953,6 @@ class SendUpdateLogService
             $sageProcessDataRequest = json_decode($sageProcessData['request'], true);
             $sageRequestPayload->sageProcessRequestType = SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST;
             $sageProcessDataRequest['sagePayload'] = $sageRequestPayload;
-            unset($request['dispatchSageCall']);
-
             $sageProcessDataRequest['requestPayload'] = $request;
             $sageProcessData['request'] = json_encode($sageProcessDataRequest);
         }
@@ -989,7 +1061,7 @@ class SendUpdateLogService
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
                         'policy_expiry_date' => $sendUpdateLog->expiry_date,
-                        //                        'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
+                        // 'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
                     ]);
                 }
                 // Cases for Correct Policy Details End
@@ -1015,7 +1087,7 @@ class SendUpdateLogService
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            logger()->error('Book Update - Error while moving updates to main lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
+            info('Book Update - Error while moving updates to main lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
             return ['status' => false, 'message' => 'Update not booked'];
         }
@@ -1105,6 +1177,7 @@ class SendUpdateLogService
         }
 
         $emailData = (object) [
+            'clientFirstName' => $quote->first_name,
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
             'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
             'carQuoteId' => $sendUpdateLog->code,
@@ -1176,6 +1249,9 @@ class SendUpdateLogService
                 SendUpdateLogStatusEnum::ACB,
                 SendUpdateLogStatusEnum::ATIB,
                 SendUpdateLogStatusEnum::DTSI,
+                SendUpdateLogStatusEnum::ATCRNB,
+                SendUpdateLogStatusEnum::ATCRNB_RBB,
+                SendUpdateLogStatusEnum::ATCRN_CRNRBB,
             ])) {
             return false;
         }
@@ -1195,9 +1271,21 @@ class SendUpdateLogService
                         DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
                     ])
                 ) {
-                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
+                    $isRequired = true;
+                    if ($option == SendUpdateLogStatusEnum::ATCRNB && $documentType['code'] == DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER) {
+                        $isRequired = false;
+                    }
+                    if ($option == SendUpdateLogStatusEnum::ATCRNB_RBB && $documentType['code'] == DocumentTypeCode::SEND_UPDATE_TAX_INVOICE) {
+                        $isRequired = false;
+                    }
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) $isRequired;
                 } elseif (
-                    $option == SendUpdateLogStatusEnum::ATICB &&
+                    in_array($option, [
+                        SendUpdateLogStatusEnum::ATICB,
+                        SendUpdateLogStatusEnum::ATCRNB,
+                        SendUpdateLogStatusEnum::ATCRNB_RBB,
+                        SendUpdateLogStatusEnum::ATCRN_CRNRBB,
+                    ]) &&
                     in_array($documentType['code'], [
                         DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
                         DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
@@ -1213,7 +1301,7 @@ class SendUpdateLogService
 
     public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
     {
-        $this->updatePriceAndDiscount($sendUpdateLog, $payment);
+        app(CentralService::class)->synchronizePaymentInformation($sendUpdateLog, $payment);
     }
 
     public function updatePaymentTotalPrice($payment, $totalPrice): void
@@ -1359,7 +1447,7 @@ class SendUpdateLogService
         }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
-            return [$insuranceProviderId, $plan_id];
+            return [$quote?->insurance_provider_id, $plan_id];
         }
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
@@ -1386,8 +1474,7 @@ class SendUpdateLogService
         $quote = app(getServiceObject($request->quoteType))->getEntityPlain($request->quoteRefId);
 
         if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD ||
-            ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option?->code == SendUpdateLogStatusEnum::PPE) ||
-            $request->inslyMigrated) {
+            ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option?->code == SendUpdateLogStatusEnum::PPE)) {
             $insuranceProviderId = $sendUpdate->insurance_provider_id;
             $planId = $sendUpdate->plan_id ?? null;
         } else {
@@ -1404,20 +1491,27 @@ class SendUpdateLogService
         return SendUpdateLogRepository::updateInsurerDetails($sendUpdate, $bookingDetails);
     }
 
-    public function isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId): bool
+    public function isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId, $category, $quote): bool
     {
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
-            $policyDetails['plan_id'] = $planId;
-        }
+        // For CPD, all fields are mandatory, and for EF PPE, only expiry date is mandatory.
+        if ($category == SendUpdateLogStatusEnum::EF) {
+            return ! is_null($policyDetails['expiry_date']);
+        } else {
+            // if legacy lead and planId is not available, because plandId is optional.
+            if (! ($quote->insly_id || $quote->insly_migrated) && ! is_null($planId)) {
+                if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+                    $policyDetails['plan_id'] = $planId;
+                }
+            }
+            $policyDetails['insurance_provider_id'] = $insuranceProviderId;
 
-        $policyDetails['insurance_provider_id'] = $insuranceProviderId;
+            $filledValues = array_filter($policyDetails, function ($value) {
+                return ! is_null($value) && $value !== '';
+            });
 
-        $filledValues = array_filter($policyDetails, function ($value) {
-            return ! is_null($value) && $value !== '';
-        });
-
-        if (count($policyDetails) === count($filledValues)) {
-            return true;
+            if (count($policyDetails) === count($filledValues)) {
+                return true;
+            }
         }
 
         return false;
@@ -1439,5 +1533,74 @@ class SendUpdateLogService
         }
 
         return false;
+    }
+
+    /**
+     * This method is used to check if the COMMISSION (VAT NOT APPLICABLE) is enabled or not.
+     *
+     * @param  $quoteType  - Life, Business etc.
+     * @param  $businessTypeOfInsuranceId  - Business type of insurance id, if quote type is Business.
+     */
+    public function commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId): bool
+    {
+        return app(CentralService::class)->commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId);
+    }
+
+    public function sendUpdateStatuses(): array
+    {
+        return [
+            SendUpdateLogStatusEnum::NEW_REQUEST,
+            SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
+            SendUpdateLogStatusEnum::TRANSACTION_DECLINE,
+            SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+            SendUpdateLogStatusEnum::UPDATE_ISSUED,
+            SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
+            SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
+            SendUpdateLogStatusEnum::UPDATE_BOOKED,
+
+        ];
+    }
+
+    /*
+     * This method is used to check if the main button should be disabled or not, for Tap Payment integration.
+     * @param $sendUpdateLog - Send Update Log
+     * @return string
+     */
+    public function disableMainBtn($sendUpdateLog, $payment = [], $brokerCommission = null): string
+    {
+        if (in_array($sendUpdateLog->category?->code, [
+            SendUpdateLogStatusEnum::EF,
+            SendUpdateLogStatusEnum::CI,
+            SendUpdateLogStatusEnum::CIR,
+        ]) && empty($sendUpdateLog->endorsement_number)) {
+            return 'Endorsement Number is required before proceeding.';
+        }
+
+        if (isTapEnabled()) {
+            $isTransactionApproved = $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED ||
+                app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED]);
+            $payment = $payment[0] ?? null;
+            if (! empty($payment) && $payment->paymentSplits->isNotEmpty() && $brokerCommission && $isTransactionApproved) {
+                $hasCCPayment = $payment->paymentSplits->contains(function ($split) {
+                    return $split->payment_method == PaymentMethodsEnum::CreditCard;
+                });
+
+                if (! $sendUpdateLog->is_booking_filled && $hasCCPayment) {
+                    return 'Please Update the booking details.';
+                }
+
+                $hasUnpaidCCPayment = $payment->paymentSplits->contains(function ($split) {
+                    return ! in_array($split->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID]) &&
+                        $split->payment_method == PaymentMethodsEnum::CreditCard;
+                });
+
+                if ($hasCCPayment && $hasUnpaidCCPayment) {
+                    return 'The payment status is not yet Authorised.';
+                }
+            }
+        }
+
+        return '';
     }
 }

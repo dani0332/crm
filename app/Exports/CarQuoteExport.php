@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Enums\AMLStatusCode;
 use App\Services\CarQuoteService;
 use App\Traits\ExcelExportable;
 use Illuminate\Support\Facades\DB;
@@ -54,8 +55,12 @@ class CarQuoteExport
             'cqr.renewal_batch',
             'cqr.previous_policy_expiry_date',
             'cqr.previous_quote_policy_premium',
+            'cqr.previous_quote_policy_number',
             'cqr.transaction_approved_at',
-            'cqr.policy_booking_date')->get();
+            'cqr.policy_booking_date',
+            'cqr.aml_status',
+            'cqr.insurer_aml_status'
+        )->get();
     }
 
     public function headings(): array
@@ -83,6 +88,8 @@ class CarQuoteExport
             'ADVISOR ASSIGNED DATE',
             'LEAD COST',
             'LEAD STATUS',
+            'AML STATUS',
+            'INSURER AML STATUS',
             'PAYMENT STATUS',
             'ECOMMERCE',
             'TIER NAME',
@@ -102,6 +109,7 @@ class CarQuoteExport
             'RENEWAL BATCH',
             'PREVIOUS POLICY EXPIRY DATE',
             'PREVIOUS POLICY PREMIUM',
+            'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
         ];
@@ -132,6 +140,8 @@ class CarQuoteExport
             $quote->advisor_assigned_date ? date(config('constants.datetime_format'), strtotime($quote->advisor_assigned_date)) : '',
             $quote->cost_per_lead,
             $quote->quote_status_id_text,
+            AMLStatusCode::getName($quote->aml_status) ?? '',
+            AMLStatusCode::getName($quote->insurer_aml_status, 'N/A') ?? '',
             $quote->payment_status_id_text,
             $quote->is_ecommerce ? 'Yes' : 'No',
             $quote->tier_id_text,
@@ -151,6 +161,7 @@ class CarQuoteExport
             $quote->renewal_batch,
             $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
             $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+            $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
         ];

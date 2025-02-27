@@ -5,24 +5,27 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use App\Factories\AllocationFactory;
 use App\Jobs\EmailStatusEventJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
+use App\Models\HomeQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\Traits\Inboundable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 class InboundEmailsHookService extends BaseService
 {
+    use Inboundable;
+
     private function verifyAuthorization()
     {
         $authUser = config('constants.INBOUND_WEBHOOK_BASIC_AUTH_USER_NAME');
@@ -78,18 +81,19 @@ class InboundEmailsHookService extends BaseService
                 return match ($quoteType) {
                     QuoteTypes::CAR => $this->handleCar($lead),
                     QuoteTypes::TRAVEL => $this->handleTravel($lead),
+                    QuoteTypes::HEALTH => $this->handleHealth($lead),
                     default => apiResponse([], Response::HTTP_UNPROCESSABLE_ENTITY, "Unhandled quote type: {$quoteType->value}")
                 };
             }
 
             info(self::class." - resolveLead: Lead not found for uuid: {$uuid}");
 
-            return apiResponse([], Response::HTTP_NOT_FOUND, "Lead not found for uuid: {$uuid}");
+            return apiResponse([], Response::HTTP_OK, "Lead not found for uuid: {$uuid}");
         }
 
         info(self::class." - resolveLead: uuid not found in subject: {$subject}");
 
-        return apiResponse([], Response::HTTP_NOT_FOUND, "UUID & Quote Type could not be extracted from subject: {$subject}");
+        return apiResponse([], Response::HTTP_OK, "UUID & Quote Type could not be extracted from subject: {$subject}");
     }
 
     private function handleCar(CarQuote $lead)
@@ -100,11 +104,14 @@ class InboundEmailsHookService extends BaseService
             DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
             info(self::class." - handleCar: Car Quote Source updated for Revival for uuid {$lead->uuid}");
 
+            $this->handleCarAllocation($lead);
+
             return apiResponse([], Response::HTTP_OK, 'Car Source Updated Successfully!');
         } else {
             try {
                 info(self::class." - handleCar: Going to handle Car Quote for uuid {$lead->uuid}");
-                (new ApiService)->sicReplyToILA($lead);
+
+                $this->handleSicReplyToILA($lead);
 
                 return apiResponse([], Response::HTTP_OK, 'Car Handled for SIC to ILA Successfully!');
             } catch (\Exception $e) {
@@ -120,19 +127,43 @@ class InboundEmailsHookService extends BaseService
         info(self::class." - handleTravel: Going to Assign Advisor to uuid: {$lead->uuid}");
 
         if ($lead->advisor_id) {
-            info(self::class." - handleTravel: Lead already has an advisor assigned: {$lead->uuid}");
+            info(self::class." - handleTravel: Lead already has an advisor assigned: {$lead->uuid} - Advisor ID: {$lead->advisor_id}");
 
             return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
         }
 
-        info(self::class." - handleTravel: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
-        $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid);
-        $assignedAdvisorId = $allocationStrategy->executeSteps();
-        info(self::class." - handleTravel: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+        info(self::class." - handleTravel: Allocation Process Executing for lead: {$lead->uuid}");
+
+        $response = QuoteTypes::TRAVEL->allocate($lead->uuid);
+        $assignedAdvisorId = $response['advisorId'] ?? '';
+        info(self::class." - handleTravel: Allocation Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
 
+    private function handleHealth(HealthQuote $lead)
+    {
+        if ($lead->source == LeadSourceEnum::REVIVAL) {
+            Log::info(self::class." - handleHealth: Going to Assign Advisor to uuid: {$lead->uuid}");
+            if ($lead->advisor_id) {
+                Log::info(self::class." - handleHealth: Lead already has an advisor assigned: {$lead->uuid}");
+
+                return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
+            }
+
+            $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+            Log::info(self::class." - handleHealth: Car Quote Source updated for Revival for uuid {$lead->uuid} to REVIVAL_REPLIED");
+            DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+            Log::info(self::class." - handleHealth: Health Quote Source updated for Revival for uuid {$lead->uuid}");
+
+            info(self::class." - handleHealth: Allocation Process Executing for lead: {$lead->uuid}");
+            $response = QuoteTypes::HEALTH->allocate($lead->uuid);
+            $assignedAdvisorId = $response['advisorId'] ?? '';
+            info(self::class." - handleHealth: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+
+            return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
+        }
+    }
     public function handleBirdWebhook($request)
     {
         try {
@@ -215,6 +246,9 @@ class InboundEmailsHookService extends BaseService
                 case QuoteTypes::HEALTH->id():
                     $quote = HealthQuote::where('id', $emailStatusData->quote_id)->first();
                     break;
+                case QuoteTypes::HOME->id():
+                    $quote = HomeQuote::where('id', $emailStatusData->quote_id)->first();
+                    break;
                 default:
                     $quote = null;
                     break;
@@ -240,7 +274,5 @@ class InboundEmailsHookService extends BaseService
             $msg = 'EmailStatus not found for msg_id: '.$messageId;
             info($msg);
         }
-
     }
-
 }

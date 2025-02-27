@@ -46,6 +46,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  error: {
+    type: String,
+    default: '',
+  },
+  range: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const selectedData = computed({
@@ -75,6 +83,7 @@ const iconPosition = computed(() => {
     class="w-full"
     auto-apply
     :clearable="!props.disabled"
+    :range="range"
     text-input
   >
     <template #dp-input="{ value, onEnter, onTab, onBlur, onInput }">
@@ -94,6 +103,7 @@ const iconPosition = computed(() => {
         @update:modelValue="onInput"
         @blur="onBlur"
         @keydown.enter.prevent="onEnter"
+        :error="props.error"
       />
     </template>
   </x-datepicker>

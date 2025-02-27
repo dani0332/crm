@@ -40,7 +40,7 @@ class LeadAssignRequest extends FormRequest
             $leadsIds = array_map('intval', explode(',', request()->assigned_lead_id));
             $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
 
-            $model = (in_array(ucfirst(request()->modelType), $personalQuotes) && in_array(ucfirst(request()->modelType), newUi())) ?
+            $model = (in_array(ucfirst(request()->modelType), $personalQuotes)) ?
                 PersonalQuote::class : (ucfirst(request()->modelType).'Quote');
 
             /**

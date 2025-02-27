@@ -17,10 +17,16 @@ const createLink = link => {
       icon: link.attributes.icon,
       value: link.url,
       href: link.url,
-      active: page.props.location.startsWith(link.url) || link.active,
+      active: isActive(link),
       ...(link.attributes.external ? { target: '_blank' } : null),
     };
   }
+};
+
+const isActive = link => {
+  const currentUrl = page.props.location;
+  const exactMatch = new RegExp(`^${link.url}$`);
+  return exactMatch.test(currentUrl) || link.active;
 };
 
 const user = computed(() => page.props.auth.user);
@@ -30,6 +36,9 @@ const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
 const minimizeSidebar = ref(false);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const impersonatingUser = page.props.impersonatingUser;
 const bannerInfo = computed(() => {
   let { quote_route, total_count } = page.props.totalQuotesCount;
 
@@ -57,12 +66,13 @@ const urls = computed(() => {
   return `/reports/payment-summary`;
 });
 
-const activitiesUrl = computed(() => {
+const activitiesUrl = activityType => {
   const today = new Date();
   const filters = {
     status: '0',
     due_date_time_start: '',
     due_date_time_end: '',
+    activity_type: '',
     page: 1,
     isCustom: false,
   };
@@ -78,13 +88,19 @@ const activitiesUrl = computed(() => {
     'DD-MM-YYYY',
   ).value;
   filters.due_date_time_end = useDateFormat(lastDayOfWeek, 'DD-MM-YYYY').value;
-  return `/activities?due_date_time_start=${filters.due_date_time_start}&due_date_time_end=${filters.due_date_time_end}&page=1&isCustom=false&status=0&redirect=1`;
-});
+  filters.activity_type = activityType;
+  return `/activities?due_date_time_start=${filters.due_date_time_start}&due_date_time_end=${filters.due_date_time_end}&activity_type=${filters.activity_type}&page=1&isCustom=false&status=0&redirect=1`;
+};
 
-const getHTML = (buttonText, data) => {
-  return `<a target="_self" class="text-primary-500 hover:underline flex items-center space-x-1" href="${activitiesUrl.value}"> ${buttonText}
+const getHTML = (buttonText, data, activityType) => {
+  return `<a target="_self" class="text-primary-500 hover:underline flex items-center space-x-1" href="${activitiesUrl(activityType)}"> ${buttonText}
     ${data}</a>`;
 };
+
+const isReceiveNotificationsEnabled = computed(() => {
+  let permission = permissionsEnum.RECEIVE_NOTIFICATIONS;
+  return can(permission);
+});
 </script>
 
 <template>
@@ -218,6 +234,7 @@ const getHTML = (buttonText, data) => {
                             getHTML(
                               'Pending Callbacks: ',
                               pendingActivityCount.pendingCallback,
+                              page.props.activityTypeEnum.CALL_BACK,
                             )
                           "
                         />
@@ -242,6 +259,7 @@ const getHTML = (buttonText, data) => {
                             getHTML(
                               'Pending WhatsApp requests: ',
                               pendingActivityCount.pendingWhatsapp,
+                              page.props.activityTypeEnum.WHATS_APP,
                             )
                           "
                         />
@@ -262,10 +280,11 @@ const getHTML = (buttonText, data) => {
 
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
-              <!-- <UserStatus /> -->
-              <CallBackNotification />
-              <PaymentNotification />
-              <PaymentExpireNotifications />
+              <CallBackNotification v-if="isReceiveNotificationsEnabled" />
+              <PaymentNotification v-if="isReceiveNotificationsEnabled" />
+              <PaymentExpireNotifications
+                v-if="isReceiveNotificationsEnabled"
+              />
 
               <x-tooltip>
                 <x-button class="w-full" size="sm">
@@ -315,6 +334,31 @@ const getHTML = (buttonText, data) => {
                 </x-button>
                 <template #content>
                   <x-popover-container class="p-2">
+                    <a
+                      v-if="impersonatingUser"
+                      class="flex gap-2 items-center px-2 group mb-2"
+                      :href="route('login-as.leave')"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="w-6 h-6 text-success-600"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                        />
+                      </svg>
+                      <span
+                        class="text-sm font-semibold group-hover:text-error-600"
+                      >
+                        Back to {{ impersonatingUser.name }}
+                      </span>
+                    </a>
                     <button
                       class="flex gap-2 items-center px-2 group"
                       @click="onLogout"

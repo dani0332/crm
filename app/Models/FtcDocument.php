@@ -38,9 +38,4 @@ class FtcDocument extends BaseModel
     {
         return ['document'];
     }
-
-    public function processGetDSL($filters, $request)
-    {
-        return self::processGetBaseDSL($filters, false);
-    }
 }
