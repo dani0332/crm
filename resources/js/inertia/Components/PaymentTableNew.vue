@@ -208,7 +208,9 @@ const isPaymentAuthorized = computed(() => {
   const payments = props.payments;
    if(payments.length > 0) {
      const notPaidStatusIds = [
-       paymentStatusEnum.AUTHORISED
+       paymentStatusEnum.AUTHORISED,
+       paymentStatusEnum.PARTIALLY_PAID,
+       paymentStatusEnum.PARTIAL_CAPTURED
      ];
      return payments.some(payment =>
        notPaidStatusIds.includes(payment.payment_status_id),
