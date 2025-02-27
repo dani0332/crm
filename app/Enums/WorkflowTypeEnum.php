@@ -35,4 +35,5 @@ final class WorkflowTypeEnum extends Enum
     public const TRAVEL_NEW_POLICY = 'travel_new_policy';
     public const CYCLE_NEW_POLICY = 'cycle_new_policy';
     public const YACHT_NEW_POLICY = 'yacht_new_policy';
+    public const HOME_NEW_POLICY = 'home_new_policy';
 }
