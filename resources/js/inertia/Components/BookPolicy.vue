@@ -267,7 +267,8 @@ const submitPolicy = () => {
   isLoading.value = true;
   let url = '/quotes/send-booking-policy';
   let data = {
-    send_policy_type: props.bookPolicyDetails.sendPolicyType,
+    // send_policy_type: props.bookPolicyDetails.sendPolicyType,
+    send_policy_type: 'customer',
     model_type: props?.quoteType,
     quote_id: props?.quote?.id,
     is_send_policy: isAllowedToSendPolicy.value,
@@ -1393,6 +1394,16 @@ const isDisabledSendPCB = computed(() => {
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
                 </template>
+
+
+                <x-button
+                    size="sm"
+                    color="orange"
+                    class="mt-4"
+                    @click.prevent="confirmSendPolicy"
+                >
+                  {{ props.bookPolicyDetails?.text }}
+                </x-button>
               </template>
 
               <template

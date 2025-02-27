@@ -1166,15 +1166,7 @@ class CentralService extends BaseService
             'workflowType' => $workflowType,
         ];
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car])) {
-            $emailData->assistanceNumber = $existingEmailData->roadsideAssistance;
-            $emailData->carDetails = $quote->carMake->text.' '.$quote->carModel->text.' '.$quote->carModelDetail->text;
-            $emailData->insuranceCompany = $existingEmailData->currentInsurer;
-            $customer = $quote->customer->insured;
-            $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
-            $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '';
-            $emailData->quoteUID = $quote->uuid;
-        }
+        $this->emailDataExtend($emailData, $quote, $quoteTypeId);
 
         return $emailData;
     }
@@ -1198,6 +1190,15 @@ class CentralService extends BaseService
             'workflowType' => $workflowType,
         ];
 
+        $this->emailDataExtend($emailData, $quote, $quoteTypeId);
+
+        // $emailData->documentUrl
+
+        return [1, $emailData, 'send-update', $quoteTypeId];
+    }
+
+    private function emailDataExtend(&$emailData, $quote, $quoteTypeId): void
+    {
         $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
         $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
         $emailData->planName = 'NA';
@@ -1211,7 +1212,7 @@ class CentralService extends BaseService
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business])) {
             $customer = $quote->customer->insured;
             $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
-            $emailData->quoteUID = $sendUpdateLog->quote_uuid;
+            $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
 
@@ -1251,13 +1252,9 @@ class CentralService extends BaseService
             $emailData->companyName = $quote->company_name;
             $emailData->details = $quote->brief_details;
         }
-
-        // $emailData->documentUrl
-
-        return [1, $emailData, 'send-update', $quoteTypeId];
     }
 
-    public function sendInslyEmailToCustomer($sendUpdate, $emailData, $quoteTypeId, $emailType = '')
+    public function sendInslyEmailToCustomer($lead, $emailData, $quoteTypeId, $emailType = '')
     {
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
@@ -1266,33 +1263,37 @@ class CentralService extends BaseService
             $birdUrlKey = "BIRD_{$quoteType}_SEND_UPDATE";
         }
         try {
-            info("Sending {$quoteType} followups email for {$emailType} uuid: ".$sendUpdate->uuid.' | Time: '.now());
+            info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
             $birdUrlKey = constant("App\Enums\ApplicationStorageEnums::{$birdUrlKey}");
 
             $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
             if ($birdUrl) {
                 $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
-                info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$sendUpdate->uuid} |Time: ".now());
+                info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$lead->uuid} |Time: ".now());
 
                 if (! empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($sendUpdate, $response, $quoteTypeId);
+                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType);
                 }
             } else {
-                info("{$birdUrlKey} key not found for {$emailType} uuid: {$sendUpdate->uuid} |Time: ".now());
+                info("{$birdUrlKey} key not found for {$emailType} uuid: {$lead->uuid} |Time: ".now());
             }
 
             return $response?->status_code ?? null;
         } catch (\Exception $ex) {
-            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$sendUpdate->uuid} | Time: ".now();
+            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now();
             info($errorMessage);
-            info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$sendUpdate->uuid} | Time: ".now());
+            info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
         }
     }
 
-    public function createQuoteFlowDetails($lead, $response, $quoteTypeId)
+    public function createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType)
     {
         try {
-            $flowType = 'SU_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_UPDATE';
+            if ($emailType == 'Send Update') {
+                $flowType = 'SU_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_UPDATE';
+            } else {
+                $flowType = strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_NEW_POLICY';
+            }
             $flowType = constant("App\Enums\QuoteFlowType::{$flowType}");
 
             $runId = collect($response->headers['Run-Id'])->first();
@@ -1303,14 +1304,14 @@ class CentralService extends BaseService
                     'flow_type' => $flowType,
                     'flow_id' => $runId,
                 ]);
-                info("SendUpdate  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                info("{$emailType} run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             } else {
-                info("SendUpdate  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                info("{$emailType} run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } catch (\Exception $ex) {
-            $errorMessage = "SendUpdate-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            $errorMessage = "{$emailType}-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             info($errorMessage);
-            info("SendUpdate-Error: {$ex->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            info("{$emailType}-Error: {$ex->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
         }
     }
 }
