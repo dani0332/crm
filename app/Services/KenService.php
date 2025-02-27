@@ -15,7 +15,8 @@ class KenService
     public function __construct()
     {
         $this->baseUrl = config('constants.KEN_API_ENDPOINT');
-
+       
+       
         $this->client = Http::withBasicAuth(config('constants.KEN_API_USER'), config('constants.KEN_API_PWD'))
             ->withHeaders([
                 'Content-Type' => 'application/json',
@@ -24,7 +25,7 @@ class KenService
 
             ])->timeout(config('constants.KEN_API_TIMEOUT'));
     }
-
+    
     /**
      * send request to ken.
      *
@@ -51,7 +52,7 @@ class KenService
     public function renewalRequest($path, $method = 'post', $data = [])
     {
         $url = config('constants.KEN2_API_ENDPOINT').$path;
-        $response = $this->client->withBody(json_encode($data), 'application/json')
+        $response = $this->client->withBody( json_encode($data), 'application/json')
             ->send($method, $url)->onError(function ($response) use ($data, $url) {
                 info('KEN Service Exception', ['data' => $data, 'url' => $url]);
                 if (isset($response->json()['msg'])) {

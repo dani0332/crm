@@ -34,6 +34,7 @@ use App\Services\QuoteDocumentService;
 use App\Services\SplitPaymentService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\KenService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
@@ -51,6 +52,7 @@ class LifeQuoteService extends BaseService
     use GenericQueriesAllLobs;
     use PersonalQuoteLobs;
     use RolePermissionConditions;
+
 
     public function getLifeQuoteData($isExportRequest = false, $isTotalLeadCountRequest = false)
     {
@@ -572,6 +574,7 @@ class LifeQuoteService extends BaseService
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
+            'getLatestRating' => true, 
             'lang' => 'en',
         ];
 
@@ -597,7 +600,6 @@ class LifeQuoteService extends BaseService
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
-
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
@@ -720,6 +722,18 @@ class LifeQuoteService extends BaseService
             }
             return $responseBodyAsString;
         }
+    }
+
+    /* This function will update the Plan details in the Quote */
+    function lifePlanSelected(String $quoteId, Int $planId){
+        // Creating Form Data
+        $formData = [
+            'quoteUID' => $quoteId,
+            'planId' => $planId, 
+            'quoteTypeId' => 4,
+        ]; 
+       $request = app(KenService::class)->request('/process-life-quote-plan', 'post',$formData); 
+       return $request;
     }
 
     private function prepareActivitiesData($activities)

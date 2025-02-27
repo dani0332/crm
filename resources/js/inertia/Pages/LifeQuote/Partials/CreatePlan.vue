@@ -47,11 +47,18 @@ const options = reactive({
 });
 
 const availableInsuranceProviders = computed(() => {
-  if(createForm.isUW) {return props.insuranceProviders;}
-  return props.insuranceProviders.filter(item => {
-    return !props.plans.some(plan => plan.providerId === item.id);
-  });
+  // if(createForm.isUW) {return props.insuranceProviders;}
+  // return props.insuranceProviders.filter(item => {
+  //   return !props.plans.some(plan => plan.providerId === item.id);
+  // });
+  return props.insuranceProviders; 
 });
+
+
+
+
+
+
 
 const createForm = reactive({
   providerId: null,
@@ -106,11 +113,18 @@ watch(
       axios
         .get(`/personal-quotes/life/provider-plans/${value}`)
         .then(res => {
-          if (res.data.plans) {
-            options.providerPlans = res.data.plans;
-          } else {
-            options.providerPlans = [];
-          }
+       
+            if (res.data.plans) {
+              if (!createForm.isUW) {
+                options.providerPlans = res.data.plans.filter(
+                  plan => !props.plans.some(existingPlan => existingPlan.planId === plan.id)
+                );
+              } else {
+                options.providerPlans = res.data.plans; 
+              }
+            } else {
+              options.providerPlans = [];
+            }
         })
         .catch(err => {
           emit('error');

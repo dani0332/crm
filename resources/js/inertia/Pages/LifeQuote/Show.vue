@@ -8,6 +8,7 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
 import LazyEditPlan from './Partials/EditPlan.vue'; 
+import { watch } from 'vue';
 
 const page = usePage();
 defineProps({
@@ -83,7 +84,7 @@ const loader = ref({
   link: false,
 });
 const selectedProviderPlan = ref({
-  id: page.props.quote.plan_id,
+  id: page.props.quote.planId,
 });
 
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
@@ -95,8 +96,17 @@ let selectedPlan = ref(null);
 
 const viewPlan = item => {
   selectedPlan = item;
-  modals.editPlan = true;
+  modals.editPlan = true;      
 };
+
+// watch (
+//   () => selectedPlan,
+//    (editPlan) => {
+//     if(editPlan){
+    
+//     }
+//   }
+// )
 
 
 // plans
@@ -722,6 +732,27 @@ const confirmSendEmail = () => {
   const last_name = page.props.quote.last_name || '';
 };
 
+const selectPlan = (planId, quoteId) => {
+  loader.value.link = true;
+  axios.post('/personal-quotes/life-plan-selected', {
+    planId: planId,
+    quoteId: quoteId
+  })
+  .then(response => {
+    notification.success({
+        title: response?.data?.message,
+        position: 'top',
+    });
+  })
+  .catch(error => {
+      notification.error({
+        title: error?.response?.data?.message ?? 'something went wrong',
+        position: 'top',
+      });
+  });
+  loader.value.link = false;
+}
+
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
@@ -760,6 +791,7 @@ const getBMITag = () => {
 
     return tag || { text: "Invalid BMI", color: "gray" };
   }
+
 </script>
 
 <template>
@@ -1692,13 +1724,14 @@ const getBMITag = () => {
                     Copy
                   </x-button>
                   <span>
-                    <SelectPlan
-                      v-if="selectedProviderPlan.id != item._id"
-                      @update:selectedPlanChanged="handlePlanSelected"
-                      :plan="item"
-                      :quoteType="quoteType"
-                      :uuid="quote.uuid"
-                    />
+                    <x-button
+                    v-if="selectedProviderPlan.id != item._id"
+                      size="xs"
+                      color="emerald"
+                      outlined
+                      :loading="loader.link"
+                       @click.prevent="selectPlan(item.planId, page.props.quote.uuid)"
+                    >Select</x-button>
 
                     <x-button
                       v-else
@@ -1753,17 +1786,20 @@ const getBMITag = () => {
       @error="onPlanError"
     />
 
+
+    <template>
+
     <LazyEditPlan 
+        v-if="modals.editPlan"
         v-model="modals.editPlan"
-        :selectedPlan="{}"
+        :selectedPlan="selectedPlan"
         :uuid="quote.uuid"
         :insuranceProviders="insuranceProviders"
         :currencies="currencies"
         :plans="computedListQuotePlans"
         :lifeRiders="lifeRiders"
     />
-
-    
+    </template>
 
     <PlanDetails
       :insuranceProviders="insuranceProviders"

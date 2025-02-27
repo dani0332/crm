@@ -46,7 +46,7 @@ class LifeController extends Controller
     public function index()
     {
         $data = $this->lifeQuoteService->getLifeQuoteData();
-
+        
         return inertia('LifeQuote/Index', $data);
     }
 
@@ -144,6 +144,26 @@ class LifeController extends Controller
         ]);
 
         return $this->lifeQuoteService->lifePlanCreateQuote($request->quoteUID, $request->formData);
+    }
+
+    public function lifePlanUpdate(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required',
+            'formData' => 'required|array',
+        ]);
+
+        // return $this->lifeQuoteService->lifePlanUpdate($request->quoteUID, $request->formData);
+    }
+
+    public function lifePlanSelected(Request $request)
+    {
+        $request->validate([
+            'planId' => 'required',
+            'quoteId' => 'required',
+        ]);
+
+        return $this->lifeQuoteService->lifePlanSelected($request->quoteId, $request->planId);
     }
 
     public function getLifeProviderPlan(Request $request)
