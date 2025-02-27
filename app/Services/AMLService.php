@@ -610,6 +610,10 @@ class AMLService
                 'insuredLastName' => $insuredDetails?->last_name,
             ];
 
+            if ($quoteTypeId == QuoteTypes::HOME->id()) {
+                $insurerScreeningPayload['nationalityId'] = $request['nationality_id'] ?? null;
+            }
+
             info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
 
