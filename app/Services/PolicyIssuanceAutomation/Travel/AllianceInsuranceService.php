@@ -17,6 +17,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
 use App\Models\TravelQuote;
@@ -638,7 +639,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);
 
-        $quote->documents()->create([
+        $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
             'original_name' => $originalName ?? $docName,
             'doc_url' => $filePathAzure,
@@ -647,6 +648,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'document_type_text' => $documentType->text,
             'doc_uuid' => generateUUID(),
         ]);
+
+        if ($newDocument->exists) {
+            WatermarkDocumentsJob::dispatch(
+                $newDocument->id, $quote->uuid, $documentType->id
+            );
+        }
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
 
