@@ -1192,6 +1192,7 @@ class CentralService extends BaseService
 
         $this->emailDataExtend($emailData, $quote, $quoteTypeId);
 
+        dd($emailData);
         // $emailData->documentUrl
 
         return [1, $emailData, 'send-update', $quoteTypeId];
@@ -1239,7 +1240,7 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Life) {
-            $emailData->planType = ''; // need to confirm.
+            $emailData->planType = $quote->insuranceTenure->text;
             $emailData->policyTerm = $quote->numberOfYears->text;
         }
 
