@@ -1192,7 +1192,6 @@ class CentralService extends BaseService
 
         $this->emailDataExtend($emailData, $quote, $quoteTypeId);
 
-        dd($emailData);
         // $emailData->documentUrl
 
         return [1, $emailData, 'send-update', $quoteTypeId];
