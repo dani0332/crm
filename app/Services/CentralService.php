@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
@@ -1190,14 +1191,14 @@ class CentralService extends BaseService
             'workflowType' => $workflowType,
         ];
 
-        $this->emailDataExtend($emailData, $quote, $quoteTypeId);
+        $this->emailDataExtend($emailData, $quote, $quoteTypeId, $sendUpdateLog);
 
         // $emailData->documentUrl
 
         return [1, $emailData, 'send-update', $quoteTypeId];
     }
 
-    private function emailDataExtend(&$emailData, $quote, $quoteTypeId): void
+    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null): void
     {
         $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
         $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
@@ -1251,6 +1252,34 @@ class CentralService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->companyName = $quote->company_name;
             $emailData->details = $quote->brief_details;
+
+            if (! empty($sendUpdateLog)) {
+                $documents = $sendUpdateLog->documents->whereIn('document_type_code', [
+                    DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
+                    DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
+                ])->toArray();
+
+                $policyCertificate = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE)['doc_url'] ?? '';
+                $policySchedule = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE)['doc_url'] ?? '';
+                $taxInvoice = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)['doc_url'] ?? '';
+            } else {
+                $documents = [];
+            }
+
+            $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
+            if (! empty($policyCertificate)) {
+                $emailData->policyCertificate = $storageUrl.$policyCertificate;
+            }
+
+            if (! empty($policySchedule)) {
+                $emailData->policySchedule = $storageUrl.$policySchedule;
+            }
+
+            if (! empty($taxInvoice)) {
+                $emailData->taxInvoice = $storageUrl.$taxInvoice;
+            }
         }
     }
 
