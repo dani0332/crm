@@ -11,7 +11,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ProcessRenewalsUploadCreate implements ShouldQueue
@@ -41,7 +40,7 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        return $renewalsUploadService->processUploadCreate($this->renewalsUploadLead);
+        return $renewalsUploadService->processUploadCreate($this->renewalsUploadLead);      
     }
 
     /**
