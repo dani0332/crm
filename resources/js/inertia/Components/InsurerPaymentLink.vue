@@ -4,6 +4,7 @@ const emit = defineEmits(['updateOnParent']);
 const props = defineProps({
   paymentForm: Object,
   payments: Array,
+  insurerPaymentLinkIndex: Number,
 });
 const notification = useNotifications('toast');
 
@@ -20,7 +21,8 @@ const quotePaymentLinkChanged = () => {
 }
 
 const insurerPaymentLink = computed(() => {
-    return props.payments[0]?.payment_splits[0]?.insurer_payment_link ?? null;
+    var currentIndexLink = props.insurerPaymentLinkIndex - 1;
+    return props.payments[0]?.payment_splits[currentIndexLink]?.insurer_payment_link ?? null;
 });
 
 const closePaymentForm = (closeModal = false) => {
@@ -78,7 +80,7 @@ defineExpose({
         "
         class="font-bold"
     >
-        <x-tooltip v-if="paymentForm.status == 'create' && paymentLinkBtnDisabled">
+        <x-tooltip v-if="paymentForm.status == 'create'">
             <x-button
                 color="orange"
                 type="submit"
@@ -96,15 +98,15 @@ defineExpose({
             </template>
         </x-tooltip>
         <x-button
-            color="orange"
+            :color=" isLinkChanged ? 'orange' : 'emerald'"
             type="submit"
             tabindex="0"
-            class="focus:outline-black font-bold text-md"
+            class="focus:outline-black"
             :loading="paymentForm.processing"
             v-else
         >
             {{
-                paymentForm.status == 'create' || isLinkChanged
+                isLinkChanged
                 ? 'Send Insurer Payment Link'
                 : 'Updates'
             }}

@@ -311,13 +311,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         $masterPayment = (object) $request->payment;
         $isInsurerPaymentLink = collect($masterPayment->payment_splits)->contains('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
-        // $insurerPaymentLinkIndex = current(array_filter($masterPayment->payment_splits, function ($e) use ($name) {
-        //     return $e->name == $name;
-        // }));
-        $isPaymentLinkNotNull = collect($masterPayment->payment_splits)->filter(function ($split) {
-            return isset($split['insurer_payment_link']) && $split['insurer_payment_link'] !== null;
-        })->isNotEmpty();
-        $sendFTCEmail = $isInsurerPaymentLink && $isPaymentLinkNotNull && $request->sendFTCEmail;
+        $insurerPaymentLinkIndex = collect($masterPayment->payment_splits)->search(function ($item) {
+            return isset($item['insurer_payment_link']) && $item['insurer_payment_link'] !== null;
+        });
+        $sendFTCEmail = $isInsurerPaymentLink && $insurerPaymentLinkIndex !== false && $request->sendFTCEmail;
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
@@ -398,7 +395,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if (! $paymentSplitRecord) {
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
-                    $index == 0 && $sendFTCEmail = $paymentSplitRecord->payment_method == PaymentMethodsEnum::InsurerPaymentLink && $splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link ? true : false;
+                    $index == $insurerPaymentLinkIndex && $sendFTCEmail = $paymentSplitRecord->payment_method == PaymentMethodsEnum::InsurerPaymentLink && $splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link ? true : false;
                     $paymentSplitRecord->update($splitPaymentInformation);
                 }
                 // add document references

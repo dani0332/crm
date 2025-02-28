@@ -5266,13 +5266,6 @@ onBeforeMount(() => {
                   </div>
 
                   <div class="w-1/5 px-2">
-                    {{
-                      getPaymentTypeLabel(paymentMethodsModels[splitPaymentNo])
-                    }}
-                    <p>{{ checkDetailModels[splitPaymentNo] }}</p>
-                  </div>
-
-                  <div class="w-1/5 px-2">
                     {{ formatAmount(splitAmountModels[splitPaymentNo]) }}
                   </div>
 
@@ -6214,7 +6207,7 @@ onBeforeMount(() => {
                   </x-button>
                 </div>
                 <template v-if="paymentMethodsModels[insurerPaymentLinkIndex] === page.props.paymentMethodsEnum?.InsurerPaymentLink">
-                  <InsurerPaymentLink ref="insurerPaymentComponent" :paymentForm="paymentMethodsForm" :payments="payments" @updateOnParent="(e,f,g) => updateFromInsurerPaymentLink(e, f, g)"/>
+                  <InsurerPaymentLink ref="insurerPaymentComponent" :insurerPaymentLinkIndex="insurerPaymentLinkIndex" :paymentForm="paymentMethodsForm" :payments="payments" @updateOnParent="(e,f,g) => updateFromInsurerPaymentLink(e, f, g)"/>
                 </template>
               </div>
             </template>
