@@ -598,7 +598,7 @@ class SageApiService
 
         // payload
         $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
-        $isPaymentPaidOrCreditApproved = $this->isPaymentPaidOrCreditApproved($payment, $paymentSplits , $sageRequest);
+        $isPaymentPaidOrCreditApproved = $this->isPaymentPaidOrCreditApproved($payment, $paymentSplits, $sageRequest);
 
         if (! $isPaymentPaidOrCreditApproved) {
             info('Policy Book : postBookPolicyToSage : Quote Code : '.$quote->code.' Booking Rejected because Payment is not paid or credit approved for '.$payment->code);
