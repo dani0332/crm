@@ -243,7 +243,8 @@ function onMemberSubmit(isValid) {
             <DatePicker
               v-model="memberForm.dob"
               placeholder="Date of Birth"
-              class="w-full fixed-datepicker"
+              class="w-full"
+              teleport
             />
           </x-field>
         </div>
