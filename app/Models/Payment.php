@@ -248,7 +248,6 @@ class Payment extends Model implements Auditable
             InsurerProviderEnum::TOKIO_MARINE,
             InsurerProviderEnum::QATAR_INSURANCE,
             InsurerProviderEnum::ALLIANCE_INSURANCE,
-            InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE,
         ]);
     }
 

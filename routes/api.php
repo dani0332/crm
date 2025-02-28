@@ -30,6 +30,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/send-health-apply-now-email', [ApiController::class, 'sendHealthApplyNowEmail'])->name('sendHealthApplyNowEmail');
     // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
+    Route::get('/imcrm/quote/{quoteUuid}/{quoteType}/auto-capture-failed', [ApiController::class, 'markAutoCaptureFailed']);
     Route::post('/imcrm/home-sync-sal', [ApiController::class, 'homeSyncSAL'])->name('home-sync-sal');
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
