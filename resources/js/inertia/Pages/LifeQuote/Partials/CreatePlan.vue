@@ -54,12 +54,6 @@ const availableInsuranceProviders = computed(() => {
   return props.insuranceProviders; 
 });
 
-
-
-
-
-
-
 const createForm = reactive({
   providerId: null,
   planId: null,

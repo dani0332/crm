@@ -1,4 +1,7 @@
 <script setup>
+import { ref } from 'vue';
+import { errorMessages } from 'vue/compiler-sfc';
+
 const props = defineProps({
   uuid: String,
   insuranceProviders: Array,
@@ -50,6 +53,9 @@ const options = reactive({
   loading: false,
 });
 
+const updateQuotesLoader = ref(false);
+
+
 const availableInsuranceProviders = computed(() => {
   if(editForm.isUW) {return props.insuranceProviders;}
   return props.insuranceProviders.filter(item => {
@@ -73,6 +79,7 @@ const editForm = reactive({
   isDisabled:props.selectedPlan.isDisabled,
   loading: false,
   isManualPlan: props.selectedPlan.isManualPlan,
+  getQuoteLoading:false
 });
 
 // Update the Plan (if it is manual)
@@ -106,6 +113,50 @@ const onSubmit = isValid => {
     })
     .finally(() => {
       editForm.loading = false;
+    });
+};
+
+// Get updated provider plan (API Mode only)
+
+const getQuote = () => {
+    editForm.getQuoteLoading = true;
+    axios
+    .post(`/personal-quotes/get-life-provider-plan`, {
+        data: {
+        quoteUID: props.uuid,
+        planId: props.selectedPlan.planId,
+        providerCode: props.selectedPlan.providerCode,
+        isIndividualLoading: true,
+        planData: {
+            currency: editForm.currency,
+            sumAssured: editForm.sumAssured,
+            policyTerm: editForm.policyTerm,
+            paymentTerm: editForm.paymentTerm,
+            riders: ridersData.value,
+        },
+        lang: "en"
+        }
+    })
+    .then(res => {
+      console.log('success response', res)
+        if (res.data.providerPlan.message) {
+            errorMessage = res.data.providerPlan.message;
+            return; 
+        }
+        if (res.data) {
+            editForm.actualPremium = res.data.providerPlan.plan.actualPremium;
+            errorMessage = null;
+        }
+        console.log('Error message', errorMessage); 
+
+        editForm.getQuoteLoading = false;
+
+    })
+    .catch(err => {
+      errorMessage = err.response.data.message;
+    })
+    .finally(() => {
+      editForm.getQuoteLoading = false;
     });
 };
 
@@ -170,7 +221,7 @@ const setActiveTab = (index, selected) => {
             >
               <button
                 :class="[
-                  'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
+                  'rounded-lg px-3 py-2 flex-auto md:min-w-[20%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
                   'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
                   selected
                     ? 'bg-white shadow text-primary-600'
@@ -398,8 +449,8 @@ const setActiveTab = (index, selected) => {
         </template>
     
         <template v-if="showGetQuoteBtn && !editForm.isManualPlan">
-            <x-button type="submit" color="blue"  :loading="editForm.loading">
-              Get Quotes
+            <x-button type="button" @click="getQuote()" color="blue"  :loading="editForm.getQuoteLoading">
+              Update Quotes
             </x-button>
         </template>
       </div>

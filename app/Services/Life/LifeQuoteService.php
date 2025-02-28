@@ -574,7 +574,7 @@ class LifeQuoteService extends BaseService
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
-            'getLatestRating' => true, 
+            'getLatestRating' => false, 
             'lang' => 'en',
         ];
 
@@ -622,7 +622,7 @@ class LifeQuoteService extends BaseService
 
     public function getProviderPlans($providerId)
     {
-        return InsuranceProviderPlan::where(['provider_id' => $providerId, 'quote_type_id' => QuoteTypeId::Life])->get();
+        return InsuranceProviderPlan::where(['provider_id' => $providerId, 'quote_type_id' => QuoteTypeId::Life])->active()->get();
     }
 
     public function lifePlanCreateQuote($uuid, $data)
@@ -636,7 +636,6 @@ class LifeQuoteService extends BaseService
         ];
 
         $client = new \GuzzleHttp\Client;
-
         try {
             $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-life-quote-plan';
             $plansApiToken = config('constants.KEN_API_TOKEN');
@@ -659,6 +658,7 @@ class LifeQuoteService extends BaseService
             );
 
             return $kenRequest->getStatusCode();
+
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = json_decode((string) $e->getResponse()->getBody());
 
@@ -675,56 +675,11 @@ class LifeQuoteService extends BaseService
 
     public function getLifeProviderPlan($data)
     {
-        $client = new \GuzzleHttp\Client;
-
-        try {
-            $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/fetch-life-provider-plan';
-            $plansApiToken = config('constants.KEN_API_TOKEN');
-            $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
-            $plansApiUserName = config('constants.KEN_API_USER');
-            $plansApiPassword = config('constants.KEN_API_PWD');
-            $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
-            $kenRequest = $client->post(
-                $plansApiEndPoint,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
-                    ],
-                    'body' => json_encode($data),
-                    'timeout' => $plansApiTimeout,
-                ]
-            );
-
-            $getStatusCode = $kenRequest->getStatusCode();
-
-            if ($getStatusCode == 200) {
-                $getContents = $kenRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
-
-                return $getdecodeContents;
-            }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
-            $contents = (string) $response->getBody();
-            $response = json_decode($contents);
-
-            if (isset($response->message)) {
-                $responseBodyAsString = $response->message;
-            } elseif (isset($response->error)) {
-                $responseBodyAsString = $response->error;
-            } elseif (isset($response->msg)) {
-                $responseBodyAsString = $response->msg;
-            } else {
-                $responseBodyAsString = 'Failedt to fetch provider plan.';
-            }
-            return $responseBodyAsString;
-        }
+       $request = app(KenService::class)->request('/fetch-life-provider-plan', 'post',$data); 
+        return $request;
     }
 
-    /* This function will update the Plan details in the Quote */
+    /* This function will select the Plan details in the Quote */
     function lifePlanSelected(String $quoteId, Int $planId){
         // Creating Form Data
         $formData = [

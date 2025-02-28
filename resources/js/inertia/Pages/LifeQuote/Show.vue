@@ -63,6 +63,8 @@ const modelClass = 'App\\Models\\PersonalQuote';
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const quoteStatusEnum = page.props.quoteStatuses;
+const selectPlanLoader = ref(false);
+const emit = defineEmits(['success', 'error']);
 const modals = reactive({
   duplicate: false,
   activity: false,
@@ -83,9 +85,8 @@ const { copy, copied } = useClipboard();
 const loader = ref({
   link: false,
 });
-const selectedProviderPlan = ref({
-  id: page.props.quote.planId,
-});
+
+const selectedProviderPlan = page.props.quote.plan_id; 
 
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
   createReusableTemplate();
@@ -733,24 +734,38 @@ const confirmSendEmail = () => {
 };
 
 const selectPlan = (planId, quoteId) => {
-  loader.value.link = true;
+  selectPlanLoader.value = true;
   axios.post('/personal-quotes/life-plan-selected', {
     planId: planId,
     quoteId: quoteId
   })
   .then(response => {
+    selectPlanLoader.value = false;  
     notification.success({
-        title: response?.data?.message,
+        title: 'Plan selected successfully',
         position: 'top',
-    });
+      });
+    emit('success'); 
+    
+    setTimeout(() => {
+
+      location.reload();
+        
+    }, 2000);
+    
+    // onLoadAvailablePlansData()
+
   })
   .catch(error => {
       notification.error({
         title: error?.response?.data?.message ?? 'something went wrong',
         position: 'top',
       });
+      console.log('error', error)
+      emit('error'); 
+      selectPlanLoader.value = false;
   });
-  loader.value.link = false;
+  
 }
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -1725,20 +1740,21 @@ const getBMITag = () => {
                   </x-button>
                   <span>
                     <x-button
-                    v-if="selectedProviderPlan.id != item._id"
+                    v-if="selectedProviderPlan != item.planId"
                       size="xs"
                       color="emerald"
                       outlined
-                      :loading="loader.link"
-                       @click.prevent="selectPlan(item.planId, page.props.quote.uuid)"
+                      :loading="selectPlanLoader"
+                      @click.prevent="selectPlan(item.planId, page.props.quote.uuid)"
                     >Select</x-button>
-
+                   
                     <x-button
                       v-else
                       size="xs"
                       color="orange"
                       outlined
                       :disabled="true"
+
                     >
                       Selected
                     </x-button>
