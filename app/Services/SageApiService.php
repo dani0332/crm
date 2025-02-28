@@ -525,6 +525,13 @@ class SageApiService
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
+        // Condition moved to Up to so that system alert user right away instead checking status after date processing
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            info('Policy Book : postBookPolicyToSage : Policy has been already booked!');
+
+            return ['status' => true, 'message' => 'Policy has been already booked!'];
+        }
+
         // check sage is enabled or not
         if (! $this->isSageEnabled()) {
             info('Policy Book : postBookPolicyToSage : Sage is not enabled');
@@ -591,6 +598,14 @@ class SageApiService
 
         // payload
         $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
+        $isPaymentPaidOrCreditApproved = $this->isPaymentPaidOrCreditApproved($payment, $paymentSplits , $sageRequest);
+
+        if (! $isPaymentPaidOrCreditApproved) {
+            info('Policy Book : postBookPolicyToSage : Quote Code : '.$quote->code.' Booking Rejected because Payment is not paid or credit approved for '.$payment->code);
+
+            return ['status' => false, 'message' => 'Payment is not paid or credit approved, Please Capture'];
+
+        }
         $sageRequest->quoteCode = $quote?->code;
         $sageRequest->quoteTypeId = $quoteTypeId;
         $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST;
@@ -604,12 +619,6 @@ class SageApiService
             info('Policy Book : postBookPolicyToSage : '.$checkRequiredSageIds['message']);
 
             return $checkRequiredSageIds;
-        }
-
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
-            info('Policy Book : postBookPolicyToSage : Policy has been already booked!');
-
-            return ['status' => true, 'message' => 'Policy has been already booked!'];
         }
 
         $this->createSageProcess($quote, $sageRequest, $request);
@@ -2166,6 +2175,17 @@ class SageApiService
     public function isSageRetryTimeoutEnabled()
     {
         return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED);
+    }
+
+    public function isPaymentPaidOrCreditApproved($payment, $paymentSplits, $sageRequest)
+    {
+        $isPaymentCreditApproval = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
+        $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
+        $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
+        $isFrequencyUpfrontOrSplit = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
+        $isFirstPaymentPaidOrCaptured = in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+
+        return $isPaymentCreditApproval || $isTransactionPaidAndFrequencyUpfront || $isFrequencySplitAndFirstChildPaymentPaid || (! $isFrequencyUpfrontOrSplit && $isFirstPaymentPaidOrCaptured);
     }
 
 }
