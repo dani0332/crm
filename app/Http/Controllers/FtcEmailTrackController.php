@@ -16,6 +16,7 @@ class FtcEmailTrackController extends Controller
         $quoteType = $request->quoteTrackableType;
         $quoteObject = $this->getQuoteObject($quoteType, $request->quoteTrackableId);
         $emailTracks = $quoteObject->ftcEmailTracks()->get();
+
         return response()->json($emailTracks);
     }
 

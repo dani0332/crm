@@ -32,19 +32,20 @@ class FtcEmailTrackController extends Controller
                 'quote_trackable_type' => get_class($quote),
             ];
             $ftcEmailTrack = $this->ftcEmailTrackService->createTrackEmail($payload);
+
             return response()->json(['message' => 'Email track created successfully.', 'data' => $ftcEmailTrack], Response::HTTP_CREATED);
         }
 
         return response()->json(['message' => 'Quote not found.'], 404);
     }
 
-    
     public function update(Request $request)
     {
         $payload = [
             'status' => $request->status,
         ];
         $trackEmail = $this->ftcEmailTrackService->updateTrackEmail($payload, '', $request->link);
-        return response()->json(['message' => 'Email track updated successfully.', 'data' => $trackEmail], Response::HTTP_OK);   
+
+        return response()->json(['message' => 'Email track updated successfully.', 'data' => $trackEmail], Response::HTTP_OK);
     }
 }

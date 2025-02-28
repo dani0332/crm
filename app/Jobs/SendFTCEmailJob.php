@@ -57,7 +57,7 @@ class SendFTCEmailJob implements ShouldQueue
 
             // Fetch the lead
             $lead = $leadQuery->first();
-            
+
             // Lead must be SIC LEAD and payment authorized
             if ($lead) {
                 $isPaymentAuthorized = $this->isInsurerPayment || $lead->isPaymentAuthorized();
@@ -66,7 +66,7 @@ class SendFTCEmailJob implements ShouldQueue
                         'quoteUID' => $this->quoteUUID,
                         'quoteTypeId' => (int) $this->quoteType->id(),
                         'isSic' => $isSic,
-                        'isInsurerPaymentLink' => $this->isInsurerPayment
+                        'isInsurerPaymentLink' => $this->isInsurerPayment,
                     ];
 
                     Marshall::request('/payment/send-payment-auth-email', 'post', $data);

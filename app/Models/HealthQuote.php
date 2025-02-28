@@ -19,7 +19,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
 {
-    use HasFtcEmailTrack, Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, HasFtcEmailTrack, QuoteModelTrait;
 
     protected $table = 'health_quote_request';
     protected $fillable = [];
