@@ -1167,7 +1167,7 @@ class CentralService extends BaseService
             'workflowType' => $workflowType,
         ];
 
-        $this->emailDataExtend($emailData, $quote, $quoteTypeId);
+        $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $existingEmailData);
 
         return $emailData;
     }
@@ -1198,7 +1198,7 @@ class CentralService extends BaseService
         return [1, $emailData, 'send-update', $quoteTypeId];
     }
 
-    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null): void
+    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $existingEmailData = null): void
     {
         $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
         $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
@@ -1263,23 +1263,28 @@ class CentralService extends BaseService
                 $policyCertificate = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE)['doc_url'] ?? '';
                 $policySchedule = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE)['doc_url'] ?? '';
                 $taxInvoice = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)['doc_url'] ?? '';
+
+                $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
+                if (! empty($policyCertificate)) {
+                    $emailData->policyCertificate = $storageUrl.$policyCertificate;
+                }
+
+                if (! empty($policySchedule)) {
+                    $emailData->policySchedule = $storageUrl.$policySchedule;
+                }
+
+                if (! empty($taxInvoice)) {
+                    $emailData->taxInvoice = $storageUrl.$taxInvoice;
+                }
             } else {
                 $documents = [];
+                // dd($existingEmailData);
+                // Business
+                // DocumentTypeCode::CTIRBB
             }
 
-            $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
-            if (! empty($policyCertificate)) {
-                $emailData->policyCertificate = $storageUrl.$policyCertificate;
-            }
-
-            if (! empty($policySchedule)) {
-                $emailData->policySchedule = $storageUrl.$policySchedule;
-            }
-
-            if (! empty($taxInvoice)) {
-                $emailData->taxInvoice = $storageUrl.$taxInvoice;
-            }
         }
     }
 

@@ -159,7 +159,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Travel, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Business])) {
                 $emailData = app(CentralService::class)->prepareBirdData(quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $emailData);
 
                 if (! empty($emailData)) {
