@@ -1216,7 +1216,7 @@ class CentralService extends BaseService
             $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '';
         }
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
             $customer = $quote->customer->insured;
             $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
             $emailData->quoteUID = $quote->uuid;
@@ -1253,6 +1253,14 @@ class CentralService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Home) {
             // need to confirm.
             $emailData->homeDetails = $quote->address;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Pet) {
+            $emailData->typeOfPet = $quote?->petQuote?->petType?->text.' - '.$quote->gender; // Cat - Female
+            $emailData->breedOfPet = $quote?->petQuote?->breed_of_pet1 ?? ''; // Persian
+            if ($quote?->petQuote?->is_microchipped && $sendUpdateLog) { // only in send update template.
+                $emailData->microchipNumber = $quote->petQuote->microchip_no;
+            }
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {

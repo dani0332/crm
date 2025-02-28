@@ -982,7 +982,7 @@ class SendEmailCustomerService extends BaseService
     {
         try {
             if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
-                QuoteTypeId::Life, QuoteTypeId::Business])) {
+                QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
                 return app(CentralService::class)->sendInslyEmailToCustomer($sendUpdateLog, $emailData, $quoteTypeId, 'Send Update');
             }
             info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
