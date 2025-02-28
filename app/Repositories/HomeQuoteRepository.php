@@ -275,6 +275,9 @@ class HomeQuoteRepository extends BaseRepository
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
         $lookUpData = app(LookupService::class)->getHomeLookUpData();
 
+        // Check if TAP integration is enabled
+        $isFuncsEnabled = ['tapIntegration' => isTapEnabled()];
+
         return [
             'documentTypes' => $documentTypes,
             'paymentDocument' => $paymentDocument,
@@ -328,6 +331,7 @@ class HomeQuoteRepository extends BaseRepository
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'customerAddressData' => $customerAddressData,
             'lookUpData' => $lookUpData,
+            'isFuncsEnabled' => $isFuncsEnabled,
         ];
     }
 
