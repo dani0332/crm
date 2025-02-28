@@ -769,7 +769,10 @@ watch(
           </div>
           <x-field
             label="Email in GIG portal"
-            v-if="quoteType.id === page.props.quoteTypeIdEnum.Car"
+            v-if="
+              quoteType.id === page.props.quoteTypeIdEnum.Car ||
+              quoteType.id === page.props.quoteTypeIdEnum.Bike
+            "
           >
             <x-input
               v-model="insuredFormDetails.get_quote_email_gig"
