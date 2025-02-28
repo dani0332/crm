@@ -1216,7 +1216,8 @@ class CentralService extends BaseService
             $emailData->planName = $quote?->plan?->text ?? $quote?->carPlan?->text ?? '';
         }
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
+            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
             $customer = $quote->customer->insured;
             $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
             $emailData->quoteUID = $quote->uuid;
@@ -1261,6 +1262,11 @@ class CentralService extends BaseService
             if ($quote?->petQuote?->is_microchipped && $sendUpdateLog) { // only in send update template.
                 $emailData->microchipNumber = $quote->petQuote->microchip_no;
             }
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $emailData->tpa = 'test TPA'; // need to confirm.
+            $emailData->numberOfMembersCovered = (string)count($quote->members);
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {

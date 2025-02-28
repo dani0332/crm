@@ -1164,8 +1164,8 @@ class SendUpdateLogService
             $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
         }
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
-            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht,
+            QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
             return app(CentralService::class)->prepareBirdData($quote, $quoteTypeId, $sendUpdateLog);
         }
         $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
