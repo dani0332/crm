@@ -19,8 +19,7 @@ class DatabaseSeeder extends Seeder
             // HealthRevivalQuotesSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
-            TravelRenewalTeamSeeder::class,
-            PermissionsSeeder::class,
+            // TravelRenewalTeamSeeder::class,
         ]);
     }
 }

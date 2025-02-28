@@ -797,8 +797,10 @@ class CRUDController extends Controller
 
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
+            $listQuotePlans = app(CarQuoteService::class)->getPlans($id);
 
             return inertia('PersonalQuote/Car/Show', compact([
+                'listQuotePlans',
                 'record',
                 'sendUpdateOptions',
                 'sendUpdateLogs',

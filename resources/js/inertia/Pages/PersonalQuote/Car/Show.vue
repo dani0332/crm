@@ -1640,22 +1640,7 @@ const allowStatusUpdate = computed(() => {
 });
 
 const convertToNumber = (value, decimalPlace = 2) => {
-  // Step 1: Round to (decimalPlace + 2) decimal places
-  const roundToExtra =
-    Math.round(value * Math.pow(10, decimalPlace + 2)) /
-    Math.pow(10, decimalPlace + 2);
-
-  // Step 2: Round to (decimalPlace + 1) decimal places
-  const roundToOneLess =
-    Math.round(roundToExtra * Math.pow(10, decimalPlace + 1)) /
-    Math.pow(10, decimalPlace + 1);
-
-  // Step 3: Round to (decimalPlace) decimal places
-  const roundToFinal =
-    Math.round(roundToOneLess * Math.pow(10, decimalPlace)) /
-    Math.pow(10, decimalPlace);
-
-  return roundToFinal;
+  return useRoundIt(value).toFixed(2);
 };
 
 function genderFormatForProfile(gender) {
@@ -1671,6 +1656,14 @@ function capitalizeString(str) {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const isCommercialVehicle = computed(() => {
+  let isCConditionMeet = false;
+  if (isPlanDetailEnabled.value) {
+    isCConditionMeet = true;
+  }
+  return isCConditionMeet;
+});
 </script>
 
 <template>
@@ -3198,19 +3191,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
               >
                 Download PDF
               </x-button>
-              <x-button
-                @click.prevent="modals.sendConfirm = true"
-                size="sm"
-                color="orange"
-                class="mr-2"
-                :disabled="
-                  record.advisor_id != $page.props.auth.user.id ||
-                  page.props.linkedQuoteDetails.childLeadsCount > 0
-                "
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Send OCB Email to Customer
-              </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="
+                    record.advisor_id != $page.props.auth.user.id ||
+                    page.props.linkedQuoteDetails.childLeadsCount > 0
+                  "
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Send OCB Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
             </template>
 
             <AddPlanButtonTemplate v-slot="{ isDisabled }">
@@ -3717,7 +3719,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isCapBtnEnabled="isCommercialVehicle"
     />
+
     <PaymentTable
       v-else
       :payments="payments"

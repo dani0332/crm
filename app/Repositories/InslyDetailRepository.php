@@ -109,10 +109,8 @@ class InslyDetailRepository extends BaseRepository
         $email = $policy['customer']['email'] ?? null;
 
         /* Temp Code - assign email for particular Policy id/number */
-        $tempEmail = 'vitara@inbox.ru';
-        $tempPolicyId = 66495910;
-        if ($tempPolicyId == $data['policy_oid']) {
-            $email = $tempEmail;
+        if ($policyID == 41679326) {
+            $email = 'ben.gibson@hotmail.ca';
         }
         /* Temp Code - assign email for particular Policy id/number */
 
@@ -134,6 +132,15 @@ class InslyDetailRepository extends BaseRepository
         if ($advisorName == null) {
             $advisorName = $policy['quote']['broker'] ?? null;
         }
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempSalesPerson = 'Shristi Chowdhury';
+        $tempPolicyId = 59306651;
+        if ($tempPolicyId == $policyID) {
+            $advisorName = $tempSalesPerson;
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
         $appUrl = config('constants.APP_URL');
         $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
         if ($advisorId == null) {
@@ -367,11 +374,19 @@ class InslyDetailRepository extends BaseRepository
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
 
         /* Temp Code - assign email for particular Policy id/number */
-        $tempEmail = 'vitara@inbox.ru';
+
+        /*$tempEmail = 'vitara@inbox.ru';
         $tempPolicyId = 66495910;
         if ($tempPolicyId == $policy['policy_oid']) {
             [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }*/
+
+        $tempEmail = 'ben.gibson@hotmail.ca';
+        $tempPolicyId = 41679326;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
         }
+
         /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;

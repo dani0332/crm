@@ -79,6 +79,12 @@ const props = defineProps({
     type: Array,
     default: [],
   },
+  realQuote: Object,
+  // For car commercial vehicles
+  isCapBtnEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // All reactive properties are defined here
@@ -247,7 +253,7 @@ if (
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Bike') {
-  initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+  initalPlanDetails = props.quoteRequest?.car_plan;
 } else {
   initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
@@ -903,11 +909,16 @@ const handlePaymentTypes = count => {
   }
 
   if (paymentMethodsForm.collection_type === 'insurer') {
-    const frequenciesToFilter = isMultiPaymentsEnabled.value
+    let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+      // need to fix this for payments
+      isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+    }
+    const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
       : frequenciesToFilterForInsurer;
 
-    if (count >= 2 || !isMultiPaymentsEnabled.value) {
+    if (count >= 2 || !isMultiPaymentEnabled) {
       if (frequenciesToFilter.includes(paymentMethodsForm.frequency)) {
         paymentTypesWithoutCheck = filterPaymentTypes(
           paymentTypesWithoutCheck,
@@ -1826,7 +1837,7 @@ const editPaymentModal = (
   }
 
   if (
-    paymentMethodsForm.collection_type === 'insurer' &&
+    payment.collection_type === 'insurer' &&
     isEditPaymentEnabled() &&
     split_payment_id == 0 &&
     sr_no == 0 &&
@@ -1960,6 +1971,13 @@ const initializePaymentForm = (
       : splitPaymentRecord.value.decline_reason_id;
   paymentMethodsForm.declined_custom_reason =
     splitPaymentRecord.value.decline_custom_reason;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    paymentMethodsForm.isCreditCardEnabled = payment.isCreditCardEnabled;
+    paymentMethodsForm.isGIGProvider = payment.isGIGProvider;
+    paymentMethodsForm.isMultiplePaymentsEnabled =
+      payment.isMultiplePaymentsEnabled;
+    paymentMethodsForm.isCaptureButtonEnabled = payment.isCaptureButtonEnabled;
+  }
 };
 
 const processPaymentSplits = payment => {
@@ -2480,6 +2498,7 @@ const addPayment = (isValid) => {
   let storeData = {
     ...data,
   };
+
   paymentMethodsForm
     .transform(data => storeData)
     .post('/payments/' + props.quoteType + '/store-new', {
@@ -2827,8 +2846,10 @@ const shouldProcessUpdate = payment => {
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
-  const isCarQuote = props.quoteType === 'Car';
-  const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+  let isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+  if (isTravelQuote && !props.sendUpdate) {
+    isGIGProvider = payment.isGIGProvider;
+  }
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
@@ -2840,6 +2861,7 @@ const shouldProcessUpdate = payment => {
     quoteTypeCodeEnum.Bike,
     quoteTypeCodeEnum.Travel,
   ];
+
   const captureOption = getCaptureOption.value(payment);
   if (
     isInsurer &&
@@ -2850,9 +2872,29 @@ const shouldProcessUpdate = payment => {
   ) {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
-    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    if (isTravelQuote) {
+      isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
+    } else {
+      isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    }
   }
-
+  const isRenewalUploadConditionMet = () => {
+    return (
+      props.isCapBtnEnabled &&
+      props.quoteType === quoteTypeCodeEnum.Car &&
+      isGIGProvider &&
+      isAmlCleared &&
+      isKycVerified() &&
+      isTotalPriceMatching &&
+      hasAnyCCSplitPayment() &&
+      !shouldSendUpdate &&
+      hasPayments &&
+      isInsurer
+    );
+  };
+  if (isRenewalUploadConditionMet()) {
+    return true;
+  }
   if (captureOption === 'approve') {
     return hasPayments;
   }
@@ -2993,28 +3035,27 @@ const alertCapture = payment => {
   });
 };
 
-const hasAnyAuthorisedPendingCA = computed(() => {
-  const statusesToCheck = [
-    paymentStatusEnum.AUTHORISED,
-    paymentStatusEnum.CREDIT_APPROVED,
-    paymentStatusEnum.PENDING,
-  ];
-
-  return payment => {
-    return payment.payment_splits.some(item =>
-      statusesToCheck.includes(item.payment_status_id),
-    );
-  };
-});
-
 const getCaptureOption = computed(() => {
   return payment => {
+    // Return early if there are no payments
     if (props.payments.length === 0) return;
-    const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+
+    let isCaptureButtonEnabled =
+      page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+      isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
+    }
+
     const paymentMethodCC = filterCCPayments(payment);
+
+    // Check if the conditions for 'capture' are met
+    const isCreditCardPayment = paymentMethodCC.length > 0;
+    const isNotInsurerPayment = payment.collection_type !== 'insurer';
+
+    // Return 'capture' if all conditions are met, otherwise return 'approve'
     if (
-      paymentMethodCC.length > 0 &&
-      (hasAnyAuthorisedPendingCA.value(payment) || isGIGProvider)
+      (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
+      (isCaptureButtonEnabled && hasAnyCCSplitPayment())
     ) {
       return 'capture';
     }
@@ -3026,6 +3067,10 @@ const planText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
+  if (!providerId || !planId) {
+    providerId = props.realQuote?.insurance_provider_id;
+    planId = props.realQuote?.plan_id;
+  }
   let url = `/get-plans/${props.quoteType}/${providerId}/${planId}`;
   axios
     .get(url)
@@ -3036,6 +3081,26 @@ const fetchPlans = () => {
       console.log(err);
     });
 };
+
+// Ecom leads
+watch(
+  () => props.realQuote?.plan_id,
+  () => {
+    if (props.realQuote?.plan_id) {
+      fetchPlans();
+    }
+  },
+);
+
+// Insly Leads
+watch(
+  () => props.sendUpdate?.plan_id,
+  () => {
+    if (props.sendUpdate?.plan_id) {
+      fetchPlans();
+    }
+  }
+);
 
 const insurerPaymentLinkIndex = computed(() => {
   var insurerPaymentIndex = paymentMethodsModels.value.findIndex((item) => {
@@ -3065,7 +3130,7 @@ watch(createPaymentModal, async (newVal, oldVal) => {
 });
 
 onMounted(() => {
-  if (props.sendUpdate?.plan_id) {
+  if (props.realQuote?.plan_id || props.sendUpdate?.plan_id) {
     fetchPlans();
   }
   showLackingPayment();
@@ -3464,6 +3529,9 @@ const isInsurerAmlVerified = () => {
 };
 
 const disableMainPaymentApproval = computed(() => {
+  if (props.sendUpdate) {
+    return false;
+  }
   let isAmlFailed =
     props.quoteRequest.aml_status ===
     page.props.amlStatusEnum.AMLScreeningFailed;
@@ -3533,10 +3601,6 @@ const isMultiPaymentsEnabled = ref(
   page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled || false,
 );
 
-const isGIGOrQICProvider = ref(
-  page.props?.bookPolicyDetails?.isGIGOrQICProvider || false,
-);
-
 watch(
   () => page.props?.bookPolicyDetails?.isCreditCardEnabled,
   newVal => {
@@ -3558,8 +3622,12 @@ const hasAnyCCSplitPayment = () => {
 };
 
 const isCCPaymentDisabled = option => {
+  let isCreditCardEnabled = isCCEnabled.value;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    isCreditCardEnabled = paymentMethodsForm.isCreditCardEnabled;
+  }
   return (
-    !isCCEnabled.value &&
+    !isCreditCardEnabled &&
     paymentMethodsForm.collection_type === 'insurer' &&
     option == 'CC'
   );
@@ -3587,17 +3655,23 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
 };
 
 const isEditPaymentEnabled = () => {
-  const statusesToCheck = [paymentStatusEnum.AUTHORISED];
+  const statusesToCheck = [
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.PAID,
+    paymentStatusEnum.CAPTURED,
+  ];
 
-  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
-    statusesToCheck.includes(item.payment_status_id),
+  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(
+    item =>
+      statusesToCheck.includes(item.payment_status_id) &&
+      item.payment_method.code === 'CC',
   );
 
-  return (
-    !isMultiPaymentsEnabled.value &&
-    isGIGOrQICProvider.value &&
-    hasAnyAuthorizedPayment
-  );
+  let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+  }
+  return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
 
 // voidPaymentModal
@@ -3674,7 +3748,6 @@ const fetchInsurerAMLStatus = async () => {
       },
     });
     NProgress.done();
-    console.log('insurerAMLStatus:', response.data);
     if (response.data?.status) {
       notification.error({
         title: response.data?.message,
@@ -4119,7 +4192,8 @@ onBeforeMount(() => {
                                 color="orange"
                                 outlined
                                 @click="
-                                  !isAmlVerified() || !isKycVerified()
+                                  !props.sendUpdate &&
+                                  (!isAmlVerified() || !isKycVerified())
                                     ? openAmlVerificationModal()
                                     : getCaptureValidation(item)
                                       ? editPaymentModal(item, 0, 0, 2)
@@ -5012,6 +5086,7 @@ onBeforeMount(() => {
                 </x-field>
               </div>
             </div>
+
             <x-divider class="mb-4 mt-10" />
 
             <div
@@ -5543,6 +5618,44 @@ onBeforeMount(() => {
                         ? splitPaymentRecord.verified_at
                         : 'N/A'
                     }}
+                  </div>
+                </div>
+
+                <div class="flex w-full custombreak">
+                  <div class="w-1/6 px-2 text-center"></div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Receipt ID</span
+                      >
+                    </span>
+                  </div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Auth Code</span
+                      >
+                    </span>
+                  </div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Charge ID</span
+                      >
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex w-full custombreak pb-5">
+                  <div class="w-1/6 px-2 text-center"></div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord.payment_receipt_id ?? 'N/A' }}
+                  </div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord.payment_auth_code ?? 'N/A' }}
+                  </div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord?.payment_charges?.transaction_id }}
                   </div>
                 </div>
 
@@ -6505,7 +6618,9 @@ onBeforeMount(() => {
             </div>
             <div class="mt-2 text-center">
               <Link
-                :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+                :href="`/kyc/aml/${
+                  page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+                }/details/${props.quoteRequest.id}`"
               >
                 <x-tooltip>
                   <x-button

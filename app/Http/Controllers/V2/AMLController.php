@@ -7,6 +7,8 @@ use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\DocumentTypeCode;
+use App\Enums\GenericModelTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -21,11 +23,13 @@ use App\Exports\KycLogs;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Http\Requests\UpdateAMLCustomerDetailRequest;
 use App\Http\Requests\UpdateAMLEntityDetailRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
+use App\Models\BikeQuote;
 use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CarQuoteRequestDetail;
@@ -51,6 +55,7 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
+use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
@@ -249,7 +254,6 @@ class AMLController extends Controller
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'asc')->get();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-
         $isPersonalQuote = checkPersonalQuotes($quoteType->code);
 
         if ($isPersonalQuote) {
@@ -312,6 +316,7 @@ class AMLController extends Controller
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
             'amlStatusName' => $amlStatusName,
+            'amlStatusCode' => AMLStatusCode::asArray(),
             'entityDetails' => $entityDetails,
             'membersDetails' => $membersDetail,
             'uboDetails' => $uboDetails,
@@ -328,6 +333,7 @@ class AMLController extends Controller
             'cardHolderName' => $cardHolderName,
             'quoteTypeIdEnum' => QuoteTypeId::asArray(),
             'quoteStatusEnums' => QuoteStatusEnum::asArray(),
+            'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -479,6 +485,15 @@ class AMLController extends Controller
                     }
                 }
 
+                if ($quoteTypeId == QuoteTypes::BIKE->id()) {
+                    $bikeQuoteRequest = BikeQuote::where('personal_quote_id', $quoteRequestId)->first();
+                    $bikeQuoteRequest->chassis_number = $AMLCheckRequest->chassis_number;
+                    if ($bikeQuoteRequest->isDirty()) {
+                        info('AML Screening Bridger - Chassis number updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
+                        $bikeQuoteRequest->save();
+                    }
+                }
+
                 if (isTapEnabled()) {
                     info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start - Ref-ID: '.$quoteRequestId);
                     $enableInsurerScreening = [
@@ -491,10 +506,11 @@ class AMLController extends Controller
                         session()->put('insurerAMLScreeningResponse');
                         InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
                         $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                        if (! empty($insurerAMLScreeningResponse)) {
+                        if (! empty($getInsurerScreeningResponse)) {
                             $insurerAMLScreeningResponse = [
                                 'status' => $getInsurerScreeningResponse['status'],
                                 'message' => $getInsurerScreeningResponse['message'],
+                                'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
                             ];
                         }
                         session()->forget('insurerAMLScreeningResponse');
@@ -586,7 +602,7 @@ class AMLController extends Controller
 
             $response = redirect()->back()->with('success', 'Quote is updated');
             if (! empty($insurerAMLScreeningResponse)) {
-                $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
+                $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
             }
 
             return $response;
@@ -740,8 +756,11 @@ class AMLController extends Controller
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
-                if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid) {
+                $isPassportDocumentExist = app(QuoteDocumentService::class)->isDocumentExists(quoteTypeCode::Travel, $quoteDetails->id, DocumentTypeCode::TRVLPAS);
+                if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid && ! $isPassportDocumentExist) {
                     $this->sendHapexReminder($quoteDetails);
+                } else {
+                    info(self::class.' - Hapex reminder not sent as passport document exists. Quote UUID: '.$quoteDetails->uuid.', isPassportDocumentExist: '.$isPassportDocumentExist.', is_documents_valid: '.$quoteDetails->is_documents_valid);
                 }
             }
             info('AML Screening Bridger - Potential Matches Found, Quote Status changed to AML Screening Failed');
@@ -773,6 +792,7 @@ class AMLController extends Controller
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+        info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
 
         return true;
     }
@@ -819,7 +839,15 @@ class AMLController extends Controller
     public function sendHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
+        info(self::class.'- sendHapexReminder Hapex reminder sent for Quote UUID: '.$quote->uuid.' | Time - '.now());
 
         return true;
+    }
+
+    public function tempSkipBridgerAML(SkipBridgerScreeningRequest $skipBridgerScreeningRequest)
+    {
+        $skipBrigerAMLResponse = app(AMLService::class)->tempSkipBridgerAML($skipBridgerScreeningRequest);
+
+        return response()->json(['response' => $skipBrigerAMLResponse['status'], 'message' => $skipBrigerAMLResponse['response']]);
     }
 }

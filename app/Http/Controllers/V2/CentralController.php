@@ -166,8 +166,8 @@ class CentralController extends Controller
     {
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
             $emiratesDetails = [
-                str_replace('-', '', $customerProfileRequest->emirates_id_number),
-                $customerProfileRequest->emirates_id_expiry_date,
+                'emirates_id_number' => str_replace('-', '', $customerProfileRequest->emirates_id_number),
+                'emirates_id_expiry_date' => $customerProfileRequest->emirates_id_expiry_date,
             ];
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
             $customer->update($emiratesDetails);
@@ -658,7 +658,7 @@ class CentralController extends Controller
 
         $response = ['status' => false, 'message' => ''];
         if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
-            $resposneMessage = 'GIG server connection issue. Please check API logs for details of the error';
+            $responseMessage = 'GIG server connection issue. Please check API logs for details of the error';
 
             if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
                 $insurerAMLScreeningResponse = AML::where([
@@ -667,11 +667,11 @@ class CentralController extends Controller
                     'screening_type' => 'INSURER_'.InsuranceProvidersEnum::AXA,
                 ])->latest()->first();
 
-                $amlResponse = json_decode($insurerAMLScreeningResponse->results);
+                $amlResponse = ! empty($insurerAMLScreeningResponse) ? json_decode($insurerAMLScreeningResponse->results) : [];
 
-                return ['status' => true, 'message' => $amlResponse->message ?? $resposneMessage];
+                return ['status' => true, 'message' => $amlResponse?->message ?? $responseMessage];
             }
-            $response = ['status' => true, 'message' => $resposneMessage];
+            $response = ['status' => true, 'message' => $responseMessage];
         }
 
         return $response;

@@ -35,6 +35,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     // FTC email tracking routes
     Route::post('ftc/{quoteType}/{uuid}', [FtcEmailTrackController::class, 'store']);
     Route::post('ftc', [FtcEmailTrackController::class, 'update']);
+    Route::get('/imcrm/quote/{quoteUuid}/{quoteType}/auto-capture-failed', [ApiController::class, 'markAutoCaptureFailed']);
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);

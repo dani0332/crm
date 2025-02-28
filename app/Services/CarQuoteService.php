@@ -69,8 +69,6 @@ class CarQuoteService extends BaseService
                 'cqr.first_name',
                 'cqr.last_name',
                 DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
-                // 'cqr.email',
-                // 'cqr.mobile_no',
                 'cqr.company_name AS car_company_name',
                 'cqr.company_address AS car_company_address',
                 DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
@@ -132,8 +130,6 @@ class CarQuoteService extends BaseService
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
-                // 'ppip.text AS prefill_plan_provider_id_text',
-                // 'prefill_plan.text AS prefill_plan_id_text',
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
                 'cqr.year_of_manufacture AS year_of_manufacture_text',
@@ -178,10 +174,7 @@ class CarQuoteService extends BaseService
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
                 'cqr.risk_score',
-                DB::raw('IF(EXISTS (
-                    SELECT *
-                    FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Car.' AND quote_request_id = cqr.id),
+                DB::raw('IF(qrem.entity_id,
                     "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
                 as customer_type'),
                 'cpip.code as plan_provider_code',
@@ -205,21 +198,12 @@ class CarQuoteService extends BaseService
                 'ent.company_address',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
-                // 'cqr.prefill_plan_id',
-                // 'cqr.prefill_plan_selected_at',
-                // 'cqr.plan_selected_at'
                 'cqr.enquiry_count',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'cqr.policy_booking_date',
                 DB::raw('GROUP_CONCAT(team.name) as team_name'),
                 'cqr.insurance_provider_id',
-                'cqr.insurer_quote_number',
-                'cqr.price_vat_applicable',
-                'cqr.price_vat_not_applicable',
-                'cqr.price_with_vat',
                 'cpdip.text as insurer_name',
-                'cqr.policy_booking_date',
-                DB::raw('GROUP_CONCAT(team.name) as team_name'),
                 DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'cqr.insly_migrated',
                 'cqr.aml_status',
@@ -256,8 +240,6 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
-            // ->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
-            // ->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
@@ -662,6 +644,7 @@ class CarQuoteService extends BaseService
                             'documents',
                             'verifiedByUser',
                             'processJob',
+                            'paymentCharges',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },
@@ -944,7 +927,6 @@ class CarQuoteService extends BaseService
             $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
             $teamMates = DB::table('user_manager')->where('manager_id', $userId)->whereIn('user_id', $carUserIds)->pluck('user_id');
             foreach ($teamMates as $teamMateId) {
-                $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
                 $nextChild = DB::table('user_manager')->where('manager_id', $teamMateId)->whereIn('user_id', $carUserIds)->pluck('user_id');
                 if (count($nextChild) > 0) {
                     $this->walkTree($teamMateId);
@@ -969,6 +951,13 @@ class CarQuoteService extends BaseService
 
         $this->addLeadViewEligibilityCheck();
 
+        $this->applyFilters($request, $searchProperties);
+
+        return $this->applySortOrder($request);
+    }
+
+    public function applyFilters($request, $searchProperties)
+    {
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
@@ -1104,19 +1093,12 @@ class CarQuoteService extends BaseService
         if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch', 'insurer_tax_invoice_number', 'insurer_commission_tax_invoice_number'])) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
+    }
 
+    public function applySortOrder($request)
+    {
         if (isset($request->sortBy) && $request->sortBy != '') {
             return $this->query->orderBy($request->sortBy, $request->sortType);
-        } else {
-            return $this->query->orderBy('cqr.created_at', 'DESC');
-        }
-
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $columnName = $request->get('columns')[$column]['name'];
-
-            return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
         } else {
             return $this->query->orderBy('cqr.created_at', 'DESC');
         }

@@ -133,7 +133,9 @@ const insuredFormDetails = useForm({
   dob: props.insuredPersonDetails?.insured.dob ?? null,
   screening_gender: props.insuredPersonDetails?.insured?.gender ?? null,
   chassis_number:
-    props.quoteDetails?.car_quote_request_detail?.chassis_number ?? null,
+    (props.quoteType.code === 'Car'
+      ? props.quoteDetails?.car_quote_request_detail?.chassis_number
+      : props.quoteDetails?.bike_quote?.chassis_number) ?? null,
 
   entity_id: props.entityDetails?.entity?.id,
   trade_license_no: props.entityDetails?.entity?.trade_license_no,
@@ -143,6 +145,7 @@ const insuredFormDetails = useForm({
   industry_type_code: props.entityDetails?.entity?.industry_type_code ?? null,
   emirate_of_registration_id:
     props.entityDetails?.entity?.emirate_of_registration_id ?? null,
+  get_quote_email_gig: page.props.gigInsurerDefaultEmail,
 });
 
 const rules = {
@@ -166,16 +169,22 @@ const rules = {
 
   emirateNumberCheck: v => {
     const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
-    return pattern.test(v) || 'Enter the correct EID number format';
+    if (v.length == 15 || v.length > 18 || pattern.test(v)) {
+      insuredFormDetails.errors.screening_id_number = '';
+    } else {
+      return 'Enter the correct EID number format';
+    }
+
+    return true;
   },
 
   passportNumberCheck: v => {
     const regex = /^[A-Za-z0-9]+$/;
-    const lengthValid = v?.length >= 8 && v?.length <= 9;
+    const lengthValid = v?.length >= 6 && v?.length <= 14;
     const isAlphanumeric = regex.test(v);
     return (
       (lengthValid && isAlphanumeric) ||
-      'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.'
+      'The entered value does not meet the required length of 6 to 14 characters. Please check and confirm.'
     );
   },
 };
@@ -184,8 +193,14 @@ const submitQuoteUpdateForm = isValid => {
   insuredFormDetails.get(`${props.quoteDetails.id}/quoteUpdate`, {
     preserveScroll: true,
     onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
       notification.error({
-        title: errors.error || 'Quote not updated',
+        title: 'Quote not updated',
         position: 'top',
       });
     },
@@ -197,8 +212,9 @@ const submitQuoteUpdateForm = isValid => {
         });
       }
       if (
-        typeof response.props.flash.info !== 'undefined' &&
-        response.props.flash.info?.length > 0
+        response.props.flash.info &&
+        Object.keys(response.props.flash.info).length > 0 &&
+        response.props.flash.info?.isEmailMismatched
       ) {
         notification.error({
           title:
@@ -405,6 +421,9 @@ const insuredSearchValidation = computed(() => {
   return true;
 });
 
+const validationKey = ref(false);
+const dobValidationKey = ref(false);
+
 const submitInsuredPersonSearch = () => {
   if (insuredSearchValidation.value) {
     loader.value.search = true;
@@ -432,6 +451,9 @@ const submitInsuredPersonSearch = () => {
             position: 'top',
           });
         }
+
+        validationKey.value = true;
+        dobValidationKey.value = true;
       })
       .catch(err => {
         console.log(err);
@@ -511,15 +533,15 @@ const validatePassportNumber = eventType => {
 
   if (eventType == 'blur') {
     const lengthValid =
-      insuredFormDetails?.screening_id_number?.length >= 8 &&
-      insuredFormDetails?.screening_id_number?.length <= 9;
+      insuredFormDetails?.screening_id_number?.length >= 6 &&
+      insuredFormDetails?.screening_id_number?.length <= 14;
     const isAlphanumeric = regex.test(insuredFormDetails.screening_id_number);
     if (
       insuredFormDetails.screening_id_number &&
       (!lengthValid || !isAlphanumeric)
     ) {
       insuredFormDetails.errors.screening_id_number =
-        'The entered value does not meet the required length of 8 to 9 characters. Please check and confirm.';
+        'The entered value does not meet the required length of 6 to 14 characters. Please check and confirm.';
       event.preventDefault();
       return true;
     } else {
@@ -601,6 +623,13 @@ watch(
     if (newValue !== null) {
       isEmptyNationality.value = false;
     }
+  },
+);
+
+watch(
+  () => insuredFormDetails.dob,
+  newValue => {
+    dobValidationKey.value = newValue !== null;
   },
 );
 </script>
@@ -685,8 +714,8 @@ watch(
           <x-field label="Insured First Name">
             <x-input
               v-model="insuredFormDetails.insured_first_name"
+              :key="validationKey"
               :rules="[isRequired, rules.nameCheck]"
-              :key="insuredFormDetails.insured_first_name"
               placeholder="Insured First Name"
               type="text"
               class="w-full"
@@ -695,8 +724,8 @@ watch(
           <x-field label="Insured Last Name">
             <x-input
               v-model="insuredFormDetails.insured_last_name"
+              :key="validationKey"
               :rules="[isRequired, rules.nameCheck]"
-              :key="insuredFormDetails.insured_last_name"
               placeholder="Insured Last Name"
               type="text"
               class="w-full"
@@ -716,16 +745,16 @@ watch(
           <x-field label="Date of Birth">
             <DatePicker
               v-model="insuredFormDetails.dob"
+              :key="dobValidationKey"
               :rules="[isRequired]"
               placeholder="Date of Birth"
               class="w-full"
-              :key="insuredFormDetails.dob"
             />
           </x-field>
           <x-field label="Gender" required>
             <x-select
               v-model="insuredFormDetails.screening_gender"
-              :key="insuredFormDetails.screening_gender"
+              :key="validationKey"
               :options="gender"
               placeholder="Gender"
               :rules="[isRequired]"
@@ -738,10 +767,29 @@ watch(
               <x-radio :value="0" label="No" />
             </x-form-group>
           </div>
+          <x-field
+            label="Email in GIG portal"
+            v-if="
+              quoteType.id === page.props.quoteTypeIdEnum.Car ||
+              quoteType.id === page.props.quoteTypeIdEnum.Bike
+            "
+          >
+            <x-input
+              v-model="insuredFormDetails.get_quote_email_gig"
+              placeholder="Email in GIG portal"
+              type="text"
+              class="w-full"
+            />
+          </x-field>
         </dl>
 
         <x-divider class="mb-4 mt-1" />
-        <div v-if="quoteType.id === page.props.quoteTypeIdEnum.Car">
+        <div
+          v-if="
+            quoteType.id === page.props.quoteTypeIdEnum.Car ||
+            quoteType.id === page.props.quoteTypeIdEnum.Bike
+          "
+        >
           <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
             <h3 class="font-semibold text-primary-800 text-lg">
               Additional Vehicle Details

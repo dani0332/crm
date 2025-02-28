@@ -10,9 +10,11 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\WatermarkDocTypesEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
@@ -207,6 +209,11 @@ class QuoteDocumentService extends BaseService
             ]);
 
             $this->updateQuoteAndPaymentStatus($quote, $documentType, $isPaymentReceipt);
+            
+            if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
+                SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+                info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
+            }
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc) {
                 WatermarkDocumentsJob::dispatch(
@@ -745,5 +752,15 @@ class QuoteDocumentService extends BaseService
         $encodedUrl = $basePath.$encodedFileName;
 
         return $encodedUrl;
+    }
+
+    public function isDocumentExists($quoteType, $quoteId, $documentType)
+    {
+        $quoteModel = 'App\\Models\\'.ucfirst($quoteType).'Quote';
+
+        return QuoteDocument::where('quote_documentable_type', $quoteModel)
+            ->where('quote_documentable_id', $quoteId)
+            ->where('document_type_code', $documentType)
+            ->exists();
     }
 }

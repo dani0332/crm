@@ -82,6 +82,7 @@ const filters = reactive({
   amlStatus: [],
   insurance_provider_ids: [],
   plan_name: [],
+  travel_start_date: '',
 });
 
 const loader = reactive({
@@ -368,6 +369,7 @@ const onDataExport = () => {
   };
   exportLoader.value = true;
   logAndExportQuotes(payload).then(result => {
+    console.log(result);
     if (result)
       setTimeout(() => {
         exportLoader.value = false;
@@ -846,6 +848,11 @@ const insurerAMLStatusOption = computed(() => {
             :options="computedTravelPlans"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.travel_start_date"
+          label="Travel Start Date"
+          format="dd-MM-yyyy"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
