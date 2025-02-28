@@ -193,8 +193,14 @@ const submitQuoteUpdateForm = isValid => {
   insuredFormDetails.get(`${props.quoteDetails.id}/quoteUpdate`, {
     preserveScroll: true,
     onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
       notification.error({
-        title: errors.error || 'Quote not updated',
+        title: 'Quote not updated',
         position: 'top',
       });
     },
