@@ -240,7 +240,7 @@ class ApiController extends Controller
 
     public function markAutoCaptureFailed($quoteUuid, $quoteType)
     {
-        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType);
+        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' - Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType);
 
         $quote = $this->getQuoteObject($quoteType, $quoteUuid);
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
@@ -254,16 +254,16 @@ class ApiController extends Controller
         }
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
         if ($insuranceProvider) {
-            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.' Insurance Provider: '.$insuranceProvider->code.' Update status and lead allocate');
+            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.', Insurance Provider: '.$insuranceProvider->code.' - Update statuses and lead allocate');
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
             $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
-            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.' Insurance Provider: '.$insuranceProvider->code.' status updated and allocation triggered');
+            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.', Insurance Provider: '.$insuranceProvider->code.' - Statuses updated and allocation triggered');
 
-            return response()->json(['status' => true, 'message' => 'Auto Capture Failed status updated and Lead allocation is triggered successfully']);
+            return response()->json(['status' => true, 'message' => 'Insurer and API Issuance statuses updated and Lead allocation is triggered successfully']);
         }
 
-        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.' Insurance Provider: '.$insuranceProvider?->code.' status update and allocation failed');
+        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.',  Insurance Provider: '.$insuranceProvider?->code.' - Status update and allocation failed');
 
-        return response()->json(['success' => false, 'message' => 'Status update and lead allocation failed']);
+        return response()->json(['success' => false, 'message' => 'Failed to update Insurer and API Issuance statuses and lead allocation!']);
     }
 }
