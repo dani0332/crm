@@ -20,7 +20,7 @@ class CarQuoteDetailObserver
                 ->get();
 
             if ($existing->count() > 1) {
-                throw new Exception("Duplicate entry on update.");
+                throw new Exception('Duplicate entry on update.');
             }
         });
     }

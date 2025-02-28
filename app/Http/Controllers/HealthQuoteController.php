@@ -19,7 +19,6 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class HealthQuoteController extends Controller
 {
