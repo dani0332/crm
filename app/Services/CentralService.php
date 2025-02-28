@@ -1009,7 +1009,6 @@ class CentralService extends BaseService
                 $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
                 if (app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote)) {
                     $oldQuoteStatus = $quote->quote_status_id;
-                    $isQuoteStatusDirty = $quote->dirty('quote_status_id');
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
@@ -1019,7 +1018,7 @@ class CentralService extends BaseService
 
                     // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
                     // No need to create quote status log
-                    if ($isQuoteStatusDirty){
+                    if ($oldQuoteStatus != $quote->quote_status_id){
                         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
                         QuoteStatusLog::create([
                             'quote_type_id' => $quoteTypeId,
