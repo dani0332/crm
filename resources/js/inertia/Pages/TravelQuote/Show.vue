@@ -741,7 +741,6 @@ const onExportPlans = () => {
 };
 
 const onLoadAvailablePlansData = async () => {
-  console.log('onLoadAvailablePlansData');
   let data = {
     jsonData: true,
   };
