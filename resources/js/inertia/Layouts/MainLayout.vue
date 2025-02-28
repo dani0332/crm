@@ -66,6 +66,25 @@ const urls = computed(() => {
   return `/reports/payment-summary`;
 });
 
+const userMenu = [
+  {
+    label: "HR Portal",
+    icon: "external",
+    active: false,
+    href : "https://hrm.alfred.ae/attendance/mark",
+    target : "_blank",
+  },
+
+  {
+    label: "Sign out",
+    icon: "logout",
+    active: false,
+    onClick: () => {
+      onLogout();
+    }
+  }
+];
+
 const activitiesUrl = activityType => {
   const today = new Date();
   const filters = {
@@ -320,7 +339,7 @@ const isReceiveNotificationsEnabled = computed(() => {
                       outlined
                       rounded
                     />
-                    <span>{{ user.name }}</span>
+                    <span class="hidden md:block">{{ user.name }}</span>
                     <svg
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -359,7 +378,12 @@ const isReceiveNotificationsEnabled = computed(() => {
                         Back to {{ impersonatingUser.name }}
                       </span>
                     </a>
-                    <button
+                    <div v-else class="p-2.5 text-xs">
+                      <div class="md:hidden block">{{ user.name }}</div>
+                      <div class="text-gray-500">{{ user.email }}</div>
+                    </div>
+                    <x-menu :items="userMenu" />
+                    <!-- <button
                       class="flex gap-2 items-center px-2 group"
                       @click="onLogout"
                     >
@@ -382,7 +406,7 @@ const isReceiveNotificationsEnabled = computed(() => {
                       >
                         Logout
                       </span>
-                    </button>
+                    </button> -->
                   </x-popover-container>
                 </template>
               </x-popover>
