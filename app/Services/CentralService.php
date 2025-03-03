@@ -1146,7 +1146,7 @@ class CentralService extends BaseService
         } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet)) {
             return 'CAR_FLEET';
         } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
-            return 'TRADE_CREDIT';
+            return 'TRADE';
         } else {
             return 'BUSINESS';
         }
