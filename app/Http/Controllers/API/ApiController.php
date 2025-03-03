@@ -6,6 +6,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\ClearCacheRequest;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
@@ -26,6 +27,7 @@ use App\Models\Payment;
 use App\Models\QuoteFlowDetails;
 use App\Services\ApiService;
 use App\Services\BirdService;
+use App\Services\Cache\CacheManager;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
@@ -302,5 +304,12 @@ class ApiController extends Controller
                 'quoteUID' => $request->quoteUID,
             ], 500);
         }
+    }
+
+    public function forgetCache(ClearCacheRequest $request)
+    {
+        CacheManager::forget($request->getKey());
+
+        return apiResponse(null, Response::HTTP_OK, 'Cache cleared successfully');
     }
 }

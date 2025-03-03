@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CacheKeyEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
@@ -22,6 +23,8 @@ use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
+use App\Services\Cache\CacheManager;
+use Illuminate\Support\Facades\Cache;
 
 class LookupService extends BaseService
 {
@@ -198,12 +201,14 @@ class LookupService extends BaseService
 
     public function getSendUpdateOptions($quoteTypeId)
     {
-        return Lookup::where([
-            'code' => LookupsEnum::SEND_UPDATE_CODE,
-            'parent_id' => null,
-        ])
-            ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
-            ->get();
+        return Cache::remember("send_update_options_{$quoteTypeId}", now()->addHour(), function () use ($quoteTypeId) {
+            return Lookup::where([
+                'code' => LookupsEnum::SEND_UPDATE_CODE,
+                'parent_id' => null,
+            ])
+                ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
+                ->get();
+        });
     }
 
     public function getCompanyTypes()
@@ -213,7 +218,9 @@ class LookupService extends BaseService
 
     public function getHomeLookUpData()
     {
-        return Capi::request('/api/v1-get-home-models', 'post');
+        return CacheManager::remember(CacheKeyEnum::HOME_LOOKUPS, function () {
+            return Capi::request('/api/v1-get-home-models', 'post');
+        });
     }
 
     public function getSendUpdateCategories()

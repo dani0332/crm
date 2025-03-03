@@ -8,14 +8,17 @@ use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use Illuminate\Support\Facades\Cache;
 
 class EmailStatusService extends BaseService
 {
     public function getEmailStatus($quoteTypeId, $quoteId)
     {
-        return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
-            ->orderBy('updated_at', 'desc')
-            ->get();
+        return Cache::remember("email_statuses_{$quoteTypeId}_{$quoteId}", now()->endOfDay(), function () use ($quoteTypeId, $quoteId) {
+            return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
+                ->orderBy('updated_at', 'desc')
+                ->get();
+        });
     }
 
     public function addEmailStatus($emailData, $messageId, $emailSubject, $status = ProcessStatusCode::IN_PROGRESS)
@@ -30,6 +33,8 @@ class EmailStatusService extends BaseService
         $newEmailStatus->email_status = $status ?? ProcessStatusCode::IN_PROGRESS;
         $newEmailStatus->email_subject = $emailSubject;
         $newEmailStatus->save();
+
+        Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
 
         return $newEmailStatus->id;
     }
