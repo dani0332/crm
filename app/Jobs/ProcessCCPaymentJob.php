@@ -114,7 +114,13 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 
         $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id);
         $isPaymentGatewayTap = $payment->isPaymentGatewayTap();
-        $quoteTypeId = QuoteTypes::getIdFromValue($ccPaymentProcess->quote_type);
+
+        // For personal LOB we can get value from personal quote  quote_type_id
+        if ($ccPaymentProcess->quote_type == QuoteTypes::PERSONAL){
+            $quoteTypeId = $quote->quote_type_id;
+        } else {
+            $quoteTypeId = QuoteTypes::getIdFromValue($ccPaymentProcess->quote_type);
+        }
         info("Quote ID: {$quote->id}, Send Update Log ID: {$payment->send_update_log_id}, Payment Split Code: {$splitPaymentCode} Quote Type ID: {$quoteTypeId}");
         $isCapturePaymentStarted = app(QuoteTagService::class)->isCapturePaymentStarted($quote->uuid, $quoteTypeId, $payment->send_update_log_id);
 
