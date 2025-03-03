@@ -93,8 +93,12 @@ class TravelRenewalService extends BaseService
         // Calculate the policy expiry date based on the start date + 365 days
         $newPolicyExpiryDate = $policyStartDate->copy()->addDays(365);
 
-        $generatedBatchNumber = $this->generateBatchNumber($newPolicyExpiryDate);
-        $batch = $this->getRenewalBatch($generatedBatchNumber, $newPolicyExpiryDate);
+
+        $batch = $this->getRenewalBatch($newPolicyExpiryDate);
+        if(! $batch) {
+            info(self::class." - TravelRenewalService No renewal batch found for Ref-ID: {$quote->uuid} | Time:".now());
+            return;
+        }
 
         $customerService = app(CustomerService::class);
         $customer = $customerService->getCustomerByEmail($quote->customer_email);
@@ -215,33 +219,15 @@ class TravelRenewalService extends BaseService
         }
     }
 
-    public function GenerateBatchNumber($expiryDate)
-    {
-        $expiryDate = Carbon::parse($expiryDate);
-        $currentDate = Carbon::now();
-        // Calculate the number of weeks between the current date and the expiry date
-        $weeksUntilExpiry = $currentDate->diffInWeeks($expiryDate);
 
-        return strtoupper('W-'.(int) $weeksUntilExpiry);
-    }
 
-    public function getRenewalBatch($batchName, $newPolicyExpiryDate)
+    public function getRenewalBatch($newPolicyExpiryDate)
     {
         $expiryDate = Carbon::parse($newPolicyExpiryDate);
-        $startDate = $expiryDate->startOfMonth()->toDateString();  // Start of the expiry month
-        $endDate = $expiryDate->endOfMonth()->toDateString();      // End of the expiry month
 
-        return RenewalBatch::firstOrCreate(
-            [
-                'name' => $batchName,
-                'month' => $expiryDate->month,
-                'year' => $expiryDate->year,
-            ],  // Check if batch with this name exists
-            [
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-            ]   // If not, create with this name
-        );
+        return RenewalBatch::where('start_date', '<=', $expiryDate)
+            ->where('end_date', '>=', $expiryDate)
+            ->first();
     }
 
     public function leadAllocation($quoteUID)
