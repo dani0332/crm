@@ -145,6 +145,7 @@ const insuredFormDetails = useForm({
   industry_type_code: props.entityDetails?.entity?.industry_type_code ?? null,
   emirate_of_registration_id:
     props.entityDetails?.entity?.emirate_of_registration_id ?? null,
+  get_quote_email_gig: page.props.gigInsurerDefaultEmail,
 });
 
 const rules = {
@@ -192,8 +193,14 @@ const submitQuoteUpdateForm = isValid => {
   insuredFormDetails.get(`${props.quoteDetails.id}/quoteUpdate`, {
     preserveScroll: true,
     onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
       notification.error({
-        title: errors.error || 'Quote not updated',
+        title: 'Quote not updated',
         position: 'top',
       });
     },
@@ -205,8 +212,9 @@ const submitQuoteUpdateForm = isValid => {
         });
       }
       if (
-        typeof response.props.flash.info !== 'undefined' &&
-        response.props.flash.info?.length > 0
+        response.props.flash.info &&
+        Object.keys(response.props.flash.info).length > 0 &&
+        response.props.flash.info?.isEmailMismatched
       ) {
         notification.error({
           title:
@@ -759,6 +767,20 @@ watch(
               <x-radio :value="0" label="No" />
             </x-form-group>
           </div>
+          <x-field
+            label="Email in GIG portal"
+            v-if="
+              quoteType.id === page.props.quoteTypeIdEnum.Car ||
+              quoteType.id === page.props.quoteTypeIdEnum.Bike
+            "
+          >
+            <x-input
+              v-model="insuredFormDetails.get_quote_email_gig"
+              placeholder="Email in GIG portal"
+              type="text"
+              class="w-full"
+            />
+          </x-field>
         </dl>
 
         <x-divider class="mb-4 mt-1" />

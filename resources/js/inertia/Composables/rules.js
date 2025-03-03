@@ -124,6 +124,11 @@ export const useRules = () => {
     );
   };
 
+  const maxCharacters = max => v =>
+    !v ||
+    v.length <= max ||
+    `This field may not be greater than ${max} characters.`;
+
   const emiratesNumber = v => {
     const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
     return (
@@ -153,6 +158,7 @@ export const useRules = () => {
     amount_with_vat,
     emptyOrNumericAndNoSpecialChar,
     isRequiredNumber,
+    maxCharacters,
     emiratesNumber,
   };
 };

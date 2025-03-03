@@ -323,6 +323,10 @@ class CentralService extends BaseService
 
             $quote->update($data->toArray());
 
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                $quote->carQuoteRequestDetail->update(['insurer_quote_number' => $data->insurer_quote_number]);
+            }
+
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
             $businessTypeId = $quote->business_type_of_insurance_id ?? null;
             $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId);
@@ -1027,25 +1031,34 @@ class CentralService extends BaseService
     public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null, $sendUpdateLog = null)
     {
         // Retrieve necessary IDs from the quote object
-        $insuranceProviderId = $quote->insurance_provider_id;
         $businessTypeId = $quote->business_type_of_insurance_id ?? null;
-        $planId = $quote->plan_id ?? null;
+
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if ($payment && in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planId = $payment->plan_id ?? null;
+        } else {
+            $planId = $quote->plan_id ?? null;
+        }
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
 
         // Get insurance provider details
-        $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType, $quote);
+        $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
 
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
-        $isCaptureButtonEnabled = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE, InsurerProviderEnum::QATAR_INSURANCE, InsurerProviderEnum::ALLIANCE_INSURANCE]);
+        $isCaptureButtonEnabled = $insuranceProvider && in_array($insuranceProvider->code, [
+            InsurerProviderEnum::GIG_INSURANCE,
+            InsurerProviderEnum::RAK_INSURANCE,
+            InsurerProviderEnum::TOKIO_MARINE,
+            InsurerProviderEnum::QATAR_INSURANCE,
+            InsurerProviderEnum::ALLIANCE_INSURANCE,
+        ]);
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         // Check if multiple payments are enabled for the provider
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
-
-        // Check if the provider is either GIG or QIC
-        $isGIGOrQICProvider = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::QATAR_INSURANCE]);
 
         // Check if TAP capture process should start
         $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId, $sendUpdateLog) : false;
@@ -1057,7 +1070,6 @@ class CentralService extends BaseService
             'isGIGProvider' => $isGIGProvider,
             'isTapCaptureProcessStart' => $isTapCaptureProcessStart,
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
-            'isGIGOrQICProvider' => $isGIGOrQICProvider,
             'commissionInPayments' => $commissionInPayments,
             'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
         ];
