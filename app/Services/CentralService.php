@@ -1181,7 +1181,7 @@ class CentralService extends BaseService
             'advisorName' => $quote->advisor->name ?? '',
             'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
             'appLink' => $existingEmailData->appDownloadLink ?? '',
-            'customerFullName' => $quote->first_name,
+            'customerFullName' => ucfirst($quote->first_name),
             'policyNumber' => $quote->policy_number ?? '',
             'policyPeriodStart' => Carbon::parse($quote->policy_start_date)->format('d/m/Y'),
             'policyPeriodEnd' => Carbon::parse($quote->policy_expiry_date)->format('d/m/Y'),
@@ -1204,7 +1204,7 @@ class CentralService extends BaseService
             'advisorMobilePhone' => $quote->advisor->mobile_no ?? '',
             'advisorName' => $quote->advisor->name ?? '',
             'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
-            'customerFullName' => $quote->first_name,
+            'customerFullName' => ucfirst($quote->first_name),
             'policyNumber' => $sendUpdateLog->policy_number ?? $quote->policy_number ?? '',
             'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d/m/Y'),
             'policyPeriodEnd' => Carbon::parse($sendUpdateLog->expiry_date ?? $quote->policy_expiry_date)->format('d/m/Y'),
@@ -1237,7 +1237,7 @@ class CentralService extends BaseService
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
             QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {
             $customer = $quote->customer->insured;
-            $emailData->insuredName = $customer->first_name.' '.$customer->last_name;
+            $emailData->insuredName = strtoupper($customer->first_name.' '.$customer->last_name);
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
