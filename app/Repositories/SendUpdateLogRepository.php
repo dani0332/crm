@@ -262,6 +262,11 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSendUpdateToCustomer($request)
     {
         $sendUpdateLog = $this->find($request['sendUpdateId']);
+        if (empty($sendUpdateLog->notes)) {
+            $response[] = ['status' => 500, 'message' => 'Notes are required to send update to customer'];
+
+            return $response;
+        }
         info('fn:SendUpdateToCustomer - Process Start - SendUpdateCode: '.$sendUpdateLog->code);
 
         try {
