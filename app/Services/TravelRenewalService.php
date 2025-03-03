@@ -93,10 +93,10 @@ class TravelRenewalService extends BaseService
         // Calculate the policy expiry date based on the start date + 365 days
         $newPolicyExpiryDate = $policyStartDate->copy()->addDays(365);
 
-
         $batch = $this->getRenewalBatch($newPolicyExpiryDate);
-        if(! $batch) {
+        if (! $batch) {
             info(self::class." - TravelRenewalService No renewal batch found for Ref-ID: {$quote->uuid} | Time:".now());
+
             return;
         }
 
@@ -218,8 +218,6 @@ class TravelRenewalService extends BaseService
             throw $e;
         }
     }
-
-
 
     public function getRenewalBatch($newPolicyExpiryDate)
     {
