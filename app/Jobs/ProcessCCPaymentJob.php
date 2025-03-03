@@ -116,7 +116,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
         $isPaymentGatewayTap = $payment->isPaymentGatewayTap();
 
         // For personal LOB we can get value from personal quote  quote_type_id
-        if ($ccPaymentProcess->quote_type == QuoteTypes::PERSONAL->value){
+        if ($ccPaymentProcess->quote_type == QuoteTypes::PERSONAL->value) {
             $quoteTypeId = $quote->quote_type_id;
         } else {
             $quoteTypeId = QuoteTypes::getIdFromValue($ccPaymentProcess->quote_type);
