@@ -3634,7 +3634,9 @@ const voidPaymentModel = payment => {
 };
 
 const isVoidPaymentEnabled = payment => {
-  return ( props.isFuncsEnabled.tapIntegration && can(permissionEnum.PAYMENTS_VOID) &&
+  return (
+    props.isFuncsEnabled.tapIntegration &&
+    can(permissionEnum.PAYMENTS_VOID) &&
     payment.payment_status_id === page.props.paymentStatusEnum.AUTHORISED &&
     payment.payment_gateway_id === props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
   );
