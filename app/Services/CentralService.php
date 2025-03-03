@@ -1139,16 +1139,34 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
+    public function checkBusinessTypeOfInsurance($businessTypeOfInsuranceId): string
+    {
+        if ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+            return 'GROUP_MEDICAL';
+        } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet)) {
+            return 'CAR_FLEET';
+        } elseif ($businessTypeOfInsuranceId == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
+            return 'TRADE_CREDIT';
+        } else {
+            return 'BUSINESS';
+        }
+    }
+
     public function prepareBirdData($quote, $quoteTypeId, $sendUpdateLog = null, $existingEmailData = null)
     {
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            $quoteType = $this->checkBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
+        } else {
+            $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+        }
         if ($sendUpdateLog) {
-            $workflowType = 'SU_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_UPDATE';
+            $workflowType = 'SU_'.$quoteType.'_UPDATE';
             $workflowType = constant("App\Enums\WorkflowTypeEnum::{$workflowType}");
 
             return $this->prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType);
         }
 
-        $workflowType = strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_NEW_POLICY';
+        $workflowType = $quoteType.'_NEW_POLICY';
         $workflowType = constant("App\Enums\WorkflowTypeEnum::{$workflowType}");
 
         return $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData);
@@ -1201,7 +1219,7 @@ class CentralService extends BaseService
 
         // $emailData->documentUrl
 
-        return [1, $emailData, 'send-update', $quoteTypeId];
+        return [1, $emailData, 'send-update', $quoteTypeId, $workflowType];
     }
 
     private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $existingEmailData = null): void
@@ -1325,7 +1343,7 @@ class CentralService extends BaseService
                 info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$lead->uuid} |Time: ".now());
 
                 if (! empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType);
+                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
                 }
             } else {
                 info("{$birdUrlKey} key not found for {$emailType} uuid: {$lead->uuid} |Time: ".now());
@@ -1339,15 +1357,10 @@ class CentralService extends BaseService
         }
     }
 
-    public function createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType)
+    public function createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, $workflowType)
     {
         try {
-            if ($emailType == 'Send Update') {
-                $flowType = 'SU_'.strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_UPDATE';
-            } else {
-                $flowType = strtoupper(QuoteTypes::getName($quoteTypeId)->value).'_NEW_POLICY';
-            }
-            $flowType = constant("App\Enums\QuoteFlowType::{$flowType}");
+            $flowType = constant("App\Enums\QuoteFlowType::{$workflowType}");
 
             $runId = collect($response->headers['Run-Id'])->first();
             if (! empty($runId)) {
