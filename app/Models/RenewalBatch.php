@@ -149,11 +149,11 @@ class RenewalBatch extends Model implements AuditableContract
 
         $monthsYears = [
             ['month' => $baseDate->month, 'year' => $baseDate->year],
-            ['month' => $baseDate->copy()->addMonth()->month, 'year' => $baseDate->copy()->addMonth()->year],
+            ['month' => $baseDate->copy()->addMonthNoOverflow()->month, 'year' => $baseDate->copy()->addMonthNoOverflow()->year],
         ];
 
         if ($includePreviousMonth) {
-            array_unshift($monthsYears, ['month' => $baseDate->copy()->subMonth()->month, 'year' => $baseDate->copy()->subMonth()->year]);
+            array_unshift($monthsYears, ['month' => $baseDate->copy()->subMonthNoOverflow()->month, 'year' => $baseDate->copy()->subMonthNoOverflow()->year]);
         }
 
         $q->where(function ($query) use ($monthsYears) {
@@ -178,7 +178,7 @@ class RenewalBatch extends Model implements AuditableContract
     public function monthName(): Attribute
     {
         return Attribute::make(
-            get: fn () => Carbon::createFromDate($this->year, $this->month)->format('M')
+            get: fn () => Carbon::parse("{$this->year}-{$this->month}")->format('M')
         );
     }
 }

@@ -8,9 +8,11 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\WatermarkDocTypesEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
@@ -202,6 +204,11 @@ class QuoteDocumentService extends BaseService
                 'payment_split_id' => $data['payment_split_id'] ?? null,
                 'created_by_id' => auth()->id(),
             ]);
+
+            if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
+                SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+                info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
+            }
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc) {
                 WatermarkDocumentsJob::dispatch(
@@ -474,11 +481,23 @@ class QuoteDocumentService extends BaseService
         $encodedUrl = $this->encodeUrl($azureFilePath);
         $fileContent = file_get_contents($encodedUrl);
 
+        if (! $fileContent) {
+            Log::error("Unable to read file azureFilePath: $azureFilePath ");
+            throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
+        }
+
         $tempFilePath = storage_path('temp/temp_'.$docName);
         file_put_contents($tempFilePath, $fileContent);
 
         // Convert the PDF to a version compatible with FPDI
         shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+
+        sleep(3);
+
+        if (! file_exists($outputFile)) {
+            Log::error("Unable to read file outputFile: $outputFile ");
+            throw new \Exception("Unable to read file outputFile: $outputFile");
+        }
 
         $pdf = new Fpdi;
 
@@ -718,5 +737,15 @@ class QuoteDocumentService extends BaseService
         $encodedUrl = $basePath.$encodedFileName;
 
         return $encodedUrl;
+    }
+
+    public function isDocumentExists($quoteType, $quoteId, $documentType)
+    {
+        $quoteModel = 'App\\Models\\'.ucfirst($quoteType).'Quote';
+
+        return QuoteDocument::where('quote_documentable_type', $quoteModel)
+            ->where('quote_documentable_id', $quoteId)
+            ->where('document_type_code', $documentType)
+            ->exists();
     }
 }

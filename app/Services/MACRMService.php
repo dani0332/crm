@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypes;
 use App\Services\Traits\Macrmable;
 use Exception;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class MACRMService
 {
@@ -111,6 +111,15 @@ class MACRMService
 
     public static function getCourierQuoteStatus($uuid, $quoteTypeId)
     {
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        $model = $quoteType?->model();
+        $quote = $model::where('uuid', $uuid)->first();
+
+        $leadData = getCourierQuote($quote, $quoteTypeId);
+        if (! $leadData) {
+            return false;
+        }
+
         info(self::class." - Getting Courier Quote Status on MACRM for UUID: {$uuid} and QuoteTypeId: {$quoteTypeId}");
 
         // making it hard code because not every lead has payment done so we can't get ref_id from payment

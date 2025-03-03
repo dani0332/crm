@@ -53,6 +53,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
+use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
 use App\Http\Controllers\V2\Admin\RulesController;
 use App\Http\Controllers\V2\Admin\TierController;
 use App\Http\Controllers\V2\AlfredChatController;
@@ -69,6 +70,7 @@ use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\HealthRevivalQuoteController;
+use App\Http\Controllers\V2\ImpersonateController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\LifeQuoteController;
@@ -118,6 +120,9 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+    Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
+    Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
+
     Route::get('leadsearch', function () {
         return redirect('home');
     });
@@ -164,6 +169,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/bike/change-insurer', [BikeQuoteController::class, 'changeInsurer'])->name('change-bike-insurer');
         Route::get('/get-bike-quote/{uuid}', [BikeQuoteController::class, 'getBikeQuote'])->name('getBikeQuote');
         // bike routes
+
+        // travel routes
+        Route::post('travel/{quoteUuId}/send-email-one-click-buy', [TravelController::class, 'sendEmailOneClickBuy'])->name('travelSendEmailOneClickBuy');
     });
     Route::get('/bike-insurance-provider-plans', [BikeQuoteController::class, 'bikePlansByInsuranceProvider']);
 
@@ -219,16 +227,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-sold', [CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
-        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction'); // ->middleware(SetReadDbConnection::class)->name('data-extraction');
-        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->name('export-car-pua-updates'); // ->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
-        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->name('export-rm-leads'); // ->middleware(SetReadDbConnection::class)->name('export-rm-leads');
+        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
+        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
+        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
         Route::delete('delete-quote-notes/{id}', [CentralController::class, 'deleteQuoteNotes'])->name('delete-quote-notes');
-        Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-plan-detail'); // ->middleware(SetReadDbConnection::class)->name('export-plan-detail');
-        Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-leads-detail-with-email-mobile'); // ->middleware(SetReadDbConnection::class)->name('export-leads-detail-with-email-mobile');
-        Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->name('export-makes-models'); // ->middleware(SetReadDbConnection::class)->name('export-makes-models');
+        Route::get('{quoteType}/leads-export-plan/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-plan-detail');
+        Route::get('{quoteType}/leads-details-with-email/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-leads-detail-with-email-mobile');
+        Route::get('{quoteType}/export-makes-model/{exportTye}', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('export-makes-models');
 
         Route::group(['prefix' => 'renewals'], function () {
             Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals'])->name('renewals-upload-create');
@@ -236,7 +244,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
-            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export'); // ->middleware(SetReadDbConnection::class)->name('renewal-search-export');
+            Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export')->middleware(SetReadDbConnection::class)->name('renewal-search-export');
         });
     });
 
@@ -294,6 +302,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/update-new', [CentralController::class, 'updateNewPayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/retry-payment', [CentralController::class, 'retrySplitPayment'])->name('approve-payments')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/delete-split-payment', [CentralController::class, 'deleteSplitPayment'])->name('payment-edit')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/void-payment', [CentralController::class, 'voidPayment'])->name('payments-void')->middleware('check_route_access');
 
     Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
 
@@ -459,6 +468,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::post('upsert', [BuyLeadConfigController::class, 'upsert'])->name('admin.buy-leads.config.upsert');
             });
         });
+
+        Route::prefix('benchmarker')->group(function () {
+            Route::prefix('query')->group(function () {
+                Route::get('show', [QueryBenchmarkerController::class, 'show'])->name('admin.benchmarker.query.show');
+                Route::post('process', [QueryBenchmarkerController::class, 'process'])->name('admin.benchmarker.query.process');
+            });
+        });
     });
 
     Route::prefix('buy-leads')->group(function () {
@@ -486,6 +502,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
+        Route::post('void-payment', [EmbeddedProductController::class, 'voidPayment'])->name('void-payment');
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
@@ -590,11 +607,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('send-bridger-response', [AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
         Route::get('aml-fetch-entity', [AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
+        Route::get('get-insured-person', [AMLController::class, 'getInsuredPersonDetails'])->name('get-insured-person');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
-        Route::get('export', [AMLController::class, 'export']); // ->middleware(SetReadDbConnection::class);
+        Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
+        Route::post('temp-skip-bridger-aml', [AMLController::class, 'tempSkipBridgerAML'])->name('temp-skip-bridger-aml');
     });
     Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
 
@@ -704,6 +723,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
     Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+
+    Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
 });
 
 Route::get('/add-batch-number', function () {

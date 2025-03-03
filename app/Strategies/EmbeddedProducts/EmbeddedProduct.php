@@ -27,10 +27,9 @@ class EmbeddedProduct
         return [
             'EP REF-ID',
             'ADVISOR NAME',
-            'PAYMENT DATE',
+            'DATE OF ISSUANCE',
             'PLAN COMMENCEMENT DATE',
             'PLAN END DATE',
-            'CERTIFICATE NUMBER',
             'FULL NAME',
             'EMIRATES ID NUMBER',
             'DOB',
@@ -38,6 +37,7 @@ class EmbeddedProduct
             'VEHICLE',
             'CONTRIBUTION AMOUNT',
             'POLICY ISSUE STATUS',
+            'CERTIFICATE NUMBER',
         ];
     }
 
@@ -49,7 +49,6 @@ class EmbeddedProduct
             $certificate->payment_date,
             $certificate->plan_start_date,
             $certificate->plan_end_date,
-            $certificate->certificate_number,
             $certificate->name,
             $certificate->emirates_id_number,
             $certificate->dob,
@@ -57,6 +56,7 @@ class EmbeddedProduct
             $certificate->vehicle,
             $certificate->contribution_amount,
             $certificate->status,
+            $certificate->certificate_number,
         ];
     }
 
@@ -88,8 +88,8 @@ class EmbeddedProduct
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
             } else {
-                $firstName = $customer->insured_first_name ?? '';
-                $lastName = $customer->insured_last_name ?? '';
+                $firstName = ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? '';
+                $lastName = ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? '';
             }
 
             $item->id = $item->id;

@@ -283,6 +283,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $payload = [
             'policy_id' => $quote->insurer_policy_id,
+            'agency_reference' => $payment->paymentSplits->first()?->paymentCharges?->transaction_id ?? null,
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
@@ -318,7 +319,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     public function fetchAndUploadDocument($quote, $travelType): array
     {
-        $maxRetries = 15;
+        $maxRetries = 5;
         $retryDelay = 10; // seconds
         $retryCount = 0;
 
@@ -576,7 +577,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' updateQuoteApiIssuanceStatus executed');
 
         $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'  allocation of failed lead started');
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'  allocation of failed lead executed');
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
@@ -603,8 +604,16 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info(self::class.' fn:'.__FUNCTION__.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
-        $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
-        if ($response && $response['advisorId']) {
+        $advisorId = $quote?->advisor_id;
+        info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  check if advisor id already assigned :  '.$advisorId);
+        if (! $advisorId) {
+            $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
+            if ($response && $response['advisorId']) {
+                $advisorId = $response['advisorId'];
+            }
+        }
+
+        if ($advisorId) {
             info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
             /* Send Failed notification only when Insurer API status is not failed already to prevent multiple email triggers and Insurer API Status is not null */
             if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {

@@ -655,6 +655,7 @@ class SagePayloadFactory
                 'GroupCode' => 'PHC',
             ];
         } else {
+            // TODO:: Need to be updated when contact and insured person FR approved
             $payLoad = [
                 'CustomerNumber' => 'P'.$customer->id,
                 'CustomerName' => $customer->insured_first_name.' '.$customer->insured_last_name,
@@ -676,13 +677,15 @@ class SagePayloadFactory
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
             'BatchRecordType' => 'CA',
+            'BankCode' => SageEnum::BANK_CODE,
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $request->sage_customer_number,
+                    'BankCode' => SageEnum::BANK_CODE,
                     'BankReceiptAmount' => roundNumber(floatval($request->collection_amount)),
                     'CheckReceiptNumber' => $request->checkDetails,
-                    'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code),
+                    'PaymentCode' => SageEnum::PAYMENT_CODE,
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [
                         [
@@ -1162,6 +1165,7 @@ class SagePayloadFactory
 
     public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits): object
     {
+        // TODO:: Need to update the insurer details when contact and insured person FR approved
         $firstChildPayment = $paymentSplits->first();
         $insuredFullName = isset($quote->customer_id) ? $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name : '';
         $latestEndorsementCode = '';

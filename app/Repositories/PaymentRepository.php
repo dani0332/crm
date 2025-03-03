@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
@@ -19,10 +18,9 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\User;
-use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\PaymentLinkService;
+use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -444,7 +442,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
      * @return mixed The result of the master payment approval process.
      */
-    private function handlePaymentApprove($request)
+    public function handlePaymentApprove($request)
     {
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
@@ -543,9 +541,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
 
                 // create sage receipt
-                $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-
-                if ($isSageEnabled) {
+                if ((new SageApiService)->isSageEnabled()) {
                     $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
                     if ($sageResponse['status'] == 'success') {
                         $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
@@ -945,32 +941,28 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     }
 
-    public function getAuthorisePaymentCount($userId = null)
+    public function getAuthorisePaymentCount($user = null, $teamIds = null)
     {
-        if (! Auth::check() && $userId == null) {
+        $user = $user ?: Auth::user();
+        if (! $user) {
             return 0;
         }
-        $userId = $userId != null ? $userId : Auth::user()->id;
-        $user = User::where('id', $userId)->first();
-        $userTeams = $user->getUserTeams($userId);
+
+        $userTeamIds = $teamIds ?: $user->getUserTeamIds();
 
         $personalCount = DB::table('payments')
             ->distinct()
             ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->join('users', 'users.id', 'pq.advisor_id')
-            ->join('user_team', 'user_team.user_id', 'users.id')
-            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->join('user_team', 'user_team.user_id', 'pq.advisor_id')
             ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
 
         if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
-            $personalCount = $personalCount->whereIn('teams.name', $userTeams)->count('payments.id');
-
+            $personalCount = $personalCount->whereIn('user_team.team_id', $userTeamIds);
         } else {
-            $personalCount = $personalCount->where('pq.advisor_id', $userId)->count('payments.id');
-
+            $personalCount = $personalCount->where('pq.advisor_id', $user->id);
         }
 
-        return $personalCount;
+        return $personalCount->count('payments.id');
     }
 
     public function fetchMainQuotePayment($quote)

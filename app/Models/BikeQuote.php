@@ -14,7 +14,7 @@ class BikeQuote extends Model implements AuditableContract
 
     protected $table = 'bike_quote_request';
     protected $guarded = [];
-    public $allowedColumns = ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id', 'bike_value_tier', 'make_id', 'model_id', 'currently_insured_with', 'cubic_capacity', 'emirate_of_registration_id', 'claim_history_id', 'bike_value'];
+    public $allowedColumns = ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id', 'bike_value_tier', 'make_id', 'model_id', 'currently_insured_with', 'cubic_capacity', 'emirate_of_registration_id', 'claim_history_id', 'bike_value', 'chassis_number'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

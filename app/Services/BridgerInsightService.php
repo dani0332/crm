@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Models\KycLog;
+use App\Models\ManualAMLLog;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -158,6 +160,7 @@ class BridgerInsightService
                                 'search_type' => (substr($memberUboDetails['code'], 0, 3) == CustomerTypeEnum::IndividualShort) ? CustomerTypeEnum::Individual : CustomerTypeEnum::Entity,
                                 'customer_code' => $memberUboDetails['code'],
                                 'decision' => AMLDecisionStatusEnum::ESCALATED,
+                                'screening_type' => AMLScreeningTypeEnum::BRIDGER,
                             ];
 
                             if ($amlResultCount == 0) {
@@ -165,6 +168,12 @@ class BridgerInsightService
                             }
                             KycLog::insert($kycLogDetails);
                             info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Potential Matches inserted into kyc_logs table. Total Matches: '.$amlResultCount);
+
+                            // Notes:: This will update the manual AML Clearance lead to "done" as the AML screening has been executed for this quote.
+                            ManualAMLLog::where([
+                                'quote_type_id' => $quoteTypeId,
+                                'quote_uuid' => $quoteDetails->uuid,
+                            ])->update(['is_executed' => 1]);
 
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail);

@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
+use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
@@ -108,10 +109,8 @@ class InslyDetailRepository extends BaseRepository
         $email = $policy['customer']['email'] ?? null;
 
         /* Temp Code - assign email for particular Policy id/number */
-        $tempEmail = 'vitara@inbox.ru';
-        $tempPolicyId = 66495910;
-        if ($tempPolicyId == $data['policy_oid']) {
-            $email = $tempEmail;
+        if ($policyID == 41679326) {
+            $email = 'ben.gibson@hotmail.ca';
         }
         /* Temp Code - assign email for particular Policy id/number */
 
@@ -129,6 +128,29 @@ class InslyDetailRepository extends BaseRepository
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
         $appUrl = config('constants.APP_URL');
+        $advisorName = $policy['policy']['renewer_person'] ?? null;
+        if ($advisorName == null) {
+            $advisorName = $policy['quote']['broker'] ?? null;
+        }
+
+        /* Temp Code - assign email for particular Policy id/number */
+        $tempSalesPerson = 'Shristi Chowdhury';
+        $tempPolicyId = 59306651;
+        if ($tempPolicyId == $policyID) {
+            $advisorName = $tempSalesPerson;
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
+        $appUrl = config('constants.APP_URL');
+        $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
+        if ($advisorId == null) {
+            return [
+                'status' => 400,
+                'message' => 'Advisor not found.',
+                'data' => '',
+            ];
+        }
+
         if (! empty($policy)) {
             $policyNumber = $policy['policy']['policy_no'];
             $coverage = $policy['policy']['coverage'];
@@ -212,6 +234,7 @@ class InslyDetailRepository extends BaseRepository
 
                 // create lead in case no record found
                 $payLoad = $this->prePareData($policy, $quoteType, $isPersonalQuote);
+                $payLoad['advisor_id'] = $advisorId;
                 info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
                 info('InslyLead - created Lead Id : '.json_encode($id));
@@ -351,11 +374,19 @@ class InslyDetailRepository extends BaseRepository
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
 
         /* Temp Code - assign email for particular Policy id/number */
-        $tempEmail = 'vitara@inbox.ru';
+
+        /*$tempEmail = 'vitara@inbox.ru';
         $tempPolicyId = 66495910;
         if ($tempPolicyId == $policy['policy_oid']) {
             [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }*/
+
+        $tempEmail = 'ben.gibson@hotmail.ca';
+        $tempPolicyId = 41679326;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
         }
+
         /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;

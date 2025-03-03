@@ -31,13 +31,13 @@ class HealthAllocation implements Allocation
             $lead = $this->fetchLead();
 
             if (! $lead) {
-                info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
+                info('Lead not found or not under fetch criteria');
 
                 return $this->healthAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
             if ($lead->isAllocationInProgress()) {
-                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+                info("Allocation is already started at {$lead->allocation_started_at}");
 
                 return $this->healthAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
             }
@@ -47,7 +47,7 @@ class HealthAllocation implements Allocation
             $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
-                info('No health team found against lead : '.$lead->uuid);
+                info('No health team found against');
 
                 $lead->endAllocation();
 
@@ -59,10 +59,10 @@ class HealthAllocation implements Allocation
             if (! $advisor) {
                 $this->healthAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::HEALTH);
 
-                info('No advisors found against lead : '.$lead->uuid);
+                info('No advisors found against');
 
                 if ($lead->isApplicationPending() && ! $lead->isApplyNowEmailSent() && Carbon::parse($lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
-                    info("Sending Apply Now Email for uuid {$lead->uuid} as it's been 10 minutes since quote status was marked as applicatio pending");
+                    info("Sending Apply Now Email as it's been 10 minutes since quote status was marked as applicatio pending");
                     app(HealthEmailService::class)->initiateApplyNowEmail($lead);
                 }
 
@@ -70,7 +70,7 @@ class HealthAllocation implements Allocation
             }
 
             if ($advisor->id == $lead->advisor_id) {
-                info('Advisor is same as previous advisor. Skipping for now.');
+                info('Advisor is same as previous advisor. Skipping for now. for');
                 $lead->endAllocation();
                 $this->healthAllocationService->endBuyLeadProcessing();
 

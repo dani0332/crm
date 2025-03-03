@@ -22,8 +22,9 @@ class EmbeddedProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
+        $this->middleware('permission:'.PermissionsEnum::PAYMENTS_VOID, ['only' => ['voidPayment']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
     }
 
@@ -188,6 +189,13 @@ class EmbeddedProductController extends Controller
     public function cancelPayment(Request $request)
     {
         $response = EmbeddedProductRepository::cancelPayment($request->all());
+
+        return response($response['data'], $response['code']);
+    }
+
+    public function voidPayment(Request $request)
+    {
+        $response = EmbeddedProductRepository::voidPayment($request->all());
 
         return response($response['data'], $response['code']);
     }

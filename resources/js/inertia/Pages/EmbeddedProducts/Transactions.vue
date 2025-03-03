@@ -37,7 +37,7 @@ const page = usePage();
 const tableHeader = [
   { text: 'EP Ref-ID', value: 'ref_id' },
   { text: 'Advisor Name', value: 'advisor_name' },
-  { text: 'Payment Date', value: 'payment_date', sortable: true },
+  { text: 'Date of Issuance', value: 'payment_date', sortable: true },
   { text: 'Plan Commencement Date', value: 'plan_start_date' },
   { text: 'Plan End Date', value: 'plan_end_date' },
   { text: 'Full Name', value: 'name' },
@@ -106,6 +106,7 @@ function filterTransactions(isValid) {
       preserveScroll: true,
       onFinish: () => {
         loader.table = false;
+        setQueryFilters();
       },
       onBefore: () => {
         loader.table = true;
@@ -115,11 +116,17 @@ function filterTransactions(isValid) {
 }
 
 function setQueryFilters() {
-  for (const [key] of Object.entries(params)) {
+  var currentParams = {
+    ...params,
+    ...serverOptions.value,
+  };
+  Object(currentParams).hasOwnProperty('rowsPerPage') &&
+    delete currentParams.rowsPerPage;
+  for (const [key] of Object.entries(currentParams)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+      filters[key.substring(0, key.length - 2)] = currentParams[key];
     } else {
-      filters[key] = params[key];
+      filters[key] = currentParams[key];
     }
   }
 }
@@ -271,38 +278,66 @@ watch(
             placeholder="Type here"
           />
         </x-field>
-        <x-field label="Date of issuance">
-          <DatePicker
-            v-model="filters.date_of_purchase"
-            name="date_of_purchase"
-            class="w-full"
-            model-type="yyyy-MM-dd"
-            range
-            max-range="30"
-          />
-        </x-field>
-        <x-field label="Months">
-          <DatePicker
-            v-model="filters.months"
-            name="months"
-            class="w-full"
-            month-picker
-            model-type="yyyy-MM"
-            format="MM-yyyy"
-          />
-        </x-field>
-        <x-field
-          label="Sync Status"
-          v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
-        >
-          <ComboBox
-            v-model="filters.sync_status"
-            placeholder="Select Sync Status"
-            :options="sync_statuses"
-            class="w-full"
-            :single="true"
-          />
-        </x-field>
+        <div>
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Date of issuance
+            </label>
+            <template #tooltip>
+              This is the date on which the EP product was issued and sent to
+              the client by the system
+            </template>
+          </x-tooltip>
+          <x-field>
+            <DatePicker
+              v-model="filters.date_of_purchase"
+              name="date_of_purchase"
+              class="w-full"
+              model-type="yyyy-MM-dd"
+              range
+              max-range="30"
+            />
+          </x-field>
+        </div>
+        <div>
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Months
+            </label>
+            <template #tooltip>
+              This is the month in which the EP product was issued to the client
+            </template>
+          </x-tooltip>
+          <x-field>
+            <DatePicker
+              v-model="filters.months"
+              name="months"
+              placeholder="Select month"
+              class="w-full"
+              month-picker
+              model-type="yyyy-MM"
+              format="MM-yyyy"
+            />
+          </x-field>
+        </div>
+        <div>
+          <x-field
+            label="Sync Status"
+            v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
+          >
+            <ComboBox
+              v-model="filters.sync_status"
+              placeholder="Select Sync Status"
+              :options="sync_statuses"
+              class="w-full"
+              :single="true"
+            />
+          </x-field>
+        </div>
       </div>
       <div class="flex flex-row-reverse gap-3">
         <div class="flex justify-self-end gap-3">

@@ -15,39 +15,13 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        Permission::firstOrCreate([
-            'name' => PermissionsEnum::TAP_BETA_ACCESS,
-            'guard_name' => 'web',
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        // try {
-        //     //permission for upload Health Rates and Coverages
-        //     $uploadHealthRatesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_RATES)->first();
-        //     if (! $uploadHealthRatesPermission) {
-        //         Permission::create([
-        //             'name' => PermissionsEnum::UPLOAD_HEALTH_RATES,
-        //             'guard_name' => 'web',
-        //             'created_at' => now(),
-        //             'updated_at' => now(),
-        //         ]);
-        //     }
-        //     $uploadHealthCoveragesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_COVERAGES)->first();
-        //     if (! $uploadHealthCoveragesPermission) {
-        //         Permission::create([
-        //             'name' => PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
-        //             'guard_name' => 'web',
-        //             'created_at' => now(),
-        //             'updated_at' => now(),
-        //         ]);
-        //     }
-        // } catch (\Throwable $th) {
-        //     info('RolePermission Seeder issue Error:'.$th->getMessage().' Line:'.$th->getLine());
-        //     throw $th;
-        // }
         // $this->addReceiveNotificationsPermission();
         // $this->searchModulePermissions();
+        // $this->createBusinessIntelligenceUnitRole();
+        // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
+        // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
+        // $this->paymentsVoid();
+        $this->addBridgerSkipPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -92,5 +66,81 @@ class RolePermissionSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function createBusinessIntelligenceUnitRole(): void
+    {
+        $roleBIU = Role::firstOrCreate([
+            'name' => RolesEnum::BusinessIntelligenceUnit,
+            'guard_name' => 'web',
+        ]);
+
+        $accountAndFinanceRoles = Role::whereIn('name', [RolesEnum::Accounts, RolesEnum::FINANCE])->get();
+
+        $permissionsFromAccountAndFinanceRoles = $accountAndFinanceRoles->flatMap(function ($role) {
+            return $role->permissions;
+        })->unique('id');
+
+        $additionalPermissions = collect([
+            Permission::firstOrCreate([
+                'name' => 'view-all-leads',
+                'guard_name' => 'web',
+            ]),
+            Permission::firstOrCreate([
+                'name' => 'view-all-reports',
+                'guard_name' => 'web',
+            ]),
+        ]);
+
+        $allPermissions = $permissionsFromAccountAndFinanceRoles->merge($additionalPermissions)->unique('id');
+
+        $roleBIU->syncPermissions($allPermissions);
+    }
+
+    private function addMissingAdvisorRoles(): void
+    {
+        $missingAdvisorRoles = [RolesEnum::CarNewBusinessAdvisor, RolesEnum::LifeRenewalAdvisor];
+        foreach ($missingAdvisorRoles as $missingAdvisorRole) {
+            Role::firstOrCreate([
+                'name' => $missingAdvisorRole,
+                'guard_name' => 'web',
+            ]);
+        }
+    }
+
+    private function addVoidPaymentEmbeddedPermission(): void
+    {
+        $role = Role::where('name', RolesEnum::EpAdmin)->first();
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::PAYMENTS_VOID,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if (! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
+        }
+    }
+
+    private function paymentsVoid(): void
+    {
+        $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_VOID, 'web');
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+        if ($role && ! $role->hasPermissionTo($permission)) {
+            $role->givePermissionTo($permission);
+        }
+    }
+
+    private function addBridgerSkipPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::SKIP_BRIDGER_AML,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
