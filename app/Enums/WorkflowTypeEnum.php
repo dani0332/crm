@@ -48,4 +48,5 @@ final class WorkflowTypeEnum extends Enum
     public const SU_TRADE_UPDATE = 'su_trade_update';
     public const TRADE_NEW_POLICY = 'trade_new_policy';
     public const SU_PROFESSIONAL_UPDATE = 'su_professional_update';
+    public const PROFESSIONAL_NEW_POLICY = 'professional_new_policy';
 }
