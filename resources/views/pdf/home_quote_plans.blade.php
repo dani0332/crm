@@ -711,42 +711,54 @@
                 {{--  make these rows dynamic as per discussion with Anne --}}
                 
                 {{-- rows for building, content and personal belonging value --}}
-                {{-- <tr>
-                    <th class="bg-light-blue">
-                        <p class="quote-info"><b>Contents value</b></p>
-                    </th>
-                    @foreach ($planIds as $planId)
-                        <th>
-                            <p class="text-center" style="font-size: 16px">
-                                AED {{ number_format($plans[$planId]->contentsValue ?? 0, 2) }}
-                            </p>
-                        </th>
-                    @endforeach
-                </tr>
-                <tr>
-                    <th class="bg-light-blue">
-                        <p class="quote-info"><b>Personal belongings value</b></p>
-                    </th>
-                    @foreach ($planIds as $planId)
-                        <th>
-                            <p class="text-center" style="font-size: 16px">
-                                AED {{ number_format($plans[$planId]->personalBelongingsValue ?? 0, 2) }}
-                            </p>
-                        </th>
-                    @endforeach
-                </tr>
-                <tr>
-                    <th class="bg-light-blue">
-                        <p class="quote-info"><b>Building value</b></p>
-                    </th>
-                    @foreach ($planIds as $planId)
-                        <th>
-                            <p class="text-center" style="font-size: 16px">
-                                AED {{ number_format($plans[$planId]->buildingValue ?? 0, 2) }}
-                            </p>
-                        </th>
-                    @endforeach
-                </tr> --}}
+                @isset($homeQuoteFlags['contents_value_flag'])
+                    @if($homeQuoteFlags['contents_value_flag'])
+                        <tr>
+                            <th class="bg-light-blue">
+                                <p class="quote-info"><b>Contents value</b></p>
+                            </th>
+                            @foreach ($planIds as $planId)
+                                <th>
+                                    <p class="text-center" style="font-size: 16px">
+                                        {{ $flagValues['contents_value'] }}
+                                    </p>
+                                </th>
+                            @endforeach
+                        </tr>
+                    @endif
+                @endisset
+                @isset($homeQuoteFlags['personal_belongings_flag'])
+                    @if($homeQuoteFlags['personal_belongings_flag'])
+                        <tr>
+                            <th class="bg-light-blue">
+                                <p class="quote-info"><b>Personal belongings value</b></p>
+                            </th>
+                            @foreach ($planIds as $planId)
+                                <th>
+                                    <p class="text-center" style="font-size: 16px">
+                                        {{ $flagValues['personal_belongings_value'] }}
+                                    </p>
+                                </th>
+                            @endforeach
+                        </tr>
+                    @endif
+                @endisset
+                @isset($homeQuoteFlags['building_value_flag'])
+                    @if($homeQuoteFlags['building_value_flag'])
+                        <tr>
+                            <th class="bg-light-blue">
+                                <p class="quote-info"><b>Building value</b></p>
+                            </th>
+                            @foreach ($planIds as $planId)
+                                <th>
+                                    <p class="text-center" style="font-size: 16px">
+                                        {{ $flagValues['building_value'] }}
+                                    </p>
+                                </th>
+                            @endforeach
+                        </tr>
+                    @endif
+                @endisset
                 {{-- rows for building, content and personal belonging value --}}
                 <tr>
                     <th class="bg-light-blue">

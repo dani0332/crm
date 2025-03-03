@@ -1084,37 +1084,6 @@ class HomeQuoteService extends BaseService
         return null;
     }
 
-    public function exportPlansPdf($quoteType, $data, $quotePlans = null)
-    {
-
-        $planIds = $data['plan_ids'] ?? [];
-        $addons = (isset($data['addons'])) ? $data['addons'] : null;
-
-        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
-        if (! isset($quotePlans->quotes->plans)) {
-            return ['error' => 'Quote plans not available'];
-        }
-
-        $providerIds = collect($quotePlans->quotes->plans)->pluck('insuranceProviderId')->toArray();
-        $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
-
-        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
-        $quote->load(['advisor' => function ($q) {
-            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
-        }, 'customer']);
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isRemoteEnabled' => true])
-            ->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
-
-        // return $pdf->stream('debug.pdf');
-
-        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Home Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
-
-        info('Home Quote Plans PDF generated for quote: '.$data['quote_uuid']);
-
-        return ['pdf' => $pdf, 'name' => $pdfName];
-    }
-
     public function getQuoteData(string $quoteUID): ?PersonalQuote
     {
         return PersonalQuote::select('id', 'customer_id')
@@ -1238,12 +1207,17 @@ class HomeQuoteService extends BaseService
 
         // Ensure the advisor relationship is loaded
         if ($quote->relationLoaded('advisor') && $quote->advisor) {
-            $data['advisor_name'] = $quote->advisor->name ?? '';
-            $data['advisor_email'] = $quote->advisor->email ?? '';
-            $data['advisor_mobile_no'] = $quote->advisor->mobile_no ?? '';
-            $data['advisor_landline_no'] = $quote->advisor->landline_no ?? '';
-            $data['profile_photo_path'] = $quote->advisor->profile_photo_path ?? '';
-            $data['mobile_no_without_spaces'] = (! empty($quote->advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) : '');
+            $advisor = optional($quote->advisor);
+            
+            $data['advisor_name'] = $advisor->name ?? '';
+            $data['advisor_email'] = $advisor->email ?? '';
+            $data['advisor_mobile_no'] = $advisor->mobile_no ?? '';
+            $data['advisor_landline_no'] = $advisor->landline_no ?? '';
+            $data['profile_photo_path'] = $advisor->profile_photo_path ?? '';
+            $data['mobile_no_without_spaces'] = !empty($advisor->mobile_no) 
+                ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) 
+                : '';
+            
             $data['quote_declaration_link'] = '';
             $data['quote_sal_link'] = '';
         } else {
@@ -1282,4 +1256,106 @@ class HomeQuoteService extends BaseService
             return collect();
         }
     }
+
+    public function exportPlansPdf($quoteType, array $data, $quotePlans = null)
+    {
+        // Retrieve home lookup data for content and personal belongings values
+        $lookUpData = app(LookupService::class)->getHomeLookUpData();
+
+        $planIds = $data['plan_ids'] ?? [];
+        $addons = $data['addons'] ?? null;
+
+        // Fetch quote plans using UUID
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        if (!$quotePlans || !isset($quotePlans->quotes) || !isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        // Retrieve insurance providers by provider IDs
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('insuranceProviderId')->toArray();
+        $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
+
+        // Get quote details with relations
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }, 'customer', 'homeQuote']);
+
+        // Retrieve home quote flags and values
+        $homeQuoteFlags = $this->getHomeQuoteFlags($quote->homeQuote);
+        $flagValues = $this->getFlagValues($homeQuoteFlags, $quote->homeQuote, $lookUpData->contentValues, $lookUpData->personalBelongingValues);
+
+        // Generate the PDF with relevant data
+        $pdf = $this->generatePdf($quote, $quotePlans, $planIds, $addons, $providers, $homeQuoteFlags, $flagValues);
+
+        // Generate the PDF filename
+        $pdfName = $this->generatePdfFilename($quote);
+
+        // Log PDF generation
+        info('Home Quote Plans PDF generated for quote: ' . $data['quote_uuid']);
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
+    }
+
+    private function getHomeQuoteFlags($homeQuote): array
+    {
+        if (!$homeQuote) return [];
+
+        return [
+            'contents_value_flag' => (bool) $homeQuote->contents_value_id,
+            'personal_belongings_flag' => (bool) $homeQuote->personal_belongings_value_id,
+            'building_value_flag' => (bool) $homeQuote->building_value,
+        ];
+    }
+
+    private function getFlagValues(array $flags, $homeQuote, array $contentValues, array $personalBelongingValues): array
+    {
+        $values = [];
+
+        if ($flags['contents_value_flag']) {
+            $contentValue = $this->getValueById($contentValues, $homeQuote->contents_value_id);
+            if ($contentValue) {
+                $values['contents_value'] = $this->formatCurrency($contentValue['maxValue']);
+            }
+        }
+
+        if ($flags['personal_belongings_flag']) {
+            $personalBelongingValue = $this->getValueById($personalBelongingValues, $homeQuote->personal_belongings_value_id);
+            if ($personalBelongingValue) {
+                $values['personal_belongings_value'] = $this->formatCurrency($personalBelongingValue['maxValue']);
+            }
+        }
+
+        if ($flags['building_value_flag']) {
+            $values['building_value'] = $this->formatCurrency($homeQuote->building_value);
+        }
+
+        return $values;
+    }
+
+    private function formatCurrency(float $value): string
+    {
+        return 'AED ' . number_format($value, 2, '.', '');
+    }
+
+    private function getValueById(array $values, int $id): ?array
+    {
+        return collect($values)->firstWhere('id', $id);
+    }
+
+    private function generatePdf($quote, $quotePlans, array $planIds, $addons, array $providers, array $homeQuoteFlags, array $flagValues)
+    {
+        return PDF::setOption([
+            'isHtml5ParserEnabled' => true,
+            'dpi' => 150,
+            'isRemoteEnabled' => true
+        ])
+        ->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'homeQuoteFlags', 'flagValues'));
+    }
+
+    private function generatePdfFilename($quote): string
+    {
+        return 'InsuranceMarket.ae™ Home Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
+    }
+
 }
