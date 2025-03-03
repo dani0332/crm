@@ -45,4 +45,5 @@ final class WorkflowTypeEnum extends Enum
     public const GROUP_MEDICAL_NEW_POLICY = 'group_medical_new_policy';
     public const SU_CAR_FLEET_UPDATE = 'su_car_fleet_update';
     public const CAR_FLEET_NEW_POLICY = 'car_fleet_new_policy';
+    public const SU_TRADE_UPDATE = 'su_trade_update';
 }
