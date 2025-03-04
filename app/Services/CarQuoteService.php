@@ -965,7 +965,8 @@ class CarQuoteService extends BaseService
             $this->query->whereNotIn('cqr.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
 
-        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '' && isset($request->advisor_assigned_date_end) && $request->advisor_assigned_date_end != ''
+        ) {
             $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
             $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
             $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
