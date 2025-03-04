@@ -237,42 +237,6 @@ class BikeQuoteService extends BaseService
             }
         }
 
-        /*if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
-            $bikePayment = Payment::where('code', '=', $quote->code)->first();
-            if (! empty($bikePayment->captured_at)) {
-                $paymentCapturedAt = $bikePayment->captured_at;
-                $today = Carbon::today();
-
-                $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
-                $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
-
-                if (Auth::user()->hasRole(RolesEnum::BikeAdvisor) && $today->lte($dateLimitForAdvisor)) {
-                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
-
-                    return true;
-                } elseif (Auth::user()->hasRole(RolesEnum::BikeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
-                    info($logPrefix.' plan modify allowed to bike manager for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
-
-                    return true;
-                }
-            }
-        }
-
-        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::BikeAdvisor, RolesEnum::BikeManager])) {
-            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
-
-            return true;
-        }
-
-        if (
-            $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
-                && Auth::user()->hasAnyRole([RolesEnum::BikeAdvisor,  RolesEnum::BikeManager]))
-        ) {
-            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
-
-            return true;
-        }*/
-
         info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
 
         return 'Plan Modification is not allowed';
