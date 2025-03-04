@@ -29,6 +29,8 @@ let riders = props.lifeRiders.map(rider => ({
 const showInsurerError = ref(false);
 const showGetQuoteBtn = ref(false);
 let selectedTabIndex = ref(0);
+let overallLoading = ref(0);
+let totalPrice = props.selectedPlan.actualPremium;  
 
 const formatDate = (timestamp) => {
   return moment(timestamp).format('DD-MM-YYYY HH:mm:ss');
@@ -174,6 +176,7 @@ onMounted(() => {
             price: rider.price ?? 0,
             coverValue: rider.coverValue ?? 0,
             text: rider.text,
+            loading:rider?.loading ?? 0
     }));
 
     console.log(ridersData.value);
@@ -278,14 +281,6 @@ const setActiveTab = (index, selected) => {
                     UW
                   </x-tag>
                   <x-tag
-                  v-else-if="props.selectedPlan.isManualPlan"
-                    size="xs"
-                    color="error"
-                    class="mt-0.5 text-[10px] bg-gray-200 text-gray-700 font-semibold px-2 py-1 rounded-md"
-                  >
-                    Manual
-                  </x-tag>
-                  <x-tag
                     v-else-if="!props.selectedPlan.isManualPlan"
                     size="xs"
                     color="error"
@@ -376,37 +371,79 @@ const setActiveTab = (index, selected) => {
                         <p></p>
                     </div>
                     <div class="mt-6">
-                        <div class="grid grid-cols-6  items-center gap-2 p-2 border-b" 
+                        <div class="grid grid-cols-10 items-center gap-2 p-2 border-b" 
                             >
-                            <div>
+                            <div class="col-span-2">
                                 <span class="text-gray-700 font-bold">Riders</span>
                             </div>
-                            <div></div>
-                            <div>
+                            <div class="col-span-3">
                                 <span class="text-gray-700 font-bold">Cover</span>
                             </div>
-                            <div></div>
-                            <div></div>
-                            <div>
+                            <div class="col-span-2">
                                 <span class="text-gray-700 font-bold">Price</span>
+                            </div>
+                            <div class="col-span-2" v-if="editForm.isManualPlan">
+                                <span class="text-gray-700 font-bold">Rider Loading</span>
+                            </div>
+                            <div class="col-span-1" v-if="editForm.isManualPlan">
+                                <span class="text-gray-700 font-bold">Final Price</span>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
-                        <span class="text-gray-700 col-span-2">Life Cover</span>
-                        <span class="text-gray-700">Included</span>
-                        <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.sumAssured" disabled />
-
-                        <x-toggle v-model="lifeCoverToggled" color="emerald" size="lg" disabled/>
-                        <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
+                        <div class="grid grid-cols-10 items-center gap-4 p-2 border-b">
+                          <div>
+                            <span class="text-gray-700">Life Cover</span>
+                          </div>
+                          
+                          <div>
+                            <span class="text-gray-700">Included</span>
+                          </div>
+                          
+                          <div class="col-span-2">
+                            <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.sumAssured" disabled />
+                          </div>
+                          
+                          <div>
+                            <x-toggle v-model="lifeCoverToggled" color="emerald" size="lg" disabled/>
+                          </div>
+                          <div class="col-span-2">
+                            <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
+                          </div>
+                          <div class="col-span-2" v-if="editForm.isManualPlan">
+                            <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
+                          </div>
+                          <div class="col-span-1">
+                            <x-input type="number" v-if="editForm.isManualPlan" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
+                          </div>
                         </div>
-                        <div class="grid grid-cols-6 items-center gap-4 p-2" 
+                        <div class="grid grid-cols-10 items-center gap-4 p-2" 
                             v-for="(rider, index) in ridersData" :key="rider.id">
-                            <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
-                            <span class="text-gray-700">{{ rider.active ? 'Included' : 'Optional'}}</span>
-                            <x-input :disabled="!rider.active" type="number" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
-                            <x-toggle v-model="rider.active" color="success" size="lg" />
-                            <x-input type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
+                            <div>
+                              <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
+                            </div>
+                            <div>
+                              <span class="text-gray-700">{{ rider.active ? 'Included' : 'Optional'}}</span>
+                            </div>
+
+                            <div class="col-span-2">
+                              <x-input :disabled="!rider.active" type="number" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
+                            </div>
+
+                            <div>
+                              <x-toggle v-model="rider.active" color="success" size="lg" />
+                            </div>
+
+                            <div class="col-span-2">
+                              <x-input type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
+                            </div>
+
+                            <div class="col-span-2" v-if="editForm.isManualPlan">
+                              <x-input type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.loading"/>
+                            </div>
+
+                            <div class="col-span-1" v-if="editForm.isManualPlan">
+                              <x-input type="number" :disabled="true" class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
+                            </div>
                         </div>
                     </div>
 
@@ -463,9 +500,8 @@ const setActiveTab = (index, selected) => {
 
 
     <div>
-  <!-- Price and Timestamps in the same row, with price on the left and timestamps on the right -->
   
-  <template v-if="selectedTabIndex == 1 || selectedTabIndex == 0">
+  <template v-if="selectedTabIndex == 0">
     <x-divider></x-divider>
       <div class="flex justify-between gap-4 mt-4">
         <!-- Price section aligned to the left -->
@@ -494,9 +530,72 @@ const setActiveTab = (index, selected) => {
             Update Quotes
           </x-button>
         </div>
+      </div>  
+  </template>
+
+  <template v-else-if="selectedTabIndex == 1 && !editForm.isManualPlan">
+    <x-divider></x-divider>
+      <div class="flex justify-between gap-4 mt-4">
+        <!-- Price section aligned to the left -->
+        <div class="flex flex-row">
+          <dt class="font-bold text-lg ml-4">Total Price:</dt>
+          <dd class="text-lg">&nbsp; AED {{ props.selectedPlan.actualPremium }}</dd>
+        </div>
+
+        <!-- Timestamps aligned to the right -->
+        <div class="flex flex-col items-end">
+          <dd><strong>Created Date:</strong> {{ formatDate(props.selectedPlan.created_at) }}</dd>
+          <dd><strong>Updated at:</strong> {{ formatDate(props.selectedPlan.updated_at) }}</dd>
+        </div>
       </div>
-    
-    </template>
+
+      <!-- Buttons section aligned to the right -->
+      <div class="flex justify-end gap-4 mt-4">
+        <div v-if="editForm.isManualPlan">
+          <x-button type="submit" color="blue" :loading="editForm.loading">
+            Save
+          </x-button>
+        </div>
+
+        <div v-if="showGetQuoteBtn && !editForm.isManualPlan">
+          <x-button type="button" @click="getQuote()" color="blue" :loading="editForm.getQuoteLoading">
+            Update Quotes
+          </x-button>
+        </div>
+      </div>  
+  </template>
+
+  <template v-else-if="selectedTabIndex == 1 && editForm.isManualPlan">
+  <x-divider></x-divider>
+  <div class="flex justify-between gap-4 mt-4 items-center">
+    <!-- Main container pushed to the right -->
+    <div class="ml-auto flex items-center gap-4">
+      <!-- Overall Loading input field -->
+      <div class="flex items-center">
+        <span class="mr-2">Overall Loading:</span>
+        <input type="number" class="w-32 p-4 border h-6 rounded border-gray-500" /> <!-- Adjust width as needed -->
+      </div>
+
+      <!-- Total Price section -->
+      <div class="flex items-center">
+        <span class="font-bold mr-2">Total Price:</span>
+        <span class="">AED {{ props.selectedPlan.actualPremium }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buttons section aligned to the right -->
+  <div class="flex justify-end gap-4 mt-4">
+    <div v-if="editForm.isManualPlan">
+      <x-button type="submit" color="blue" :loading="editForm.loading">
+        Save
+      </x-button>
+    </div>
+  </div>
+</template>
+
+
+
 
   </div>
   </x-modal>

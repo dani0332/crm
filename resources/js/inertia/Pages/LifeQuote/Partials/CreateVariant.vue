@@ -1,4 +1,6 @@
 <script setup>
+import { ref } from 'vue';
+
 const props = defineProps({
   uuid: String,
   insuranceProviders: Array,
@@ -41,6 +43,8 @@ const availableInsuranceProviders = computed(() => {
 });
 
 let errorMessage = null;
+let alreadyQuoted = ref(null);
+
 
 const createForm = reactive({
   providerId: null,
@@ -133,6 +137,13 @@ const onSubmit = isValid => {
       formData: createForm,
     })
     .then(res => {
+      console.log(res.data)
+      const alreadyQuotedMessage = 'This plan detail is already quoted'; 
+      if (res.data && res.data.includes(alreadyQuotedMessage)) {
+        alreadyQuoted = 'This plan detail is already quoted';
+        console.log('exists');
+        return;
+      }
       if (res.data == 200) {
         emit('success');
       } else {
@@ -161,7 +172,7 @@ const onSubmit = isValid => {
   >
     <div class="mx-auto p-6 bg-white rounded-lg">
         <h2 class="bg-gray-100 text-gray-700 font-semibold text-center rounded-lg px-6 py-3 -mt-4 mb-2">
-            {{plan.planName}}
+            {{ props.plan.planName}}
         </h2>
       <div class="grid grid-cols-2 gap-4">
         <div>
@@ -278,30 +289,45 @@ const onSubmit = isValid => {
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
           <span class="text-gray-700 col-span-2">Life Cover</span>
           <span class="text-gray-700">Included</span>
-          <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="createForm.sumAssured" disabled />
+          <x-input type="number" class="w-full h-10 p-2 rounded-md" 
+          v-model="createForm.sumAssured" disabled />
 
           <x-toggle color="emerald" size="lg" disabled/>
-          <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="createForm.actualPremium" disabled />
+          <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
         </div>
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.id">
           <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
           <span class="text-gray-700">{{rider.active ? 'Included' : 'Optional'}}</span>
-          <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="rider.coverValue" />
+          <x-input type="number" :disabled="!rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
           <x-toggle v-model="rider.active" color="success" size="lg" />
-          <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="rider.price"/>
+          <x-input type="number" 
+          class="w-full h-10 p-2 rounded-md" :disabled="!rider.active || !props.plan.isManualPlan" v-model="rider.price"/>
         </div>
       </div>
     </div>
 
     <template #actions>
-      <div class="flex justify-end">
-        <x-button @click="getQuote" v-if="!createForm.actualPremium && plan.isApi" color="emerald" :loading="createForm.getQuoteLoading">
+      <div class="flex justify-between w-full">
+        <!-- Left side: Text -->
+        <div class="flex justify-start">
+          <p class="text-red-500">{{ alreadyQuoted }}</p>
+        </div>
+
+        <!-- Right side: Button -->
+        <div class="flex justify-end">
+          <x-button class="mr-2" @click="shown = false">
+            Cancel
+          </x-button>
+          <x-button @click="getQuote" v-if="!createForm.actualPremium && plan.isApi" color="emerald" :loading="createForm.getQuoteLoading">
             Get Quote
-        </x-button>
-        <x-button v-else type="submit" color="emerald" :loading="createForm.loading">
-          Save
-        </x-button>
+          </x-button>
+          
+          <x-button v-else type="submit" color="emerald" :loading="createForm.loading">
+            Save
+          </x-button>
+        </div>
       </div>
     </template>
+
   </x-modal>
 </template>
