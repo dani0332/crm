@@ -1001,8 +1001,8 @@ class CarQuoteService extends BaseService
             'carTypeInsurance:id,text',
         ])
             ->when(
-                !request()->filled('email') && !request()->filled('code') && !request()->filled('first_name') && !request()->filled('last_name') && !request()->filled('quote_status_id') && !request()->filled('mobile_no'),
-                fn($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]),
+                ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
+                fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]),
             )
             ->when(request('code'), function ($query) {
                 $query->where('code', request('code'));
@@ -1110,6 +1110,19 @@ class CarQuoteService extends BaseService
             ->when(request('sic_advisor_requested') && strtolower(request('sic_advisor_requested')) != 'all', function ($query) {
                 $query->where('sic_advisor_requested', request('sic_advisor_requested'));
             })
+            ->when(request('payment_due_date'), function ($query) {
+                [$start, $end] = request('payment_due_date');
+
+                $start = $this->parseDate($start, true);
+                $end = $this->parseDate($end, false);
+
+                $query->whereIn('id', function ($q) use ($start, $end) {
+                    $q->select('paymentable_id')
+                        ->from('payments')
+                        ->where('paymentable_type', CarQuote::class)
+                        ->whereBetween('payment_due_date', [$start, $end]);
+                });
+            })
             ->when(request('booking_date'), function ($query) {
                 [$start, $end] = request('booking_date');
 
@@ -1120,10 +1133,10 @@ class CarQuoteService extends BaseService
             })
             ->when(
                 request()->filled('sortBy'),
-                fn($q) => $q->orderBy(request('sortBy'), request('sortType')),
-                fn($q) => $q->orderBy('created_at', 'DESC'),
+                fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
+                fn ($q) => $q->orderBy('created_at', 'DESC'),
             )
-            ->where(function($query) {
+            ->where(function ($query) {
                 if (Auth::user()->hasRole(RolesEnum::CarManager)) {
                     $this->walkTree(Auth::id());
                     $query->whereIn('advisor_id', $this->childUserIds);
