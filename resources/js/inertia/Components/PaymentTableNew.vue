@@ -2436,7 +2436,9 @@ const addPayment = isValid => {
       });
     return;
   }
-
+  if (props.isPlanDetailEnabled){
+    data.plan_id = null;
+  }
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&

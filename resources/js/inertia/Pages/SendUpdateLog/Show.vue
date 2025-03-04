@@ -634,6 +634,7 @@ const isBookUpdate = computed(() => {
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="props.isFuncsEnabled"
       :realQuote="props.realQuote"
+      isPlanDetailEnabled="true"
     />
 
     <LazyPolicyDetails
