@@ -887,7 +887,6 @@ const insurerAMLStatusOption = computed(() => {
         <div>
           <x-button
             v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
-            disabled="true"
             size="sm"
             color="emerald"
             :loading="exportLoader"
