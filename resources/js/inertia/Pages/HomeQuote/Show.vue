@@ -2044,6 +2044,7 @@ const viewPlanDetailsLoader = ref({});
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      isPlanDetailEnabled="false"
     />
 
     <QuotePayments
