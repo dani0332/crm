@@ -32,11 +32,12 @@ class AMLCheckRequest extends FormRequest
                 'insured_last_name' => 'required|max:200',
             ];
 
-            if ($this->quote_type == QuoteTypes::CAR->value) {
-                $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
+            if (in_array($this->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
+                if ($this->quote_type == QuoteTypes::CAR->value) {
+                    $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
+                }
                 $rules['get_quote_email_gig'] = 'nullable|email:rfc,dns';
             }
-
         }
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {

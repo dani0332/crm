@@ -1048,7 +1048,13 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
-        $isCaptureButtonEnabled = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE, InsurerProviderEnum::QATAR_INSURANCE, InsurerProviderEnum::ALLIANCE_INSURANCE]);
+        $isCaptureButtonEnabled = $insuranceProvider && in_array($insuranceProvider->code, [
+            InsurerProviderEnum::GIG_INSURANCE,
+            InsurerProviderEnum::RAK_INSURANCE,
+            InsurerProviderEnum::TOKIO_MARINE,
+            InsurerProviderEnum::QATAR_INSURANCE,
+            InsurerProviderEnum::ALLIANCE_INSURANCE,
+        ]);
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         // Check if multiple payments are enabled for the provider
@@ -1106,7 +1112,8 @@ class CentralService extends BaseService
             'quoteTypeId' => (int) $request->quote_type_id,
             'payments' => [
                 [
-                    'codeRef' => $request->payment_code,
+                    // Notes:: This case include for Travel Single plan and mix inquiry case
+                    'codeRef' => ($request->quote_type_id == QuoteTypeId::Travel) ? $request->payment_code.'-1' : $request->payment_code,
                 ],
             ],
         ];
