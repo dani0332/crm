@@ -1064,13 +1064,13 @@ class CarQuoteService extends BaseService
             ->when(request('is_ecommerce'), function ($query) {
                 $query->where('is_ecommerce', request('is_ecommerce'));
             })
-            ->when(request('quote_status_id'), function ($query) {
+            ->when(request('quote_status_id') && is_array(request('quote_status_id')), function ($query) {
                 $query->whereIn('quote_status_id', request('quote_status_id'));
             })
-            ->when(request('insurer_aml_status'), function ($query) {
+            ->when(request('insurer_aml_status') && is_array(request('insurer_aml_status')), function ($query) {
                 $query->whereIn('insurer_aml_status', request('insurer_aml_status'));
             })
-            ->when(request('tier_id'), function ($query) {
+            ->when(request('tier_id') && is_array(request('tier_id')), function ($query) {
                 $query->whereIn('tier_id', request('tier_id'));
             })
             ->when(request('vehicle_type_id'), function ($query) {
@@ -1097,15 +1097,19 @@ class CarQuoteService extends BaseService
             ->when(request('assignment_type') && strtolower(request('assignment_type')) != 'all', function ($query) {
                 $query->where('assignment_type', request('assignment_type'));
             })
-            ->when(request('teams'), function ($query) {
+            ->when(request('teams') && is_array(request('teams')), function ($query) {
                 $query->whereIn('advisor_id', function ($query) {
                     $query->select('user_id')
                         ->from('user_team')
                         ->whereIn('team_id', request('teams'));
                 });
             })
-            ->when(request('advisor_id'), function ($query) {
-                $query->whereIn('advisor_id', request('advisor_id'));
+            ->when(request('advisor_id') && is_array(request('advisor_id')), function ($query) {
+                if (in_array('-1', request('advisor_id')) || in_array(-1, request('advisor_id'))) {
+                    $query->whereNull('advisor_id');
+                } else {
+                    $query->whereIn('advisor_id', request('advisor_id'));
+                }
             })
             ->when(request('transaction_approved_dates'), function ($query) {
                 [$start, $end] = request('transaction_approved_dates');
