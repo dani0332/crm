@@ -1226,6 +1226,8 @@ class CentralService extends BaseService
 
     private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $existingEmailData = null): void
     {
+        $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
         $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
         $emailData->insuranceCompany = $quote?->insuranceProvider?->text ?? '';
         $emailData->planName = 'NA';
@@ -1259,6 +1261,74 @@ class CentralService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Yacht) {
             // need to confirm.
             $emailData->yachtDetails = $quote->yachtQuote->boat_details;
+
+            if (! $sendUpdateLog) {
+                $quoteDocuments = ! empty($existingEmailData->quoteDocuments) ? collect($existingEmailData->quoteDocuments) : [];
+
+                if ($policySchedule = $quoteDocuments->where('document_type_code', DocumentTypeCode::CPS)->first()) {
+                    $emailData->policySchedule = $storageUrl.$policySchedule['doc_url'];
+                }
+
+                if ($paymentProof = $quoteDocuments->where('document_type_code', DocumentTypeCode::YPD)->first()) {
+                    $emailData->paymentProof = $storageUrl.$paymentProof['doc_url'];
+                }
+
+                if ($receipt = $quoteDocuments->where('document_type_code', DocumentTypeCode::YPD_RECEIPT)->first()) {
+                    $emailData->receipt = $storageUrl.$receipt['doc_url'];
+                }
+
+                if ($discountProof = $quoteDocuments->where('document_type_code', DocumentTypeCode::YDPDR)->first()) {
+                    $emailData->discountProof = $storageUrl.$discountProof['doc_url'];
+                }
+
+                if ($eCard = $quoteDocuments->where('document_type_code', DocumentTypeCode::ECARD_YTCH)->first()) {
+                    $emailData->eCard = $storageUrl.$eCard['doc_url'];
+                }
+
+                if ($additionalEmailAttachments = $quoteDocuments->where('document_type_code', DocumentTypeCode::TAEA)->first()) {
+                    $emailData->additionalEmailAttachments = $storageUrl.$additionalEmailAttachments['doc_url'];
+                }
+
+                if ($policyHandbook = $quoteDocuments->where('document_type_code', DocumentTypeCode::PHB)->first()) {
+                    $emailData->policyHandbook = $storageUrl.$policyHandbook['doc_url'];
+                }
+
+
+                // "Endorsed Schedule": "https://insurancemarket.blob.core.windows.net",
+                // "Payment Proof": "https://insurancemarket.blob.core.windows.net",
+                // "Receipt": "https://insurancemarket.blob.core.windows.net",
+                // "Discount Proof": "https://insurancemarket.blob.core.windows.net",
+                // "Policy Schedule": "https://insurancemarket.blob.core.windows.net",
+                // "E-card": "https://insurancemarket.blob.core.windows.net",
+                // "Additional Email Attachments": "https://insurancemarket.blob.core.windows.net",
+                // "Policy Handbook": "https://insurancemarket.blob.core.windows.net",
+
+                // "Policy Certificate": "https://insurancemarket.blob.core.windows.net",
+                // "Payment Proof (Insurer Collects)": "https://insurancemarket.blob.core.windows.net",
+                // "Payment approval": "https://insurancemarket.blob.core.windows.net",
+                // "Customer Documents (Endorsement)": "https://insurancemarket.blob.core.windows.net",
+                // "UW email Correspondence": "https://insurancemarket.blob.core.windows.net",
+                // "Payment Slip (Non CC payments)": "https://insurancemarket.blob.core.windows.net",
+                // "Tax Invoice": "https://insurancemarket.blob.core.windows.net",
+
+
+
+
+                // "additionalEmailAttachments": "https://insurancemarket.blob.core.windows.net",
+                // "customerDocumentsEndorsement": "https://insurancemarket.blob.core.windows.net",
+                // "discountProof": "https://insurancemarket.blob.core.windows.net",
+                // "eCard": "https://insurancemarket.blob.core.windows.net",
+                // "paymentProof": "https://insurancemarket.blob.core.windows.net",
+                // "paymentProofInsurerCollects": "https://insurancemarket.blob.core.windows.net",
+                // "paymentSlipNonCCPayments": "https://insurancemarket.blob.core.windows.net",
+                // "paymentApproval": "https://insurancemarket.blob.core.windows.net",
+                // "policyCertificate": "https://insurancemarket.blob.core.windows.net",
+                // "policyHandbook": "https://insurancemarket.blob.core.windows.net",
+                // "policySchedule": "https://insurancemarket.blob.core.windows.net",
+                // "receipt": "https://insurancemarket.blob.core.windows.net",
+                // "taxInvoice": "https://insurancemarket.blob.core.windows.net",
+                // "UWEmailCorrespondence": "https://insurancemarket.blob.core.windows.net",
+            }
         }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
@@ -1306,8 +1376,6 @@ class CentralService extends BaseService
                 $policyCertificate = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE)['doc_url'] ?? '';
                 $policySchedule = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE)['doc_url'] ?? '';
                 $taxInvoice = collect($documents)->firstWhere('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)['doc_url'] ?? '';
-
-                $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
                 if (! empty($policyCertificate)) {
                     $emailData->policyCertificate = $storageUrl.$policyCertificate;
