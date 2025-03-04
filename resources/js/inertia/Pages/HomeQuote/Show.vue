@@ -70,7 +70,8 @@ const canAny = permissions => useCanAny(permissions);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const can = permission => useCan(permission);
-const modelClass = 'App\\Models\\HomeQuote';
+const modelClass = 'App\\Models\\PersonalQuote';
+const modelClassHome = 'App\\Models\\HomeQuote';
 const processingOCBEmailNB = ref(false);
 
 const countDays = computed(() =>
@@ -2151,7 +2152,7 @@ const viewPlanDetailsLoader = ref({});
       :quoteCode="$page.props.quote.code"
     />
 
-    <ApiLogs :type="modelClass" :id="$page.props.quote.home_quote.id" />
+    <ApiLogs :type="modelClassHome" :id="$page.props.quote.home_quote.id" />
 
     <LeadHistory :quote="$page.props.quote" />
 
