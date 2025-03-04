@@ -1167,7 +1167,7 @@ class RenewalsUploadService
         });
 
         // Create Members for Health Quote
-        if($quote) {
+        if ($quote) {
             $quoteTypeCode = array_key_exists('quote_type', $data) ? $data['quote_type'] : $renewalQuoteProcess->quote_type;
             $quoteType = $this->getQuoteTypeByShortCode($quoteTypeCode);
             if ($quoteType->code == quoteTypeCode::Health) {
@@ -1197,7 +1197,7 @@ class RenewalsUploadService
                 $emirates = Emirate::whereIn('text', $memberEmirateOfVisas)->withActive()->get(['id', 'text']);
 
                 foreach ($memberDobs as $index => $dob) {
-                    if($index == 0) { // As first member is policy holder customer
+                    if ($index == 0) { // As first member is policy holder customer
                         $memberNameArray = explode(' ', $memberNames[$index]);
                         $firstName = $memberNameArray[0];
                         unset($memberNameArray[0]);
@@ -1217,16 +1217,16 @@ class RenewalsUploadService
                             'first_name' => $quote->first_name,
                             'last_name' => $quote->last_name,
                             'gender' => $quote->gender,
-                            'nationality_id' => $quote->nationality_id
+                            'nationality_id' => $quote->nationality_id,
                         ]);
 
                         // check if only one member then also create one customer member
-                        if(count($memberDobs) == 1) {
+                        if (count($memberDobs) == 1) {
                             $existingMembersCount = CustomerMembers::where([
                                 ['quote_id', $quote->id],
                                 ['quote_type', HealthQuote::class],
                             ])->whereNull('deleted_at')->count();
-                            if($existingMembersCount == 1) {
+                            if ($existingMembersCount == 1) {
                                 CustomerMembers::where([
                                     ['quote_id', $quote->id],
                                     ['quote_type', HealthQuote::class],
@@ -1238,14 +1238,13 @@ class RenewalsUploadService
                                     'gender' => $quote->gender,
                                     'nationality_id' => $quote->nationality_id,
                                     'member_category_id' => $quote->member_category_id,
-                                    'salary_band_id' => $quote->salary_band_id
+                                    'salary_band_id' => $quote->salary_band_id,
                                 ]);
                             }
-                            if($existingMembersCount > 1) {
+                            if ($existingMembersCount > 1) {
                                 continue;
                             }
-                        }
-                        else {
+                        } else {
                             continue;
                         }
                     }
@@ -1262,7 +1261,7 @@ class RenewalsUploadService
                     $memberDetails['firstName'] = $memberNameArray[0];
                     unset($memberNameArray[0]);
                     $memberDetails['lastName'] = implode(' ', $memberNameArray);
-                    
+
                     // continue and update if a user with same first_name and last_name exists
                     $memberExists = CustomerMembers::where([
                         ['quote_id', $quote->id],
@@ -1270,8 +1269,8 @@ class RenewalsUploadService
                         ['first_name', $memberDetails['firstName']],
                         ['last_name', $memberDetails['lastName']],
                     ])
-                    ->whereNull('deleted_at')
-                    ->exists();
+                        ->whereNull('deleted_at')
+                        ->exists();
 
                     if ($memberExists) {
                         CustomerMembers::where([
@@ -1285,8 +1284,9 @@ class RenewalsUploadService
                             'gender' => $memberDetails['gender'],
                             'nationality_id' => $memberDetails['nationalityId'],
                             'member_category_id' => $memberDetails['memberCategoryId'],
-                            'salary_band_id' => $memberDetails['salaryBandId']
+                            'salary_band_id' => $memberDetails['salaryBandId'],
                         ]);
+
                         continue;
                     }
 
