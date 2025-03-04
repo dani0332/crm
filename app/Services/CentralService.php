@@ -237,7 +237,7 @@ class CentralService extends BaseService
                 return app(TravelQuoteService::class)->sortedPlansList($id);
             case quoteTypeCode::Life:
                 $quotePlans = app(LifeQuoteService::class)->getQuotePlans($id);
-               
+                
                 if (isset($quotePlans->message) && $quotePlans->message != '') {
                     $listQuotePlans = [];
                 } else {

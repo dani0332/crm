@@ -717,6 +717,7 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+      console.log('Plan data', plansTable.data); 
     })
     .catch(err => {
       console.log(err);

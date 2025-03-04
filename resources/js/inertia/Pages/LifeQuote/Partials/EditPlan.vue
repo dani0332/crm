@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { errorMessages } from 'vue/compiler-sfc';
-
+import moment from 'moment';
 const props = defineProps({
   uuid: String,
   insuranceProviders: Array,
@@ -28,6 +28,11 @@ let riders = props.lifeRiders.map(rider => ({
 
 const showInsurerError = ref(false);
 const showGetQuoteBtn = ref(false);
+let selectedTabIndex = ref(0);
+
+const formatDate = (timestamp) => {
+  return moment(timestamp).format('DD-MM-YYYY HH:mm:ss');
+}
 
 const ridersData = ref(riders);
 
@@ -188,6 +193,7 @@ const tabs = ref([
 
 
 const setActiveTab = (index, selected) => {
+  selectedTabIndex.value = index; 
   if(index == 1){
     showGetQuoteBtn.value = true;
     return;  
@@ -201,6 +207,7 @@ const setActiveTab = (index, selected) => {
 
 <template>
   <x-modal
+    :hasActions="false"
     v-model="shown"
     size="lg"
     :title="selectedPlan?.providerName ?? 'Edit Plan'"
@@ -210,8 +217,9 @@ const setActiveTab = (index, selected) => {
     @submit="onSubmit"
   >
     <div class="w-full">
-        <TabGroup>
-          <TabList class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full">
+        <TabGroup
+          >
+          <TabList class="flex flex-row flex-wrap rounded-xl bg-slate-100 p-1.5 w-full">
             <Tab
               v-for="{ index, label } in tabs"
               as="template"
@@ -232,13 +240,13 @@ const setActiveTab = (index, selected) => {
               </button>
             </Tab>
         </TabList>
-            <TabPanels class="mt-2 text-sm min-h-[70vh]">
+            <TabPanels class="mt-2 text-sm min-h-[40vh]">
                 <!-- General Info -->
                 <TabPanel>
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             
             
-            <div class="grid sm:grid-cols-2 mb-3">
+            <div :class="{'col-span-2': !editForm.isManualPlan}">
               <x-toggle
                 v-model="editForm.isDisabled"
                 color="success"
@@ -260,8 +268,17 @@ const setActiveTab = (index, selected) => {
 
             <div class="grid sm:grid-cols-2">
               <dt class="">Plan Name</dt>
-              <dd>{{ props.selectedPlan.planName }} <x-tag
-                    v-if="props.selectedPlan.isManualPlan"
+              <dd>{{ props.selectedPlan.planName }}
+                 <x-tag
+                  v-if="props.selectedPlan.isUnderwritten"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px] bg-green-300 text-green-800 font-semibold px-2 py-1 rounded-md"
+                  >
+                    UW
+                  </x-tag>
+                  <x-tag
+                  v-else-if="props.selectedPlan.isManualPlan"
                     size="xs"
                     color="error"
                     class="mt-0.5 text-[10px] bg-gray-200 text-gray-700 font-semibold px-2 py-1 rounded-md"
@@ -348,10 +365,6 @@ const setActiveTab = (index, selected) => {
                 />
             </div>
 
-            <div class="grid sm:grid-cols-4 col-span-2">
-                <dt class="">Total Price: </dt>
-                <dd>AED: {{ props.selectedPlan.actualPremium }}</dd>
-            </div>
 
         </dl>
         </TabPanel>
@@ -382,46 +395,55 @@ const setActiveTab = (index, selected) => {
                         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
                         <span class="text-gray-700 col-span-2">Life Cover</span>
                         <span class="text-gray-700">Included</span>
-                        <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="editForm.sumAssured" disabled />
+                        <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.sumAssured" disabled />
 
                         <x-toggle v-model="lifeCoverToggled" color="emerald" size="lg" disabled/>
-                        <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="editForm.actualPremium" disabled />
+                        <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
                         </div>
-                        <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" 
+                        <div class="grid grid-cols-6 items-center gap-4 p-2" 
                             v-for="(rider, index) in ridersData" :key="rider.id">
                             <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
-                            <span class="text-gray-700">{{rider.active ? 'Included' : 'Optional'}}</span>
-                            <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="rider.coverValue" />
+                            <span class="text-gray-700">{{ rider.active ? 'Included' : 'Optional'}}</span>
+                            <x-input :disabled="!rider.active" type="number" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
                             <x-toggle v-model="rider.active" color="success" size="lg" />
-                            <input type="number" class="w-full h-10 p-2 border border-gray-300 rounded-md" v-model="rider.price"/>
+                            <x-input type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
                         </div>
                     </div>
 
                 </TabPanel>
             
                 <TabPanel>
-                        <div class="mb-2"
-                            v-if="props?.selectedPlan?.benefits?.inclusion"
-                            v-for="data in props?.selectedPlan?.benefits?.inclusion || []"
-                            :key="data.code">
-                            <dt class="font-medium">{{ data.text }}</dt>
-                            <dd>{{ data.value ?? 'Included' }}</dd>
-                        </div>
-                </TabPanel>
+  <div
+    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
+    v-if="props?.selectedPlan?.benefits?.inclusion"
+  >
+    <div
+      v-for="data in props?.selectedPlan?.benefits?.inclusion || []"
+      :key="data.code"
+      class="mb-3 text-center"
+    >
+      <dt class="font-semibold">{{ data.text }}</dt>
+      <dd>{{ data.value ?? 'Included' }}</dd>
+    </div>
+  </div>
+</TabPanel>
 
 
                 <TabPanel>
-                    
-                    <div
-                        v-if="props?.selectedPlan?.benefits?.exclusion"
-                        v-for="data in props?.selectedPlan?.benefits?.exclusion || []"
-                        :key="data.code"
-                        class="mt-2"
-                        >
-                        <dt class="font-medium mb-2">{{ data.text }}</dt>
-                        <dd>{{ data.value }}</dd>
-                    </div>
-                </TabPanel>
+                <div
+                  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
+                  v-if="props?.selectedPlan?.benefits?.exclusion"
+                >
+                  <div
+                    v-for="data in props?.selectedPlan?.benefits?.exclusion || []"
+                    :key="data.code"
+                    class="mb-3 text-center"
+                  >
+                    <dt class="font-semibold">{{ data.text }}</dt>
+                    <dd>{{ data.value ?? 'Excluded' }}</dd>
+                  </div>
+                </div>
+              </TabPanel>
 
                 <TabPanel>
                     <dl class="grid md:grid-cols-2 gap-5 p-4">
@@ -440,20 +462,42 @@ const setActiveTab = (index, selected) => {
     </div>
 
 
-    <template #actions>
-      <div class="flex justify-end">
-        <template v-if="editForm.isManualPlan">
-            <x-button type="submit" color="blue" x-if="editForm.isManualPlan" :loading="editForm.loading">
-            Save
-            </x-button>
-        </template>
-    
-        <template v-if="showGetQuoteBtn && !editForm.isManualPlan">
-            <x-button type="button" @click="getQuote()" color="blue"  :loading="editForm.getQuoteLoading">
-              Update Quotes
-            </x-button>
-        </template>
+    <div>
+  <!-- Price and Timestamps in the same row, with price on the left and timestamps on the right -->
+  
+  <template v-if="selectedTabIndex == 1 || selectedTabIndex == 0">
+    <x-divider></x-divider>
+      <div class="flex justify-between gap-4 mt-4">
+        <!-- Price section aligned to the left -->
+        <div class="flex flex-row">
+          <dt class="font-bold text-lg ml-4">Total Price:</dt>
+          <dd class="text-lg">&nbsp; AED {{ props.selectedPlan.actualPremium }}</dd>
+        </div>
+
+        <!-- Timestamps aligned to the right -->
+        <div class="flex flex-col items-end">
+          <dd><strong>Created Date:</strong> {{ formatDate(props.selectedPlan.created_at) }}</dd>
+          <dd><strong>Updated at:</strong> {{ formatDate(props.selectedPlan.updated_at) }}</dd>
+        </div>
       </div>
+
+      <!-- Buttons section aligned to the right -->
+      <div class="flex justify-end gap-4 mt-4">
+        <div v-if="editForm.isManualPlan">
+          <x-button type="submit" color="blue" :loading="editForm.loading">
+            Save
+          </x-button>
+        </div>
+
+        <div v-if="showGetQuoteBtn && !editForm.isManualPlan">
+          <x-button type="button" @click="getQuote()" color="blue" :loading="editForm.getQuoteLoading">
+            Update Quotes
+          </x-button>
+        </div>
+      </div>
+    
     </template>
+
+  </div>
   </x-modal>
 </template>

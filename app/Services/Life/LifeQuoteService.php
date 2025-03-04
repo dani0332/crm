@@ -576,6 +576,12 @@ class LifeQuoteService extends BaseService
             'quoteUID' => $quoteUuId,
             'getLatestRating' => false, 
             'lang' => 'en',
+            'filters' => [
+                [
+                    'field' => 'isDisabled',
+                    'value' => false,
+                ]
+            ],
         ];
 
         $client = new \GuzzleHttp\Client;
@@ -675,8 +681,54 @@ class LifeQuoteService extends BaseService
 
     public function getLifeProviderPlan($data)
     {
-       $request = app(KenService::class)->request('/fetch-life-provider-plan', 'post',$data); 
-        return $request;
+       
+        $client = new \GuzzleHttp\Client;
+
+        try {
+            $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/fetch-life-provider-plan';
+            $plansApiToken = config('constants.KEN_API_TOKEN');
+            $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+            $plansApiUserName = config('constants.KEN_API_USER');
+            $plansApiPassword = config('constants.KEN_API_PWD');
+            $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'body' => json_encode($data),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } elseif (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } elseif (isset($response->msg)) {
+                $responseBodyAsString = $response->msg;
+            } else {
+                $responseBodyAsString = 'Failedt to fetch provider plan.';
+            }
+            return $responseBodyAsString;
+        }
     }
 
     /* This function will select the Plan details in the Quote */

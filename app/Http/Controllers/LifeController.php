@@ -146,7 +146,7 @@ class LifeController extends Controller
         return $this->lifeQuoteService->lifePlanCreateQuote($request->quoteUID, $request->formData);
     }
 
-    public function lifePlanUpdate(Request $request)
+    public function lifePlanUpdate(Request $request): void
     {
         $request->validate([
             'quoteUID' => 'required',
@@ -168,6 +168,7 @@ class LifeController extends Controller
 
     public function getLifeProviderPlan(Request $request)
     {
+        // dd($request->data);
         $providerPlan = $this->lifeQuoteService->getLifeProviderPlan($request->data);
 
         return response()->json(['providerPlan' => $providerPlan]);
