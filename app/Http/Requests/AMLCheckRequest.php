@@ -58,6 +58,7 @@ class AMLCheckRequest extends FormRequest
     {
         return [
             'chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
+            'get_quote_email_gig' => 'Email in GIG portal must be a valid email address',
         ];
     }
 }
