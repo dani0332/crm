@@ -1144,7 +1144,7 @@ class CarQuoteService extends BaseService
                     $this->walkTree(Auth::id());
                     $query->whereIn('advisor_id', $this->childUserIds)->orWhereNull('advisor_id');
                 } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
-                    $this->query->where('advisor_id', Auth::id());
+                    $query->where('advisor_id', Auth::id());
                 }
             });
     }
