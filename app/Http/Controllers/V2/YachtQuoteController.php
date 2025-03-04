@@ -7,6 +7,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -39,6 +40,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -80,6 +82,7 @@ class YachtQuoteController extends Controller
             'renewalBatches' => $renewalBatches,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : YachtQuoteRepository::getData(true, true),
             'authorizedDays' => intval($authorizedDays->value),
+            'insurerAMLStatus' => AMLService::getInsurerAMLStatuses(),
         ]);
     }
 
@@ -88,7 +91,9 @@ class YachtQuoteController extends Controller
      */
     public function create()
     {
-        return inertia('YachtQuote/Form');
+        $data = YachtQuoteRepository::getFormOptions();
+
+        return inertia('YachtQuote/Form', $data);
     }
 
     /**
@@ -114,9 +119,12 @@ class YachtQuoteController extends Controller
      */
     public function edit($uuid)
     {
+        $data = YachtQuoteRepository::getFormOptions();
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('YachtQuote/Form', ['quote' => $quote]);
+        return inertia('YachtQuote/Form', array_merge($data, [
+            'quote' => $quote,
+        ]));
     }
 
     /**
@@ -230,6 +238,8 @@ class YachtQuoteController extends Controller
             'payments' => $quote?->payments,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 

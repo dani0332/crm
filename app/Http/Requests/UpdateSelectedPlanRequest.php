@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
+use App\Services\SplitPaymentService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSelectedPlanRequest extends FormRequest
@@ -22,18 +23,32 @@ class UpdateSelectedPlanRequest extends FormRequest
      */
     public function rules(): array
     {
+        $quoteType = strtolower(request()->quoteType);
+
         $rules = [
             'plan_id' => 'required',
         ];
 
-        if (strtolower(request()->quoteType) == strtolower(QuoteTypes::HEALTH->value)) {
+        if ($quoteType == strtolower(QuoteTypes::HEALTH->value)) {
             $rules['copay_id'] = 'required';
         }
 
-        if (strtolower(request()->quoteType) == strtolower(QuoteTypes::TRAVEL->value)) {
+        if ($quoteType == strtolower(QuoteTypes::TRAVEL->value)) {
             $rules['selected_plan_id'] = 'sometimes';
         }
 
         return $rules;
+    }
+
+    public function withValidator($validator)
+    {
+        $quoteType = request()->quoteType;
+        $insuranceProviderId = request()->insurance_provider_id;
+        $planId = request()->plan_id;
+        $code = request()->code;
+
+        $validator->after(function ($validator) use ($quoteType, $insuranceProviderId, $planId, $code) {
+            app(SplitPaymentService::class)->validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, null, $planId);
+        });
     }
 }

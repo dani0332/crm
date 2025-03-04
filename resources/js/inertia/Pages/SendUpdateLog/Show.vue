@@ -21,7 +21,7 @@ const props = defineProps({
   storageUrl: String,
   realQuote: Object,
   isNegativeValue: Boolean,
-  bookingDetails: Array,
+  bookPolicyDetails: Array,
   updateBtn: String,
   uploadedDocuments: Array,
   payments: Array,
@@ -43,6 +43,8 @@ const props = defineProps({
   isCommVatNotAppEnabled: Boolean,
   isSentOrBooked: Boolean,
   disableMainBtn: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const page = usePage();
@@ -296,6 +298,12 @@ const isLegacyPolicy = computed(() => {
     props.realQuote?.insly_id
   );
 });
+
+const isBookUpdate = computed(() => {
+  return (
+    props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED
+  );
+});
 </script>
 
 <template>
@@ -500,10 +508,7 @@ const isLegacyPolicy = computed(() => {
                     </dd>
                   </template>
                 </div>
-                <div
-                  class="grid sm:grid-cols-2"
-                  v-if="can(permissionsEnum.TAP_BETA_ACCESS)"
-                >
+                <div class="grid sm:grid-cols-2">
                   <dt>
                     <x-tooltip>
                       <label
@@ -524,7 +529,7 @@ const isLegacyPolicy = computed(() => {
                       :rules="isEndorsementNumberRequired ? [isRequired] : []"
                       v-model="sendUpdateForm.endorsement_number"
                       size="xs"
-                      :disabled="!state.edit || props.isSentOrBooked"
+                      :disabled="!state.edit || isBookUpdate"
                       placeholder="Enter Endorsement Number"
                       maxlength="23"
                       @keypress="endorsementNumberValidation"
@@ -626,6 +631,9 @@ const isLegacyPolicy = computed(() => {
       :insuranceProviders="props.insuranceProviders"
       :quoteDocuments="props.quoteDocuments"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="props.isFuncsEnabled"
+      :realQuote="props.realQuote"
     />
 
     <LazyPolicyDetails
@@ -665,7 +673,7 @@ const isLegacyPolicy = computed(() => {
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
       :is-negative-value="isNegativeValue"
-      :booking-details="props.bookingDetails"
+      :booking-details="props.bookPolicyDetails"
       :real-quote="props.realQuote"
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"

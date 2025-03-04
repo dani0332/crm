@@ -2,6 +2,7 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
+use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
@@ -87,8 +88,8 @@ class EmbeddedProduct
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
             } else {
-                $firstName = $customer->insured_first_name ?? '';
-                $lastName = $customer->insured_last_name ?? '';
+                $firstName = ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? '';
+                $lastName = ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? '';
             }
 
             $item->id = $item->id;
@@ -108,6 +109,10 @@ class EmbeddedProduct
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
             $item->emirates_id_number = $customer->emirates_id_number ?? '';
+
+            if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
+                $item->sync_status = $item->courier_sync_status_info;
+            }
 
             if ($isAlfredProtect) {
                 $item->plan_type = EmbeddedProductEnum::{$item->product->embeddedProduct->short_code}()->value;
@@ -191,6 +196,9 @@ class EmbeddedProduct
                     $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
                     $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
                 });
+            })
+            ->when(isset($filters['sync_status']), function ($query) use ($filters) {
+                $query->filterBySyncStatus(CourierSyncStatusEnum::tryFrom($filters['sync_status']));
             });
 
         $sortBy = 'embedded_transactions.id';
