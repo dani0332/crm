@@ -9,11 +9,8 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\CarPlan;
-use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use PDF;
 
