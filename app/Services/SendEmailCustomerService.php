@@ -119,7 +119,7 @@ class SendEmailCustomerService extends BaseService
                     $to != null && info('Mail Request to details ----- '.json_encode($to));
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 90000)
+                // ->retry(3, 90000)
                 ->post($this->url, $body);
 
             $result = [
@@ -1256,7 +1256,7 @@ class SendEmailCustomerService extends BaseService
 
             $response = Http::withHeaders($headers)
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 90000)
+                // ->retry(3, 90000)
                 ->post(config('constants.SIB_URL'), $body);
 
             info('SICFollowupEmail ---- Request Sent '.$lead->email);
