@@ -1016,10 +1016,19 @@ class CarQuoteService extends BaseService
             ->when(request('last_name'), function ($query) {
                 $query->where('last_name', 'like', '%'.request('last_name').'%');
             })
-            ->when(! request()->filled('created_at_start'), function ($query) {
+            ->when(! request()->filled('code') && ! request()->filled('email') && ! request()->filled('mobile_no') && ! request()->filled('created_at') && ! request()->filled('payment_due_date') && ! request()->filled('booking_date') && ! request()->filled('previous_quote_policy_number') && ! request()->filled('renewal_batch') && ! request()->filled('insurer_tax_invoice_number') && ! request()->filled('insurer_commission_tax_invoice_number') && ! request()->filled('created_at_start'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(now(), true), $this->parseDate(now(), false)]);
             })
-            ->when(request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
+            ->when(isset(request()->created_at) && request()->created_at != ''
+            && empty(request()->email)
+            && empty(request()->code)
+            && empty(request()->renewal_batch)
+            && empty(request()->quote_batch_id)
+            && empty(request()->payment_due_date)
+            && empty(request()->booking_date)
+            && ! isset(request()->previous_quote_policy_number)
+            && ! isset(request()->insurer_tax_invoice_number)
+            && ! isset(request()->insurer_commission_tax_invoice_number) && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
             })
             ->when(request('email'), function ($query) {
@@ -1055,13 +1064,13 @@ class CarQuoteService extends BaseService
             ->when(request('is_ecommerce'), function ($query) {
                 $query->where('is_ecommerce', request('is_ecommerce'));
             })
-            ->when(request('quote_status_id'), function ($query) {
+            ->when(request('quote_status_id') && is_array(request('quote_status_id')), function ($query) {
                 $query->whereIn('quote_status_id', request('quote_status_id'));
             })
-            ->when(request('insurer_aml_status'), function ($query) {
+            ->when(request('insurer_aml_status') && is_array(request('insurer_aml_status')), function ($query) {
                 $query->whereIn('insurer_aml_status', request('insurer_aml_status'));
             })
-            ->when(request('tier_id'), function ($query) {
+            ->when(request('tier_id') && is_array(request('tier_id')), function ($query) {
                 $query->whereIn('tier_id', request('tier_id'));
             })
             ->when(request('vehicle_type_id'), function ($query) {
@@ -1088,15 +1097,19 @@ class CarQuoteService extends BaseService
             ->when(request('assignment_type') && strtolower(request('assignment_type')) != 'all', function ($query) {
                 $query->where('assignment_type', request('assignment_type'));
             })
-            ->when(request('teams'), function ($query) {
+            ->when(request('teams') && is_array(request('teams')), function ($query) {
                 $query->whereIn('advisor_id', function ($query) {
                     $query->select('user_id')
                         ->from('user_team')
                         ->whereIn('team_id', request('teams'));
                 });
             })
-            ->when(request('advisor_id'), function ($query) {
-                $query->whereIn('advisor_id', request('advisor_id'));
+            ->when(request('advisor_id') && is_array(request('advisor_id')), function ($query) {
+                if (in_array('-1', request('advisor_id')) || in_array(-1, request('advisor_id'))) {
+                    $query->whereNull('advisor_id');
+                } else {
+                    $query->whereIn('advisor_id', request('advisor_id'));
+                }
             })
             ->when(request('transaction_approved_dates'), function ($query) {
                 [$start, $end] = request('transaction_approved_dates');
