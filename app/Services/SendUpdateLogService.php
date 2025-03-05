@@ -32,6 +32,7 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
+use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
@@ -1117,28 +1118,20 @@ class SendUpdateLogService
         }
     }
 
-    public function getAdditionalOptionsForCar($sendUpdateLog): array
+    public function getAdditionalOptionsForCar(): array
     {
-        $data = [];
-        switch ($sendUpdateLog->category->code) {
-            case SendUpdateLogStatusEnum::EF:
-                switch ($sendUpdateLog->option->code) {
-                    case SendUpdateLogStatusEnum::AOCOV:
-                        $data = $this->getCarAddons($sendUpdateLog->quote_uuid);
-                        break;
-                    case SendUpdateLogStatusEnum::COE:
-                        $data = Emirate::where('is_active', true)->get()->toArray();
-                        break;
-                }
-                break;
-            case SendUpdateLogStatusEnum::EN:
-                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::COE_NFI) {
-                    $data = Emirate::where('is_active', true)->get()->toArray();
-                }
-                break;
+        return Emirate::where('is_active', true)->get()->toArray();
+    }
+
+    public function getSendUpdateLogNotes($quoteType): array
+    {
+        if ($quoteType == quoteTypeCode::Car) {
+            return Lookup::where('key', 'car-su-notes')->get()->toArray();
+        } elseif ($quoteType == quoteTypeCode::Bike) {
+            return Lookup::where('key', 'bike-su-notes')->get()->toArray();
         }
 
-        return $data;
+        return [];
     }
 
     public function getCarAddons($quoteUuid, $addonsIds = null): array
@@ -1213,7 +1206,8 @@ class SendUpdateLogService
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
-                $emailData->policyNewExpiry = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
+                // $emailData->policyNewExpiry = ! empty($sendUpdateLog->car_addons) ? implode(', ', $this->getCarAddons($sendUpdateLog->quote_uuid, $sendUpdateLog->car_addons)) : '';
+                $emailData->policyNewExpiry = '';
             } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
                 $emailData->policyNewExpiry = $sendUpdateLog->emirates->text ?? '';
             } elseif (in_array($optionCode, [SendUpdateLogStatusEnum::CISC, SendUpdateLogStatusEnum::CISC_NFI])) {
