@@ -62,7 +62,7 @@ class CarQuoteController extends Controller
             $personalQuotes = CarQuoteRepository::getData()->withQueryString();
         }
 
-        $advisors = CarQuoteRepository::getAdvisors();
+        $advisors = Cache::remember('car_quote_advusors', now()->addMinutes(5), fn () => CarQuoteRepository::getAdvisors());
         $quoteBatches = Cache::remember('quote_batches', now()->addHour(), fn () => QuoteBatches::get());
 
         return inertia('CarQuote/Index', [
