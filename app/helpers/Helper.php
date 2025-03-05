@@ -1001,15 +1001,23 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName, $default = false)
+    function getAppStorageValueByKey($keyName, $default = false, bool $useCache = false, $cacheTime = null)
     {
-        $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+        $getStorageValue = function () use ($keyName, $default) {
+            $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
-        if (! $query) {
-            return $default;
+            if (! $query) {
+                return $default;
+            }
+
+            return $query->value;
+        };
+
+        if (! $useCache) {
+            return $getStorageValue();
         }
 
-        return $query->value;
+        return Cache::remember("APP_STORAGE_{$keyName}", $cacheTime ?: now()->addHour(), $getStorageValue);
     }
 }
 
