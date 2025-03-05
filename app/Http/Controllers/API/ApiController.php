@@ -238,7 +238,7 @@ class ApiController extends Controller
 
     public function duplicateEntires()
     {
-        $tableName = 'car_quote_request_detail_duplicate';
+        $tableName = 'car_quote_request_detail';
 
         DB::table($tableName)
             ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
@@ -246,7 +246,7 @@ class ApiController extends Controller
             ->havingRaw('COUNT(car_quote_request_id) > 1')
             ->whereNull('is_deleted')
             ->orderBy('car_quote_request_id')
-            ->chunk(500, function ($duplicates) use ($tableName) {
+            ->chunk(200, function ($duplicates) use ($tableName) {
                 $allIds = $duplicates->pluck('ids')
                     ->map(fn ($ids) => explode(',', $ids))
                     ->flatten()
@@ -315,7 +315,7 @@ class ApiController extends Controller
 
                 DB::table($tableName)->whereIn('id', $deleteAt)->update(['is_deleted' => true]);
 
-                sleep(1);
+                sleep(2);
             });
     }
 }
