@@ -21,7 +21,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
-use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
@@ -344,19 +343,6 @@ class CRUDService extends BaseService
                 }
             }
 
-            if (
-                strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
-                && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-            ) {
-
-                if (
-                    $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-                    || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
-                    || $request->leadStatus == QuoteStatusEnum::TransactionApproved
-                ) {
-                    CammyJob::dispatch($entity, 'unsub');
-                }
-            }
             $quoteTypeId = constant(QuoteTypeId::class.'::'.$request->modelType);
 
             $activityResponse = false;
