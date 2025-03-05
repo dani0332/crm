@@ -329,7 +329,7 @@ function calculateValuesAndHighlight() {
     let fontColorAssigned = false;
     let rawRetention = 0.0;
     let overallRawRetention = 0.0;
- 
+
     rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(
       2,
     );
@@ -364,7 +364,7 @@ function calculateValuesAndHighlight() {
       volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
 
     const monthlySum = calculateMonthlySum(reportDataRef, index);
-    
+
     item.volumeSegmentConversion =
       volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
     item.valueSegmentConversion =
@@ -849,9 +849,7 @@ watch(
                     }}
                   </p>
                 </td>
-                <td
-                  class="x-table-cell px-3 py-4 align-middle text-center"
-                >
+                <td class="x-table-cell px-3 py-4 align-middle text-center">
                   <p>{{ item.overallRawRetention }}%</p>
                 </td>
                 <td class="x-table-cell px-3 py-4 align-middle">
