@@ -3,13 +3,13 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
-use App\Enums\LeadSourceEnum;
-use App\Services\SendEmailCustomerService;
 
 class CarAllocation implements Allocation
 {
@@ -137,10 +137,10 @@ class CarAllocation implements Allocation
         if ($advisorId && $advisorId != 0) {
             $this->assignLead($lead, $advisorId, $tier);
 
-
             if ($lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
                 app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($lead, $advisorId);
             }
+
             return $this->carAllocationService->createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
         } else {
             $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
