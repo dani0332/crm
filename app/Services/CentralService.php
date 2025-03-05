@@ -1300,42 +1300,6 @@ class CentralService extends BaseService
                 if ($policyHandbook = $quoteDocuments->where('document_type_code', DocumentTypeCode::PHB)->first()) {
                     $emailData->policyHandbook = $storageUrl.$policyHandbook['doc_url'];
                 }
-
-
-                // "Endorsed Schedule": "https://insurancemarket.blob.core.windows.net",
-                // "Payment Proof": "https://insurancemarket.blob.core.windows.net",
-                // "Receipt": "https://insurancemarket.blob.core.windows.net",
-                // "Discount Proof": "https://insurancemarket.blob.core.windows.net",
-                // "Policy Schedule": "https://insurancemarket.blob.core.windows.net",
-                // "E-card": "https://insurancemarket.blob.core.windows.net",
-                // "Additional Email Attachments": "https://insurancemarket.blob.core.windows.net",
-                // "Policy Handbook": "https://insurancemarket.blob.core.windows.net",
-
-                // "Policy Certificate": "https://insurancemarket.blob.core.windows.net",
-                // "Payment Proof (Insurer Collects)": "https://insurancemarket.blob.core.windows.net",
-                // "Payment approval": "https://insurancemarket.blob.core.windows.net",
-                // "Customer Documents (Endorsement)": "https://insurancemarket.blob.core.windows.net",
-                // "UW email Correspondence": "https://insurancemarket.blob.core.windows.net",
-                // "Payment Slip (Non CC payments)": "https://insurancemarket.blob.core.windows.net",
-                // "Tax Invoice": "https://insurancemarket.blob.core.windows.net",
-
-
-
-
-                // "additionalEmailAttachments": "https://insurancemarket.blob.core.windows.net",
-                // "customerDocumentsEndorsement": "https://insurancemarket.blob.core.windows.net",
-                // "discountProof": "https://insurancemarket.blob.core.windows.net",
-                // "eCard": "https://insurancemarket.blob.core.windows.net",
-                // "paymentProof": "https://insurancemarket.blob.core.windows.net",
-                // "paymentProofInsurerCollects": "https://insurancemarket.blob.core.windows.net",
-                // "paymentSlipNonCCPayments": "https://insurancemarket.blob.core.windows.net",
-                // "paymentApproval": "https://insurancemarket.blob.core.windows.net",
-                // "policyCertificate": "https://insurancemarket.blob.core.windows.net",
-                // "policyHandbook": "https://insurancemarket.blob.core.windows.net",
-                // "policySchedule": "https://insurancemarket.blob.core.windows.net",
-                // "receipt": "https://insurancemarket.blob.core.windows.net",
-                // "taxInvoice": "https://insurancemarket.blob.core.windows.net",
-                // "UWEmailCorrespondence": "https://insurancemarket.blob.core.windows.net",
             }
         }
 
