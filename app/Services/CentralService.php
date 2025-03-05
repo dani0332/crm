@@ -1295,7 +1295,7 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Health) {
-            $emailData->tpa = 'test TPA'; // need to confirm.
+            $emailData->tpa = $quote?->plan?->healthNetwork->text;
             $emailData->numberOfMembersCovered = (string) count($quote->members);
         }
 
