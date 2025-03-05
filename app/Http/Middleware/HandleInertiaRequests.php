@@ -42,6 +42,8 @@ use App\Services\LeadsCountService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
@@ -82,6 +84,8 @@ class HandleInertiaRequests extends Middleware
             $vatValue = getAppStorageValueByKey(ApplicationStorageEnums::VAT_VALUE, useCache: true);
         }
 
+        $authID = Auth::id() ?? 0;
+
         return [
             ...parent::share($request),
             'auth.user' => fn () => $request->user()
@@ -117,13 +121,13 @@ class HandleInertiaRequests extends Middleware
             'amlStatusEnum' => AMLStatusCode::asArray(),
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
-            'authorisePaymentCount' => app(PaymentRepository::class)->getAuthorisePaymentCount(),
+            'authorisePaymentCount' => Cache::remember("shared_authorisepayment_count_{$authID}", now()->addMinutes(5), fn () => app(PaymentRepository::class)->getAuthorisePaymentCount()),
             'checkAuthUserRole' => checkAuthUserRole(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
-            'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
+            'paymentLookups' => Cache::remember('shared_payment_lookups', now()->addHour(), fn () => app(SplitPaymentService::class)->getPaymentLookups()),
             'vatValue' => $vatValue,
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
-            'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
+            'policyIssuanceStatus' => Cache::remember('policy_issuance_statuses', now()->addHour(), fn () => PolicyIssuanceStatus::active()->get()),
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
             'policyIssuanceEnum' => PolicyIssuanceEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
@@ -138,7 +142,7 @@ class HandleInertiaRequests extends Middleware
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
             'isTapEnabled' => isTapEnabled(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'impersonatingUser' => User::find(app('impersonate')?->getImpersonatorId()),
+            'impersonatingUser' => app('impersonate')?->getImpersonatorId() ? User::find(app('impersonate')?->getImpersonatorId()) : null,
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
         ];
     }
@@ -656,7 +660,7 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::Engineering]) && getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_ENABLED, 0) == 1,
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering]) && getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_ENABLED, 0, useCache: true) == 1,
                         'Query Benchmarker',
                         route('admin.benchmarker.query.show'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
