@@ -68,7 +68,7 @@ const urls = computed(() => {
 
 const userMenu = [
   {
-    label: "HR Portal",
+    label: "HR Services",
     icon: "external",
     active: false,
     href : "https://hrm.alfred.ae/attendance/mark",
