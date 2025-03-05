@@ -3684,7 +3684,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      isPlanDetailEnabled="false"
+      isPlanDetailSectionEnabled="false"
     />
 
     <PaymentTable

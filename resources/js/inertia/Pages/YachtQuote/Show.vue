@@ -971,7 +971,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      isPlanDetailEnabled="true"
+      isPlanDetailSectionEnabled="true"
     />
 
     <QuotePayments
