@@ -1012,24 +1012,8 @@ class SendUpdateLogService
                 }
 
                 if ($request->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
-                    // Addons for Car move to main lead
-                    if (! empty($sendUpdateLog->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
-                        foreach ($sendUpdateLog->car_addons as $addonId) {
-                            $plansAddons = CarAddOnOption::where('addon_id', $addonId)->get();
-                            foreach ($plansAddons as $planAddon) {
-                                CarQuoteRequestAddOn::updateOrCreate([
-                                    'quote_request_id' => $quote->id,
-                                    'addon_option_id' => $planAddon->id,
-                                ], [
-                                    'quote_request_id' => $quote->id,
-                                    'addon_option_id' => $planAddon->id,
-                                    'price' => 0,
-                                ]);
-                            }
-                        }
-                    }
                     // Emirate of Registration for Car move to main lead
-                    elseif (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) {
+                    if (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) {
                         $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
                         info('emirate id : '.$sendUpdateLog->emirates_id);
                     }
