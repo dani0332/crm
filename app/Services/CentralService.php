@@ -1328,13 +1328,7 @@ class CentralService extends BaseService
                 if (! empty($taxInvoice)) {
                     $emailData->taxInvoice = $storageUrl.$taxInvoice;
                 }
-            } else {
-                $documents = [];
-                // dd($existingEmailData);
-                // Business
-                // DocumentTypeCode::CTIRBB
             }
-
         }
     }
 
