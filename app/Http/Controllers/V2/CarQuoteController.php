@@ -17,6 +17,7 @@ use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CarQuoteController extends Controller
 {
@@ -62,7 +63,7 @@ class CarQuoteController extends Controller
         }
 
         $advisors = CarQuoteRepository::getAdvisors();
-        $quoteBatches = QuoteBatches::get();
+        $quoteBatches = Cache::remember('quote_batches', now()->addHour(), fn () => QuoteBatches::get());
 
         return inertia('CarQuote/Index', [
             'quotes' => $personalQuotes,
