@@ -1156,13 +1156,8 @@ class SendUpdateLogService
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
-        if (checkPersonalQuotes($quoteType)) {
-            $quoteModel = $this->getRepositoryObject($quoteType);
-            $quote = $quoteModel::getBy('uuid', $sendUpdateLog->quote_uuid);
-        } else {
-            $quoteModel = $this->getModelObject($quoteType);
-            $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
-        }
+        $quoteModel = $this->getModelObject($quoteType);
+        $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht,
             QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet])) {

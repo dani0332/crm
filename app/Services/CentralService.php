@@ -1358,7 +1358,7 @@ class CentralService extends BaseService
             $emailData->typeOfPet = $quote?->petQuote?->petType?->text.' - '.$quote->gender; // Cat - Female
             $emailData->breedOfPet = $quote?->petQuote?->breed_of_pet1 ?? ''; // Persian
             if ($quote?->petQuote?->is_microchipped && $sendUpdateLog) { // only in send update template.
-                $emailData->microchipNumber = $quote->petQuote->microchip_no;
+                $emailData->microchipNumber = $quote->petQuote->microchip_no ?? '';
             }
         }
 
