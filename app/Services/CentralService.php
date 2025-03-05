@@ -1269,38 +1269,6 @@ class CentralService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Yacht) {
             // need to confirm.
             $emailData->yachtDetails = $quote->yachtQuote->boat_details;
-
-            if (! $sendUpdateLog) {
-                $quoteDocuments = ! empty($existingEmailData->quoteDocuments) ? collect($existingEmailData->quoteDocuments) : [];
-
-                if ($policySchedule = $quoteDocuments->where('document_type_code', DocumentTypeCode::CPS)->first()) {
-                    $emailData->policySchedule = $storageUrl.$policySchedule['doc_url'];
-                }
-
-                if ($paymentProof = $quoteDocuments->where('document_type_code', DocumentTypeCode::YPD)->first()) {
-                    $emailData->paymentProof = $storageUrl.$paymentProof['doc_url'];
-                }
-
-                if ($receipt = $quoteDocuments->where('document_type_code', DocumentTypeCode::YPD_RECEIPT)->first()) {
-                    $emailData->receipt = $storageUrl.$receipt['doc_url'];
-                }
-
-                if ($discountProof = $quoteDocuments->where('document_type_code', DocumentTypeCode::YDPDR)->first()) {
-                    $emailData->discountProof = $storageUrl.$discountProof['doc_url'];
-                }
-
-                if ($eCard = $quoteDocuments->where('document_type_code', DocumentTypeCode::ECARD_YTCH)->first()) {
-                    $emailData->eCard = $storageUrl.$eCard['doc_url'];
-                }
-
-                if ($additionalEmailAttachments = $quoteDocuments->where('document_type_code', DocumentTypeCode::TAEA)->first()) {
-                    $emailData->additionalEmailAttachments = $storageUrl.$additionalEmailAttachments['doc_url'];
-                }
-
-                if ($policyHandbook = $quoteDocuments->where('document_type_code', DocumentTypeCode::PHB)->first()) {
-                    $emailData->policyHandbook = $storageUrl.$policyHandbook['doc_url'];
-                }
-            }
         }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
