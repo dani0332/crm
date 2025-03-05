@@ -38,7 +38,6 @@ use App\Models\PolicyIssuanceStatus;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
-use App\Services\ApplicationStorageService;
 use App\Services\LeadsCountService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
@@ -80,7 +79,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()) {
             $permissions = auth()->user()->getAllPermissions()->pluck('name')->toArray();
             $roles = auth()->user()->getRoleNames()->toArray();
-            $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+            $vatValue = getAppStorageValueByKey(ApplicationStorageEnums::VAT_VALUE, useCache: true);
         }
 
         return [
