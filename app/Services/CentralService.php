@@ -35,6 +35,7 @@ use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
+use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -1200,6 +1201,13 @@ class CentralService extends BaseService
 
     public function prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType)
     {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            $quoteType = strtolower(QuoteTypes::getName($quoteTypeId)->value).'su-notes';
+            $notes = Lookup::where('key', $quoteType)->where('code', $sendUpdateLog->notes)->first()->description ?? '';
+        } else {
+            $notes = $sendUpdateLog->notes;
+        }
+
         $emailData = (object) [
             'advisorEmail' => $quote->advisor->email ?? '',
             'advisorLandLine' => $quote->advisor->landline_no ?? '',
@@ -1210,7 +1218,7 @@ class CentralService extends BaseService
             'policyNumber' => $sendUpdateLog->policy_number ?? $quote->policy_number ?? '',
             'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d/m/Y'),
             'policyPeriodEnd' => Carbon::parse($sendUpdateLog->expiry_date ?? $quote->policy_expiry_date)->format('d/m/Y'),
-            'reason' => $sendUpdateLog->notes,
+            'reason' => $notes,
             'refID' => $sendUpdateLog->code,
             'rtaPortalLink' => 'https://vls.rta.ae/renewal/identityVerification',
             'customerEmail' => $quote->email,
