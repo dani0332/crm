@@ -1152,10 +1152,15 @@ class CentralService extends BaseService
             InsurerProviderEnum::TOKIO_MARINE,
             InsurerProviderEnum::QATAR_INSURANCE,
             InsurerProviderEnum::ALLIANCE_INSURANCE,
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
         ];
 
         if ($quoteTypeId == QuoteTypeId::Health) {
             $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
         }
 
         return in_array($insuranceProviderCode, $enabledProviders);
