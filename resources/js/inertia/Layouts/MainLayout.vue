@@ -68,21 +68,21 @@ const urls = computed(() => {
 
 const userMenu = [
   {
-    label: "HR Services",
-    icon: "external",
+    label: 'HR Services',
+    icon: 'external',
     active: false,
-    href : "https://hrm.alfred.ae/attendance/mark",
-    target : "_blank",
+    href: 'https://hrm.alfred.ae/attendance/mark',
+    target: '_blank',
   },
 
   {
-    label: "Sign out",
-    icon: "logout",
+    label: 'Sign out',
+    icon: 'logout',
     active: false,
     onClick: () => {
       onLogout();
-    }
-  }
+    },
+  },
 ];
 
 const activitiesUrl = activityType => {
