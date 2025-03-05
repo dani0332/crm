@@ -244,6 +244,7 @@ function onMemberSubmit(isValid) {
               v-model="memberForm.dob"
               placeholder="Date of Birth"
               class="w-full"
+              teleport
             />
           </x-field>
         </div>

@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CourierSyncStatusEnum;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\PermissionsEnum;
 use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
 use Exception;
 use Illuminate\Http\Request;
@@ -167,6 +171,8 @@ class EmbeddedProductController extends Controller
                 'detail' => $ep,
                 'transactions' => $dataset,
             ],
+            'ep_enums' => EmbeddedProductEnum::asArray(),
+            'sync_statuses' => CourierSyncStatusEnum::withLabels(),
         ]);
     }
 
@@ -234,5 +240,27 @@ class EmbeddedProductController extends Controller
         $embeddedProducts = EmbeddedProductRepository::byQuoteType($request->quote_type_id, $request->quote_id);
 
         return response()->json($embeddedProducts);
+    }
+
+    public function reSyncCourier(string $code)
+    {
+        $et = EmbeddedTransaction::whereCode($code)->firstOrFail();
+
+        if (! $et->isSyncable()) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Request is not syncable. Please check the status and try again.',
+            ]);
+        }
+
+        $et->courier_sync_started_at = now();
+        $et->save();
+
+        SyncCourierQuoteWithMacrm::dispatch($et->quoteRequest, $et->quote_type_id);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Re-syncing Request Submitted Successfully. Please Wait for the process to complete.',
+        ]);
     }
 }

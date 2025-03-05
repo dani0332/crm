@@ -21,6 +21,7 @@ class RolePermissionSeeder extends Seeder
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
+        $this->addBridgerSkipPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -130,5 +131,16 @@ class RolePermissionSeeder extends Seeder
         if ($role && ! $role->hasPermissionTo($permission)) {
             $role->givePermissionTo($permission);
         }
+    }
+
+    private function addBridgerSkipPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::SKIP_BRIDGER_AML,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

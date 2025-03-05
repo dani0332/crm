@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\DiscountTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -28,11 +27,7 @@ class PaymentService extends BaseService
 
         $infoMessage .= 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
         $infoMessage .= 'ID: '.$difference.' ';
-        if ($payment->system_adjusted_discount != null) {
-            $difference += $payment->system_adjusted_discount;
-            $infoMessage .= 'SAD: '.$payment->system_adjusted_discount.' DASA '.$difference;
-        }
-        $this->handleSystemAdjustedDiscount($payment, $difference, $initialDifference);
+
         info($infoMessage);
 
         $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference);
@@ -49,29 +44,6 @@ class PaymentService extends BaseService
         }
     }
 
-    private function handleSystemAdjustedDiscount($payment, $difference, $initialDifference)
-    {
-        // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
-        if ($difference <= 0.99 && $difference > 0) {
-            $payment->system_adjusted_discount = $difference;
-            // If condition to check if discount value is not null & add difference to it else set difference as discount value
-            if ($payment->discount_value != null) {
-                $payment->discount_value += $initialDifference;
-            } else {
-                $payment->discount_value = $difference;
-                $payment->discount_type = DiscountTypeEnum::SYSTEM_ADJUSTED_DISCOUNT;
-            }
-        }
-        // Case 2 if difference is greater than 0.99 and system adjusted discount is greater than 0 then subtract system adjusted discount from discount value
-        elseif (($difference > 0.99 || $difference == 0) && $payment->system_adjusted_discount > 0) {
-            $payment->discount_value -= $payment->system_adjusted_discount;
-            $payment->system_adjusted_discount = 0;
-            if ($payment->discount_type == DiscountTypeEnum::SYSTEM_ADJUSTED_DISCOUNT) {
-                $payment->discount_type = null;
-            }
-        }
-    }
-
     /**
      * This method will set payment status in payment table
      * This method trigger when policy details section update
@@ -81,7 +53,7 @@ class PaymentService extends BaseService
         if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
             $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
             // If status is partially paid & total price is less than price with vat then set status to partially paid
-            if (in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED]) && $payment->total_price < $priceWithVat && ($difference > 0.99)) {
+            if (in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED]) && $payment->total_price < $priceWithVat) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
             } elseif ($priceWithVat <= $captureAndDiscount) {
                 $payment->payment_status_id = PaymentStatusEnum::PAID;
