@@ -23,6 +23,7 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted'];
     protected $guarded = [];
     public $filterables = [
         'code' => FilterTypes::EXACT,
@@ -234,6 +235,11 @@ class CarQuote extends BaseModel
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
+    }
+
     public function embeddedTransactions()
     {
         return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
@@ -316,7 +322,7 @@ class CarQuote extends BaseModel
 
     public function quoteViewCount()
     {
-        return $this->hasOne(QuoteViewCount::class, 'quote_id', 'id')->where('quote_type_id', 1);
+        return $this->hasOne(QuoteViewCount::class, 'quote_id', 'id')->where('quote_type_id', QuoteTypeId::Car);
     }
 
     public function updatedBy()
