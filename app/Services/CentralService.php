@@ -1202,7 +1202,7 @@ class CentralService extends BaseService
     public function prepareUpdateToCustomerData($quote, $quoteTypeId, $sendUpdateLog, $workflowType)
     {
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
-            $quoteType = strtolower(QuoteTypes::getName($quoteTypeId)->value).'su-notes';
+            $quoteType = strtolower(QuoteTypes::getName($quoteTypeId)->value).'-su-notes';
             $notes = Lookup::where('key', $quoteType)->where('code', $sendUpdateLog->notes)->first()->description ?? '';
         } else {
             $notes = $sendUpdateLog->notes;
