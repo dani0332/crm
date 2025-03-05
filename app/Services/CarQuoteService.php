@@ -1078,6 +1078,7 @@ class CarQuoteService extends BaseService
             })
             ->when(request('previous_quote_policy_number'), function ($query) {
                 $query->where('previous_quote_policy_number', request('previous_quote_policy_number'));
+                $query->orWhere('policy_number', request('previous_quote_policy_number'));
             })
             ->when(request()->filled('policy_expiry_date'), function ($query) {
                 $query->where('previous_policy_expiry_date', '>=', $this->parseDate(request('policy_expiry_date'), true));
