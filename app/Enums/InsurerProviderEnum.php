@@ -12,6 +12,6 @@ final class InsurerProviderEnum extends Enum
     const TOKIO_MARINE = 'TM';
     const ALLIANCE_INSURANCE = 'ALNC';
     const ABU_DHABI_NATIONAL_INSURANCE = 'ADNIC';
-    const SUKOON_OMAN_INSURANCE='OIC';
-    const WATANIA_TAKAFUL= 'NT';
+    const SUKOON_OMAN_INSURANCE = 'OIC';
+    const WATANIA_TAKAFUL = 'NT';
 }
