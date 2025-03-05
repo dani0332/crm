@@ -77,7 +77,8 @@ class Dtt extends Command
             PaymentStatusEnum::PARTIALLY_PAID,
         ];
 
-        $excludeAmlStatuses = [
+        $includeAmlStatuses = [
+            AMLStatusCode::AMLPending,
             AMLStatusCode::AMLScreeningCleared,
             AMLStatusCode::AMLScreeningFailed,
         ];
@@ -126,8 +127,8 @@ class Dtt extends Command
 
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
 
-            ->where(function ($query) use ($excludePaymentStatuses, $excludeAmlStatuses) {
-                $query->whereIn('aml_status', $excludeAmlStatuses)
+            ->where(function ($query) use ($excludePaymentStatuses, $includeAmlStatuses) {
+                $query->whereIn('aml_status', $includeAmlStatuses)
                     ->whereNotIn('payment_status_id', $excludePaymentStatuses);
             })
 
