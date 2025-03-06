@@ -293,7 +293,7 @@ const submitPolicy = () => {
       Object.keys(flash_messages).forEach(function (key) {
         if (flash_messages[key]) {
           notification.error({
-            title: flash_messages[key],
+            title: flash_messages[key][0] ?? flash_messages[key],
             position: 'top',
           });
         }
