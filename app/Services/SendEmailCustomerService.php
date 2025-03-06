@@ -1536,11 +1536,11 @@ class SendEmailCustomerService extends BaseService
         return $bccAdditional;
     }
 
-    public function sendIntroAndReassignEmail($quote, $quoteType = null,$oldAdvisorId = null)
+    public function sendIntroAndReassignEmail($quote, $quoteType = null, $oldAdvisorId = null)
     {
         $advisor = User::where('id', $quote->advisor_id)->first();
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
-        $logMessage = empty($oldAdvisorId) ? "old Advisor is not available" : "old Advisor {$oldAdvisorId} is available";
+        $logMessage = empty($oldAdvisorId) ? 'old Advisor is not available' : "old Advisor {$oldAdvisorId} is available";
         info(self::class." - {$logMessage} for the quote: {$quote->uuid} | Time: ".now());
         $payload = [
             'customerEmail' => $quote->email,
@@ -1551,13 +1551,13 @@ class SendEmailCustomerService extends BaseService
             'advisor' => $advisor,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
-            'advisorProfilePath'=>  (! empty($advisor->profile_photo_path) ? $advisor->profile_photo_path : ''),
+            'advisorProfilePath' => (! empty($advisor->profile_photo_path) ? $advisor->profile_photo_path : ''),
             'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'workflowType' =>empty($oldAdvisorId) ? workflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER : workflowTypeEnum::CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR,
+            'workflowType' => empty($oldAdvisorId) ? workflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER : workflowTypeEnum::CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR,
         ];
 
         $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
