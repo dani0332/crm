@@ -9,6 +9,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -32,6 +33,12 @@ class Payment extends Model implements Auditable
 
     ];
     protected $forceDeleting = true;
+    protected $casts = [
+        'authorized_at' => 'datetime',
+    ];
+    protected $appends = [
+        'authorized_at_formatted',
+    ];
 
     public function transformAudit(array $data): array
     {
@@ -254,6 +261,13 @@ class Payment extends Model implements Auditable
     public function isPaymentGatewayTap()
     {
         return $this->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP;
+    }
+
+    public function authorizedAtFormatted(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->authorized_at ? Carbon::parse($this->authorized_at)->format('d-m-Y') : null,
+        );
     }
 
     public function homePlan()

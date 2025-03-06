@@ -70,3 +70,7 @@ Route::prefix('v1')->group(function () {
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
+
+Route::get('/heath-check', function () {
+    return response()->json(['success' => true]);
+});
