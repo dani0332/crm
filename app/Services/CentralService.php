@@ -1061,20 +1061,22 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
-        $isCaptureButtonEnabled = $insuranceProvider && in_array($insuranceProvider->code, [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::RAK_INSURANCE,
-            InsurerProviderEnum::TOKIO_MARINE,
-            InsurerProviderEnum::QATAR_INSURANCE,
-            InsurerProviderEnum::ALLIANCE_INSURANCE,
-        ]);
+        $isCaptureButtonEnabled = false;
+        if ($insuranceProvider) {
+            $isCaptureButtonEnabled = $this->isCaptureButtonEnabledForProvider($insuranceProvider->code, $quoteTypeId);
+        }
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         // Check if multiple payments are enabled for the provider
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
 
+        $sendUpdateLogId = null;
+        if ($sendUpdateLog) {
+            $sendUpdateLogId = $sendUpdateLog->id;
+        }
+
         // Check if TAP capture process should start
-        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId, $sendUpdateLog) : false;
+        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isCapturePaymentStarted($quote->uuid, $quoteTypeId, $sendUpdateLogId) : false;
 
         // Prepare the TAP configuration array
         $tapConfiguration = [
@@ -1149,5 +1151,36 @@ class CentralService extends BaseService
         info('fn:voidPayment - Void authorized payment process completed');
 
         return ['status' => true, 'message' => 'Void payment processed'];
+    }
+
+    /**
+     * Check if the capture button is enabled for a given quote type and insurance provider.
+     *
+     * @return bool
+     */
+    private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
+    {
+        $enabledProviders = [
+            InsurerProviderEnum::GIG_INSURANCE,
+            InsurerProviderEnum::RAK_INSURANCE,
+            InsurerProviderEnum::TOKIO_MARINE,
+            InsurerProviderEnum::QATAR_INSURANCE,
+            InsurerProviderEnum::ALLIANCE_INSURANCE,
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+        ];
+
+        //        if ($quoteTypeId == QuoteTypeId::Health) {
+        //            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
+        //        }
+        //
+        //        if ($quoteTypeId == QuoteTypeId::Car) {
+        //            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        //        }
+        //
+        //        if ($quoteTypeId == QuoteTypeId::Travel) {
+        //            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+        //        }
+
+        return in_array($insuranceProviderCode, $enabledProviders);
     }
 }
