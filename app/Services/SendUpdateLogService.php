@@ -36,6 +36,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
@@ -1041,15 +1042,30 @@ class SendUpdateLogService
 
                 // Cases for Cancel Inception and Cancel Inception Reissue Start
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
+                    $oldLeadStatus = $quote->quote_status_id;
+                    $newLeadStatus = QuoteStatusEnum::PolicyCancelledReissued;
                     $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
-                        // 'quote_status_id' => QuoteStatusEnum::PolicyCancelled, // Below code overrides status, it should be PolicyCancelledReissued not PolicyCancelled
+                        'quote_status_id' => $newLeadStatus,
                         'quote_batch_id' => null,
+                    ]);
+                    QuoteStatusLog::create([
+                        'quote_type_id' => $sendUpdateLog->quote_type_id,
+                        'quote_request_id' => $quote->id,
+                        'current_quote_status_id' => $newLeadStatus,
+                        'previous_quote_status_id' => $oldLeadStatus,
                     ]);
                     (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->uuid);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
+                    $oldLeadStatus = $quote->quote_status_id;
+                    $newLeadStatus = QuoteStatusEnum::PolicyCancelled;
                     $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                        'quote_status_id' => $newLeadStatus,
+                    ]);
+                    QuoteStatusLog::create([
+                        'quote_type_id' => $sendUpdateLog->quote_type_id,
+                        'quote_request_id' => $quote->id,
+                        'current_quote_status_id' => $newLeadStatus,
+                        'previous_quote_status_id' => $oldLeadStatus,
                     ]);
                 }
                 // Cases for Cancel Inception and Cancel Inception Reissue End
