@@ -18,6 +18,7 @@ use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\DeDuplicateCarQuoteDetailJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
@@ -32,6 +33,7 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -241,84 +243,21 @@ class ApiController extends Controller
 
     public function duplicateEntires()
     {
-        $tableName = 'car_quote_request_detail';
+        $chunkSize = request('chunkSize', 10);
+        $chunkSize = request('doOnlyIteration', true) ? 1 : $chunkSize;
 
-        DB::table($tableName)
+        DB::table('car_quote_request_detail_duplicate')
             ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
             ->groupBy('car_quote_request_id')
             ->havingRaw('COUNT(car_quote_request_id) > 1')
             ->whereNull('is_deleted')
             ->orderBy('car_quote_request_id')
-            ->chunk(200, function ($duplicates) use ($tableName) {
-                $allIds = $duplicates->pluck('ids')
-                    ->map(fn ($ids) => explode(',', $ids))
-                    ->flatten()
-                    ->unique()
-                    ->values()
-                    ->toArray();
-
-                $mainQuery = DB::table($tableName)
-                    ->whereIn('id', $allIds)->whereNull('is_deleted')->get();
-
-                $lastGroupArray = [];
-
-                foreach ($duplicates as $group) {
-                    $groupIDs = explode(',', $group->ids);
-
-                    $query = $mainQuery->whereIn('id', $groupIDs);
-
-                    $latestUpdatedRecord = $query->sortByDesc('updated_at')->first();
-
-                    $lastId = $latestUpdatedRecord->id;
-                    $lastRecordData = (array) $latestUpdatedRecord;
-
-                    $filteredRecords = $query->filter(function ($record) use ($lastId) {
-                        return $record->id != $lastId;
-                    })->values();
-
-                    $updatedData = [];
-
-                    $recentAdvisorData = $query->sortByDesc('advisor_assigned_date')->first();
-
-                    if ($recentAdvisorData && ! empty($recentAdvisorData)) {
-                        $updatedData['advisor_assigned_by_id'] = $recentAdvisorData->advisor_assigned_by_id;
-                        $updatedData['advisor_assigned_date'] = $recentAdvisorData->advisor_assigned_date;
-                    }
-
-                    foreach ($filteredRecords as $record) {
-                        $currentRecord = (array) $record;
-
-                        foreach ($lastRecordData as $column => $lastValue) {
-                            if (! in_array($column, ['id', 'created_at', 'updated_at', 'car_quote_request_id', 'advisor_assigned_date', 'advisor_assigned_by_id'])) {
-                                if ((empty($lastValue) || is_null($lastValue))
-                                    && ! empty($currentRecord[$column])
-                                    && ! is_null($currentRecord[$column])
-                                    && ! array_key_exists($column, $updatedData)) {
-
-                                    $updatedData[$column] = $currentRecord[$column];
-                                }
-                            }
-                        }
-                    }
-
-                    $updatedData = $updatedData + array_diff_key($lastRecordData, $updatedData);
-
-                    DB::table($tableName)->where('id', $lastId)->update($updatedData);
-
-                    $filteredArray = array_diff($groupIDs, [$lastId]);
-                    $lastGroupArray[] = implode(',', $filteredArray);
+            ->chunk($chunkSize, function ($duplicates) {
+                DeDuplicateCarQuoteDetailJob::dispatch($duplicates);
+                if (request('doOnlyIteration', true)) {
+                    throw new Exception('One Iterartion Completed');
                 }
-
-                $deleteAt = collect($lastGroupArray)
-                    ->map(fn ($ids) => explode(',', $ids))
-                    ->flatten()
-                    ->unique()
-                    ->values()
-                    ->toArray();
-
-                DB::table($tableName)->whereIn('id', $deleteAt)->update(['is_deleted' => true]);
-
-                sleep(2);
+                sleep(request('sleepTime', 2));
             });
     }
 
