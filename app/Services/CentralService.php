@@ -1156,17 +1156,17 @@ class CentralService extends BaseService
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
         ];
 
-//        if ($quoteTypeId == QuoteTypeId::Health) {
-//            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
-//        }
-//
-//        if ($quoteTypeId == QuoteTypeId::Car) {
-//            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
-//        }
-//
-//        if ($quoteTypeId == QuoteTypeId::Travel) {
-//            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
-//        }
+        //        if ($quoteTypeId == QuoteTypeId::Health) {
+        //            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
+        //        }
+        //
+        //        if ($quoteTypeId == QuoteTypeId::Car) {
+        //            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        //        }
+        //
+        //        if ($quoteTypeId == QuoteTypeId::Travel) {
+        //            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+        //        }
 
         return in_array($insuranceProviderCode, $enabledProviders);
     }
