@@ -225,6 +225,7 @@ class TravelRenewalService extends BaseService
 
         return RenewalBatch::where('start_date', '<=', $expiryDate)
             ->where('end_date', '>=', $expiryDate)
+            ->whereNull('quote_type_id')
             ->first();
     }
 
