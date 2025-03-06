@@ -1163,6 +1163,10 @@ class CentralService extends BaseService
             $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
         }
 
+        if ($quoteTypeId == QuoteTypeId::Travel) {
+            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+        }
+
         return in_array($insuranceProviderCode, $enabledProviders);
     }
 }

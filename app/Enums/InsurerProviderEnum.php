@@ -14,4 +14,5 @@ final class InsurerProviderEnum extends Enum
     const ABU_DHABI_NATIONAL_INSURANCE = 'ADNIC';
     const SUKOON_OMAN_INSURANCE = 'OIC';
     const WATANIA_TAKAFUL = 'NT';
+    const ORIENT_INSURANCE = 'OI2';
 }
