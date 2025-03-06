@@ -16,6 +16,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\SendEmailCustomerService;
 
 class HomeQuoteObserver
 {
@@ -38,13 +39,13 @@ class HomeQuoteObserver
         $dirty = $homeQuote->getDirty();
 
         if (isset($dirty['advisor_id'])) {
-            $homeOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH)->first();
-            if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
-                app(HomeEmailService::class)->sendHomeOCBIntroEmail($homeQuote);
-                info("HomeQuoteObserver - Home OCB Automated Followups Switch is on - Ref ID: {$homeQuote->uuid} | Time: ".now());
-            } else {
-                info("HomeQuoteObserver - Home OCB Automated Followups Switch is off - Ref ID: {$homeQuote->uuid} | Time: ".now());
-            }
+
+            $oldAdvisorId = $homeQuote->getOriginal('advisor_id');
+            info("HomeQuoteObserver - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$homeQuote->advisor_id} | Time: ".now());
+            $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
+            info(self::class." Sending {$emailType} email to customer for home quote {$homeQuote->uuid} | Time: ".now());
+            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($homeQuote, QuoteTypes::HOME->value, $oldAdvisorId);
+            info(self::class." | {$emailType} email sent to customer for home quote {$homeQuote->uuid} | Time: ".now());
 
         }
         if (
