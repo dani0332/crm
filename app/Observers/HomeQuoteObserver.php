@@ -2,21 +2,18 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
-use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
 use App\Repositories\PaymentRepository;
-use App\Services\EmailServices\HomeEmailService;
+use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Services\SendEmailCustomerService;
 
 class HomeQuoteObserver
 {
