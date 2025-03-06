@@ -393,21 +393,26 @@ class CarAllocationService extends AllocationService
 
     private function fetchEligibleUsersByStatus(CarQuote $lead, Tier $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob)
     {
+        // Ensure $tierUserIds is an array for consistency
         $tierUserIds = is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray();
-        info(self::class."::fetchEligibleUsersByStatus - Users against tierID {$tier->id} and tier name: {$tier->name} are: ".json_encode($tierUserIds));
 
-        $advisors = [];
+        info(self::class . "::fetchEligibleUsersByStatus - Users against tierID {$tier->id} and tier name: {$tier->name} are: " . json_encode($tierUserIds));
 
+        // Determine if the lead is eligible for advisors based on the Buy Lead logic
         if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::CAR)) && ($tier->isValue() || $tier->isVolume())) {
-            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
+            return $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
 
-        if (empty($advisors)) {
-            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
+        // Check if the lead qualifies for Organic team assignment (AMJ, SIC, and no requested advisor)
+        if ($lead->isInsurerAMJ() && $lead->isSIC(QuoteTypes::CAR) && !$lead->sic_advisor_requested && $lead->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer) {
+            $teamId = getTeamId(TeamNameEnum::ORGANIC);
+            return $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
 
-        return $advisors;
+        // If no advisors have been found, fetch default advisors
+        return $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
     }
+
 
     private function determineStatusOrder($isReassignmentJob)
     {

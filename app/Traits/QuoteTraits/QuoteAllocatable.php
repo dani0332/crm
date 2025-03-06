@@ -2,6 +2,7 @@
 
 namespace App\Traits\QuoteTraits;
 
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -145,5 +146,10 @@ trait QuoteAllocatable
     public function isRevivalRepliedOrPaid()
     {
         return in_array($this->source, [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID]);
+    }
+
+    public function isInsurerAMJ()
+    {
+        return $this->insuranceProvider->code == InsuranceProvidersEnum::AMJ;
     }
 }
