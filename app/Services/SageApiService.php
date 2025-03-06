@@ -2136,6 +2136,7 @@ class SageApiService
     public function sageHasProcessingConflict($sageErrorMessage)
     {
         $sageErrorMessage = strtolower($sageErrorMessage);
+
         return str_contains($sageErrorMessage, 'processing conflict') || str_contains($sageErrorMessage, 'post in progress');
     }
 
