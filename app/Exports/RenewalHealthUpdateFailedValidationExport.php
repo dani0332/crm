@@ -43,6 +43,7 @@ class RenewalHealthUpdateFailedValidationExport implements FromCollection, WithS
         $firstRow->payment_link = 'Payment Link';
         $firstRow->previous_policy_premium = 'Previous Policy Premium';
         $firstRow->notes = 'Notes';
+        $firstRow->errors = 'Errors';
         $exportLeads->push($firstRow);
         foreach ($failedLeads as $lead) {
             if ($lead->data) {
