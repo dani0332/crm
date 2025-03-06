@@ -67,7 +67,6 @@ const tableHeader = [
   {
     text: 'POLICY EXPIRY DATE',
     value: 'previous_policy_expiry_date_formatted',
-    sortable: true,
   },
   {
     text: 'ADVISOR ASSIGNED DATE',
