@@ -24,7 +24,6 @@ class Kernel extends ConsoleKernel
         Commands\AddBatchNumberNonMotors::class,
         Commands\Dtt::class,
         Commands\DttFollowUp::class,
-        Commands\TierAssignment::class,
         Commands\UpdateUserStatus::class,
         Commands\QuoteAllocation::class,
         Commands\LeadsReassignment::class,
@@ -33,7 +32,6 @@ class Kernel extends ConsoleKernel
         Commands\UpdateStaleLeads::class,
         Commands\AutomateActivitiesCommand::class,
         Commands\PaymentOverdueStatus::class,
-        Commands\AlfredFollowUpSchedulerCommand::class,
         Commands\ProcessCCPaymentsCommand::class,
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
@@ -41,7 +39,6 @@ class Kernel extends ConsoleKernel
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
-        Commands\CorplineDataMigration::class,
     ];
 
     /**
@@ -132,18 +129,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();
 
-        // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
-
-        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('10:50')
-        //     ->onOneServer()
-        //     ->withoutOverlapping()
-        //     ->onSuccess(function (Stringable $output) {
-        //         info('----------- Business Data Migrations Completed -----------'.$output);
-        //     })
-        //     ->onFailure(function (Stringable $output) {
-        //         info('----------- Business Data Migrations Failed -----------'.$output);
-        //     });
-
+        $schedule->command('quotes-syncing:retry')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
     }
 
     /**

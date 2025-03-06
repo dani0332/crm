@@ -77,10 +77,13 @@ const updatePriceWithVat = () => {
       (priceVatApplicable / 100) * vat +
       priceVatApplicable +
       priceVatNotApplicable;
+    priceWithVat = Number(useRoundIt(priceWithVat).toFixed(2));
   } else if (priceVatApplicable) {
     priceWithVat = (priceVatApplicable / 100) * vat + priceVatApplicable;
+    priceWithVat = Number(useRoundIt(priceWithVat).toFixed(2));
   } else if (priceVatNotApplicable) {
     priceWithVat = priceVatNotApplicable;
+    priceWithVat = Number(useRoundIt(priceWithVat).toFixed(2));
   }
 
   planDetailsForm.price_with_vat = roundDecimal(priceWithVat);

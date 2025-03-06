@@ -15,6 +15,7 @@ use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ActivitiesService extends BaseService
@@ -297,18 +298,20 @@ class ActivitiesService extends BaseService
 
         $userId = auth()->user()->id;
 
-        $query = DB::table('activities')
-            ->selectRaw('
-            SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingCallback,
-            SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingWhatsapp
-        ', [ActivityTypeEnum::CALL_BACK, ActivityTypeEnum::WHATS_APP])
-            ->where('activities.status', 0)
-            ->where('activities.assignee_id', $userId)
-            ->first();
+        return Cache::remember("pending-activity-count-{$userId}", now()->addMinutes(5), function () use ($userId) {
+            $query = DB::table('activities')
+                ->selectRaw('
+                SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingCallback,
+                SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingWhatsapp
+            ', [ActivityTypeEnum::CALL_BACK, ActivityTypeEnum::WHATS_APP])
+                ->where('activities.status', 0)
+                ->where('activities.assignee_id', $userId)
+                ->first();
 
-        return [
-            'pendingCallback' => $query->pendingCallback ?? 0,
-            'pendingWhatsapp' => $query->pendingWhatsapp ?? 0,
-        ];
+            return [
+                'pendingCallback' => $query->pendingCallback ?? 0,
+                'pendingWhatsapp' => $query->pendingWhatsapp ?? 0,
+            ];
+        });
     }
 }

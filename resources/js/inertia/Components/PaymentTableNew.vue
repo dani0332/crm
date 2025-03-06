@@ -80,6 +80,11 @@ const props = defineProps({
     default: [],
   },
   realQuote: Object,
+  // For car commercial vehicles
+  isCapBtnEnabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // All reactive properties are defined here
@@ -900,11 +905,16 @@ const handlePaymentTypes = count => {
   }
 
   if (paymentMethodsForm.collection_type === 'insurer') {
-    const frequenciesToFilter = isMultiPaymentsEnabled.value
+    let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+      // need to fix this for payments
+      isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+    }
+    const frequenciesToFilter = isMultiPaymentEnabled
       ? frequenciesToFilterForCount
       : frequenciesToFilterForInsurer;
 
-    if (count >= 2 || !isMultiPaymentsEnabled.value) {
+    if (count >= 2 || !isMultiPaymentEnabled) {
       if (frequenciesToFilter.includes(paymentMethodsForm.frequency)) {
         paymentTypesWithoutCheck = filterPaymentTypes(
           paymentTypesWithoutCheck,
@@ -1950,6 +1960,13 @@ const initializePaymentForm = (
       : splitPaymentRecord.value.decline_reason_id;
   paymentMethodsForm.declined_custom_reason =
     splitPaymentRecord.value.decline_custom_reason;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    paymentMethodsForm.isCreditCardEnabled = payment.isCreditCardEnabled;
+    paymentMethodsForm.isGIGProvider = payment.isGIGProvider;
+    paymentMethodsForm.isMultiplePaymentsEnabled =
+      payment.isMultiplePaymentsEnabled;
+    paymentMethodsForm.isCaptureButtonEnabled = payment.isCaptureButtonEnabled;
+  }
 };
 
 const processPaymentSplits = payment => {
@@ -2807,8 +2824,10 @@ const shouldProcessUpdate = payment => {
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
-  const isCarQuote = props.quoteType === 'Car';
-  const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+  let isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+  if (isTravelQuote && !props.sendUpdate) {
+    isGIGProvider = payment.isGIGProvider;
+  }
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
@@ -2820,6 +2839,7 @@ const shouldProcessUpdate = payment => {
     quoteTypeCodeEnum.Bike,
     quoteTypeCodeEnum.Travel,
   ];
+
   const captureOption = getCaptureOption.value(payment);
   if (
     isInsurer &&
@@ -2830,9 +2850,29 @@ const shouldProcessUpdate = payment => {
   ) {
     isInsurerAmlCleared =
       insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
-    isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    if (isTravelQuote) {
+      isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
+    } else {
+      isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    }
   }
-
+  const isRenewalUploadConditionMet = () => {
+    return (
+      props.isCapBtnEnabled &&
+      props.quoteType === quoteTypeCodeEnum.Car &&
+      isGIGProvider &&
+      isAmlCleared &&
+      isKycVerified() &&
+      isTotalPriceMatching &&
+      hasAnyCCSplitPayment() &&
+      !shouldSendUpdate &&
+      hasPayments &&
+      isInsurer
+    );
+  };
+  if (isRenewalUploadConditionMet()) {
+    return true;
+  }
   if (captureOption === 'approve') {
     return hasPayments;
   }
@@ -2978,7 +3018,12 @@ const getCaptureOption = computed(() => {
     // Return early if there are no payments
     if (props.payments.length === 0) return;
 
-    const isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+    let isCaptureButtonEnabled =
+      page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+      isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
+    }
+
     const paymentMethodCC = filterCCPayments(payment);
 
     // Check if the conditions for 'capture' are met
@@ -2987,8 +3032,8 @@ const getCaptureOption = computed(() => {
 
     // Return 'capture' if all conditions are met, otherwise return 'approve'
     if (
-      (isCreditCardPayment && isNotInsurerPayment && !isGIGProvider) ||
-      isGIGProvider
+      (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
+      (isCaptureButtonEnabled && hasAnyCCSplitPayment())
     ) {
       return 'capture';
     }
@@ -3435,6 +3480,9 @@ const isInsurerAmlVerified = () => {
 };
 
 const disableMainPaymentApproval = computed(() => {
+  if (props.sendUpdate) {
+    return false;
+  }
   let isAmlFailed =
     props.quoteRequest.aml_status ===
     page.props.amlStatusEnum.AMLScreeningFailed;
@@ -3504,10 +3552,6 @@ const isMultiPaymentsEnabled = ref(
   page.props?.bookPolicyDetails?.isMultiplePaymentsEnabled || false,
 );
 
-const isGIGOrQICProvider = ref(
-  page.props?.bookPolicyDetails?.isGIGOrQICProvider || false,
-);
-
 watch(
   () => page.props?.bookPolicyDetails?.isCreditCardEnabled,
   newVal => {
@@ -3529,8 +3573,12 @@ const hasAnyCCSplitPayment = () => {
 };
 
 const isCCPaymentDisabled = option => {
+  let isCreditCardEnabled = isCCEnabled.value;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    isCreditCardEnabled = paymentMethodsForm.isCreditCardEnabled;
+  }
   return (
-    !isCCEnabled.value &&
+    !isCreditCardEnabled &&
     paymentMethodsForm.collection_type === 'insurer' &&
     option == 'CC'
   );
@@ -3564,26 +3612,35 @@ const isEditPaymentEnabled = () => {
     paymentStatusEnum.CAPTURED,
   ];
 
-  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(item =>
-    statusesToCheck.includes(item.payment_status_id),
+  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(
+    item =>
+      statusesToCheck.includes(item.payment_status_id) &&
+      item.payment_method.code === 'CC',
   );
 
-  return !isMultiPaymentsEnabled.value && hasAnyAuthorizedPayment;
+  let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
+  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
+  }
+  return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
 
-// voidPaymentModal
-const voidPaymentModel = ref(false);
+let voidPaymentObject = {};
 const voidPaymentProcess = ref(false);
-const isVoidPaymentEnabled = computed(() => {
+const voidPaymentModelPopup = ref(false);
+const voidPaymentModel = payment => {
+  voidPaymentModelPopup.value = true;
+  voidPaymentObject = payment;
+};
+
+const isVoidPaymentEnabled = payment => {
   return (
     props.isFuncsEnabled.tapIntegration &&
     can(permissionEnum.PAYMENTS_VOID) &&
-    props.payments[0].payment_status_id ===
-      page.props.paymentStatusEnum.AUTHORISED &&
-    props.payments[0].payment_gateway_id ===
-      props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+    payment.payment_status_id === page.props.paymentStatusEnum.AUTHORISED &&
+    payment.payment_gateway_id === props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
   );
-});
+};
 
 const voidPayment = () => {
   voidPaymentProcess.value = true;
@@ -3591,8 +3648,8 @@ const voidPayment = () => {
     quote_type_id: page.props.quoteTypeId,
     quote_id: props.quoteRequest.id,
     quote_uuid: props.quoteRequest.uuid,
-    payment_id: props.payments[0].id,
-    payment_code: props.payments[0].code,
+    payment_id: voidPaymentObject.id,
+    payment_code: voidPaymentObject.code,
     send_update_log_id: props.sendUpdate?.id ?? null,
   };
 
@@ -3600,7 +3657,7 @@ const voidPayment = () => {
     .post(`/payments/${props.quoteType}/void-payment`, data)
     .then(res => {
       voidPaymentProcess.value = false;
-      voidPaymentModel.value = false;
+      voidPaymentModelPopup.value = false;
       if (res.data.status === false) {
         notification.error({
           title: res.data.message,
@@ -3645,7 +3702,6 @@ const fetchInsurerAMLStatus = async () => {
       },
     });
     NProgress.done();
-    console.log('insurerAMLStatus:', response.data);
     if (response.data?.status) {
       notification.error({
         title: response.data?.message,
@@ -4090,7 +4146,8 @@ onBeforeMount(() => {
                                 color="orange"
                                 outlined
                                 @click="
-                                  !isAmlVerified() || !isKycVerified()
+                                  !props.sendUpdate &&
+                                  (!isAmlVerified() || !isKycVerified())
                                     ? openAmlVerificationModal()
                                     : getCaptureValidation(item)
                                       ? editPaymentModal(item, 0, 0, 2)
@@ -4102,12 +4159,12 @@ onBeforeMount(() => {
                               </x-button>
                             </template>
                           </template>
-                          <template v-if="isVoidPaymentEnabled">
+                          <template v-if="isVoidPaymentEnabled(item)">
                             <x-button
                               size="xs"
                               color="orange"
                               outlined
-                              @click="voidPaymentModel = true"
+                              @click="voidPaymentModel(item)"
                             >
                               Void
                             </x-button>
@@ -4961,6 +5018,7 @@ onBeforeMount(() => {
                 </x-field>
               </div>
             </div>
+
             <x-divider class="mb-4 mt-10" />
 
             <div
@@ -5492,6 +5550,44 @@ onBeforeMount(() => {
                         ? splitPaymentRecord.verified_at
                         : 'N/A'
                     }}
+                  </div>
+                </div>
+
+                <div class="flex w-full custombreak">
+                  <div class="w-1/6 px-2 text-center"></div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Receipt ID</span
+                      >
+                    </span>
+                  </div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Auth Code</span
+                      >
+                    </span>
+                  </div>
+                  <div class="w-1/5 px-2">
+                    <span class="text-sm">
+                      <span class="border-b-2 border-solid border-black text-sm"
+                        >Charge ID</span
+                      >
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex w-full custombreak pb-5">
+                  <div class="w-1/6 px-2 text-center"></div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord.payment_receipt_id ?? 'N/A' }}
+                  </div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord.payment_auth_code ?? 'N/A' }}
+                  </div>
+                  <div class="w-1/5 px-2">
+                    {{ splitPaymentRecord?.payment_charges?.transaction_id }}
                   </div>
                 </div>
 
@@ -6450,7 +6546,9 @@ onBeforeMount(() => {
             </div>
             <div class="mt-2 text-center">
               <Link
-                :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+                :href="`/kyc/aml/${
+                  page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+                }/details/${props.quoteRequest.id}`"
               >
                 <x-tooltip>
                   <x-button
@@ -6596,8 +6694,9 @@ onBeforeMount(() => {
             </x-form>
           </div>
         </div>
+
         <x-modal
-          v-model="voidPaymentModel"
+          v-model="voidPaymentModelPopup"
           size="lg"
           title="Void Authorized Payment"
           show-close

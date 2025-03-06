@@ -557,11 +557,13 @@ class SageApiService
 
         // This block is for collection type INSURER and having any Credit Card Payment
         // This specific block is added to handle tap payments
-        $hasAnyCCPayment = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
+        $unpaidPaymentCount = $paymentSplits->whereNotIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])
             ->where('payment_method', PaymentMethodsEnum::CreditCard)
-            ->count() > 0;
-        info($payment->code.' Policy Book : postBookPolicyToSage : hasAnyCCPayment : '.$hasAnyCCPayment.' And collection type is : '.$payment->collection_type);
-        if ($payment->isInsurerPayment() && $hasAnyCCPayment && ! $payment->isGIGInsurer($quoteTypeId, $quote)) {
+            ->select('id')
+            ->count();
+        $isInsurerPayment = $payment->isInsurerPayment();
+        info($payment->code.' Policy Book : postBookPolicyToSage : unpaid payment count : '.$unpaidPaymentCount.' And collection type is : '.$payment->collection_type);
+        if ($isInsurerPayment && $unpaidPaymentCount > 0) {
             info('Skipping Policy Book & Authorizing payment for '.$payment->code);
             $successMessage = $this->handleSplitPaymentApproval($quoteTypeId, $quote, $payment, $paymentSplits);
             if (! $successMessage) {
@@ -580,7 +582,9 @@ class SageApiService
                 ]
             );
 
-            return ['status' => false, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
+            return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
+        } else {
+            info($payment->code.' Capture payment process skip & proceeding with Policy Book proceess unpaid payment count is: '.$unpaidPaymentCount.' and is Insurer Payment'.$isInsurerPayment);
         }
 
         // Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.

@@ -15,72 +15,73 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-        $this->seedBirdWorkflowUrls();
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
-            [
-                'value' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
+        // $this->seedBirdWorkflowUrls();
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
+        //     [
+        //         'value' => 0,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
 
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
-            [
-                'value' => '2024-12-01',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
+        //     [
+        //         'value' => '2024-12-01',
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
 
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL],
-            [
-                'value' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY],
-            [
-                'value' => 'PFW43eLvGkOFh521QmolXW1fTLpT5C3Z3hiA',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-            [
-                'value' => 0,
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        );
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-            [
-                'value' => 0,
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        );
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
-            [
-                'value' => 'newleadpool@insurancemarket.ae',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL],
+        //     [
+        //         'value' => 0,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY],
+        //     [
+        //         'value' => 'PFW43eLvGkOFh521QmolXW1fTLpT5C3Z3hiA',
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //         'is_active' => 1,
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+        //     [
+        //         'value' => 0,
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
+        //     [
+        //         'value' => 0,
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        // ApplicationStorage::firstOrCreate(
+        //     ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
+        //     [
+        //         'value' => 'newleadpool@insurancemarket.ae',
+        //         'is_active' => 1,
+        //         'created_at' => now(),
+        //         'updated_at' => now(),
+        //     ],
+        // );
+        $this->seedBenchmarking();
     }
 
     private function seedBirdWorkflowUrls()
@@ -237,6 +238,15 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/5fd51eb0-a17a-43d4-b9a8-11910469e7ac/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedUnavailableTimeThreshold()
@@ -245,6 +255,29 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::USER_UNAVAILABLE_TIME_THRESHOLD],
             [
                 'value' => 120,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    public function seedBenchmarking()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BENCHMARKING_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS],
+            [
+                'value' => 5000,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

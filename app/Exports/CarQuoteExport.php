@@ -13,7 +13,7 @@ class CarQuoteExport
 
     public function collection()
     {
-        return app(CarQuoteService::class)->getGridData()->select(
+        return app(CarQuoteService::class)->getGridDataOld()->select(
             'cqr.code',
             'qb.name as quote_batch_id_text',
             'cqr.first_name',
