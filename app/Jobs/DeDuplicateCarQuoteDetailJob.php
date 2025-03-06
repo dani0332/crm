@@ -14,7 +14,7 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(protected $duplicates) {}
+    public function __construct(protected $duplicates, protected $tableName) {}
 
     /**
      * Execute the job.
@@ -26,7 +26,7 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
         if ($isScriptStopped) {
             info('The Script has been Stopped');
         } else {
-            $tableName = 'car_quote_request_detail_duplicate';
+            $tableName = $this->tableName;
 
             $allIds = $this->duplicates->pluck('ids')
                 ->map(fn ($ids) => explode(',', $ids))

@@ -245,15 +245,16 @@ class ApiController extends Controller
     {
         $chunkSize = request('chunkSize', 10);
         $chunkSize = request('doOnlyIteration', true) ? 1 : $chunkSize;
+        $tableName = request('tableName', 'car_quote_request_detail_duplicate');
 
-        DB::table('car_quote_request_detail_duplicate')
+        DB::table($tableName)
             ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
             ->groupBy('car_quote_request_id')
             ->havingRaw('COUNT(car_quote_request_id) > 1')
             ->whereNull('is_deleted')
             ->orderBy('car_quote_request_id')
-            ->chunk($chunkSize, function ($duplicates) {
-                DeDuplicateCarQuoteDetailJob::dispatch($duplicates);
+            ->chunk($chunkSize, function ($duplicates) use ($tableName) {
+                DeDuplicateCarQuoteDetailJob::dispatch($duplicates, $tableName);
                 if (request('doOnlyIteration', true)) {
                     throw new Exception('One Iterartion Completed');
                 }
