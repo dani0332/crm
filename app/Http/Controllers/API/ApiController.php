@@ -19,7 +19,6 @@ use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
-use App\Jobs\DeDuplicateCarQuoteDetailJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
@@ -252,10 +251,11 @@ class ApiController extends Controller
 
             if ($isScriptStopped) {
                 info('The Script has been Stopped');
+
                 return 'Script stopped by configuration';
             }
 
-            info(self::class . ' - De-Duplication Job Started');
+            info(self::class.' - De-Duplication Job Started');
 
             $duplicates = DB::table($tableName)
                 ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
@@ -267,7 +267,8 @@ class ApiController extends Controller
                 ->get();
 
             if ($duplicates->isEmpty()) {
-                info(self::class . ' - No duplicates found to process');
+                info(self::class.' - No duplicates found to process');
+
                 return response()->json(['success' => true, 'message' => 'No duplicates found to process']);
             }
 
@@ -292,14 +293,14 @@ class ApiController extends Controller
                     $groupIDs = explode(',', $group->ids);
                     $query = $mainQuery->whereIn('id', $groupIDs);
                     $latestUpdatedRecord = $query->sortByDesc('updated_at')->first();
-                    
-                    if (!$latestUpdatedRecord) {
-                        throw new Exception('No latest record found for group: ' . $group->ids);
+
+                    if (! $latestUpdatedRecord) {
+                        throw new Exception('No latest record found for group: '.$group->ids);
                     }
 
                     $lastId = $latestUpdatedRecord->id;
 
-                    info(self::class . ' - Processing Group: ' . $group->ids . ' - Last ID: ' . $lastId);
+                    info(self::class.' - Processing Group: '.$group->ids.' - Last ID: '.$lastId);
 
                     $lastRecordData = (array) $latestUpdatedRecord;
                     $filteredRecords = $query->filter(fn ($record) => $record->id != $lastId)->values();
@@ -307,7 +308,7 @@ class ApiController extends Controller
                     $updatedData = [];
                     $recentAdvisorData = $query->sortByDesc('advisor_assigned_date')->first();
 
-                    if ($recentAdvisorData && !empty($recentAdvisorData)) {
+                    if ($recentAdvisorData && ! empty($recentAdvisorData)) {
                         $updatedData['advisor_assigned_by_id'] = $recentAdvisorData->advisor_assigned_by_id;
                         $updatedData['advisor_assigned_date'] = $recentAdvisorData->advisor_assigned_date;
                     }
@@ -315,11 +316,11 @@ class ApiController extends Controller
                     foreach ($filteredRecords as $record) {
                         $currentRecord = (array) $record;
                         foreach ($lastRecordData as $column => $lastValue) {
-                            if (!in_array($column, ['id', 'created_at', 'updated_at', 'car_quote_request_id', 'advisor_assigned_date', 'advisor_assigned_by_id']) &&
+                            if (! in_array($column, ['id', 'created_at', 'updated_at', 'car_quote_request_id', 'advisor_assigned_date', 'advisor_assigned_by_id']) &&
                                 (empty($lastValue) || is_null($lastValue)) &&
-                                !empty($currentRecord[$column]) &&
-                                !is_null($currentRecord[$column]) &&
-                                !array_key_exists($column, $updatedData)) {
+                                ! empty($currentRecord[$column]) &&
+                                ! is_null($currentRecord[$column]) &&
+                                ! array_key_exists($column, $updatedData)) {
                                 $updatedData[$column] = $currentRecord[$column];
                             }
                         }
@@ -331,10 +332,11 @@ class ApiController extends Controller
                     $filteredArray = array_diff($groupIDs, [$lastId]);
                     $lastGroupArray[] = implode(',', $filteredArray);
 
-                    info(self::class . ' - Group: ' . $group->ids . ' - Updated Record: ' . $lastId);
+                    info(self::class.' - Group: '.$group->ids.' - Updated Record: '.$lastId);
                 } catch (Exception $e) {
-                    info(self::class . ' - Error processing group ' . $group->ids . ': ' . $e->getMessage());
-                    return response()->json(['success' => false, 'message' => 'Error processing group ' . $group->ids . ': ' . $e->getMessage()]);
+                    info(self::class.' - Error processing group '.$group->ids.': '.$e->getMessage());
+
+                    return response()->json(['success' => false, 'message' => 'Error processing group '.$group->ids.': '.$e->getMessage()]);
                 }
             }
 
@@ -346,22 +348,25 @@ class ApiController extends Controller
                     ->values()
                     ->toArray();
 
-                if (!empty($deleteAt)) {
+                if (! empty($deleteAt)) {
                     DB::table($tableName)->whereIn('id', $deleteAt)->update(['is_deleted' => true]);
                 }
             } catch (Exception $e) {
-                info(self::class . ' - Error deleting records: ' . $e->getMessage());
-                return response()->json(['success' => false, 'message' => 'Error deleting records: ' . $e->getMessage()]);
+                info(self::class.' - Error deleting records: '.$e->getMessage());
+
+                return response()->json(['success' => false, 'message' => 'Error deleting records: '.$e->getMessage()]);
             }
 
-            info(self::class . ' - De-Duplication Job Completed');
+            info(self::class.' - De-Duplication Job Completed');
 
             sleep(request('sleepTime', 2));
+
             return 'De-duplication completed successfully';
 
         } catch (Exception $e) {
-            info(self::class . ' - Fatal error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Fatal error: ' . $e->getMessage()]);
+            info(self::class.' - Fatal error: '.$e->getMessage());
+
+            return response()->json(['success' => false, 'message' => 'Fatal error: '.$e->getMessage()]);
         }
     }
 
