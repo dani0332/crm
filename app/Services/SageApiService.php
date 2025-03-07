@@ -773,9 +773,10 @@ class SageApiService
 
         foreach ($paymentSplits as $paymentSplit) {
 
-            if($paymentSplit->payment_method == PaymentMethodsEnum::CreditApproval){
+            if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditApproval) {
                 info('SAGE API :  Quote Code : '.$quote->code.' Posting of prepayment skipped due to credit approval :  '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
                 $postedReceiptStatus[] = ['status' => true, 'message' => 'Posting of prepayment skipped due to credit approval : '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no];
+
                 continue;
             }
 
