@@ -2440,7 +2440,7 @@ const addPayment = isValid => {
       });
     return;
   }
-  if (props.isPlanDetailSectionEnabled){
+  if (props.isPlanDetailSectionEnabled) {
     data.plan_id = null;
   }
   if (paymentMethodsForm.status === 'edit') {
