@@ -247,7 +247,7 @@ class ApiController extends Controller
         $chunkSize = request('doOnlyIteration', true) ? 1 : $chunkSize;
         $tableName = request('tableName', 'car_quote_request_detail_duplicate');
 
-        if(request('debug') === true) {
+        if (request('debug') === true) {
             dump($chunkSize, $tableName);
         }
 
