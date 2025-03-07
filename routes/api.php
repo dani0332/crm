@@ -31,6 +31,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
     Route::get('/imcrm/quote/{quoteUuid}/{quoteType}/auto-capture-failed', [ApiController::class, 'markAutoCaptureFailed']);
+    Route::post('duplicate-entires', [ApiController::class, 'duplicateEntires']);
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
@@ -64,7 +65,6 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
-    Route::get('duplicate-entires', [ApiController::class, 'duplicateEntires']);
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
