@@ -11,6 +11,8 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
 {
     use Queueable;
 
+    public $timeout = 120;
+
     /**
      * Create a new job instance.
      */
