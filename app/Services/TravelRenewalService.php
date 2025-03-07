@@ -106,7 +106,7 @@ class TravelRenewalService extends BaseService
         $destinationIds = collect($quote->TravelDestinations)->pluck('destination_id')->toArray();
         if (count($destinationIds) < 1) {
             info(self::class." - TravelRenewalService No destination found for Ref-ID: {$quote->uuid} | Time:".now());
-            $destinationIds = $this->getDestinationId($quote->regionCoverFor);
+            $destinationIds = $this->getDestinationId($quote->regionCoverFor,$quote->uuid);
         }
 
         $members = $this->mapCustomerMembers($quote->customerMembers, $quote->primary_member_id) ?? [];
@@ -155,7 +155,7 @@ class TravelRenewalService extends BaseService
             info(self::class.' - '.json_encode($logData).' | Time: '.now());
         }
     }
-    public function getDestinationId($regionCoverFor)
+    public function getDestinationId($regionCoverFor,$quoteUID)
     {
         $regionMapping = [
             RegionCoverEnum::SCHENGEN => RegionCoverEnum::NORWAY,
@@ -163,10 +163,10 @@ class TravelRenewalService extends BaseService
             RegionCoverEnum::WORLDWIDE_INCL_US_CANADA => RegionCoverEnum::UNITED_STATES,
         ];
         $countryCode = $regionMapping[$regionCoverFor->code];
-        info(self::class." - TravelRenewalService Mapping destination for country code: {$countryCode} | Time:".now());
+        info(self::class." - TravelRenewalService Mapping destination for country code: {$countryCode} quote Ref-ID: {$quoteUID} | Time:".now());
         $destination = Nationality::where('code', $countryCode)->first();
         $countryName = $destination->country_name ?? '';
-        info(self::class." - TravelRenewalService Destination found for country: {$countryName} | Time:".now());
+        info(self::class." - TravelRenewalService Destination found for country: {$countryName} quote Ref-ID: {$quoteUID} | Time:".now());
 
         return [$destination->id ?? null];
     }
