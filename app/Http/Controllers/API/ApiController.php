@@ -244,7 +244,6 @@ class ApiController extends Controller
     public function duplicateEntires()
     {
         $chunkSize = request('chunkSize', 10);
-        $chunkSize = request('doOnlyIteration', true) ? 1 : $chunkSize;
         $tableName = request('tableName', 'car_quote_request_detail_duplicate');
         $queue = request('queue', 'default');
 
