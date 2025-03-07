@@ -1019,16 +1019,7 @@ class CarQuoteService extends BaseService
             ->when(! request()->filled('code') && ! request()->filled('email') && ! request()->filled('mobile_no') && ! request()->filled('created_at') && ! request()->filled('payment_due_date') && ! request()->filled('booking_date') && ! request()->filled('previous_quote_policy_number') && ! request()->filled('renewal_batch') && ! request()->filled('insurer_tax_invoice_number') && ! request()->filled('insurer_commission_tax_invoice_number') && ! request()->filled('created_at_start'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(now(), true), $this->parseDate(now(), false)]);
             })
-            ->when(isset(request()->created_at) && request()->created_at != ''
-            && empty(request()->email)
-            && empty(request()->code)
-            && empty(request()->renewal_batch)
-            && empty(request()->quote_batch_id)
-            && empty(request()->payment_due_date)
-            && empty(request()->booking_date)
-            && ! isset(request()->previous_quote_policy_number)
-            && ! isset(request()->insurer_tax_invoice_number)
-            && ! isset(request()->insurer_commission_tax_invoice_number) && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
+            ->when(empty(request()->email) && empty(request()->code) && empty(request()->renewal_batch) && empty(request()->quote_batch_id) && empty(request()->payment_due_date) && empty(request()->booking_date) && ! isset(request()->previous_quote_policy_number) && ! isset(request()->insurer_tax_invoice_number) && ! isset(request()->insurer_commission_tax_invoice_number) && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
             })
             ->when(request('email'), function ($query) {
