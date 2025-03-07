@@ -1225,20 +1225,16 @@ class SplitPaymentService
             ->first();
     }
 
-    public function validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, $businessTypeId = null, $planId = null)
+    public function validateAuthorizedPayment($validator, $code)
     {
 
-        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
-
-        if (! $isCreditCardEnabled) {
-            $payment = Payment::where('code', $code)->with('paymentSplits')->first();
-            // Get insurance provider details
-            if ($payment && $payment->isInsurerPayment()) {
-                $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
-                if ($hasAnyAuthorizedPayment) {
-                    $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
-                }
+        $payment = Payment::where('code', $code)->with('paymentSplits')->first();
+        
+        // Get insurance provider details
+        if ($payment && $payment->isInsurerPayment()) {
+            $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
+            if ($hasAnyAuthorizedPayment) {
+                $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
             }
         }
     }

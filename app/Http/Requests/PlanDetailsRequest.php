@@ -66,7 +66,7 @@ class PlanDetailsRequest extends FormRequest
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 
-            app(SplitPaymentService::class)->validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, $businessTypeId);
+            app(SplitPaymentService::class)->validateAuthorizedPayment($validator, $code);
         });
     }
 }
