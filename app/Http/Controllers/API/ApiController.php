@@ -18,6 +18,7 @@ use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\DeDuplicateCarQuoteDetailJob;
 use App\Jobs\FixQuoteStatusDate;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
@@ -32,8 +33,10 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -236,6 +239,27 @@ class ApiController extends Controller
     public function Ken2Connectivity()
     {
         return Ken::renewalRequest('/get-connectivity-check', 'get');
+    }
+
+    public function duplicateEntires()
+    {
+        $chunkSize = request('chunkSize', 10);
+        $chunkSize = request('doOnlyIteration', true) ? 1 : $chunkSize;
+        $tableName = request('tableName', 'car_quote_request_detail_duplicate');
+
+        DB::table($tableName)
+            ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
+            ->groupBy('car_quote_request_id')
+            ->havingRaw('COUNT(car_quote_request_id) > 1')
+            ->whereNull('is_deleted')
+            ->orderBy('car_quote_request_id')
+            ->chunk($chunkSize, function ($duplicates) use ($tableName) {
+                DeDuplicateCarQuoteDetailJob::dispatch($duplicates, $tableName);
+                if (request('doOnlyIteration', true)) {
+                    throw new Exception('One Iterartion Completed');
+                }
+                sleep(request('sleepTime', 2));
+            });
     }
 
     public function markAutoCaptureFailed($quoteUuid, $quoteType)
