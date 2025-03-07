@@ -1147,6 +1147,7 @@ class CentralService extends BaseService
      */
     private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
     {
+        // Capture are enabled for the following providers
         $enabledProviders = [
             InsurerProviderEnum::GIG_INSURANCE,
             InsurerProviderEnum::RAK_INSURANCE,
@@ -1156,6 +1157,11 @@ class CentralService extends BaseService
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
         ];
 
+        // Capture is enabled for the Orient and Travel
+        if ($quoteTypeId == QuoteTypeId::Travel) {
+            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+        }
+
         //        if ($quoteTypeId == QuoteTypeId::Health) {
         //            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
         //        }
@@ -1164,9 +1170,6 @@ class CentralService extends BaseService
         //            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
         //        }
         //
-        //        if ($quoteTypeId == QuoteTypeId::Travel) {
-        //            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
-        //        }
 
         return in_array($insuranceProviderCode, $enabledProviders);
     }
