@@ -1417,7 +1417,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails', 'quote'],
   });
 };
 

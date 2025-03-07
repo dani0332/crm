@@ -1653,6 +1653,7 @@ const handlePlanSelected = plan => {
       'ecomDetails',
       'coPayment',
       'bookPolicyDetails',
+      'quote'
     ],
   });
 };
