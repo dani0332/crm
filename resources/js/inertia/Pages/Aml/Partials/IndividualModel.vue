@@ -193,8 +193,14 @@ const submitQuoteUpdateForm = isValid => {
   insuredFormDetails.get(`${props.quoteDetails.id}/quoteUpdate`, {
     preserveScroll: true,
     onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
       notification.error({
-        title: errors.error || 'Quote not updated',
+        title: 'Quote not updated',
         position: 'top',
       });
     },
@@ -763,7 +769,10 @@ watch(
           </div>
           <x-field
             label="Email in GIG portal"
-            v-if="quoteType.id === page.props.quoteTypeIdEnum.Car"
+            v-if="
+              quoteType.id === page.props.quoteTypeIdEnum.Car ||
+              quoteType.id === page.props.quoteTypeIdEnum.Bike
+            "
           >
             <x-input
               v-model="insuredFormDetails.get_quote_email_gig"
