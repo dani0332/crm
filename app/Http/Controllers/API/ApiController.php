@@ -246,6 +246,7 @@ class ApiController extends Controller
         $chunkSize = request('chunkSize', 10);
         $chunkSize = request('doOnlyIteration', true) ? 1 : $chunkSize;
         $tableName = request('tableName', 'car_quote_request_detail_duplicate');
+        $queue = request('queue', 'default');
 
         if (request('debug') === true) {
             dump($chunkSize, $tableName);
@@ -259,19 +260,19 @@ class ApiController extends Controller
                 $q->whereNull('is_deleted')->orWhere('is_deleted', 0);
             })
             ->orderBy('car_quote_request_id')
-            ->chunk($chunkSize, function ($duplicates) use ($tableName) {
+            ->chunk($chunkSize, function ($duplicates) use ($tableName, $queue) {
                 $isScriptStopped = getAppStorageValueByKey(ApplicationStorageEnums::STOP_DE_DUPLICATION_JOB) == 1;
 
                 if ($isScriptStopped) {
-                    info('The Script has been Stopped');
+                    info(self::class.'::duplicateEntires - The Script has been Stopped');
                 }
 
                 if (request('debug') === true) {
                     dd($duplicates);
                 }
 
-                info('Going to dispatch DeDuplicateCarQuoteDetailJob for '.count($duplicates).' records');
-                DeDuplicateCarQuoteDetailJob::dispatch($duplicates, $tableName);
+                info(self::class.'::duplicateEntires - Going to dispatch DeDuplicateCarQuoteDetailJob for '.count($duplicates).' records');
+                DeDuplicateCarQuoteDetailJob::dispatch($duplicates, $tableName)->onQueue($queue);
                 if (request('doOnlyIteration', true)) {
                     dd('One Iteration Completed');
                 }
