@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
@@ -33,7 +34,6 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -247,6 +247,10 @@ class ApiController extends Controller
         $chunkSize = request('doOnlyIteration', true) ? 1 : $chunkSize;
         $tableName = request('tableName', 'car_quote_request_detail_duplicate');
 
+        if (request('debug') === true) {
+            dump($chunkSize, $tableName);
+        }
+
         DB::table($tableName)
             ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
             ->groupBy('car_quote_request_id')
@@ -254,9 +258,20 @@ class ApiController extends Controller
             ->whereNull('is_deleted')
             ->orderBy('car_quote_request_id')
             ->chunk($chunkSize, function ($duplicates) use ($tableName) {
+                $isScriptStopped = getAppStorageValueByKey(ApplicationStorageEnums::STOP_DE_DUPLICATION_JOB) == 1;
+
+                if ($isScriptStopped) {
+                    info('The Script has been Stopped');
+                }
+
+                if (request('debug') === true) {
+                    dd($duplicates);
+                }
+
+                info('Going to dispatch DeDuplicateCarQuoteDetailJob for '.count($duplicates).' records');
                 DeDuplicateCarQuoteDetailJob::dispatch($duplicates, $tableName);
                 if (request('doOnlyIteration', true)) {
-                    throw new Exception('One Iterartion Completed');
+                    dd('One Iteration Completed');
                 }
                 sleep(request('sleepTime', 2));
             });
