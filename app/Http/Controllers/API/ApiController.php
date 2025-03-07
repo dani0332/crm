@@ -254,6 +254,10 @@ class ApiController extends Controller
             ->whereNull('is_deleted')
             ->orderBy('car_quote_request_id')
             ->chunk($chunkSize, function ($duplicates) use ($tableName) {
+                if (request('debug') === true) {
+                    dd($duplicates);
+                }
+                info('Going to dispatch DeDuplicateCarQuoteDetailJob for '.count($duplicates).' records');
                 DeDuplicateCarQuoteDetailJob::dispatch($duplicates, $tableName);
                 if (request('doOnlyIteration', true)) {
                     throw new Exception('One Iterartion Completed');
