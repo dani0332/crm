@@ -12,6 +12,7 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
     use Queueable;
 
     public $timeout = 120;
+    public $tries = 1;
 
     /**
      * Create a new job instance.
@@ -28,7 +29,7 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
         if ($isScriptStopped) {
             info('The Script has been Stopped');
         } else {
-            info('De-Duplication Job Started');
+            info(self::class.' - De-Duplication Job Started');
 
             $tableName = $this->tableName;
 
@@ -53,6 +54,9 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
                 $latestUpdatedRecord = $query->sortByDesc('updated_at')->first();
 
                 $lastId = $latestUpdatedRecord->id;
+
+                info(self::class.' - Processing Group: '.$group->ids.' - Last ID: '.$lastId);
+
                 $lastRecordData = (array) $latestUpdatedRecord;
 
                 $filteredRecords = $query->filter(function ($record) use ($lastId) {
@@ -90,6 +94,8 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
 
                 $filteredArray = array_diff($groupIDs, [$lastId]);
                 $lastGroupArray[] = implode(',', $filteredArray);
+
+                info(self::class.' - Group: '.$group->ids.' - Updated Record: '.$lastId);
             }
 
             $deleteAt = collect($lastGroupArray)
@@ -100,6 +106,8 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
                 ->toArray();
 
             DB::table($tableName)->whereIn('id', $deleteAt)->update(['is_deleted' => true]);
+
+            info(self::class.' - De-Duplication Job Completed');
         }
     }
 }
