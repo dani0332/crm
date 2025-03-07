@@ -37,7 +37,9 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
                 ->values()
                 ->toArray();
 
-            $mainQuery = DB::table($tableName)->whereIn('id', $allIds)->whereNull('is_deleted')->get();
+            $mainQuery = DB::table($tableName)->whereIn('id', $allIds)->where(function ($q) {
+                $q->whereNull('is_deleted')->orWhere('is_deleted', 0);
+            })->get();
 
             $lastGroupArray = [];
 
