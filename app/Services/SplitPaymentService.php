@@ -177,34 +177,35 @@ class SplitPaymentService
                 }
             }
 
-            $isLiveApiCallStep4 = true;
-            $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
-            if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == 'success') {
-                $isLiveApiCallStep4 = false;
-                $postedResponse = json_decode($sageLogArray[4]['response'], true);
-            } else {
-                $postedResponse = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
-                $postedResponse = json_decode($postedResponse, true);
-            }
-
-            if ($isAlreadyPosted && isset($aRPostReceipts)) {
-                $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
-            } else {
-                if (isset($postedResponse['error'])) {
-                    info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber']);
-                    $returnMessage['response'] = 'Error while posting to sage - Ref:'.$quote->code;
-                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
-
-                    return $returnMessage;
-                } else {
-                    if ($isLiveApiCallStep4) {
-                        $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
-                    }
-                }
-            }
+            // Reminder:: Please do not remove this code until all cases works fine on PROD
+            //            $isLiveApiCallStep4 = true;
+            //            $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
+            //            if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == 'success') {
+            //                $isLiveApiCallStep4 = false;
+            //                $postedResponse = json_decode($sageLogArray[4]['response'], true);
+            //            } else {
+            //                $postedResponse = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+            //                $postedResponse = json_decode($postedResponse, true);
+            //            }
+            //
+            //            if ($isAlreadyPosted && isset($aRPostReceipts)) {
+            //                $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
+            //            } else {
+            //                if (isset($postedResponse['error'])) {
+            //                    info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber']);
+            //                    $returnMessage['response'] = 'Error while posting to sage - Ref:'.$quote->code;
+            //                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
+            //
+            //                    return $returnMessage;
+            //                } else {
+            //                    if ($isLiveApiCallStep4) {
+            //                        $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
+            //                    }
+            //                }
+            //            }
 
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
-            info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments: Successfully created and posted receipt');
+            info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments: Successfully created receipt');
             $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];
         } else {
             info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments Error: Document number not generated from Sage');
