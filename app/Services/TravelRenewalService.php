@@ -106,7 +106,7 @@ class TravelRenewalService extends BaseService
         $destinationIds = collect($quote->TravelDestinations)->pluck('destination_id')->toArray();
         if (count($destinationIds) < 1) {
             info(self::class." - TravelRenewalService No destination found for Ref-ID: {$quote->uuid} | Time:".now());
-            $destinationIds = $this->getDestinationId($quote->regionCoverFor,$quote->uuid);
+            $destinationIds = $this->getDestinationId($quote->regionCoverFor, $quote->uuid);
         }
 
         $members = $this->mapCustomerMembers($quote->customerMembers, $quote->primary_member_id) ?? [];
@@ -155,7 +155,7 @@ class TravelRenewalService extends BaseService
             info(self::class.' - '.json_encode($logData).' | Time: '.now());
         }
     }
-    public function getDestinationId($regionCoverFor,$quoteUID)
+    public function getDestinationId($regionCoverFor, $quoteUID)
     {
         $regionMapping = [
             RegionCoverEnum::SCHENGEN => RegionCoverEnum::NORWAY,
