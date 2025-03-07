@@ -67,6 +67,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isPlanDetailSectionEnabled: {
+    type: Boolean,
+    default: false,
+  },
   bookPolicyDetails: {
     type: Array,
     default: [],
@@ -2436,7 +2440,9 @@ const addPayment = isValid => {
       });
     return;
   }
-
+  if (props.isPlanDetailSectionEnabled) {
+    data.plan_id = null;
+  }
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
