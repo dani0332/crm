@@ -21,6 +21,7 @@ use App\Http\Requests\LifeQuoteRequest;
 use App\Services\Life\LifeQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Inertia\ResponseFactory;
+use Illuminate\Support\Facades\DB;
 
 class LifeController extends Controller
 {
