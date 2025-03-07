@@ -99,7 +99,7 @@ const onSubmit = isValid => {
     .then(res => {
       console.log(res)
       if (res.status == 200) {
-        emit('success');
+        // emit('success');
 
         notification.success({
           title: res.data.message,
@@ -117,7 +117,7 @@ const onSubmit = isValid => {
           title: res?.data?.message ?? '',
           position: 'top',
         });
-        emit('error', res.data);
+        // emit('error', res.data);
       }
     })
     .catch(err => {

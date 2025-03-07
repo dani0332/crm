@@ -14,6 +14,7 @@ const props = defineProps({
 
 const { isRequired } = useRules();
 
+
 const shown = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
@@ -147,10 +148,11 @@ const onSubmit = isValid => {
     .catch(err => {
       emit('error');
       extraAttr.loading = false;
-      notification.error({
-          title: err.response.data.message,
-          position: 'top',
-      });
+      // notification.error({
+      //     title: err.response.data.message,
+      //     position: 'top',
+      // });
+      errorMessage.value = err.response.data.message
     })
     .finally(() => {
       extraAttr.loading = false;
@@ -330,6 +332,7 @@ const getInputRules = (rider) => {
                 v-model="editForm.isManualPlan"
                 color="success"
                 label="Manual"
+                disabled
               />
             </div>
 
@@ -579,6 +582,12 @@ const getInputRules = (rider) => {
   <template v-if="selectedTabIndex == 0">
     <x-divider></x-divider>
       <div class="flex justify-between gap-4 mt-4">
+          <div class="flex-col">
+            <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
+
+          </div>
+      </div>
+      <div class="flex justify-between gap-4 mt-4">
         <!-- Price section aligned to the left -->
         <div class="flex flex-row">
           <dt class="font-bold text-lg ml-4">Total Price:</dt>
@@ -607,7 +616,7 @@ const getInputRules = (rider) => {
       <div class="flex justify-between gap-4 mt-4">
         <!-- Price section aligned to the left -->
         <div class="flex flex-col">
-          <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
+        <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
         <div class="flex flex-row">
           <dt class="font-bold text-sm ml-4">Total Price:</dt>
           <dd class="text-sm">&nbsp; AED {{ editForm.actualPremium }}</dd>

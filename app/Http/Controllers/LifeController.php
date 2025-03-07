@@ -87,7 +87,8 @@ class LifeController extends Controller
         /* End - Temporarily adding for correcting historic data */
 
         $data = $this->lifeQuoteService->getShowData($uuid);
-
+        
+        
         return inertia('LifeQuote/Show', $data);
     }
 
@@ -161,9 +162,10 @@ class LifeController extends Controller
         $request->validate([
             'planId' => 'required',
             'quoteId' => 'required',
+            'version' => 'required'
         ]);
 
-        return $this->lifeQuoteService->lifePlanSelected($request->quoteId, $request->planId);
+        return $this->lifeQuoteService->lifePlanSelected($request->quoteId, $request->planId, $request->version);
     }
 
     public function getLifeProviderPlan(Request $request)

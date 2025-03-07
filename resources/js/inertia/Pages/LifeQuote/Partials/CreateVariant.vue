@@ -137,12 +137,12 @@ const onSubmit = isValid => {
       formData: createForm,
     })
     .then(res => {
-      emit('success');
+      // emit('success');
 
-      // notification.success({
-      //   title: res.data.message,
-      //   position: 'top',
-      // });
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
 
       shown.value = false;
 

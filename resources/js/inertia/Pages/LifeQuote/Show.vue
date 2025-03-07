@@ -12,6 +12,7 @@ import { watch } from 'vue';
 
 const page = usePage();
 defineProps({
+  availablePlan: Object, 
   quote: Object,
   quoteStatuses: Object,
   quoteType: String,
@@ -63,7 +64,7 @@ const modelClass = 'App\\Models\\PersonalQuote';
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const quoteStatusEnum = page.props.quoteStatuses;
-const selectPlanLoader = ref(false);
+const selectPlanLoader = ref({});  
 const emit = defineEmits(['success', 'error']);
 const modals = reactive({
   duplicate: false,
@@ -87,6 +88,8 @@ const loader = ref({
 });
 
 const selectedProviderPlan = page.props.quote.plan_id; 
+const selectedProviderPlanVersion = page.props?.availablePlan?.quotes?.version ?? 0; 
+
 
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
   createReusableTemplate();
@@ -734,14 +737,16 @@ const confirmSendEmail = () => {
   const last_name = page.props.quote.last_name || '';
 };
 
-const selectPlan = (planId, quoteId) => {
-  selectPlanLoader.value = true;
+const selectPlan = (planId, quoteId, version) => {
+  const loaderKey = `${planId}-${version}`; 
+  selectPlanLoader.value[loaderKey] = true;
   axios.post('/personal-quotes/life-plan-selected', {
     planId: planId,
-    quoteId: quoteId
+    quoteId: quoteId, 
+    version: version
   })
   .then(response => {
-    selectPlanLoader.value = false;  
+    selectPlanLoader.value[loaderKey] = false;
     notification.success({
         title: 'Plan selected successfully',
         position: 'top',
@@ -764,8 +769,8 @@ const selectPlan = (planId, quoteId) => {
       });
       console.log('error', error)
       emit('error'); 
-      selectPlanLoader.value = false;
-  });
+      selectPlanLoader.value[loaderKey] = true;
+    });
   
 }
 
@@ -1741,23 +1746,23 @@ const getBMITag = () => {
                   </x-button>
                   <span>
                     <x-button
-                    v-if="selectedProviderPlan != item.planId"
-                      size="xs"
-                      color="emerald"
-                      outlined
-                      :loading="selectPlanLoader"
-                      @click.prevent="selectPlan(item.planId, page.props.quote.uuid)"
-                    >Select</x-button>
-                   
-                    <x-button
-                      v-else
+                    v-if="selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)"
                       size="xs"
                       color="orange"
                       outlined
                       :disabled="true"
-
+                    >Selected</x-button>
+                   
+                    <x-button
+                      v-else
+                      
+                      size="xs"
+                      color="emerald"
+                      outlined
+                      :loading="selectPlanLoader[`${item.planId}-${item.version}`]"                     
+                       @click.prevent="selectPlan(item.planId, page.props.quote.uuid, item.version)"
                     >
-                      Selected
+                      Select
                     </x-button>
                   </span>
                   <span v-if="!item.isUnderwritten">

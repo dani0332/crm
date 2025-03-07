@@ -423,6 +423,7 @@ class LifeQuoteService extends BaseService
             'ecomLifeInsuranceQuoteUrl' => $ecomLifeInsuranceQuoteUrl,
             'currencies' => $currencies,
             'lifeRiders' => $lifeRiders,
+            'availablePlan' => $this->getQuotePlans($uuid),
         ];
     }
 
@@ -640,6 +641,7 @@ class LifeQuoteService extends BaseService
             'isUW' => $data['isUW'],
             'plans' => [$data]
         ];
+       
 
         $response = app(abstract: KenService::class)->request('/save-manual-life-quote-plan', 'post', $reqData);
         return $response; 
@@ -705,11 +707,12 @@ class LifeQuoteService extends BaseService
     }
 
     /* This function will select the Plan details in the Quote */
-    function lifePlanSelected(String $quoteId, Int $planId){
+    function lifePlanSelected(String $quoteId, Int $planId, Int $version = 0){
         // Creating Form Data
         $formData = [
             'quoteUID' => $quoteId,
             'planId' => $planId, 
+            'version' => $version, 
             'quoteTypeId' => 4,
         ]; 
        $request = app(KenService::class)->request('/process-life-quote-plan', 'post',$formData); 
