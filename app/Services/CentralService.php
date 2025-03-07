@@ -450,6 +450,10 @@ class CentralService extends BaseService
             $lockFunctionalities['member_details'] = true;
         }
 
+        if(!empty($quote->authorized_at)) {
+            $lockFunctionalities['plan_selection'] = true;
+        }
+        
         // Lock functionality check for Lead status Section
         $lockedForQuoteStatus = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED];
         $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, $lockedForQuoteStatus);
