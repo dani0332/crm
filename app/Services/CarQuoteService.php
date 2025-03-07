@@ -1137,6 +1137,16 @@ class CarQuoteService extends BaseService
                         ->whereBetween('payment_due_date', [$start, $end]);
                 });
             })
+            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
+                $query->whereHas('payments', function ($q) {
+                    $q->where('insurer_tax_number', request('insurer_tax_invoice_number'));
+                });
+            })
+            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
+                $query->whereHas('payments', function ($q) {
+                    $q->where('insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
+                });
+            })
             ->when(request('booking_date'), function ($query) {
                 [$start, $end] = request('booking_date');
 
