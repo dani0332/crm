@@ -982,6 +982,11 @@ class CarQuoteService extends BaseService
             'created_at',
             'updated_at',
             'updated_by',
+            'policy_booking_date',
+            'transaction_approved_at',
+            'policy_expiry_date',
+            'insurer_aml_status',
+            'aml_status',
         ])->with([
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
