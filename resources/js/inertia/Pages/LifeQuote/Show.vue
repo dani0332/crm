@@ -1687,7 +1687,7 @@ const getBMITag = () => {
                     UW
                   </x-tag>
                   <x-tag
-                    v-else-if="isManualPlan"
+                    v-else-if="isManualPlan && !isApi"
                     size="xs"
                     color="error"
                     class="mt-0.5 text-[10px] bg-gray-200 text-gray-700 font-semibold px-2 py-1 rounded-md"

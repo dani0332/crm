@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { errorMessages } from 'vue/compiler-sfc';
 import moment from 'moment';
+import { reactify } from '@vueuse/core';
 const props = defineProps({
   uuid: String,
   insuranceProviders: Array,
@@ -28,9 +29,12 @@ let riders = props.lifeRiders.map(rider => ({
 
 const showInsurerError = ref(false);
 const showGetQuoteBtn = ref(false);
+const showSaveButton = ref(false);
+
 let selectedTabIndex = ref(0);
 let overallLoading = ref(0);
 let totalPrice = props.selectedPlan.actualPremium;  
+let errorMessage = ref(null)
 
 const formatDate = (timestamp) => {
   return moment(timestamp).format('DD-MM-YYYY HH:mm:ss');
@@ -47,6 +51,9 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const active = ref(false);
 
 const lifeCoverToggled = true;
+
+const notification = useNotifications('toast');
+
 
 const paymentTerms = [
   { value: 1, label: 'Monthly' },
@@ -70,11 +77,15 @@ const availableInsuranceProviders = computed(() => {
   });
 });
 
+const extraAttr = reactive({
+  getQuoteLoading: false,
+  loading:false,
+})
+
 const editForm = reactive({
   providerId: props?.selectedPlan?.providerId ?? null,
   planId: props?.selectedPlan?.planId ?? null,
-  loading: false,
-  isUW: props.selectedPlan?.isUW ?? 0,
+  isUW: props.selectedPlan?.isUW ?? false,
   currency: props.selectedPlan.currency,
   paymentTerm: props.selectedPlan?.paymentTerm ?? null,
   sumAssured: props.selectedPlan.sumInsured ?? 0, 
@@ -82,12 +93,16 @@ const editForm = reactive({
   actualPremium: props.selectedPlan.actualPremium ?? 0,
   insurerQuoteNo: props.selectedPlan.insurerQuoteNo ?? null,
   isVariant: false,
-  update: false,
-  isDisabled:props.selectedPlan.isDisabled,
-  loading: false,
+  update: true,
+  isDisabled:props.selectedPlan.isDisabled ?? false,
   isManualPlan: props.selectedPlan.isManualPlan,
-  getQuoteLoading:false
+  version: props.selectedPlan.version, 
+  isApi: props.selectedPlan.isApi, 
+  isManualUpdate: props.selectedPlan.isManualPlan ? true : false
 });
+
+let actualPremium = ref(parseFloat(props.selectedPlan.actualPremium)); 
+
 
 // Update the Plan (if it is manual)
 const onSubmit = isValid => {
@@ -95,12 +110,9 @@ const onSubmit = isValid => {
   if (!isValid) {
     return;
   }
-  editForm.loading = true;
+  extraAttr.loading = true;
   editForm.riders = ridersData.value;
 
-  console.log(editForm);
-  editForm.loading = false;
-  return;
   // remove loading from editForm
   // const data  = editForm.filter((item) => item !== 'loading');
   axios
@@ -109,24 +121,46 @@ const onSubmit = isValid => {
       formData: editForm,
     })
     .then(res => {
-      if (res.data == 200) {
-        emit('success');
+      extraAttr.loading = false;
+      if (res.status == 200) {
+        
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+
+        shown.value = false;
+
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+
       } else {
+
         emit('error', res.data);
+        notification.error({
+          title: 'Something went wrong',
+          position: 'top',
+        });
       }
     })
     .catch(err => {
       emit('error');
+      extraAttr.loading = false;
+      notification.error({
+          title: err.response.data.message,
+          position: 'top',
+      });
     })
     .finally(() => {
-      editForm.loading = false;
+      extraAttr.loading = false;
     });
 };
 
 // Get updated provider plan (API Mode only)
 
 const getQuote = () => {
-    editForm.getQuoteLoading = true;
+    extraAttr.getQuoteLoading = true;
     axios
     .post(`/personal-quotes/get-life-provider-plan`, {
         data: {
@@ -145,25 +179,32 @@ const getQuote = () => {
         }
     })
     .then(res => {
-      console.log('success response', res)
+        console.log('success response', res)
+        
         if (res.data.providerPlan.message) {
-            errorMessage = res.data.providerPlan.message;
+            errorMessage.value = res.data.providerPlan.message;
             return; 
         }
+
         if (res.data) {
             editForm.actualPremium = res.data.providerPlan.plan.actualPremium;
-            errorMessage = null;
+            actualPremium.value = res.data.providerPlan.plan.actualPremium;
+            errorMessage.value = null;
         }
         console.log('Error message', errorMessage); 
 
-        editForm.getQuoteLoading = false;
+        extraAttr.getQuoteLoading = false;
+        showGetQuoteBtn.value = false;
+        showSaveButton.value = true;
 
     })
     .catch(err => {
-      errorMessage = err.response.data.message;
+      console.log(err)
+      errorMessage.value = err.response.data.message;
+
     })
     .finally(() => {
-      editForm.getQuoteLoading = false;
+      extraAttr.getQuoteLoading = false;
     });
 };
 
@@ -171,6 +212,7 @@ const getQuote = () => {
 onMounted(() => {
   if (editForm.providerId) {
     ridersData.value = props.selectedPlan.riders.map(rider => ({
+          
             riderId: rider.id,
             active: rider.active ?? 0,
             price: rider.price ?? 0,
@@ -182,6 +224,29 @@ onMounted(() => {
     console.log(ridersData.value);
   }
 });
+
+const getRiderPrice = () => {
+  // Calculate the total price for active riders
+  return ridersData.value.filter(rider => rider.active == 1)  // Filter active riders
+    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.price) || 0), 0); // Sum the prices
+}
+
+// Calculate total price where active != 0
+watch(ridersData, (newRidersData) => {
+  console.log('Rider Data', ridersData)
+  // Calculate the total price for active riders
+  const totalActivePrice = newRidersData
+    .filter(rider => rider.active == parseInt(1))  // Filter active riders
+    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.price) || 0), 0); // Sum the prices
+
+    // Add the total active rider price to the actualPremium
+    actualPremium.value = parseFloat(editForm.actualPremium) + parseFloat(totalActivePrice);
+}, { deep: true });
+
+const handleActualPremium = () => {
+  const totalRider = getRiderPrice();
+  actualPremium.value = parseFloat(editForm.actualPremium) + parseFloat(totalRider);
+}
 
 
 
@@ -205,6 +270,9 @@ const setActiveTab = (index, selected) => {
 
 };
 
+const getInputRules = (rider) => {
+  return parseInt(rider.active) == 1 ? [isRequired] : [];
+};
 
 </script>
 
@@ -249,14 +317,15 @@ const setActiveTab = (index, selected) => {
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             
             
-            <div :class="{'col-span-2': !editForm.isManualPlan}">
+            <div :class="{'col-span-2': editForm.isApi}">
               <x-toggle
                 v-model="editForm.isDisabled"
                 color="success"
                 label="Hide"
               />
             </div>
-            <div v-if="editForm.isManualPlan" class="grid sm:grid-cols-2 mb-3">
+
+            <div v-if="!editForm.isApi" class="grid sm:grid-cols-2 mb-3">
               <x-toggle
                 v-model="editForm.isManualPlan"
                 color="success"
@@ -294,7 +363,7 @@ const setActiveTab = (index, selected) => {
               <dt class="mt-2">Insurer Quote No.:</dt>
               <x-input
                 v-model="editForm.insurerQuoteNo"
-                :disabled="!editForm.isManualPlan"
+                :disabled="editForm.isApi"
                 :error="showInsurerError ? 'This field is required' : ''"
                 maxlength="50"
                 size="sm"
@@ -305,7 +374,8 @@ const setActiveTab = (index, selected) => {
               <dt class="mt-2">Price:</dt>
               <x-input
                 v-model="editForm.actualPremium"
-                :disabled="!editForm.isManualPlan"
+                :disabled="editForm.isApi"
+                @input="handleActualPremium"
                 size="sm"
                 type="number"
               />
@@ -317,7 +387,7 @@ const setActiveTab = (index, selected) => {
                 v-model="editForm.currency"
                 placeholder="AED"
                 class="w-full"
-                :disabled="!editForm.isManualPlan"
+                :disabled="editForm.isApi"
                 :options="
                     props.currencies?.map(currency => ({
                     value: currency.text,
@@ -332,7 +402,8 @@ const setActiveTab = (index, selected) => {
               <dt class="mt-2">Sum Assured:</dt>
               <x-input
                 v-model="editForm.sumAssured"
-                :disabled="!editForm.isManualPlan"
+                :disabled="editForm.isApi"
+                :rules="[isRequired]"
                 size="sm"
                 type="number"
               />
@@ -342,7 +413,8 @@ const setActiveTab = (index, selected) => {
               <dt class="mt-2">Policy Term:</dt>
               <x-input
                 v-model="editForm.policyTerm"
-                :disabled="!editForm.isManualPlan"
+                :disabled="editForm.isApi"
+                :rules="[isRequired]"
                 size="sm"
               />
             </div>
@@ -355,7 +427,7 @@ const setActiveTab = (index, selected) => {
                 placeholder="Select Payment Terms"
                 class="w-full"
                 :options="paymentTerms"
-                :disabled="!editForm.isManualPlan"
+                :disabled="editForm.isApi"
                 :rules="[isRequired]"
                 />
             </div>
@@ -382,10 +454,10 @@ const setActiveTab = (index, selected) => {
                             <div class="col-span-2">
                                 <span class="text-gray-700 font-bold">Price</span>
                             </div>
-                            <div class="col-span-2" v-if="editForm.isManualPlan">
+                            <div class="col-span-2" v-if="props.selectedPlan.isUnderwritten">
                                 <span class="text-gray-700 font-bold">Rider Loading</span>
                             </div>
-                            <div class="col-span-1" v-if="editForm.isManualPlan">
+                            <div class="col-span-1" v-if="props.selectedPlan.isUnderwritten">
                                 <span class="text-gray-700 font-bold">Final Price</span>
                             </div>
                         </div>
@@ -407,13 +479,14 @@ const setActiveTab = (index, selected) => {
                             <x-toggle v-model="lifeCoverToggled" color="emerald" size="lg" disabled/>
                           </div>
                           <div class="col-span-2">
-                            <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
+                            <x-input type="number" 
+                            class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
                           </div>
-                          <div class="col-span-2" v-if="editForm.isManualPlan">
+                          <div class="col-span-2" v-if="props.selectedPlan.isUnderwritten">
                             <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
                           </div>
                           <div class="col-span-1">
-                            <x-input type="number" v-if="editForm.isManualPlan" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
+                            <x-input type="number" v-if="props.selectedPlan.isUnderwritten" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
                           </div>
                         </div>
                         <div class="grid grid-cols-10 items-center gap-4 p-2" 
@@ -426,7 +499,9 @@ const setActiveTab = (index, selected) => {
                             </div>
 
                             <div class="col-span-2">
-                              <x-input :disabled="!rider.active" type="number" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
+                              <x-input :disabled="!rider.active" 
+                              :rules="parseInt(rider.active) == 1 ? isRequired : []" 
+                              type="number" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
                             </div>
 
                             <div>
@@ -437,11 +512,11 @@ const setActiveTab = (index, selected) => {
                               <x-input type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
                             </div>
 
-                            <div class="col-span-2" v-if="editForm.isManualPlan">
+                            <div class="col-span-2" v-if="props.selectedPlan.isUnderwritten">
                               <x-input type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.loading"/>
                             </div>
 
-                            <div class="col-span-1" v-if="editForm.isManualPlan">
+                            <div class="col-span-1" v-if="props.selectedPlan.isUnderwritten">
                               <x-input type="number" :disabled="true" class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
                             </div>
                         </div>
@@ -507,7 +582,7 @@ const setActiveTab = (index, selected) => {
         <!-- Price section aligned to the left -->
         <div class="flex flex-row">
           <dt class="font-bold text-lg ml-4">Total Price:</dt>
-          <dd class="text-lg">&nbsp; AED {{ props.selectedPlan.actualPremium }}</dd>
+          <dd class="text-lg">&nbsp; AED {{ actualPremium }}</dd>
         </div>
 
         <!-- Timestamps aligned to the right -->
@@ -519,80 +594,75 @@ const setActiveTab = (index, selected) => {
 
       <!-- Buttons section aligned to the right -->
       <div class="flex justify-end gap-4 mt-4">
-        <div v-if="editForm.isManualPlan">
-          <x-button type="submit" color="blue" :loading="editForm.loading">
+        <div v-if="!editForm.isApi">
+          <x-button type="submit" color="blue" :loading="extraAttr.loading">
             Save
-          </x-button>
-        </div>
-
-        <div v-if="showGetQuoteBtn && !editForm.isManualPlan">
-          <x-button type="button" @click="getQuote()" color="blue" :loading="editForm.getQuoteLoading">
-            Update Quotes
           </x-button>
         </div>
       </div>  
   </template>
 
-  <template v-else-if="selectedTabIndex == 1 && !editForm.isManualPlan">
+  <template v-else-if="selectedTabIndex == 1 && editForm.isApi">
     <x-divider></x-divider>
       <div class="flex justify-between gap-4 mt-4">
         <!-- Price section aligned to the left -->
+        <div class="flex flex-col">
+          <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
         <div class="flex flex-row">
-          <dt class="font-bold text-lg ml-4">Total Price:</dt>
-          <dd class="text-lg">&nbsp; AED {{ props.selectedPlan.actualPremium }}</dd>
+          <dt class="font-bold text-sm ml-4">Total Price:</dt>
+          <dd class="text-sm">&nbsp; AED {{ editForm.actualPremium }}</dd>
         </div>
-
+        
+      
+      </div>
         <!-- Timestamps aligned to the right -->
-        <div class="flex flex-col items-end">
-          <dd><strong>Created Date:</strong> {{ formatDate(props.selectedPlan.created_at) }}</dd>
-          <dd><strong>Updated at:</strong> {{ formatDate(props.selectedPlan.updated_at) }}</dd>
-        </div>
+        
       </div>
 
       <!-- Buttons section aligned to the right -->
       <div class="flex justify-end gap-4 mt-4">
-        <div v-if="editForm.isManualPlan">
-          <x-button type="submit" color="blue" :loading="editForm.loading">
+        <div v-if="showSaveButton">
+          <x-button type="submit" color="blue" :loading="extraAttr.loading">
             Save
           </x-button>
         </div>
 
-        <div v-if="showGetQuoteBtn && !editForm.isManualPlan">
-          <x-button type="button" @click="getQuote()" color="blue" :loading="editForm.getQuoteLoading">
+        <div v-else-if="showGetQuoteBtn">
+          <x-button type="button" @click="getQuote()" color="blue" :loading="extraAttr.getQuoteLoading">
             Update Quotes
           </x-button>
         </div>
       </div>  
   </template>
 
-  <template v-else-if="selectedTabIndex == 1 && editForm.isManualPlan">
-  <x-divider></x-divider>
-  <div class="flex justify-between gap-4 mt-4 items-center">
-    <!-- Main container pushed to the right -->
-    <div class="ml-auto flex items-center gap-4">
-      <!-- Overall Loading input field -->
-      <div class="flex items-center">
-        <span class="mr-2">Overall Loading:</span>
-        <input type="number" class="w-32 p-4 border h-6 rounded border-gray-500" /> <!-- Adjust width as needed -->
-      </div>
+  <template v-else-if="selectedTabIndex == 1 && editForm.isManualPlan && !editForm.isApi">
+    <x-divider></x-divider>
+    <div class="flex justify-between gap-4 mt-4 items-center">
+      <!-- Main container pushed to the right -->
+      <div class="ml-auto flex items-center gap-4">
+        <!-- Overall Loading input field -->
+        <div class="flex items-center" v-if="props.selectedPlan.isUnderwritten">
+          <span class="mr-2">Overall Loading:</span>
+          <input type="number" class="w-32 p-4 border h-6 rounded border-gray-500" /> <!-- Adjust width as needed -->
+        </div>
 
-      <!-- Total Price section -->
-      <div class="flex items-center">
-        <span class="font-bold mr-2">Total Price:</span>
-        <span class="">AED {{ props.selectedPlan.actualPremium }}</span>
+        <!-- Total Price section -->
+        <div class="flex items-center">
+          <span class="font-bold mr-2">Total Price:</span>
+          <span class="">AED {{ actualPremium }}</span>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Buttons section aligned to the right -->
-  <div class="flex justify-end gap-4 mt-4">
-    <div v-if="editForm.isManualPlan">
-      <x-button type="submit" color="blue" :loading="editForm.loading">
-        Save
-      </x-button>
+    <!-- Buttons section aligned to the right -->
+    <div class="flex justify-end gap-4 mt-4">
+      <div v-if="!editForm.isApi">
+        <x-button type="submit" color="blue" :loading="extraAttr.loading">
+          Save
+        </x-button>
+      </div>
     </div>
-  </div>
-</template>
+  </template>
 
 
 

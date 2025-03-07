@@ -641,94 +641,67 @@ class LifeQuoteService extends BaseService
             'plans' => [$data]
         ];
 
-        $client = new \GuzzleHttp\Client;
-        try {
-            $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-life-quote-plan';
-            $plansApiToken = config('constants.KEN_API_TOKEN');
-            $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
-            $plansApiUserName = config('constants.KEN_API_USER');
-            $plansApiPassword = config('constants.KEN_API_PWD');
-            $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
-            $kenRequest = $client->post(
-                $plansApiEndPoint,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
-                    ],
-                    'body' => json_encode($reqData),
-                    'timeout' => $plansApiTimeout,
-                ]
-            );
-
-            return $kenRequest->getStatusCode();
-
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $response = json_decode((string) $e->getResponse()->getBody());
-
-            if (isset($response->error)) {
-                $response = $response->error;
-            }
-            if (isset($response->msg)) {
-                $response = $response->msg;
-            }
-
-            return $response;
-        }
+        $response = app(abstract: KenService::class)->request('/save-manual-life-quote-plan', 'post', $reqData);
+        return $response; 
     }
 
     public function getLifeProviderPlan($data)
     {
        
-        $client = new \GuzzleHttp\Client;
+        $response = app(abstract: KenService::class)->request('/fetch-life-provider-plan', 'post', $data);
+        return $response; 
+        // dd($resposne); 
 
-        try {
-            $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/fetch-life-provider-plan';
-            $plansApiToken = config('constants.KEN_API_TOKEN');
-            $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
-            $plansApiUserName = config('constants.KEN_API_USER');
-            $plansApiPassword = config('constants.KEN_API_PWD');
-            $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
-            $kenRequest = $client->post(
-                $plansApiEndPoint,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
-                    ],
-                    'body' => json_encode($data),
-                    'timeout' => $plansApiTimeout,
-                ]
-            );
+        // $client = new \GuzzleHttp\Client;
 
-            $getStatusCode = $kenRequest->getStatusCode();
+        // try {
+        //     $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/fetch-life-provider-plan';
+        //     $plansApiToken = config('constants.KEN_API_TOKEN');
+        //     $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        //     $plansApiUserName = config('constants.KEN_API_USER');
+        //     $plansApiPassword = config('constants.KEN_API_PWD');
+        //     $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+        //     $kenRequest = $client->post(
+        //         $plansApiEndPoint,
+        //         [
+        //             'headers' => [
+        //                 'Content-Type' => 'application/json',
+        //                 'Accept' => 'application/json',
+        //                 'x-api-token' => $plansApiToken,
+        //                 'Authorization' => 'Basic '.$authBasic,
+        //             ],
+        //             'body' => json_encode($data),
+        //             'timeout' => $plansApiTimeout,
+        //         ]
+        //     );
 
-            if ($getStatusCode == 200) {
-                $getContents = $kenRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
+        //     $getStatusCode = $kenRequest->getStatusCode();
 
-                return $getdecodeContents;
-            }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
-            $contents = (string) $response->getBody();
-            $response = json_decode($contents);
+        //     if ($getStatusCode == 200) {
+        //         $getContents = $kenRequest->getBody();
+        //         $getdecodeContents = json_decode($getContents);
 
-            if (isset($response->message)) {
-                $responseBodyAsString = $response->message;
-            } elseif (isset($response->error)) {
-                $responseBodyAsString = $response->error;
-            } elseif (isset($response->msg)) {
-                $responseBodyAsString = $response->msg;
-            } else {
-                $responseBodyAsString = 'Failedt to fetch provider plan.';
-            }
-            return $responseBodyAsString;
-        }
+        //         return $getdecodeContents;
+        //     }
+        // } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        //     $response = $e->getResponse();
+        //     $contents = (string) $response->getBody();
+        //     $response = json_decode($contents);
+
+        //     dd($response); 
+        //     if (isset($response->message)) {
+        //         $responseBodyAsString = $response->message;
+        //     } elseif (isset($response->error)) {
+        //         $responseBodyAsString = $response->error;
+        //     } elseif (isset($response->msg)) {
+        //         $responseBodyAsString = $response->msg;
+        //     } else {
+        //         $responseBodyAsString = 'Failedt to fetch provider plan.';
+        //     }
+        //     return $responseBodyAsString;
+        // }
+
+
     }
 
     /* This function will select the Plan details in the Quote */

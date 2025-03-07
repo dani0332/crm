@@ -34,6 +34,9 @@ const active = ref(false);
 
 const lifeCoverToggled = true;
 
+const notification = useNotifications('toast');
+
+
 const paymentTerms = [
   { value: 1, label: 'Monthly' },
   { value: 3, label: 'Quarterly' },
@@ -67,7 +70,16 @@ const createForm = reactive({
   insurerQuoteNo: null,
   isVariant: false,
   update: false,
+  initialPrice: 0
 });
+
+watch(
+  () => createForm.actualPremium,
+  (newActualPremium) => {
+    createForm.initialPrice = newActualPremium;
+    console.log('initial price', createForm.initialPrice);
+  }
+);
 
 const onSubmit = isValid => {
 
@@ -76,6 +88,7 @@ const onSubmit = isValid => {
   }
   createForm.loading = true;
   createForm.riders = ridersData.value;
+
   // remove loading from createForm
   // const data  = createForm.filter((item) => item !== 'loading');
   axios
@@ -84,13 +97,34 @@ const onSubmit = isValid => {
       formData: createForm,
     })
     .then(res => {
-      if (res.data == 200) {
+      console.log(res)
+      if (res.status == 200) {
         emit('success');
+
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+
+        shown.value = false;
+
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+
       } else {
+        notification.success({
+          title: res?.data?.message ?? '',
+          position: 'top',
+        });
         emit('error', res.data);
       }
     })
     .catch(err => {
+      notification.error({
+          title: res?.data?.message ?? 'Something Went wrong',
+          position: 'top',
+        }); 
       emit('error');
     })
     .finally(() => {

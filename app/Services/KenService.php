@@ -45,7 +45,6 @@ class KenService
                     vAbort('KEN Service Exception');
                 }
             });
-
         return $response->json();
     }
 

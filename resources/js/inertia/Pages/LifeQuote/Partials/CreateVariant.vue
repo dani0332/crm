@@ -137,21 +137,29 @@ const onSubmit = isValid => {
       formData: createForm,
     })
     .then(res => {
-      console.log(res.data)
-      const alreadyQuotedMessage = 'This plan detail is already quoted'; 
-      if (res.data && res.data.includes(alreadyQuotedMessage)) {
-        alreadyQuoted = 'This plan detail is already quoted';
-        console.log('exists');
-        return;
-      }
-      if (res.data == 200) {
-        emit('success');
-      } else {
-        emit('error', res.data);
-      }
+      emit('success');
+
+      // notification.success({
+      //   title: res.data.message,
+      //   position: 'top',
+      // });
+
+      shown.value = false;
+
+      setTimeout(() => {
+        location.reload();
+      }, 2000);
+
+    
     })
     .catch(err => {
       emit('error');
+
+      const alreadyQuotedMessage = 'This plan detail is already quoted'; 
+      if (err.response.data.message && err.response.data.message.includes(alreadyQuotedMessage)) {
+        alreadyQuoted = 'This plan detail is already quoted';
+        return;
+      }
     })
     .finally(() => {
       createForm.loading = false;
