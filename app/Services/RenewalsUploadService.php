@@ -1174,7 +1174,6 @@ class RenewalsUploadService
 
         if ($isQuoteTypeHealth) {
             $this->updateOrCreateHealthMembers($quote, $data);
-            $this->updateBasePricePlan($quote, $data);
         }
 
     }
@@ -1219,9 +1218,15 @@ class RenewalsUploadService
      *
      * @return void
      */
-    private function updateBasePricePlan() 
+    private function updateBasePricePlan($quote, $data) 
     {
-
+        // dd($quote);
+        $customersMember = CustomerMembers::where('quote_id', $quote->id)
+            ->where('quote_type', HealthQuote::class)
+            ->whereNull('deleted_at')
+            ->get()
+            ->keyBy(fn($member) => strtolower(trim($member->first_name . ' ' . $member->last_name)));
+        
     }
 
     /**
@@ -1258,7 +1263,6 @@ class RenewalsUploadService
         $nationalities = Nationality::whereIn('text', $memberNationalities)->withActive()->pluck('id', 'text');
         $memberCategories = MemberCategory::whereIn('text', $memberCategoriesText)->active()->pluck('id', 'text');
         $emirates = Emirate::whereIn('text', $memberEmirateOfVisas)->withActive()->pluck('id', 'text');
-        // dd($nationalities);
 
         $existingMembers = CustomerMembers::where('quote_id', $quote->id)
             ->where('quote_type', HealthQuote::class)
@@ -1276,7 +1280,7 @@ class RenewalsUploadService
             $lastName = implode(' ', $memberNameArray);
             $fullNameKey = strtolower(trim($firstName . ' ' . $lastName));
 
-            $memberDetails[$index] = [
+            $memberDetails[] = [
                 'dob' => $dobFormatted,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
@@ -1305,12 +1309,13 @@ class RenewalsUploadService
                     $updateMemberDetails[] = Arr::only($memberDetails[$index], ['id', 'first_name', 'last_name','dob','emirate_of_your_visa_id','gender','nationality_id','member_category_id','salary_band_id']);
                     unset($memberDetails[$index]);
                 }
+                continue;
             }
 
             // Update existing member if found
             if (isset($existingMembers[$fullNameKey])) {
                 $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
-                $updateMemberDetails[] = Arr::only($memberDetails[$index], ['id', 'dob', 'emirate_of_your_visa_id', 'gender', 'nationality_id', 'member_category_id', 'salary_band_id']);
+                $updateMemberDetails[] = Arr::only($memberDetails[$index], ['id', 'first_name', 'last_name', 'dob', 'emirate_of_your_visa_id', 'gender', 'nationality_id', 'member_category_id', 'salary_band_id']);
                 unset($memberDetails[$index]);
             }
         }
@@ -1318,15 +1323,20 @@ class RenewalsUploadService
         $memberDetails = arrayKeysToCamelCase($memberDetails);
         $updateMemberDetails = arrayKeysToCamelCase($updateMemberDetails);
 
-        count($memberDetails) > 0 && Ken::request('/add-health-quote-members', 'POST', [
+        $addResponse = count($memberDetails) > 0 && Ken::request('/add-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
-            'memberDetails' => $memberDetails,
+            'memberDetails' => [...$memberDetails],
         ]);
 
-        count($updateMemberDetails) > 0 && Ken::request('/update-health-quote-members', 'POST', [
+        $updateResponse = count($updateMemberDetails) > 0 && Ken::request('/update-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
-            'memberDetails' => $updateMemberDetails,
+            'memberDetails' => [...$updateMemberDetails],
         ]);
+
+        if($addResponse || $updateResponse) {
+            info(' Health Members added/updated successfully for UUID: '.$quote->uuid);
+            $this->updateBasePricePlan($quote, $data);
+        }
     }
 
     /**
