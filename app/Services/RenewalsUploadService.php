@@ -149,10 +149,10 @@ class RenewalsUploadService
         $path = 'renewals';
         // Getting original file name
         // Debugger : remove timestamp from file name
-        $timeStamp = Carbon::now()->timestamp;
-        $fileName = $timeStamp . '-' . request()->file('file_name')->getClientOriginalName();
+        // $timeStamp = Carbon::now()->timestamp;
+        // $fileName = $timeStamp . '-' . request()->file('file_name')->getClientOriginalName();
 
-        // $fileName = request()->file('file_name')->getClientOriginalName();
+        $fileName = request()->file('file_name')->getClientOriginalName();
         // Generating name for file for azure usage
         $azureFileName = get_guid().'_'.$fileName;
 
@@ -1299,17 +1299,12 @@ class RenewalsUploadService
                 ]);
                 Customer::where('id', $quote->customer_id)->update($customerPayload);
 
-                if (count($memberDobs) == 1 ) {
-                    if($existingMembers->count() == 0) {
-                        unset($memberDetails[$index]);
-                    }
-                    // Update only if a single member exists
-                    // first member or prime policy holder shouldn't be updated now
-                    // $updateMemberDetails[] = Arr::only($memberDetails[$index], ['first_name', 'last_name','dob','emirate_of_your_visa_id','gender','nationality_id','member_category_id','salary_band_id']);
+                // Update only if a single member exists
+                if(isset($existingMembers[$fullNameKey])) {
+                    $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
+                    $updateMemberDetails[] = Arr::only($memberDetails[$index], ['id', 'first_name', 'last_name','dob','emirate_of_your_visa_id','gender','nationality_id','member_category_id','salary_band_id']);
+                    unset($memberDetails[$index]);
                 }
-                // as per discussion first primary and prime policy holder member must not be updated
-                unset($memberDetails[$index]);
-                continue;
             }
 
             // Update existing member if found
@@ -1317,7 +1312,6 @@ class RenewalsUploadService
                 $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
                 $updateMemberDetails[] = Arr::only($memberDetails[$index], ['id', 'dob', 'emirate_of_your_visa_id', 'gender', 'nationality_id', 'member_category_id', 'salary_band_id']);
                 unset($memberDetails[$index]);
-                continue;
             }
         }
 
