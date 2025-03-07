@@ -295,7 +295,9 @@ class ApiController extends Controller
                     $latestUpdatedRecord = $query->sortByDesc('updated_at')->first();
 
                     if (! $latestUpdatedRecord) {
-                        throw new Exception('No latest record found for group: '.$group->ids);
+                        info(self::class.' - No latest updated record found for group: '.$group->ids);
+
+                        continue;
                     }
 
                     $lastId = $latestUpdatedRecord->id;
@@ -335,8 +337,6 @@ class ApiController extends Controller
                     info(self::class.' - Group: '.$group->ids.' - Updated Record: '.$lastId);
                 } catch (Exception $e) {
                     info(self::class.' - Error processing group '.$group->ids.': '.$e->getMessage());
-
-                    return response()->json(['success' => false, 'message' => 'Error processing group '.$group->ids.': '.$e->getMessage()]);
                 }
             }
 
@@ -358,8 +358,6 @@ class ApiController extends Controller
             }
 
             info(self::class.' - De-Duplication Job Completed');
-
-            sleep(request('sleepTime', 2));
 
             return 'De-duplication completed successfully';
 
