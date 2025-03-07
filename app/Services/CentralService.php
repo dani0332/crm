@@ -1171,7 +1171,6 @@ class CentralService extends BaseService
         //        }
         //
 
-
         return in_array($insuranceProviderCode, $enabledProviders);
     }
 }
