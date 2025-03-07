@@ -1001,7 +1001,7 @@ class CentralService extends BaseService
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id ' . $quote->quote_status_id . ' policy issuance status id ' . $quote->policy_issuance_status_id);
+        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
         if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyIssued]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
@@ -1018,7 +1018,7 @@ class CentralService extends BaseService
 
                     // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
                     // No need to create quote status log
-                    if ($oldQuoteStatus != $quote->quote_status_id){
+                    if ($oldQuoteStatus != $quote->quote_status_id) {
                         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
                         QuoteStatusLog::create([
                             'quote_type_id' => $quoteTypeId,
