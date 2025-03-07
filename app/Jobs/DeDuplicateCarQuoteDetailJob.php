@@ -26,6 +26,8 @@ class DeDuplicateCarQuoteDetailJob implements ShouldQueue
         if ($isScriptStopped) {
             info('The Script has been Stopped');
         } else {
+            info('De-Duplication Job Started');
+
             $tableName = $this->tableName;
 
             $allIds = $this->duplicates->pluck('ids')
