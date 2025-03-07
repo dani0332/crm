@@ -719,4 +719,32 @@ class AMLService
 
         return $return;
     }
+
+    /**
+     * Clears the AML status for non-AXA insurance providers.
+     */
+    public function clearAmlStatusForNonGIG($quoteType, $code, $insuranceProvider)
+    {
+        info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$insuranceProvider}");
+
+        if ($insuranceProvider === InsuranceProvidersEnum::AXA) {
+            info("Insurance Provider is AXA. Skipping AML status clearing for Quote Code: {$code}");
+
+            return false;
+        }
+
+        // Retrieve the quote details by quote type and code
+        $quoteDetails = $this->getQuoteObjectBy($quoteType, $code, 'code');
+
+        // Update the insurer AML status to null if it is not already null
+        if ($quoteDetails->insurer_aml_status !== null) {
+            $oldInsurerAmlStatus = $quoteDetails->insurer_aml_status;
+            $quoteDetails->insurer_aml_status = null;
+            $quoteDetails->save();
+
+            info("AML status change from {$oldInsurerAmlStatus} to null for Quote Code: {$code}");
+        }
+
+        return true;
+    }
 }

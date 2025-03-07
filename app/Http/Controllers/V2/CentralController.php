@@ -67,6 +67,7 @@ use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\NotificationService;
@@ -317,12 +318,16 @@ class CentralController extends Controller
     {
         $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $code, $request->insurance_provider_id);
+
         return redirect()->back();
     }
 
     public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
+
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->insurance_provider_id);
 
         return response()->json(['plan' => $response]);
     }
