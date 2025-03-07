@@ -261,7 +261,7 @@ class ApiController extends Controller
                 ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
                 ->groupBy('car_quote_request_id')
                 ->havingRaw('COUNT(car_quote_request_id) > 1')
-                ->orWhere('is_deleted', 0)
+                ->where('is_deleted', 0)
                 ->orderBy('car_quote_request_id')
                 ->limit($limit)
                 ->get();
