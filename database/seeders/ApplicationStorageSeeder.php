@@ -231,7 +231,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DTT_FROM],
             [
-                'value' => "2025-02-19",
+                'value' => '2025-02-19',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

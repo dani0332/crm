@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -52,6 +51,7 @@ class DttWithDate extends Command
         $isDttEnabled = $storageService->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             info('DTT is not enabled from CMS');
+
             return false;
         }
 
@@ -59,6 +59,7 @@ class DttWithDate extends Command
         $date = $storageService->getValueByKey(ApplicationStorageEnums::DTT_FROM);
         if (is_null($date)) {
             info('DttWithRange: No date range provided in dtt_from_to, skipping execution');
+
             return false;
         }
 
@@ -127,8 +128,8 @@ class DttWithDate extends Command
         $dateTwo = $currentDate->copy()->subMonths(11)->addDay(1)->toDateString();
         $datethirtyDaysBefore = $currentDate->copy()->subDays(30)->toDateString();
 
-        info($logPrefix . "Processing for current date: " . $currentDate->toDateString() . " (dateOne: $dateOne, dateTwo: $dateTwo)");
-        
+        info($logPrefix.'Processing for current date: '.$currentDate->toDateString()." (dateOne: $dateOne, dateTwo: $dateTwo)");
+
         $leads = CarQuote::select(
             'id',
             'uuid',
@@ -171,17 +172,17 @@ class DttWithDate extends Command
                 QuoteStatusEnum::PolicyIssued,
                 QuoteStatusEnum::TransactionApproved,
                 QuoteStatusEnum::Fake,
-                QuoteStatusEnum::Duplicate
+                QuoteStatusEnum::Duplicate,
             ])
             ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
             ->get();
-        info($logPrefix . "Count for $dateOne - " . count($leads) . ' - ' . json_encode($leads->pluck('uuid')->toArray()));
+        info($logPrefix."Count for $dateOne - ".count($leads).' - '.json_encode($leads->pluck('uuid')->toArray()));
 
         $jobs = [];
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
-            if (!$isTierR) {
+            if (! $isTierR) {
                 $jobs[] = new CarRevivalLeadsCreationJob($carLead);
             }
         }
@@ -189,19 +190,19 @@ class DttWithDate extends Command
             Haystack::build()
                 ->addJobs($jobs)
                 ->then(function () use ($logPrefix, $dateOne) {
-                    info($logPrefix . "All jobs for $dateOne completed successfully");
+                    info($logPrefix."All jobs for $dateOne completed successfully");
                 })
                 ->catch(function () use ($logPrefix, $dateOne) {
-                    info($logPrefix . "One of batch for $dateOne failed");
+                    info($logPrefix."One of batch for $dateOne failed");
                 })
                 ->finally(function () use ($logPrefix, $dateOne) {
-                    info($logPrefix . "Everything done for $dateOne");
+                    info($logPrefix."Everything done for $dateOne");
                 })
                 ->allowFailures()
                 ->withDelay(30)
                 ->dispatch();
         } else {
-            info($logPrefix . "------No leads found for $dateOne------");
+            info($logPrefix."------No leads found for $dateOne------");
         }
 
         return 0;
