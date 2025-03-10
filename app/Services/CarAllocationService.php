@@ -400,6 +400,7 @@ class CarAllocationService extends AllocationService
 
         // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
         if ($lead->isInsurerPlanB() && $lead->isSIC(QuoteTypes::CAR) && !$lead->sic_advisor_requested && $lead->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer) {
+            info(self::class."::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor");
             $teamId = getTeamId(TeamNameEnum::ORGANIC);
             $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
 
