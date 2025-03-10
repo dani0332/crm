@@ -228,6 +228,16 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DTT_FROM_TO],
+            [
+                'value' => "2025-02-19, 2025-03-09",
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1
+            ],
+        );
+
         // TODO:: Need to confirm email addresses with Shahrukh
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS],
