@@ -23,12 +23,17 @@ class GroupMedicalAllocation extends BaseAllocation
 
     protected function fetchAdvisor(int $onlineStatus)
     {
+       if(empty($this->lead->health_plan_type_id)){
+            info(self::class . " - PlanTypeId :{$this->lead->health_plan_type_id} is empty | quote Ref-ID: {$this->lead->uuid} | time: " . now());
+           return null;
+       }
         $planType = HealthPlanTypeEnum::typeName($this->lead->health_plan_type_id)?->label();
+
         $team = $this->getTeamByCriteria($planType, $this->lead->number_of_employees);
+
         info(self::class . " - group medical team: $team | plan type: $planType | number of employees: {$this->lead->number_of_employees} | online status: $onlineStatus |
          quote Ref-ID: {$this->lead->uuid} | time: " . now());
         $emails = $team === self::TEAM_MICRO ? $this->getMicroAdvisors() : $this->getNonMicroAdvisors();
-
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::GMAdvisor])
             ->whereIn('users.email', $emails)
             ->first();
@@ -52,9 +57,11 @@ class GroupMedicalAllocation extends BaseAllocation
     {
         $employeeRange = $this->getEmployeeRange($numberOfEmployees);
 
-        switch ($planType) {
-            case HealthPlanTypeEnum::ENTRY_LEVEL:
+        info(self::class . " - Employee Range: {$employeeRange} | Plan Type: {$planType} | Number of Employees: {$numberOfEmployees} | Quote Ref-ID: {$this->lead->uuid} | Time: " . now());
+        switch ($this->lead->health_plan_type_id) {
+            case HealthPlanTypeEnum::ENTRY_LEVEL->value:
                 if ($employeeRange === self::EMPLOYEE_RANGE_0_5) {
+                    info(self::class . " - Employee Range: {$employeeRange} | Plan Type: {$planType} | Number of Employees: {$numberOfEmployees} | Quote Ref-ID: {$this->lead->uuid} | Time: " . now());
                     return ''; // N/A (default to Non-Micro)
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_6_50) {
                     return self::TEAM_MICRO;
@@ -65,7 +72,7 @@ class GroupMedicalAllocation extends BaseAllocation
                 }
                 break;
 
-            case HealthPlanTypeEnum::GOOD:
+            case HealthPlanTypeEnum::GOOD->value:
                 if ($employeeRange === self::EMPLOYEE_RANGE_0_5) {
                     return self::TEAM_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_6_50) {
@@ -77,7 +84,7 @@ class GroupMedicalAllocation extends BaseAllocation
                 }
                 break;
 
-            case HealthPlanTypeEnum::BEST:
+            case HealthPlanTypeEnum::BEST->value:
                 if ($employeeRange === self::EMPLOYEE_RANGE_0_5) {
                     return self::TEAM_NON_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_6_50) {
@@ -89,7 +96,7 @@ class GroupMedicalAllocation extends BaseAllocation
                 }
                 break;
 
-            case HealthPlanTypeEnum::MULTI_CATEGORIES:
+            case HealthPlanTypeEnum::MULTI_CATEGORIES->value:
                 if ($employeeRange === self::EMPLOYEE_RANGE_0_5) {
                     return self::TEAM_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_6_50) {
