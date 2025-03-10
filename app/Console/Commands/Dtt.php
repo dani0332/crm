@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
