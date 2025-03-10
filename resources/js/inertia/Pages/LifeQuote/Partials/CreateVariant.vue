@@ -9,6 +9,9 @@ const props = defineProps({
   plan: Object,
 });
 
+const notification = useNotifications('toast');
+
+
 const { isRequired } = useRules();
 
 const shown = computed({
@@ -156,10 +159,11 @@ const onSubmit = isValid => {
       emit('error');
 
       const alreadyQuotedMessage = 'This plan detail is already quoted'; 
-      if (err.response.data.message && err.response.data.message.includes(alreadyQuotedMessage)) {
+      if (err?.response?.data?.message && err?.response?.data?.message.includes(alreadyQuotedMessage)) {
         alreadyQuoted = 'This plan detail is already quoted';
         return;
       }
+      
     })
     .finally(() => {
       createForm.loading = false;
