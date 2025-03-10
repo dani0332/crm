@@ -178,33 +178,31 @@ class DttWithDate extends Command
             ->get();
         info($logPrefix . "Count for $dateOne - " . count($leads) . ' - ' . json_encode($leads->pluck('uuid')->toArray()));
 
-        dd(count($leads));
-
-        // $jobs = [];
-        // foreach ($leads as $carLead) {
-        //     $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
-        //     if (!$isTierR) {
-        //         $jobs[] = new CarRevivalLeadsCreationJob($carLead);
-        //     }
-        // }
-        // if ($jobs && count($jobs)) {
-        //     Haystack::build()
-        //         ->addJobs($jobs)
-        //         ->then(function () use ($logPrefix, $dateOne) {
-        //             info($logPrefix . "All jobs for $dateOne completed successfully");
-        //         })
-        //         ->catch(function () use ($logPrefix, $dateOne) {
-        //             info($logPrefix . "One of batch for $dateOne failed");
-        //         })
-        //         ->finally(function () use ($logPrefix, $dateOne) {
-        //             info($logPrefix . "Everything done for $dateOne");
-        //         })
-        //         ->allowFailures()
-        //         ->withDelay(30)
-        //         ->dispatch();
-        // } else {
-        //     info($logPrefix . "------No leads found for $dateOne------");
-        // }
+        $jobs = [];
+        foreach ($leads as $carLead) {
+            $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
+            if (!$isTierR) {
+                $jobs[] = new CarRevivalLeadsCreationJob($carLead);
+            }
+        }
+        if ($jobs && count($jobs)) {
+            Haystack::build()
+                ->addJobs($jobs)
+                ->then(function () use ($logPrefix, $dateOne) {
+                    info($logPrefix . "All jobs for $dateOne completed successfully");
+                })
+                ->catch(function () use ($logPrefix, $dateOne) {
+                    info($logPrefix . "One of batch for $dateOne failed");
+                })
+                ->finally(function () use ($logPrefix, $dateOne) {
+                    info($logPrefix . "Everything done for $dateOne");
+                })
+                ->allowFailures()
+                ->withDelay(30)
+                ->dispatch();
+        } else {
+            info($logPrefix . "------No leads found for $dateOne------");
+        }
 
         return 0;
     }
